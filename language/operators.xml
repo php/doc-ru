@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<!-- $Revision: 1.1 $ -->
-<!-- EN-Revision: 1.71 Maintainer: young Status: ready -->
+<!-- $Revision: 1.2 $ -->
+<!-- EN-Revision: 1.80 Maintainer: young Status: ready -->
  <chapter id="language.operators">
   <title>Операторы</title>
   <simpara>
@@ -44,7 +44,9 @@
    </para>
    <para>
     В следующей таблице приведен список операторов, отсортированный по
-	убыванию их приоритетов.
+	убыванию их приоритетов. Операторы, размещенные в одной строке имеют
+	одинаковый приоритет и порядок их выполнения опроделяется исходя из
+	их ассоциативности.
     <table>
      <title>Порядок выполнения операторов</title>
      <tgroup cols="2">
@@ -64,8 +66,12 @@
         <entry>[</entry>
        </row>
        <row>
-        <entry>правая</entry>
-        <entry>! ~ ++ -- (int) (float) (string) (array) (object) @</entry>
+        <entry>неассоциативна</entry>
+        <entry>++ --</entry>
+       </row>
+       <row>
+        <entry>неассоциативна</entry>
+        <entry>! ~ - (int) (float) (string) (array) (object) @</entry>
        </row>
        <row>
         <entry>левая</entry>
@@ -118,10 +124,6 @@
         </entry>
        </row>
        <row>
-        <entry>правая</entry>
-        <entry>print</entry>
-       </row>
-       <row>
         <entry>левая</entry>
         <entry>and</entry>
        </row>
@@ -141,6 +143,26 @@
      </tgroup>
     </table>
    </para>
+   <para>
+      Левая ассоциативность подразумевает, что выражение вычисляется слева направо,
+	  правая ассоциативность соответственно подразумевает противоположный порядок.
+      <example> 
+       <title>Ассоциативность</title> 
+       <programlisting role="php"> 
+  <![CDATA[ 
+  <?php 
+  $a = 3 * 3 % 5; // (3 * 3) % 5 = 4 
+  $a = true ? 0 : true ? 1 : 2; // (true ? 0 : true) ? 1 : 2 = 2 
+    
+  $a = 1; 
+  $b = 2; 
+  $a = $b += 3; // $a = ($b += 3) -> $a = 5, $b = 5 
+  ?> 
+  ]]> 
+       </programlisting> 
+      </example>
+	   Вы моежете использовать круглые скобки для повышения читабельности кода. 
+     </para> 
    <note>
     <para>
      Несмотря на то, что оператор <literal>!</literal>  имеет
@@ -169,6 +191,11 @@
       </row>
      </thead>
      <tbody>
+      <row> 
+         <entry>-$a</entry> 
+         <entry>Отрицание</entry> 
+         <entry>Смена знака $a.</entry> 
+      </row> 
       <row>
        <entry>$a + $b</entry>
        <entry>Сложение</entry>
@@ -202,6 +229,12 @@
    оба значения были целочисленными (или строками, которые преобразуются
    в целые числа).
    </simpara>
+   <note> 
+      <simpara> 
+       Остаток <literal>$a % $b</literal> будет негативным, для негативных значений 
+       <literal>$a</literal>. 
+      </simpara> 
+     </note> 
    <simpara>
     Также вы можете ознакомиться с разделом документации 
     <link linkend="ref.math">Математические функции</link>. 
@@ -356,6 +389,13 @@ echo "hallo" ^ "hello"; // Выведет следующие ASCII-значения: #0 #4 #0 #0 #0
      </tbody>
     </tgroup>
    </table>
+    <warning> 
+      <para>
+	   Не используйте сдвиг вправо более чем на 32 бита на тридцатидвухразрядных 
+	   системах. Не используйте сдвиг вправо для получения чисел, требующих для записи 
+	   более ридцатидвух бит.
+      </para> 
+     </warning> 
   </sect1>
 
   <sect1 id="language.operators.comparison">
@@ -430,6 +470,33 @@ echo "hallo" ^ "hello"; // Выведет следующие ASCII-значения: #0 #4 #0 #0 #0
      </tbody>
     </tgroup>
    </table>
+   <para>
+      В случае, если вы сравниваете целое со строкой, строка будет
+	  <link linkend="language.types.string.conversion">преобразована к числу</link>.
+	  В случае, если вы сравниваете две числовые строки, они сравниваются
+	  как целые числа. Эти правила также распространяются на оператор
+      <link linkend="control-structures.switch">switch</link>. 
+      <informalexample> 
+       <programlisting role="php"> 
+  <![CDATA[ 
+  <?php 
+  var_dump(0 == "a"); // 0 == 0 -> true 
+  var_dump("1" == "01"); // 1 == 1 -> true 
+    
+  switch ("a") { 
+  case 0: 
+      echo "0"; 
+      break; 
+  case "a": // Эта ветка никогда не будет достигнута, так как "a" уже сопоставленно с 0 
+      echo "a"; 
+      break; 
+  } 
+  ?> 
+  ]]> 
+       </programlisting> 
+      </informalexample> 
+     </para> 
+   
    <para>
    Еще одним условным оператором является тернарный оператор "?:".
     <informalexample>
@@ -668,6 +735,11 @@ AC
      </programlisting>
     </example>
    </para>
+   <para>
+      Инкрементирование или декрементирование булевых переменных 
+	  не приводит ни к какому результату.
+   </para>
+   
   </sect1>
 
   <sect1 id="language.operators.logical">
