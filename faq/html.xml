@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- EN-Revision: 1.29 Maintainer: irinagoble Status: ready -->
+<!-- $Revision: 1.1 $ -->
+ <chapter id="faq.html">
+  <title>PHP и HTML</title>
+  <titleabbrev>PHP и HTML</titleabbrev>
+
+  <para>
+   PHP и HTML взаимодействуют тесно : PHP может генерировать HTML и HTML
+   может передавать информацию PHP. Перед чтением вопросов в этом разделе
+   важно чтобы вы понимали как <link linkend="language.variables.external">
+   получать переменные извне PHP</link>. Страницы руководства по этой теме
+   содержат много примеров. Обращайте особое внимание на то, что
+   <literal>register_globals</literal> значит для вас.
+  </para>
+
+  <qandaset>
+   <qandaentry id="faq.html.encoding">
+    <question>
+     <para>
+      Какое кодирование/декодирование я должен выполнять при передаче значения
+      через форму/URL?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Здесь несколько этапов, на которых кодировка важна. Предположим, что у вас
+      есть <varname>$data</varname> типа <type>string</type>, содержащая
+      строку, которую вы хотите передать некодируемым путем, важные следующие этапы: 
+      <itemizedlist>
+       <listitem>
+        <para>
+         Интерпретация HTML. Для того, чтобы задать произвольную строку,
+         вы <emphasis>должны</emphasis> заключить её в двойные кавычки и
+         вызвать <function>htmlspecialchars</function> на всё значение.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         URL: URL состоит из нескольких частей. Если вы хотите чтобы ваши
+         данные были восприняты как один элемент, вы <emphasis>должны</emphasis>
+         закодировать их с помощью <function>urlencode</function>.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+     <para>
+      <example>
+       <title>Скрытый элемент HTML формы</title>
+        <programlisting role="php">
+<![CDATA[
+<?php
+    echo "<input type='hidden' value='" . htmlspecialchars($data) . "' />\n";
+?>
+]]>
+        </programlisting>
+      </example>
+      <note>
+       <simpara>
+        Использовать <function>urlencode</function> для
+        <varname>$data</varname> будет неправильным, так как 
+        <function>urlencode</function> кодирование данных на 
+        ответственности браузеров. Все популярные браузеры делают это правильно.
+        Отметьте, что это происходит вне зависимости от метода (например, 
+        GET или POST). Однако, вы заметите это только в случае GET запроса,
+        так как POST запросы обычно скрыты.
+       </simpara>
+      </note>
+      <example>
+       <title>Данные, редактируемые пользователем</title>
+        <programlisting role="php">
+<![CDATA[
+<?php
+    echo "<textarea name='mydata'>\n";
+    echo htmlspecialchars($data)."\n";
+    echo "</textarea>";
+?>
+]]>
+        </programlisting>
+      </example>
+      <note>
+       <simpara>
+        Данные показываются браузером как предполагается, потому что браузер будет
+        интерпретировать экранированные HTML символы. 
+       </simpara>
+       <simpara>
+        При отправке через GET или POST данные будут закодированы (urlencoded)
+        браузером для передачи и раскодированы (urldecoded) PHP. Поэтому вам
+        не надо выполнять какое-либо url-кодирование/url-раскодирование самим,
+        все выполняется автомагически. 
+       </simpara>
+      </note>
+      <example>
+       <title>В URL</title>
+        <programlisting role="php">
+<![CDATA[
+<?php
+    echo "<a href='" . htmlspecialchars("/nextpage.php?stage=23&data=" .
+        urlencode($data)) . "'>\n";
+?>
+]]>
+        </programlisting>
+      </example>
+      <note>
+       <simpara>
+        На самом деле вы представляетесь HTML GET запросом, поэтому необходимо
+        вручную закодировать (<function>urlencode</function>) данные.
+        </simpara>
+      </note>
+      <note>
+       <simpara>
+        Вам надо применить <function>htmlspecialchars</function> 
+        на полный URL, потому что URL появляется как значение HTML атрибута.
+        В этом случае, браузер сначала раскодирует всё значение
+        (де-<function>htmlspecialchars</function>) и затем URL.
+        PHP поймет URL правильно, так как вы закодировали данные с
+        <function>urlencoded</function>.
+       </simpara>
+       <simpara>
+        Вы заметите, что <literal>&amp;</literal> в URL заменяется на
+        <literal>&amp;amp;</literal>. Хотя большинство браузеров выправится,
+        если вы забудете об этом, но всё же это не всегда возможно. Поэтому,
+        даже если ваш URL не динамический, вам <emphasis>надо</emphasis>
+        закодировать его с помощью <function>htmlspecialchars</function>.
+       </simpara>
+      </note>
+     </para>
+     <!-- TODO: a note about addgpcslashes? -->
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.html.form-image">
+    <question>
+     <para>
+      Я пытаюсь использовать &lt;input type="image"&gt;, но переменные
+      <varname>$foo.x</varname> и <varname>$foo.y</varname>
+      недоступны. <varname>$_GET['foo.x']</varname> тоже не существует.
+      Где они?
+     </para>
+    </question>
+    <answer>
+     <para>
+      При отправке формы, вместо стандартной кнопки посылки возможно использовать
+      изображение с тэгом как:
+      <programlisting role="html">
+<![CDATA[
+<input type="image" src="image.gif" name="foo" />
+]]>
+      </programlisting>
+      Когда пользователь щёлкает где-либо на картинке, серверу будет послана
+      сопутствующая форма с двумя дополнительными переменными:
+      <varname>foo.x</varname> и <varname>foo.y</varname>.
+     </para>
+     <para>
+      Так как имена <varname>foo.x</varname> и <varname>foo.y</varname>
+      нелегальны в PHP, они автомагически превращаются в 
+      <varname>foo_x</varname> и <varname>foo_y</varname>. То есть,
+      точки заменяются на подчёркивание. Вы обращаетесь к этим переменным
+      так же как к любым другим, описанным в разделе о получении
+      <link linkend="language.variables.external">переменных извне
+      PHP</link>. Например, <varname>$_GET['foo_x']</varname>.
+      <note>
+       <para>
+         Пробелы в именах переменных запроса преобразуются в подчёркивания.
+       </para>
+      </note>
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.html.arrays">
+    <question>
+     <para>Как создать массивы в HTML &lt;form&gt;?</para>
+    </question>
+    <answer>
+     <para>
+      Для того, чтобы результаты &lt;form&gt; были посланы вашему PHP
+      скрипту как <link linkend="language.types.array">массив</link>,
+      именуйте элементы  &lt;input&gt;, &lt;select&gt; или &lt;textarea&gt;
+      следующим образом:
+      <programlisting role="html">
+<![CDATA[
+<input name="MyArray[]" />
+<input name="MyArray[]" />
+<input name="MyArray[]" />
+<input name="MyArray[]" />
+]]>
+      </programlisting>
+      Заметьте квадратные скобки после имени переменной, это делает её массивом.
+      Вы можете сгруппировать элементы в массив, присваивая одно и тоже имя
+      разным элементам:
+      <programlisting role="html">
+<![CDATA[
+<input name="MyArray[]" />
+<input name="MyArray[]" />
+<input name="MyOtherArray[]" />
+<input name="MyOtherArray[]" />
+]]>
+      </programlisting>
+      Это создаст два массива, MyArray и MyOtherArray, которые будут посланы
+      PHP скрипту. Также возможно задать определённые ключи для ваших массивов:
+      <programlisting role="html">
+<![CDATA[
+<input name="AnotherArray[]" />
+<input name="AnotherArray[]" />
+<input name="AnotherArray[email]" />
+<input name="AnotherArray[phone]" />
+]]>
+      </programlisting>
+      Массив AnotherArray теперь будет содержать ключи 0, 1, email и phone.
+      </para>
+      <para>
+       <note>
+        <para>
+         Определять ключи массивов в HTML необязательно. Если вы не задаёте
+         ключи, массив заполняется в порядке появления элементов в форме.
+         Наш первый пример будет содержать ключи 0, 1, 2 и 3.
+        </para>
+       </note>
+      </para>
+      <para>
+      Также смотрите
+      <link linkend="ref.array">Функции Массивов</link> и
+      <link linkend="language.variables.external">Переменные извне PHP</link>.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.html.select-multiple">
+    <question>
+     <para>
+      Как получить все результаты из HTML тэга select с опцией multiple?
+     </para>
+    </question>
+    <answer>
+     <para>
+      HTML тэг select с multiple позволяет пользователю выбрать несколько
+      элементов из списка. Эти элементы затем передаются обработчику 
+      формы. Проблема в том, что они все переданы с одним и тем же именем.
+      Например:
+      <programlisting role="html">
+<![CDATA[
+<select name="var" multiple="yes">
+]]>
+      </programlisting>
+      Каждая выбранная опция поступит обработчику формы как:
+      <programlisting>
+var=option1
+var=option2
+var=option3
+      </programlisting>
+      Каждая опция будет затирать содержимое предыдущей переменной
+      <varname>$var</varname>. Решение - воспользоваться возможностью
+      PHP "массив из элемента формы". Должно быть задано следующее:
+      <programlisting role="html">
+<![CDATA[
+<select name="var[]" multiple="yes">
+]]>
+      </programlisting>
+      Это укажет PHP обращаться с <varname>$var</varname> как с массивом и
+      каждое присваивание значения для var[] добавит элемент в массив.
+      Первый элемент становится <varname>$var[0]</varname>, следующий
+      <varname>$var[1]</varname> и т.д. Функция <function>count</function>
+      может быть использована для определения сколько элементов было выбрано
+      и функция <function>sort</function> может быть использована для
+      сортировки массива опций, если необходимо.
+     </para>
+     <para>
+      Заметьте, что если вы используете JavaScript, то <literal>[]</literal>
+      в имени элемента может вызвать проблемы, если вы пытаетесь обращаться к
+      элементу по имени. Вместо, используйте числовой ID элемента формы или
+      заключите имя переменной в одиночные скобки и используйте как
+      индекс массива элементов, например: 
+      <programlisting>
+variable = documents.forms[0].elements['var[]'];
+      </programlisting>
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.html.javascript-variable">
+    <question>
+     <para>
+      Как я могу передать переменную из JavaScript в PHP?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Так как JavaScript является (обычно) технологией на стороне клиента,
+      а PHP является (обычно) технологией серверной стороны и так как 
+      HTML - протокол "без состояния", эти два языка не могут разделять
+      переменные напрямую.
+     </para>
+     <para>
+      Однако, возможно передавать переменные между ними.
+      Один из способов достичь этого - сгенерировать JavaScript код
+      из PHP и заставить браузер обновиться, посылая определённые
+      переменные назад PHP скрипту. Нижеприведённый пример показывает
+      как это сделать -- он позволяет PHP коду получить высоту и ширину
+      экрана, что, обычно, возможно только на стороне клиента.
+     </para>
+     <para>
+      <programlisting role="php">
+<![CDATA[
+<?php
+if (isset($_GET['width']) AND isset($_GET['height'])) {
+  // output the geometry variables
+  echo "Screen width is: ". $_GET['width'] ."<br />\n";
+  echo "Screen height is: ". $_GET['height'] ."<br />\n";
+} else {
+  // pass the geometry variables
+  // (preserve the original query string
+  //   -- post variables will need to handled differently)
+
+  echo "<script language='javascript'>\n";
+  echo "  location.href=\"${_SERVER['SCRIPT_NAME']}?${_SERVER['QUERY_STRING']}"
+            . "&width=\" + screen.width + \"&height=\" + screen.height;\n";
+  echo "</script>\n";
+  exit();
+}
+?>
+]]>
+      </programlisting>
+     </para>
+    </answer>
+   </qandaentry>
+
+  </qandaset>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
