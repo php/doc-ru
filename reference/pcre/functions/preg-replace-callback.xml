@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+<!-- EN-Revision: 1.8 Maintainer: young Status: ready -->
+<!-- splitted from ./en/functions/pcre.xml, last change in rev 1.47 -->
+  <refentry id="function.preg-replace-callback">
+   <refnamediv>
+    <refname>preg_replace_callback</refname>
+    <refpurpose>Выполняет поиск по регулярному выражению и замену с использованием функции обратного вызова</refpurpose>
+   
+   </refnamediv>
+   <refsect1>
+    <title>Описание</title>
+    <methodsynopsis>
+     <type>mixed</type><methodname>preg_replace_callback</methodname>
+     <methodparam><type>mixed</type><parameter>pattern</parameter></methodparam>
+     <methodparam><type>callback</type><parameter>callback</parameter></methodparam>
+     <methodparam><type>mixed</type><parameter>subject</parameter></methodparam>
+     <methodparam choice="opt"><type>int</type><parameter>limit</parameter></methodparam>
+    </methodsynopsis>
+    <para>
+     Поведение этой функции во многом напоминает
+     <function>preg_replace</function>, за исключением того, что вместо
+     параметра <parameter>replacement</parameter> необходимо указывать
+     <parameter>callback</parameter> функцию, которой в качестве 
+     входящего параметра передается массив найденных вхождений. 
+     Ожидаемый результат - строка, которой будет произведена замена.
+    </para>
+    <example>
+     <title><function>preg_replace_callback</function> пример</title>
+     <programlisting role='php'>
+<![CDATA[
+<?php
+  // Этот текст был использован в 2002 году
+  // мы хотим обновить даты к 2003 году
+  $text = "April fools day is 04/01/2002\n";
+  $text.= "Last christmas was 12/24/2001\n";
+
+  // функция обратного вызова
+  function next_year($matches) 
+  {
+    // как обычно: $matches[0] -  полное вхождение шаблона
+    // $matches[1] - вхождение первой подмаски,
+    // заключенной в круглые скобки, и так далее...
+    return $matches[1].($matches[2]+1);
+  }
+
+  echo preg_replace_callback(
+              "|(\d{2}/\d{2}/)(\d{4})|",
+              "next_year",
+              $text);
+
+  // результат:
+  // April fools day is 04/01/2003
+  // Last christmas was 12/24/2002
+?>
+]]>
+     </programlisting>
+    </example>
+    <para>
+     Достаточно часто <parameter>callback</parameter> функция, кроме как в вызове
+     <function>preg_replace_callback</function>, ни в чем больше не участвует.
+     Исходя из этих соображений, можно использовать <function>create_function</function> 
+     для создания безымянной функции обратного вызова непосредственно 
+     в вызове <function>preg_replace_callback</function>.
+     Если вы используете такой подход, вся информация, связанная с заменой по
+     регулярному выражению, будет собрана в одном месте, и пространство имен
+     функций не будет загромождаться неиспользуемыми записями.
+    </para>
+    <example>
+     <title><function>preg_replace_callback</function> и <function>create_function</function></title>
+     <programlisting role='php'>
+<![CDATA[
+<?php
+  /* фильтр, подобный тому, что используется в системах Unix
+   * для преобразования в заглавные начальных букв параграфа */
+
+  $fp = fopen("php://stdin", "r") or die("can't read stdin");
+  while (!feof($fp)) {
+      $line = fgets($fp);
+      $line = preg_replace_callback(
+          '|<p>\s*\w|',
+          create_function(
+              // Использование одиночных кавычек в данном случае принципиально,
+              // альтернатива - экранировать все символы '$'
+              '$matches',
+              'return strtolower($matches[0]);'
+          ),
+          $line
+      );
+      echo $line;
+  }
+  fclose($fp);
+?>
+]]>
+     </programlisting>
+    </example>
+    <para>
+     Смотрите также <function>preg_replace</function> и
+     <function>create_function</function>.
+    </para>
+   </refsect1>
+  </refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+<!-- EN-Revision: 1.12 Maintainer: young Status: ready -->
+<!-- splitted from ./en/functions/pcre.xml, last change in rev 1.2 -->
+  <refentry id="function.preg-replace">
+   <refnamediv>
+    <refname>preg_replace</refname>
+    <refpurpose>Выполняет поиск и замену по регулярному выражению</refpurpose>
+   </refnamediv>
+   <refsect1>
+    <title>Описание</title>
+     <methodsynopsis>
+      <type>mixed</type><methodname>preg_replace</methodname>
+      <methodparam><type>mixed</type><parameter>pattern</parameter></methodparam>
+      <methodparam><type>mixed</type><parameter>replacement</parameter></methodparam>
+      <methodparam><type>mixed</type><parameter>subject</parameter></methodparam>
+      <methodparam choice="opt"><type>int</type><parameter>limit</parameter></methodparam>
+     </methodsynopsis>
+    <para>
+     Выполняет поиск в строке <parameter>subject</parameter> совпадений с шаблоном
+     <parameter>pattern</parameter> и заменяет их на
+     <parameter>replacement</parameter>. В случае, если параметр
+     <parameter>limit</parameter> указан, будет произведена замена 
+     <parameter>limit</parameter> вхождений шаблона; в случае, если
+     <parameter>limit</parameter> опущен либо равняется -1, будут заменены все вхождения шаблона.
+    </para>
+    <para>
+     <parameter>Replacement</parameter> может содержать ссылки вида
+     <literal>\\<replaceable>n</replaceable></literal> либо (начиная с PHP 4.0.4)
+     <literal><replaceable>$n</replaceable></literal>, причем последний вариант 
+     предпочтительней. Каждая такая ссылка, будет заменена на подстроку, соответствующую
+     <replaceable>n</replaceable>'нной заключенной в круглые скобки подмаске.
+     <replaceable>n </replaceable>может принимать значения от 0 до 99, причем ссылка
+     <literal>\\0</literal> (либо <literal>$0</literal>) соответствует вхождению всего шаблона.
+     Подмаски нумеруются слева направо, начиная с единицы.
+    </para>
+    <para>
+     При использовании замены по шаблону с использованием ссылок на подмаски 
+     может возникнуть ситуация, когда непосредственно за маской следует цифра.
+     В таком случае нотация вида <literal>\\n</literal> приводит к ошибке: ссылка на первую подмаску, за которой 
+     следует цифра 1, запишется как <literal>\\11</literal>, что будет интерпретировано как ссылка на одиннадцатую подмаску.
+     Это недоразумение можно устранить, если воспользоваться конструкцией 
+     <literal>\${1}1</literal>, указывающей на изолированную ссылку на первую подмаску, и следующую за ней
+     цифру <literal>1</literal>.
+    </para>
+    <para>
+     <example>
+      <title>Использование подмасок, за которыми следует цифра</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+$string = "April 15, 2003";
+$pattern = "/(\w+) (\d+), (\d+)/i";
+$replacement = "\${1}1,\$3";
+echo preg_replace($pattern, $replacement, $string);
+?>
+]]>
+      </programlisting>
+      <para>
+       Результатом работы этого примера будет:
+      </para>
+      <screen>
+<![CDATA[
+April1,2003
+]]>
+      </screen>
+     </example>
+    </para>
+    <para>
+    Если во время выполнения функции были обнаружены совпадения с шаблоном,
+    будет возвращено измененное значение <parameter>subject</parameter>,
+    в противном случае будет возвращен исходный текст <parameter>subject</parameter>.
+    </para>
+    <para>
+    Первые три параметра функции <function>preg_replace</function> 
+    могут быть одномерными массивами. В случае, если массив использует ключи, при обработке массива
+    они будут взяты в том порядке, в котором они расположены в массиве.
+    Указание ключей в массиве для <parameter>pattern</parameter> и <parameter>replacement</parameter> не
+    является обязательным.
+    Если вы все же решили использовать индексы, для сопоставления шаблонов и строк, участвующих в замене,
+    используйте функцию <function>ksort</function>  для каждого из массивов.
+    </para>
+    <para>
+     <example>
+      <title>Использование массивов с числовыми индексами в качестве аргументов функции <function>preg_replace</function></title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+$string = "The quick brown fox jumped over the lazy dog.";
+
+$patterns[0] = "/quick/";
+$patterns[1] = "/brown/";
+$patterns[2] = "/fox/";
+
+$replacements[2] = "bear";
+$replacements[1] = "black";
+$replacements[0] = "slow";
+
+echo preg_replace($patterns, $replacements, $string);
+?>
+]]>
+      </programlisting>
+      <para>
+       Результат:
+      </para>
+      <screen>
+<![CDATA[
+The bear black slow jumped over the lazy dog.
+]]>
+      </screen>
+      <para>
+       Используя <function>ksort</function>, получаем желаемый результат:
+      </para>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+ksort($patterns);
+ksort($replacements);
+
+echo preg_replace($patterns, $replacements, $string);
+
+?>
+]]>
+      </programlisting>
+      <para>
+      Результат:
+      </para>
+      <screen>
+<![CDATA[
+The slow black bear jumped over the lazy dog.
+]]>
+      </screen>
+     </example>
+    </para>
+    <para>
+     В случае, если параметр <parameter>subject</parameter> является массивом,
+     поиск и замена по шаблону производятся для каждого из его элементов.
+     Возвращаемый результат также будет массивом.
+    </para>
+    <para>
+    В случае, если параметры <parameter>pattern</parameter> и <parameter>replacement</parameter> являются
+    массивами, <function>preg_replace</function> поочередно извлекает из обоих массивов
+    по паре элементов и использует их для операции поиска и замены.
+    Если массив <parameter>replacement</parameter> содержит больше элементов, чем
+    <parameter>pattern</parameter>, вместо недостающих элементов для замены будут взяты пустые строки.
+    В случае, если <parameter>pattern</parameter> является массивом, а <parameter>replacement</parameter> - строкой,
+    по каждому элементу массива <parameter>pattern</parameter> будет осущесвтлен поиск
+    и замена на <parameter>pattern</parameter> (шаблоном будут поочередно все элементы массива, в то время как строка замены остается фиксированной). 
+    Вариант, когда <parameter>pattern</parameter> является строкой, а <parameter>replacement</parameter> - массивом, не имеет смысла.
+    </para>
+    <para>
+     Модификатор <literal>/e</literal> меняет поведение функции <function>preg_replace</function> таким образом, 
+     что параметр <parameter>replacement</parameter> после выполнения необходимых подстановок интерпретируется как PHP-код и 
+     только после этого используется для замены. Используя данный модификатор, будьте внимательны:
+     параметр <parameter>replacement</parameter> должен содержать корректный PHP-код,
+     в противном случае в строке, содержащей вызов функции <function>preg_replace</function>, возникнет 
+     ошибка синтаксиса.
+    </para>
+    <para>
+     <example>
+      <title>Замена по нескольким шаблонам</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+$patterns = array ("/(19|20)(\d{2})-(\d{1,2})-(\d{1,2})/",
+                   "/^\s*{(\w+)}\s*=/");
+$replace = array ("\\3/\\4/\\1\\2", "$\\1 =");
+echo preg_replace($patterns, $replace, "{startDate} = 1999-5-27");
+?>
+]]>
+      </programlisting>
+      <para>
+       Этот пример выведет:
+      </para>
+      <screen>
+<![CDATA[
+$startDate = 5/27/1999
+]]>
+      </screen>
+     </example>
+    </para>
+    <para>
+     <example>
+      <title>Использование модификатора /e</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+preg_replace("/(<\/?)(\w+)([^>]*>)/e", 
+              "'\\1'.strtoupper('\\2').'\\3'", 
+              $html_body);
+?>
+]]>
+      </programlisting>
+      <para>
+      Преобразует все HTML-теги к верхнему регистру
+      </para>
+     </example>
+    </para>
+    <para>
+     <example>
+      <title>Конвертор HTML в текст</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+// $document на выходе должен содержать HTML-документ.
+// Необходимо удалить все HTML-теги, секции javascript,
+// пробельные символы. Также необходимо заменить некоторые
+// HTML-сущности на их эквивалент.
+
+$search = array ("'<script[^>]*?>.*?</script>'si",  // Вырезает javaScript
+                 "'<[\/\!]*?[^<>]*?>'si",           // Вырезает HTML-теги
+                 "'([\r\n])[\s]+'",                 // Вырезает пробельные символы
+                 "'&(quot|#34);'i",                 // Заменяет HTML-сущности
+                 "'&(amp|#38);'i",
+                 "'&(lt|#60);'i",
+                 "'&(gt|#62);'i",
+                 "'&(nbsp|#160);'i",
+                 "'&(iexcl|#161);'i",
+                 "'&(cent|#162);'i",
+                 "'&(pound|#163);'i",
+                 "'&(copy|#169);'i",
+                 "'&#(\d+);'e");                    // интерпретировать как php-код
+
+$replace = array ("",
+                  "",
+                  "\\1",
+                  "\"",
+                  "&",
+                  "<",
+                  ">",
+                  " ",
+                  chr(161),
+                  chr(162),
+                  chr(163),
+                  chr(169),
+                  "chr(\\1)");
+
+$text = preg_replace($search, $replace, $document);
+?>
+]]>
+      </programlisting>
+     </example>
+    </para>
+    <note>
+     <para>
+      Параметр <parameter>limit</parameter> доступен в PHP 4.0.1pl2 и выше.
+     </para>
+    </note>
+    <para>
+     Смотрите также <function>preg_match</function>,
+     <function>preg_match_all</function>, и
+     <function>preg_split</function>.
+    </para>
+   </refsect1>
+  </refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
