@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+ <appendix id="debugger">
+  <title>Отладчик PHP</title>
+
+  <sect1 id="debugger-about">
+   <title>Об отладчике</title>
+   <simpara>
+    PHP 3 включает поддержку сетевого отладчика.
+   </simpara>
+   <simpara>
+    PHP 4 пока не имеет подобного отладочного средства.
+   </simpara>
+  </sect1>
+
+  <sect1 id="debugger-using">
+   <title>Использование отладчика</title>
+
+   <para>
+    Внутренний отладчик PHP 3 полезен для отслеживания
+    трудноуловимых ошибок. Отладчик работает путем установления
+    соединения по порту <acronym>TCP</acronym> каждый раз
+    при запуске PHP 3. Все сообщения об ошибках отсылаются
+    по установленному соединению. Эта информация предназначается
+    для отладочного сервера, который может выполняться внутри
+    <acronym>IDE</acronym> или программируемого редактора
+    (такого, как Emacs).
+   </para>
+   <para>
+    Как настроить отладчик:
+    <orderedlist>
+     <listitem>
+      <simpara> 
+       Установите значение порта TCP отладчика в <link
+       linkend="configuration.file">конфигурационном файле</link> (<link
+       linkend="ini.debugger.port">debugger.port</link>) и разрешите
+       его использование (<link linkend="ini.debugger.enabled">debugger.enabled</link>).
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara> 
+       Настройте на этот порт TCP listener (например, 
+       <command>socket -l -s 1400</command> в UNIX).
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara> 
+       Добавьте в ваш скрипт
+       "debugger_on(<replaceable>host</replaceable>)", где
+       <replaceable>host</replaceable> - адрес IP или
+       имя хоста, выполняющего <acronym>TCP</acronym> listener.
+      </simpara>
+     </listitem>
+    </orderedlist>
+    Теперь все предупреждения, замечания и т.д. будут выводиться
+    средствами TCP listener, <emphasis>даже если вы отключили эту
+    возможность с использование <function>error_reporting</function></emphasis>.  
+   </para>
+  </sect1>
+
+  <sect1 id="debugger-protocol">
+   <title>Протокол отладчика</title>
+   <para>
+    Протокол отладчика PHP 3 основан на строковых сообщениях.
+    Каждая строка имеет определенный <emphasis>тип</emphasis>,
+    а несколько строк формируют <emphasis>сообщение</emphasis>.
+    Каждое сообщение начинается со строки, имеющей тип <literal>start</literal>
+    и заканчивается строкой, имеющей тип <literal>end</literal>.
+    PHP 3 может одновременно посылать строки для различных сообщений.
+   </para>
+   <para>
+    Строка имеет такой формат:
+    <informalexample>
+     <literallayout>
+<replaceable>дата</replaceable> <replaceable>время</replaceable>
+<replaceable>хост</replaceable>(<replaceable>pid</replaceable>)
+<replaceable>тип</replaceable>:
+<replaceable>сообщение</replaceable>
+     </literallayout>
+    </informalexample>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable>дата</replaceable></term>
+      <listitem>
+       <simpara>
+        Дата в формате ISO 8601
+	(<replaceable>гггг</replaceable>-<replaceable>мм</replaceable>-<replaceable>дд</replaceable>)
+       </simpara>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable>время</replaceable></term>
+      <listitem>
+       <simpara>Время (с точностью до миллисекунд):
+	<replaceable>чч</replaceable>:<replaceable>мм</replaceable>:<replaceable>мксмкс</replaceable>
+       </simpara>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable>хост</replaceable></term>
+      <listitem>
+       <simpara>
+        Имя DNS или адрес IP хоста, где произошла ошибка во время
+        выполнения скрипта.
+       </simpara>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable>pid</replaceable></term>
+      <listitem>
+       <simpara>
+	PID (идентификатор процесса) на <replaceable>хосте</replaceable>,
+        где PHP 3 сгенерировал ошибку во время выполнения скрипта.
+       </simpara>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable>тип</replaceable></term>
+      <listitem>
+       <para>
+	Тип строки. Сообщает принимающей программе, как следует
+	обрабатывать последующие данные:
+	<table>
+	 <title>Типы строк отладчика</title>
+	 <tgroup cols="2">
+	  <thead>
+	   <row>
+	    <entry>Тип</entry>
+	    <entry>Значение</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+	    <entry><literal>start</literal></entry> 
+	    <entry>
+	     Сообщает принимающей программе о начале сообщения
+	     отладчика. Содержание <replaceable>данных</replaceable>
+	     будет иметь тип сообщения об ошибке, приведенном ниже.
+	    </entry>
+	   </row>
+	   <row>
+	    <entry><literal>message</literal></entry>
+	    <entry>Сообщение об ошибке PHP 3.</entry>
+	   </row>
+	   <row>
+	    <entry><literal>location</literal></entry>
+	    <entry>
+	     Имя файла и номер строки, где произошла ошибка. Первая
+	     строка <literal>location</literal> всегда будет указывать
+	     на нулевой уровень вложенности выполнения.
+	     <replaceable>data</replaceable> будет содержать
+	     <literal><replaceable>файл</replaceable>:<replaceable>строку</replaceable></literal>.
+	     После <literal>message</literal> и после каждой <literal>function</literal>
+	     всегда будет строка <literal>location</literal>.
+	    </entry>
+	   </row>
+	   <row>
+	    <entry>
+	     <literal>frames</literal></entry> <entry>Количество кадров
+	     в последующем дампе стека. Если перечислено четыре кадра,
+	     следует ожидать информации о выполненных функциях с
+	     четырьмя уровнями вложенности. Если строка "frames"
+	     отсутствует, глубина вложенности должна приниматься за нулевую
+	     (ошибка произошла на нулевом уровне вложенности выполнения).
+	    </entry>
+	   </row>
+	   <row>
+	    <entry>
+	     <literal>function</literal></entry> 
+	    <entry>
+	     Имя функции, в которой произошла ошибка. Будет
+	     повторяться только однажды в каждом уровне
+	     вложенности в стеке вызова функции.
+	    </entry>
+	   </row>
+	   <row>
+	    <entry><literal>end</literal></entry> 
+	    <entry>
+	     Сообщает принимающей программе, что сообщение отладчика
+	     закончено.
+	    </entry>
+	   </row>
+	  </tbody>
+	 </tgroup>
+	</table>
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable>data</replaceable></term>
+      <listitem>
+       <simpara>Строковые данные.</simpara>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    <table>
+     <title>Типы ошибок отладчика</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>В отладчике</entry>
+	<entry>В PHP 3</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry><errortype>warning</errortype></entry>
+	<entry><errortype>E_WARNING</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>error</errortype></entry>
+	<entry><errortype>E_ERROR</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>parse</errortype></entry>
+	<entry><errortype>E_PARSE</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>notice</errortype></entry>
+	<entry><errortype>E_NOTICE</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>core-error</errortype></entry>
+	<entry><errortype>E_CORE_ERROR</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>core-warning</errortype></entry>
+	<entry><errortype>E_CORE_WARNING</errortype></entry>
+       </row>
+       <row>
+	<entry><errortype>unknown</errortype></entry>
+	<entry>(any other)</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    
+    <example>
+     <title>Пример сообщения отладчика</title>
+     <literallayout>
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) start: notice
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) message: Uninitialized variable
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) location: (&null;):7
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) frames: 1
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) function: display
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) location: /home/ssb/public_html/test.php3:10
+1998-04-05 23:27:400966 lucifer.guardian.no(20481) end: notice
+     </literallayout>
+    </example>
+   </para>
+  </sect1>
+
+ </appendix>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
