@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+<!-- splitted from ./index.xml, last change in rev 1.66 -->
+  <sect1 id="security.filesystem">
+   <title>Безопасность файловой системы</title>
+   <simpara>
+    PHP является одним из важных моментов в вопросе безопасности сервера,
+    поскольку PHP-скрипты могут манипулировать файлами и каталогами 
+    на диске. В связи с этим существуют конфигурационные настройки,
+    указывающие, какие файлы могут быть доступны и какие операции с ними можно
+    выполнять. Необходимо проявлять осторожность, поскольку любой из файлов с 
+    соответствующими правами доступа может быть прочитан каждым, кто имеет доступ 
+    к файловой системе.
+   </simpara>
+   <simpara>
+    Поскольку в PHP изначально предполагался полноправный пользовательский
+    доступ к файловой системе, можно написать скрипт, который позволит читать
+    системные файлы, такие как /etc/passwd, управлять сетевыми соединениями,
+    отправлять задания принтеру, и так далее. Как следствие вы всегда должны быть
+    уверены в том, что файлы, которые вы читаете или модифицируете, соответствуют вашим
+    намерениям.
+   </simpara>
+   <simpara>
+    Рассмотрим следующий пример, в коротом пользователь создал скрипт, удаляющий
+    файл из его домашней директории. Предполагается ситуация, когда веб-интерфейс,
+    написанный на PHP, регулярно используется для работы с файлами, и настройки
+    безопасности позволяют удалять файлы в домашнем каталоге.
+   </simpara>
+   <para>
+    <example>
+     <title>Недостаточная проверка внешних данных.</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+// Удаление файла из домашней директории пользователя
+$username = $_POST['user_submitted_name'];
+$homedir = "/home/$username";
+$file_to_delete = "$userfile";
+unlink ("$homedir/$userfile");
+echo "$file_to_delete has been deleted!";
+?>
+]]>
+     </programlisting>
+    </example>
+   Поскольку переменные вводятся в пользовательской форме, существует
+   возможность удалить файлы, принадлежащие кому-либо другому, введя
+   соответствующие значения. В этом случае может понадобиться авторизация.
+   Посмотрим, что произойдет, если будут отправлены значения
+   "../etc/" и "passwd". Скрипт выполнит следующие действия:
+    <example>
+     <title>Атака на файловую систему</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+// Удаление любого файла, доступного из PHP-скрипта.
+// В случае, если PHP работает с правами пользователя root:
+$username = "../etc/";
+$homedir = "/home/../etc/";
+$file_to_delete = "passwd";
+unlink ("/home/../etc/passwd");
+echo "/home/../etc/passwd has been deleted!";
+?>
+]]>
+     </programlisting>
+    </example>
+    Cуществуют два решения описанной проблемы.
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Ограничить доступ пользователя, с правами которого работает веб-сервер.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+      Проверять все данные, вводимые пользователем.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+    Вот улучшеный вариант кода:
+    <example>
+     <title>Более безопасная проверка имени файла</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+// Удаление любого файла, доступного из PHP-скрипта.
+$username = $_SERVER['REMOTE_USER']; // использование авторизации
+
+$homedir = "/home/$username";
+
+$file_to_delete = basename("$userfile"); // усечение пути
+unlink ($homedir/$file_to_delete);
+
+$fp = fopen("/home/logging/filedelete.log","+a"); //логируем удаление
+$logstring = "$username $homedir $file_to_delete";
+fputs ($fp, $logstring);
+fclose($fp);
+
+echo "$file_to_delete has been deleted!";
+?>
+]]>
+     </programlisting>
+    </example>
+    Однако и такая проверка не учитывает все возможные ситуации. Если
+    система авторизации позволяет пользователям выбирать произвольные логины,
+    вломщик может создать учетную запись вида "../etc/" и система опять 
+    окажется уязвимой. Исходя из этого, вам может понадобиться более строгая проверка:
+    <example>
+     <title>Более строгая проверка имени файла</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$username = $_SERVER['REMOTE_USER']; // использование авторизации
+$homedir = "/home/$username";
+
+if (!ereg('^[^./][^/]*$', $userfile))
+     die('bad filename'); //завершение работы
+
+if (!ereg('^[^./][^/]*$', $username))
+     die('bad username'); //завершение работы
+//etc...
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <para>
+    В зависимости от используемой вами операционной системы необходимо
+    предусматривать возможность атаки на разнообразные файлы, включая 
+    системные файлы устройств (/dev/ или COM1), конфигурационные файлы 
+    (например /etc/ или файлы с расширением .ini), хорошо известные области хранения данных 
+    (/home/, My Documents), и так далее. Исходя из этого, как правило, легче
+    реализовать такую политику безопасности, в которой запрещено все, исключая
+    то, что явно разрешено.
+   </para>
+  </sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

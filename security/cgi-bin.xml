@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+<!-- splitted from ./index.xml, last change in rev 1.66 -->
+  <sect1 id="security.cgi-bin">
+   <title>Если PHP установлен как CGI</title>
+
+   <sect2 id="security.cgi-bin.attacks">
+    <title>Возможные атаки</title>
+    <simpara>
+     Использование PHP как бинарного <acronym>CGI</acronym>-приложения 
+     является одним из вариантов, когда по каким-либо причинам нежелательно
+     интегрировать PHP в веб-сервер (например Apache) в качестве модуля,
+     либо предполагается использование таких утилит, как chroot и setuid для
+     организации безопасного окружения во время работы скриптов.	
+     Такая установка обычно сопровождается копированием исполняемого 
+     файла PHP в директорию cgi-bin веб-сервера.  CERT (организация, следящая за угрозами безопасности)
+     <ulink url="&url.cert;">CA-96.11</ulink>  рекомендует не помещать
+     какие-либо интерпретаторы в каталог cgi-bin. Даже если PHP используется
+     как самостоятельный интерпрктатор, он спроектирован так, чтобы предотвратить
+     возможность следующих атак:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Доступ к системным файлам: <filename
+       role="url">http://my.host/cgi-bin/php?/etc/passwd</filename>
+      </simpara>
+      <simpara>
+       Данные, введенные в строке запроса (URL) после вопросительного знака,
+       передаются интерпретатору как аргументы командной строки согласно
+       CGI протоколу. Обычно интерпретаторы открывают
+       и исполняют файл, указанный в качестве первого аргумента.
+      </simpara>
+      <simpara>
+       В случае использования PHP посредством CGI-протокола он не
+       станет интерпретировать аргументы командной строки.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Доступ к произвольному документу на сервере:
+       <filename
+       role="url">http://my.host/cgi-bin/php/secret/doc.html</filename>
+      </simpara>
+      <simpara>
+       Согласно общепринятому соглашению часть пути в запрошенной странице, которая расположена после
+       имени выполняемого модуля PHP, <filename role="uri">/secret/doc.html</filename>,
+       используется для указания файла, который будет интерпретирован как
+       <acronym>CGI</acronym>-программа Обычно, некоторые конфигурационные
+       опции веб-серевера (например, Action для сервера Apache) используются
+       для перенаправления документа, к примеру, для перенаправления запросов 
+       вида <filename
+       role="url">http://my.host/secret/script.php</filename> интерпретатору PHP.
+       В таком случае веб-сервер вначале проверяет права доступа к
+       директории  <filename role="uri">/secret</filename>, и после этого
+       создает перенаправленный запрос <filename
+       role="url">http://my.host/cgi-bin/php/secret/script.php</filename>.
+       К сожалению, если запрос изначально задан в полном виде,
+       проверка на наличие прав для файла  <filename role="uri">/secret/script.php</filename>
+       не выполняется, она происходит только для файла 
+       <filename role="uri">/cgi-bin/php</filename>. Таким образом, пользователь
+       имеет возможность обратиться к <filename role="uri">/cgi-bin/php</filename>,
+       и, как следствие, к любому защищенному документу на сервере.
+      </simpara>
+      <simpara>
+       В PHP, указывая во время компиляции опцию <link
+       linkend="install.configure.enable-force-cgi-redirect">--enable-force-cgi-redirect</link>,
+       а таке опции <link
+       linkend="ini.doc-root">doc_root</link> и <link
+       linkend="ini.user-dir">user_dir</link> во время выполнения скрипта,
+       можно предотвратить подобные атаки для директорий с ограниченным доступом.
+       Более детально приведенные опции, а также их комбинации будут рассмотрены ниже.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </sect2>
+
+   <sect2 id="security.cgi-bin.default">
+    <title>Вариант 1: обслуживаются только общедоступные файлы</title>
+
+    <simpara>
+     В случае, если на вашем сервере отсутствуют файлы, доступ к которым ограничен
+     паролем либо фильтром по IP-адресам, нет никакой необходимости использовать данные опции.
+     Если ваш веб-сервер не разрешает выполнять перенаправления
+     либо не имеет возможности взаимодействовать с исполняемым PHP-модулем 
+     на необходимом уровне безопасности, вы можете использовать опцию  <link
+     linkend="install.configure.enable-force-cgi-redirect">--enable-force-cgi-redirect</link>
+     во время сборки PHP. Но при этом вы должны убедиться, что альтернативные
+     способы вызова скрипта, такие как непосредственно вызов <filename
+     role="php">http://my.host/cgi-bin/php/dir/script.php</filename>
+     либо с переадресацией <filename
+     role="php">http://my.host/dir/script.php</filename>, недоступны.
+    </simpara>
+    <simpara>
+     В веб-сервере Apache перенаправление может быть сконфигурировано
+     при помощи директив AddHandler и Action (описано ниже).
+    </simpara>
+   </sect2>
+
+   <sect2 id="security.cgi-bin.force-redirect">
+    <title>Вариант 2: использование --enable-force-cgi-redirect</title>
+    <simpara>
+     Эта опция, указываемая во время сборки PHP, предотвращает вызов 
+     скриптов непосредственно по адресу вида <filename
+     role="php">http://my.host/cgi-bin/php/secretdir/script.php</filename>.
+     Вместо этого, PHP будет обрабатывать пришедший запрос только в том случае,
+     если он был перенаправлен веб-сервером.
+    </simpara>
+    <simpara>
+     Обычно перенаправление в веб-сервере Apache настраивается при помощи
+     следующих опций:
+    </simpara>
+    <programlisting role="apache-conf">
+<![CDATA[
+Action php-script /cgi-bin/php
+AddHandler php-script .php
+]]>
+    </programlisting>
+    <simpara>
+     Эта опция проверена только для веб-сервера Apache, ее работа основывается
+     на установке в случае перенаправления нестандартной переменной <envar>REDIRECT_STATUS</envar>, 
+     находящейся в CGI-окружении. В случае, если ваш веб-сервер
+     не предоставляет возможности однозначно идентифицировать, является
+     ли данный запрос перенаправленным, вы не можете использовать описываемую
+     в данном разделе опцию и должны воспользоваться любым другим методом
+     работы с CGI-приложениями.
+    </simpara>
+   </sect2>
+
+   <sect2 id="security.cgi-bin.doc-root">
+    <title>Вариант 3: использование опций doc_root и user_dir</title>
+    <simpara>
+     Размещение динамического контента, такого как скрипты либо любые 
+     другие исполняемые файлы, в директории веб-сервера делает его 
+     потенциально опасным. В случае, если в конфигурации сервера допущена
+     ошибка, возможна ситуация, когда скрипты не выполняются, а отображаются
+     в браузере, как обычные HTML-документы, что может привести к утечке конфиденциальной
+     информации (например, паролей), либо информации, являющейся 
+     интеллектуальной собственностью. Исходя из таких соображений, многие
+     системные администраторы предпочитают использовать для хранения скриптов
+     отдельную директорию, работая со всеми размещенными в ней файлами 
+     по CGI-интерфейсу.
+    </simpara>
+    <simpara>
+     В случае, если невозможно гарантировать, что запросы не перенаправляются,
+     как было показано в предыдущем разделе, необходимо указывать
+     переменную doc_root, которая отличается от корневой директории веб-документов.
+    </simpara>
+    <simpara>
+     Вы можете установить корневую директорию для PHP-скриптов, настроив
+     параметр <link linkend="ini.doc-root">doc_root</link> в 
+     <link linkend="configuration.file">конфигурационном файле</link>, 
+     либо установив переменную окружения <envar>PHP_DOCUMENT_ROOT</envar>.  
+     В случае, если PHP используется посредством CGI, полный путь к открываемому
+     файлу будет построен на основании значения переменной <parameter>doc_root</parameter>
+     и указанного в запросе пути. Таким образом, вы можете быть уверены,
+     что скрипты будут выполняться только внутри указанной вами директории
+     (кроме директории <parameter>user_dir</parameter>, которая описана ниже).
+    </simpara>
+   <simpara>
+     Еще одна используемая при настройке безопасности опция - 
+     <link linkend="ini.user-dir">user_dir</link>. В случае, если
+     переменная user_dir не установлена, путь к открываемому файлу
+     строится относительно <parameter>doc_root</parameter>. Запрос 
+     вида <filename role="url">http://my.host/~user/doc.php</filename>
+     приводит к выполнению скрипта, находящегося не в домашнем каталоге 
+     соответствующего пользователя, а находящегося в подкаталоге doc_root
+     скрипта <filename role="uri">~user/doc.php</filename> (да, имя 
+     директории начинается с символа <literal>~</literal>).
+    </simpara>
+    <simpara>
+     Но если переменной <filename role="dir">public_php</filename>
+     присвоено значение, например,  <filename role="url">http://my.host/~user/doc.php</filename>,
+     тогда в приведенном выше примере будет выполнен скрипт <filename>doc.php</filename>,
+     находящийся в домашнем каталоге пользователя, в директории <filename role="dir">public_php</filename>.
+     Например, если домашний каталог пользователя <filename role="dir">/home/user</filename>,
+     будет выполнен файл <filename>/home/user/public_php/doc.php</filename>.
+    </simpara>
+    <simpara>
+     Установка опции <parameter>user_dir</parameter> происходит
+     независимо от установки  <parameter>doc_root</parameter>,
+     таким образом вы можете контролировать корневую директорию веб-сервера
+     и пользовательские директории независимо друг от друга.
+    </simpara>
+   </sect2>
+
+   <sect2 id="security.cgi-bin.shell">
+    <title>Вариант 4: PHP вне дерева веб-документов</title>
+    <para>
+     Один из способов существенно повысить уровень безопасности - поместить
+     исполняемый модуль PHP вне дерева веб-документов, например в <filename
+     role="dir">/usr/local/bin</filename>. Единственным недостатком такого подхода
+     является то, что первая строка каждого скрипта должна иметь вид:
+     <informalexample>
+      <programlisting>
+<![CDATA[
+#!/usr/local/bin/php
+]]>
+      </programlisting>
+     </informalexample>
+     Также необходимо сделать все файлы скриптов исполняемыми. Таким образом,
+     скрипт будет рассматриваться так же, как и любое другое CGI-приложение,
+     написанное на Perl, sh или любом другом скриптовом языке, который использует
+     дописывание <literal>#!</literal> в начало файла для запуска самого себя.
+    </para>
+    <para>
+     Что бы внутри скрипта вы могли получить корректные значения переменных
+      <envar>PATH_INFO</envar> и <envar>PATH_TRANSLATED</envar>,
+      PHP должен быть сконфигурирован с опцией  <link
+     linkend="install.configure.enable-discard-path">--enable-discard-path</link>.
+    </para>
+   </sect2>
+
+  </sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
