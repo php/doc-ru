@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<!-- $Revision: 1.4 $ -->
+<!-- $Revision: 1.5 $ -->
  <appendix id="debugger">
-  <title>Отлаживание PHP 3</title>
+  <title>Отладка PHP</title>
 
   <sect1 id="debugger-about">
    <title>Об отладчике</title>
    <simpara>
-    В PHP 3 входит поддержка отладчика, основанного на сетевой технологии.
+    PHP 3 имеет поддержку сетевого отладчика.
    </simpara>
    <simpara>
-    PHP 4 пока не обладает такой возможностью.
+    PHP 4 не имеет встроенной системы отладки. Тем не менее, вы
+    можете использовать внешние отладчики. <ulink url="&url.zend.ide;">Zend IDE</ulink>
+    имеет встроенный отладчик, кроме того, существует несколько свободно
+    распространяемых расширений для отладки, например, DBG, находящееся по
+    адресу <ulink url="&url.dbg;">&url.dbg;</ulink> или <ulink url="&url.apd;">Advanced PHP
+    Debugger</ulink> (APD).
    </simpara>
   </sect1>
 
@@ -17,90 +22,87 @@
    <title>Использование отладчика</title>
 
    <para>
-    Внутренний отладчик PHP 3 бывает полезен для отслеживания
-    трудновыявляемых ошибок. Отладчик начинает работу по порту
-    <acronym>TCP</acronym> каждый раз во время запуска PHP 3.
-    Все сообщения об ошибках отсылаются через установленное
-    TCP-соединение.  Эта информация предназначена для
-    "отладочного сервера", который может быть запущен в
-    <acronym>IDE</acronym> или программируемом редакторе (например, Emacs).
+    Встроенный в PHP 3 отладчик бывает полезным для отслеживания
+    скрытых ошибок. Отладчик начинает работать на порту <acronym>TCP</acronym>
+    каждый раз, когда запускается PHP. Все сообщения об ошибках отсылаются
+    по TCP соединению. Эта информация предназначается для "сервера отладки",
+    который может работать как в <acronym>IDE</acronym>, так и в программируемом
+    редакторе (таком, как Emacs).
    </para>
    <para>
     Как настроить отладчик:
     <orderedlist>
      <listitem>
       <simpara> 
-       Настройте TCP-порт отладчика в <link
-       linkend="configuration.file">файле конфигурации</link> (<link
+       Установите TCP порт для отладчика в <link
+       linkend="configuration.file">файле конфигурации</link> (опция <link
        linkend="ini.debugger.port">debugger.port</link>) и включите его
-       (<link linkend="ini.debugger.enabled">debugger.enabled</link>).
+       (опция <link linkend="ini.debugger.enabled">debugger.enabled</link>).
       </simpara>
      </listitem>
      <listitem>
       <simpara> 
-       Настройте на этот порт TCP listener (например,
-       <command>socket -l -s 1400</command> на платформе Unix).
+       Настройте на этот порт TCP listener (например, так: <command>socket -l -s 1400</command>
+       для платформ UNIX).
       </simpara>
      </listitem>
      <listitem>
       <simpara> 
-       В вашем коде поместите вызов функции
-       "debugger_on(<replaceable>host</replaceable>)", где
-       <replaceable>host</replaceable> - IP или имя машины,
-       на которой запущен <acronym>TCP</acronym> listener.
+       В код скрипта внесите вызов функции "debugger_on(<replaceable>хост</replaceable>)", где
+       <replaceable>хост</replaceable> - IP адрес или имя машины, на которой
+       запущен <acronym>TCP</acronym> listener.
       </simpara>
      </listitem>
     </orderedlist>
-    Теперь все предупреждения, замечания и т.д. будут приниматься
-    сокетом listener'а, <emphasis>даже если вы отключили их вывод
-    функцией <function>error_reporting</function></emphasis>.  
+    Теперь все предупреждения, замечания и т.д. будут отсылаться на сокет, 
+    используемый listener'ом, <emphasis>даже если вы отключили вывод сообщений об
+    ошибках с помощью функции <function>error_reporting</function></emphasis>.  
    </para>
   </sect1>
 
   <sect1 id="debugger-protocol">
    <title>Протокол отладчика</title>
    <para>
-    Протокол отладчика PHP 3 основан на строках. Каждая строка
-    имеет <emphasis>тип</emphasis>, а несколько строк образуют 
-    <emphasis>сообщение</emphasis>. Каждое сообщение начинается
-    строкой типа <literal>start</literal> и заканчивается строкой
-    типа <literal>end</literal>. PHP 3 может одновременно рассылать
-    строки для отдельных сообщений.
+    Протокол отладчика PHP 3 является построчным. Каждая строка
+    состоит из <emphasis>типа</emphasis> и нескольких строк, составляющих
+    <emphasis>сообщение</emphasis>. Каждое сообщение начинается строкой, имеющей тип
+    <literal>start</literal> и завершается строкой, имеющей тип <literal>end</literal>.
+    PHP 3 имеет возможность одновременной посылки строк, предназначенных для
+    разных сообщений.
    </para>
    <para>
-    Строка имеет следующий формат:
+    Каждая строка имеет следующий формат:
     <informalexample>
      <literallayout>
-<replaceable>date</replaceable> <replaceable>time</replaceable>
-<replaceable>host</replaceable>(<replaceable>pid</replaceable>)
-<replaceable>type</replaceable>:
-<replaceable>message-data</replaceable>
+<replaceable>дата</replaceable> <replaceable>время</replaceable>
+<replaceable>хост</replaceable>(<replaceable>pid</replaceable>)
+<replaceable>тип</replaceable>:
+<replaceable>данные сообщения</replaceable>
      </literallayout>
     </informalexample>
     <variablelist>
      <varlistentry>
-      <term><replaceable>date</replaceable></term>
+      <term><replaceable>дата</replaceable></term>
       <listitem>
        <simpara>
-        Дата в формате ISO 8601
-	(<replaceable>гггг</replaceable>-<replaceable>мм</replaceable>-<replaceable>дд</replaceable>)
+  Дата в формате ISO 8601
+	(<replaceable>гггг</replaceable>-<replaceable>мм</replaceable>-<replaceable>чч</replaceable>)
        </simpara>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable>time</replaceable></term>
+      <term><replaceable>время</replaceable></term>
       <listitem>
        <simpara>Время с указанием микросекунд:
-	<replaceable>чч</replaceable>:<replaceable>мм</replaceable>:<replaceable>мкрсек</replaceable>
+	<replaceable>чч</replaceable>:<replaceable>мм</replaceable>:<replaceable>мсмсмс</replaceable>
        </simpara>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable>host</replaceable></term>
+      <term><replaceable>хост</replaceable></term>
       <listitem>
        <simpara>
-        Имя DNS или IP-адрес машины, где произошла ошибка выполнения
-        скрипта PHP 3.
+  Имя DNS или IP адрес хоста, на котором возникла ошибка при выполнении скрипта.
        </simpara>
       </listitem>
      </varlistentry>
@@ -108,78 +110,74 @@
       <term><replaceable>pid</replaceable></term>
       <listitem>
        <simpara>
-	PID (идентификатор процесса) скрипта на машине
-	<replaceable>host</replaceable>, где произошла ошибка при
-	выполнении скрипта PHP 3.
+	PID (идентификатор процесса) на <replaceable>хосте</replaceable>, в процессе работы
+  которого возникла ошибка в скрипте PHP 3.
        </simpara>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable>type</replaceable></term>
+      <term><replaceable>тип</replaceable></term>
       <listitem>
        <para>
-        Тип строки. Сообщает принимающей программе, как воспринимать
-        последующие данные:
+  Тип строки. Сообщает принимающей программе, как та должна
+  интерпретировать последующие данные:
 	<table>
 	 <title>Типы строк отладчика</title>
 	 <tgroup cols="2">
 	  <thead>
 	   <row>
-	    <entry>Название</entry>
-	    <entry>Обозначение</entry>
+	    <entry>Имя</entry>
+	    <entry>Значение</entry>
 	   </row>
 	  </thead>
 	  <tbody>
 	   <row>
 	    <entry><literal>start</literal></entry> 
 	    <entry>
-	     Сообщает принимающей программе о начале сообщения
-	     отладчика. Содержание <replaceable>data</replaceable>
-	     будет интерпретировано как один из типов сообщения об ошибке,
-	     перечисленных ниже.
+       Сообщает принимающей программе о начале отладочного сообщения.
+       Содержащиеся в <replaceable>данных</replaceable> сведения являютя одним из типов
+       ошибки, перечисленных ниже.
 	    </entry>
 	   </row>
 	   <row>
 	    <entry><literal>message</literal></entry>
-	    <entry>Сообщение об ошибке PHP 3.</entry>
+	    <entry>Сообщение PHP 3 об ошибке.</entry>
 	   </row>
 	   <row>
 	    <entry><literal>location</literal></entry>
 	    <entry>
-	     Имя файла и номер строки, где произошал ошибка.
-	     Первая строка <literal>location</literal> всегда
-	     будет содержать указание на верхний уровень.
-	     <replaceable>data</replaceable> будет содержать
-	     <literal><replaceable>file</replaceable>:<replaceable>line</replaceable></literal>.
-	     После каждой строки <literal>function</literal> и 
-	     строки <literal>message</literal> всегда будет
-	     находиться строка <literal>location</literal>.
+       Имя файла и номер строки, где возникла ошибка. Первая строка
+	     <literal>location</literal> всегда содержит указание на
+       верхний уровень.
+	     <replaceable>данные</replaceable> будут содержать строку вида
+	     <literal><replaceable>файл</replaceable>:<replaceable>строка</replaceable></literal>.
+       После каждой строки <literal>message</literal> и после
+       каждой строки <literal>function</literal> всегда будет
+       следовать строка <literal>location</literal>.
 	    </entry>
 	   </row>
 	   <row>
 	    <entry>
-	     <literal>frames</literal></entry> <entry>Количество "frames"
-	     (кадров) в последующем дампе стека. Например, если указано четыре
-	     кадра, то следует ожидать информации о четырех уровнях
-	     вызываемых функций. Если строка "frames" отсутствует,
-	     глубина вложенности должна считаться нулевой (ошибка
-	     произошла на верхнем уровне выполнения).
+	     <literal>frames</literal></entry> <entry>Количество кадров
+       в последующем дампе стека. Если, например, передаются сведения
+       о четырех кадрах, следует ожидать, что последует информация
+       о четырех уровнях вложенности вызова функций. Если строка
+	     "frames" отсутствует, глубина вложенности принимается за нулевую.
 	    </entry>
 	   </row>
 	   <row>
 	    <entry>
 	     <literal>function</literal></entry> 
 	    <entry>
-	     Имя функции, в которой произошла ошибка. Строка
-	     будет единожды повторяться для каждого уровня вложенности
-	     в стеке вызова функции.
+       Имя функции, в которой произошла ошибка. Для каждого
+       уровня вложенности в стеке вызовов функций это имя
+       будет повторяться только однажды.
 	    </entry>
 	   </row>
 	   <row>
 	    <entry><literal>end</literal></entry> 
 	    <entry>
-	     Сообщает принимающей программе об окончании
-	     сообщения отладчика.
+       Сообщает об окончании отладочного сообщения.
 	    </entry>
 	   </row>
 	  </tbody>
@@ -191,7 +189,7 @@
      <varlistentry>
       <term><replaceable>data</replaceable></term>
       <listitem>
-       <simpara>Строковые данные.</simpara>
+       <simpara>Данные в строке.</simpara>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -202,7 +200,7 @@
       <thead>
        <row>
 	<entry>Отладчик</entry>
-	<entry>Внутреннее обозначение PHP 3</entry>
+	<entry>Внутреннее представление в PHP 3</entry>
        </row>
       </thead>
       <tbody>
@@ -232,14 +230,14 @@
        </row>
        <row>
 	<entry><errortype>unknown</errortype></entry>
-	<entry>(любой другой)</entry>
+	<entry>(any other)</entry>
        </row>
       </tbody>
      </tgroup>
     </table>
     
     <example>
-     <title>Пример сообщения отладчика</title>
+     <title>Пример отладочного сообщения</title>
      <literallayout>
 1998-04-05 23:27:400966 lucifer.guardian.no(20481) start: notice
 1998-04-05 23:27:400966 lucifer.guardian.no(20481) message: Uninitialized variable
