@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- EN-Revision: 1.33 Maintainer: irinagoble Status: ready -->
+<!-- $Revision: 1.1 $ -->
+<chapter id="faq.using">
+  <title>Использование PHP</title>
+  <titleabbrev>Использование PHP</titleabbrev>
+
+  <para>
+   В этом разделе собрано множество общих ошибок, которые могут вам
+   встретиться при написании PHP скриптов.
+  </para>
+
+  <qandaset>
+   <qandaentry id="faq.using.anyform">
+    <question>
+     <para>
+      Я хочу написать общий PHP скрипт, кторый может обрабатывать данные,
+      приходящие из любой формы. Как узнать какие переменные метода POST
+      доступны?
+     </para>
+    </question>
+    <answer>
+     <para>
+      PHP предлагает множество <link linkend="language.variables.predefined">
+      предопределённых переменных</link>, таких как суперглобальная <varname>
+      $_POST</varname>. Вы можете пройтись по <varname>$_POST</varname>
+      так как это ассоциативный массив всех значений, пришедших с POST.
+      Для примера, давайте просто пройдёмся по ним с
+      <link linkend="control-structures.foreach">foreach</link>,
+      проверим на пустые (<function>empty</function>) значения и распечатаем.
+      <programlisting role="php">
+<![CDATA[
+<?php
+$empty = $post = array();
+foreach ($_POST as $varname => $varvalue) {
+    if (empty($varvalue)) {
+        $empty[$varname] = $varvalue;
+    } else {
+        $post[$varname] = $varvalue;
+    }
+}
+
+print "<pre>";
+if (empty($empty)) {
+    print "None of the POSTed values are empty, posted:\n";
+    var_dump($post);
+} else {
+    print "We have " . count($empty) . " empty values\n";
+    print "Posted:\n"; var_dump($post);
+    print "Empty:\n";  var_dump($empty);
+    exit;
+}
+?>
+]]>
+      </programlisting>
+     </para>
+     
+     &note.superglobals;
+
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.addslashes">
+    <question>
+     <para>
+      Мне надо преобразовать все одиночные кавычки (') в обратную косую черту с
+      последующей одиночной кавычкой (\').
+      Как я могу сделать это с помощью регулярного выражения?
+      Я также хотел бы преобразовать " в \" и \ в \\.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Это делает функция <function>addslashes</function>. 
+      Смотрите также <function>mysql_escape_string</function>.
+      Также вы можете избавиться от обратной косой черты с помощью
+      <function>stripslashes</function>.
+     </para>
+
+     &note.magicquotes.gpc;
+
+    </answer>
+   </qandaentry>
+   
+   <qandaentry id="faq.using.stripslashes">
+    <question>
+     <para>
+      Все мои " превратились в \" и мои ' в \', как я могу избавиться от
+      всех этих нежелательных обратных косых черт? Как и почему они появились?
+     </para>
+    </question>
+    <answer>
+     <para>
+      PHP функция <function>stripslashes</function> удалит эти
+      обратные косые черты из вашей строки (<type>string</type>). Вероятнее всего,
+      обратные косые черты магически появились из-за того, что включена
+      PHP директива <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>
+     </para>
+     
+     &note.magicquotes.gpc;
+     
+    </answer>
+   </qandaentry>   
+
+   <qandaentry id="faq.using.wrong-order">
+    <question>
+     <para>
+      Когда я делаю следующее, вывод распечатывается не в том порядке:
+     <programlisting role="php">
+<![CDATA[
+<?php
+function myfunc($argument)
+{
+    echo $argument + 10;
+}
+$variable = 10;
+echo "myfunc($variable) = " . myfunc($variable);
+?>
+]]>
+    </programlisting>
+     Что происходит?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Для того, чтобы использовать результат вашей функции в выражении
+      (таком как соединение с другими строками, как в вышеприведённом примере),
+      вам необходимо вернуть значение с помощью <function>return</function>,
+      а не выводить его через <function>echo</function>.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.newlines">
+    <question>
+     <para>
+      Эй, что произошло с моими строками?
+      <programlisting role="php">
+<![CDATA[
+<pre>
+<?php echo "This should be the first line."; ?>
+<?php echo "This should show up after the new line above."; ?>
+</pre>
+]]>
+      </programlisting>
+     </para>
+    </question>
+    <answer>
+     <para>
+      В PHP, блок кода завершается либо с "?&gt;", либо с "?&gt;\n"
+      (где \n означает "новая строка"). В вышеприведённом примере
+      предложения выведутся на одной строке, так как PHP опусткает
+      символ новой строки после завершения блока. Это означает,
+      что вам необходимо вставить дополнительный символ новой строки
+      после каждого блока PHP кода, для того чтобы вывод продолжался
+      с новой строки.
+     </para>
+     <para>
+      Почему PHP делает это? Потому что при форматировании обычного HTML
+      это, обычно, упрощает вашу жизнь когда вым не нужна эта новая строка
+      и вам не надо создавать невероятно длинные строки для того, чтобы
+      сделать сырой исходник страницы читаемым. 
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.headers-sent">
+    <question>
+     <para>
+      Я получаю сообщение
+      'Warning: Cannot send session cookie - headers already
+      sent...' или 'Cannot add header information - headers already sent...'.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Функциям <function>header</function>, <function>setcookie</function>,
+      и <link linkend="ref.session">функциям сессии</link> нужно добавить
+      заголовки к выходному потоку, но заголовки могут быть посланы только перед 
+      всем другим содержимым. Перед использованием этих функций не может быть 
+      никакого вывода HTML. Функция <function>headers_sent</function>
+      проверит если ваш скрипт уже послал заголовки; также смотрите
+      <link linkend="ref.outcontrol"> Функции Управления Выводом</link>.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.header">
+    <question>
+     <para>
+      Мне необходим прямой доступ к информации в заголовке запроса. 
+      Как я могу это сделать?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Это делает функция <function>getallheaders</function> если вы
+      запускаете PHP как модуль Apache. Так следующий кусок кода
+      покажет вам все заголовки запроса:
+      <programlisting role="php">
+<![CDATA[
+<?php
+$headers = getallheaders();
+foreach ($headers as $name => $content) {
+    echo "headers[$name] = $content<br />\n";
+}
+?>
+]]>
+      </programlisting>
+     </para>
+     <para>
+      Также смотрите
+      <function>apache_lookup_uri</function>,
+      <function>apache_response_headers</function> и
+      <function>fsockopen</function>
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.authentication">
+    <question>
+     <para>
+      Когда я пытаюсь использовать аутентификацию с IIS, я получаю
+      'No Input file specified'.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Это недостаток модели безопасности IIS. Проблема общая для всех
+      CGI программ, выполняющихся под IIS. Чтобы обойти проблему, 
+      создайте простой HTML файл (неразбираемый PHP) как входную страницу
+      в аутентифицируемой директории. Затем используйте META тэг для
+      перенаправления на PHP страницу или поместите ссылку на PHP страницу.
+      После этого PHP распознает аутентификацию правильно. 
+      С модулем ISAPI такой проблемы нет. Это не должно повлиять на другие
+      web сервисы NT. Для дополнительной информации смотрите:
+      <ulink url="&url.iis;">&url.iis;</ulink> и раздел руководства
+      <link linkend="features.http-auth">HTTP Аутентификация</link>.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.iis.sharing">
+    <question>
+     <para>
+      Windows: У меня нет доступа к файлам, разделяемых другим компьютером,
+      по IIS.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Вам необходимо сделать изменения. Идите в <literal>Internet Information
+      Services</literal>. Найдите ваш PHP файл и перейдите в его свойства.
+      Идите в закладку <literal>File Security</literal>, <literal>Edit -&gt;
+      Anonymous access and authentication control</literal>.
+     </para>
+     <para>
+      Вы можете исправить проблему либо сняв отметку с <literal>Anonymous
+      Access</literal> и оставив отмеченым <literal>Integrated Window
+      Authentication</literal>, либо отметив <literal>Anonymous
+      Access</literal> и отредактировать права пользователя, так как у него
+      может не быть прав.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.netscape">
+    <question>
+     <para>
+      Мой PHP скрипт работает в IE и Lynx, а в Netscape некоторый 
+      вывод отсутствует. Когда я выполняю "View Source", я вижу
+      содержимое в IE, а в Netscape нет.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Netscape более строг к HTML тэгам (таким как таблицы), чем IE.
+      Может быть полезно пропустить ваш HTML вывод через HTML validator,
+      такой как <ulink url="&url.w3.validator;">validator.w3.org</ulink>.
+      Например, это может быть вызвано отсутствием &lt;/table&gt;.
+     </para>
+     <para>
+      Также, оба IE и Lynx игнорируют любые NUL-ы (<literal>\0</literal>)
+      в HTML потоке, а Netscape нет. Лучший способ проверить это - скомпилировать
+      версию <link linkend="features.commandline">командной строки</link> PHP
+      (также известную как CGI версия) и выполнить ваш скрипт из командной строки.
+      На *nix, пропустите вывод через <literal>od -c</literal> и ищите любые
+      <literal>\0</literal> символы. Если вы под Windows, вам надо найти
+      редактор или какую-либо другую программу, которая позволяет просматривать
+      двоичные файлы. Когда Netscape видит NUL в файле, он обычно не будет 
+      больше ничего выводить на этой строке, тогда как IE и Lynx будут.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.mixml">
+    <question>
+     <para>
+      Как я должен совмещать XML и PHP? Он жалуется на мои &lt;?xml тэги!
+     </para>
+    </question>
+    <answer>
+     <para>
+      Для того, чтобы встроить &lt;?xml напрямую в ваш PHP код, вам надо отключить
+      короткие тэги, установив PHP директиву
+      <link linkend="ini.short-open-tag">short_open_tags</link> в
+      <literal>0</literal>. Вы можете установить эту директиву с помощью
+      <function>ini_set</function>. Независимо от того, что включена или нет
+      <link linkend="ini.short-open-tag">short_open_tags</link>,
+      вы можете делать что-то типа:
+      <literal>&lt;?php echo '&lt;?xml'; ?&gt;</literal>. 
+      По умолчанию эта директива включена.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.editor">
+    <question>
+     <para>
+      Как я могу использовать PHP с FrontPage или каким-либо другим
+      редактором HTML, который настаивает на перемещении моего кода?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Самое простое, что можно сделать - это включить поддержку ASP тэгов в вашем
+      PHP коде. Это позволит вам использовать разделители кода в стиле ASP
+      &lt;% и %&gt;. Некоторые популярные редакторы HTML обращаются с ними
+      более интеллигентно (пока ещё). Чтобы разрешить тэги в стиле ASP,
+      вам надо установить переменную <link linkend="ini.asp-tags">asp_tags</link>
+      в &php.ini; или использовать соответствующую директиву Apache.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.variables">
+    <question>
+     <para>
+      Где я могу найти полный список переменных, доступных мне в PHP?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Читайте страницу руководства по 
+      <link linkend="language.variables.predefined">предопределённым
+      переменным</link> так как она содержит частичный список предопределённых
+      переменных, доступных вашему скрипту. Полный список доступных переменных
+      (и множество другой информации) можно увидеть, вызвав функцию
+      <function>phpinfo</function>. Не забудьте прочитать раздел руководства
+      по <link linkend="language.variables.external">переменным извне PHP
+      </link> так как он описывает общие сценарии для внешних переменных, таких 
+      как HTML форма, Cookie и URL.
+     </para>
+     
+     &note.registerglobals;
+
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.freepdf">
+    <question>
+     <para>
+      Как я могу генерировать PDF файлы без использования платных или
+      коммерческих библиотек <link linkend="ref.cpdf">ClibPDF</link> и 
+      <link linkend="ref.pdf">PDFLib</link>?  Я бы хотел что-нибудь
+      бесплатное и не требующее внешних библиотек PDF.
+     </para>
+    </question>
+    <answer>
+     <para>
+      Есть несколько альтернатив, написанных на PHP, таких как 
+      <ulink url="&url.pdf.ros;">&url.pdf.ros;</ulink>, 
+      <ulink url="&url.pdf.fpdf;">&url.pdf.fpdf;</ulink>, 
+      <ulink url="&url.pdf.pdf4php;">&url.pdf.pdf4php;</ulink> и
+      <ulink url="&url.pdf.phppdflib;">&url.pdf.phppdflib;</ulink>.
+      А также модуль <ulink url="&url.pdf.panda;">Panda</ulink>.
+     </para>
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.cgi-vars">
+    <question>
+     <para>
+      Я пытаюсь получить доступ к одной из стандартных CGI переменных
+      (таких как $DOCUMENT_ROOT или $HTTP_REFERER) в определённой 
+      пользователем функции и, похоже, она не может быть найдена.
+      В чём дело?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Важно осознавать, что директива PHP <link
+      linkend="ini.register-globals">register_globals</link> 
+      также затрагивает переменные окружения и сервера. 
+      Когда register_globals = off (по умолчанию off, начиная с PHP 4.2.0),
+      default is off since PHP 4.2.0), <varname>$DOCUMENT_ROOT</varname>
+      не будет существовать. Вместо ипользуйте <varname>$_SERVER['DOCUMENT_ROOT']
+      </varname>. Если register_globals = on, то переменные
+      <varname>$DOCUMENT_ROOT</varname> и
+      <varname>$GLOBALS['DOCUMENT_ROOT']</varname> будут также существовать.
+     </para>
+     <para>
+      Если вы уверины, что register_globals = on и удивляетесь почему
+      <varname>$DOCUMENT_ROOT</varname> недоступна внутри функции, то
+      это потому, что, как любые другие переменные, она требует
+      <literal>global $DOCUMENT_ROOT</literal> внутри функции.
+      Также смотрите страницу руководства по 
+      <link linkend="language.variables.scope">области
+      определения переменной</link>.
+      Предпочтительно кодировать с register_globals = off.
+     </para>
+     
+     &note.superglobals;
+
+    </answer>
+   </qandaentry>
+
+   <qandaentry id="faq.using.shorthandbytes">
+    <question>
+     <para>
+      Несколько PHP директив могут принимать сокращения для байтовых значений
+      в отличие от только <type>integer</type> байтовах значений.
+      Каковы все доступные сокращения? И могу ли я использовать их вне &php.ini;?
+     </para>
+    </question>
+    <answer>
+     <para>
+      Доступные опции: K (для Килобайтов), M (для Мегабайтов) и 
+      G (для Гигабайтов; доступна начиная с PHP 5.1.0);
+      они чувствительны к регистру. Всё остальное считается байтами.
+      <literal>1M</literal> равно одному Мегабайту или
+      <literal>1048576</literal> байтам. <literal>1K</literal> равно
+      одному Килобайту или <literal>1024</literal> байтам.
+      Вы не можете использовать эти сокращения вне &php.ini;, вместо
+      используйте <type>integer</type> значения байтов. Смотрите документацию
+      по <function>ini_get</function> для примеров как преобразовать эти значения.
+     </para>
+    </answer>
+   </qandaentry>
+
+  </qandaset>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
+
