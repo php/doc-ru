@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- EN-Revision: 1.8 Maintainer: blindman Status: ready -->
+<!-- $Revision: 1.1 $ -->
+  <refentry id="function.ftp-nb-get">
+   <refnamediv>
+    <refname>ftp_nb_get</refname>
+    <refpurpose>Загружает файл с FTP сервера в асинхронном режиме</refpurpose>
+   </refnamediv>
+   <refsect1>
+    <title>Описание</title>
+     <methodsynopsis>
+      <type>int</type><methodname>ftp_nb_get</methodname>
+      <methodparam><type>resource</type><parameter>ftp_stream</parameter></methodparam>
+      <methodparam><type>string</type><parameter>local_file</parameter></methodparam>
+      <methodparam><type>string</type><parameter>remote_file</parameter></methodparam>
+      <methodparam><type>int</type><parameter>mode</parameter></methodparam>
+      <methodparam choice="opt"><type>int</type><parameter>resumepos</parameter></methodparam>
+     </methodsynopsis>
+    <para>
+     <function>ftp_nb_get</function> загружает файл 
+     <parameter>remote_file</parameter> с FTP сервера и сохраняет в 
+     локальном файле <parameter>local_file</parameter> . Аргумент 
+     <parameter>mode</parameter> задает режим передачи и может принимать 
+     значения <constant>FTP_ASCII</constant> или 
+     <constant>FTP_BINARY</constant>. Необязательный аргумент 
+     <parameter>resumepos</parameter> задает позицию в файле, с которой 
+     начинается загрузка.
+     Отличие этой функции от <function>ftp_get</function> состоит в том, 
+     что загрузка файла происходит в асинхронном режиме, что позволяет 
+     программе выполнять другие операции во время загрузки.
+    </para>
+    <para>
+     Возвращает <constant>FTP_FAILED</constant>, 
+     <constant>FTP_FINISHED</constant> или
+     <constant>FTP_MOREDATA</constant>.
+    </para>
+    <para>
+     <example>
+      <title>Пример использования <function>ftp_nb_get</function></title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+// Начало загрузки
+$ret = ftp_nb_get($my_connection, "test", "README", FTP_BINARY);
+while ($ret == FTP_MOREDATA) {
+   
+   // производим какие-то дествия ...
+   echo ".";
+
+   // продолжение загрузки ...
+   $ret = ftp_nb_continue($my_connection);
+}
+if ($ret != FTP_FINISHED) {
+   echo "При загрузке файла произолшла ошибка...";
+   exit(1);
+}
+?>
+]]>
+      </programlisting>
+     </example>
+     <example>
+      <title>
+       Возобновление загрузки файла с помощью <function>ftp_nb_get</function>
+      </title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+// Начало загрузки
+$ret = ftp_nb_get($my_connection, "test", "README", FTP_BINARY, 
+                      filesize("test"));
+// ИЛИ: $ret = ftp_nb_get($my_connection, "test", "README", 
+//                           FTP_BINARY, FTP_AUTORESUME);
+while ($ret == FTP_MOREDATA) {
+   
+   // производим какие-то дествия ...
+   echo ".";
+
+   // продолжение загрузки ...
+   $ret = ftp_nb_continue($my_connection);
+}
+if ($ret != FTP_FINISHED) {
+   echo "При загрузке файла произолшла ошибка...";
+   exit(1);
+}
+?>
+]]>
+      </programlisting>
+     </example>
+     <example>
+      <title>
+       Загрузка файла начиная с позиции 100 в новый файл
+       с помощью <function>ftp_nb_get</function>
+      </title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+// Запрет FTP_AUTOSEEK
+ftp_set_option($my_connection, FTP_AUTOSEEK, false);
+
+// Начало загрузки
+$ret = ftp_nb_get($my_connection, "newfile", "README", FTP_BINARY, 100);
+while ($ret == FTP_MOREDATA) {
+
+   /* ... */
+   
+   // продолжение загрузки ...
+   $ret = ftp_nb_continue($my_connection);
+}
+?>
+]]>
+      </programlisting>
+     </example>
+    </para>
+    <para>
+     В последнем примере, <filename>"newfile"</filename> будет на 100 байт 
+     меньше, чем <filename>"README"</filename> на FTP сервере, потому что 
+     загрузка начинается со смещением 100. Если не запретить 
+     <constant>FTP_AUTOSEEK</constant>, первые 100 байт файла 
+     <filename>"newfile"</filename> будут содержать 
+     <literal>'\0'</literal>.
+    </para>
+    <para>
+     См. также описание функций
+     <function>ftp_nb_fget</function>,
+     <function>ftp_nb_continue</function>,
+     <function>ftp_get</function> и
+     <function>ftp_fget</function>.
+    </para>
+   </refsect1>
+  </refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
