@@ -1,0 +1,549 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<!-- $Revision: 1.1 $ -->
+<!-- EN-Revision: 1.76 Maintainer: young Status: ready -->
+ <chapter id="features.file-upload">
+  <title> Загрузка файлов на сервер</title>
+
+  <sect1 id="features.file-upload.post-method">
+   <title>Загрузка файлов методом POST</title>
+
+   <simpara>
+    PHP способен принимать файл загружаемый при помощи любого
+    браузера, поддерживающего стандарт RFC-1867 (в том числе 
+    <productname>Netscape Navigator 3</productname> и выше, 
+	<productname>Microsoft Internet Explorer 3</productname> 
+    с патчем от Microsoft или более поздние версии без патча).
+    Это дает возможность загружать как текстовые, так и бинарные 
+    файлы. Вместе с PHP-аутентификацией и функциями
+    для работы с файловой системой вы получаете полный контроль над тем,
+    кому разрешено загружать файлы, и над тем, что делать с файлом после
+    его загрузки.
+   </simpara>
+   <note>
+    <title>Смежные замечания по конфигурации</title>
+    <para>
+     Также ознакомьтесь с описанием директив <link linkend="ini.file-uploads">file_uploads</link>, 
+     <link linkend="ini.upload-max-filesize">upload_max_filesize</link>,
+     <link linkend="ini.upload-tmp-dir">upload_tmp_dir</link>, и
+     <link linkend="ini.post-max-size">post_max_size</link> конфигурационного
+     файла &php.ini;
+    </para>
+   </note>
+   <para>
+    Также следует заметить, что PHP поддерживает загрузку файлов методом PUT,
+    который используется в клиентах <productname>Netscape Composer</productname> 
+	и W3C <productname>Amaya</productname>. Для получения
+    более детальной документации обратитесь к разделу  
+    <link linkend="features.file-upload.put-method">поддержка метода PUT</link>
+   </para>
+   <para>
+    Страница для загрузки файлов может быть реализована при помощи
+    специальной формы, которая выглядит примерно так:
+   </para>
+   <para>
+    <example>
+     <title>Форма для загрузки файлов</title>
+     <programlisting role="html">
+<![CDATA[
+<form enctype="multipart/form-data" action="_URL_" method="post">
+ <input type="hidden" name="MAX_FILE_SIZE" value="30000" />
+ Отправить этот файл: <input name="userfile" type="file" />
+ <input type="submit" value="Send File" />
+</form>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <para>
+    В приведенном выше примере "_URL_" необходимо заменить ссылкой
+    на PHP-скрипт. Скрытое поле <literal>MAX_FILE_SIZE</literal>(значение необходимо
+    указывать в байтах) должно предшествовать полю для выбора файла,
+    и его значение является максимально допустимым размером принимаемого
+    файла. Также следует убедиться, что в атрибутах формы вы указали
+    <literal>enctype="multipart/form-data"</literal>, в противном случае
+    загрузка файлов на сервер выполняться не будет.
+    <warning>
+     <para>
+      Опция <literal>MAX_FILE_SIZE</literal> является рекомендацией браузеру, даже если 
+      бы PHP также проверял это условие. Обойти это ограничение на 
+      стороне браузера достаточно просто, следовательно, вы не должны 
+      полагаться на то, что все файлы большего размера будут блокированы 
+      при помощи этой возможности. Тем не менее, ограничение PHP касательно 
+      максимального размера обойти невозможно. Вы в любом случае должны 
+      добавлять переменную формы <literal>MAX_FILE_SIZE</literal>, так как она предотвращает 
+      тревожное ожидание пользователей при передаче огромных файлов, только 
+      для того, чтобы узнать, что файл слишком большой и передача фактически 
+      не состоялась.
+     </para>
+    </warning>
+   </para>
+
+   <para>
+    Переменные, определенные для загруженных файлов, зависят от 
+    версии PHP и текущей конфигурации. Суперглобальный массив
+    <link linkend="reserved.variables.files">$_FILES</link>
+    доступен начиная с PHP 4.1.0. Массив <varname>$HTTP_POST_FILES</varname> 
+    доступен начиная с PHP 4.0.0.  Эти массивы содержат всю информацию
+    о загруженных файлах.  Использование <varname>$_FILES</varname> 
+    является более предпочтительным. 
+    В случае, если конфигурационная директива <link linkend="ini.register-globals">register_globals</link> 
+    установлена значением <emphasis>on</emphasis>, дополнительно будут объявлены переменные с соответствующими именами.
+    Начиная с версии <ulink url="&url.php.release4.2.0;">4.2.0</ulink> значением
+    по умолчанию для опции <link linkend="ini.register-globals">register_globals</link> 
+    является <emphasis>off</emphasis>.
+   </para>
+   <para>
+    Содержимое массива <link linkend="reserved.variables.files">$_FILES</link>
+    для нашего примера приведено ниже. Обратите внимание, что здесь предполагается
+    использование имени <emphasis>userfile</emphasis> для поля выбора файла, как и 
+    в приведенном выше примере. На самом деле имя поля может быть любым.
+    <variablelist>
+     <varlistentry>
+      <term><varname>$_FILES['userfile']['name']</varname></term>
+      <listitem>
+       <para>
+        Оригинальное имя файла на компьютере клиента.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><varname>$_FILES['userfile']['type']</varname></term>
+      <listitem>
+       <para>
+        Mime-тип файла, в случае, если браузер предоставил такую
+        информацию. Пример: <literal>"image/gif"</literal>.
+        </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><varname>$_FILES['userfile']['size']</varname></term>
+      <listitem>
+       <para>
+        Размер в байтах принятого файла.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><varname>$_FILES['userfile']['tmp_name']</varname></term>
+      <listitem>
+       <para>
+        Временное имя, с которым принятый файл был сохранен на сервере.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><varname>$_FILES['userfile']['error']</varname></term>
+      <listitem>
+       <para>
+        <link linkend="features.file-upload.errors">Код ошибки</link>, которая
+        может возникнуть при загрузке файла. Ключ <emphasis>['error']</emphasis>
+        был добавлен в PHP 4.2.0
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <note>
+    <para>
+     В PHP 4.1.0 и более ранних версиях описанный выше массив назывался
+     <varname>$HTTP_POST_FILES</varname> и не являлся
+     <link linkend="language.variables.superglobals">суперглобальным</link>, 
+     в отличие от <varname>$_FILES</varname>.  В PHP 3 массив
+     <varname>$HTTP_POST_FILES</varname> не определен.
+    </para>
+   </note>
+   <para>
+    В случае, если <link linkend="ini.register-globals">register_globals</link>
+    установлена значением <emphasis>on</emphasis> в конфигурационном
+    файле &php.ini;, будут доступны дополнительные переменные. Например,
+    <varname>$userfile_name</varname> будет эквивалентна переменной <varname>$_FILES['userfile']['name']</varname>,
+    а <varname>$userfile_type</varname> соответствует <varname>$_FILES['userfile']['type']</varname>, и так далее. 
+    Не стоит забывать, что начиная с PHP 4.2.0 для директивы register_globals 
+    значение по умолчанию <emphasis>off</emphasis>.  Рекомендуется не полагаться на значение этой директивы.
+   </para>
+   <para>
+    По умолчанию принятые файлы сохраняются на сервере в стандартной 
+    временной папке до тех пор, пока не будет задана другая директория при
+    помощи директивы <link linkend="ini.upload-tmp-dir">upload_tmp_dir</link> 
+    конфигурационного файла &php.ini;. Директорию сервера по умолчанию
+    можно сменить, установив переменную <envar>TMPDIR</envar> для
+    окружения, в котором выполняется PHP. Установка переменной <envar>TMPDIR</envar> при помощи 
+    функции <function>putenv</function> внутри PHP-скрипта работать
+    не будет. Эта переменная окружения также может использоваться для того,
+    чтобы удостовериться, что другие операции также работают с принятыми файлами.
+    <example>
+     <title>Проверка загружаемых на сервер файлов</title>
+     <para>
+      Для получения более детальной информации вы можете ознакомится
+      с описанием функций <function>is_uploaded_file</function> 
+      и <function>move_uploaded_file</function>. Следующий пример
+      принимает и обрабатывает загруженный при помощи формы файл.
+     </para>
+     <programlisting role="php">
+<![CDATA[
+<?php
+// В PHP 4.1.0 и более ранних версиях следует использовать $HTTP_POST_FILES 
+// вместо $_FILES.
+
+$uploaddir = '/var/www/uploads/';
+$uploadfile = $uploaddir . $_FILES['userfile']['name'];
+
+print "<pre>";
+if (move_uploaded_file($_FILES['userfile']['tmp_name'], $uploadfile)) {
+    print "File is valid, and was successfully uploaded. ";
+    print "Here's some more debugging info:\n";
+    print_r($_FILES);
+} else {
+    print "Possible file upload attack!  Here's some debugging info:\n";
+    print "Possible file upload attack!  Дополнительная отладочная информация:\n";
+    print_r($_FILES);
+}
+print "</pre>";
+
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <simpara>
+    PHP-скрипт, принимающий загруженный файл, должен реализовывать логику,
+    необходимую для определения дальнейших действий над принятым файлом.
+    Например, вы можете проверить переменную <varname>$_FILES['userfile']['size']</varname>,
+    чтобы отсечь слишком большие или слишком маленькие файлы. Также вы
+    можете использовать переменную <varname>$_FILES['userfile']['type']</varname>
+    для исключения файлов, которые не удовлетворяют критерию касательно
+    типа файла. Начиная с PHP 4.2.0 вы можете использовать 
+    <varname>$_FILES['userfile']['error']</varname> и <link
+    linkend="features.file-upload.errors">разъяснение сообщений об ошибках</link>
+    при реализации вашей логики. Независимо от того, какую модель поведения
+    вы выбрали, вы должны удалить файл из временной папки или переместить его в 
+    другую директорию.
+   </simpara>
+   <simpara>
+    В случае, если при отправке формы файл выбран не был, PHP установит 
+    переменную <varname>$_FILES['userfile']['size']</varname> значением 0, а переменную
+    <varname>$_FILES['userfile']['tmp_name']</varname> - пустой строкой.
+    none.
+   </simpara>
+   <simpara>
+    По окончанию работы скрипта, в случае, если принятый файл не был
+    переименован, или перемещен он будет автоматически удален из временной папки.
+   </simpara>
+  </sect1>
+
+  <sect1 id="features.file-upload.errors">
+   <title>Разъяснение сообщений об ошибках</title>
+   <simpara>
+    Начиная с PHP 4.2.0, PHP возвращает код ошибки наряду с другими
+    атрибутами принятого файла. Он расположен в массиве, создаваемом  PHP
+    при загрузке файла, и может быть получен при обращении по ключу
+    <emphasis>['error']</emphasis>. Говоря другими словами, код ошибки можно
+    найти в переменной <varname>$_FILES['userfile']['error']</varname>.
+   </simpara>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><constant>UPLOAD_ERR_OK</constant></term>
+      <listitem>
+       <para>
+        Значение: 0; Ошибок не возникало, файл был успешно загружен на сервер.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><constant>UPLOAD_ERR_INI_SIZE</constant></term>
+      <listitem>
+       <para>
+        Значение: 1; Размер принятого файла превысил максимально допустимый
+        размер, который задан директивой <link linkend="ini.upload-max-filesize">upload_max_filesize</link> 
+        конфигурационного файла &php.ini;.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><constant>UPLOAD_ERR_FORM_SIZE</constant></term>
+      <listitem>
+       <para>
+        Значение: 2; Размер загружаемого файла превысил значение <emphasis>MAX_FILE_SIZE</emphasis>,
+        указанное в HTML-форме.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><constant>UPLOAD_ERR_PARTIAL</constant></term>
+      <listitem>
+       <para>
+        Значение: 3; Загружаемый файл был получен только частично.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><constant>UPLOAD_ERR_NO_FILE</constant></term>
+      <listitem>
+       <para>
+        Значение: 4; Файл не был загружен.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <note>
+    <para>
+     Константы были добавлены в PHP 4.3.0.
+    </para>
+   </note>
+  </sect1>
+
+  <sect1 id="features.file-upload.common-pitfalls">
+   <title>Наиболее распространенные ошибки</title>
+   <simpara>
+    Опция <literal>MAX_FILE_SIZE</literal> не должна позволять передачу файлов,
+    размер которых превышает лимит, установленный конфигурационной директивой
+    <link linkend="ini.upload-max-filesize">upload_max_filesize</link>.
+    Ограничение по умолчанию составляет 2 мегабайта.
+   </simpara>
+   <simpara>
+    В случае, если установлено ограничения памяти, вам может понадобиться
+    увеличить значение опции <link linkend="ini.memory-limit">memory_limit</link>.
+    Убедитесь в том, что значение <link linkend="ini.memory-limit">memory_limit</link>
+    достаточно велико.
+   </simpara>
+   <simpara>
+    В случае, если опция <link linkend="ini.max-execution-time">max_execution_time</link>
+    установлена слишком маленьким значением, необходимое время работы скрипта
+    может превышать это значение. Убедитесь в том, что значение
+    <literal>max_execution_time</literal> достаточно велико.
+   </simpara>
+   <note>
+    <simpara>
+     Директива <link linkend="ini.max-execution-time">max_execution_time</link> only
+     касается исключительно времени,  используемого непосредственно самим скриптом.
+     Время, потраченное на внешние действия, такие как системные
+     вызовы при помощи функции <function>system</function> или
+     <function>sleep</function>, обращения к базе данных, а также
+     время, потраченное на загрузку файла и другие действия, происходящие
+     вне скрипта, не учитываются при определении максимально допустимого
+     промежутка времени, отведенного для выполнения скрипта.
+    </simpara>
+   </note>
+   <simpara>
+    Директива <link linkend="ini.max-input-time">max_input_time</link> указывает
+    максимально допустимое время в секундах для получения входящих данных, 
+    в том числе и загружаемых файлов. В случае, если вы имеете дело с несколькими
+    или большими файлами, либо удаленные пользователи используют медленный
+    канал, ограничение по умолчанию в <literal>60 секунд</literal> может быть превышено.
+   </simpara>
+   <simpara>
+    Если директива <link linkend="ini.post-max-size">post_max_size</link> 
+    установлена слишком маленьким значением, большие файлы не смогут быть 
+    загружены на сервер. Убедитесь, что значение директивы
+    <literal>post_max_size</literal> достаточно велико.
+   </simpara>
+   <simpara>
+    Если не проверять, с какими файлами вы работаете, пользователи могут
+    получить доступ к конфиденциальной информации, расположенной в других
+    директориях.
+   </simpara>
+   <simpara>
+    Следут заметить, что <productname>CERN httpd</productname> может отсечь все, что идет после первого
+    пробела в получаемом от клиента заголовке content-type. Если у вас именно
+    такой случай, <productname>CERN httpd</productname> не будет поддерживать возможность загрузки файлов.
+   </simpara>
+   <simpara>
+    Поскольку разные системы по-разному работают с файловой структурой,
+    у вас нет никаких гарантий того, что файлы с экзотическими именами
+    (например, которые содержат пробельные символы) будут обработаны корректно.
+   </simpara>
+   <simpara>
+    Разработчики не должны использовать одинаковые имена для полей ввода и полей
+    выбора файла в пределах одной и той же формы (например, используя имя
+    вида <literal>foo[]</literal>).
+   </simpara>
+  </sect1>
+  
+  <sect1 id="features.file-upload.multiple">
+   <title>Загрузка на сервер нескольких файлов</title>
+   <simpara>
+    Загрузку нескольких файлов можно реализовать используя, например,
+    различные значения <literal>name</literal> для тега <literal>input</literal>.
+   </simpara>
+   <simpara>
+    Также предусмотрена возможность автоматического получения организованной в 
+    массив информации о нескольких одновременно загружаемых файлах.
+    Для реализации такой возможности используйте тот же синтаксис отправки
+    массива из HTML-формы, что и для множественных полей
+    <literal>select</literal> и <literal>checkbox</literal>:
+   </simpara>
+   <note>
+    <para>
+     Поддержка загрузки нескольких файлов была добавлена в PHP 3.0.10.
+    </para>
+   </note>
+   <para>
+    <example>
+     <title>Загрузка нескольких файлов</title>
+     <programlisting role="html">
+<![CDATA[
+<form action="file-upload.php" method="post" enctype="multipart/form-data">
+  Send these files:<br />
+  <input name="userfile[]" type="file" /><br />
+  <input name="userfile[]" type="file" /><br />
+  <input type="submit" value="Send files" />
+</form>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <simpara>
+    В случае, если такая форма была отправлена, массивы
+    <varname>$_FILES['userfile']</varname>,
+    <varname>$_FILES['userfile']['name']</varname>, и
+    <varname>$_FILES['userfile']['size']</varname> будут
+    инициализированы (точно так же, как и <varname>$HTTP_POST_FILES</varname> 
+    для PHP 4.1.0 и более ранних версий). Если конфигурационная директива 
+    <link linkend="ini.register-globals">register_globals</link> установлена значением <literal>on</literal>,
+    также будут инициализированы сопутствующие глобальные переменные.
+    Каждая из таких переменных будет представлять собой численно индексированный
+    массив соответствующих значений для принятых файлов.
+   </simpara>
+   <simpara>
+    Например, предположим, что были загружены файлы 
+    <filename>/home/test/review.html</filename> и
+    <filename>/home/test/xwp.out</filename>. В таком случае переменная
+    <varname>$_FILES['userfile']['name'][0]</varname> будет установлена 
+    значением <filename>review.html</filename>, а переменная
+    <varname>$_FILES['userfile']['name'][1]</varname> - значением
+    <filename>xwp.out</filename>. Аналогично, переменная 
+    <varname>$_FILES['userfile']['size'][0]</varname> будет содержать размер
+    файла <filename>review.html</filename> и так далее.
+   </simpara>
+   <simpara>
+    Переменные <varname>$_FILES['userfile']['name'][0]</varname>,
+    <varname>$_FILES['userfile']['tmp_name'][0]</varname>,
+    <varname>$_FILES['userfile']['size'][0]</varname> и
+    <varname>$_FILES['userfile']['type'][0]</varname> также будут
+    инициализированы.
+   </simpara>
+  </sect1>
+
+  <sect1 id="features.file-upload.put-method">
+   <title>Поддержка метода PUT</title>
+   <simpara>
+    Поддержка метода PUT была изменена при переходе от PHP 3 к PHP 4.
+    В PHP 4 вы должны использовать стандартный поток ввода для чтения
+    файла, передаваемого методом HTTP PUT.
+   </simpara>
+   <para>
+    <example>
+     <title>Сохранение загруженного при помощи HTTP PUT файла в PHP 4</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+/* Данные PUT находятся в потоке stdin */
+$putdata = fopen("php://stdin", "r");
+
+/* Открываем файл для записи */
+$fp = fopen("myputfile.ext", "w");
+
+/* Читаем данные блоками размером в 1 KB и
+   записываем их в файл */
+while ($data = fread($putdata, 1024))
+  fwrite($fp, $data);
+
+/* Закрываем потоки */
+fclose($fp);
+fclose($putdata);
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <note>
+    <para>
+     Вся документация, приведенная ниже, касается исключительно PHP 3.
+    </para>
+   </note>
+   <para>
+    PHP поддерживает загрузку файлов методом HTTP PUT, который используется в клиентах
+    <productname>Netscape Composer</productname> и
+    <productname>W3C Amaya</productname>.  Запрос PUT выглядит проще,
+    чем в случае обыкновенной загрузки файла на сервер:
+    <informalexample>
+     <programlisting>
+PUT /path/filename.html HTTP/1.1
+     </programlisting>
+    </informalexample>
+   </para>
+   <para>
+    Такой вызов означает, что удаленный клиент хотел бы сохранить
+    файл под именем <filename>/path/filename.html</filename> в дереве каталогов вашего веб-сервера.
+    Очевидно, что возможность клиента автоматически перезаписывать файлы вашего 
+    веб-сервера при помощи Apache или PHP не является хорошим решением.
+    Поэтому для того, чтобы обрабатывать такие запросы, вам необходимо указать 
+    веб-серверу PHP-скрипт, которому вы доверяете их обработку.
+    В веб-сервере Apache вы можете сделать это, используя директиву
+    <emphasis>Script</emphasis>. Она может находиться практически
+    в любом месте конфигурационного файла Apache. Как правило, эта директива
+    расположена внутри блока &lt;Directory&gt; или же внутри блока
+    &lt;Virtualhost&gt;. Сама запись выглядит следующим образом:
+    <informalexample>
+     <programlisting>
+Script PUT /put.php
+     </programlisting>
+    </informalexample>
+   </para>
+   <simpara>
+    Это указывает веб-серверу Apache на необходимость перенаправлять по
+    указанному адресу все  PUT-запросы, контекст которых совпадает с контекстом, в
+    которым вы разместили эту строку. Предполагается, что файлы с расширением .php
+    обрабатываются, как PHP-скрипты, и что сам PHP установлен и работает.
+   </simpara>
+   <simpara>
+    Внутри вашего файла put.php file вы можете поместить что-нибудь похожее на это:
+   </simpara>
+   <para>
+    <informalexample><programlisting role="php">
+<![CDATA[
+<?php copy($PHP_UPLOADED_FILE_NAME, $DOCUMENT_ROOT . $REQUEST_URI); ?>
+]]>
+    </programlisting></informalexample>
+   </para>
+   <simpara>
+    Приведенный код скопирует файл в место, запрошенное клиентом. Возможно,
+    вы захотите выполнить какую-либо проверку и/или аутентифицировать 
+    пользователя, прежде чем выполнять копирование. Трюк состоит в том, что
+    когда PHP видит PUT-запрос, он сохраняет полученный файл во временной
+    папке, как и при <link linkend="features.file-upload.post-method">загрузке методом POST</link>.
+    По окончании обработки запроса временный файл удаляется.
+    Поэтому ваш PHP-скрипт, обрабатывающий PUT-запрос, должен скопировать куда-либо
+    полученный файл. Имя временного файла хранится в переменной 
+    <varname>$PHP_PUT_FILENAME</varname>, а предполагаемое имя файла можно найти в 
+    переменной <varname>$REQUEST_URI</varname> (может быть другим на веб-серверах, отличных от Apache).
+    Запрашиваемое имя файла указывается удаленным клиентом. Вы не обязаны
+    следовать его указаниям. Например, вы можете скопировать все загруженные
+    файлы в отдельный каталог.
+   </simpara>
+  </sect1>
+
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
