@@ -1,0 +1,427 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<!-- EN-Revision: 1.3 Status: ready -->
+<!-- $Revision: 1.1 $ -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="1.1" xml:id="language.namespaces" xmlns:xml="http://www.w3.org/XML/1998/namespace">
+ <title>Пространства имён</title>
+ <sect1  xml:id="language.namespaces.rationale">
+  <title>Обзор пространств имён</title>
+  <simpara>
+   Пространства имён введены в PHP для решения проблем в больших 
+   PHP-библиотеках. В PHP все определения классов глобальны, поэтому 
+   авторы библиотек должны выбирать уникальные имена для создаваемых ими классов. 
+   Это делается для того, чтобы при использовании библиотеки совместно 
+   с другими библиотеками не возникало конфликтов имён. Обычно это достигается 
+   введением в имена классов префиксов. Например: если мы будем использовать класс 
+   <classname>dataBase</classname> - велика вероятность, что такое имя 
+   класса будет присутствовать и в других библиотеках, а при их совместном 
+   использовании возникнет ошибка. Поэтому мы вынуждены использовать для 
+   класса другое имя. Например: <classname>ourLibraryDataBase</classname>
+   Такие действия приводят к черезмерному вырастанию длины имён классов.
+  </simpara>
+  <simpara>
+   Пространства имён позволяют разработчику управлять зонами видимости имён, 
+   что избавляет от необходимости использования префиксов и черезмерно длинных имён. 
+   Все это служит повышению читабельности кода.
+  </simpara>
+  <simpara>
+   Пространства имён доступны в PHP начиная с версии 5.3.0. 
+   Данная секция экспериментальна и возможно будет подвержена изменениям.
+  </simpara>
+ </sect1>
+ <sect1  xml:id="language.namespaces.definition">
+  <title>Определение пространства имён</title>
+  <para>
+   Пространство имён определяется посредством ключевого слова 
+   <literal>namespace</literal>, которое должно находиться в самом начале файла.
+   Пример:
+   <example>
+    <title>Определение пространства имён.</title>
+    <programlisting role="php"><![CDATA[
+     <?php
+     namespace MyProject::DB;
+
+     const CONNECT_OK = 1;
+
+     class Connection { /* ... */ }
+
+     function connect() { /* ... */  }
+
+     ?>
+     ]]></programlisting>
+   </example>
+   Это пространство имён может быть использовано в разных файлах.
+  </para>
+  <para>
+   Пространства имён могут включать определения классов, констант и функций. 
+   Но не должны включать обычного кода.
+  </para>
+  <para>
+   Определение пространства имён работает так:
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Внутри пространства имён все имена классов, функций и констант 
+      автоматически будут префиксированы именем пространства имён. 
+      Имена классов при вызове должны быть полными, так например 
+      при вызове класса из примера выше должно использоваться следующее имя 
+      <classname>MyProject::DB::Connection</classname>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Определения констант создают константы, состоящие из имени 
+      пространства имён и имени константы. Как и константы классов - 
+      константы пространства имён могут содержать данные
+      только скалярного типа.
+     </simpara>
+    </listitem>
+    <listitem>
+     <para>
+      Поиск неквалифицированного имени класса (т.е. не содержащего <literal>::</literal>)
+      осуществляется в следующей последовательности:
+      <orderedlist>
+       <listitem>
+        <simpara>
+         Попытка найти класс в текущем пространстве имён (т.е. 
+         префиксирование класса именем текущего пространства имён) без попытки 
+         <link  linkend="language.oop5.autoload">автозагрузки (autoload)</link>.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>
+         Попытка найти класс в глобальном пространстве имён без попытки 
+         <link  linkend="language.oop5.autoload">автозагрузки (autoload)</link>.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>
+         Попытка автозагрузки в текущем пространстве имён.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>В случае неудачи предыдущего - отказ.</simpara>
+       </listitem>
+      </orderedlist>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Поиск неквалифицированного имени функции (т.е. не включающего 
+      <literal>::</literal>) во время выполнения производится сначала в 
+      текущем пространстве имён, затем в глобальном пространстве имён.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Поиск неквалифицированного имени константы производится сначала 
+      в текущем пространстве имён, затем среди глобально объявленных констант.
+     </para>
+    </listitem>
+   </itemizedlist>
+   Смотри так же  <link  linkend="language.namespaces.rules">правила разбора имён</link>.
+  </para>
+ </sect1>
+ <sect1  xml:id="language.namespaces.using" >
+  <title>Использование пространств имён</title>
+  <para>
+   На имена классов и функций, объявленых внутри пространства 
+   имён всегда можно сослаться по полному имени:
+   <classname>MyProject::DB::Connection</classname> или 
+   <classname>MyProject::DB::connect</classname> .
+   <example>
+    <title>Использование имён, объявленных внутри пространств имён</title>
+    <programlisting  role="php"><![CDATA[
+     <?php
+     require 'MyProject/Db/Connection.php';
+     $x = new MyProject::DB::Connection;
+     MyProject::DB::connect();
+     ?>
+     ]]></programlisting>
+   </example>
+  </para>
+  <para>
+   Пространства имён могут быть импортированы в текущий контекст 
+   (глобальный или пространство имён) при помощи оператора 
+   <literal>use</literal>. Синтаксис оператора use:
+   <informalexample>
+    <programlisting  role="php"><![CDATA[
+     <?php
+     /* ... */
+     use Some::Name as Othername;
+
+     // Самая простая форма :
+     use Foo::Bar;
+     // это то же что и :
+     use Foo::Bar as Bar;
+     ?>
+     ]]></programlisting>
+   </informalexample>
+   Импортированные пространства имён работают следующим образом: 
+   каждый раз, когда компилятор встречает локальное имя 
+   <literal>Othername</literal> (как простое имя или как префикс 
+   более длинного, разделенного <literal>::</literal> имени),
+   импортированное имя <literal>Some::Name</literal> заменяется. 
+  </para>
+  <para>
+   Оператор <literal>use</literal> может быть использован только в
+   глобальном пространстве имён - не внутри класса или функции.
+   Импортированные имена действуют с точки импортирования до конца текущего файла. 
+   Рекомендуется импортировать имена в начале файла во избежание путаницы.
+  </para>
+  <para>
+   <example>
+    <title>Импортирование пространств имён и доступ к ним</title>
+    <programlisting  role="php"><![CDATA[
+     <?php
+     require 'MyProject/Db/Connection.php';
+     use MyProject::DB;
+     use MyProject::DB::Connection as DbConnection;
+
+     $x = new MyProject::DB::Connection();
+     $y = new DB::connection();
+     $z = new DbConnection();
+     DB::connect();
+     ?>
+     ]]></programlisting>
+   </example>
+  </para>
+  <para>
+   <note>
+    <simpara>
+     Операция импорта пространств имён выполняется только во время компиляции. 
+     Все локальные имена заменяются компилятором на их полные эквиваленты. 
+     Заметьте, что это не переводит имена в строки. Таким образом динамический 
+     импорт пространств имён невозможен.
+    </simpara>
+   </note>
+  </para>
+ </sect1>
+ <sect1  xml:id="language.namespaces.global">
+  <title>Глобальное пространство имён</title>
+  <para>
+   Без определения какого-либо пространства имён, все определения классов 
+   и функциий оказываются в глобальном пространстве - как это было в PHP
+   до появления поддержки пространств имён. Префиксирование имени знаками 
+   <literal>::</literal> указывает, что имя из глобального пространства 
+   имён - работает даже в контексте пространства имён.
+   <example>
+    <title>Использование указания на глобальное пространство имён </title>
+    <programlisting  role="php"><![CDATA[
+     <?php
+     namespace A::B::C;
+
+     /* This function is A::B::C::fopen */
+     function fopen() { 
+     /* ... */
+     $f = ::fopen(...); // вызывает глобальную fopen
+     return $f;
+     } 
+     ?>
+     ]]></programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1  xml:id="language.namespaces.constant">
+  <title>__NAMESPACE__</title>
+  <para>
+   Константа времени компиляции <constant>__NAMESPACE__</constant> 
+   определяет текущее пространство имён. Вне пространства имён эта 
+   константа имеет значение пустой строки.
+   Эта константа используется когда требуется сформировать полное i
+   имя класса или функции из текущего пространства имён.
+   <example>
+    <title>Использование __NAMESPACE__</title>
+    <programlisting  role="php"><![CDATA[
+     <?php
+     namespace A::B::C;
+
+     function foo() {
+     // do stuff
+     }
+
+     set_error_handler(__NAMESPACE__ . "::foo");
+     ?>
+     ]]></programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1  xml:id="language.namespaces.rules">
+  <title>Правила разбора имён</title>
+  <para>
+   Разбор имён происходит по следующим правилам:
+   <orderedlist>
+    <listitem>
+     <simpara>
+      Все квалифицированные имена транслируются во время компиляции в 
+      соответствии с текущими импортированными пространствами имён. 
+      К примеру, если импортировано постранство имён A::B::C, вызов 
+      <code>C::D::e()</code> будет транслирован как <code>A::B::C::D::e()</code>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Неквалифицированные имена классов транслируются во время компиляции 
+      в соответствии с текущими импортированными пространствами имён 
+      (полные имена заменяют короткие импортированные имена). К примеру, 
+      если пространство имён <literal>A::B::C</literal> импортировано,
+      <code>new C()</code> будет транслировано как 
+      <code>new A::B::C()</code>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Внутри пространства имён вызов неквалифицированных функций, определенных
+      в этом же пространстве имён интерпертируется как вызов в данном
+      пространстве имён во время компиляции.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Внутри пространства имён (например <literal>A::B</literal>) вызов
+      неквалифицированных функций, не определенных в этом пространстве имён
+      будет разрешаться во время выполнения.
+      Вызов функции <literal>foo()</literal> будет разрешаться следующим образом:
+     </simpara>
+     <orderedlist>
+      <listitem>
+       <simpara>
+        Поиск в текущем пространстве имён:
+        <literal>A::B::foo()</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Поиск <emphasis>внутренней</emphasis> PHP функции 
+        <literal>foo()</literal>.
+       </simpara>
+      </listitem>
+     </orderedlist>
+     <simpara>
+      В случае неудачи всех предыдущих попыток будет использован вызов
+      определенной в глобальном пространстве имён функции 
+      <literal>::foo()</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Внутри пространства имён (например <literal>A::B</literal>), вызов
+      неквалифицированных классов разрешается во время выполнения. Например
+      вызов <code>new C()</code> будет разрешаться следующим образом:
+     </simpara>
+     <orderedlist>
+      <listitem>
+       <simpara>
+        Поиск класса в текущем пространстве имён:
+        <literal>A::B::C</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Попытка вызова <emphasis>внутреннего</emphasis> PHP-класса <literal>C</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Попытка автозагрузки <literal>A::B::C</literal>.
+       </simpara>
+      </listitem>
+     </orderedlist>
+     <simpara>
+      В случае неудачи всех предыдущих, будет использован вызов  
+      <code>new ::C()</code>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Вызов квалифицированных функций разрешается во время выполнения.
+      Например вызов <literal>A::B::foo()</literal> будет разрешаться следующим образом :
+     </simpara>
+     <orderedlist>
+      <listitem>
+       <simpara>
+        Поиск функции <literal>foo()</literal> в пространстве имён 
+        <literal>A::B</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Поиск класса <literal>A::B</literal> и вызов его статического метода
+        <literal>foo()</literal>. Будет сделана автозагрузка класса, если
+        необходимо.
+       </simpara>
+      </listitem>
+     </orderedlist>
+    </listitem>
+    <listitem>
+     <simpara>
+      Квалифицированные имена классов разрешаются во время компиляции, как
+      классы соответствующего пространства имён. К примеру  <code>new
+       A::B::C()</code> будет ссылаться на класс 
+      <classname>C</classname> пространства имён <literal>A::B</literal>.
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <example>
+   <title>Примеры разбора имён</title>
+   <programlisting  role="php"><![CDATA[
+    <?php
+    namespace A;
+
+    // вызовы функций
+
+    foo();      // сначала попытка вызвать "foo" определенную в пространстве имён "A"
+    // затем вызов внутренней функции "foo"
+
+    ::foo();    // вызоы функции "foo" определенной глобально
+
+    // class references
+
+    new B();    // сначала попытка создать объект класса "B" определенного в пространстве имён "A"
+    // затем создание объекта внутреннего класса "B"
+
+    new ::B();  //  создать объект класса "B" определенного глобально
+
+    // статические методы/функции пространства имён из других (не текущих) пространств имён
+
+    B::foo();   // сначала попытка вызвать функцию "foo" из пространства имён "A::B"
+    // затем вызов метода "foo" внутреннего класса "B"
+
+    ::B::foo(); // сначала попытка вызова функции "foo" из пространства имён  "B"
+    // затем вызов метода  "foo" класса "B" из глобального пространства имён
+
+    // статические методы/функции пространства имён из текущего пространства имён
+
+    A::foo();   // сначала попытка вызова функции "foo" пространства имён "A::A"
+    // затем попытка вызова метода "foo" класса "A" из пространства имён "A"
+    // затем попытка вызова функции "foo" пространства имён "A"
+    // затем вызов метода "foo" внутреннего класса "A" 
+
+    ::A::foo(); // сначала попытка вызова функции  "foo" пространства имён "A"
+    // затем вызов метода "foo" класса "A" из глобального пространства имён
+    ?>
+    ]]></programlisting>
+  </example>
+ </sect1>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+ Local variables:
+ mode: sgml
+ sgml-omittag:t
+ sgml-shorttag:t
+ sgml-minimize-attributes:nil
+ sgml-always-quote-attributes:t
+ sgml-indent-step:1
+ sgml-indent-data:t
+ indent-tabs-mode:nil
+ sgml-parent-document:nil
+ sgml-default-dtd-file:"../../manual.ced"
+ sgml-exposed-tags:nil
+ sgml-local-catalogs:nil
+ sgml-local-ecat-files:nil
+ End:
+ vim600: syn=xml fen fdm=syntax fdl=2 si
+ vim: et tw=78 syn=sgml
+ vi: ts=1 sw=1
+-->
