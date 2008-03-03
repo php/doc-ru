@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 1.7 Maintainer: tony2001 Status: ready -->
+<!-- $Revision: 1.1 $ -->
+   <sect1 xml:id="install.unix.apache" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Apache 1.3.x на системах Unix</title>
+    <para>
+     Этот раздел включает иструкции по установке Apache
+     и PHP на платформах Unix. Установка PHP с Apache2 описана в <link
+     linkend="install.unix.apache2">другом разделе</link>.
+    </para>   
+    <para>
+     Вы можете менять аргументы <command>configure</command> на шаге 10 ниже. 
+     Полный список аргументов доступен на странице <link
+      linkend="configure">список основных параметров конфигурации</link>. 
+     А параметры специфичные для различных расширений описаны в разделах
+     посвященных соответсвующим расширениям. В инструкции ниже опущены номера
+     версий - вы должны заменить 'xxx' на номер версии присутствующий в именах 
+     скачанных вами файлов.
+    </para>
+
+    <example xml:id="install.unix.apache.example">
+     <title>
+      Инструкция по установке PHP, как подгружаемого модуля Apache
+     </title>
+     <screen>
+<![CDATA[
+1.  gunzip apache_xxx.tar.gz
+2.  tar -xvf apache_xxx.tar
+3.  gunzip php-xxx.tar.gz
+4.  tar -xvf php-xxx.tar
+5.  cd apache_xxx
+6.  ./configure --prefix=/www --enable-module=so
+7.  make
+8.  make install
+9.  cd ../php-xxx
+
+10. Теперь мы сконфигурируем PHP. Здесь вы можете настроить установку
+     PHP при помощи параметров скрипта configure.
+     Вы можете включить или выключить некоторые расширения. Просмотрите вывод
+     команды ./configure --help для получения полного списка параметров
+     конфигурации. В нашем примере мы сконфигурируем PHP очень просто -
+     с поддержкой Apache и MySQL. В вашей системе путь до apxs может
+     отличаться от указанного в примере.
+
+      ./configure --with-mysql --with-apxs=/www/bin/apxs
+
+11. make
+12. make install
+
+    Если вы решите изменить параметры конфигурации после установки, три
+    последних шага надо будет повторить. Так же вам надо будет
+    рестартовать Apache, чтобы новые модули подгрузились и начали работать.
+    Перекомпиляция Apache для этого не потребуется.
+
+    Заметьте, что 'make install' установит так же PEAR,
+    различные инструменты PHP - такие как phpize, версию PHP для командной
+    строки (PHP CLI) и т.д.
+
+
+13. Настройка вашего php.ini
+
+    cp php.ini-dist /usr/local/lib/php.ini
+
+    Вероятно, вы захотите изменить некоторые настройки в php.ini.
+    Если вы предпочитаете держать файл php.ini в другом месте, используйте
+    параметр --with-config-file-path=/some/path в шаге 10. Если вы используете
+    php.ini-recomended, прочитайте его, чтобы знать какие изменения в
+    поведении PHP это повлечет.
+
+14. Отредактируйте ваш httpd.conf, чтобы Apache подгружал модуль PHP. Путь в
+    инструкции LoadModule должен указывать на модуль PHP. Команда make
+    install может добавить эту иструкцию автоматически, но этого может и не
+    произойти, поэтому проверьте, чтобы убедиться.
+
+    Для PHP 4:
+
+      LoadModule php4_module modules/libphp4.so
+
+    Для PHP 5:
+
+      LoadModule php5_module modules/libphp5.so
+
+15. Так же в секции AddModule файла httpd.conf, несколько ниже
+    ClearModuleList, добавьте следующее:
+    
+    Для PHP 4:
+    
+      AddModule mod_php4.c
+      
+    Для PHP 5:
+    
+      AddModule mod_php5.c
+
+16.  Теперь следует сконфигурировать Apache, чтобы он передавал файлы с
+    некоторыми расширениями на обработку модулю PHP. В нашем примере сделаем
+    это для файлов с расширениями .php и .phtml. Вы можете добавить также
+    другие расширения в конец строки, разделяя их символом пробела.
+
+      AddType application/x-httpd-php .php .phtml
+
+    Сделаем то же самое для расширения .phps - модуль PHP покажет его как
+    исходный код с подсветкой синтаксиса, вместо того чтобы исполнять.
+
+      AddType application/x-httpd-php-source .phps
+
+
+17. Используйте стандартную процедуру запуска сервера. (Нужно остановить
+    и заново запустить сервер, процедура перезапуска с использованием сигналов
+    HUP или USR1 в данном случае не подходит.)
+]]>
+     </screen>
+    </example>
+
+    <para>
+     В качестве альтернативы, можно установить PHP, как статический
+     модуль Apache:
+    </para>
+
+    <example xml:id="install.unix.apache.example-static">
+     <title>
+      Инструкция по статической сборке PHP и Apache
+     </title>
+     <screen>
+<![CDATA[
+1.  gunzip -c apache_1.3.x.tar.gz | tar xf -
+2.  cd apache_1.3.x
+3.  ./configure
+4.  cd ..
+
+5.  gunzip -c php-5.x.y.tar.gz | tar xf -
+6.  cd php-5.x.y
+7.  ./configure --with-mysql --with-apache=../apache_1.3.x
+8.  make
+9.  make install
+
+10. cd ../apache_1.3.x
+
+11. ./configure --prefix=/www --activate-module=src/modules/php5/libphp5.a
+    (Строка выше корректна. Да, мы знаем, что libphp5.a не существует на
+    данном этапе. Этот файл будет создан.)
+
+12. make
+    (Теперь вы должны получить бинарный файл httpd, который вы можете скопировать
+    в каталог bin сервера Apache. Затем вам надо выполнить "make install", 
+    если это ваша первая установка)
+
+13. cd ../php-5.x.y
+14. cp php.ini-dist /usr/local/lib/php.ini
+
+15. Для изменения конфигурации PHP можно отредактировать файл /usr/local/lib/php.ini.
+    Отредактируйте httpd.conf или srm.conf, добавив туда:
+    AddType application/x-httpd-php .php
+]]>
+      </screen>
+     </example>
+     <note>
+      <para>
+       Замените <literal>php-5</literal> на <literal>php-4</literal> и
+       <literal>php5</literal> на <literal>php4</literal>, если вы
+       устанавливаете 4-ю версию PHP.
+      </para>
+     </note>
+
+     <para>
+      В зависимости от варианта вашей установки Apache и версии Unix,       
+      возможно множество путей остановки и запуска сервера. Ниже приведены
+      несколько распространенных команд перезапуска сервера для различных
+      установок Apache и Unix-систем. Замените <literal>/path/to/</literal> 
+      на реальный путь до приложений в вашей системе.
+     </para>
+     <para>
+      <example>
+       <title>Примеры команд перезапуска Apache</title>
+       <programlisting role="shell">
+<![CDATA[
+1. Некоторые дистрибутивы Linux и системы SysV:
+/etc/rc.d/init.d/httpd restart
+
+2. Использование скрипта apachectl:
+/path/to/apachectl stop
+/path/to/apachectl start
+
+3. httpdctl и httpsdctl (Использующий OpenSSL), аналогично apachectl:
+/path/to/httpsdctl stop
+/path/to/httpsdctl start
+
+4. Использующий mod_ssl или другие варианты SSL сервер:
+/path/to/apachectl stop
+/path/to/apachectl startssl
+]]>
+       </programlisting>
+      </example>
+     </para>
+     <para>
+      Пути к apachectl и http(s)dctl часто различаются. Если в вашей системе
+      есть команды <literal>locate</literal> 
+      или <literal>whereis</literal>, или <literal>which</literal>,
+      они помогут вам найти программы, контролирующие сервер.
+     </para>
+
+     <para>
+      Другие варианты компиляции PHP для Apache:
+      <informalexample>
+       <programlisting role="shell">
+<![CDATA[
+./configure --with-apxs --with-pgsql
+]]>
+       </programlisting>
+      </informalexample>
+     </para>
+     <para>
+      Будет создан файл подгружаемой библиотеки <filename>libphp5.so</filename> 
+      (или <filename>libphp4.so</filename> для PHP 4).
+      Эта библиотека должна быть подгружена в Apache с использованием
+      директивы LoadModule конфигурационного файла &httpd.conf;. В данном
+      случае поддержка PostgreSQL будет встроена в эту библиотеку.
+     </para>
+     <para>
+      <informalexample>
+       <programlisting role="shell">
+<![CDATA[
+./configure --with-apxs --with-pgsql=shared
+]]>
+       </programlisting>
+      </informalexample>
+     </para>
+     <para>
+      Будет создан файл подгружаемой библиотеки <filename>libphp5.so</filename> 
+      для Apache, но так же будет создана подгружаемая библиотека
+      <filename>pgsql.so</filename>, которая должна быть подгружена в PHP
+      одним из двух способов: директивой extension  в &php.ini; или в скрипте,
+      использованием функции <function>dl</function>.
+     </para>
+     <para>
+      <informalexample>
+       <programlisting role="shell">
+<![CDATA[
+./configure --with-apache=/path/to/apache_source --with-pgsql
+]]>
+       </programlisting>
+      </informalexample>
+     </para>
+     <para>
+      Будет создана библиотека <filename>libmodphp5.a</filename>. Файл
+      <filename>mod_php5.c</filename> и несколько сопровождающих файлов будут
+      скопированы в каталог <literal>src/modules/php5</literal> дерева
+      исходных кодов Apache. Затем следует cкомпилировать Apache, используя
+      <literal>--activate-module=src/modules/php5/libphp5.a</literal>, система
+      сборки Apache создаст <filename>libphp5.a</filename> и статически свяжет
+      с исполняемым <filename>httpd</filename>.
+      (замените <literal>php5</literal> на <literal>php4</literal> для PHP
+      4). Поддержка PostgreSQL будет включена непосредственно в 
+      <filename>httpd</filename> и конечным результатом будет единственный
+      исполняемый файл <filename>httpd</filename>, включающий все от Apache и
+      все от PHP.
+     </para>
+     <para>
+      <informalexample>
+       <programlisting role="shell">
+<![CDATA[
+./configure --with-apache=/path/to/apache_source --with-pgsql=shared
+]]>
+       </programlisting>
+      </informalexample>
+     </para>
+     <para>
+      Так же как и прежде, взамен поддержки PostgreSQL, встроенной
+      непосредственно в финальный исполняемый файл <filename>httpd</filename>
+      вы получите подгружаемую библиотеку <filename>pgsql.so</filename>,
+      которую вы должны будете подгрузить в PHP одним из двух
+      способов: &php.ini; или используя функцию <function>dl</function>.
+     </para>
+     <para>
+      Выбирая способ установки PHP, следует учитывать преимущества и
+      недостатки каждого из методов. Если вы собираете PHP, как подгружаемый
+      модуль Apache - вы сможете компилировать PHP и Apache отдельно друг от
+      друга и вам не нужно будет перекомпилировать Apache, если вы захотите
+      изменить конфигурацю PHP. Если вы собираете PHP статически - PHP будет 
+      работать чуть быстрее. Для получения более подробной информаци посетите 
+      страницу посвященную поддержке  
+      <link xlink:href="&url.apachedso;">DSO (Dynamic Shared Object)</link>
+      в Apache.
+     </para>
+    <note>
+     <para>
+      В настоящее время файл конфигурации Apache &httpd.conf; обычно
+      поставляется со следующими настройками:
+      <informalexample>
+       <programlisting role="apache-conf">
+<![CDATA[
+User nobody
+Group "#-1"
+]]>
+       </programlisting>
+      </informalexample>
+      Пока вы не измените группу на "Group nogroup" или что-нибудь вроде
+      "Group daemon" (такая настройка довольно распространена), PHP не сможет
+      открывать файлы.
+     </para>
+    </note>  
+    <note>
+     <para>
+      Убедитесь, что вы указываете установленную версию apxs, когда
+      используете <option role="configure">--with-apxs=/path/to/apxs</option>.
+      Вы НЕ ДОЛЖНЫ указывать версию apxs, поставляемую с исходными кодами
+      Apache - только действительно установленную в вашу систему вместе с
+      сервером.
+     </para>
+    </note>   
+   </sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
