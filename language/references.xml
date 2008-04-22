@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1.37 Maintainer: Nick Shaforostoff Status: ready -->
-<!-- $Revision: 1.3 $ -->
+<!-- EN-Revision: 1.50 Status: ready -->
+<!-- $Revision: 1.4 $ -->
  <chapter xml:id="language.references" xmlns="http://docbook.org/ns/docbook">
   <title>Ссылки. Разъяснения</title>
 
@@ -37,6 +37,33 @@ $a =& $b;
      Это также касается массивов, передаваемых функциям по значению.
     </para>
    </note>
+<note>
+    <para>
+     Если вы возвращаете из функции ссылку на неинициализированную
+     переменную - она будет создана.
+     <example>
+      <title>Использование ссылок с неинициализированными переменными</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+function foo(&$var) { }
+
+foo($a); // $a создана и равна null
+
+$b = array();
+foo($b['b']);
+var_dump(array_key_exists('b', $b)); // bool(true)
+
+$c = new StdClass;
+foo($c->d);
+var_dump(property_exists($c, 'd')); // bool(true)
+?>
+]]>
+      </programlisting>
+     </example>
+    </para>
+   </note>
+
    <para>
    Такой же синтаксис можно использовать и в функциях, возвращая ссылки, а так же в операторе <literal>new</literal> (начиная с PHP 4.0.4):
     <informalexample>
@@ -165,7 +192,7 @@ foo($a);
     linkend="language.references.pass">передачи по ссылке</link>.
    </para>
    <simpara>
-    Третье, что могут ссылк - <link
+    Третье, что могут ссылки - <link
     linkend="language.references.return">возвращение значение по ссылке</link>.
    </simpara>
   </sect1>
@@ -304,6 +331,18 @@ $foo->x = 2;
      В отличие от передачи параметров по ссылке, <literal>&amp;</literal> здесь нужно использовать в обоих местах - для указания на то, что вы возвращаете ссылку, а не копию, как обычно, и для указания того, что происходит связывание по ссылке, а не обычное присвоение.
     </simpara>
    </note>
+   <note>
+    <simpara>
+    Если вы возвращаете ссылку из функции используя следующий синтаксис:
+    <literal>return ($this->value);</literal>, это <emphasis>не</emphasis>  
+    будет работать, так как вы возвращаете по ссылке результат
+    <emphasis>выражения</emphasis>, а не переменную. По ссылке можно
+    возвращать только переменные, ничего больше. Начиная с PHP 4.4.0 и PHP 5.1.0, 
+    если код пытается вернуть по ссылке динамическое выражение или результат оператора 
+    <literal>new</literal>, будет выброжено предупреждение <constant>E_NOTICE</constant>.
+    </simpara>
+   </note>
+
   </sect1>
 
   <sect1 xml:id="language.references.unset">
