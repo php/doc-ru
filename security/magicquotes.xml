@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- $Revision: 1.1 $ -->
+  <chapter xml:id="security.magicquotes" xmlns="http://docbook.org/ns/docbook">
+   <title>Волшебные кавычки</title>
+   &warn.deprecated.removed-6-0-0;
+   <para>
+    Волшебные кавычки (Magic Quotes) - это процесс автоматического экранирования
+    входящих данных PHP скрипта. Желательно отключать директиву magic quotes и
+    вместо этого экранировать данные в процессе разработки, если это необходимо. 
+   </para>
+
+   <sect1 xml:id="security.magicquotes.what">
+    <title>Что такое волшебные кавычки?</title>
+    <para>
+     Это когда все символы <literal>'</literal> (одиночные кавычки),
+     <literal>"</literal> (двойные кавычки), <literal>\</literal> (обратный слэш)
+     и <literal>NULL</literal> автоматически экранируются обратным слэшем. Это
+     идентично тому, что делает функция <function>addslashes</function>.
+    </para>
+    <para>
+     Существует три вида директив волшебных кавычек:
+    </para>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>
+      </simpara>
+      <simpara>
+       Это касается данных из HTTP запроса (GET, POST и COOKIE). Не может
+       быть изменено во время выполнения и по умолчанию в PHP установлено
+       значение <emphasis>on</emphasis>.
+      </simpara>
+      <simpara>
+       Смотри также <function>get_magic_quotes_gpc</function>.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <link linkend="ini.magic-quotes-runtime">magic_quotes_runtime</link>
+      </simpara>
+      <simpara>
+       Если включено, то большинство функций, которые возвращают данные из
+       внешнего источника, включая базы данных и текстовые файлы, будут
+       экранировать кавычки с помощью обратного слэша. Может быть установлено
+       во время выполнения и по умолчанию в PHP имеет значение
+       <emphasis>off</emphasis>.
+      </simpara>
+      <simpara>
+       Смотри также <function>set_magic_quotes_runtime</function> и
+       <function>get_magic_quotes_runtime</function>.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <link linkend="ini.magic-quotes-sybase">magic_quotes_sybase</link>
+      </simpara>
+      <simpara>
+       Если включено, то одиночная кавычка экранируются одиночной кавычкой
+       взамен обратного слэша. Если установлено значение on, то это полностью
+       отвергает установки <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>.
+       В том случае, когда обе директивы включены, выполняется экранирование только
+       одиночных кавычек через <literal>''</literal>. Двойные кавычки, обратные слэши,
+       значение NULL останутся нетронутыми и неэкранированными.
+      </simpara>
+      <simpara>
+       Смотри также <function>ini_get</function> для запроса установленного значения.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </sect1>
+
+   <sect1 xml:id="security.magicquotes.why">
+    <title>Зачем использовать волшебные кавычки?</title>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Полезно для начинающих
+      </simpara>
+      <simpara>
+       Волшебные кавычки реализованы в PHP с целью осуществления помощи начинающим
+       программистам в написании кода, который будет устойчив к опасностям. Хотя
+       <link linkend="security.database.sql-injection">SQL инъекции</link> до сих
+       пор возможны при включенной директиве magic quotes, риск все же будет меньше.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Удобство
+      </simpara>
+      <simpara>
+       При вставке данных в базу данных, волшебные кавычки преимущественно
+       выполняют <function>addslashes</function> для всех данных из Get, Post,
+       и Cookie; и это происходит автоматически.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </sect1>
+
+   <sect1 xml:id="security.magicquotes.whynot">
+    <title>Почему не надо использовать волшебные кавычки</title>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Переносимость
+      </simpara>
+      <simpara>
+      	Возможность присваивания значений on или off сказывается на
+      	переносимости. Используйте <function>get_magic_quotes_gpc</function>
+      	для проверки и пишите код соответствующим образом.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Производительность
+      </simpara>
+      <simpara>
+       Так как не все данные заносятся в базу данных, то присутствует потеря
+       производительности при экранировании всех данных. Простой вызов
+       экранирующих функций (например, <function>addslashes</function>)
+       во время выполнения более эффективен.
+      </simpara>
+      <simpara>
+       Хотя <filename>php.ini-dist</filename> включает эти директивы по
+       умолчанию, <filename>php.ini-recommended</filename> отключает их.
+       Эта рекомендация соответствует, в основном, по причинам
+       производительности.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Неудобство
+      </simpara>
+      <simpara>
+       Так как не все данные должны быть экранированы, то часто досадно
+       видеть экранированные данные там, где этого не должно быть.
+       Например, при отправке письма из формы можно наблюдать связку \'
+       в самом письме. Для того, чтобы это исправить, требуется дополнительно
+       использовать <function>stripslashes</function>.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </sect1>
+
+   <sect1 xml:id="security.magicquotes.disabling">
+    <title>Отключение волшебных кавычек</title>
+    <para>
+     Директиву <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>
+     можно отключить только на системном уровне и нельзя во время выполениня.
+     В других случаях, использование <function>ini_set</function> не
+     дает эффекта.
+    </para>
+    <para>
+     <example>
+      <title>Отключение волшебных кавычек на сервере</title>
+      <para>
+       Пример, где показана установка значения <literal>Off</literal> в
+       &php.ini; для этих директив. Для дополнительной информации читайте
+       раздел руководства под названием <link linkend="configuration.changes">
+       Как изменять параметры конфигурации</link>.
+      </para>
+      <screen>
+<![CDATA[
+; Волшебные кавычки
+;
+
+; Волшебные кавычки для входных данных GET/POST/Cookie.
+magic_quotes_gpc = Off
+
+; Волшебные кавычки для данных, поступающих во время выполнения (например, данные из SQL, из exec() и т.д).
+magic_quotes_runtime = Off
+
+; Использование волшебных кавычек в стиле Sybase (экранирование ' путем '' вместо \').
+magic_quotes_sybase = Off
+]]>
+      </screen>
+      <para>
+       Если доступ к конфигурации на сервере невозможен, используйте
+       <filename>.htaccess</filename> в качестве альтернативы.
+       Например:
+      </para>
+      <screen>
+<![CDATA[
+php_flag magic_quotes_gpc Off
+]]>
+      </screen>
+     </example>
+    </para>
+    <para>
+     В целях написания переносимого кода (код, который будет работать
+     на любой платформе), и в случае невозможности изменения конфигурации
+     на сервере, показан пример отключения <link linkend="ini.magic-quotes-gpc">
+     magic_quotes_gpc</link> в скрипте. Этот метод неэффективен, так как
+     предпочтительно устанавливать соответствующие директивы в другом
+     месте.
+    </para>
+    <para>
+     <example>
+      <title>Отключение волшебных кавычек в скрипте</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+if (get_magic_quotes_gpc()) {
+    function stripslashes_deep($value)
+    {
+        $value = is_array($value) ?
+                    array_map('stripslashes_deep', $value) :
+                    stripslashes($value);
+
+        return $value;
+    }
+
+    $_POST = array_map('stripslashes_deep', $_POST);
+    $_GET = array_map('stripslashes_deep', $_GET);
+    $_COOKIE = array_map('stripslashes_deep', $_COOKIE);
+    $_REQUEST = array_map('stripslashes_deep', $_REQUEST);
+}
+?>
+]]>
+      </programlisting>
+     </example>
+    </para>
+   </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
