@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision: 1.1 $ -->
+<!-- splitted from ./en/functions/var.xml, last change in rev 1.6 -->
+<refentry xml:id="function.var-export" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>var_export</refname>
+  <refpurpose>Выводит в браузер или возвращает интерпретируемое строковое представление переменной</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>mixed</type><methodname>var_export</methodname>
+   <methodparam><type>mixed</type><parameter>expression</parameter></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>return</parameter></methodparam>
+  </methodsynopsis>
+  <simpara>
+   <function>var_export</function> возвращает структурированную информацию о
+   данной переменной. Функция аналогична <function>var_dump</function>
+   за одним исключением: возвращаемое представление является полноценным PHP кодом.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>expression</parameter></term>
+     <listitem>
+      <para>
+       Переменная, которую необходимо экспортировать.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>return</parameter></term>
+     <listitem>
+      <para>
+       Если используется и значение равно &true;, <function>var_export</function> вернет
+       представление переменной вместо его вывода.
+      </para>
+      &note.uses-ob;
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает представление переменной, если параметр <parameter>return</parameter> 
+   используется и приравнивается к &true;. В противном случае функция
+   возвращает &null;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.1.0</entry>
+       <entry>
+        Стало возможным экспортировать классы и массивы, содержащие другие классы, используя
+        магический метод <link linkend="language.oop5.magic.set-state">__set_state</link>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Примеры использования <function>var_export</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$a = array (1, 2, array ("a", "b", "c"));
+var_export($a);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array (
+  0 => 1,
+  1 => 2,
+  2 => 
+  array (
+    0 => 'a',
+    1 => 'b',
+    2 => 'c',
+  ),
+)
+]]>
+    </screen>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$b = 3.1;
+$v = var_export($b, true);
+echo $v;
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+3.1
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Экспорт классов в PHP с версии 5.1.0</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class A { public $var; }
+$a = new A;
+$a->var = 5;
+var_export($a);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+A::__set_state(array(
+   'var' => 5,
+))
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Использование <link linkend="language.oop5.magic.set-state">__set_state</link> (в PHP с версии 5.1.0)</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class A
+{
+    public $var1;
+    public $var2;
+
+    public static function __set_state($an_array)
+    {
+        $obj = new A;
+        $obj->var1 = $an_array['var1'];
+        $obj->var2 = $an_array['var2'];
+        return $obj;
+    }
+}
+
+$a = new A;
+$a->var1 = 5;
+$a->var2 = 'foo';
+
+eval('$b = ' . var_export($a, true) . ';'); // $b = A::__set_state(array(
+                                            //    'var1' => 5,
+                                            //    'var2' => 'foo',
+                                            // ));
+var_dump($b);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+object(A)#2 (2) {
+  ["var1"]=>
+  int(5)
+  ["var2"]=>
+  string(3) "foo"
+}
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Переменные типа <type>resource</type> не могут быть экспортированы
+    с помощью этой функции.
+   </para>
+  </note>
+  <note>
+   <para>
+    <function>var_export</function> не обрабатывает кольцевые ссылки, так как
+    было бы почти невозможно сгенерировать интерпретируемый PHP код для такого случая.
+    Если Вы хотите производить какие-то действия с полным представлением массива
+    или объекта, используйте функцию <function>serialize</function>.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>print_r</function></member>
+    <member><function>serialize</function></member>
+    <member><function>var_dump</function></member>
+   </simplelist>
+  </para>  
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"../../../../manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
