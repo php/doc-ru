@@ -1,109 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: conf Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: lovchy Status: ready -->
-<!-- splitted from ./en/functions/mysql.xml, last change in rev 1.45 -->
-  <refentry xml:id="function.mysql-fetch-assoc" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>mysql_fetch_assoc</refname>
-    <refpurpose>
-     Обрабатывает ряд результата запроса и возвращает ассоциативный массив.
-    </refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>array</type><methodname>mysql_fetch_assoc</methodname>
-      <methodparam><type>resource</type><parameter>result</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     Возвращает ассоциативный массив с названиями индексов, соответсвующими 
-     названиям колонок или &false; если рядов больше нет.
-    </para>
-    <para>
-     Функция <function>mysql_fetch_assoc</function> аналогична вызову функции
-     <function>mysql_fetch_array</function> со вторым параметром, равным
-     MYSQL_ASSOC. Функция возвращает только ассоциативный массив.
-     Если вам нужны как ассоциативные, так и численные индексы в массиве,
-     обратитесь к функции <function>mysql_fetch_array</function>.
-    </para>
-    <para>
-     Если несколько колонок в запросе имеют одинаковые имена, значение ключа
-     массива с индексом названия колонок будет равно значению последней из
-     колонок. Чтобы работать с первыми, используйте функции, возвращающие
-     не ассоциативный массив: <function>mysql_fetch_row</function>, либо используйте алиасы.
-     Смотрите пример использования алиасов в SQL в описании
-     функции <function>mysql_fetch_array</function>.
-    </para>
-    <para>
-     Важно заметить, что
-     <function>mysql_fetch_assoc</function> работает <emphasis>НЕ
-     </emphasis> медленнее, чем
-     <function>mysql_fetch_row</function>, предоставляя более удобный доступ к
-     данным.
-    </para>
-    &database.field-case;
-    <para>
-     <example>
-      <title>Расширенный пример использования <function>mysql_fetch_assoc</function></title>
-      <programlisting role="php">
+<refentry xml:id="function.mysql-fetch-assoc" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>mysql_fetch_assoc</refname>
+  <refpurpose>Возвращает ряд результата запроса в качестве ассоциативного массива.</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>mysql_fetch_assoc</methodname>
+   <methodparam><type>resource</type><parameter>result</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает ассоциативный массив, соответсвующий полученному ряду и сдвигает вперед
+   внутренний указатель результата.
+   Функция <function>mysql_fetch_assoc</function> аналогична вызову функции
+   <function>mysql_fetch_array</function> со вторым необязательным параметром, равным
+   MYSQL_ASSOC. Функция возвращает только ассоциативный массив.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    &mysql.result.description;
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает ассоциативный массив строк, соответствующий полученному ряду, либо
+   &false; если рядов больше нет.
+  </para>
+  <para>
+   Если два или более столбцов результата имеют одинаковые имена,
+   приоритет будет иметь последний столбец. Для доступа к другому
+   одноименному столбцу (или столбцам), вам необходимо либо обратиться
+   к результату запроса по числовому индексу с помощью
+   <function>mysql_fetch_row</function> либо добавить псевдонимы к нужным столбцам.
+   Для более подробной информации о псевдонимах
+   смотрите описание примера <function>mysql_fetch_array</function>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Расширенный пример использования <function>mysql_fetch_assoc</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
-    $conn = mysql_connect("localhost", "mysql_user", "mysql_password");
-    
-    if (!$conn) {
-        echo "Unable to connect to DB: " . mysql_error();
-        exit;
-    }
-    
-    if (!mysql_select_db("mydbname")) {
-        echo "Unable to select mydbname: " . mysql_error();
-        exit;
-    }
-    
-    $sql = "SELECT id as userid, fullname, userstatus 
-            FROM   sometable
-            WHERE  userstatus = 1";
+$conn = mysql_connect("localhost", "mysql_user", "mysql_password");
 
-    $result = mysql_query($sql);
+if (!$conn) {
+    echo "Unable to connect to DB: " . mysql_error();
+    exit;
+}
 
-    if (!$result) {
-        echo "Could not successfully run query ($sql) from DB: " . mysql_error();
-        exit;
-    }
-    
-    if (mysql_num_rows($result) == 0) {
-        echo "No rows found, nothing to print so am exiting";
-        exit;
-    }
+if (!mysql_select_db("mydbname")) {
+    echo "Unable to select mydbname: " . mysql_error();
+    exit;
+}
 
-    // До тех пор, пока в результате содержатся ряды, помещаем их в
-    // ассоциативный массив.
-    // Заметка: если запрос возвращает только один ряд -- нет нужды в цикле.
-    // Заметка: если вы добавите extract($row); в начало цикла, вы сделаете
-    //          доступными переменные $userid, $fullname, $userstatus.
-    while ($row = mysql_fetch_assoc($result)) {
-        echo $row["userid"];
-        echo $row["fullname"];
-        echo $row["userstatus"];
-    }
-	    
-    mysql_free_result($result);
+$sql = "SELECT id as userid, fullname, userstatus
+        FROM   sometable
+        WHERE  userstatus = 1";
+
+$result = mysql_query($sql);
+
+if (!$result) {
+    echo "Could not successfully run query ($sql) from DB: " . mysql_error();
+    exit;
+}
+
+if (mysql_num_rows($result) == 0) {
+    echo "No rows found, nothing to print so am exiting";
+    exit;
+}
+
+// До тех пор, пока в результате содержатся ряды, помещаем их в ассоциативный массив.
+// Замечание: если запрос возвращает только один ряд - нет нужды в цикле.
+// Замечание: если вы добавите extract($row); в начало цикла, вы сделаете
+//            доступными переменные $userid, $fullname и $userstatus
+while ($row = mysql_fetch_assoc($result)) {
+    echo $row["userid"];
+    echo $row["fullname"];
+    echo $row["userstatus"];
+}
+
+mysql_free_result($result);
 
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     См. также 
-     <function>mysql_fetch_row</function>,
-     <function>mysql_fetch_array</function>,
-     <function>mysql_query</function> и
-     <function>mysql_error</function>.
-    </para>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <title>Производительность</title>
+   <para>
+    Важно отметить, что
+    <function>mysql_fetch_assoc</function> лишь <emphasis>незначительно</emphasis>
+    медленнее, чем <function>mysql_fetch_row</function>, но в то же время предоставляет
+    важную дополнительную информацию.
+   </para>
+  </note>
+  &database.field-case;
+  &database.fetch-null;
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>mysql_fetch_row</function></member>
+    <member><function>mysql_fetch_array</function></member>
+    <member><function>mysql_data_seek</function></member>
+    <member><function>mysql_query</function></member>
+    <member><function>mysql_error</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
