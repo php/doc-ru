@@ -1,0 +1,2111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 6e268a928712966330c37b9a2beb6e00b6a9842a Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Id$ -->
+<!-- splitted from ./en/functions/pcre.xml, last change in rev 1.2 -->
+<chapter xml:id="reference.pcre.pattern.syntax" xmlns="http://docbook.org/ns/docbook">
+ <title>Синтаксис регулярных выражений</title>
+ <titleabbrev>Описание синтаксиса Perl-совместимых регулярных выражений</titleabbrev>
+
+ <section xml:id="regexp.introduction">
+  <title>Вступление</title>
+  <para>
+   Ниже описаны синтаксис и семантика регулярных выражений, поддерживаемых
+   библиотекой PCRE. Регулярные выражения также описаны в документации
+   языка Perl и во множестве других книг, некоторые содержат большое количество
+   примеров. Очень подробно регулярные выражения описаны в книге
+   Джеффри Фридла "Регулярные выражения" (Jeffrey Friedl
+   "Mastering Regular Expressions"), опубликованной издательством O'Reilly
+   (ISBN 1-56592-257-3).
+   Описание ниже дано в качестве справочной информации.
+  </para>
+  <para>
+   Регулярное выражение - это шаблон, с которым сравнивается
+   указанная строка слева направо.
+   Большинство символов в шаблоне являются самими собой,
+   и совпадают с соответствующими символами в искомой строке.
+   В качестве банального примера, шаблон
+   <literal>The quick brown fox</literal>
+   соответствует той части искомой строки, которая с ним совпадает.
+  </para>
+ </section>
+ <section xml:id="regexp.reference.delimiters">
+  <title>Разделители</title>
+  <para>
+   При использовании любой PCRE функции необходимо заключать
+   шаблон в <emphasis>разделители</emphasis>.
+   Разделителем может быть любой символ не являющийся буквой, цифрой,
+   обратной косой чертой или каким-либо пробельным символом.
+  </para>
+  <para>
+   Часто используемыми разделителями являются косые черты (<literal>/</literal>),
+   знаки решетки (<literal>#</literal>) и тильды (<literal>~</literal>). Ниже
+   представлены примеры шаблонов с корректными разделителями.
+   <informalexample>
+    <programlisting>
+<![CDATA[
+/foo bar/
+#^[^0-9]$#
++php+
+%[a-zA-Z0-9_-]%
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  <para>
+   Если необходимо использовать разделитель внутри шаблона,
+   его нужно проэкранировать с помощью обратной косой черты.
+   Если разделитель часто используется в шаблоне, в целях удобочитаемости,
+   лучше выбрать другой разделитель для этого шаблона.
+   <informalexample>
+    <programlisting>
+<![CDATA[
+/http:\/\//
+#http://#
+]]>
+    </programlisting>
+   </informalexample>
+   Функция <function>preg_quote</function> может быть использована для
+   экранирования строки, используемой в шаблоне, а ее необязательный второй параметр
+   позволяет указать используемый разделитель.
+  </para>
+  <para>
+   В дополнение к вышеупомянутым разделителям, также возможно использовать
+   скобки, где открывающая и закрывающая скобки, соответственно, являются
+   открывающим и закрывающим разделителем.
+   <informalexample>
+    <programlisting>
+<![CDATA[
+{this is a pattern}
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  <para>
+   После закрывающего разделителями можно использовать
+   <link linkend="reference.pcre.pattern.modifiers">модификаторы
+   шаблонов</link>. Ниже следуюет пример регистро-независимого поиска:
+   <informalexample>
+    <programlisting>
+<![CDATA[
+#[a-z]#i
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+ </section>
+ <section xml:id="regexp.reference.meta">
+  <title>Метасимволы</title>
+  <para>
+   Сила регулярных выражений исходит из возможности использовать условия и
+   повторения в шаблоне. Они записываются при помощи <emphasis>метасимволов</emphasis>,
+   которые специальным образом интерпретируются.
+  </para>
+  <para>
+   Существуют два различных набора метасимволов: те, которые используются
+   внутри квадратных скобок, и те, которые используются вне квадратных скобок.
+   Вне квадратных скобок используются следующие метасимволы:
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\</emphasis></term>
+     <listitem><simpara>общий экранирующий символ, допускающий несколько вариантов применения</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>^</emphasis></term>
+     <listitem><simpara>декларирует начало данных (или строки, в многострочном режиме)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>$</emphasis></term>
+     <listitem><simpara>декларирует конец данных (или строки, в многострочном режиме)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>.</emphasis></term>
+     <listitem><simpara>соответствует любому символу, кроме перевода строки (по умолчанию)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>[</emphasis></term>
+     <listitem><simpara>начало описания символьного класса</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>]</emphasis></term>
+     <listitem><simpara>конец описания символьного класса</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>|</emphasis></term>
+     <listitem><simpara>начало ветки условного выбора</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>(</emphasis></term>
+     <listitem><simpara>начало подмаски</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>)</emphasis></term>
+     <listitem><simpara>конец подмаски</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>?</emphasis></term>
+     <listitem>
+      <simpara>
+       расширяет смысл метасимвола (, является также квантификатором, означающим отсутствие либо ровно 1 вхождение,
+       также преобразует жадные квантификаторы в ленивые (смотрите <link linkend="regexp.reference.repetition">повторение</link>)
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>*</emphasis></term>
+     <listitem><simpara>квантификатор, означающий 0 или более вхождений</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>+</emphasis></term>
+     <listitem><simpara>квантификатор, означающий 1 или более вхождений</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>{</emphasis></term>
+     <listitem><simpara>начало количественного квантификатора</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>}</emphasis></term>
+     <listitem><simpara>конец количественного квантификатора</simpara></listitem>
+    </varlistentry>
+   </variablelist>
+
+    Часть шаблона, заключенная в квадратные скобки, называется "символьным классом".
+    Внутри символьных классов используются следующие метасимволы:
+
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\</emphasis></term>
+     <listitem><simpara>общий экранирующий символ</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>^</emphasis></term>
+     <listitem><simpara>означает отрицание класса, допустим только в начале класса</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>-</emphasis></term>
+     <listitem><simpara>означает символьный интервал</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>]</emphasis></term>
+     <listitem><simpara>завершает символьный класс</simpara></listitem>
+    </varlistentry>
+   </variablelist>
+
+    Следующие разделы детально описывают каждый из перечисленных метасимволов.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.escape">
+  <title>Экранирующие последовательности</title>
+  <para>
+   Обратная косая черта ('\') имеет несколько применений. Прежде всего, если она
+   предшествует не буквенно-цифровому символу, она снимает с него специальное значение,
+   которое он мог иметь. Применение обратной косой черты как экранирующего символа
+   допустимо как в символьном классе, так и вне него.
+  </para>
+  <para>
+   Например, если вы хотите задать соответствие символу "*",
+   в шаблоне необходимо указать "\*". Это предотвратит трактование последующего символа
+   как метасимвола с особым значением. Всегда безопасно экранировать
+   не буквенно-цифровые символы с помощью "\", если вы хотите убедиться,
+   что они означают в шаблоне самих себя. В частном случае для сопоставления
+   с самим символом обратной косой черты, используйте запись "\\".
+  </para>
+  <note>
+   <para>
+    <link linkend="language.types.string.syntax">PHP-cтроки</link>, заключенные
+    в одинарные и двойные кавычки интерпретируют обратную косую черту по-разному.
+    Поэтому, если необходимо совпадение \ с регулярным выражением \\,
+    в PHP-коде нужно использовать "\\\\" или '\\\\'.
+   </para>
+  </note>
+  <para>
+   В случае, если указан модификатор
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>,
+   пробельные символы в шаблоне (вне описания символьного класса) игнорируются.
+   Также игнорируется часть строки, находящаяся между символом "#"
+   (опять же, не участвующем в описании символьного класса)
+   и следующим символом перевода строки. В таком случае обратный слэш можно применять
+   как экранирующий символ для указания вхождений пробельных символов
+   или символа "#" в шаблоне.
+  </para>
+  <para>
+    Второе применение обратного слэша заключается в том, что он позволяет использовать
+    непечатные символы в видимой форме в описании шаблона.
+    При том, что в PCRE нет ограничений на использование непечатных символов
+    (исключая бинарный ноль, который интерпретируется как конец шаблона),
+    при редактировании программного кода в каком-либо текстовом редакторе
+    гораздо удобнее использовать следующие комбинации, чем реальные символы, которые
+    они представляют:
+  </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\a</emphasis></term>
+     <listitem>
+      <simpara>символ оповещения, сигнал, (BEL, шестнадцатиричный код 07)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\cx</emphasis></term>
+     <listitem>
+      <simpara>"Ctrl+x", где x - произвольный символ</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\e</emphasis></term>
+     <listitem>
+      <simpara>escape (шестнадцатеричный код 1B)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\f</emphasis></term>
+     <listitem>
+      <simpara>разрыв страницы (шестнадцатиричный код 0C)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\n</emphasis></term>
+     <listitem>
+      <simpara>перевод строки (шестнадцатиричный код 0A)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\p{xx}</emphasis></term>
+     <listitem>
+      <simpara>
+       символ со свойством xx, подробнее смотрите
+       <link linkend="regexp.reference.unicode">свойства unicode</link>
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\P{xx}</emphasis></term>
+     <listitem>
+      <simpara>
+       символ без свойства xx, подробнее смотрите
+       <link linkend="regexp.reference.unicode">свойства unicode</link>
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\r</emphasis></term>
+     <listitem>
+      <simpara>возврат каретки (шестнадцатиричный код 0D)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\t</emphasis></term>
+     <listitem>
+      <simpara>табуляция (шестнадцатиричный код 09)</simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\xhh</emphasis></term>
+     <listitem>
+      <simpara>
+       символ с шестнадцатиричным кодом hh, подробнее смотрите
+       <link linkend="regexp.reference.unicode">свойства unicode</link>
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\ddd</emphasis></term>
+     <listitem>
+      <simpara>символ с восьмеричным кодом ddd, либо ссылка на подмаску</simpara>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Если быть более точным, комбинация "<literal>\cx</literal>" интерпретируется
+   следующим образом: если "<literal>x</literal>" - символ нижнего регистра,
+   он преобразуется в верхний регистр.
+   После этого шестой бит символа (шестнадцатеричный код 40) инвертируется.
+   Таким образом "<literal>\cz</literal>" интерпретируется как шестнадцатеричное
+   значение 1A, в то время как "<literal>\c{</literal>" получает шестнадцатиричное
+   значение 3B, а "<literal>\c;</literal>" - 7B.
+  </para>
+  <para>
+   После "<literal>\x</literal>" считываются еще две шестнадцатиричные цифры
+   (они могут быть записаны в нижнем или верхнем регистре).
+   В <emphasis>режиме UTF-8</emphasis>, разрешается использование
+   "<literal>\x{...}</literal>", где содержимое скобок является строкой
+   из шестнадцатеричных цифр. Она интерпретируется как символ UTF-8 character с кодом,
+   совпадающим с данным шестнадцатеричным числом.
+   Исходная шестнадцатеричная экранирующая последовательность,
+   <literal>\xhh</literal>, совпадает с двухбайтным UTF-8 символом, если его значение
+   превышает 127.
+  </para>
+  <para>
+   После  "<literal>\0</literal>" считываются две восьмеричные цифры.
+   Если в записи менее двух цифр, будут использованы
+   все фактически присутствующие цифры. Таким образом, последовательность
+   "<literal>\0\x\07</literal>" будет интерпретирована как два бинарных нуля,
+   за которыми следует символ оповещения (звонок). В случае, если вы используете
+   представление числа в восьмеричном коде, убедитесь, что за
+   начальным нулем следуют две значащие цифры.
+  </para>
+  <para>
+   Обработка обратного слэша, за которым следует ненулевая цифра, несколько сложнее.
+   Вне символьного класса PCRE воспринимает обратный слэш и следующие за ним цифры
+   как десятичное число. Если полученное значение меньше десяти,
+   либо если шаблон содержит по меньшей мере такое же количество предшествующих
+   текущей позиции подмасок, вся конструкция интерпретируется как
+   <emphasis>ссылка на подмаску</emphasis>.
+   Более детальное описание будет приведено ниже при обсуждении механизма работы подмасок.
+  </para>
+  <para>
+   Внутри символьного класса, либо если полученное значение больше 9 и соответствующее
+   количество предшествующих подмасок отсутствует, PCRE считывает до трех восьмеричных
+   цифр, следующих за обратным слэшем, и генерирует один байт из последних 8-ми
+   значащих битов полученного значения. Все последующие цифры обозначают себя же. Например:
+  </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\040</emphasis></term>
+     <listitem><simpara>еще один способ записи пробела</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\40</emphasis></term>
+     <listitem>
+      <simpara>
+       то же самое в случае, если данной записи предшествует менее сорока подмасок
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\7</emphasis></term>
+     <listitem><simpara>всегда интерпретируется как ссылка на подмаску</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\11</emphasis></term>
+     <listitem>
+      <simpara>
+       может быть как обратной ссылкой, так и альтернативной записью символа табуляции
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\011</emphasis></term>
+     <listitem><simpara>всегда интерпретируется как символ табуляции</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\0113</emphasis></term>
+     <listitem><simpara>символ табуляции, за которым следует цифра "3"</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\113</emphasis></term>
+     <listitem>
+      <simpara>
+       интерпретируется как символ с восьмеричным кодом 113 (так как ссылок на подмаски не может быть более чем 99)
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\377</emphasis></term>
+     <listitem><simpara>байт, всецело состоящий из единичных битов</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\81</emphasis></term>
+     <listitem>
+      <simpara>
+       либо обратная ссылка, либо бинарный ноль, за которым следуют цифры "8" и "1"
+      </simpara>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Следует помнить, что восьмеричные значения, превышающие 100, следует писать без
+   лидирующего нуля, так как читается не более трех восьмеричных цифр.
+  </para>
+  <para>
+   Все последовательности, определяющие однобайтное значение, могут встречаться
+   как внутри, так и вне символьных классов. Кроме того, внутри символьного класса
+   запись "<literal>\b</literal>" интерпретируется как символ возврата
+   ('backspace', шестнадцатеричный код 08). Вне символьного класса она имеет
+   другое значение (какое именно, описано ниже).
+  </para>
+  <para>
+   Третье использование обратного слэша - указание общего типа символов:
+  </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\d</emphasis></term>
+     <listitem><simpara>любая десятичная цифра</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\D</emphasis></term>
+     <listitem><simpara>любой символ, кроме десятичной цифры</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\h</emphasis></term>
+     <listitem><simpara>любой горизонтальный пробельный символ (начиная с версии PHP 5.2.4)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\H</emphasis></term>
+     <listitem><simpara>любой символ, не являющийся горизонтальным пробельным символом (начиная с версии PHP 5.2.4)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\s</emphasis></term>
+     <listitem><simpara>любой пробельный символ</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\S</emphasis></term>
+     <listitem><simpara>любой непробельный символ</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\v</emphasis></term>
+     <listitem><simpara>любой вертикальный пробельный символ (начиная с версии PHP 5.2.4)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\V</emphasis></term>
+     <listitem><simpara>любой символ, не являющийся вертикальным пробельным символом (начиная с версии PHP 5.2.4)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\w</emphasis></term>
+     <listitem><simpara>Любой символ, образующий "слово"</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\W</emphasis></term>
+     <listitem><simpara>Любой символ, не образующий "слово"</simpara></listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Каждая пара таких специальных последовательностей делит полное множество
+   всех символов на два непересекающихся множества.
+   Любой символ соответствует одному и только одному множеству из пары.
+  </para>
+  <para>
+   Символ, образующий "слово" - это произвольная цифра, буква или символ подчеркивания,
+   проще говоря, любой символ, который может являться частью
+   "<emphasis>слова</emphasis>" в Perl. Определение букв и цифр управляется
+   символьными таблицами, с которыми была собрана PCRE. И, как следствие, эти наборы
+   могут отличаться в различных локализированных дистрибутивах.
+   Например, в локали "fr" (Франция) некоторые символы с кодом выше 128 используются
+   для записи ударных символов и, соответственно, соответствуют маске <literal>\w</literal>.
+  </para>
+  <para>
+   Описанные выше типы символов могут применяться как внутри, так и вне символьных
+   классов, и соответствуют одному символу данного типа. Если текущая точка
+   сравнения находится в конце строки, ни один из них не сможет совпасть, так как
+   нет символа, с которым могло бы произойти совпадение.
+  </para>
+  <para>
+   Четвертое использование обратного слэша - определение некоторых формальных утверждений,
+   описывающих условия касательно месторасположения особых позиций в строке
+   и совершенно не затрагивающих сами символы. Использование подмасок как более
+   сложных формальных утверждений описано ниже.
+   Такими управляющими последовательностями являются:
+  </para>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\b</emphasis></term>
+     <listitem><simpara>граница слова</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\B</emphasis></term>
+     <listitem><simpara>не является границей слова</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\A</emphasis></term>
+     <listitem><simpara>начало данных (независимо от многострочного режима)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\Z</emphasis></term>
+     <listitem>
+      <simpara>
+       конец данных либо позиция перед последним переводом строки (независимо от многострочного режима)
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\z</emphasis></term>
+     <listitem><simpara>конец данных (независимо от многострочного режима)</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\G</emphasis></term>
+     <listitem><simpara>первая совпадающая позиция в строке</simpara></listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Описанные выше последовательности не могут встречаться в символьных классах
+   (исключая комбинацию "<literal>\b</literal>", которая внутри класса означает
+   символ возврата 'backspace').
+  </para>
+  <para>
+   Границей слова считается такая позиция в строке, в которой из текущего и
+   последующего символа только один соответствует <literal>\w</literal> или
+   <literal>\W</literal> (т.е. один из них соответствует <literal>\w</literal>,
+   а другой <literal>\W</literal>). Начало или конец строки также соответствуют
+   границе слова в случае, если первый или, соответственно, последний символ совпадает
+   с <literal>\w</literal>.
+  </para>
+  <para>
+   Специальные последовательности <literal>\A</literal>, <literal>\Z</literal> и
+   <literal>\z</literal> отличаются от общеупотребляемых метасимволов начала строки
+   '^' и конца строки '$' (описанных ниже) тем, что они всегда совпадают либо
+   в самом начале либо в самом конце строки.
+   На них никак не влияют опции
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link> и
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOLLAR_ENDONLY</link>.
+   Разница между <literal>\Z</literal> и <literal>\z</literal> в том,
+   что <literal>\Z</literal> соответствует позиции перед последним символом
+   в случае, если последний символ - перевод строки, кроме самого конца строки.
+   В то время, как <literal>\z</literal> соответствует исключительно концу данных.
+  </para>
+  <para>
+   Утверждение <literal>\G</literal> является истинным только в том случае,
+   если текущая проверяемая позиция находится в начале совпадения, указанного
+   параметром <parameter>offset</parameter> функции <function>preg_match</function>.
+   Она отличается от <literal>\A</literal> при ненулевом значении параметра
+   <parameter>offset</parameter>.
+  </para>
+
+  <para>
+   <literal>\Q</literal> и <literal>\E</literal> могут быть использованы для
+   игнорирования метасимволов регулярных выражений в шаблоне. Например:
+   <literal>\w+\Q.$.\E$</literal> совпадет с один или более символов,
+   составляющих "слово",за которыми следуют символы <literal>.$.</literal>
+   и якорь в конце строки.
+  </para>
+
+  <para>
+   Последовательность <literal>\K</literal> может быть использована для сброса
+   начала совпадения начиная с версии PHP 5.2.4. Например, шаблон
+   <literal>foo\Kbar</literal> совпадет с "foobar", но сообщит о том, что
+   совпал только с "bar". Использование
+   <literal>\K</literal> не мешает установке подмасок. Например, если шаблон
+   <literal>(foo)\Kbar</literal> совпадет со строкой "foobar", первой подмаской
+   все равно будет являться "foo".
+  </para>
+
+ </section>
+
+ <section xml:id="regexp.reference.unicode">
+  <title>Свойства Unicode-символов</title>
+  <para>
+   Начиная с версии 5.1.0, были добавлены три дополнительные управляющие
+   последовательности, совпадающих с некоторыми общими символьными типами
+   <emphasis>в режиме UTF-8</emphasis>. Вот они:
+  </para>
+  <variablelist>
+   <varlistentry>
+    <term><emphasis>\p{xx}</emphasis></term>
+    <listitem><simpara>символ со свойством xx</simpara></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><emphasis>\P{xx}</emphasis></term>
+    <listitem><simpara>символ без свойства xx</simpara></listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><emphasis>\X</emphasis></term>
+    <listitem><simpara>расширенная последовательность Unicode</simpara></listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   Имена свойств, представленные выше как <literal>xx</literal>, ограничены
+   общими категориями свойств  Unicode. Каждый символ имеет ровно одно такое свойство,
+   указываемое двубуквенной аббревиатурой. Для совместимости с Perl также можно указать
+   отрицание добавлением знака "^" между открывающей скобкой и именем свойства.
+   Например, <literal>\p{^Lu}</literal> - это то же самое, что и <literal>\P{Lu}</literal>.
+  </para>
+  <para>
+   Если с <literal>\p</literal> или <literal>\P</literal> указана только одна буква,
+   она включает все свойства, которые начинаются с этой буквы.
+   В этом случае, если не используется отрицание, фигурные скобки необязательны;
+   следующие два примера эквивалентны:
+  </para>
+  <informalexample>
+   <programlisting>
+<![CDATA[
+\p{L}
+\pL
+]]>
+   </programlisting>
+  </informalexample>
+  <table>
+   <title>Поддерживаемые коды свойств</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Свойство</entry>
+      <entry>Совпадение</entry>
+      <entry>Замечание</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>C</literal></entry>
+      <entry>Другое</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Cc</literal></entry>
+      <entry>Control</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Cf</literal></entry>
+      <entry>Формат</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Cn</literal></entry>
+      <entry>Не присвоено</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Co</literal></entry>
+      <entry>Частное использование</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>Cs</literal></entry>
+      <entry>Суррогат</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>L</literal></entry>
+      <entry>Буква</entry>
+      <entry>
+       Включает следующие свойства: <literal>Ll</literal>,
+       <literal>Lm</literal>, <literal>Lo</literal>, <literal>Lt</literal> и
+       <literal>Lu</literal>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>Ll</literal></entry>
+      <entry>Строчная буква</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Lm</literal></entry>
+      <entry>Модификатор буквы</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Lo</literal></entry>
+      <entry>Другая буква</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Lt</literal></entry>
+      <entry>Заглавная буква</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>Lu</literal></entry>
+      <entry>Прописная буква</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>M</literal></entry>
+      <entry>Знак</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Mc</literal></entry>
+      <entry>Пробельный знак</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Me</literal></entry>
+      <entry>Окружающий знак</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>Mn</literal></entry>
+      <entry>Непробельный знак</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>N</literal></entry>
+      <entry>Число</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Nd</literal></entry>
+      <entry>Десятичное число</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Nl</literal></entry>
+      <entry>Буквенное число</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>No</literal></entry>
+      <entry>Другое число</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>P</literal></entry>
+      <entry>Пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Pc</literal></entry>
+      <entry>Соединяющая пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Pd</literal></entry>
+      <entry>Знаки тире</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Pe</literal></entry>
+      <entry>Закрывающая пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Pf</literal></entry>
+      <entry>Заключительная пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Pi</literal></entry>
+      <entry>Начальная пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Po</literal></entry>
+      <entry>Другая пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>Ps</literal></entry>
+      <entry>Открывающая пунктуация</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>S</literal></entry>
+      <entry>Символ</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Sc</literal></entry>
+      <entry>Денежный знак</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Sk</literal></entry>
+      <entry>Модификатор символа</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Sm</literal></entry>
+      <entry>Математический символ</entry>
+      <entry></entry>
+     </row>
+     <row rowsep="1">
+      <entry><literal>So</literal></entry>
+      <entry>Другой символ</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Z</literal></entry>
+      <entry>Разделитель</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Zl</literal></entry>
+      <entry>Разделитель строки</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Zp</literal></entry>
+      <entry>Разделитель абзаца</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><literal>Zs</literal></entry>
+      <entry>Пробельный разделитель</entry>
+      <entry></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Расширенные свойства, такие как греческие ("Greek") или музыкальные символы
+   ("InMusicalSymbols") не поддерживаются в PCRE.
+  </para>
+  <para>
+   Указывание регистро-независимого (безрегистрового) режима не влияет на эти
+   управляющие последовательности. Например, <literal>\p{Lu}</literal> всегда
+   совпадает только с прописными буквами.
+  </para>
+  <para>
+   Последовательность <literal>\X</literal> совпадает с любым числом Unicode символов,
+   формирующих расширенную Unicode последовательность. <literal>\X</literal>
+   эквивалентно <literal>(?>\PM\pM*)</literal>.
+  </para>
+  <para>
+   Это означает, что совпадет символ без свойства "знака" ("mark" property),
+   за которым идет ноль или более символов со свойством "знака", и вся
+   последовательность обрабатывается как одна неделимая группа (смотрите ниже).
+   Символы со свойством "знака" - это обычно знаки ударения, влияющие на
+   предыдущий символ.
+  </para>
+  <para>
+   Совпадение символов по Unicode свойству не является быстрой операцией,
+   потому для этой цели PCRE необходимо осуществить поиск в структуре данных
+   с более чем пятнадцатью тысяч символов. Поэтому традиционные управляющие
+   последовательности в PCRE, такие как <literal>\d</literal> и <literal>\w</literal>,
+   не используют Unicode свойства.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.anchors">
+  <title>Якоря</title>
+  <para>
+   По умолчанию, вне символьного класса метасимвол начала строки
+   (<literal>^</literal>) соответствует началу обрабатываемых данных
+   (если не используются модификаторы). Внутри символьного класса он
+   (<literal>^</literal>) имеет совершенно другое значение.
+  </para>
+  <para>
+   Метасимвол начала строки (<literal>^</literal>) не обязан быть первым символом
+   шаблона в случае, если в шаблоне используются несколько альтернатив,
+   но должен быть первым символом в каждой из альтернатив, в которой он
+   встречается, если шаблон когда-либо сопоставим с соответствующей веткой.
+   Если все альтернативы начинаются с метасимвола начала строки (<literal>^</literal>),
+   то шаблон ограничен для совпадения исключительно в начале строки,
+   говорят что шаблон "заякорен". (Существуют и другие способы "заякорить" шаблон).
+  </para>
+  <para>
+   Соответствие метасимволу конца строки (знак доллара, <literal>$</literal>)
+   достигается только в конце строки или непосредственно перед последним символом в случае,
+   если им является перевод строки (если модификаторы не указаны).
+   Метасимвол конца строки (<literal>$</literal>) не обязан быть последним символом шаблона
+   в случае, если используется несколько альтернатив, но должен быть последним символом
+   в каждой альтернативе, в которой он фигурирует. Внутри символьного класса
+   символ '$' не имеет специального значения.
+  </para>
+  <para>
+   Поведение метасимвола конца строки может быть изменено при помощи модификатора
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOLLAR_ENDONLY</link> так, чтобы
+   он соответствовал исключительно концу строки. Данный флаг никак не
+   касается специальной последовательности \Z.
+  </para>
+  <para>
+   Значение метасимволов начала и конца строки меняется в случае, если используется
+   модификатор <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>.
+   В таком случае, помимо совпадений в начале или в конце строки,
+   метасимволы '^' и '$' соответствуют позиции непосредственно после символа
+   перевода строки "\n". Например, шаблон /^abc$/ встречается в строке "def\nabc"
+   в многострочном режиме и не встречается в нормальном режиме.
+   Таким образом, шаблон который "заякорен" в однострочном режиме, все ветки которого,
+   начинаются с "^", не будет являться "заякоренным" в многострочном режиме.
+   Модификатор <link linkend="reference.pcre.pattern.modifiers">PCRE_DOLLAR_ENDONLY</link>
+   игнорируется в случае, если модификатор установлен
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>.
+  </para>
+  <para>
+   Следует заметить, что служебные последовательности \A, \Z и \z
+   могут использоваться для сопоставления с началом либо концом строки в обоих
+   режимах. И если все ветви шаблона начинаются с \A, шаблон будет "заякорен"
+   независимо от присутствия модификатора
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.dot">
+  <title>Метасимвол точка</title>
+  <para>
+   Вне символьного класса точка соответствует любому (в том числе и непечатному,
+   бинарному) символу, кроме символа перевода строки '\n' (в обычном режиме).
+   В случае, если используется модификатор
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>,
+   точка соответствует также символу перевода строки.
+   Обработка метасимвола "точка", никак не связана с метасимволами начала и конца
+   строки, единственное, что у них общего - так это специальное отношение к
+   символу перевода строки. Внутри символьного класса точка не имеет
+   специального значения.
+  </para>
+  <para>
+   Для совпадения с одним байтом можно использовать последовательность <emphasis>\C</emphasis>.
+   Это может быть полезно <emphasis>в режиме UTF-8</emphasis>, так как с точкой
+   в этом режиме будет совпадать целый символ, который может состоять из
+   нескольких байт.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.character-classes">
+  <title>Символьные классы</title>
+  <para>
+   Открывающая квадратная скобка объявляет начало символьного класса,
+   завершаемого закрывающей квадратной скобкой. Символ ']' не имеет специального
+   значения, и в случае, если закрывающая квадратная скобка необходима как член
+   символьного класса, она должна быть первым символом непосредственно после
+   открывающей квадратной скобки (если используется метасимвол '^', то
+   непосредственно после него), либо экранироваться при помощи обратного слэша.
+  </para>
+  <para>
+   Символьный класс соответствует одиночному символу обрабатываемой строки,
+   причем сам символ должен содержаться в наборе, определяемым классом. В случае,
+   если первым символом описания класса является '^', логика работы инвертируется:
+   класс соответствует одиночному символу, который не содержится в наборе,
+   определяемым классом. Если символ '^' необходим как член класса,
+   его не следует помещать первым символом в описании класса либо
+   необходимо экранировать при помощи обратного слэша.
+  </para>
+  <para>
+   К примеру, символьный класс [aeiou] соответствует любой гласной букве
+   в нижнем регистре, в то время, как  [^aeiou] соответствует любому символу,
+   не являющемуся гласной буквой нижнего регистра.
+   Следует понимать, что символ '^' всего лишь удобный инструмент для описания
+   символов, не используемых в сопоставлении, это не утверждение,
+   так как он все же занимает символ в обрабатываемой строке, и
+   не совпадет, если текущая позиция сравнения находится в конце строки.
+  </para>
+  <para>
+   В случае, если производится регистронезависимое сопоставление,
+   любая буква символьного класса соответствует как своему верхнему,
+   так и нижнему регистру. Таким образом символьный класс [aeiou]
+   соответствует как 'A', так и 'a'.
+   Аналогично, класс [^aeiou] не соответствует ни 'A', ни 'a', тогда как в
+   регистрозависимом режиме совпадение бы состоялось.
+  </para>
+  <para>
+   Внутри символьного класса символ перевода строки "\n" не имеет специального
+   значения, независимо от наличия модификаторов
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link> и
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>.
+   Символьные классы, построенные на отрицании, например [^a], всегда
+   соответствуют символу перевода строки.
+  </para>
+  <para>
+   Символ минус '-' (дефис) внутри класса используется для задания
+   символьного диапазона. Например, [d-m] соответствует любому символу,
+   находящемуся между 'd' и 'm', включая сами символы 'd' и 'm'.
+   В случае, если '-' необходим, как член класса,
+   он должен находиться в такой позиции, в которой он не может интерпретироваться
+   как диапазон (как правило, это первый и последний символ описания класса),
+   либо экранироваться при помощи обратного слэша.
+  </para>
+  <para>
+   Недопустимо использовать закрывающую квадратную скобку "]" в качестве границы
+   символьного диапазона. К примеру шаблон '[W-]46]' будет интерпретирован
+   как символьный класс, состоящий из двух символов ("W" и "-"), за которыми
+   следует строка "46]", таким образом шаблон будет соответствовать
+   строкам "W46]" или "-46]".
+   Чтобы все же использовать символ ']' в описании диапазона, его необходимо
+   экранировать при помощи обратного слэша, к примеру шаблон [W-\]46] будет
+   интерпретирован как символьный класс, состоящий из символьного диапазона
+   вместе с двумя последующими символами '4' и '6'.
+   Такого же результата можно достичь используя шестнадцатиричное
+   или восьмеричное представление символа ']'.
+  </para>
+  <para>
+   Для построения символьных диапазонов используется ASCII представление
+   символов. Таким образом пограничные символы можно задавать непосредственно
+   в числовом представлении, например, [\000-\037].
+   В случае, если выполняется регистронезависимый поиск,
+   символы, описанные в диапазоне, также будут соответствовать символам обеих
+   регистров. К примеру, диапазоны [W-c] и [][\^_`wxyzabc] эквивалентны
+   (в случае регистронезависимого поиска). Например, если установлена локаль
+   "fr" (Франция) можно использовать [\xc8-\xcb] для задания
+   соответствия ударному 'E' в обоих регистрах.
+  </para>
+  <para>
+   Общие типы символов \d, \D, \s, \S,  \w,  и  \W также могут использоваться
+   в символьных классах, добавляя при этом в класс те символы,
+   которым соответствуют. Например, класс [\dABCDEF] соответствует
+   любой шестнадцатиричной цифре. Символ '^' может использоваться совместно
+   с общим типом, взятым в верхнем регистре, для указания более узкого
+   набора символов. Например, класс [^\W_] соответствует любой букве или цифре,
+   но не символу подчеркивания.
+  </para>
+  <para>
+   Все небуквенно-цифровые символы, кроме \, -, ^ (вначале) и завершающего ']',
+   не являются специальными символами, но использование экранирующего
+   слэша перед ними не навредит. Символ конца шаблона всегда является особым
+   случаем и всегда должен быть проэкранирован внутри выражения.
+  </para>
+  <para>
+   Perl поддерживает нотацию POSIX для символьных классов. Это включает
+   использование имен, заключенных в <literal>[:</literal> и <literal>:]</literal>,
+   в свою очередь заключенных в квадратные скобки. PCRE также поддерживает эту
+   запись. Например, <literal>[01[:alpha:]%]</literal> совпадет с
+   "0", "1", любым алфавитным символом или "%". Поддерживаются следующие имена
+   классов:
+   <table>
+    <title>Символьные классы</title>
+    <tgroup cols="2">
+     <tbody>
+      <row><entry><literal>alnum</literal></entry><entry>буквы и цифры</entry></row>
+      <row><entry><literal>alpha</literal></entry><entry>буквы</entry></row>
+      <row><entry><literal>ascii</literal></entry><entry>символы с кодами 0 - 127</entry></row>
+      <row><entry><literal>blank</literal></entry><entry>только пробел или символ табуляции</entry></row>
+      <row><entry><literal>cntrl</literal></entry><entry>управляющие символы</entry></row>
+      <row><entry><literal>digit</literal></entry><entry>десятичные цифры (то же самое, что и \d)</entry></row>
+      <row><entry><literal>graph</literal></entry><entry>печатные символы, исключая пробел</entry></row>
+      <row><entry><literal>lower</literal></entry><entry>строчные буквы</entry></row>
+      <row><entry><literal>print</literal></entry><entry>печатные символы, включая пробел</entry></row>
+      <row><entry><literal>punct</literal></entry><entry>печатные символы, исключая буквы и цифры</entry></row>
+      <row><entry><literal>space</literal></entry><entry>пробельные символы(почти то же самое, что и \s)</entry></row>
+      <row><entry><literal>upper</literal></entry><entry>прописные буквы</entry></row>
+      <row><entry><literal>word</literal></entry><entry>символы "слова" (то же самое, что и \w)</entry></row>
+      <row><entry><literal>xdigit</literal></entry><entry>шестнадцатеричные цифры</entry></row>
+     </tbody>
+    </tgroup>
+   </table>
+   Класс пробельных символов (<literal>space</literal>) - это горизонтальная табуляция (HT, 9),
+   перевод строки (LF, 10), вертикальная табуляция (VT, 11), разрыв страницы (FF, 12),
+   возврат каретки (CR, 13) и пробел (32). Учтите, что этот список включает
+   вертикальную табуляцию (VT, код 11). Это отличает "space" от <literal>\s</literal>,
+   который не включает этот символ (для совместимости с Perl).
+  </para>
+  <para>
+   Название <literal>word</literal> - это расширение Perl, а <literal>blank</literal>
+   - расширение GNU, начиная с версии Perl 5.8. Другое расширение Perl - это
+   отрицание, которое указывается символом <literal>^</literal> после
+   двоеточия. Например, <literal>[12[:^digit:]]</literal> совпадет с "1", "2",
+   или с любой нецифрой.
+  </para>
+  <para>
+   В режиме UTF-8, символы со значениями, превышающими 128, не совпадут ни с одним
+   из символьных классов POSIX.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.alternation">
+  <title>Альтернативный выбор</title>
+  <para>
+   Символ вертикальной черты '|' используется для разделения альтернативных масок.
+   Например, шаблон <literal>gilbert|sullivan</literal> соответствует как
+   "gilbert", так и "sullivan". Допустимо указывать любое количество альтернатив,
+   также допустимо указывать пустые альтернативы (соответствуют пустой строке).
+   В процессе поиска соответствия просматриваются все перечисленные альтернативы
+   слева направо, останавливаясь после первого найденного соответствия.
+   В случае, если альтернативные варианты перечислены в подмаске, то весь шаблон совпадет
+   только в случае соответствия одного из альтернативных вариантов подмаски
+   и остатка основного шаблона.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.internal-options">
+  <title>Установка внутренних опций</title>
+  <para>
+   Установки <link linkend="reference.pcre.pattern.modifiers">PCRE_CASELESS</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_UNGREEDY</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTRA</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link> и
+   PCRE_DUPNAMES могут быть локально предопределены в шаблоне
+   с использованием специальных Perl-последовательностей,
+   заключенных между символами  "(?" и ")". Ниже представлен список этих опций:
+
+   <table>
+    <title>Символы внутренних опций</title>
+    <tgroup cols="2">
+     <tbody>
+      <row>
+       <entry><literal>i</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_CASELESS</link></entry>
+      </row>
+      <row>
+       <entry><literal>m</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link></entry>
+      </row>
+      <row>
+       <entry><literal>s</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link></entry>
+      </row>
+      <row>
+       <entry><literal>x</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link></entry>
+      </row>
+      <row>
+       <entry><literal>U</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_UNGREEDY</link></entry>
+      </row>
+      <row>
+       <entry><literal>X</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTRA</link></entry>
+      </row>
+      <row>
+       <entry><literal>J</literal></entry>
+       <entry>для <link linkend="reference.pcre.pattern.modifiers">PCRE_INFO_JCHANGED</link></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Например, (?im) указывает на регистронезависимый, многострочный режим поиска.
+   Также можно сбросить опцию, поставив перед ней символ '-', либо комбинировать
+   установку и отмену режимов. Например, (?im-sx) устанавливает флаги
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_CASELESS</link>,
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_MULTILINE</link>
+   и отменяет флаги <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>
+   и <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>.
+   В случае, если символ расположен одновременно после и перед
+   символом '-', опция будет отменена.
+  </para>
+  <para>
+   Если изменение опции происходит на самом верхнем уровне (т.е. вне
+   подмаски), изменение будет применено к оставшейся части шаблона.
+   Таким образом, <literal>/ab(?i)c/</literal> совпадет только с  "abc" и "abC".
+  </para>
+  <para>
+   Если изменение опции происходит внутри подмаски, эффект будет другим.
+   Это изменение поведения в Perl 5.005. Изменение опции внутри подмаски повлияет
+   только на оставшуюся часть этой подмаски, то есть
+
+   <literal>(a(?i)b)c</literal>
+
+   совпадет только с 'abc'  и 'aBc' и больше ни с чем (разумеется, если <link
+   linkend="reference.pcre.pattern.modifiers">PCRE_CASELESS</link> не включен).
+   Это означает, что в разных частях шаблона опции могут отличаться.
+   Любые изменения, произошедшие в одной альтернативной ветке, переносятся и в
+   другие ветки в пределах одной подмаски. Например,
+
+   <literal>(a(?i)b|c)</literal>
+
+   совпадет с "ab", "aB", "c", и "C", хотя и при совпадении с
+   "C" первая ветка была отброшена до установки опции.
+   Это происходит потому, что установка всех опций происходит на этапе
+   компиляции. В противном случае могло быть весьма странное поведение.
+  </para>
+  <para>
+   Опции, специфичные для PCRE, такие как <link
+   linkend="reference.pcre.pattern.modifiers">PCRE_UNGREEDY</link>  и
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTRA</link>
+   могут быть установлены точно так же, как и Perl-совместимые опции,
+   путем использования символов U и X соответственно.
+   Флаг (?X) специфичен тем, что должен быть расположен в шаблоне прежде, чем будет
+   использоваться любая другая дополнительная возможность, даже если он расположен
+   на верхнем уровне. Лучше всего размещать флаг (?X) в самом начале шаблона.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.subpatterns">
+  <title>Подмаски</title>
+  <para>
+   Подмаски ограничиваются круглыми скобками, которые могут быть вложенными.
+   Использование части шаблона как подмаски имеет следующие функции:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     Локализирует набор альтернатив. Например, шаблон
+     <literal>cat(aract|erpillar|)</literal> соответствует одному из слов "cat",
+     "cataract" или  "caterpillar". Без использования скобок он соответствовал
+     бы строкам "cataract", "erpillar" или пустой строке.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Указывает на необходимость захвата подстроки (как показано выше).
+     В том случае, если соответствие шаблону было найдено, подстрока,
+     соответствующая подмаске, также передается обратно вызывающему
+     при помощи аргумента <emphasis>ovector</emphasis> функции
+     <function>pcre_exec</function>. Открывающие круглые скобки нумеруются
+     слева направо (начиная с единицы) и их порядковые номера
+     используются для нумерации соответствующих подстрок в результате.
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   Например, если строка "the red king" сопоставляется с шаблоном
+
+   <literal>the ((red|white) (king|queen))</literal>,
+
+   будут захвачены подстроки "red king", "red" и "king", с номерами 1, 2 и 3
+   соответственно.
+  </para>
+  <para>
+   На самом деле выполнение одновременно двух функций не всегда удобно.
+   Бывают случаи, когда необходима группировка альтернатив без захвата строки.
+   В случае, если после открывающей круглой скобки следует "?:", захват строки
+   не происходит, и текущая подмаска не нумеруется.
+   Например, если строка "the  white  queen"  сопоставляется с шаблоном
+
+   <literal>the ((?:red|white) (king|queen))</literal>,
+
+   будут захвачены подстроки "white queen" и "queen", и они будут пронумерованы
+   1 и 2 соответственно. Максимальное количество захватывающих подмасок - 99,
+   максимальное количество всех подмасок (как захватывающих, так и нет) - 200.
+  </para>
+  <para>
+   В случае, если в незахватывающей подмаске необходимо указать дополнительные
+   опции, можно воспользоваться удобным сокращением: символ, обозначающий
+   устанавливаемую опцию помещается между "?" и ":".
+   Таким образом, следующие два шаблона
+  </para>
+
+  <informalexample>
+   <programlisting>
+<![CDATA[
+(?i:saturday|sunday)
+(?:(?i)saturday|sunday)
+]]>
+   </programlisting>
+  </informalexample>
+
+  <para>
+   соответствуют одному и тому же набору строк. Поскольку альтернативные
+   версии берутся слева направо, и установленные опции сохраняют свое
+   действие до конца подмаски, опция, установленная в одной ветке, также
+   имеет эффект во всех последующих ветках. Поэтому приведенные выше шаблоны
+   совпадают как с "SUNDAY", так и с "Saturday".
+  </para>
+
+  <para>
+   Также можно использовать именованные подмаски с помощью синтаксиса
+   <literal>(?P&lt;name&gt;pattern)</literal>. Эта подмаска будет индексирована
+   в массиве совпадений кроме обычного числового индекса, еще и по имени name.
+   В PHP 5.2.2 было добавлено два альтернативных синтаксиса:
+   <literal>(?&lt;name&gt;pattern)</literal> и <literal>(?'name'pattern)</literal>.
+  </para>
+
+  <para>
+   Иногда бывает необходимо иметь несколько совпадений, исключающих друг друга.
+   Обычно, каждое такое совпадение получает свой собственный номер, даже
+   если шаблон позволяет совпасть только одному из них.
+   Синтаксис <literal>(?|</literal> позволяет обойти это поведение и убрать
+   дублирующиеся номера. Рассмотрим следующее регулярное выражение,
+   сопоставленное со строкой <literal>Sunday</literal>:
+  </para>
+
+  <informalexample>
+   <programlisting>
+<![CDATA[(?:(Sat)ur|(Sun))day]]>
+   </programlisting>
+  </informalexample>
+
+  <para>
+   Здесь <literal>Sun</literal> сохраняется в ссылке 2, тогда как
+   ссылка 1 пуста. Если же совпадет <literal>Sat</literal>, то она будет
+   помещена в ссылку 1, а ссылка 2 вообще не будет существовать.
+   Использование <literal>(?|</literal> в шаблоне решает эту проблему:
+  </para>
+
+  <informalexample>
+   <programlisting>
+<![CDATA[(?|(Sat)ur|(Sun))day]]>
+   </programlisting>
+  </informalexample>
+
+  <para>
+   В этом шаблоне обе подмаски <literal>Sun</literal> и <literal>Sat</literal>
+   будут сохранены под номером 1.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.repetition">
+  <title>Повторение</title>
+  <para>
+   Повторение задается при помощи квантификаторов, следующих за любым из указанных
+   ниже элементов:
+   <itemizedlist>
+    <listitem><simpara>произвольным, возможно экранированным, символом</simpara></listitem>
+    <listitem><simpara>метасимволом "точка"</simpara></listitem>
+    <listitem><simpara>символьным классом</simpara></listitem>
+    <listitem><simpara>ссылкой на предыдущий фрагмент шаблона (см. следующий раздел)</simpara></listitem>
+    <listitem><simpara>взятой в круглый скобки подмаской (если это не утверждение - см. далее)</simpara></listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   Общий квантификатор повторения указывает минимальное и максимальное
+   допустимое количество совпадений, согласно двум числам, заключенными
+   в фигурные скобки и разделенными запятой. Числа должны быть меньше чем 65536,
+   и первое число не должно превышать второе по значению.
+   Например:
+
+   <literal>z{2,4}</literal>
+
+   соответствует "zz", "zzz" или "zzzz". Закрывающая фигурная скобка сама
+   по себе не является специальным символом. В случае, если второе число опущено,
+   но запятая присутствует, нет верхнего предела; в случае, если и второе
+   число и запятая опущены, требуется точное число повторений.
+   Таким образом
+
+   <literal>[aeiou]{3,}</literal>
+
+   соответствует как минимум трем последовательным гласным (а также любому
+   их количеству выше трех), в то время как
+
+   <literal>\d{8}</literal>
+
+   соответствует ровно восьми цифрам. Открывающая фигурная скобка,
+   расположенная в недопустимой для квантификатора позиции, либо не
+   соответствующая синтаксису квантификатора, интерпретируется как
+   обыкновенная символьная строка. Например, {,6} не является квантификатором,
+   а интерпретируется как символьная строка из четырех символов.
+  </para>
+  <para>
+   Квантификатор {0} является допустимым и ведет себя таким образом, будто бы
+   сам квантификатор и предшествующий ему элемент отсутствуют.
+  </para>
+  <para>
+   Для удобства (а так же обратной совместимости) три наиболее распространённых
+   квантификатора имеют односимвольные аббревиатуры:
+   <table>
+    <title>Односимвольные квантификаторы</title>
+    <tgroup cols="2">
+     <tbody>
+      <row>
+       <entry><literal>*</literal></entry>
+       <entry>эквивалентен <literal>{0,}</literal></entry>
+      </row>
+      <row>
+       <entry><literal>+</literal></entry>
+       <entry>эквивалентен <literal>{1,}</literal></entry>
+      </row>
+      <row>
+       <entry><literal>?</literal></entry>
+       <entry>эквивалентен <literal>{0,1}</literal></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Можно конструировать бесконечные циклы, указав после шаблона, совпадающего
+   с пустой строкой, квантификатор, не имеющий верхнего предела, например:
+   <literal>(a?)*</literal>
+  </para>
+  <para>
+   Ранние версии Perl и PCRE выдавали ошибку во время компиляции для таких
+   шаблонов. Однако, поскольку бывают случаи, когда подобные шаблоны могли бы
+   быть полезны, была добавлена поддержка таких шаблонов. Но если любое повторение
+   такой подмаски фактически не совпадает ни с какими символами, цикл
+   принудительно прерывается.
+  </para>
+  <para>
+   По умолчанию, все квантификаторы являются "жадными", это означает, что они
+   совпадают максимально возможное количество раз (но не более, чем максимально
+   допустимое количество раз), не приводя к невозможности сопоставления
+   остальных частей шаблона. Классический пример проблем, которые
+   могут возникнуть в связи с такой особенностью квантификаторов -
+   нахождение комментариев в C-программах. Комментарием считается произвольный
+   текст, находящийся внутри символьных комбинаций  /* и */  (при этом, символы
+   '/' и '*' также могут быть частью комментария). Попытка найти комментарии
+   при помощи шаблона
+
+   <literal>/\*.*\*/</literal>
+
+   в строке
+
+   <literal>/* первый комментарий */  не комментарий  /* второй комментарий */</literal>
+
+   закончится неудачей, поскольку указанный шаблон соответствует всей строке
+   целиком (из-за жадности кватификатора '*').
+  </para>
+  <para>
+   Однако, если сразу же после квантификатора идет вопросительный знак, он
+   становится "ленивым" и соответствует минимально допустимому количеству раз.
+   Таким образом, шаблон
+
+   <literal>/\*.*?\*/</literal>
+
+   корректно находит все комментарии языка Си. Использование символа '?' после
+   квантификатора влияет исключительно на его жадность, и не затрагивает
+   никакие другие свойства.  Не следует путать использование символа '?'
+   как, собственно, квантификатора (ноль либо одно соответствие) и как ограничителя
+   жадности. Также в следствие его двойственной функциональности может
+   использоваться следующая запись:
+
+   <literal>\d??\d</literal>,
+
+   которая в первую очередь соответствует одной цифре, но также
+   может соответствовать и двум цифрам, если это необходимо для
+   соответствия остальных частей шаблона.
+  </para>
+  <para>
+   В случае, если установлена опция
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_UNGREEDY</link>
+   (отсутствующая в Perl), квантификаторы не являются жадными по умолчанию,
+   но могут становиться таковыми, если за ними следует символ '?'.
+   Говоря другими словами, знак вопроса инвертирует жадность
+   квантификаторов.
+  </para>
+  <para>
+   Квантификаторы, за которыми следует <literal>+</literal>, являются "захватывающими".
+   Они поглощают столько символов, сколько могут и не возвращаются обратно
+   для совпадения остатка шаблона. Таким образом <literal>.*abc</literal>
+   совпадет с "aabc", а <literal>.*+abc</literal> - нет, потому что
+   <literal>.*+</literal> захватит всю строку целиком. Захватывающие
+   квантификаторы могут быть использованы для ускорения обработки.
+  </para>
+  <para>
+   В случае, если используется подмаска с квантификатором, для
+   которого задано минимальное количество повторений (больше одного),
+   либо задано максимальное количество повторений, то
+   для откомпилированного шаблона требуется больше памяти (пропорционально
+   минимуму либо максимуму соответственно).
+  </para>
+  <para>
+   В случае, если шаблон начинается с .*  либо  .{0,}, и установлен модификатор
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>
+   (являющийся аналогом Perl-опции /s), который позволяет метасимволу
+   "точка" соответствовать переводам строк, шаблон неявно заякоривается.
+   Это происходит поскольку все последующие конструкции будут сопоставляться
+   с каждой символьной позицией в обрабатываемом тексте, и, как следствие,
+   начало строки - единственная позиция, дающая наиболее полное совпадение.
+   PCRE рассматривает каждый такой шаблон, как если бы ему предшествовала
+   последовательность \A. В случае, если известно, что данные
+   не содержат переводов строк, а сам шаблон начинается на .*, рекомендуется
+   использовать <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>
+   для оптимизации шаблона, либо использовать метасимвол '^' для указания
+   явного заякоривания.
+  </para>
+  <para>
+   В случае, если захватывающая подмаска повторяется, результирующим значением
+   подмаски будет подстрока, совпадающая с результатом последней итерации.
+   Например, после того, как
+
+   <literal>(tweedle[dume]{3}\s*)+</literal>
+
+   совпадет с "tweedledum tweedledee", результирующим значением подмаски
+   будет "tweedledee". Однако, если присутствуют вложенные захватывающие
+   подмаски, соответствующие значения могут быть установлены в предыдущих
+   итерациях. Например, после того, как
+
+   <literal>/(a|(b))+/</literal>
+
+   совпадет с "aba", значением второй захваченной подстроки будет "b".
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.back-references">
+  <title>Обратные ссылки</title>
+  <para>
+   Вне символьного класса обратный слэш с последующей цифрой
+   больше нуля (и, возможно, последующими цифрами) интерпретируется
+   как ссылка на предшествующую захватывающую подмаску, предполагая,
+   что соответствующее количество предшествующих открывающих круглых
+   скобок присутствует.
+  </para>
+  <para>
+   Однако, в случае, если следующее за обратным слэшем число меньше 10,
+   оно всегда интерпретируется как обратная ссылка, и приводит к ошибке
+   только в том случае, если нет соответствующего числа открывающих
+   скобок. Другими словами, открывающие скобки не обязаны предшествовать
+   ссылке для чисел меньше 10. "Упреждающая обратная ссылка" может
+   смысл, если используется повторение и более поздняя подмаска
+   участвует в ранней итерации. Более детальную информацию об
+   обработке цифр после обратного слэша можно найти в разделе
+   "Обратный слэш".
+  </para>
+  <para>
+   Обратная ссылка сопоставляется с частью строки, захваченной
+   соответствующей подмаской, но не с самой подмаской.
+   Таким образом шаблон
+
+   <literal>(sens|respons)e and \1ibility</literal>
+
+   соответствует "sense and sensibility", "response and responsibility",
+   но не "sense  and  responsibility". В случае, если обратная ссылка
+   обнаружена во время регистрозависимого поиска, то при
+   сопоставлении обратной ссылки регистр также учитывается. Например,
+
+   <literal>((?i)rah)\s+\1</literal>
+
+   соответствует "rah rah" и "RAH RAH", но не "RAH  rah",  хотя сама
+   подмаска сопоставляется без учета регистра.
+  </para>
+  <para>
+   На одну и ту же подмаску может быть несколько ссылок. Если
+   подмаска не участвовала в сопоставлении, то сопоставление со
+   ссылкой на нее всегда терпит неудачу. Например, шаблон
+
+   <literal>(a|(bc))\2</literal>
+
+   терпит неудачу, если находит соответствие с "a" раньше, чем с "bc".
+   Поскольку может быть до 99 обратных ссылок, все цифры, следующие
+   за обратным слэшем, рассматриваются как часть потенциальной
+   обратной ссылки. Если за ссылкой должна следовать цифра, необходимо
+   использовать ограничитель. В случае, если указан флаг <link
+   linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>,
+   ограничителем может быть любой пробельный символ. В противном
+   случае можно использовать пустой комментарий.
+  </para>
+  <para>
+   Ссылка на подмаску, внутри которой она расположена, всегда терпит неудачу,
+   если это первое сопоставление текущей подмаски. Например, шаблон (a\1)
+   не соответствует ни одной строке. Но все же такие ссылки бывают
+   полезны в повторяющихся подмасках. Например, шаблон
+
+   <literal>(a|b\1)+</literal>
+
+   совпадает с любым количеством "a", "aba", "ababaa"...  При
+   каждой итерации подмаски обратная ссылка соответствует той части
+   строки, которая была захвачена при предыдущей итерации.
+   Чтобы такая конструкция работала, шаблон должен быть построен так,
+   чтобы при первой итерации сопоставление с обратной ссылкой не производилось.
+   Этого можно достичь, используя альтернативы (как в предыдущем
+   примере), либо квантификаторы с минимумом, равным нулю.
+  </para>
+  <para>
+   Начиная с PHP 5.2.2, управляющая последовательность <literal>\g</literal>
+   может быть использована для абсолютных и относительных ссылок на
+   подмаски. После этой последовательности должно быть указано
+   беззнаковое или отрицательное число, при желании заключенное в фигурные
+   скобки. Последовательности <literal>\1</literal>, <literal>\g1</literal>
+   и <literal>\g{1}</literal> эквивалентны друг другу.
+   Использование этого шаблона с беззнаковым числом поможет избежать
+   двусмысленности, присущей числам после обратного слэша. Это также
+   помогает отличить обратные ссылки от символов в восьмеричном
+   формате, а также упрощает запись числового литерала сразу после
+   обратной ссылки, например, <literal>\g{2}1</literal>.
+  </para>
+  <para>
+   Использование отрицательных чисел с <literal>\g</literal> полезно при
+   использовании относительных ссылок. Например, <literal>(foo)(bar)\g{-1}</literal>
+   соответствует "foobarbar", а <literal>(foo)(bar)\g{-2}</literal>
+   соответствует "foobarfoo". Это также может быть полезно в длинных
+   шаблонах, в качестве альтернативы отслеживания числа подмасок,
+   на которые можно ссылаться в последующей части шаблона.
+  </para>
+  <para>
+   Указать обратную ссылку на именованную подмаску можно с помощью
+   <literal>(?P=name)</literal> или, начиная с PHP 5.2.2,
+   <literal>\k&lt;name&gt;</literal> или <literal>\k'name'</literal>.
+   Кроме того, в PHP 5.2.4 была добавлена поддержка <literal>\k{name}</literal>
+   и <literal>\g{name}</literal>.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.assertions">
+  <title>Утверждения</title>
+  <para>
+   Утверждения - это проверки касательно символов, идущих до или после
+   текущей позиции сопоставления, ничего при этом не поглощая
+   (никакие символы исходного текста не ставятся в соответствие
+   утверждениям). Наиболее простые варианты утверждений, такие как
+   \b, \B,  \A,  \Z,  \z, ^ и $ были рассмотрены ранее.
+   Более сложные утверждения записываются как подмаски. Утверждения
+   бывают двух видов: те, которые анализируют текст, следующий
+   <emphasis>после текущей позиции</emphasis> (look ahead),
+   и идущий <emphasis>перед ней</emphasis> (look behind).
+  </para>
+  <para>
+   Сопоставление подмаски, содержащий утверждение, происходит обычным
+   образом, за исключением того, что текущая позиция не изменяется.
+   Утверждения касательно <emphasis>последующего текста</emphasis>
+   начинаются с (?= для положительных утверждений и с (?! для отрицающих
+   утверждений. Например,
+
+   <literal>\w+(?=;)</literal>
+
+   совпадает со словом, за которым следует символ ';', но при этом сама
+   точка с запятой в совпадение не включается. А
+
+   <literal>foo(?!bar)</literal>
+
+   соответствует любому появлению "foo", после которого не идёт "bar".
+   Заметим, что похожий шаблон
+
+   <literal>(?!foo)bar</literal>
+
+   не будет искать вхождение "bar", которому предшествует любая
+   строка за исключением "foo". Но, тем не менее, он будет соответствовать
+   любым вхождениям подстроки "bar", поскольку условие (?!foo) всегда
+   &true;, если следующие три символа - "bar". Для получения желаемого
+   результата необходимо воспользоваться второй категорией утверждений.
+  </para>
+  <para>
+   Утверждения касательно <emphasis>предшествующего текста</emphasis>
+   начинаются с (?&lt;= для положительных утверждений и (?&lt;!
+   для отрицающих. Например,
+
+   <literal>(?&lt;!foo)bar</literal>
+
+   не найдёт вхождения "bar", которым не предшествует "foo". Сами
+   утверждения 'назад' ограничены так, чтобы все подстроки, которым
+   они соответствуют, имели фиксированную длину. Но, в случае, если
+   используются несколько альтернатив, они не обязаны иметь одинаковую
+   длину. Таким образом шаблон
+
+   <literal>(?&lt;=bullock|donkey)</literal>
+
+   корректен, но
+
+   <literal>(?&lt;!dogs?|cats?)</literal>
+
+   вызовет ошибку во время компиляции. Ветки, которые соответствуют
+   строкам разной длины, разрешены только на верхнем уровне утверждений
+   касательно предшествующего текста. Это расширение относительно
+   Perl  5.005, который требует чтобы все ветки соответствовали строкам
+   одинаковой длины. Такое утверждение как
+
+   <literal>(?&lt;=ab(c|de))</literal>
+
+   не корректно, поскольку верхний уровень маски может соответствовать
+   строкам разной длины, но его можно преобразовать к корректному шаблону,
+   используя альтернативы на верхнем уровне:
+
+   <literal>(?&lt;=abc|abde)</literal>
+
+   Утверждения касательно предшествующего текста реализованы так,
+   что для каждой альтернативы текущая позиция временно переносится
+   назад, на фиксированную ширину, после чего выполняется поиск
+   соответствия условию. В случае, если перед текущей позицией недостаточно
+   символов, поиск соответствия терпит неудачу. Утверждения назад в сочетании
+   с однократными подмасками могут быть особенно удобны для поиска
+   в конце строки; соответствующий пример приведен в конце раздела
+   "Однократные подмаски".
+  </para>
+  <para>
+   Несколько утверждений (разных типов) могут присутствовать в
+   утверждении, например:
+
+   <literal>(?&lt;=\d{3})(?&lt;!999)foo</literal>
+
+   совпадает с подстрокой "foo", которой предшествуют три цифры,
+   отличные от "999". Следует понимать, что каждое из утвержений
+   проверяется относительно одной и той же позиции в обрабатываемом
+   тексте. Вначале выполняется проверка того, что предшествующие три символа -
+   это цифры, затем проверяется, чтобы эти же цифры не являлись
+   числом 999. Приведенный выше шаблон не соответствует подстроке
+   "foo", которой предшествуют шесть символов, первые три из которых
+   - цифры, а последние три не образуют "999". Например, он не
+   соответствует строке "123abcfoo", в то время как шаблон
+
+   <literal>(?&lt;=\d{3}...)(?&lt;!999)foo</literal>
+   соответствует.
+  </para>
+  <para>
+   В этом случае анализируются предшествующие шесть
+   символов на предмет того, чтобы первые три из них были цифрами,
+   а последние три не образовали "999".
+  </para>
+  <para>
+   Утверждения могут быть вложенными, причем в произвольных сочетаниях:
+
+   <literal>(?&lt;=(?&lt;!foo)bar)baz</literal>
+
+   соответствует подстроке "baz", которой предшествует "bar",
+   перед которой, в свою очередь, нет "foo", а
+
+   <literal>(?&lt;=\d{3}...(?&lt;!999))foo</literal>
+
+   - совершенно другой шаблон, соответствующий подстроке "foo",
+   которой предшествуют три цифры и три произвольных символа, отличных
+   от "999".
+  </para>
+  <para>
+   Утверждающие подмаски являются незахватывающими и неповторяемыми,
+   поскольку бессмысленно повторять одно и то же несколько раз. Если в
+   утверждении произвольного типа находится захватывающая подмаска,
+   она нумеруется в той же последовательности, что и все остальные
+   захватывающие подмаски, но захват соответствующих значений происходит
+   только для положительных утверждений, поскольку для отрицающих это не
+   имеет смысла.
+  </para>
+  <para>
+   В утверждениях обрабатывается не более, чем 200 захватывающих
+   подмасок.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.onlyonce">
+  <title>Однократные подмаски</title>
+  <para>
+   Как для минимального, так и максимального количества повторений,
+   если последующая часть шаблона терпит неудачу при сопоставлении,
+   происходит повторный анализ повторяемого выражения на предмет того,
+   возможно ли успешное сопоставление всего шаблона при другом количестве
+   повторений. Бывают случаи, когда необходимо изменить описанную логику
+   работы для реализации специфического сопоставления либо оптимизации шаблона
+   (если автор уверен, что других вариантов соответствия нет).
+  </para>
+  <para>
+   В качестве примера, рассмотрим шаблон \d+foo  в применении к строке
+
+   <literal>123456bar</literal>
+  </para>
+  <para>
+   После того, как \d+ будет сопоставлен с первыми шестью цифрами,
+   сопоставление "foo" потерпит неудачу. После этого, в соответствие
+   \d+, будет сопоставлено 5 цифр, после очередной неудачи будет сопоставлено
+   4 цифры и так далее. В конце концов весь шаблон потерпит неудачу.
+   Однократные подмаски указывают, что если одна часть шаблона была
+   сопоставлена, ее не стоит анализировать повторно. Применимо к приведенному
+   выше примеру весь шаблон потерпел бы неудачу после первого же
+   неудачного сопоставления с "foo". Записываются однократные шаблоны
+   при помощи круглых скобок следующим образом: (?&gt;. Например:
+
+   <literal>(?&gt;\d+)bar</literal>
+  </para>
+  <para>
+   Этот вид подмаски предотвращает повторный ее анализ в случае, если
+   сопоставление последующих элементов терпят неудачу. Однако, это не мешает
+   повторно анализировать любые другие элементы, в том числе предшествующие
+   однократной подмаске.
+  </para>
+  <para>
+   Говоря другими словами, подмаски такого типа соответствуют
+   той части подстроки, которой соответствовала бы одиночная
+   изолированная маска, заякоренная на текущей позиции обрабатываемого
+   текста.
+  </para>
+  <para>
+   Однократные подмаски являются незахватывающими. Простые примеры,
+   подобные приведенному выше, можно охарактеризовать как безусловный
+   захват максимального количества повторений. В то время как
+   \d+ и \d+? корректируются так, чтобы остальные части шаблона
+   так же совпали, (?&gt;\d+) соответствует исключительно максимальной по
+   длине последовательности цифр, даже если это приводит к неудаче при
+   сопоставлении других частей шаблона.
+  </para>
+  <para>
+   Однократные подмаски могут включать в себя более сложные конструкции,
+   а также могут быть вложенными.
+  </para>
+  <para>
+   Однократные подмаски могут использоваться совместно с утверждениями
+   касательно предшествующего текста для описания эффективных сопоставлений
+   в конце обрабатываемого текста. Рассмотрим простой шаблон
+
+   <literal>abcd$</literal>
+
+   в применении к длинному тексту, который не соответствует указанной маске.
+   Поскольку поиск происходит слева направо, вначале PCRE будет
+   искать букву "a", и только потом анализировать следующие
+   записи в шаблоне. В случае, если шаблон указан в виде
+
+   <literal>^.*abcd$</literal>.
+
+   В таком случае вначале .* сопоставляется со всей строкой, после
+   чего сопоставление терпит неудачу (так как нет последующего символа 'a').
+   После чего .* сопоставляется со всей строкой, кроме последнего символа,
+   потом кроме двух последних символов, и так далее. В конечном итоге
+   поиск символа 'a' происходит по всей строке. Однако, если шаблон записать
+   в виде:
+
+   <literal>^(?>.*)(?&lt;=abcd)</literal>
+
+   повторный анализ для .* не выполняется, и, как следствие, может
+   соответствовать только всей строке целиком. После чего утверждение
+   проверяет последние четыре символа на совпадение с 'abcd', и в случае
+   неудачи все сопоставление терпит неудачу. Для больших объемов
+   обрабатываемого текста этот подход имеет значительный выигрыш во времени
+   выполнения.
+  </para>
+  <para>
+   Если шаблон содержит неограниченное повторение внутри подмаски,
+   которая в свою очередь также может повторяться неограниченное количество
+   раз, использование однократных  подмасок позволяет
+   избегать многократных неудачных сопоставлений,
+   которые длятся достаточно продолжительное время. Шаблон
+
+   <literal>(\D+|&lt;\d+>)*[!?]</literal>
+
+   соответствует неограниченному количеству подстрок, которые состоят
+   не из цифр,  либо из цифр заключенных в &lt;>, за которыми следует
+   ? либо !. В случае, если в обрабатываемом тексте содержатся
+   соответствия, время работы регулярного выражения будет невелико.
+   Но если его применить к строке
+
+   <literal>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</literal>
+
+   это займет длительное время. Это связанно с тем, что строка
+   может быть разделена между двумя частями шаблона многими способами,
+   и все они будут опробованы (в примере мы использовали [?!], поскольку
+   в случае одиночного символа в конце шаблона и PCRE и Perl выполняют
+   оптимизацию. Они запоминают последний одиночный символ и в случае
+   его отсутствия выдают неудачу).  Если изменить шаблон на
+
+   <literal>((?>\D+)|&lt;\d+>)*[!?]</literal>,
+
+   нецифровые последовательности не могут быть разорваны, и
+   невозможность сопоставления обнаруживается гораздо быстрее.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.conditional">
+  <title>Условные подмаски</title>
+  <para>
+   В PCRE реализована возможность подчинять шаблон условию либо выбирать
+   из двух условных подмасок в зависимости от успеха сопоставления
+   предыдущей подмаски. Условные подмаски имеют две допустимые формы
+   использования:
+  </para>
+
+  <informalexample>
+   <programlisting>
+<![CDATA[
+(?(condition)yes-pattern)
+(?(condition)yes-pattern|no-pattern)
+]]>
+   </programlisting>
+  </informalexample>
+  <para>
+   В случае успешного сопоставления условия condition, используется
+   подмаска yes-pattern, в противном случае no-pattern
+   (если он присутствует). Если указано более двух альтернатив,
+   возникнет ошибка во время компиляции.
+  </para>
+  <para>
+   Условия бывают двух видов. В случае, если между скобками
+   заключены цифры, условие будет выполняться в том случае,
+   если подмаска с соответствующим номером была успешно сопоставлена.
+   Рассмотрим следующий шаблон (он содержит незначащий пробел для удобства
+   чтения, подразумевается использование модификатора
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>),
+   разделив его для удобства на три смысловые части:
+
+   <literal>( \( )?    [^()]+    (?(1) \) )</literal>
+  </para>
+  <para>
+   Первая часть соответствует опциональной открывающей скобке,
+   и в случае если она присутствует, захватывает ее как значение
+   первой подмаски. Следующая часть соответствует одному или более
+   символам, отличным от круглой скобки. Третья часть является условной
+   подмаской, зависящей от результата сопоставления первой подмаски.
+   В случае, если в начале обрабатываемых данных была обнаружена
+   открывающая круглая скобка, условие будет интерпретировано как
+   истина, и, следовательно, для успешного сопоставления третьей
+   части шаблона необходима закрывающая круглая скобка. В противном случае,
+   поскольку не указана вторая ветвь условного шаблона, третья часть
+   будет сопоставлена с пустой строкой. Суммируя все вышесказанное,
+   приведенный шаблон совпадает с последовательностью не-скобок,
+   возможно, заключенной в круглые скобки.
+  </para>
+  <para>
+   Если условием является строка <literal>(R)</literal>, оно будет
+   выполнено, если будет произведен рекурсивный вызов к шаблону или
+   подмаске. На "самом верхнем уровне" условие ложно.
+  </para>
+  <para>
+   Если условие не является последовательностью цифр или (R),
+   оно должно быть утверждением.  Это может быть либо положительная
+   или отрицательная проверка последующего либо предыдущего текста.
+   Рассмотрим данный шаблон, снова содержащий незначащие пробелы,
+   с двумя альтернативами на второй строке:
+  </para>
+
+  <informalexample>
+   <programlisting>
+<![CDATA[
+(?(?=[^a-z]*[a-z])
+\d{2}-[a-z]{3}-\d{2}  |  \d{2}-\d{2}-\d{2} )
+]]>
+   </programlisting>
+  </informalexample>
+  <para>
+   Приведен пример с утверждающим условием касательно предшествующего
+   текста, которое выполняется для необязательной последовательности
+   не-букв с последующей буквой. Говоря другими словами, указанное
+   условие проверяет наличие хотя бы одной предшествующей буквы.
+   В случае, если буква найдена, выполняется сопоставление с первой
+   альтернативой, в противном случае - со второй альтернативой.
+   Приведенный шаблон соответствует строкам двух видов:
+   dd-aaa-dd либо dd-dd-dd, где aaaa - это буквы, а dd - цифры.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.comments">
+  <title>Комментарии</title>
+  <para>
+   Служебная последовательность (?# обозначает начало комментария,
+   который продолжается до ближайшей закрывающей скобки. Вложенные
+   скобки не допускаются. Символы, находящиеся внутри комментария,
+   не принимают участия в сопоставлении шаблона.
+  </para>
+  <para>
+   В случае, если используется модификатор <link
+   linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>,
+   неэкранированный символ '#' вне символьного класса также означает
+   начало блока комментария, который длится до конца текущей строки.
+  </para>
+ </section>
+
+ <section xml:id="regexp.reference.recursive">
+  <title>Рекурсивные шаблоны</title>
+  <para>
+   Рассмотрим задачу поиска соответствия со строкой, находящихся
+   внутри неограниченного количества круглых скобок. Без использования
+   рекурсии лучшее, что можно сделать - написать шаблон, который
+   будет решать задачу для некоторой ограниченной глубины вложенности, так
+   как обработать неограниченную глубину не предоставляется возможным.
+   В Perl 5.6 предоставлены некоторые экспериментальные возможности,
+   которые в том числе позвояляют реализовать рекурсию в шаблонах.
+   Специально обозначение (?R) используется для указания рекурсивной
+   подмаски. Таким образом, приведем PCRE шаблон, решающий поставленную
+   задачу (подразумевается, что используется модификатор
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_EXTENDED</link>,
+   незначащие пробелы игнорируются):
+
+   <literal>\( ( (?>[^()]+) | (?R) )* \)</literal>
+  </para>
+  <para>
+   Вначале он соответствует открывающей круглой скобке. Далее
+   он соответствует любому количеству подстрок, каждая из которых
+   может быть последовательностью не-скобок, либо строкой, рекурсивно
+   соответствующей шаблону (т.е. строкой, корректно заключенной в
+   круглые скобки). И, в конце, идет закрывающая круглая скобка.
+  </para>
+  <para>
+   Приведенный пример шаблона использует вложенные неограниченные повторения,
+   поэтому использование однократных шаблонов значительно ускоряет процесс
+   сопоставления, особенно в случаях, когда строка не соответствует заданной
+   маске. Например, если его применить к строке:
+
+   <literal>(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()</literal>,
+
+   то несоответствие будет обнаружено достаточно быстро. Но в случае, если
+   однократные шаблоны не используются, сопоставление будет затягиваться
+   на длительное время, так как существует множество способов разделения
+   строки между квантификаторами + и *, и все они должны быть проверены,
+   прежде чем будет выдано сообщение о неудаче.
+  </para>
+  <para>
+   Значение, устанавливаемое для захватывающей подмаски будет соответствовать
+   значению, захваченному на наиболее глубоком уровне рекурсии. В случае,
+   если приведенный выше шаблон сопоставляется со строкой
+
+   <literal>(ab(cd)ef)</literal>,
+
+   захваченным значением будет 'ef', которое является последним значением,
+   принимаемым на верхнем уровне. В случае, если добавить дополнительные скобки
+
+   <literal>\( ( ( (?>[^()]+) | (?R) )* ) \)</literal>,
+   захваченным значением будет "ab(cd)ef". В случае, если
+   в шаблоне встречается более, чем 15 захватывающих скобок, PCRE
+   требуется больше памяти для обработки рекурсии, чем обычно.
+   Память выделяется при помощи функции pcre_malloc, и освобождается
+   соответственно функцией pcre_free. Если память не может быть выделена,
+   сохраняются данные только для первых 15 захватывающих скобок,
+   так как нет способа выдать ошибку out-of-memory изнутри рекурсии.
+  </para>
+
+  <para>
+   <literal>(?1)</literal>, <literal>(?2)</literal> и так далее
+   также могут быть использованы для рекурсивных подмасок.
+   Также возможно использовать именованные подмаски:
+   <literal>(?P&gt;name)</literal> или <literal>(?P&amp;name)</literal>.
+  </para>
+  <para>
+   Если синтаксис ссылки на рекурсивную подмаску (как по имени, так и по
+   числовому индексу) используется вне скобок, к которым он относится, он
+   отрабатывает аналогично подпрограмме в языке программирования.
+   Возьмем более ранний пример, указывающий что шаблон
+   <literal>(sens|respons)e and \1ibility</literal>
+   соответствует "sense and sensibility" и "response and responsibility",
+   но не "sense and responsibility". Если вместо этого использовать шаблон
+   <literal>(sens|respons)e and (?1)ibility</literal>,
+   он совпадет с "sense and responsibility" так же, как и с другими двумя
+   строками. Однако, такие ссылки должны быть указаны после подмаски, на которую
+   они ссылаются.
+  </para>
+
+  <para>
+   Максимальная строка обрабатываемой строки не должна превышать максимально
+   доступного целого числа. Однако, так как для обработки подмасок
+   и бесконечного повторения PCRE использует рекурсию, это означает, что
+   размер обрабатываемых строк в некоторых шаблонах также может быть
+   ограничен доступным размером стэка.
+  </para>
+
+ </section>
+
+ <section xml:id="regexp.reference.performances">
+  <title>Производительность</title>
+  <para>
+   Некотрые элементы, которые могут встречаться в шаблонах, являются более
+   эффективными, чем ряд других. Например, гораздо эффективней использовать
+   символьный класс [aeiou] вместо набора альтернатив (a|e|i|o|u).
+   Как правило, более простая конструкция является более эффективной.
+   Книга Джеффри Фридла содержит много обсуждений вопроса оптимизации
+   регулярных выражений.
+  </para>
+  <para>
+   В случае, если шаблон начинается с .* и используется флаг <link
+   linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>,
+   шаблон неявно заякоривается, так как он может совпадать только
+   в начале строки. Но если
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>
+   не используется, PCRE не может выполнить соответствующую оптимизацию,
+   так как в таком случае метасимвол '.' не соответствует символу начала
+   строки (если обрабатываемые данные содержат переводы строк, такой шаблон
+   может соответствовать шаблону не от начала строки, а от позиции
+   непосредственно после перевода строки).
+   Например, применяя шаблон
+
+   <literal>(.*) second</literal>
+
+   к строке "first\nand second" (где \n обозначает символ
+   перевода строки), значение, захваченное первой подмаской, будет 'and'.
+   Чтобы обработать все возможные точки соответствия, PCRE пытается
+   сопоставить шаблон после каждого символа перевода строки.
+  </para>
+  <para>
+   В случае, если вы используете подобные шаблоны для обработки
+   данных, не содержащих переводы строк, для лучшей производительности
+   используйте модификатор
+   <link linkend="reference.pcre.pattern.modifiers">PCRE_DOTALL</link>,
+   либо начинайте шаблон с ^.* для указания явного заякоривания.
+   Это предотвратит PСRE от поиска символов новых строк и дополнительных
+   попыток сопоставить шаблон с каждой такой найденной позицией.
+  </para>
+  <para>
+   Избегайте шаблонов, которые содержат вложенные неограниченные повторения.
+   Сопоставление их со строками, не содержащими совпадений, занимает
+   длительное время. Рассмотрим пример шаблона
+
+   <literal>(a+)*</literal>
+  </para>
+  <para>
+   Он может соответствовать с  "aaaa" 33-мя различными способами, и эта
+   цифра очень быстро растет при увеличении строки. (В данном примере,
+   квантификатор * может совпадать 0, 1, 2, 3 или 4 раза,
+   и для каждого такого случая, кроме нуля, квантификатор + также может
+   совпадать различное число раз.) Если остаток шаблона таков, что все
+   совпадение терпит неудачу, PCRE должна попробовать все возможные
+   варианты совпадения, что может потребовать огромного количества времени.
+  </para>
+  <para>
+   При помощи оптимизации можно отловить наиболее простые случаи, такие как
+
+   <literal>(a+)*b</literal>
+
+   где следом идёт литеральный символ. Прежде, чем производить стандартную
+   процедуру поиска, PCRE проверяет в последующей подстроке наличие
+   символа 'b', и, в случае отсутствия такового,  попытка сопоставления
+   немедленно завершается неудачей. Однако, когда последующего литерала нет,
+   оптимизация не может быть применена. Вы можете ощутить разницу, сравнив поведение
+
+   <literal>(a+)*\d</literal>
+
+   с поведением приведенного выше шаблона. Первый определяет
+   невозможность сопоставления практически сразу же, при сопоставлении
+   со строкой состоящей из символов 'a', в то время как второй
+   тратит длительное время на поиск в строках длинее 20 символов.
+  </para>
+ </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
