@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 3e57d6ccfdd9e474227c60e0773a3c7d1ecb9536 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Id -->
+ <chapter xml:id="features.safe-mode" xmlns="http://docbook.org/ns/docbook">
+  <title>Безопасный режим</title>
+
+  <para>
+   Безопасный режим в PHP - это попытка решить проблему безопасности на совместно
+   используемых серверах. Несмотря на то, что концептуально неверно решать 
+   эту проблему на уровне PHP, но поскольку альтернативы уровня веб-сервера или
+   операционной системы на сегодняшний день отсутствуют, многие пользователи,
+   особенно провайдеры, используют именно защищенный режим.
+  </para>
+
+  &warn.deprecated.feature-5-3-0.removed-6-0-0;
+
+  <sect1 xml:id="ini.sect.safe-mode">
+   <title>Безопасность и безопасный режим</title>
+   <para>
+    <table>
+     <title>Конфигурационные опции, управляющие безопасным режимом и вопросами безопасности</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Имя</entry>
+        <entry>Значение по умолчанию</entry>
+        <entry>Изменяемость</entry>
+        <entry>История изменений</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>safe_mode</entry>
+        <entry>"0"</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>&removed.php.future;</entry>
+       </row>
+       <row>
+        <entry>safe_mode_gid</entry>
+        <entry>"0"</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>Доступно начиная с версии PHP 4.1.0. &removed.php.future;</entry>
+       </row>
+       <row>
+        <entry>safe_mode_include_dir</entry>
+        <entry>NULL</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>Доступно начиная с версии PHP 4.1.0. &removed.php.future;</entry>
+       </row>
+       <row>
+        <entry>safe_mode_exec_dir</entry>
+        <entry>""</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>&removed.php.future;</entry>
+       </row>
+       <row>
+        <entry>safe_mode_allowed_env_vars</entry>
+        <entry>PHP_</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>&removed.php.future;</entry>
+       </row>
+       <row>
+        <entry>safe_mode_protected_env_vars</entry>
+        <entry>"LD_LIBRARY_PATH"</entry>
+        <entry>PHP_INI_SYSTEM</entry>
+        <entry>&removed.php.future;</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    &ini.php.constants;
+   </para>
+   
+   &ini.descriptions.title;
+   
+   <para>
+    <variablelist>
+     <varlistentry xml:id="ini.safe-mode">
+      <term>
+       <parameter>safe_mode</parameter>
+       <type>boolean</type>
+      </term>
+      <listitem>
+       <para>
+        Включает/отключает безопасный режим в PHP.
+        Если PHP скомпилирован с опцией <literal>--enable-safe-mode</literal>,
+        то по умолчанию принимает значение On (включено), иначе - Off (выключено).
+       </para>
+       &warn.deprecated.feature-5-3-0.removed-6-0-0;
+      </listitem>
+     </varlistentry>
+     <varlistentry xml:id="ini.safe-mode-gid">
+      <term>
+       <parameter>safe_mode_gid</parameter>
+       <type>boolean</type>
+      </term>
+      <listitem>
+       <para>
+        По умолчанию в безопасном режиме при открытии файла выполняется
+        проверка значения UID. Для того, чтобы немного смягчить это условие и
+        выполнять проверку GID, необходимо установить значение on для флага safe_mode_gid.
+        Определяет, использовать ли проверку <literal>UID</literal> (&false;) или
+        <literal>GID</literal> (&true;) проверку при обращении к файлу.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry xml:id="ini.safe-mode-include-dir">
+      <term>
+       <parameter>safe_mode_include_dir</parameter>
+       <type>string</type>
+      </term>
+      <listitem>
+       <para>
+        При подключении файлов, расположенных в указанной директории и всех ее подкаталогах,
+        проверка на соответствие значений <literal>UID</literal>/<literal>GID</literal> 
+        не выполняется (в случае, если установленная директория не указана в
+        <link linkend="ini.include-path">include_path</link>,
+        необходимо указывать полный путь при включении).
+       </para>
+       <simpara>
+        Начиная с PHP 4.2.0 значением этой директивы может быть список каталогов,
+        разделенных двоеточием (точкой с запятой на Windows-системах), что аналогично
+        синтаксису <link linkend="ini.include-path">include_path</link>. 
+       </simpara>
+       <simpara>
+        Указанное значение в действительности является префиксом, а не названием
+        директории. Это означает, что запись
+        "<literal>safe_mode_include_dir = /dir/incl</literal>" позволяет
+        подключать файлы, находящиеся в директориях "<literal>/dir/include</literal>"
+        и "<literal>/dir/incls</literal>", в случае, если они существуют.
+        Если вы хотите указать доступ к конкретной директории,
+        используйте завершающий слэш, например: "<literal>safe_mode_include_dir = /dir/incl/</literal>"
+       </simpara>
+       <simpara>
+        Если значение этой директивы пусто, то никакие файлы с отличающимися
+        <literal>UID</literal>/<literal>GID</literal> не могут быть подключены в
+        версии PHP 4.2.3 и начиная с версии PHP 4.3.3. В более ранних версиях
+        подключались все файлы.
+       </simpara>
+      </listitem>
+     </varlistentry>
+     <varlistentry xml:id="ini.safe-mode-exec-dir">
+      <term>
+       <parameter>safe_mode_exec_dir</parameter>
+       <type>string</type>
+      </term>
+      <listitem>
+       <para>
+        В случае, когда PHP работает в безопасном режиме,
+        <function>system</function> и другие <link linkend="ref.exec">функции
+        запуска программ</link> отклоняют выполнение программ, находящихся вне
+        данной директории. Вам также придется использовать <literal>/</literal>
+        в качестве разделителя пути на всех окружениях, включая Windows.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry xml:id="ini.safe-mode-allowed-env-vars">
+      <term>
+       <parameter>safe_mode_allowed_env_vars</parameter>
+       <type>string</type>
+      </term>
+      <listitem>
+       <para>
+        Возможность устанавливать переменные окружения - потенциальная 
+        брешь в безопасности. Значением этой директивы является
+        список префиксов, разделенных двоеточиями. В безопасном режиме
+        пользователь может модифицировать только те переменные окружения,
+        имена которых начинаются с одного из указанных префиксов. По умолчанию,
+        пользователю доступны переменные, которые начинаются с префикса <literal>PHP_</literal>
+        (например, <literal>PHP_FOO=BAR</literal>).
+       </para>
+       <note>
+        <para>
+         В случае, если этой директиве указать пустое значение, пользователь получит
+         возможность модифицировать ЛЮБУЮ переменную окружения!
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+     <varlistentry xml:id="ini.safe-mode-protected-env-vars">
+      <term>
+       <parameter>safe_mode_protected_env_vars</parameter>
+       <type>string</type>
+      </term>
+      <listitem>
+       <para>
+        Эта директива содержит список переменных окружения, разделенных двоеточием,
+        значение которых пользователь не сможет изменить, используя
+        функцию <function>putenv</function>. Значения этих переменных
+        остаются защищенными, даже если их модификация разрешена
+        директивой safe_mode_allowed_env_vars.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+   <para>
+    Смотрите также:
+    <link linkend="ini.open-basedir">open_basedir</link>,
+    <link linkend="ini.disable-functions">disable_functions</link>,
+    <link linkend="ini.disable-classes">disable_classes</link>,
+    <link linkend="ini.register-globals">register_globals</link>,
+    <link linkend="ini.display-errors">display_errors</link>, и
+    <link linkend="ini.log-errors">log_errors</link>
+   </para>
+
+  <para>
+   В случае, если включена директива <link linkend="ini.safe-mode">safe_mode</link>,
+   PHP проверит, совпадает ли владелец скрипта и владелец файла или директории,
+   которыми оперирует скрипт. Например:
+   <programlisting role="ls">
+<![CDATA[
+-rw-rw-r--    1 rasmus   rasmus       33 Jul  1 19:20 script.php 
+-rw-r--r--    1 root     root       1116 May 26 18:01 /etc/passwd 
+]]>
+   </programlisting>
+   Выполнение скрипта <filename>script.php</filename>
+   <programlisting role="php">
+<![CDATA[
+<?php
+ readfile('/etc/passwd'); 
+?>
+]]>
+   </programlisting>
+   в случае использования безопасного режима приводит к следующей ошибке:
+   <screen>
+<![CDATA[
+Warning: SAFE MODE Restriction in effect. The script whose uid is 500 is not 
+allowed to access /etc/passwd owned by uid 0 in /docroot/script.php on line 2
+]]>
+   </screen>
+  </para>
+  <para>
+   Тем не менее, предусмотрена возможность вместо проверки на соответствие
+   <literal>UID</literal> использовать более мягкую проверку на соответствие
+   <literal>GID</literal>. Для этого необходимо использовать директиву
+   <link linkend="ini.safe-mode-gid">safe_mode_gid</link>. В случае, если она
+   установлена значением  <literal>On</literal>, используется более мягкая 
+   проверка <literal>GID</literal>. В противном случае, если установлено значение 
+   <literal>Off</literal> (значение по умолчанию), выполняется более строгая проверка
+   на соответствие <literal>UID</literal>.
+  </para>
+  <para>
+   В качестве альтернативы директиве <link linkend="ini.safe-mode">safe_mode</link> 
+   вы можете ограничить все выполняемые скрипты жестко заданным
+   деревом директорий при помощи опции <link linkend="ini.open-basedir">open_basedir</link>.
+   Например (фрагмент конфигурационного файла &httpd.conf;): 
+   <programlisting role="ini">
+<![CDATA[
+<Directory /docroot>
+  php_admin_value open_basedir /docroot 
+</Directory>
+]]>
+   </programlisting>
+   При попытке выполнить тот же самый скрипт script.php с 
+   указанной опцией 
+   <link linkend="ini.open-basedir">open_basedir</link>
+   вы получите следующий результат:
+   <screen>
+<![CDATA[
+Warning: open_basedir restriction in effect. File is in wrong directory in 
+/docroot/script.php on line 2 
+]]>
+   </screen>
+  </para>
+  <para>
+   Вы также можете запретить отдельные функции. Следует заметить, что 
+   директива 
+   <link linkend="ini.disable-functions">disable_functions</link>
+   может быть указана исключительно в конфигурационном файле &php.ini;,
+   это означает, что вы не можете, отредактировав &httpd.conf;, установить 
+   индивидуальные значения для конкретного виртуального хоста или каталога.
+   Если добавить в &php.ini; следующую строку: 
+   <programlisting role="ini">
+<![CDATA[
+disable_functions = readfile,system
+]]>
+   </programlisting>
+  Результатом работы скрипта будет следующий вывод: 
+   <screen>
+<![CDATA[
+Warning: readfile() has been disabled for security reasons in 
+/docroot/script.php on line 2 
+]]>
+   </screen>
+  </para>
+  <warning>
+   <para>
+    Разумеется, эти ограничения PHP не работают в запускаемых программах.
+   </para>
+  </warning>
+ </sect1>
+
+  <sect1 xml:id="features.safe-mode.functions">
+   <title>Ограниченные или недоступные в безопасном режиме функции</title>
+   <para>
+    Ниже приведен, вероятно, неполный и, возможно, не вполне корректный список
+    функций, ограниченных в 
+    <link linkend="features.safe-mode">безопасном режиме</link>.
+    <!-- TODO: add &note.sm.*; to the functions mentioned here.
+    That entity should link to this section -->
+    <table>
+     <title>Функции, ограниченные в безопасном режиме</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Функция</entry>
+        <entry>Ограничения</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry><function>dbmopen</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>dbase_open</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>filepro</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>filepro_rowcount</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>filepro_retrieve</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry>ifx_*</entry>
+        <entry>sql_safe_mode ограничения (не путать с safe_mode)</entry>
+        <!-- TODO: more info on sql-safe-mode -->
+       </row>
+       <row>
+        <entry>ingres_*</entry>
+        <entry>sql_safe_mode ограничения (не путать с safe_mode)</entry>
+        <!-- TODO: more info on sql-safe-mode -->
+       </row>
+       <row>
+        <entry>mysql_*</entry>
+        <entry>sql_safe_mode ограничения (не путать с safe_mode)</entry>
+        <!-- TODO: more info on sql-safe-mode -->
+       </row>
+       <row>
+        <entry><function>pg_lo_import</function></entry>
+        <entry>&sm.uidcheck;</entry>
+        <!-- source TODO: there is no PHP-warning for that safe-mode-restriction -->
+       </row>
+       <row>
+        <entry><function>posix_mkfifo</function></entry>
+        <entry>&sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>putenv</function></entry>
+        <entry>Подчиняется настройкам the safe_mode_protected_env_vars и
+        safe_mode_allowed_env_vars. Ознакомьтесь с более подробным описанием
+        функции <function>putenv</function>.</entry>
+        <!-- TODO: document those directives in chapters/config.xml -->
+       </row>
+       <row>
+        <entry><function>move_uploaded_file</function></entry>
+        <entry>&sm.uidcheck; <!-- TODO: check this --></entry>
+       </row>
+
+       <!-- TODO: from here on, add warning to the function itself -->
+
+       <row>
+        <entry><function>chdir</function></entry>
+        <entry>&sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>dl</function></entry>
+        <entry>&sm.disabled;</entry>
+       </row>
+       <row>
+        <entry><link linkend="language.operators.execution">backtick operator</link></entry>
+        <entry>&sm.disabled;</entry>
+       </row>
+       <row>
+        <entry><function>shell_exec</function> (функция эквивалентна backticks)</entry>
+        <entry>&sm.disabled;</entry>
+       </row>
+       <row>
+        <entry><function>exec</function></entry>
+        <entry>Вы можете запускать исполняемые файлы, ограниченные деревом
+        каталогов, указанным в <link linkend="ini.safe-mode-exec-dir">safe_mode_exec_dir</link>.
+        Исходя из практических соображений, использовать <literal>..</literal> 
+        при указании пути запрещено. Следует заметить, что к аргументу этой функции
+        применяется <function>escapeshellcmd</function>.
+        </entry>
+       </row>
+       <row>
+        <entry><function>system</function></entry>
+        <entry>Вы можете запускать исполняемые файлы, ограниченные деревом
+        каталогов, указанным в <link linkend="ini.safe-mode-exec-dir">safe_mode_exec_dir</link>.
+        Исходя из практических соображений, использовать <literal>..</literal> 
+        при указании пути запрещено. Следует заметить, что к аргументу этой функции
+        применяется <function>escapeshellcmd</function>
+        </entry>
+       </row>
+       <row>
+        <entry><function>passthru</function></entry>
+        <entry>Вы можете запускать исполняемые файлы, ограниченные деревом
+        каталогов, указанным в <link linkend="ini.safe-mode-exec-dir">safe_mode_exec_dir</link>.
+        Исходя из практических соображений, использовать <literal>..</literal> 
+        при указании пути запрещено. Следует заметить, что к аргументу этой функции
+        применяется <function>escapeshellcmd</function>.
+        </entry>
+       </row>
+       <row>
+        <entry><function>popen</function></entry>
+        <entry>Вы можете запускать исполняемые файлы, ограниченные деревом
+        каталогов, указанным в <link linkend="ini.safe-mode-exec-dir">safe_mode_exec_dir</link>.
+        Исходя из практических соображений, использовать <literal>..</literal> 
+        при указании пути запрещено. Следует заметить, что к аргументу этой функции
+        применяется <function>escapeshellcmd</function>.
+        </entry>
+        <!-- TODO: not sure. popen uses a completely different implementation
+        Don't know why, don't know whether it's behaving the same -->
+       </row>
+       <row>
+        <entry><function>fopen</function></entry>
+        <entry>&sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>mkdir</function></entry>
+        <entry>&sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>rmdir</function></entry>
+        <entry>&sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>rename</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir;<!-- on the old name only, it seems. Is rename preventing moving files? --></entry>
+       </row>
+       <row>
+        <entry><function>unlink</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>copy</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir; (для
+        параметров <parameter>source</parameter> и 
+        <parameter>target</parameter>)</entry>
+       </row>
+       <row>
+        <entry><function>chgrp</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>chown</function></entry>
+        <entry>&sm.uidcheck;</entry>
+       </row>
+       <row>
+        <entry><function>chmod</function></entry>
+        <entry>&sm.uidcheck; Кроме того, вы не можете
+        устанавливать UID, SGID и sticky-биты.</entry>
+       </row>
+       <row>
+        <entry><function>touch</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir;</entry>
+       </row>
+       <row>
+        <entry><function>symlink</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir; 
+        (Замечание: проверка выполняется только для параметра target)</entry>
+       </row>
+       <row>
+        <entry><function>link</function></entry>
+        <entry>&sm.uidcheck; &sm.uidcheck.dir; 
+        (Замечание: проверка выполняется только для параметра target)</entry>
+       </row>
+       <row>
+        <entry><function>apache_request_headers</function></entry>
+        <entry>В безопасном режиме, заголовки, начинающиеся с 'authorization'
+        (независимо от регистра), не возвращаются.</entry>
+       </row>
+       <row>
+        <entry><function>header</function></entry>
+        <entry>В безопасном режиме, текущий UID скрипта будет добавлен к
+        <literal>realm</literal>-части заголовка
+        <literal>WWW-Authenticate</literal>, если вы его устанавливаете
+        (используется для HTTP-аутентификации).</entry>
+       </row>
+       <row>
+        <entry><link linkend="features.http-auth">переменные PHP_AUTH</link></entry>
+        <entry>
+         В безопасном режиме, переменные <varname>PHP_AUTH_USER</varname>,
+         <varname>PHP_AUTH_PW</varname>, и <varname>AUTH_TYPE</varname>
+         недоступны как элементы массива <varname>$_SERVER</varname>. 
+         Несмотря на это, вы все еще можете использовать переменную 
+         <varname>REMOTE_USER</varname> для идентификации пользователя.
+         (Замечание: актуально только для PHP 4.3.0 и выше)
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <function>highlight_file</function>,
+         <function>show_source</function>
+        </entry>
+        <entry>
+         &sm.uidcheck; &sm.uidcheck.dir; (Замечание: актуально только для PHP 4.2.1 и выше)
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <function>parse_ini_file</function>
+        </entry>
+        <entry>
+         &sm.uidcheck; &sm.uidcheck.dir; (Замечание: актуально только для PHP 4.2.1 и выше)
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <function>set_time_limit</function>
+        </entry>
+        <entry>
+         Не имеет никакого эффекта, если используется &safemode;.
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <link linkend="ini.max-execution-time">max_execution_time</link>
+        </entry>
+        <entry>
+         Не имеет никакого эффекта, если используется &safemode;.
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <function>mail</function>
+        </entry>
+        <entry>
+         В безопасном режиме пятый параметр недоступен.
+         (Замечание: актуально только для PHP 4.2.3 и выше)
+        </entry>
+       </row>
+       <row>
+        <entry>
+         <function>session_start</function>
+        </entry>
+        <entry>
+         Владелец скрипта должен совпадать с владельцем каталога <link
+         linkend="ini.session.save-path">session.save_path</link>, если используются
+         хранилище по умолчанию <literal>files</literal> и <link
+         linkend="ini.session.save-handler">session.save_handler</link>.
+        </entry>
+       </row>
+       <row>
+        <entry>Все функции работы с файлами и потоками.
+        </entry>
+        <entry>
+         &sm.uidcheck; &sm.uidcheck.dir; (смотрите также &php.ini;-опцию <link
+          linkend="ini.safe-mode-include-dir">safe_mode_include_dir</link>.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+  </sect1>
+
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
