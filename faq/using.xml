@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: irinagoble Status: ready -->
-<!-- $Revision$ -->
+<!-- EN-Revision: 8e3c3f725ce77309538959f52a7c17415e9e55a8 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Id -->
 <chapter xml:id="faq.using" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
   <title>Использование PHP</title>
   <titleabbrev>Использование PHP</titleabbrev>
@@ -11,10 +12,31 @@
   </para>
 
   <qandaset>
+
+   <qandaentry xml:id="faq.using.parameterorder">
+    <question>
+     <para>
+      Я не могу запомнить порядок аргументов PHP-функций, они что, случайны?
+     </para>
+    </question>
+    <answer>
+     <para>
+      PHP - это клей, который скрепляет вместе сотни различных внешних библиотек,
+      поэтому иногда это кажется довольно запутанным. Однако, общее правило таково:
+     </para>
+     <para>
+      Параметры <link linkend="book.array">функций работы с массивами</link> упорядочены
+      в виде "<emphasis>иголка (needle), сено (haystack)</emphasis>", тогда как
+      порядок в <link linkend="book.strings">строковых функциях</link> обратный,
+      то есть аналогичен "<emphasis>сено, иголка</emphasis>".
+     </para>
+    </answer>
+   </qandaentry>
+
    <qandaentry xml:id="faq.using.anyform">
     <question>
      <para>
-      Я хочу написать общий PHP скрипт, кторый может обрабатывать данные,
+      Я хочу написать общий PHP скрипт, который может обрабатывать данные,
       приходящие из любой формы. Как узнать какие переменные метода POST
       доступны?
      </para>
@@ -25,8 +47,7 @@
       предопределённых переменных</link>, таких как суперглобальная <varname>
       $_POST</varname>. Вы можете пройтись по <varname>$_POST</varname>
       так как это ассоциативный массив всех значений, пришедших с POST.
-      Для примера, давайте просто пройдёмся по ним с
-      <link linkend="control-structures.foreach">foreach</link>,
+      Для примера, давайте просто пройдёмся по ним с &foreach;,
       проверим на пустые (<function>empty</function>) значения и распечатаем.
       <programlisting role="php">
 <![CDATA[
@@ -63,18 +84,21 @@ if (empty($empty)) {
    <qandaentry xml:id="faq.using.addslashes">
     <question>
      <para>
-      Мне надо преобразовать все одиночные кавычки (') в обратную косую черту с
-      последующей одиночной кавычкой (\').
-      Как я могу сделать это с помощью регулярного выражения?
+      Мне надо преобразовать все одиночные кавычки (') в обратный слэш с
+      последующей одиночной кавычкой (\'). Как я могу сделать это с помощью
+      регулярного выражения?
       Я также хотел бы преобразовать " в \" и \ в \\.
      </para>
     </question>
     <answer>
      <para>
-      Это делает функция <function>addslashes</function>. 
-      Смотрите также <function>mysql_escape_string</function>.
-      Также вы можете избавиться от обратной косой черты с помощью
-      <function>stripslashes</function>.
+      Подразумевая, что вы хотите использовать результат преобразования в работе
+      с базой данных, используйте соответствующий механизм экранирования, идущий
+      с используемой вами базой данных. Например, используйте
+      <function>mysql_real_escape_string</function> с MySQL и
+      <function>pg_escape_string</function> с PostgreSQL.
+      Есть также более общие функции <function>addslashes</function> и
+      <function>stripslashes</function>, они часто встречаются в старом PHP-коде.
      </para>
 
      &note.magicquotes.gpc;
@@ -85,16 +109,17 @@ if (empty($empty)) {
    <qandaentry xml:id="faq.using.stripslashes">
     <question>
      <para>
-      Все мои " превратились в \" и мои ' в \', как я могу избавиться от
-      всех этих нежелательных обратных косых черт? Как и почему они появились?
+      Все мои " превратились в \", а ' в \', как избавиться от
+      всех этих ненужных обратных слэшей? Как и почему они появились?
      </para>
     </question>
     <answer>
      <para>
-      PHP функция <function>stripslashes</function> удалит эти
-      обратные косые черты из вашей строки (<type>string</type>). Вероятнее всего,
-      обратные косые черты магически появились из-за того, что включена
-      PHP директива <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>
+      Наиболее частой причиной магического появления обратных слэшей -
+      это включенная PHP-директива <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>.
+      Этот функционал PHP уже устарел и на него нельзя полагаться, поэтому
+      эту директиву рекомендуется отключить. Кроме того, для удаления обратных слэшей
+      из строк можно использовать функцию <function>stripslashes</function>.
      </para>
      
      &note.magicquotes.gpc;
@@ -137,13 +162,14 @@ echo $PHP_SELF;
 ]]>
      </programlisting>
     </para>
+    <!-- FIXME PHP_6 register_globals removal alert -->
     <para>
      Код выше демонстрирует как register_globals создаёт множество переменных.
      Годами такой стиль написания не одобрялся и годами register_globals была
-     выключена по умолчанию. В PHP 6 директива register_globals наконец
-     удалена. Несмотря на то, что большинство хостингов отключает
+     выключена по умолчанию. Учтите, что эта возможность помечена устаревшей
+     и будет в конце концов удалена. Несмотря на то, что большинство хостингов отключает
      register_globals, осталось еще много устаревших статей, руководств и
-     книг, которые требуют включения этой директивы.
+     книг, которые требуют включения этой директивы. Действуйте соответственно.
     </para>
     <para>
      См. также следующие источники за дополнительной информацией:
@@ -151,7 +177,7 @@ echo $PHP_SELF;
       <member>Директива <link linkend="ini.register-globals">register_globals</link></member>
       <member><link linkend="security.globals">Глава о безопасности и register_globals</link></member>
       <member><link linkend="language.variables.external">Работа с внешними данными</link></member>
-      <member><link linkend="language.variables.superglobals">Суперглобальные переменные</link></member>
+      <member>В качестве альтернативы используйте <link linkend="language.variables.superglobals">суперглобальные переменные</link></member>
      </simplelist>
     </para>
     <note>
@@ -200,8 +226,8 @@ echo "myfunc($variable) = " . myfunc($variable);
       <programlisting role="php">
 <![CDATA[
 <pre>
-<?php echo "This should be the first line."; ?>
-<?php echo "This should show up after the new line above."; ?>
+<?php echo "Это должно быть на первой строке."; ?>
+<?php echo "А это должно быть на следующей строке."; ?>
 </pre>
 ]]>
       </programlisting>
@@ -211,7 +237,7 @@ echo "myfunc($variable) = " . myfunc($variable);
      <para>
       В PHP, блок кода завершается либо с "?&gt;", либо с "?&gt;\n"
       (где \n означает "новая строка"). В вышеприведённом примере
-      предложения выведутся на одной строке, так как PHP опусткает
+      предложения выведутся на одной строке, так как PHP опускает
       символ новой строки после завершения блока. Это означает,
       что вам необходимо вставить дополнительный символ новой строки
       после каждого блока PHP кода, для того чтобы вывод продолжался
@@ -219,9 +245,9 @@ echo "myfunc($variable) = " . myfunc($variable);
      </para>
      <para>
       Почему PHP делает это? Потому что при форматировании обычного HTML
-      это, обычно, упрощает вашу жизнь когда вым не нужна эта новая строка
+      это, обычно, упрощает вашу жизнь когда вам не нужна эта новая строка
       и вам не надо создавать невероятно длинные строки для того, чтобы
-      сделать сырой исходник страницы читаемым. 
+      сделать исходник страницы читаемым.
      </para>
     </answer>
    </qandaentry>
@@ -239,10 +265,10 @@ echo "myfunc($variable) = " . myfunc($variable);
       Функциям <function>header</function>, <function>setcookie</function>,
       и <link linkend="ref.session">функциям сессии</link> нужно добавить
       заголовки к выходному потоку, но заголовки могут быть посланы только перед 
-      всем другим содержимым. Перед использованием этих функций не может быть 
-      никакого вывода HTML. Функция <function>headers_sent</function>
-      проверит если ваш скрипт уже послал заголовки; также смотрите
-      <link linkend="ref.outcontrol"> Функции Управления Выводом</link>.
+      всем другим содержимым. Перед использованием этих функций нельзя ничего
+      выводить, в том числе HTML. Функция <function>headers_sent</function>
+      проверит, если ваш скрипт уже послал заголовки; также смотрите
+      <link linkend="ref.outcontrol">функции управления выводом</link>.
      </para>
     </answer>
    </qandaentry>
@@ -256,8 +282,8 @@ echo "myfunc($variable) = " . myfunc($variable);
     </question>
     <answer>
      <para>
-      Это делает функция <function>getallheaders</function> если вы
-      запускаете PHP как модуль Apache. Так следующий кусок кода
+      Это делает функция <function>getallheaders</function>, если вы
+      запускаете PHP как модуль Apache. Так, следующий кусок кода
       покажет вам все заголовки запроса:
       <programlisting role="php">
 <![CDATA[
@@ -290,12 +316,12 @@ foreach ($headers as $name => $content) {
      <para>
       Это недостаток модели безопасности IIS. Проблема общая для всех
       CGI программ, выполняющихся под IIS. Чтобы обойти проблему, 
-      создайте простой HTML файл (неразбираемый PHP) как входную страницу
+      создайте простой HTML файл (необрабатываемый PHP) как входную страницу
       в аутентифицируемой директории. Затем используйте META тэг для
-      перенаправления на PHP страницу или поместите ссылку на PHP страницу.
+      перенаправления на PHP страницу или поместите ссылку, указывающую на PHP страницу.
       После этого PHP распознает аутентификацию правильно. 
       С модулем ISAPI такой проблемы нет. Это не должно повлиять на другие
-      web сервисы NT. Для дополнительной информации смотрите:
+      веб-серверы NT. Для дополнительной информации смотрите:
       <link xlink:href="&url.iis;">&url.iis;</link> и раздел руководства
       <link linkend="features.http-auth">HTTP Аутентификация</link>.
      </para>
@@ -305,7 +331,7 @@ foreach ($headers as $name => $content) {
    <qandaentry xml:id="faq.using.iis.sharing">
     <question>
      <para>
-      Windows: У меня нет доступа к файлам, разделяемых другим компьютером,
+      Windows: У меня нет доступа к файлам, разделяемых с другим компьютером,
       по IIS.
      </para>
     </question>
@@ -318,39 +344,10 @@ foreach ($headers as $name => $content) {
      </para>
      <para>
       Вы можете исправить проблему либо сняв отметку с <literal>Anonymous
-      Access</literal> и оставив отмеченым <literal>Integrated Window
+      Access</literal> и оставив отмеченным <literal>Integrated Window
       Authentication</literal>, либо отметив <literal>Anonymous
       Access</literal> и отредактировать права пользователя, так как у него
       может не быть прав.
-     </para>
-    </answer>
-   </qandaentry>
-
-   <qandaentry xml:id="faq.using.netscape">
-    <question>
-     <para>
-      Мой PHP скрипт работает в IE и Lynx, а в Netscape некоторый 
-      вывод отсутствует. Когда я выполняю "View Source", я вижу
-      содержимое в IE, а в Netscape нет.
-     </para>
-    </question>
-    <answer>
-     <para>
-      Netscape более строг к HTML тэгам (таким как таблицы), чем IE.
-      Может быть полезно пропустить ваш HTML вывод через HTML validator,
-      такой как <link xlink:href="&url.w3.validator;">validator.w3.org</link>.
-      Например, это может быть вызвано отсутствием &lt;/table&gt;.
-     </para>
-     <para>
-      Также, оба IE и Lynx игнорируют любые NUL-ы (<literal>\0</literal>)
-      в HTML потоке, а Netscape нет. Лучший способ проверить это - скомпилировать
-      версию <link linkend="features.commandline">командной строки</link> PHP
-      (также известную как CGI версия) и выполнить ваш скрипт из командной строки.
-      На *nix, пропустите вывод через <literal>od -c</literal> и ищите любые
-      <literal>\0</literal> символы. Если вы под Windows, вам надо найти
-      редактор или какую-либо другую программу, которая позволяет просматривать
-      двоичные файлы. Когда Netscape видит NUL в файле, он обычно не будет 
-      больше ничего выводить на этой строке, тогда как IE и Lynx будут.
      </para>
     </answer>
    </qandaentry>
@@ -367,30 +364,11 @@ foreach ($headers as $name => $content) {
       короткие тэги, установив PHP директиву
       <link linkend="ini.short-open-tag">short_open_tags</link> в
       <literal>0</literal>. Вы можете установить эту директиву с помощью
-      <function>ini_set</function>. Независимо от того, что включена или нет
-      <link linkend="ini.short-open-tag">short_open_tags</link>,
+      <function>ini_set</function>. Независимо от того, включена
+      <link linkend="ini.short-open-tag">short_open_tags</link> или нет,
       вы можете делать что-то типа:
       <literal>&lt;?php echo '&lt;?xml'; ?&gt;</literal>. 
-      По умолчанию эта директива включена.
-     </para>
-    </answer>
-   </qandaentry>
-
-   <qandaentry xml:id="faq.using.editor">
-    <question>
-     <para>
-      Как я могу использовать PHP с FrontPage или каким-либо другим
-      редактором HTML, который настаивает на перемещении моего кода?
-     </para>
-    </question>
-    <answer>
-     <para>
-      Самое простое, что можно сделать - это включить поддержку ASP тэгов в вашем
-      PHP коде. Это позволит вам использовать разделители кода в стиле ASP
-      &lt;% и %&gt;. Некоторые популярные редакторы HTML обращаются с ними
-      более интеллигентно (пока ещё). Чтобы разрешить тэги в стиле ASP,
-      вам надо установить переменную <link linkend="ini.asp-tags">asp_tags</link>
-      в &php.ini; или использовать соответствующую директиву Apache.
+      По умолчанию эта директива включена (<literal>On</literal>).
      </para>
     </answer>
    </qandaentry>
@@ -405,11 +383,11 @@ foreach ($headers as $name => $content) {
      <para>
       Читайте страницу руководства по 
       <link linkend="language.variables.predefined">предопределённым
-      переменным</link> так как она содержит частичный список предопределённых
+      переменным</link>, так как она содержит частичный список предопределённых
       переменных, доступных вашему скрипту. Полный список доступных переменных
       (и множество другой информации) можно увидеть, вызвав функцию
       <function>phpinfo</function>. Не забудьте прочитать раздел руководства
-      по <link linkend="language.variables.external">переменным извне PHP
+      по <link linkend="language.variables.external">переменным, лежащим вне PHP
       </link> так как он описывает общие сценарии для внешних переменных, таких 
       как HTML форма, Cookie и URL.
      </para>
@@ -430,11 +408,12 @@ foreach ($headers as $name => $content) {
     <answer>
      <para>
       Есть несколько альтернатив, написанных на PHP, таких как 
-      <link xlink:href="&url.pdf.ros;">&url.pdf.ros;</link>, 
-      <link xlink:href="&url.pdf.fpdf;">&url.pdf.fpdf;</link>, 
-      <link xlink:href="&url.pdf.pdf4php;">&url.pdf.pdf4php;</link> и
-      <link xlink:href="&url.pdf.phppdflib;">&url.pdf.phppdflib;</link>.
-      А также модуль <link xlink:href="&url.pdf.panda;">Panda</link>.
+      <link xlink:href="&url.pdf.fpdf;">FPDF</link> и
+      <link xlink:href="&url.pdf.tcpdf;">TCPDF</link>.
+     </para>
+     <para>
+      Есть также расширение <link linkend="book.haru">Haru</link>, использующее
+      внешнюю свободную библиотеку libHaru.
      </para>
     </answer>
    </qandaentry>
@@ -443,7 +422,8 @@ foreach ($headers as $name => $content) {
     <question>
      <para>
       Я пытаюсь получить доступ к одной из стандартных CGI переменных
-      (таких как $DOCUMENT_ROOT или $HTTP_REFERER) в определённой 
+      (таких как <varname>$DOCUMENT_ROOT</varname> или
+      <varname>$HTTP_REFERER</varname>) в определённой
       пользователем функции и, похоже, она не может быть найдена.
       В чём дело?
      </para>
@@ -455,20 +435,20 @@ foreach ($headers as $name => $content) {
       также затрагивает переменные окружения и сервера. 
       Когда register_globals = off (по умолчанию off, начиная с PHP 4.2.0),
       default is off since PHP 4.2.0), <varname>$DOCUMENT_ROOT</varname>
-      не будет существовать. Вместо ипользуйте <varname>$_SERVER['DOCUMENT_ROOT']
-      </varname>. Если register_globals = on, то переменные
-      <varname>$DOCUMENT_ROOT</varname> и
+      не будет существовать. Вместо нее используйте
+      <varname>$_SERVER['DOCUMENT_ROOT']</varname>. Если register_globals = on,
+      то переменные <varname>$DOCUMENT_ROOT</varname> и
       <varname>$GLOBALS['DOCUMENT_ROOT']</varname> будут также существовать.
      </para>
      <para>
-      Если вы уверины, что register_globals = on и удивляетесь почему
+      Если вы уверены, что register_globals = on и удивляетесь почему
       <varname>$DOCUMENT_ROOT</varname> недоступна внутри функции, то
       это потому, что, как любые другие переменные, она требует
       <literal>global $DOCUMENT_ROOT</literal> внутри функции.
       Также смотрите страницу руководства по 
       <link linkend="language.variables.scope">области
-      определения переменной</link>.
-      Предпочтительно кодировать с register_globals = off.
+      определения переменных</link>.
+      Рекомендуется работать с register_globals = off.
      </para>
      
      &note.superglobals;
@@ -486,15 +466,41 @@ foreach ($headers as $name => $content) {
     </question>
     <answer>
      <para>
-      Доступные опции: K (для Килобайтов), M (для Мегабайтов) и 
-      G (для Гигабайтов; доступна начиная с PHP 5.1.0);
-      они чувствительны к регистру. Всё остальное считается байтами.
-      <literal>1M</literal> равно одному Мегабайту или
+      Доступные опции: K (для килобайт), M (для мегабайт) и
+      G (для гигабайт; доступна начиная с PHP 5.1.0);
+      они не чувствительны к регистру. Всё остальное считается байтами.
+      <literal>1M</literal> равно одному мегабайту или
       <literal>1048576</literal> байтам. <literal>1K</literal> равно
-      одному Килобайту или <literal>1024</literal> байтам.
-      Вы не можете использовать эти сокращения вне &php.ini;, вместо
-      используйте <type>integer</type> значения байтов. Смотрите документацию
+      одному килобайту или <literal>1024</literal> байтам.
+      Вы не можете использовать эти сокращения вне &php.ini;, вместо этого
+      используйте целочисленные значения в байтах. Смотрите документацию
       по <function>ini_get</function> для примеров как преобразовать эти значения.
+     </para>
+     <note>
+      <title>килобайт и кибибайт</title>
+      <para>
+       В нотации PHP один килобайт равен 1024 байтам, тогда как стандарт
+       <acronym>IEC</acronym> считает это кибибайтом.
+       В итоге: k и K = 1024 байта.
+      </para>
+     </note>
+    </answer>
+   </qandaentry>
+
+   <qandaentry xml:id="faq.using.windowslocalhostissue">
+    <question>
+     <para>
+      Windows: Я постоянно получаю таймауты при соединении с <literal>localhost</literal>,
+      хотя с <literal>"127.0.0.1"</literal> все работает нормально?
+     </para>
+    </question>
+    <answer>
+     <para>
+      До версии PHP 5.3.4, существовала ошибка в коде резолвинга доменного имени,
+      не дававшая определить адрес <literal>localhost</literal> при включенном IPv6,
+      во всех ситуациях связанных с потоками.
+      Для обхода этой проблемы можно использовать <literal>"127.0.0.1"</literal>
+      или отключить резолвинг IPv6 в файле <filename>hosts</filename>.
      </para>
     </answer>
    </qandaentry>
@@ -513,7 +519,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
@@ -522,5 +528,3 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
-
-
