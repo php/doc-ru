@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: irinagoble Status: ready -->
-<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Id -->
  <chapter xml:id="faq.misc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
   <title>Разные вопросы</title>
   <titleabbrev>Разные вопросы</titleabbrev>
@@ -14,7 +15,7 @@
    <qandaentry xml:id="faq.misc.bz2">
     <question>
      <para>
-      Как я могу обращаться со сжатыми bz2 руководствами под Windows?
+      Как обращаться со сжатыми bz2 руководствами под Windows?
      </para>
     </question>
     <answer>
@@ -53,16 +54,16 @@
       инструкциям:
       <itemizedlist>
        <listitem>
-        <simpara>откройте окно запроса команды (command prompt)</simpara>
+        <simpara>откройте окно c командной строкой (command prompt)</simpara>
        </listitem>
        <listitem>
         <simpara>
-         cd в директорию, где вы храните скаченный php_manual_lang.x.bz2
+         перейдите в директорию (команда cd), куда вы сохранили скачанный php_manual_lang.x.bz2
         </simpara>
        </listitem>
        <listitem>
         <simpara>
-         вызовите bzip2 -d php_manual_lang.x.bz2, извлеките
+         вызовите bzip2 -d php_manual_lang.x.bz2 для извлечения
          php_manual_lang.x в ту же директорию
         </simpara>
        </listitem>
@@ -108,7 +109,7 @@
       Для информации по проблемам безопасности, связанных с  
       <literal>register_globals</literal>, читайте
       <link linkend="security.globals">Использование register_globals</link>
-      в главе Безопасность.
+      в главе "Безопасность".
      </para>
      <para>
       Предпочтительнее использовать
@@ -117,9 +118,9 @@
       установлена в On.
      </para>
      <para>
-      Если вы пользуетесь совместным хостом с выключенной 
+      Если вы пользуетесь виртуальным (shared) хостингом с выключенной
       <literal>register_globals</literal> и вам надо использовать некоторые
-      существующие приложения, которые требуют чтобы эта опция была включена;
+      существующие приложения, которые требуют, чтобы эта опция была включена;
       или вы на каком-либо сервере, где эта возможность включена, но вы хотите
       эмулировать проблему по безопасности, то возможно вам надо эмулировать
       противоположную установку с помощью PHP.
@@ -131,7 +132,9 @@
       <example>
        <title>Эмулирование Register Globals</title>
         <para>
-        Следующее эмулирует register_globals установленную в On.
+        Следующее эмулирует register_globals установленную в On. Если вы
+        меняли директиву <link linkend="ini.variables-order">variables_order</link>,
+        измените соответственно и <varname>$superglobals</varname>.
        </para>
        <programlisting role="php">
 <![CDATA[
@@ -146,31 +149,51 @@ if (!ini_get('register_globals')) {
     foreach ($superglobals as $superglobal) {
         extract($superglobal, EXTR_SKIP);
     }
-    ini_set('register_globals', true);
 }
 ?>
 ]]>
        </programlisting>
        <para>
-        Следующее эмулирует register_globals установленную в Off.
+        Следующее эмулирует register_globals установленную в Off. Помните,
+        что этот код должен вызываться в самом начале вашего скрипта, или
+        после вызова <function>session_start</function>, если вы используете
+        сессии.
        </para>
        <programlisting role="php">
 <![CDATA[
 <?php
 // Emulate register_globals off
-if (ini_get('register_globals')) {
-    $superglobals = array($_SERVER, $_ENV,
-        $_FILES, $_COOKIE, $_POST, $_GET);
-    if (isset($_SESSION)) {
-        array_unshift($superglobals, $_SESSION);
+function unregister_GLOBALS()
+{
+    if (!ini_get('register_globals')) {
+        return;
     }
-    foreach ($superglobals as $superglobal) {
-        foreach ($superglobal as $global => $value) {
-            unset($GLOBALS[$global]);
+
+    // Might want to change this perhaps to a nicer error
+    if (isset($_REQUEST['GLOBALS']) || isset($_FILES['GLOBALS'])) {
+        die('GLOBALS overwrite attempt detected');
+    }
+
+    // Variables that shouldn't be unset
+    $noUnset = array('GLOBALS',  '_GET',
+                     '_POST',    '_COOKIE',
+                     '_REQUEST', '_SERVER',
+                     '_ENV',     '_FILES');
+
+    $input = array_merge($_GET,    $_POST,
+                         $_COOKIE, $_SERVER,
+                         $_ENV,    $_FILES,
+                         isset($_SESSION) && is_array($_SESSION) ? $_SESSION : array());
+
+    foreach ($input as $k => $v) {
+        if (!in_array($k, $noUnset) && isset($GLOBALS[$k])) {
+            unset($GLOBALS[$k]);
         }
     }
-    ini_set('register_globals', false);
 }
+
+unregister_GLOBALS();
+
 ?>
 ]]>
        </programlisting>
@@ -192,7 +215,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
@@ -201,4 +224,3 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
-
