@@ -1,34 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: dd3df871f5e3e195f738ac0be1de8d9f5d64cb7c Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: young Status: ready -->
- <chapter xml:id="features.http-auth" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <title>HTTP-Аутентификация в PHP</title>
+<chapter xml:id="features.http-auth" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>HTTP-аутентификация в PHP</title>
 
   <simpara>
-   <acronym>HTTP</acronym>-Аутентификация в PHP возможна только в том случае, когда он выполняется
-   как модуль веб-сервера Apache, и, соответственно, недоступна для CGI-версии.
-   Ваш скрипт может использовать функцию <function>header</function> для того,
-   чтобы отправить браузеру клиента сообщение "Authentication Required",
-   что в свою очередь приведет к появлению диалогового окна для ввода имени 
-   пользователя и пароля. После того как клиент ввел свое имя и пароль, 
-   скрипт будет вызван повторно, но уже с 
+   Возможно использовать функцию <function>header</function> для 
+   посылки сообщения <literal>"Authentication Required"</literal>
+   браузеру, заставив его показать окошко для ввода логина и пароля.
+   Как только пользователь заполнит логин и пароль, ссылка, содержащая
+   PHP-скрипт будет вызвана еще раз с 
    <link linkend="reserved.variables">предопределенными переменными</link> 
-   <varname>PHP_AUTH_USER</varname>, <varname>PHP_AUTH_PW</varname> 
-   и <varname>AUTH_TYPE</varname>, которые соответственно содержат 
-   имя пользователя, пароль и тип аутентификации. Эти переменные могут быть
-   найдены в массиве <link linkend="reserved.variables.server">$_SERVER</link> и 
-   <varname>$HTTP_SERVER_VARS</varname>.   В настоящее время поддерживается только 
-   "Basic"-аутентификация. Также вы можете ознакомится с более детальным
-   описанием функции <function>header</function>. 
+   <varname>PHP_AUTH_USER</varname>, <varname>PHP_AUTH_PW</varname>, 
+   и <varname>AUTH_TYPE</varname>, установленными в логин, пароль
+   и тип аутентификации соответственно. Эти предопределенные 
+   переменные хранятся в массивах <varname>$_SERVER</varname> и
+   <varname>$HTTP_SERVER_VARS</varname>. Поддерживаются оба типа:
+   "Basic" и "Digest" (начиная с версии PHP 5.1.0). Подробнее
+   смотрите функцию <function>header</function>.
   </simpara>
-
+ 
   <note>
    <title>Замечание касательно версии PHP</title>
    <para>
     <link linkend="language.variables.superglobals">Cуперглобальные переменные</link>, 
-    такие как <link linkend="reserved.variables.server">$_SERVER</link>, доступны,
+    такие как <varname>$_SERVER</varname>, доступны,
     начиная с  <link xlink:href="&url.php.release4.1.0;">4.1.0</link>. 
-    Массив <varname>$HTTP_SERVER_VARS</varname> доступен в PHP 3 и выше.
    </para>
   </note>
 
@@ -38,20 +36,87 @@
   </para>
   <para>
    <example>
-    <title>Пример HTTP-аутентификации</title>
+    <title>Пример Basic HTTP-аутентификации</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  if (!isset($_SERVER['PHP_AUTH_USER'])) {
+if (!isset($_SERVER['PHP_AUTH_USER'])) {
     header('WWW-Authenticate: Basic realm="My Realm"');
     header('HTTP/1.0 401 Unauthorized');
     echo 'Текст, отправляемый в том случае,
     если пользователь нажал кнопку Cancel';
     exit;
-  } else {
+} else {
     echo "<p>Hello {$_SERVER['PHP_AUTH_USER']}.</p>";
     echo "<p>Вы ввели пароль {$_SERVER['PHP_AUTH_PW']}.</p>";
-  }
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Пример Digest HTTP-аутентификации</title>
+    <para>
+     Это пример реализации простого скрипта Digest HTTP-аутентификации.
+     За подробностями обращайтесь к <link
+      xlink:href="&url.rfc;2617">RFC 2617</link>.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$realm = 'Запретная зона';
+
+//user => password
+$users = array('admin' => 'mypass', 'guest' => 'guest');
+
+
+if (empty($_SERVER['PHP_AUTH_DIGEST'])) {
+    header('HTTP/1.1 401 Unauthorized');
+    header('WWW-Authenticate: Digest realm="'.$realm.
+           '",qop="auth",nonce="'.uniqid().'",opaque="'.md5($realm).'"');
+
+    die('Текст, посылаемый, если пользователь нажал Cancel');
+}
+
+
+// анализируем переменную PHP_AUTH_DIGEST
+if (!($data = http_digest_parse($_SERVER['PHP_AUTH_DIGEST'])) ||
+    !isset($users[$data['username']]))
+    die('Неправильные данные!');
+
+
+// генерируем корректный ответ
+$A1 = md5($data['username'] . ':' . $realm . ':' . $users[$data['username']]);
+$A2 = md5($_SERVER['REQUEST_METHOD'].':'.$data['uri']);
+$valid_response = md5($A1.':'.$data['nonce'].':'.$data['nc'].':'.$data['cnonce'].':'.$data['qop'].':'.$A2);
+
+if ($data['response'] != $valid_response)
+    die('Неправильные данные!');
+
+// ok, логин и пароль верны
+echo 'Вы вошли как: ' . $data['username'];
+
+
+// функция разбора заголовка http auth
+function http_digest_parse($txt)
+{
+    // защита от отсутствующих данных
+    $needed_parts = array('nonce'=>1, 'nc'=>1, 'cnonce'=>1, 'qop'=>1, 'username'=>1, 'uri'=>1, 'response'=>1);
+    $data = array();
+    $keys = implode('|', array_keys($needed_parts));
+
+    preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $txt, $matches, PREG_SET_ORDER);
+
+    foreach ($matches as $m) {
+        $data[$m[1]] = $m[3] ? $m[3] : $m[4];
+        unset($needed_parts[$m[1]]);
+    }
+
+    return $needed_parts ? false : $data;
+}
 ?>
 ]]>
     </programlisting>
@@ -64,9 +129,11 @@
     Будьте особенно внимательны при указании HTTP-заголовков. Для того, чтобы 
     гарантировать максимальную совместимость с наибольшим количеством
     различных клиентов, слово "Basic" должно быть написано с большой буквы "B",
-    регион (realm) должен быть взят в двойный (не одинарные!) кавычки,
+    регион (realm) должен быть взят в двойные (не одинарные!) кавычки,
     и ровно один пробел должен предшествовать коду <emphasis>401</emphasis> в заголовке
-    <emphasis>HTTP/1.0 401</emphasis>.
+    <emphasis>HTTP/1.0 401</emphasis>. Параметры аутентификации должны
+    разделяться запятыми, как это было показано в примере Digest 
+    аутентификации выше.
    </para>
   </note>
 
@@ -79,15 +146,15 @@
 
   <para>
    Вы можете пронаблюдать особенности работы браузера Internet Explorer.
-   Он очень требователен к параметру передаваемых заголовков. Указание
+   Он очень требователен к параметру передаваемых заголовков. Трюк с указанием
    заголовка <emphasis>WWW-Authenticate</emphasis> перед отправкой статуса
-   <literal>HTTP/1.0 401</literal> является небольшой хитростью.
+   <literal>HTTP/1.0 401</literal> пока что работает для него.
   </para>
 
   <simpara>
    Начиная с PHP 4.3.0, для того, чтобы предотвратить написание
    кем-либо скрипта, раскрывающего пароль к странице, которая использует
-   внешнюю аутентификацию, переменные <varname>PHP_AUTH</varname> 
+   внешнюю аутентификацию, переменные PHP_AUTH 
    не устанавливаются в случае, если данная страница использует 
    внешнюю аутентификацию и установлен &safemode;.  Несмотря на это,
    переменная <varname>REMOTE_USER</varname> может использоваться для
@@ -105,12 +172,12 @@
   </note>
 
   <simpara>
-	Следует заметить, что все вышесказанное не предотвращает похищения паролей к
-	страницам, требующим авторизацию, кем-либо, кто контролирует страницы без
-	авторизации, расположенные на том же сервере.
+   Следует заметить, что все вышесказанное не предотвращает похищения паролей к
+   страницам, требующим авторизацию, кем-либо, кто контролирует страницы без
+   авторизации, расположенные на том же сервере.
   </simpara>
   <simpara>
-   И Netscape Navigator и Internet Explorer очищают кеш аутентификации
+   И Netscape Navigator и Internet Explorer очищают кэш аутентификации
    текущего окна для заданного региона (realm) при получении от сервера.
    Это может использоваться для реализации принудительного выхода пользователя
    и повторного отображения диалогового окна для ввода имени пользователя и 
@@ -123,54 +190,54 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-  function authenticate() {
+function authenticate() {
     header('WWW-Authenticate: Basic realm="Test Authentication System"');
     header('HTTP/1.0 401 Unauthorized');
     echo "Вы должны ввести корректный логин и пароль для получения доступа к ресурсу \n";
     exit;
-  }
+}
  
-  if (!isset($_SERVER['PHP_AUTH_USER']) ||
-      ($_POST['SeenBefore'] == 1 && $_POST['OldAuth'] == $_SERVER['PHP_AUTH_USER'])) {
-   authenticate();
-  } 
-  else {
-   echo "<p>Добро пожаловать: {$_SERVER['PHP_AUTH_USER']}<br />";
-   echo "Предыдущий логин: {$_REQUEST['OldAuth']}";
-   echo "<form action='{$_SERVER['PHP_SELF']}' METHOD='post'>\n";
-   echo "<input type='hidden' name='SeenBefore' value='1' />\n";
-   echo "<input type='hidden' name='OldAuth' value='{$_SERVER['PHP_AUTH_USER']}' />\n";
-   echo "<input type='submit' value='Авторизоваться повторно' />\n";
-   echo "</form></p>\n";
-  }
+if (!isset($_SERVER['PHP_AUTH_USER']) ||
+    ($_POST['SeenBefore'] == 1 && $_POST['OldAuth'] == $_SERVER['PHP_AUTH_USER'])) {
+    authenticate();
+} else {
+    echo "<p>Добро пожаловать: " . htmlspecialchars($_SERVER['PHP_AUTH_USER']) . "<br />";
+    echo "Предыдущий логин: " . htmlspecialchars($_REQUEST['OldAuth']);
+    echo "<form action='' method='post'>\n";
+    echo "<input type='hidden' name='SeenBefore' value='1' />\n";
+    echo "<input type='hidden' name='OldAuth' value=\"" . htmlspecialchars($_SERVER['PHP_AUTH_USER']) . "\" />\n";
+    echo "<input type='submit' value='Авторизоваться повторно' />\n";
+    echo "</form></p>\n";
+}
 ?>
 ]]>
     </programlisting>
    </example>
   </para>
   <simpara>
-   Это поведение не регламентируется стандартами HTTP Basic-аутентификации,
-   следовательно, вы не должны зависеть от этого. Как показали тесты,
-   браузер Lynx не очищает кеш авторизации при получении от сервера
+   Это поведение не регламентируется стандартами <literal>HTTP Basic</literal>-аутентификации,
+   следовательно, вы не должны зависеть от этого. Тестирование браузера <literal>Lynx</literal>
+   показало, что <literal>Lynx</literal> не очищает кэш авторизации при получении от сервера
    статуса 401, и, нажав последовательно "Back", а затем "Forward" возможно
-   открыть такую страницу, при условии, что требуемые атрибуты авториазации не изменились.
-   Однако, пользователь может нажать клавишу  '_' для очистки кеша аутентификации.
+   открыть такую страницу, при условии, что требуемые атрибуты авторизации не изменились.
+   Однако, пользователь может нажать клавишу <literal>'_'</literal> для очистки кеша аутентификации.
   </simpara>
   <simpara>
    Также следует заметить, что до версии PHP 4.3.3, HTTP-аутентификация
    не работала на серверах под управлением Microsoft IIS, если PHP был установлен
    как CGI-модуль, в силу некоторых ограничений IIS. Для того, чтобы
    добиться корректной работы в PHP 4.3.3+, вы должны отредактировать
-   конфигурационную настройку IIS под названием "Directory Security".
-   Щелкните на надписи "Edit" и установите опцию "Anonymous Access",
+   конфигурационную настройку IIS под названием "<literal>Directory Security</literal>".
+   Щелкните на надписи "<literal>Edit</literal>" и установите опцию 
+   "<literal>Anonymous Access</literal>",
    все остальные поля должны остаться неотмеченными.
   </simpara>
   <simpara>
-   Еще одно ограничение, если вы используете IIS посредством ISAPI: переменные
-  <literal>PHP_AUTH_*</literal> не определены, но в то же время доступна
-  переменная <literal>HTTP_AUTHORIZATION</literal>. Пример кода, который вы могли бы
-  использовать: <literal>list($user, $pw) = explode(':',  
-   base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6)));</literal>
+   Еще одно ограничение, если вы используете IIS посредством ISAPI и PHP 4: переменные
+   <literal>PHP_AUTH_*</literal> не определены, но в то же время доступна
+   переменная <literal>HTTP_AUTHORIZATION</literal>. Пример кода, который вы могли бы
+   использовать: <literal>list($user, $pw) = explode(':',
+    base64_decode(substr($_SERVER['HTTP_AUTHORIZATION'], 6)));</literal>
   </simpara>
   <note>
    <title>Замечание касательно IIS:</title>
@@ -182,7 +249,7 @@
   </note>
   <note>
    <para>
-    В случае, если используется <link linkend="ini.safe-mode">защищенный режим</link>,
+    В случае, если используется <link linkend="ini.safe-mode">безопасный режим</link>,
     UID текущего скрипта будет добавлен в <literal>realm</literal>-часть заголовка
     <literal>WWW-Authenticate</literal>.
    </para>
@@ -201,7 +268,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
