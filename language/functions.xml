@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: c1e20705f557cb8e7742dea28bc6546b676bebe5 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: young Status: ready -->
- <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
   <title>Функции</title>
 
   <sect1 xml:id="functions.user-defined">
@@ -27,23 +28,23 @@ function foo($arg_1, $arg_2, /* ..., */ $arg_n)
     </example>
    </para>
    
-   <!--
-    
-    status of func(const $param) ?
-    zend doesn't care at all whether or not you specify it.
-    I've never seen it before... what's its use? (or was...)
-    
-    -->
-     
    <simpara>
    Внутри функции можно использовать любой корректный PHP-код, 
    в том числе другие функции и даже объявления <link linkend="keyword.class">классов</link>.
    </simpara>
+   <para>
+    Имена функций следуют тем же правилам, что и другие метки в PHP.
+    Корректное имя функции начинается с буквы или знака подчеркивания,
+    за которым следует любое количество букв, цифр или знаков
+    подчеркивания. В качестве регулярного выражения оно может быть
+    выражено так:
+    <literal>[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*</literal>.
+   </para>
+   &tip.userlandnaming;
    <simpara>
-   В PHP 3 функции должны были быть определены прежде, чем они будут 
-   использованы. Начиная с PHP 4 такого ограничения нет, <emphasis>исключая</emphasis> 
-   тот случай, когда функции определяются условно, как это показано
-   в двух последующих примерах.
+    Функции не обязаны быть определены до их использования, <emphasis>исключая</emphasis> 
+    тот случай, когда функции определяются условно, как это показано
+    в двух последующих примерах.
    </simpara>
    <para>
     В случае, когда функция определяется в зависимости от какого-либо условия, например,
@@ -68,7 +69,7 @@ bar();
 if ($makefoo) {
   function foo()
   {
-    echo "I don't exist until program execution reaches me.\n";
+    echo "Я не существую до тех пор, пока выполнение программы меня не достигнет.\n";
   }
 }
 
@@ -79,7 +80,7 @@ if ($makefoo) foo();
 
 function bar() 
 {
-  echo "I exist immediately upon program start.\n";
+  echo "Я существую сразу с начала старта программы.\n";
 }
 
 ?>
@@ -97,7 +98,7 @@ function foo()
 {
   function bar() 
   {
-    echo "I don't exist until foo() is called.\n";
+    echo "Я не существую пока не будет вызвана foo().\n";
   }
 }
 
@@ -116,27 +117,53 @@ bar();
      </programlisting>
     </example>
    </para>
+   <para>
+    Все функции и классы PHP имеют глобальную область видимости - 
+    они могут быть вызваны вне функции, даже если были определены
+    внутри и наоборот.
+   </para>
    <simpara>
     PHP не поддерживает перегрузку функции, также отсутствует возможность
-	переопределить или удалить объявленную ранее функцию.
+    переопределить или удалить объявленную ранее функцию.
    </simpara>
    <note>
     <simpara>
-	 Имена функций регистронезависимы, тем не менее, более предпочтительно
-	 вызывать функции так, как они были объявлены.
+     Имена функций регистронезависимы, тем не менее, более предпочтительно
+     вызывать функции так, как они были объявлены.
     </simpara>
    </note>   
    <simpara>
-    PHP 3 не поддерживает переменное количество аргументов функции,
-	хотя поддержка значений по умолчанию для аргументов присутствует (смотрите раздел
-	<link linkend="functions.arguments.default">Значения аргументов по умолчанию</link>). 
-	Начиная с 4-й версии PHP поддерживает и то, и другое: смотрите раздел
-	<link linkend="functions.variable-arg-list">Списки аргументов переменной длины
-    </link> и описания функций
+    Функции PHP поддерживают как <link linkend="functions.variable-arg-list">
+    списки аргументов переменной длины</link>, так и 
+    <link linkend="functions.arguments.default">значения аргументов по умолчанию</link>. 
+    Смотрите также описания функций
     <function>func_num_args</function>,
     <function>func_get_arg</function>, и
     <function>func_get_args</function> для более детальной информации.
    </simpara>
+
+   <para>
+    Можно также вызывать функции PHP рекурсивно. Однако, пытайтесь
+    избегать вызовов рекурсивных функций/методов с более чем 100-200
+    уровней рекурсии, так как это сильно бьет по стэку и может вызвать
+    крах выполняемого скрипта.
+    <example>
+     <title>Рекурсивные функции</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+function recursion($a)
+{
+    if ($a < 20) {
+        echo "$a\n";
+        recursion($a + 1);
+    }
+}
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
 
   </sect1>
  
@@ -145,20 +172,17 @@ bar();
  
    <simpara>
     Функция может принимать информацию в виде списка аргументов,
-	который является списком разделенных запятыми переменных и/или
-	констант.
+    который является списком разделенных запятыми выражений.
    </simpara> 
    <para>
     PHP поддерживает передачу аргументов по значению (по умолчанию), <link
     linkend="functions.arguments.by-reference">передачу аргументов по ссылке</link>, 
     и <link linkend="functions.arguments.default">значения по умолчанию</link>. 
-	Списки аргументов переменной длины поддерживаются, начиная с PHP 4: смотрите раздел
-	<link linkend="functions.variable-arg-list">Списки аргументов переменной длины
-    </link> и описания функций
+    <link linkend="functions.variable-arg-list">Списки аргументов переменной длины
+    </link> также поддерживаются, смотрите также описания функций
     <function>func_num_args</function>,
     <function>func_get_arg</function> и
     <function>func_get_args</function> для более детальной информации.
-	Подобного эффекта можно достичь в PHP 3, передавая функции массив аргументов:
    </para>
    <para>
     <example>
@@ -180,15 +204,15 @@ function takes_array($input)
     <title>Передача аргументов по ссылке</title>
  
     <simpara>
-	 По умолчанию аргументы в функцию передаются по значению (это означает, что
-	 если вы измените значение аргумента внутри функции, то вне ее значение 
-	 все равно останется прежним). Если вы хотите разрешить функции
-	 модифицировать свои аргументы, вы должны передавать их по ссылке.
+     По умолчанию аргументы в функцию передаются по значению (это означает, что
+     если вы измените значение аргумента внутри функции, то вне ее значение 
+     все равно останется прежним). Если вы хотите разрешить функции
+     модифицировать свои аргументы, вы должны передавать их по ссылке.
     </simpara>
     <para>
-	 Если вы хотите, что бы аргумент всегда передавался по ссылке,
-	 вы можете указать амперсанд (&amp;) перед именем аргумента в описании
-	 функции:
+     Если вы хотите, что бы аргумент всегда передавался по ссылке,
+     вы можете указать амперсанд (&amp;) перед именем аргумента в описании
+     функции:
     </para>
     <para>
      <example>
@@ -198,11 +222,11 @@ function takes_array($input)
 <?php
 function add_some_extra(&$string)
 {
-    $string .= 'and something extra.';
+    $string .= 'и кое-что еще.';
 }
-$str = 'This is a string, ';
+$str = 'Это строка, ';
 add_some_extra($str);
-echo $str;    // Выведет 'This is a string, and something extra.'
+echo $str;    // выведет 'Это строка, и кое-что еще.'
 ?>
 ]]>
       </programlisting>
@@ -215,8 +239,8 @@ echo $str;    // Выведет 'This is a string, and something extra.'
     <title>Значения аргументов по умолчанию</title>
  
     <para>
-	Функция может определять значения по умолчанию в стиле C++ для
-	скалярных аргументов, например:
+     Функция может определять значения по умолчанию в стиле C++ для
+     скалярных аргументов, например:
     </para>
     <para>
      <example>
@@ -224,61 +248,59 @@ echo $str;    // Выведет 'This is a string, and something extra.'
       <programlisting role="php">
 <![CDATA[
 <?php
-function makecoffee($type = "cappuccino")
+function makecoffee($type = "капуччино")
 {
-    return "Making a cup of $type.\n";
+    return "Готовим чашку $type.\n";
 }
 echo makecoffee();
-echo makecoffee("espresso");
+echo makecoffee(null);
+echo makecoffee("эспрессо");
+?>
+]]>
+      </programlisting>
+      &example.outputs;
+      <screen>
+<![CDATA[
+Готовим чашку капуччино.
+Готовим чашку .
+Готовим чашку эспрессо.
+]]>
+      </screen>
+     </example>
+    </para>
+    <para>
+     PHP также позволяет использовать массивы (<type>array</type>) и специальный тип &null; в 
+     качестве значений по умолчанию, например:
+    </para>
+    <para>
+     <example>
+      <title>Использование нескалярных типов в качестве значений по умолчанию</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+function makecoffee($types = array("капуччино"), $coffeeMaker = NULL)
+{
+    $device = is_null($coffeeMaker) ? "вручную" : $coffeeMaker;
+    return "Готовлю чашку ".join(", ", $types)." $device.\n";
+}
+echo makecoffee();
+echo makecoffee(array("капуччино", "лавацца"), "в чайнике");
 ?>
 ]]>
       </programlisting>
      </example>
-    </para>
- 
-    <para>
-     Результат работы приведенного выше кода будет таким:
-    </para>
-    <para>
-     <screen>
-Making a cup of cappuccino.
-Making a cup of espresso.
-     </screen>
-    </para>
-    <para>  
-       PHP также позволяет использовать массивы и специальный тип NULL в 
-       качестве значений по умолчанию, например:
-    </para>  
-      <para>  
-       <example>  
-        <title>Использование нескалярных типов в качестве значений по умолчанию</title>  
-        <programlisting role="php">  
-  <![CDATA[  
-  <?php  
-  function makecoffee($types = array("cappuccino"), $coffeeMaker = NULL)  
-  {  
-      $device = is_null($coffeeMaker) ? "hands" : $coffeeMaker;  
-      return "Making a cup of ".join(", ", $types)." with $device.\n";  
-  }  
-  echo makecoffee();  
-  echo makecoffee(array("cappuccino", "lavazza"), "teapot");  
-  ?>  
-  ]]>  
-        </programlisting>  
-       </example>  
     
-    </para>  
- 
+    </para>
     <simpara>
-	 Значение по умолчанию должно быть константным выражением, а не
-	 (к примеру) переменной или вызовом функции/метода класса.
+     Значение по умолчанию должно быть константным выражением, а не
+     (к примеру) переменной или вызовом функции/метода класса.
     </simpara>
     <para>
-	 Обратите внимание, что все аргументы, для которых установлены 
-	 значения по умолчанию, должны находится правее аргументов,
-	 для которых значения по умолчанию не заданы, в противном случае
-	 ваш код может работать не так, как вы этого ожидаете. Рассмотрим
-	 следующий пример:
+     Обратите внимание, что все аргументы, для которых установлены 
+     значения по умолчанию, должны находиться правее аргументов,
+     для которых значения по умолчанию не заданы, в противном случае
+     ваш код может работать не так, как вы этого ожидаете. Рассмотрим
+     следующий пример:
     </para>
     <para>
      <example>
@@ -286,68 +308,62 @@ Making a cup of espresso.
       <programlisting role="php">
 <![CDATA[
 <?php
-function makeyogurt($type = "acidophilus", $flavour)
+function makeyogurt($type = "ацидофил", $flavour)
 {
-    return "Making a bowl of $type $flavour.\n";
+    return "Готовим чашку из бактерий $type со вкусом $flavour.\n";
 }
  
-echo makeyogurt("raspberry");   // Не будет работать так, как мы могли бы ожидать
+echo makeyogurt("малины");   // Не будет работать так, как мы могли бы ожидать
 ?>
 ]]>
       </programlisting>
-     </example>
-    </para>
- 
-    <para>
-     Результат работы приведенного выше примера будет следующим:
-    </para>
-    <para>
-     <screen>
+      &example.outputs;
+      <screen>
+<![CDATA[
 Warning: Missing argument 2 in call to makeyogurt() in 
-/usr/local/etc/httpd/htdocs/php3test/functest.html on line 41
-Making a bowl of raspberry .
-     </screen>
+/usr/local/etc/httpd/htdocs/phptest/functest.html on line 41
+Готовим чашку из бактерий малины со вкусом .
+]]>
+      </screen>
+     </example>
     </para>
     <para>
      Теперь сравним эго со следующим примером:
     </para>
     <para>
      <example>
-      <title>Некорректное использование значений по умолчанию</title>
+      <title>Корректное использование значений по умолчанию</title>
       <programlisting role="php">
 <![CDATA[
 <?php
-function makeyogurt($flavour, $type = "acidophilus")
+function makeyogurt($flavour, $type = "ацидофил")
 {
-    return "Making a bowl of $type $flavour.\n";
+    return "Готовим чашку из бактерий $type со вкусом $flavour.\n";
 }
  
-echo makeyogurt("raspberry");   // отрабатывает правильно
+echo makeyogurt("малины");   // отрабатывает правильно
 ?>
 ]]>
       </programlisting>
+      &example.outputs;
+      <screen>
+<![CDATA[
+Готовим чашку из бактерий ацидофил со вкусом малины.
+]]>
+      </screen>
      </example>
     </para>
- 
-    <para>
-     Теперь результат работы примера будет выглядеть так:
-    </para>
-    <para>
-     <screen>
-Making a bowl of acidophilus raspberry.
-     </screen>
-    </para>
-     <note> 
-       <simpara> 
-        Начиная с PHP 5, значения по умолчанию могут быть переданны по ссылке.
-       </simpara> 
-      </note> 
+    <note>
+     <simpara>
+      Начиная с PHP 5, значения по умолчанию могут быть переданны по ссылке.
+     </simpara>
+    </note>
 
    </sect2>
 
    <sect2 xml:id="functions.variable-arg-list">
     <title>Списки аргументов переменной длины</title>
-	
+
     <simpara>
      PHP 4 и выше поддерживает списки аргументов переменной длины для функций,
      определяемых пользователем. Реализация этой возможности достаточно прозрачна
@@ -371,14 +387,20 @@ Making a bowl of acidophilus raspberry.
    <para>
     Значения возвращаются при помощи необязательного оператора возврата.
     Возвращаемые значения могут быть любого типа, в том числе это могут
-    быть списки и объекты. Возврат приводит к завершению выполнения функции и передаче 
+    быть массивы и объекты. Возврат приводит к завершению выполнения функции и передаче 
     управления обратно к той строке кода, в которой данная функция была
     вызвана. Для получения более детальной информации ознакомьтесь с описанием
-    функции <function>return</function>.
+    <function>return</function>.
    </para>
+   <note>
+    <para>
+     Если конструкция <function>return</function> не указана, то функция вернет
+     значение &null;.
+    </para>
+   </note>
    <para>
     <example>
-     <title>Использование функции <function>return</function></title>
+     <title>Использование конструкции <function>return</function></title>
      <programlisting role="php">
 <![CDATA[
 <?php
@@ -437,7 +459,7 @@ $newref =& returns_reference();
    </para>
    <simpara>
     Для получения более детальной информации о ссылках обратитесь
-    к разделу документации <link linkend="language.references">Подробно об указателях</link>.
+    к разделу документации <link linkend="language.references">Подробно о ссылках</link>.
    </simpara>
   </sect1>
  
@@ -489,7 +511,7 @@ $func = 'bar';
 $func('test');  // Вызывает функцию bar()
 
 $func = 'echoit';
-$func('test');  // Вызыывет функцию echoit()
+$func('test');  // Вызывает функцию echoit()
 ?>
 ]]>
      </programlisting>
@@ -527,6 +549,33 @@ $foo->$funcname();  // Обращаемся к $foo->Variable()
     </example>
    </para>
    <para>
+    При вызове статических методов, вызов функции "сильнее"
+    чем оператор доступа к статическому свойству:
+    <example>
+     <title>Пример вызова переменного метода со статическим свойством</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class Foo
+{
+    static $variable = 'static property';
+    static function Variable()
+    {
+        echo 'Method Variable called';
+    }
+}
+
+echo Foo::$variable; // Это выведет 'static property'. Переменная $variable будет разрешена в нужной области видимости.
+$variable = "Variable";
+Foo::$variable();  // Это вызовет $foo->Variable(), прочитав $variable из этой области видимости.
+
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+      
+   <para>
     Смотрите также <function>call_user_func</function>,
     <link linkend="language.variables.variable">Переменные переменные</link> и 
     <function>function_exists</function>.
@@ -540,19 +589,19 @@ $foo->$funcname();  // Обращаемся к $foo->Variable()
     В самом PHP содержится достаточно большое количество встроенных функций
     и языковых конструкций. Также есть функции, которые требуют, чтобы PHP был
     собран со специфическими расширениями, в противном случае вы получите
-    сообщение об ошибке, вызванной использованием неизвестной функции.
-    Например, для того чтобы использовать <link linkend="ref.image">Функции для работы с изображениями</link>,
-    например <function>imagecreatetruecolor</function>, вам необходимо собрать PHP с 
+    сообщение о фатальной ошибке, вызванной использованием неизвестной функции.
+    Например, для того чтобы использовать <link linkend="ref.image">функции для работы с изображениями</link>,
+    например, <function>imagecreatetruecolor</function>, вам необходимо собрать PHP с 
     поддержкой <productname>GD</productname>.  Или же для того, чтобы воспользоваться 
     функцией <function>mysql_connect</function>, вам необходима  поддержка модуля 
     <link linkend="ref.mysql">MySQL</link>. Тем не менее, есть много встроенных
-    функций, которые доступны всегда: например <link linkend="ref.strings">Функции обработки строк</link> и
-    <link linkend="ref.var">Функции для работы с переменными</link>.
+    функций, которые доступны всегда: например <link linkend="ref.strings">функции обработки строк</link> и
+    <link linkend="ref.var">функции для работы с переменными</link>.
     Вызвав <function>phpinfo</function> или <function>get_loaded_extensions</function>,
     вы можете узнать, поддержка каких модулей есть в используемом вами PHP.
     Также следует учесть, что поддержка некоторых дополнительных расширений 
     включена по умолчанию, и что сама документация к PHP разбита по расширениям.
-    Ознакомьтесь с разделами <link linkend="configuration">Конфигурация</link>,  
+    Ознакомьтесь с разделами <link linkend="configuration">Конфигурация</link>,
     <link linkend="install">Установка</link>, а также с документацией
     непосредственно к дополнительным расширениям для получения более детальной
     информации о том, как настроить ваш PHP.
@@ -571,17 +620,169 @@ $foo->$funcname();  // Обращаемся к $foo->Variable()
     функции в различных версиях. Знание и применение этих (порой даже незаметных)
     нюансов очень важно для написания корректного PHP-кода.
    </para>
+   <note>
+    <simpara>
+     Если в функцию передаются не те аргументы, которые она ожидает,
+     например, массив (<type>array</type>) вместо строки (<type>string</type>), 
+     возвращаемое значение функции не определено. Скорее всего
+     в этом случае будет возвращен &null;, но это просто соглашение,
+     на него нельзя полагаться.
+    </simpara>
+   </note>
    <para>
-    Ознакомьтесь также со  
-    <link linkend="funcref">Справочником функций</link> и более 
-    детальными описаниями функций
-    <function>function_exists</function>, 
+    Ознакомьтесь также с описанием функции <function>function_exists</function>,  
+    <link linkend="funcref">справочником функций</link> и функциями
     <function>get_extension_funcs</function> и 
     <function>dl</function>.
    </para>
+  </sect1>
+  
+  <sect1 xml:id="functions.anonymous">
+   <title>Анонимные функции</title>
+
+   <simpara>
+    Анонимные функции, также известные как замыкания (<literal>closures</literal>),
+    позволяют создавать функции, не имеющие определенных имен.
+    Они наиболее полезны в качестве значений
+    <link linkend="language.types.callback">callback</link>-параметров,
+    но также могут иметь и множество других применений.
+   </simpara>
+
+   <example>
+    <title>Пример анонимной функции</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+echo preg_replace_callback('~-([a-z])~', function ($match) {
+    return strtoupper($match[1]);
+}, 'hello-world');
+// выведет helloWorld
+?>
+]]>
+    </programlisting>
+   </example>
+
+   <simpara>
+    Замыкания также могут быть использованы в качестве значений
+    переменных; PHP автоматически преобразует такие выражения
+    в экземпляры внутреннего класса <classname>Closure</classname>.
+    Присвоение замыкания переменной использует тот же синтаксис,
+    что и для любого другого присвоения, включая завершающую
+    точку с запятой:
+   </simpara>
+
+   <example>
+    <title>Пример присвоения анонимной функции переменной</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$greet = function($name)
+{
+    printf("Hello %s\r\n", $name);
+};
+
+$greet('World');
+$greet('PHP');
+?>
+]]>
+    </programlisting>
+   </example>
    
-   <!-- FIXME: Fixes build -->
-   <para xml:id='functions.anonymous'><link xlink:href="http://php.net/manual/en/functions.anonymous">Anonymous Functions</link></para>
+   <simpara>
+    Замыкания могут также наследовать переменные из родительской
+    области видимости. Любая подобная переменная должна быть
+    объявлена в заголовке функции. Наследование переменных из
+    родительской области видимости <emphasis>не</emphasis> то же
+    самое, что использование глобальных переменных.
+    Глобальные переменные существуют в глобальной области видимости,
+    которая не меняется, вне зависимости от того, какая функция
+    выполняется в данный момент. Родительская область видимости
+    - это функция, в которой было объявлено замыкание (не обязательно
+    та же самая, из которой оно было вызвано). Смотрите следующий
+    пример:
+   </simpara>
+
+   <example>
+    <title>Замыкания и область видимости</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Базовая корзина покупок, содержащая список добавленных
+// продуктов и количество каждого продукта. Включает метод,
+// вычисляющий общую цену элементов корзины с помощью
+// callback-замыкания.
+class Cart
+{
+    const PRICE_BUTTER  = 1.00;
+    const PRICE_MILK    = 3.00;
+    const PRICE_EGGS    = 6.95;
+
+    protected $products = array();
+    
+    public function add($product, $quantity)
+    {
+        $this->products[$product] = $quantity;
+    }
+    
+    public function getQuantity($product)
+    {
+        return isset($this->products[$product]) ? $this->products[$product] :
+               FALSE;
+    }
+    
+    public function getTotal($tax)
+    {
+        $total = 0.00;
+        
+        $callback =
+            function ($quantity, $product) use ($tax, &$total)
+            {
+                $pricePerItem = constant(__CLASS__ . "::PRICE_" .
+                    strtoupper($product));
+                $total += ($pricePerItem * $quantity) * ($tax + 1.0);
+            };
+        
+        array_walk($this->products, $callback);
+        return round($total, 2);
+    }
+}
+
+$my_cart = new Cart;
+
+// Добавляем несколько элементов в корзину
+$my_cart->add('butter', 1);
+$my_cart->add('milk', 3);
+$my_cart->add('eggs', 6);
+
+// Выводим общую сумму с 5% налогом на продажу.
+print $my_cart->getTotal(0.05) . "\n";
+// Результатом будет 54.29
+?>
+]]>
+    </programlisting>
+   </example>
+   
+   <simpara>
+    Анонимные функции в настоящее время реализованы с помощью класса
+    <link linkend="reserved.classes.closure">
+    <classname>Closure</classname></link>. Это деталь реализации,
+    на нее не стоит полагаться.
+   </simpara>
+   
+   <note>
+    <simpara>
+     Анонимные функции доступны начиная с версии PHP 5.3.0.
+    </simpara>
+   </note>
+
+   <note>
+    <simpara>
+     Совместно с замыканиями можно использовать функции
+     <function>func_num_args</function>,
+     <function>func_get_arg</function> и <function>func_get_args</function>.
+    </simpara>
+   </note>
+
   </sect1>
 
  </chapter>
@@ -597,7 +798,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
