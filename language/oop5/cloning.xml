@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.cloning" xmlns="http://docbook.org/ns/docbook">
   <title>Клонирование объектов</title>
@@ -15,8 +16,8 @@
    нового окна. Другим примером может послужить ситуация,
    когда ваш объект содержит ссылку на какой-либо другой используемый
    объект и, когда вы создаёте копию ссылающегося объекта,
-   вам нужно также создать новый экземпляр содержащегося объекта,
-   так, чтобы копия объекта содержала собственный отдельный
+   вам нужно также создать новый экземпляр этого другого объекта,
+   так, чтобы копия объекта-контейнера содержала собственный отдельный
    экземпляр содержащегося объекта.
   </para>
 
@@ -35,15 +36,15 @@ $copy_of_object = clone $object;
   </informalexample>
 
   <para>
-   Когда программист запрашивает создание копии объекта, PHP 5 определит,
-   был ли для этого объекта объявлен метод __clone() или нет. Если нет,
-   будет вызван метод __clone(), объявленный по умолчанию, который
-   скопирует все свойства объекта. Если метод __clone() был объявлен,
-   создание копий свойств в копии объекта полностью возлагается на него.
-   Для удобства, движок обеспечивает программиста функцией, которая
-   импортирует все свойства из объекта-источника, так что программист
-   может осуществить позначное копирование свойств и переопределять
-   только необходимые.
+   При клонировании объекта, PHP 5 выполняет неполную копию
+   всех свойств объекта. Любые свойства, являющиеся ссылками на другие 
+   переменные, останутся ссылками.
+  </para>
+ 
+  <para>
+   По завершении клонирования, если у класса был определен метод
+   __clone(), то он вызывается у свежесозданной копии объекта, для
+   возможного изменения всех необходимых свойств.
   </para>
 
   <example>
@@ -51,34 +52,85 @@ $copy_of_object = clone $object;
    <programlisting role="php">
 <![CDATA[
 <?php
-class MyCloneable {
-   static $id = 0;
+class SubObject
+{
+    static $instances = 0;
+    public $instance;
 
-   function MyCloneable() {
-       $this->id = self::$id++;
-   }
+    public function __construct() {
+        $this->instance = ++self::$instances;
+    }
 
-   function __clone() {
-       $this->address = "Москва";
-       $this->id = self::$id++;
-   }
+    public function __clone() {
+        $this->instance = ++self::$instances;
+    }
+}
+
+class MyCloneable
+{
+    public $object1;
+    public $object2;
+
+    function __clone()
+    {
+        // Форсируем копию this->object, иначе
+        // он будет указывать на один и тот же объект.
+        $this->object1 = clone $this->object1;
+    }
 }
 
 $obj = new MyCloneable();
 
-$obj->name = "Привет";
-$obj->address = "Самара";
+$obj->object1 = new SubObject();
+$obj->object2 = new SubObject();
 
-print $obj->id . "\n";
+$obj2 = clone $obj;
 
-$obj_cloned = clone $obj;
 
-print $obj_cloned->id . "\n";
-print $obj_cloned->name . "\n";
-print $obj_cloned->address . "\n";
+print("Оригинальный объект:\n");
+print_r($obj);
+
+print("Клонированный объект:\n");
+print_r($obj2);
+
 ?> 
 ]]>
    </programlisting>
+   &example.outputs;
+   <screen role="php">
+<![CDATA[
+Оригинальный объект:
+MyCloneable Object
+(
+    [object1] => SubObject Object
+        (
+            [instance] => 1
+        )
+
+    [object2] => SubObject Object
+        (
+            [instance] => 2
+        )
+
+)
+Клонированный объект:
+MyCloneable Object
+(
+    [object1] => SubObject Object
+        (
+            [instance] => 3
+        )
+
+    [object2] => SubObject Object
+        (
+            [instance] => 2
+        )
+
+)
+]]>
+
+   </screen>
+
   </example>
 
  </sect1>
@@ -94,7 +146,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
