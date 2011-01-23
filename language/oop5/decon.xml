@@ -1,93 +1,154 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: 8574a2c1bd1dee8283a9d05fc0bd21c36efd237b Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.decon" xmlns="http://docbook.org/ns/docbook">
   <title>Конструкторы и деструкторы</title>
+
   <sect2 xml:id="language.oop5.decon.constructor">
-    <title>Constructor</title>
-    <para>
-     PHP 5 позволяет объявлять методы-конструкторы. Классы, в которых
-     объявлен метод-констуктор, будут вызывать этот метод при каждом
-     создании нового объекта, так что это может оказаться полезным,
-     чтобы, например, инициализировать какое-либо состояние объекта
-     перед его использованием.
-    </para>
-    <note>
-     <simpara>
-      Конструкторы в классах-родителях не вызываются автоматически.
-      Чтобы вызвать конструктор, объявленный в родительском классе,
-      следует обратиться к методу <function>parent::__construct</function>.
-     </simpara>
-    </note>
-    <example>
-     <title>Использование унифицированных конструкторов</title>
-     <programlisting role="php">
+   <title>Конструктор</title>
+   <methodsynopsis>
+    <type>void</type><methodname>__construct</methodname>
+    <methodparam choice="opt"><type>mixed</type><parameter>args</parameter></methodparam>
+    <methodparam choice="opt"><parameter>...</parameter></methodparam>
+   </methodsynopsis>
+   <para>
+    PHP 5 позволяет объявлять методы-конструкторы. Классы, в которых
+    объявлен метод-констуктор, будут вызывать этот метод при каждом
+    создании нового объекта, так что это может оказаться полезным,
+    например, для инициализации какого-либо состояния объекта
+    перед его использованием.
+   </para>
+   <note>
+    <simpara>
+     Конструкторы в классах-родителях не вызываются автоматически,
+     если класс-потомок определяет собственный конструктор.
+     Чтобы вызвать конструктор, объявленный в родительском классе,
+     следует обратиться к методу <function>parent::__construct</function>
+     внутри конструктора класса-потомка.
+    </simpara>
+   </note>
+   <example>
+    <title>Использование унифицированных конструкторов</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 class BaseClass {
-    function __construct() {
-        print "Конструктор класса BaseClass\n";
-    }
+   function __construct() {
+       print "Конструктор класса BaseClass\n";
+   }
 }
 
 class SubClass extends BaseClass {
-    function __construct() {
-        parent::__construct();
-        print "Конструктор класса SubClass\n";
-    }
+   function __construct() {
+       parent::__construct();
+       print "Конструктор класса SubClass\n";
+   }
 }
 
 $obj = new BaseClass();
 $obj = new SubClass();
 ?> 
 ]]>
-     </programlisting>
-    </example>
-    <para>
-     Если PHP 5 не может обнаружить объявленный метод <function>__construct</function>,
-     вызов конструктора произойдет по прежней схеме, через обращение к методу,
-     имя которого соответствует имени класса. Может возникнуть только
-     одна проблема совместимости старого кода, если в нём присутствуют
-     классы с методами <function>__construct</function>.
-    </para>
+    </programlisting>
+   </example>
+   <para>
+    В целях обратной совместимости, если PHP 5 не может обнаружить объявленный метод <function>__construct</function>,
+    вызов конструктора произойдет по прежней схеме, через обращение к методу,
+    имя которого соответствует имени класса. Может возникнуть только
+    одна проблема совместимости старого кода, если в нём присутствуют
+    классы с методами <function>__construct</function>, использующиеся для
+    других целей.
+   </para>
+   <para>
+    В отличие от других методов, PHP не будет генерировать ошибку
+    уровня <constant>E_STRICT</constant>, если <function>__construct</function>
+    будет перекрыт методом с другими параметрами, отличными от тех,
+    которые находятся в родительском <function>__construct</function>.
+   </para>
+   <para>
+    Начиная с версии PHP 5.3.3, методы с именами, совпадающими с 
+    последним элемeнтом имени класса, находящимся в пространстве имен,
+    больше не будут считаться конструкторами. Это изменение не влияет
+    на классы, не находящиеся в пространстве имен.
+   </para>
+   <example>
+    <title>Конструкторы в классах, находящихся в пространстве имен</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+namespace Foo;
+class Bar {
+    public function Bar() {
+        // конструктор в версиях PHP 5.3.0-5.3.2
+        // обычный метод, начиная с версии PHP 5.3.3
+    }
+}
+?>
+]]>
+    </programlisting>
+   </example>
   </sect2>
 
   <sect2 xml:id="language.oop5.decon.destructor">
-    <title>Деструкторы</title>
-    <para>
-     PHP 5 предоставляет концепцию деструкторов, сходную с теми,
-     что применяются в других ОО языках, таких, как Java:
-     когда освобождается последняя ссылка на объект, перед высвобождением
-     памяти, занимаемой этим объектом, вызывается метод
-     <function>__destruct</function>, не принимающий параметров.
-    </para>
-    <example>
-     <title>Пример использования деструктора</title>
-     <programlisting role="php">
+   <title>Деструкторы</title>
+   <methodsynopsis>
+    <type>void</type><methodname>__destruct</methodname>
+    <void />
+   </methodsynopsis>
+   <para>
+    PHP 5 предоставляет концепцию деструкторов, сходную с теми,
+    что применяются в других ОО языках, таких, как C++.
+    Деструктор вызывается в том случае, когда освобождаются все ссылки
+    на определенный объект, объект явно удаляется или при завершении 
+    скрипта (деструкторы будут вызваны в случайном порядке).
+   </para>
+   <example>
+    <title>Пример использования деструктора</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 class MyDestructableClass {
-    function __construct() {
-        print "Конструктор\n";
-        $this->name = "MyDestructableClass";
-    }
+   function __construct() {
+       print "Конструктор\n";
+       $this->name = "MyDestructableClass";
+   }
 
-    function __destruct() {
-        print "Уничтожается " . $this->name . "\n";
-    }
+   function __destruct() {
+       print "Уничтожается " . $this->name . "\n";
+   }
 }
 
 $obj = new MyDestructableClass();
 ?> 
 ]]>
-     </programlisting>
-    </example>
+    </programlisting>
+   </example>
+   <para>
+    Как и в случае с конструкторами, деструкторы, объявленные
+    в родительском классе, не будут вызваны автоматически.
+    Для вызова деструктора, объявленном в классе-родителе,
+    следует обратиться к методу <function>parent::__destruct</function> в
+    теле деструктора-потомка.
+   </para>
+   <para>
+    Деструктор будет вызван даже в том случае, если скрипт был остановлен с
+    помощью функции <function>exit</function>. Вызов <function>exit</function>
+    в деструкторе предотвратит запуск всех последующих функций завершения.
+   </para>
+   <note>
     <para>
-     Как и в случае с конструкторами, деструкторы, объявленные
-     в родительском классе, не будут вызваны автоматически.
-     Для вызова деструктора, объявленном в классе-родителе,
-     следует обратиться к методу <function>parent::__destruct</function>.
+     Деструкторы, вызываемые при завершении скрипта, вызываются после отправки
+     HTTP-заголовков. Рабочая директория во время фазы завершения скрипта
+     может отличаться в некоторых SAPI (например, в Apache).
     </para>
+   </note>
+   <note>
+    <para>
+     Попытка бросить исключение в деструкторе (вызванного во время
+     завершения скрипта) влечет за собой фатальную ошибку.
+    </para>
+   </note>
   </sect2>
 
  </sect1>
@@ -103,7 +164,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
