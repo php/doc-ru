@@ -1,109 +1,267 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: 606c44a528e1649ff4dcb5706a5e85935d9c36f6 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.overloading" xmlns="http://docbook.org/ns/docbook">
   <title>Перегрузка</title>
+  
+  <para>
+   Перегрузка в PHP означает возможность динамически <quote>создавать</quote>
+   свойства и методы. Эти динамические сущности обрабатываются с
+   помощью "волшебных" методов, которые можно создать в классе для
+   различных видов действий.
+  </para>
+ 
+  <para>
+   Методы перегрузки вызываются при взаимодействии с теми свойствами
+   или методами, которые не были объявлены или не <link 
+   linkend="language.oop5.visibility">видны</link> в текущей области
+   видимости. Далее в этом разделе мы будем использовать термины
+   <quote>недоступные свойства</quote> или <quote>недоступные методы</quote> 
+   для отражения этой комбинации объявления и области видимости.
+  </para>
 
   <para>
-   Вызовы методов, как и обращения к свойствам объекта, могут
-   быть перегружены с использованием методов __call, __get и __set.
-   Эти методы будут срабатывать только в том случае, если объект
-   или наследуемый объект не содержат свойства или метода,
-   к которому осуществляется доступ.
+   Все методы перегрузки должны быть объявлены как <literal>public</literal>.
   </para>
+
+  <note>
+   <para>
+    Ни один аргумент не может быть передан
+    <link linkend="functions.arguments.by-reference">по ссылке
+    </link> в эти "волшебные" методы.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Интерпретация <quote>перегрузки</quote> в PHP отличается
+    от остальных объектно-ориентированных языков. Традиционно
+    перегрузка означает возможность иметь множество одноименных методов
+    с разным количеством или различными типами аргументов.
+   </para>
+  </note>
+
+
+  <sect2 xml:id="language.oop5.overloading.changelog">
+   &reftitle.changelog;
+   <para>
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>&Version;</entry>
+        <entry>&Description;</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>5.3.0</entry>
+        <entry>
+         Добавлен метод <function>__callStatic</function>.
+         Добавлено предупреждение об усилении публичной видимости и не-статичном объявлении.
+        </entry>
+       </row>
+       <row>
+        <entry>5.1.0</entry>
+        <entry>
+         Добавлены методы <function>__isset</function> и <function>__unset</function>.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </sect2>
+
 
   <sect2 xml:id="language.oop5.overloading.members">
    <title>Перегрузка свойств</title>
 
    <methodsynopsis>
     <type>void</type><methodname>__set</methodname>
-    <methodparam><type>string</type><parameter>имя</parameter></methodparam>
-    <methodparam><type>mixed</type><parameter>значение</parameter></methodparam>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+    <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
    </methodsynopsis>
    <methodsynopsis>
-    <type>void</type><methodname>__get</methodname>
-    <methodparam><type>mixed</type><parameter>имя</parameter></methodparam>
+    <type>mixed</type><methodname>__get</methodname>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+   </methodsynopsis>
+   <methodsynopsis>
+    <type>bool</type><methodname>__isset</methodname>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+   </methodsynopsis>
+   <methodsynopsis>
+    <type>void</type><methodname>__unset</methodname>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
    </methodsynopsis>
 
    <para>
-    С помощью этих методов обращения к свойствам класса могут быть перегружены
-    с целью выполнения произвольного кода, описанного в классе.
-    В аргументе <varname>имя</varname> передаётся имя свойства, к которому
-    производится обращение. Аргумент <varname>значение</varname> метода __set()
-    должен содержать значение, которое будет присвоено свойству класса
-    с именем <varname>имя</varname>.
+    Метод <function>__set</function> будет выполнен при записи
+    данных в недоступные свойства.
    </para>
 
+   <para>
+    Метод <function>__get</function> будет выполнен при чтении
+    данных из недоступных свойств.
+   </para>
+
+   <para>
+    Метод <function>__isset</function> будет выполнен при
+    использовании <function>isset</function> или <function>empty</function>
+    на недоступных свойствах.
+   </para>
+
+   <para>
+    Метод <function>__unset</function> будет выполнен при вызове
+    <function>unset</function> на недоступном свойстве.
+   </para>
+
+   <para>
+    Аргумент <varname>$name</varname> представляет собой имя
+    вызываемого свойства. Метод <function>__set</function>
+    содержит аргумент <varname>$value</varname>, представляющий
+    собой значение, которое будет записано в свойство с именем
+    <varname>$name</varname>.
+   </para>
+
+   <para>
+    Перегрузка свойств работает только в контексте объекта.
+    Данные магические методы не будут вызваны в статическом контексте.
+    Поэтому данные методы не должны объявляться
+    <link linkend="language.oop5.static">статичными</link>. 
+    Начиная с версии PHP 5.3.0, при объявлении "волшебного" метода в 
+    качестве <literal>static</literal> будет показано предупреждение.
+   </para>
+
+   <note>
+    <para>
+     Возвращаемое значение метода <function>__set</function> будет
+     проигнорировано из-за способа обработки в PHP оператора присваивания.
+     Аналогично, <function>__get</function> никогда не вызовется при
+     цепных присваиваниях, например, таких:
+     <literal><![CDATA[ $a = $obj->b = 8; ]]></literal>
+    </para>
+   </note>
+
+   <note>
+    <para>
+     Невозможно использовать перегруженные свойства в других
+     языковых конструкциях, кроме <function>isset</function>. 
+     Это означает, что если на перегруженном свойстве будет вызвана
+     конструкция <function>empty</function>, то перегруженный метод не будет
+     вызван.
+    </para>
+    <para>
+     Для обхода этого ограничения можно скопировать перегруженное
+     свойство в локальную переменную и затем применить к ней 
+     <function>empty</function>.
+    </para>
+   </note>
+
    <example>
-    <title>Пример перегрузки с использование __get и __set</title>
+    <title>
+     Перегрузка свойств с помощью методов <function>__get</function>,
+     <function>__set</function>, <function>__isset</function>
+     и <function>__unset</function>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class Setter {
-  public $n;
-  private $x = array("a" => 1, "b" => 2, "c" => 3);
+class PropertyTest {
+    /**  Место хранения перегружаемых данных.  */
+    private $data = array();
 
-  function __get($nm) {
-    print "ЧИтаем [$nm]\n";
+    /**  Перегрузка не применяется к объявленным свойствам.  */
+    public $declared = 1;
 
-    if (isset($this->x[$nm])) {
-      $r = $this->x[$nm];
-      print "Получили: $r\n";
-      return $r;
-    } else {
-      print "Ничего!\n";
+    /**  Здесь перегрузка будет использована только при доступе вне класса.  */
+    private $hidden = 2;
+
+    public function __set($name, $value) {
+        echo "Установка '$name' в '$value'\n";
+        $this->data[$name] = $value;
     }
-  }
 
-  function __set($nm, $val) {
-    print "Пишем $val в [$nm]\n";
+    public function __get($name) {
+        echo "Получение '$name'\n";
+        if (array_key_exists($name, $this->data)) {
+            return $this->data[$name];
+        }
 
-    if (isset($this->x[$nm])) {
-      $this->x[$nm] = $val;
-      print "OK!\n";
-    } else {
-      print "Всё плохо!\n";
+        $trace = debug_backtrace();
+        trigger_error(
+            'Неопределенное свойство в __get(): ' . $name .
+            ' в файле ' . $trace[0]['file'] .
+            ' на строке ' . $trace[0]['line'],
+            E_USER_NOTICE);
+        return null;
     }
-  }
+
+    /**  Начиная с версии PHP 5.1.0  */
+    public function __isset($name) {
+        echo "Установлено ли '$name'?\n";
+        return isset($this->data[$name]);
+    }
+
+    /**  Начиная с версии PHP 5.1.0  */
+    public function __unset($name) {
+        echo "Уничтожение '$name'\n";
+        unset($this->data[$name]);
+    }
+
+    /**  Не "волшебный" метод, просто для примера. */
+    public function getHidden() {
+        return $this->hidden;
+    }
 }
 
-$foo = new Setter();
-$foo->n = 1;
-$foo->a = 100;
-$foo->a++;
-$foo->z++;
-var_dump($foo);
+
+echo "<pre>\n";
+
+$obj = new PropertyTest;
+
+$obj->a = 1;
+echo $obj->a . "\n\n";
+
+var_dump(isset($obj->a));
+unset($obj->a);
+var_dump(isset($obj->a));
+echo "\n";
+
+echo $obj->declared . "\n\n";
+
+echo "Давайте поэкспериментируем с private свойством 'hidden':\n";
+echo "Private свойства видны внутри класса, поэтому __get() не используется...\n";
+echo $obj->getHidden() . "\n";
+echo "Private свойства не видны вне класса, поэтому __get() используется...\n";
+echo $obj->hidden . "\n";
 ?>
 ]]>
     </programlisting>
-    <para>
-     Результатом выполнения будет:
-    </para>
+    &example.outputs;
     <screen role="php">
 <![CDATA[
-Пишем 100 в [a]
-OK!
-Читаем [a]
-Получили: 100
-Пишем 101 в [a]
-OK!
-Читаем [z]
-Ничего!
-Пишем 1 в [z]
-Всё плохо!
-object(Setter)#1 (2) {
-  ["n"]=>
-  int(1)
-  ["x:private"]=>
-  array(3) {
-    ["a"]=>
-    int(101)
-    ["b"]=>
-    int(2)
-    ["c"]=>
-    int(3)
-  }
-}
+Установка 'a' в '1'
+Получение 'a'
+1
+
+Установлено ли 'a'?
+bool(true)
+Уничтожение 'a'
+Установлено ли 'a'?
+bool(false)
+
+1
+
+Давайте поэкспериментируем с private свойством 'hidden':
+Private свойства видны внутри класса, поэтому __get() не используется...
+2
+Private свойства не видны вне класса, поэтому __get() используется...
+Получение 'hidden'
+
+
+Notice:  Неопределенное свойство в __get(): hidden в файле <file> на строке 70 в <file> на строке 29
 ]]>
     </screen>
 
@@ -115,65 +273,67 @@ object(Setter)#1 (2) {
 
    <methodsynopsis>
     <type>mixed</type><methodname>__call</methodname>
-    <methodparam><type>string</type><parameter>имя</parameter></methodparam>
-    <methodparam><type>array</type><parameter>аргументы</parameter></methodparam>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+    <methodparam><type>array</type><parameter>arguments</parameter></methodparam>
+   </methodsynopsis>
+   <methodsynopsis>
+    <type>mixed</type><methodname>__callStatic</methodname>
+    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+    <methodparam><type>array</type><parameter>arguments</parameter></methodparam>
    </methodsynopsis>
 
    <para>
-    С использованием этого метода, методы класса могут быть перегружены
-    с целью выполнения произвольного кода, описанного в классе.
-    В аргументе <varname>имя</varname> передаётся имя вызванного
-    метода. Аргументы, которые были переданы методу при обращении,
-    будут возвращены чере <varname>аргументы</varname>.
-    Значение, возвращённое методом __call(), будет передано вызывающему оператору.
+    В контексте объекта при вызове недоступных методов
+    вызывается метод <function>__call</function>.
+   </para>
+
+   <para>
+    В статическом контексте при вызове недоступных методов
+    вызывается метод <function>__callStatic</function>.
+   </para>
+
+   <para>
+    Аргумент <varname>$name</varname> представляет собой имя 
+    вызываемого метода. Аргумент <varname>$arguments</varname>
+    представляет собой числовой массив, содержащий параметры,
+    переданные в вызываемый метод <varname>$name</varname>.
    </para>
 
    <example>
-    <title>Пример перегрузки с использованием __call</title>
+    <title>
+     Перегрузка методов с помощью методов <function>__call</function>
+     и <function>__callStatic</function>
+    </title>
     <programlisting role="php">
   <![CDATA[
 <?php
-class Caller {
-  private $x = array(1, 2, 3);
+class MethodTest {
+    public function __call($name, $arguments) {
+        // Замечание: значение $name регистрозависимо.
+        echo "Вызов метода '$name' "
+             . implode(', ', $arguments). "\n";
+    }
 
-  function __call($m, $a) {
-    print "Вызван метод $m :\n";
-    var_dump($a);
-    return $this->x;
-  }
+    /**  Начиная с версии PHP 5.3.0  */
+    public static function __callStatic($name, $arguments) {
+        // Замечание: значение $name регистрозависимо.
+        echo "Вызов статического метода '$name' "
+             . implode(', ', $arguments). "\n";
+    }
 }
 
-$foo = new Caller();
-$a = $foo->test(1, "2", 3.4, true);
-var_dump($a);
+$obj = new MethodTest;
+$obj->runTest('в контексте объекта');
+
+MethodTest::runTest('в статическом контексте');  // Начиная с версии PHP 5.3.0
 ?>
 ]]>
     </programlisting>
-    <para>
-     Результатом выполнения будет:
-    </para>
+    &example.outputs;
     <screen role="php">
 <![CDATA[
-
-Вызван метод test:
-array(4) {
-  [0]=>
-  int(1)
-  [1]=>
-  string(1) "2"
-  [2]=>
-  float(3.4)
-  [3]=>
-  bool(true)
-}
-array(3) {
-  [0]=>
-  int(1)
-  [1]=>
-  int(2)
-  [2]=>
-  int(3)
-}
+Вызов метода 'runTest' в контексте объекта
+Вызов статического метода 'runTest' в статическом контексте
 ]]>
     </screen>
    </example>
@@ -181,7 +341,7 @@ array(3) {
   </sect2>
 
  </sect1>
- 
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
@@ -193,7 +353,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
