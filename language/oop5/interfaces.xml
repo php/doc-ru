@@ -1,61 +1,226 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: d08c651831f0675c3f936203916db8742e60fcae Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.interfaces" xmlns="http://docbook.org/ns/docbook">
   <title>Интерфейсы объектов</title>
   <para>
-   Интерфейсы объектов позволяют программисту создавать код, который
+   Интерфейсы объектов позволяют создавать код, который
    указывает, какие методы и свойства должен включать класс, без
    необходимости описывания их функционала.
   </para>
   <para>
    Интерфейсы объявляются так же, как и обычные классы, но с использованием
    ключевого слова "interface"; тела методов интерфейсов должны быть пустыми.
-   Для включения интерфейса в класс программист должен использовать
-   ключевое слово "implements" и описать функционал методов,
-   перечисленных во включаемом интерфейсе. Если это требуется,
-   классы могут включать более одного интерфейса путём их перечисления
-   через пробел.
   </para>
   <para>
-   Если класс включает какой-либо интерфейс и не описывает функционал
-   всех методов этого интерфейса, выполнение кода с использованием
-   такого класса завершится фатальной ошибкой, сообщающей, какие
-   именно методы не были описаны.
+   Все методы, определенные в интерфейсы должны быть публичными, что
+   следует из самой природы интерфейса.
   </para>
-  <example>
-   <title>Пример интерфейса</title>
-    <programlisting role="php">
+  <sect2 xml:id="language.oop5.interfaces.implements">
+   <title><literal>implements</literal></title>
+   <para>
+    Для реализации интерфейса используется оператор <literal>implements</literal>.
+    Класс должен реализовать все методы, описанные в интерфейсе; иначе
+    произойдет фатальная ошибка. При желании классы могут реализовывать
+    более одного интерфейса за раз, реализуемые интерфейсы должны разделяться
+    запятой.
+   </para>
+   <note>
+    <para>
+     Класс не может реализовать два интерфейса, содержащих одноименную
+     функцию, так как это повлечет за собой неоднозначность.
+    </para>
+   </note>
+   <note>
+    <para>
+     Интерфейсы могут быть унаследованы друг от друга, так же как и классы,
+     с помощью оператора <link linkend="language.oop5.inheritance">extends</link>. 
+    </para>
+   </note>
+   <note>
+    <para>
+     Сигнатуры методов в классе, реализующем интерфейс, должны точно совпадать с сигнатурами,
+     используемыми в интерфейсе, в противном случае будет вызвана
+     фатальная ошибка.
+     </para>
+    </note>
+  </sect2>
+  <sect2 xml:id="language.oop5.interfaces.constants">
+   <title>Константы (<literal>Constants</literal>)</title>
+   <para>
+    Интерфейсы могут содержать константы. Константы интерфейсов
+    работают точно так же, как и <link linkend="language.oop5.constants">
+    константы классов</link>, за исключением того, что они не могут
+    быть перекрыты наследующим классом или интерфейсом.
+   </para>
+  </sect2>
+  <sect2 xml:id="language.oop5.interfaces.examples">
+   &reftitle.examples;
+   <example xml:id="language.oop5.interfaces.examples.ex1">
+    <title>Пример интерфейса</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
-interface ITemplate
+
+// Объявим интерфейс 'iTemplate'
+interface iTemplate
 {
-  public function setVariable($name, $var);
-  public function getHtml($template);
+    public function setVariable($name, $var);
+    public function getHtml($template);
 }
 
-class Template implements ITemplate
+// Реализуем интерфейс
+// Это сработает нормально
+class Template implements iTemplate
 {
-  private $vars = array();
+    private $vars = array();
   
-  public function setVariable($name, $var)
-  {
-    $this->vars[$name] = $var;
-  }
-  
-  public function getHtml($template)
-  {
-    foreach($this->vars as $name => $value) {
-      $template = str_replace('{'.$name.'}', $value, $template);
+    public function setVariable($name, $var)
+    {
+        $this->vars[$name] = $var;
     }
-    
-    return $template;
-  }
+  
+    public function getHtml($template)
+    {
+        foreach($this->vars as $name => $value) {
+            $template = str_replace('{' . $name . '}', $value, $template);
+        }
+ 
+        return $template;
+    }
 }
-?> 
+
+// Это не будет работать
+// Fatal error: Class BadTemplate contains 1 abstract methods
+// and must therefore be declared abstract (iTemplate::getHtml)
+// (Фатальная ошибка: Класс BadTemplate содержит 1 абстрактный метод
+// и поэтому должнен быть объявлен абстрактным (iTemplate::getHtml))
+class BadTemplate implements iTemplate
+{
+    private $vars = array();
+  
+    public function setVariable($name, $var)
+    {
+        $this->vars[$name] = $var;
+    }
+}
+?>
 ]]>
-   </programlisting>
-  </example>
+    </programlisting>
+   </example>
+   <example xml:id="language.oop5.interfaces.examples.ex2">
+    <title>Расширяемые интерфейсы</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+interface a
+{
+    public function foo();
+}
+
+interface b extends a
+{
+    public function baz(Baz $baz);
+}
+
+// Это сработает
+class c implements b
+{
+    public function foo()
+    {
+    }
+
+    public function baz(Baz $baz)
+    {
+    }
+}
+
+// Это не сработает и выдаст фатальную ошибку
+class d implements b
+{
+    public function foo()
+    {
+    }
+
+    public function baz(Foo $foo)
+    {
+    }
+}
+?>
+]]>
+     </programlisting>
+   </example>
+   <example xml:id="language.oop5.interfaces.examples.ex3">
+    <title>Множественное наследование интерфейсов</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+interface a
+{
+    public function foo();
+}
+
+interface b
+{
+    public function bar();
+}
+
+interface c extends a, b
+{
+    public function baz();
+}
+
+class d implements c
+{
+    public function foo()
+    {
+    }
+
+    public function bar()
+    {
+    }
+
+    public function baz()
+    {
+    }
+}
+?>
+]]>
+     </programlisting>
+   </example>
+   <example xml:id="language.oop5.interfaces.examples.ex4">
+    <title>Интерфейсы с константами</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+interface a
+{
+    const b = 'Константа интерфейса';
+}
+
+// Выведет: Константа интерфейса
+echo a::b;
+
+
+// Вот это, однако, не будет работать, так как  
+// константы перекрывать нельзя.
+class b implements a
+{
+    const b = 'Class constant';
+}
+?>
+]]>
+     </programlisting>
+   </example>
+   <para>
+    Интерфейс, совместно с контролем типов, предоставляет отличный
+    способ проверки того, что определенный объект содержит определенный
+    набор методов. Смотрите также оператор
+    <link linkend="language.operators.type">instanceof</link> и
+    <link linkend="language.oop5.typehinting">контроль типов</link>.
+   </para>
+  </sect2>
 
  </sect1>
  
@@ -70,7 +235,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
