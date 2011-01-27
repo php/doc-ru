@@ -1,62 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: f653adafd6a2db762c1ad7e20575262a464cac9f Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- splitted from ./en/functions/array.xml, last change in rev 1.62 -->
-  <refentry xml:id="function.array-filter" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>array_filter</refname>
-    <refpurpose>
-     Применяет фильтр к массиву, используя функцию обратного вызова
-    </refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>array</type><methodname>array_filter</methodname>
-      <methodparam><type>array</type><parameter>input</parameter></methodparam>
-      <methodparam choice="opt"><type>mixed</type><parameter>callback</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     Функция <function>array_filter</function> возвращает массив,
-     содержащий значения массива <parameter>input</parameter>,
-     отфильтрованные в соответствии с результатом функции обратного вызова.
-     Если <parameter>input</parameter> является ассоциативным
-     массивом, его ключи сохраняются.
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>array_filter</function></title>
-      <programlisting role="php">
-<![CDATA[
-function odd($var) {
-    return ($var % 2 == 1);
-}
+<refentry xml:id="function.array-filter" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>array_filter</refname>
+  <refpurpose>Фильтрует элементы массива с помощью callback-функции</refpurpose>
+ </refnamediv>
 
-function even($var) {
-    return ($var % 2 == 0);
-}
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>array_filter</methodname>
+   <methodparam><type>array</type><parameter>input</parameter></methodparam>
+   <methodparam choice="opt"><type>callback</type><parameter>callback</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Обходит каждое значение массива <parameter>input</parameter>,
+   передавая его в <parameter>callback</parameter>-функцию. Если
+   <parameter>callback</parameter>-функция возвращает true, данное
+   значение возвращается в массив <parameter>input</parameter>.
+   Ключи массива сохраняются.
+  </para>
+</refsect1>
 
-$array1 = array ("a"=>1, "b"=>2, "c"=>3, "d"=>4, "e"=>5);
-$array2 = array (6, 7, 8, 9, 10, 11, 12);
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
 
-echo "Нечетные :\n";
-print_r(array_filter($array1, "odd"));
-echo "Четные   :\n";
-print_r(array_filter($array2, "even"));
-]]>
-      </programlisting>
+    <varlistentry>
+     <term><parameter>input</parameter></term>
+     <listitem>
       <para>
-       Результатом выполнения вышеприведенной программы будет:
-       <screen role="php">
+       Итерируемый массив
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>callback</parameter></term>
+     <listitem>
+      <para>
+       Используемая callback-функция
+      </para>
+      <para>
+       Если <parameter>callback</parameter>-функция не передана, все значения
+       массива <parameter>input</parameter> равные &false; (см.
+       <link linkend="language.types.boolean.casting">преобразование в
+        булевый тип</link>) будут удалены.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает отфильтрованный массив.
+  </para>
+ </refsect1>
+
+<!--
+ <refsect1 role="errors">
+  &reftitle.errors;
+  &errors.no.unusual.errors;
+ </refsect1>
+-->
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>array_filter</function></title>
+    <programlisting role="php">
 <![CDATA[
-Нечетные :
+<?php
+function odd($var)
+{
+    // является ли переданное число нечетным
+    return($var & 1);
+}
+
+function even($var)
+{
+    // является ли переданное число четным
+    return(!($var & 1));
+}
+
+$array1 = array("a"=>1, "b"=>2, "c"=>3, "d"=>4, "e"=>5);
+$array2 = array(6, 7, 8, 9, 10, 11, 12);
+
+echo "Нечетные:\n";
+print_r(array_filter($array1, "odd"));
+echo "Четные:\n";
+print_r(array_filter($array2, "even"));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Нечетные:
 Array
 (
     [a] => 1
     [c] => 3
     [e] => 5
 )
-Четные   :
+Четные:
 Array
 (
     [0] => 6
@@ -65,25 +120,63 @@ Array
     [6] => 12
 )
 ]]>
-       </screen>
-      </para>
-     </example>
-    </para>
-    &note.func-callback;
-    <para>
-     Пользователи не должны изменять массив в результате
-     его обработки функцией обратного вызова, например,
-     добавлять или удалять элемент или обнулять массив,
-     обрабатываемый функцией <function>array_filter</function>. Если
-     массив подвергается изменениям, поведение этой функции
-     становится неопределенным.
-    </para>
-    <para>
-     См.также <function>array_map</function> и
-     <function>array_reduce</function>.
-    </para>
-   </refsect1>
-  </refentry>
+    </screen>
+   </example>
+   <example>
+    <title>Использование <function>array_filter</function> без
+    <parameter>callback</parameter>-функции</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$entry = array(
+             0 => 'foo',
+             1 => false,
+             2 => -1,
+             3 => null,
+             4 => ''
+          );
+
+print_r(array_filter($entry));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => foo
+    [2] => -1
+)
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <caution>
+   <para>
+    Если callback-функция изменяет массив (например, добавляет или
+    удаляет элементы), поведение этой функции неопределено.
+   </para>
+  </caution>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>array_map</function></member>
+    <member><function>array_reduce</function></member>
+    <member><function>array_walk</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -96,7 +189,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
