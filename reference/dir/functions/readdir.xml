@@ -1,95 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: tronic Status: ready -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 <!-- splitted from ./en/functions/dir.xml, last change in rev 1.2 -->
-  <refentry xml:id="function.readdir" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>readdir</refname>
-    <refpurpose>Получить элемент каталога по его дескриптору</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>string</type><methodname>readdir</methodname>
-      <methodparam><type>resource</type><parameter>dir_handle</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     Возвращает имя следующего по порядку элемента каталога. Имена
-     элементов возвращаются в порядке, зависящем от файловой
-     системы.
-    </para>
+<refentry xml:id="function.readdir" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>readdir</refname>
+  <refpurpose>Получает элемент каталога по его дескриптору</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>string</type><methodname>readdir</methodname>
+   <methodparam choice="opt"><type>resource</type><parameter>dir_handle</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает имя следующего по порядку элемента каталога. Имена
+   элементов возвращаются в порядке, в котором они хранятся на
+   файловой системе.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>dir_handle</parameter></term>
+     <listitem>
+      <para>
+       Дескриптор каталога (<type>resource</type>), ранее открытый
+       функцией <function>opendir</function>. Если дескриптор каталога
+       не указан, используется последний дескриптор открытый функцией
+       <function>opendir</function>.
+  </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает имя файла в случае успеха&return.falseforfailure;.
+  </para>
+  &return.falseproblem;
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Вывести список всех файлов в каталоге</title>
     <para>
      Обратите внимание на способ проверки значения, возвращаемого
      функцией <function>readdir</function> в приведенном ниже
-     примере. В этом примере осуществляется проверка значения
+     примере. В этом примере осуществляется явная проверка значения
      на идентичность (выражения идентичны, когда они равны и являются
      значениями одного типа - за более подробной информацией
-     обратитесь к главе <link linkend="language.operators.comparison">
-     Операторы сравнения</link>) значению &false;, поскольку
+     обратитесь к главе "<link linkend="language.operators.comparison">
+     Операторы сравнения</link>") значению &false;, поскольку
      в ином случае, любой элемент каталога, чье имя может быть
-     выражено как &false;, остановит цикл (например, элемент с
+     преобразовано к &false;, остановит цикл (например, элемент с
      именем "0").
     </para>
-    <para>
-     <example>
-      <title>Вывести список всех файлов в каталоге</title>
-      <programlisting role="php">
+    <programlisting role="php">
 <![CDATA[
 <?php
-// Обратите внимание, что оператор !== не существовал до версии 4.0.0-RC2
 
 if ($handle = opendir('/path/to/files')) {
     echo "Дескриптор каталога: $handle\n";
     echo "Файлы:\n";
 
     /* Именно этот способ чтения элементов каталога является правильным. */
-    while (false !== ($file = readdir($handle))) { 
+    while (false !== ($file = readdir($handle))) {
         echo "$file\n";
     }
 
-    /* Этот способ НЕВЕРЕН. */
-    while ($file = readdir($handle)) { 
+    /* Это НЕВЕРНЫЙ способ обхода каталога. */
+    while ($file = readdir($handle)) {
         echo "$file\n";
     }
 
-    closedir($handle); 
+    closedir($handle);
 }
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     Обратите внимание, что функция <function>readdir</function> также возвращает
-     элементы с именами <literal>.</literal> и <literal>..</literal>.
-     Если вы не хотите получать эти значения, просто отбрасывайте их:
-     <example>
-      <title>
-       Получить список файлов в текущем каталоге и отбросить элементы
-       с именами <literal>.</literal> и <literal>..</literal>
-      </title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>
+     Получить список файлов в текущем каталоге и отбросить элементы
+     с именами <literal>.</literal> и <literal>..</literal>
+    </title>
+    <programlisting role="php">
 <![CDATA[
-<?php 
+<?php
 if ($handle = opendir('.')) {
-    while (false !== ($file = readdir($handle))) { 
-        if ($file != "." && $file != "..") { 
-            echo "$file\n"; 
-        } 
+    while (false !== ($file = readdir($handle))) {
+        if ($file != "." && $file != "..") {
+            echo "$file\n";
+        }
     }
-    closedir($handle); 
+    closedir($handle);
 }
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     См.также описания функций <function>is_dir</function> и
-     <function>glob</function>.
-    </para>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>is_dir</function></member>
+    <member><function>glob</function></member>
+    <member><function>opendir</function></member>
+    <member><function>scandir</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -102,7 +139,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
