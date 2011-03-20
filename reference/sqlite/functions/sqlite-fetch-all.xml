@@ -1,24 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: blindman Status: ready -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.sqlite-fetch-all" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>sqlite_fetch_all</refname>
-  <refpurpose>
-   Выбирает все записи из результата запроса и возвращает массив массивов
-  </refpurpose>
+  <refname>SQLiteResult->fetchAll</refname>
+  <refname>SQLiteUnbuffered->fetchAll</refname>
+  <refpurpose>Выбирает все записи из результата запроса и возвращает многомерный массив</refpurpose>
  </refnamediv>
- <refsect1>
+
+ <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>array</type><methodname>sqlite_fetch_all</methodname>
    <methodparam><type>resource</type><parameter>result</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>result_type</parameter></methodparam>
-   <methodparam choice="opt"><type>bool</type><parameter>decode_binary</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>result_type</parameter><initializer>SQLITE_BOTH</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>decode_binary</parameter><initializer>true</initializer></methodparam>
   </methodsynopsis>
-  
-  &warn.undocumented.func;
+  <para>Объектно-ориентированный стиль (метод):</para>
+  <classsynopsis>
+   <ooclass><classname>SQLiteResult</classname></ooclass>
+   <methodsynopsis>
+    <type>array</type><methodname>fetchAll</methodname>
+    <methodparam choice="opt"><type>int</type><parameter>result_type</parameter><initializer>SQLITE_BOTH</initializer></methodparam>
+    <methodparam choice="opt"><type>bool</type><parameter>decode_binary</parameter><initializer>true</initializer></methodparam>
+   </methodsynopsis>
+  </classsynopsis>
+  <classsynopsis>
+   <ooclass><classname>SQLiteUnbuffered</classname></ooclass>
+   <methodsynopsis>
+    <type>array</type><methodname>fetchAll</methodname>
+    <methodparam choice="opt"><type>int</type><parameter>result_type</parameter><initializer>SQLITE_BOTH</initializer></methodparam>
+    <methodparam choice="opt"><type>bool</type><parameter>decode_binary</parameter><initializer>true</initializer></methodparam>
+   </methodsynopsis>
+  </classsynopsis>
+  <para>
+   <function>sqlite_fetch_all</function> возвращает массив с полным
+   результирующим набором из ресурса <parameter>result</parameter>.
+   Она похожа на вызов функци
+   <function>sqlite_query</function> (или
+   <function>sqlite_unbuffered_query</function>), а затем
+   <function>sqlite_fetch_array</function> для каждого ряда
+   результирующего набора.
+  </para>
+ </refsect1>
 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>result</parameter></term>
+     <listitem>
+      <para>
+       Ресурс результата SQLite. Этот параметр не требуется при 
+       использовании объектно-ориентированного метода.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>result_type</parameter></term>
+     <listitem>
+      &sqlite.result-type;
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>decode_binary</parameter></term>
+     <listitem>
+      &sqlite.decode-bin;
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает массив с оставшимися рядами в результиующем наборе.
+   Возвращает все ряды при вызове сразу после <function>sqlite_query</function>.
+   При вызове после <function>sqlite_fetch_array</function>, функция
+   вернет оставшиеся ряды. Если в результирующем наборе больше нет
+   рядов, то будет возвращен пустой массив.
+  </para>
+  &sqlite.case-fold;
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Процедурный стиль</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$dbhandle = sqlite_open('sqlitedb');
+$query = sqlite_query($dbhandle, 'SELECT name, email FROM users LIMIT 25');
+$result = sqlite_fetch_all($query, SQLITE_ASSOC);
+foreach ($result as $entry) {
+    echo 'Имя: ' . $entry['name'] . '  E-mail: ' . $entry['email'];
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Объектно-ориентированный стиль</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$dbhandle = new SQLiteDatabase('sqlitedb');
+
+$query = $dbhandle->query('SELECT name, email FROM users LIMIT 25'); // буферизованный результирующий набор
+$query = $dbhandle->unbufferedQuery('SELECT name, email FROM users LIMIT 25'); // небуферизованный результирующий набор
+
+$result = $query->fetchAll(SQLITE_ASSOC);
+foreach ($result as $entry) {
+    echo 'Имя: ' . $entry['name'] . '  E-mail: ' . $entry['email'];
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>sqlite_fetch_array</function></member>
+   </simplelist>
+  </para>
  </refsect1>
 </refentry>
 
@@ -32,7 +148,7 @@
  sgml-indent-step:1
  sgml-indent-data:t
  sgml-parent-document:nil
- sgml-default-dtd-file:"../../manual.ced"
+ sgml-default-dtd-file:"~/.phpdoc/manual.ced"
  sgml-exposed-tags:nil
  sgml-local-catalogs:nil
  sgml-local-ecat-files:nil
