@@ -1,52 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: f453f7036c74f5f8ce5e15d3d5abbaf8dfd599e2 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 
 <chapter xml:id="sqlite.setup" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.setup;
 
  <!-- {{{ Requirements -->
-
  <section xml:id="sqlite.requirements">
   &reftitle.required;
   <para>
-   Для использования функций этого модуля, PHP должен быть собран с
-   поддержкой SQLite или модуль должен быть подключен динамически в
-   &php.ini;.
+   Начиная с версии PHP 5 расширение SQLite доступно по умолчанию.
+   До этого времени требовалась библиотека SQLite.
   </para>
  </section>
  <!-- }}} -->
- 
- <!-- {{{ Installation -->
 
+ <!-- {{{ Installation -->
  <section xml:id="sqlite.installation">
   &reftitle.install;
   <para>
-   Прочтите файл INSTALL, поставляемый с модулем. Или
-   просто воспользуйтесь командой установки PEAR: "pear install sqlite".
-   Библиотека SQLite включена в поставку PHP, устанавливать ее дополнительно нет
-   необходимости.
+   Начиная с версии PHP 5 это расширение доступно по умолчанию, поэтому
+   для работы с ним просто не отключайте его.
+  </para>
+  <caution>
+   <para>
+    Не используйте PECL-версию этого расширения, так как она больше
+    не поддерживается. Всегда используйте расширение SQLite,
+    поставляемое вместе с исходниками PHP, даже если вы компилируете
+    это расширение в отдельный файл. В данном случае исходники
+    находятся в <literal>php-src-dir/ext/sqlite</literal>,
+    скомплиировать которые можно с помощью обычного метода
+    <link linkend="install.pecl.phpize">phpize</link>.
+   </para>
+  </caution>
+  <para>
+   Для использования этих функций пользователи Windows должны
+   включить <filename>php_sqlite.dll</filename> в &php.ini;
+   &pecl.windows.download;
   </para>
   <para>
-   Пользователи Windows могут загрузить скомпилированную версию модуля
-   SQLite здесь:
-   (<link xlink:href="&url.pecl.get.win;php_sqlite.dll">php_sqlite.dll</link>).
-  </para>
-  <para>
-   В PHP 5 модуль SQLite устанавливается по умолчанию. Однако,
-   начиная с версии PHP 5.1.0 вам следует самостоятельно подключать модуль в
-   php.ini потому, что начиная с этой версии он поставляется в виде
-   разделяемой библиотеки. Более того, т.к. модуль SQLite зависит от модуля
-   <link linkend="intro.pdo">PDO</link>, он также должен быть включен.
-   Чтобы включить оба модуля, добавьте следующие строки в php.ini:
+   В сборках Windows необходимо также включить PDO, так как начиная
+   с версии PHP 5.1.0 модуль SQLite также зависит от него.
+   В итоге &php.ini; будет выглядеть примерно так:
    <informalexample>
     <programlisting role="ini">
 <![CDATA[
-php_extension=php_pdo.dll
-php_extension=php_sqlite.dll
+extension=php_pdo.dll
+extension=php_sqlite.dll
 ]]>
     </programlisting>
    </informalexample>
+   Если вы собираете PDO в качестве подгружаемого модуля в
+   операционных системах Unix или Linux, для SQLite необходимо
+   использовать конфигурационную опцию
+   <command>--with-sqlite=shared</command>.
   </para>
+  <para>
+   Серия Windows сборок версии PHP 5.0.x включала это расширение
+   по умолчанию, без необходимости подключать какие-либо
+   <acronym>DLL</acronym>-файлы.
+  </para>
+  <para>
+   SQLite 3 поддерживается с помощью модуля <link
+   linkend="ref.pdo-sqlite">PDO SQLite</link>.
+  </para>
+  <note>
+   <title>Установка в Windows для непривилегированных аккаунтов</title>
+   <para>
+    В операционной системе Windows в непривилегированных аккаунтах не
+    переменная окружения <varname>TMP</varname> по умолчанию
+    не устанавливается. Это вынуждает sqlite создавать временные
+    файлы в папке windows, что не очень хорошо. Для решения этой
+    проблемы необходимо установить переменную окружения
+    <varname>TMP</varname> для веб-сервера или для того
+    пользовательского аккаунта, под которым он запущен.
+    Если вы используете Apache, то этого можно достигнуть
+    установкой директивы <command>SetEnv</command> в файле
+    &httpd.conf;. Например:
+    <informalexample>
+     <programlisting role="apache-conf">
+<![CDATA[
+SetEnv TMP c:/temp
+]]>
+     </programlisting>
+    </informalexample>
+    Если вы не можете установить эту переменную на серверном уровне,
+    можно реализовать эту установку с помощью скрипта:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+putenv('TMP=C:/temp');
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    Опция должна указывать на директорию, в которой веб-сервер
+    может создавать файлы, последовательно писать в них и,
+    соответственно, удалять.
+    Иначе, вы получите следующее сообщение об ошибке:
+    <computeroutput>
+     malformed database schema -
+     unable to open a temporary database file for storing temporary tables
+    </computeroutput>
+    (поврежденная схема базы данных - невозможно открыть временный
+    файл с базой данных для хранения временных таблиц)
+   </para>
+  </note>
  </section>
  <!-- }}} -->
 
