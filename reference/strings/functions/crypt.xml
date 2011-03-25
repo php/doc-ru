@@ -1,137 +1,307 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: blindman Status: ready -->
+<!-- EN-Revision: ab5351a260a7fdab22466de11eae852fbd4616f1 Maintainer: shein Status: in progress -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- splitted from ./en/functions/strings.xml, last change in rev 1.2 -->
-  <refentry xml:id="function.crypt" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>crypt</refname>
-    <refpurpose>Необратимое шифрование (хэширование)</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>string</type><methodname>crypt</methodname>
-      <methodparam><type>string</type><parameter>str</parameter></methodparam>
-      <methodparam choice="opt"><type>string</type><parameter>salt</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>crypt</function> возвращает строку, зашифрованную по 
-     стандартному алгоритму UNIX, основанному на <abbrev>DES</abbrev>, или другому 
-     алгоритму, имеющемуся в системе.  Аргументами являются строка, 
-     которую требуется зашифровать, и необязательная 
-     salt-последовательность, на которой основывается шифрование. Для 
-     получения дополнительной информации обратитесь к руководству UNIX по 
-     функции crypt.
-    </para>
+<refentry xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook" xml:id="function.crypt">
+ <refnamediv>
+  <refname>crypt</refname>
+  <refpurpose>Необратимое хэширование строки</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>string</type><methodname>crypt</methodname>
+   <methodparam><type>string</type><parameter>str</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>salt</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>crypt</function> возвращает хэшированную строку,
+   полученную с помощью стандартного алгоритма UNIX, основанного
+   на <abbrev>DES</abbrev>, или другого алгоритма, имеющегося в
+   системе.
+  </para>
+  <para>
+   Некоторые операционные системы поддерживают несколько алгоритмов
+   хэширования. Иногда стандартный алгоритм, основанный на DES,
+   заменяется алгоритмом на основе MD5. Вид хэширования определяется
+   переданным аргументом salt (соль). До версии PHP 5.3, PHP определял
+   доступные алгоритмы шифрования во время инсталляции, базируясь
+   на системной функции crypt(). Если соль не указана,
+   будет автоматически сгенерирована стандартная случайная
+   двухсимвольная (DES) либо двенадцатисимвольная (MD5) соль, в
+   зависимости от доступности алгоритма MD5 в crypt().
+   Предопределенная константа <constant>CRYPT_SALT_LENGTH</constant>
+   позволяет определить максимально доступную длину соли в
+   соответствии с используемыми алгоритмами.
+  </para>
+  <para>
+   Стандартная функция <function>crypt</function> на основе DES копирует
+   возвращает соль в качестве первых двух символов возвращаемой
+   строки. Кроме того, она использует только первые восемь символов
+   строки <parameter>str</parameter>, поэтому более длинные строки,
+   начинающиеся с тех же восьми символов, сгенерируют один и тот же
+   результат (при использовании одинаковой соли).
+  </para>
+  <simpara>
+   На системах, где функция crypt() поддерживает несколько алгоритмов
+   хэширования, следующие константы устанавливаются в 0 или 1 в
+   зависимости от доступности соответствующего алгоритма:
+  </simpara>
+  <itemizedlist>
+   <listitem>
     <simpara>
-    Если аргумент <parameter>salt</parameter> не передан, он будет выбран 
-    случайным образом.
+     <constant>CRYPT_STD_DES</constant> - Стандартное DES-шифрование
+     с двухсимвольной солью из алфавита "./0-9A-Za-z""./0-9A-Za-z". Использование
+     других символов в соли повлечет за собой отказ работы crypt().
     </simpara>
+   </listitem>
+   <listitem>
     <simpara>
-     Некоторые операционные системы поддерживают несколько алгоритмов 
-     шифрования. Иногда стандартный алгоритм, основанный на DES, 
-     заменяется алгоритмом на основе MD5. Вид шифрования определяется 
-     salt-последовательностью.  При инсталляции PHP определяет, какие 
-     алгоритмы шифрования поддерживает crypt. Если salt-последовательность 
-     не передана, будет автоматически сгенерирована стандартная случайная
-     двухсимвольная salt-последовательность, если только в системе по 
-     умолчанию не используется MD5, в этом случае будет создана случайная
-     salt-последовательность, совместимая с MD5. Предопределенная 
-     константа CRYPT_SALT_LENGTH позволяет определить, используется ли в 
-     системе стандартная двухсимвольная salt, или 12-символьная.
+     <constant>CRYPT_EXT_DES</constant> - Расширенное DES-шифрование.
+     "Соль" является девятисимвольной строкой, состоящей из символа
+     подчеркивания, за которым следуют 4 байта счетчика итерации и
+     4 байта соли. Эти данные будут закодированы в виде печатаемых
+     символов, 6 бит на символ, с меньшим значащим символом указанным
+     первым. Значения от 0 до 63 кодируются как "./0-9A-Za-z".
+     Использование других символов в соли повлечет за собой отказ
+     работы crypt().
     </simpara>
+   </listitem>
+   <listitem>
     <simpara>
-     Если вы опускаете аргумент <parameter>salt</parameter>, вы должны 
-     знать, что salt генериуется только при первом вызове этой функции, и 
-     для всех последующих вызовов используется полученное значение. Это в 
-     конечном итоге может привести к снижению безопасности.
+     <constant>CRYPT_MD5</constant> - MD5-шифрование с 12-символьной
+     солью, начинающейся с $1$
     </simpara>
+   </listitem>
+   <listitem>
     <simpara>
-     Стандартная функция <function>crypt</function> на основе DES копирует 
-     salt в начало возвращаемой строки. Кроме того, она использует только 
-     первые восемь символов строки <parameter>str</parameter>, поэтому 
-     для различных строк, первые восемь символов в которых совпадают, 
-     будет возвращаться один и тот же результат (при использовании 
-     одинаковых salt-последовательностей).
+     <constant>CRYPT_BLOWFISH</constant> - Blowfish-шифрование со
+     следующей солью: "$2a$", весовой параметр из двух цифр, "$",
+     22 базовых 64 цифры из алфавита "./0-9A-Za-z". Использование других
+     символов в соли повлечет за собой возвращение пустой строки.
+     Весовой параметр из двух цифр является двоичным логарифмом
+     счетчика итераций низлежащего хэширующего алгоритма, основанного
+     на Blowfish, и должен быть в диапазоне 04-31, значения вне
+     данного диапазона вызовут отказ crypt().
     </simpara>
+   </listitem>
+   <listitem>
     <simpara>
-     На системах, где функция crypt() поддерживает несколько алгоритмов 
-     шифрования, следующие константы устанавливаются в 0 или 1 в 
-     зависимости от доступности соответствующего алгоритма:
+     <constant>CRYPT_SHA256</constant> - хэш SHA-256 с шестнадцатисимвольной
+     солью, начинающейся с $5$. Если строка с солью начинается с
+     'rounds=&lt;N&gt;$', число N будет использовано для обозначения
+     количества раундов хэширования, по аналогии с весовым параметром
+     в Blowfish. По умолчанию используемое количество раундов равно 5000,
+     минимально доступно 1000 и максимально 999,999,999. Любой значение
+     вне этого диапазона будет усечено до ближайшего лимита.
     </simpara>
-    <itemizedlist>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CRYPT_SHA512</constant> - хэш SHA-512 с шестнадцатисимвольной
+     солью, начинающейся с $6$. Если строка с солью начинается с
+     'rounds=&lt;N&gt;$', число N будет использовано для обозначения
+     количества раундов хэширования, по аналогии с весовым параметром
+     в Blowfish. По умолчанию используемое количество раундов равно 5000,
+     минимально доступно 1000 и максимально 999,999,999. Любой значение
+     вне этого диапазона будет усечено до ближайшего лимита.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <note>
+   <para>
+    Начиная с версии PHP 5.3.0, PHP использует свою собственную
+    реализацию, которая будет использована при отсутствии в системе
+    какого-либо алгоритма.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>str</parameter></term>
      <listitem>
-      <simpara>
-       CRYPT_STD_DES - Стандартное DES-шифрование с двухсимвольной salt
-      </simpara>
+      <para>
+       Хэшируемая строка.
+      </para>
      </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>salt</parameter></term>
      <listitem>
-      <simpara>
-       CRYPT_EXT_DES - Расширенное DES-шифрование с девятисимвольной salt
-      </simpara>
+      <para>
+       Необязательный параметр с солью, на которой будет основано
+       хэширование. Если не указан, поведение определяется по
+       наличию реализованных алгоритмов в системе и может привести
+       к неожиданным результатам.
+      </para>
      </listitem>
-     <listitem>
-      <simpara>
-       CRYPT_MD5 - MD5-шифрование с 12-символьной salt, начинающейся с $1$
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       CRYPT_BLOWFISH - Blowfish-шифрование с 16-символьной salt, 
-       начинающейся с $2$
-      </simpara>
-     </listitem>
-    </itemizedlist>
-    <note>
-     <simpara>
-      Функция расшифровки отсутствует, так как <function>crypt</function> 
-      использует необратимый алгоритм шифрования.
-     </simpara>
-     </note>
-    <example>
-     <title>Пример использования <function>crypt</function></title>
-     <programlisting role="php">
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает хэшированную строку или строку короче 13 символов,
+   гарантированно отличающуюся от соли в случае ошибки.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.3.2</entry>
+       <entry>
+        Добавлено хэширование алгоритмами SHA-256 и SHA-512,
+        основанное на
+        <link xlink:href="&url.crypt.sha;">реализации Ulrich Drepper</link>.
+       </entry>
+      </row>
+      <row>
+       <entry>5.3.2</entry>
+       <entry>
+        Исправлено поведение Blowfish при некорректных раундах: теперь
+        возвращается "ошибочная" строка ("*0" или "*1") вместо отката
+        к использованию DES.
+       </entry>
+      </row>
+      <row>
+       <entry>5.3.0</entry>
+       <entry>
+        PHP теперь использует собственную реализацию MD5, Стандартного DES,
+        Расширенного DES и Blowfish алгоритмов, которые будут использованы
+        в случае отсутствия их поддержки в системе.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>crypt</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$password = crypt('My1sTpassword'); // salt будет сгенерирована автоматически
+$password = crypt('mypassword'); // соль будет сгенерирована автоматически
 
-// Для проверки пароля в качестве salt следует передавать результат работы 
-// crypt() целиком во избежание проблем при использовании различных 
-// алгоритмов (как уже было отмечено выше, стандартный DES-алгоритм 
-// использует 2-символьную salt, а MD5 - 12-символьную.
-
+/* Для проверки пароля в качестве параметра salt следует передавать результат работы
+   crypt() целиком во избежание проблем при использовании различных
+   алгоритмов (как уже было отмечено выше, стандартный DES-алгоритм
+   использует 2-символьную соль, а MD5 - 12-символьную. */
 if (crypt($user_input, $password) == $password) {
-   echo "Пароль верен !";
+   echo "Пароль верен!";
 }
 ?>
 ]]>
-     </programlisting>
-    </example>
-    <example>
-     <title>Использование <function>crypt</function> с файлом .htpasswd</title>
-     <para>
-      При создании пароля для использования в файле .htpasswd  Apache, нужно
-      использовать 2 первых символа пароля в качестве salt.
-     </para>
-     <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Использование <function>crypt</function> и htpasswd</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 // пароль 
 $password = 'mypassword';
 
-// получение хэша
-$hash = crypt($password, substr($password, 0, 2));
+// получение хэша, соль генерируется автоматически
+$hash = crypt($password);
 ?>
 ]]>
-     </programlisting>
-    </example>
-    <simpara>
-     См. также описание функции
-     <function>md5</function> и 
-     <link linkend="ref.mcrypt">модуля Mcrypt</link>.
-    </simpara>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Использование <function>crypt</function> с различными видами хэшей</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+if (CRYPT_STD_DES == 1) {
+    echo 'Стандартный DES: ' . crypt('rasmuslerdorf', 'rl') . "\n";
+}
+
+if (CRYPT_EXT_DES == 1) {
+    echo 'Расширенный DES: ' . crypt('rasmuslerdorf', '_J9..rasm') . "\n";
+}
+
+if (CRYPT_MD5 == 1) {
+    echo 'MD5:             ' . crypt('rasmuslerdorf', '$1$rasmusle$') . "\n";
+}
+
+if (CRYPT_BLOWFISH == 1) {
+    echo 'Blowfish:        ' . crypt('rasmuslerdorf', '$2a$07$usesomesillystringforsalt$') . "\n";
+}
+
+if (CRYPT_SHA256 == 1) {
+    echo 'SHA-256:         ' . crypt('rasmuslerdorf', '$5$rounds=5000$usesomesillystringforsalt$') . "\n";
+}
+
+if (CRYPT_SHA512 == 1) {
+    echo 'SHA-512:         ' . crypt('rasmuslerdorf', '$6$rounds=5000$usesomesillystringforsalt$') . "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Стандартный DES: rl.3StKT.4T8M
+Расширенный DES: _J9..rasmBYk8r9AiWNc
+MD5:             $1$rasmusle$rISCgZzpwk3UhDidwXvin0
+Blowfish:        $2a$07$usesomesillystringfore2uDLvp1Ii2e./U9C8sBjqp8I90dH6hi
+SHA-256:         $5$rounds=5000$usesomesillystri$KqJWpanXZHKq2BOB43TSaYhEWsQ1Lr5QNyPCDH/Tp.6
+SHA-512:         $6$rounds=5000$usesomesillystri$D4IrlXatmP7rx3P3InaxBeoomnAihCKRVQP22JZ6EY47Wc6BkroIuUUBOov1i.S5KPgErtP/EN5mcO.ChWQW21
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <simpara>
+    Функция расшифровки отсутствует, так как <function>crypt</function>
+    использует необратимый алгоритм хэширования.
+   </simpara>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>md5</function></member>
+    <member>Расширение <link linkend="ref.mcrypt">Mcrypt</link></member>
+    <member>Страница руководства Unix по вашей функции crypt</member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -144,7 +314,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
