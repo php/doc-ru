@@ -1,44 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: ab6785b01ce1006e3a9761988575289f40c9b678 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: young Status: ready -->
 <!-- splitted from ./index.xml, last change in rev 1.66 -->
   <chapter xml:id="security.filesystem" xmlns="http://docbook.org/ns/docbook">
    <title>Безопасность файловой системы</title>
    <simpara>
-    PHP является одним из важных моментов в вопросе безопасности сервера,
+    <acronym>PHP</acronym> является одним из важных моментов в вопросе безопасности сервера,
     поскольку PHP-скрипты могут манипулировать файлами и каталогами 
     на диске. В связи с этим существуют конфигурационные настройки,
     указывающие, какие файлы могут быть доступны и какие операции с ними можно
-    выполнять. Необходимо проявлять осторожность, поскольку любой из файлов с 
-    соответствующими правами доступа может быть прочитан каждым, кто имеет доступ 
-    к файловой системе.
+    выполнять. Необходимо проявлять осторожность, поскольку любой из файлов,
+    с полными правами чтения ("world readable") может быть прочитан
+    каждым, кто имеет доступ к файловой системе.
    </simpara>
    <simpara>
-    Поскольку в PHP изначально предполагался полноправный пользовательский
-    доступ к файловой системе, можно написать скрипт, который позволит читать
-    системные файлы, такие как /etc/passwd, управлять сетевыми соединениями,
-    отправлять задания принтеру, и так далее. Как следствие вы всегда должны быть
-    уверены в том, что файлы, которые вы читаете или модифицируете, соответствуют вашим
-    намерениям.
+    Поскольку в <acronym>PHP</acronym> изначально предполагался полноправный пользовательский
+    доступ к файловой системе, можно написать <acronym>PHP</acronym>-скрипт,
+    который позволит читать системные файлы, такие как /etc/passwd,
+    управлять сетевыми соединениями, отправлять задания принтеру, и
+    так далее. Как следствие, вы всегда должны быть уверены в том, что
+    файлы, которые вы читаете или модифицируете, являются именно теми,
+    которые вы подразумевали.
    </simpara>
    <simpara>
     Рассмотрим следующий пример, в коротом пользователь создал скрипт, удаляющий
     файл из его домашней директории. Предполагается ситуация, когда веб-интерфейс,
-    написанный на PHP, регулярно используется для работы с файлами, и настройки
-    безопасности позволяют удалять файлы в домашнем каталоге.
+    написанный на <acronym>PHP</acronym>, регулярно используется для
+    работы с файлами, и настройки безопасности позволяют удалять
+    файлы в домашнем каталоге.
    </simpara>
    <para>
     <example>
-     <title>Недостаточная проверка внешних данных.</title>
+     <title>Недостаточная проверка внешних данных ведет к...</title>
      <programlisting role="php">
 <![CDATA[
 <?php
 // Удаление файла из домашней директории пользователя
 $username = $_POST['user_submitted_name'];
-$homedir = "/home/$username";
-$file_to_delete = "$userfile";
-unlink ("$homedir/$userfile");
-echo "$file_to_delete has been deleted!";
+$userfile = $_POST['user_submitted_filename'];
+$homedir  = "/home/$username";
+
+unlink("$homedir/$userfile");
+
+echo "Файл был удален!";
 ?>
 ]]>
      </programlisting>
@@ -49,26 +54,30 @@ echo "$file_to_delete has been deleted!";
    Посмотрим, что произойдет, если будут отправлены значения
    "../etc/" и "passwd". Скрипт выполнит следующие действия:
     <example>
-     <title>Атака на файловую систему</title>
+     <title>... атаке на файловую систему</title>
      <programlisting role="php">
 <![CDATA[
 <?php
 // Удаление любого файла, доступного из PHP-скрипта.
 // В случае, если PHP работает с правами пользователя root:
-$username = "../etc/";
-$homedir = "/home/../etc/";
-$file_to_delete = "passwd";
-unlink ("/home/../etc/passwd");
-echo "/home/../etc/passwd has been deleted!";
+$username = $_POST['user_submitted_name']; // "../etc"
+$userfile = $_POST['user_submitted_filename']; // "passwd"
+$homedir  = "/home/$username"; // "/home/../etc"
+
+unlink("$homedir/$userfile"); // "/home/../etc/passwd"
+
+echo "Файл был удален!";
 ?>
 ]]>
      </programlisting>
     </example>
-    Cуществуют два решения описанной проблемы.
+    Cуществуют две важные меры, которые можно предпринять для предотвращения
+    описанной проблемы.
     <itemizedlist>
      <listitem>
       <simpara>
-       Ограничить доступ пользователя, с правами которого работает веб-сервер.
+       Ограничить доступ пользователя, с правами которого работает веб-сервер
+       с <acronym>PHP</acronym>.
       </simpara>
      </listitem>
      <listitem>
@@ -83,41 +92,48 @@ echo "/home/../etc/passwd has been deleted!";
      <programlisting role="php">
 <![CDATA[
 <?php
-// Удаление любого файла, доступного из PHP-скрипта.
+// Удаление любого файла, к которому имеет доступ пользователь,
+// под которым запущен PHP.
 $username = $_SERVER['REMOTE_USER']; // использование авторизации
+$userfile = basename($_POST['user_submitted_filename']);
+$homedir  = "/home/$username";
 
-$homedir = "/home/$username";
+$filepath = "$homedir/$userfile";
 
-$file_to_delete = basename("$userfile"); // усечение пути
-unlink ($homedir/$file_to_delete);
-
-$fp = fopen("/home/logging/filedelete.log","+a"); //логируем удаление
-$logstring = "$username $homedir $file_to_delete";
-fwrite ($fp, $logstring);
+if (file_exists($filepath) && unlink($filepath)) {
+    $logstring = "$filepath удален\n";
+} else {
+    $logstring = "Не удалось удалить $filepath\n";
+}
+$fp = fopen("/home/logging/filedelete.log", "a");
+fwrite($fp, $logstring);
 fclose($fp);
 
-echo "$file_to_delete has been deleted!";
+echo htmlentities($logstring, ENT_QUOTES);
+
 ?>
 ]]>
      </programlisting>
     </example>
     Однако и такая проверка не учитывает все возможные ситуации. Если
     система авторизации позволяет пользователям выбирать произвольные логины,
-    вломщик может создать учетную запись вида "../etc/" и система опять 
+    взломщик может создать учетную запись вида "../etc/" и система опять
     окажется уязвимой. Исходя из этого, вам может понадобиться более строгая проверка:
     <example>
      <title>Более строгая проверка имени файла</title>
      <programlisting role="php">
 <![CDATA[
 <?php
-$username = $_SERVER['REMOTE_USER']; // использование авторизации
-$homedir = "/home/$username";
+$username     = $_SERVER['REMOTE_USER']; // использование авторизации
+$userfile     = $_POST['user_submitted_filename'];
+$homedir      = "/home/$username";
 
-if (!ereg('^[^./][^/]*$', $userfile))
-     die('bad filename'); //завершение работы
+$filepath     = "$homedir/$userfile";
 
-if (!ereg('^[^./][^/]*$', $username))
-     die('bad username'); //завершение работы
+if (!ctype_alnum($username) || !preg_match('/^(?:[a-z0-9_-]|\.(?!\.))+$/iD', $userfile)) {
+    die("Неправильное имя пользователя или файл");
+}
+
 //etc...
 ?>
 ]]>
@@ -128,11 +144,67 @@ if (!ereg('^[^./][^/]*$', $username))
     В зависимости от используемой вами операционной системы необходимо
     предусматривать возможность атаки на разнообразные файлы, включая 
     системные файлы устройств (/dev/ или COM1), конфигурационные файлы 
-    (например /etc/ или файлы с расширением .ini), хорошо известные области хранения данных 
-    (/home/, My Documents), и так далее. Исходя из этого, как правило, легче
-    реализовать такую политику безопасности, в которой запрещено все, исключая
-    то, что явно разрешено.
+    (например /etc/ или файлы с расширением .ini), хорошо известные
+    области хранения данных (/home/, My Documents), и так далее.
+    Исходя из этого, как правило, легче реализовать такую политику
+    безопасности, в которой запрещено все, исключая то, что явно
+    разрешено.
    </para>
+   <sect1 xml:id="security.filesystem.nullbytes">
+    <title>Проблемы безопасности, связанные с нулевым байтом</title>
+    <simpara>
+     Так как для работы с файловой системой <acronym>PHP</acronym>
+     использует нижележащие C-функции, то в этом случае возможна
+     крайне неожиданная обработка нулевого байта.
+     Так как нулевой байт означает конец строки в C, то строки, содержащие
+     такой байт, не будут трактоваться полностью, а только до той
+     позиции, в которой находится этот байт.
+
+     Следующий пример содержит уязвимый код, демонстрирующий эту проблему:
+    </simpara>
+    <example>
+     <title>Скрипт, уязвимый к нулевому байту</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$file = $_GET['file']; // "../../etc/passwd\0"
+if (file_exists('/home/wwwrun/'.$file.'.php')) {
+    // file_exists возвратит true, т.к. /home/wwwrun/../../etc/passwd существует
+    include '/home/wwwrun/'.$file.'.php';
+    // будет подключен файл /etc/passwd
+}
+?>
+]]>
+     </programlisting>
+    </example>
+    <para>
+     Таким образом, любая испорченная строка, используемая в операциях
+     с файловой систеthat должна быть соответствующим образом проверена.
+     Вот улучшенная версия предыдущего примера:
+    </para>
+    <example>
+     <title>Correctly validating the input</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$file = $_GET['file'];
+
+// Белый список возможных значений
+switch ($file) {
+    case 'main':
+    case 'foo':
+    case 'bar':
+        include '/home/wwwrun/include/'.$file.'.php';
+        break;
+    default:
+        include '/home/wwwrun/include/main.php';
+}
+?>
+]]>
+     </programlisting>
+    </example>
+   </sect1>
+
   </chapter>
 
 <!-- Keep this comment at the end of the file
@@ -146,7 +218,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
