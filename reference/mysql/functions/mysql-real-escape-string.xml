@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: f97cf90f6426ca029ab138bcb9328aa053500be4 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.mysql-real-escape-string" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysql_real_escape_string</refname>
-  <refpurpose>
-   Экранирует специальные символы в строках для 
-   использования в выражениях SQL
-  </refpurpose>
+  <refpurpose>Экранирует специальные символы в строках для использования в выражениях SQL</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,7 +18,7 @@
   <para>
    Экранирует специальные символы в <parameter>unescaped_string</parameter>, 
    принимая во внимание кодировку соединения, таким образом, что результат 
-   можно безопасно использовать в SQL-запросе в функци <function>mysql_query</function>. 
+   можно безопасно использовать в SQL-запросе в функции <function>mysql_query</function>.
    Если вставляются бинарные данные, то к ним так же необходимо применять эту функцию.
   </para>
   <para>
@@ -27,7 +26,7 @@
    mysql_real_escape_string, которая добавляет обратную косую черту к следующим символам:
    <literal>\x00</literal>, <literal>\n</literal>,
    <literal>\r</literal>, <literal>\</literal>, <literal>'</literal>,
-   <literal>"</literal> and <literal>\x1a</literal>.
+   <literal>"</literal> и <literal>\x1a</literal>.
   </para>
   <para>
    Эта функция должна всегда (за несколькими исключениями) использоваться для того, 
@@ -43,7 +42,7 @@
      <term><parameter>unescaped_string</parameter></term>
      <listitem>
       <para>
-       Строка, которая должна быть экранирована.
+       Экранируемая строка.
       </para>
      </listitem>
     </varlistentry>
@@ -64,18 +63,15 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>
-     Простой пример использования
-     <function>mysql_real_escape_string</function>
-    </title>
+    <title>Простой пример использования <function>mysql_real_escape_string</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Connect
+// Соединение
 $link = mysql_connect('mysql_host', 'mysql_user', 'mysql_password')
     OR die(mysql_error());
 
-// Query
+// Запрос
 $query = sprintf("SELECT * FROM users WHERE user='%s' AND password='%s'",
             mysql_real_escape_string($user),
             mysql_real_escape_string($password));
@@ -86,18 +82,18 @@ $query = sprintf("SELECT * FROM users WHERE user='%s' AND password='%s'",
   </para>
   <para>
    <example>
-    <title>Пример взлома с использованием SQL Injection</title>
+    <title>Пример взлома с использованием SQL-инъекции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// посылаем запрос, чтобы проверить имя и пароль пользователя
-$query = "SELECT * FROM users WHERE user='{$_POST['username']}' AND password='{$_POST['password']}'";
-mysql_query($query);
-
-// Мы не никак проверили переменную $_POST['password'], 
+// Мы не никак проверили переменную $_POST['password'],
 // а она может содержать совсем не то, что мы ожидали. Например:
 $_POST['username'] = 'aidan';
 $_POST['password'] = "' OR ''='";
+
+// посылаем запрос, чтобы проверить имя и пароль пользователя
+$query = "SELECT * FROM users WHERE user='{$_POST['username']}' AND password='{$_POST['password']}'";
+mysql_query($query);
 
 // посмотрим, какой запрос будет отправлен в MySQL:
 echo $query;
@@ -109,57 +105,11 @@ echo $query;
      </para>
     <screen>
 <![CDATA[
-SELECT * FROM users WHERE name='aidan' AND password='' OR ''=''
+SELECT * FROM users WHERE user='aidan' AND password='' OR ''=''
 ]]>
     </screen>
     <para>
      Это позволит кому угодно войти в систему без пароля.
-    </para>
-   </example>
-  </para>
-  <para>
-   <example>
-    <title>Лучший вариант составления запроса</title>
-    <para>
-     Применение <function>mysql_real_escape_string</function> к каждой переменной, 
-     вставляемой в запрос, предотвращает SQL Injection. Нижеследующий код является 
-     наилучшим вариантом составления запросов и не зависит от установки 
-     <link linkend="security.magicquotes">Magic Quotes</link>.
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-// Функция экранирования переменных
-function quote_smart($value)
-{
-    // если magic_quotes_gpc включена - используем stripslashes
-    if (get_magic_quotes_gpc()) {
-        $value = stripslashes($value);
-    }
-    // Если переменная - число, то экранировать её не нужно
-    // если нет - то окружем её кавычками, и экранируем
-    if (!is_numeric($value)) {
-        $value = "'" . mysql_real_escape_string($value) . "'";
-    }
-    return $value;
-}
-
-// Соединяемся
-$link = mysql_connect('mysql_host', 'mysql_user', 'mysql_password')
-    OR die(mysql_error());
-
-// Составляем безопасный запрос
-$query = sprintf("SELECT * FROM users WHERE user=%s AND password=%s",
-            quote_smart($_POST['username']),
-            quote_smart($_POST['password']));
-
-mysql_query($query);
-?>
-]]>
-    </programlisting>
-    <para>
-     Запрос, составленный таким образом, будет выполнен без ошибок, 
-     и взлом с помощью SQL Injection окажется невозможен.
     </para>
    </example>
   </para>
@@ -171,23 +121,23 @@ mysql_query($query);
    <para>
     Функцию <function>mysql_real_escape_string</function> можно использовать 
     только после того, как установлено соединение с MySQL. В противном 
-    случае возникнет ошибка уровня <literal>E_WARNING</literal>, а функция 
-    возвратит &false;. Если  <parameter>link_identifier</parameter> не указан, 
+    случае возникнет ошибка уровня <constant>E_WARNING</constant>, а функция
+    возвратит &false;. Если <parameter>link_identifier</parameter> не указан,
     используется последнее открытое соединение.
    </para>
   </note>
   <note>
    <para>
-    Если <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link> включены, 
+    Если <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link> включены,
     то сначала данные следует обработать функцией <function>stripslashes</function>. 
-    Если <function>mysql_real_escape_string</function> применяется к данным, 
-    которые уже были прослешены, то в результате слеши в данных будут удваиваться.
+    Если данную функцию применить к уже проэкранированным данным,
+    то данные будут проэкранированы дважды.
    </para>
   </note>
   <note>
    <para>
     Если не пользоваться этой функцией, то запрос становится уязвимым для
-    <link linkend="security.database.sql-injection">взлома с помощью SQL Injection</link>.
+    <link linkend="security.database.sql-injection">взлома с помощью SQL-инъекций</link>.
    </para>
   </note>
   <note>
@@ -195,7 +145,7 @@ mysql_query($query);
     <function>mysql_real_escape_string</function> не экранирует символы
     <literal>%</literal> и <literal>_</literal>. Эти знаки являются масками
     групп символов в операторах MySQL <literal>LIKE</literal>, 
-    <literal>GRANT</literal> или <literal>REVOKE</literal>.
+    <literal>GRANT</literal> и <literal>REVOKE</literal>.
    </simpara>
   </note>
  </refsect1>
@@ -225,7 +175,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
