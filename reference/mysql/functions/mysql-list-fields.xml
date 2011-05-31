@@ -1,72 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 0640e024d4b8a9400d457143ccd0ea66e5f98ead Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: lovchy Status: ready -->
-<!-- splitted from ./en/functions/mysql.xml, last change in rev 1.2 -->
-  <refentry xml:id="function.mysql-list-fields" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>mysql_list_fields</refname>
-    <refpurpose>Возвращает список колонок таблицы</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>resource</type><methodname>mysql_list_fields</methodname>
-      <methodparam><type>string</type><parameter>database_name</parameter></methodparam>
-      <methodparam><type>string</type><parameter>table_name</parameter></methodparam>
-      <methodparam choice="opt"><type>resource</type><parameter>link_identifier</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>mysql_list_fields</function> возвращает информацию о таблице с
-     переданным именем. Параметрами функции являются имена таблицы и базы
-     данных. Возвращаемый результат может быть обработан с помощью следующих
-     функций:
-     <function>mysql_field_flags</function>,
-     <function>mysql_field_len</function>,
-     <function>mysql_field_name</function>, 
-     <function>mysql_field_type</function>.
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>mysql_list_fields</function></title>
-      <programlisting role="php">
+<refentry xml:id="function.mysql-list-fields" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>mysql_list_fields</refname>
+  <refpurpose>Возвращает список колонок таблицы</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>mysql_list_fields</methodname>
+   <methodparam><type>string</type><parameter>database_name</parameter></methodparam>
+   <methodparam><type>string</type><parameter>table_name</parameter></methodparam>
+   <methodparam choice="opt"><type>resource</type><parameter>link_identifier</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает информацию о таблице с переданным именем.
+  </para>
+  <para>
+   Эта функция устарела. Вместо нее рекомендуется использовать
+   <function>mysql_query</function> с SQL-запросом
+   <literal>SHOW COLUMNS FROM table [LIKE 'name']</literal>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>database_name</parameter></term>
+     <listitem>
+      <para>
+       Имя опрашиваемой базы данных.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>table_name</parameter></term>
+     <listitem>
+      <para>
+       Имя опрашиваемой таблицы.
+      </para>
+     </listitem>
+    </varlistentry>
+    &mysql.linkid.description;
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Дескриптор результата (<type>resource</type>) в случае успеха,
+   или &false; в случае ошибки.
+  </para>
+  <para>
+   Возвращаемый результат может быть обработан с помощью следующих
+   функций: <function>mysql_field_flags</function>,
+   <function>mysql_field_len</function>,
+   <function>mysql_field_name</function>&listendand;
+   <function>mysql_field_type</function>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>mysql_list_fields</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysql_connect('localhost', 'mysql_user', 'mysql_password');
-
-$fields = mysql_list_fields("database1", "table1", $link);
-$columns = mysql_num_fields($fields);
-
-for ($i = 0; $i < $columns; $i++) {
-    echo mysql_field_name($fields, $i) . "\n";
+$result = mysql_query("SHOW COLUMNS FROM sometable");
+if (!$result) {
+    echo 'Ошибка при выполнении запроса: ' . mysql_error();
+    exit;
 }
+if (mysql_num_rows($result) > 0) {
+    while ($row = mysql_fetch_assoc($result)) {
+        print_r($row);
+    }
+}
+?>
 ]]>
-      </programlisting>
-      <para>
-       Вышеописанный пример выдаст следующий результат:
-      </para>
-      <screen>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
 <![CDATA[
-field1
-field2
-field3
-...
+Array
+(
+    [Field] => id
+    [Type] => int(7)
+    [Null] =>
+    [Key] => PRI
+    [Default] =>
+    [Extra] => auto_increment
+)
+Array
+(
+    [Field] => email
+    [Type] => varchar(100)
+    [Null] =>
+    [Key] =>
+    [Default] =>
+    [Extra] =>
+)
 ]]>
-      </screen>
-     </example>
-    </para>
-    <para>
-     Для совместимости, как алиас, доступна функция <function>mysql_listfields</function>.
-     Однако, использовать её крайне не рекомендуется.
-    </para>
-    <note>
-     <para>
-      Функция <function>mysql_list_fields</function> устарела.
-      Предпочтительным является исползьзование SQL-запроса
-      <literal>SHOW COLUMNS FROM table [LIKE 'name']</literal>.
-     </para>
-    </note>
-   </refsect1>
-  </refentry>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    &info.deprecated.alias;
+    <function>mysql_listfields</function>
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>mysql_field_flags</function></member>
+    <member><function>mysql_info</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -79,7 +146,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
