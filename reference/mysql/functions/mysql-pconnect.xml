@@ -1,96 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<!-- EN-Revision: n/a Maintainer: lovchy Status: ready -->
-<!-- splitted from ./en/functions/mysql.xml, last change in rev 1.2 -->
-  <refentry xml:id="function.mysql-pconnect" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>mysql_pconnect</refname>
-    <refpurpose>
-     Устанавливает постоянное соединение с сервером MySQL.
-    </refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>resource</type><methodname>mysql_pconnect</methodname>
-      <methodparam choice="opt"><type>string</type><parameter>server</parameter></methodparam>
-      <methodparam choice="opt"><type>string</type><parameter>username</parameter></methodparam>
-      <methodparam choice="opt"><type>string</type><parameter>password</parameter></methodparam>
-      <methodparam choice="opt"><type>int</type><parameter>client_flags</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     Возвращает указатель на постоянное соединение с MySQL или &false;, в
-     случае ошибки.
-    </para>
-    <para>
-     <function>mysql_pconnect</function> устанавливает постоянное соединение с сервером 
-     MySQL. Следующие значения по умолчанию установлены для отсутсвующих
-     параметров: <parameter>server</parameter> = 'localhost:3306', 
-     <parameter>username</parameter> = имя пользователя владельца процесса 
-     сервера и <parameter>password</parameter> = пустой пароль.
-     Параметр <parameter>client_flags</parameter> может быть комбинацией
-     следующих констант: MYSQL_CLIENT_COMPRESS, MYSQL_CLIENT_IGNORE_SPACE,
-     MYSQL_CLIENT_INTERACTIVE.
-    </para>
+<refentry xml:id="function.mysql-pconnect" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>mysql_pconnect</refname>
+  <refpurpose>Устанавливает постоянное соединение с сервером MySQL</refpurpose>
+ </refnamediv>
 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>mysql_pconnect</methodname>
+   <methodparam choice="opt"><type>string</type><parameter>server</parameter><initializer>ini_get("mysql.default_host")</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>username</parameter><initializer>ini_get("mysql.default_user")</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>password</parameter><initializer>ini_get("mysql.default_password")</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>client_flags</parameter></methodparam>
+  </methodsynopsis>
+  <!-- Undocumented confusing syntax:
+  <methodsynopsis>
+   <type>resource</type><methodname>mysql_pconnect</methodname>
+   <methodparam choice="opt"><type>string</type><parameter>server</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>username</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>password</parameter></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>new_link</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>client_flags</parameter></methodparam>
+  </methodsynopsis>
+  -->
+  <para>
+   Устанавливает постоянное соединение с сервером MySQL.
+  </para>
+  <!-- TODO: Integrate this information more nicely with features.persistent -->
+  <para>
+   <function>mysql_pconnect</function> работает аналогично
+   <function>mysql_connect</function> с двумя важными отличиями.
+  </para>
+  <para>
+   Во-первых, при соединении функция пытается найти уже открытый
+   (постоянный) указатель на тот же сервер с тем же пользователем и паролем.
+   Если он найден, возвращён функцией будет именно он, вместо открытия
+   нового соединения.
+  </para>
+  <para>
+   Во-вторых, соединение с SQL-сервером не будет закрыто, когда работа
+   скрипта закончится. Вместо этого, оно останется рабочим для будущего
+   использования (<function>mysql_close</function> также не закрывает
+   постоянные соединения, открытые <function>mysql_pconnect</function>).
+  </para>
+  <para>
+   Соединения такого типа называют 'постоянными'.
+  </para>
+ </refsect1>
 
-    <para>
-     Параметр <parameter>server</parameter> может также включать номер
-     порта, к примеру &quot;hostname:port&quot; или путь к сокету,
-     к примеру &quot;:/path/to/socket&quot; для локального сервера.
-     <note>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>server</parameter></term>
+     <listitem>
       <para>
-       Поддержка указания порта через &quot;:port&quot; была
-       добавлена в PHP 3.0B4.
+       Сервер MySQL. Может также включать номер порта, например,
+       "hostname:port" или путь к локальному сокету, например,
+       ":/path/to/socket" для локального хоста.
       </para>
       <para>
-       Поддержка указания локального сокета как &quot;:/path/to/socket&quot;
-       была добавлена в PHP 3.0.10.
+       Если директива <link linkend="ini.mysql.default-host">
+       mysql.default_host</link> не определена (по умолчанию), то
+       по умолчанию используется значение 'localhost:3306'
       </para>
-     </note>
-    </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>username</parameter></term>
+     <listitem>
+      <para>
+       Имя пользователя. По умолчанию используется имя пользователя,
+       владеющего серверным процессом.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>password</parameter></term>
+     <listitem>
+      <para>
+       Пароль. По умолчанию используется пустая строка.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>client_flags</parameter></term>
+     <listitem>
+      <para>
+       Параметр <parameter>client_flags</parameter> может быть
+       комбинацией следующих констант:
+       128 (включает обработку <literal>LOAD DATA LOCAL</literal>),
+       <constant>MYSQL_CLIENT_SSL</constant>,
+       <constant>MYSQL_CLIENT_COMPRESS</constant>,
+       <constant>MYSQL_CLIENT_IGNORE_SPACE</constant> и
+       <constant>MYSQL_CLIENT_INTERACTIVE</constant>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
 
-    <!-- TODO move the story to features.persistent, and refer to that -->
-    <para>
-     <function>mysql_pconnect</function> работает аналогично
-     <function>mysql_connect</function> с двумя отличиями.
-    </para>
-    <para>
-     Во-первых, при соединении, функция пытается найти уже открытый
-     (постоянный) указатель на тот же сервер с тем же пользователем и паролем.
-     Если он найден, возвращён функцией будет именно он, вместо открытия
-     нового соединения.
-    </para>
-    <para>
-     Во-вторых, соединение с SQL-сервером не будет закрыто, когда работа
-     скрипта закончится. Вместо этого, оно останется рабочим для будущего
-     использования (<function>mysql_close</function> также не закрывает
-     постоянные соединения)
-    </para>
-    <para>
-     Опциональный параметр <parameter>client_flags</parameter> появился в PHP 4.3.0.
-    </para>
-    <para>
-     Соединения такого типа называют 'постоянными'.
-    </para>
-    <note>
-     <para>
-      Учтите, что соединения такого типа работают только, если
-      PHP установлен как модуль. За дополнительной информацией обращайтесь к
-      разделу 
-      <link linkend="features.persistent-connections">Постоянные Соединения с
-      Базами Данных</link>.
-     </para>
-    </note>
-    <warning>
-     <para>
-      Использование устойчивых соединений может потребовать некоторой
-      настройки Apache и MySQL. Убедитесь, что вы не превысите максимальное
-      число дозволенных соединений.
-     </para>
-    </warning>
-   </refsect1>
-  </refentry>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает дескриптор постоянного соединения MySQL в случае успеха,
+   и &false; в случае ошибки.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Добавлен параметр <parameter>client_flags</parameter>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Учтите, что соединения такого типа работают только, если
+    PHP установлен как модуль. За дополнительной информацией
+    обращайтесь к разделу
+    "<link linkend="features.persistent-connections">Постоянные соединения с
+    базами данных</link>".
+   </para>
+  </note>
+  <warning>
+   <para>
+    Использование постоянных соединений может потребовать некоторой
+    настройки Apache и MySQL. Убедитесь, что вы не превысите максимальное
+    число дозволенных соединений в MySQL.
+   </para>
+  </warning>
+  <note>
+   <para>
+    Можно подавить сообщение об ошибке при неудачном соединении
+    поставив перед вызовом функции оператор
+    <link linkend="language.operators.errorcontrol">@</link>.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>mysql_connect</function></member>
+    <member>"<link linkend="features.persistent-connections">Постоянные
+    соединения с базами данных</link>"</member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -103,7 +188,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../~/.phpdoc/manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
