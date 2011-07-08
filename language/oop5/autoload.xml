@@ -1,28 +1,32 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: a2048ed42fe3df85010149ae85e9e01e574f274d Maintainer: irker Status: ready -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.autoload" xmlns="http://docbook.org/ns/docbook">
-  <title>Автоматическая загрузка объектов</title>
+  <title>Автоматическая загрузка классов</title>
   <para>
    Большинство разработчиков объектно-ориентированных приложений
    создают для каждого определения класса отдельный файл с 
-   кодом PHP. Одной из самых больших неприятностей в этом случае
+   кодом PHP. Одной из самых больших неприятностей при этом
    является необходимость писать в начале каждого скрипта 
    длинный список подгружаемых файлов.
   </para>
   <para>
    Если используется PHP 5, то делать это не обязательно. 
    Вы можете определить функцию __autoload, которая автоматически
-   вызывается в том случае, когда вы пытаетесь использовать класс/интерфейс,
-   который не был определен ранее. Вызов этой функции - это
+   вызывается, когда вы пытаетесь использовать класс/интерфейс,
+   который не был определен ранее. Вызов этой функции - 
    последний шанс для интерпретатора загрузить класс прежде, чем
    он закончит выполнение скрипта с ошибкой.
   </para>
   <note>
    <para>
-    Исключения, вызванные в функции __autoload, не могут быть
+    До версии 5.3.0 исключения, вызванные в функции __autoload, не могли быть
     перехвачены в блоке <link linkend="language.exceptions">catch</link>
-    и завершатся с неисправимой ошибкой.
+    и завершались с неисправимой ошибкой. Начиная с версии 5.3.0 эти исключения
+    можно перехватывать в ближайшем блоке <link linkend="language.exceptions">catch</link>.
+    Если бросить определенное пользоваелем исключение, то должен быть досупен класс 
+    этого исключения. Функция __autoload может использоваться рекурсивно для автоматической 
+    загрузки классов определенных пользоваелем исключений.
    </para>
   </note>
   <note>
@@ -51,7 +55,7 @@
 <![CDATA[
 <?php
 function __autoload($class_name) {
-    require_once $class_name . '.php';
+    include $class_name . '.php';
 }
 
 $obj  = new MyClass1();
@@ -61,6 +65,7 @@ $obj2 = new MyClass2();
     </programlisting>
    </example>
    <example>
+    <title>Еще один пример автоматической загрузки</title>
     <para>
      В этом примере представлена попытка загрузки интерфейса <literal>ITest</literal>.
     </para>
@@ -84,8 +89,79 @@ Fatal error: Interface 'ITest' not found in ...
 ]]>
     </programlisting>
    </example>
+   <example>
+    <title>Автоматическая загрузка с перехватом исключения в версиях 5.3.0+</title>
+    <para>
+     В данном примере вызывается исключение и отлавливается блоком try/catch.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function __autoload($name) {
+    echo "Want to load $name.\n";
+    throw new Exception("Unable to load $name.");
+}
 
+try {
+    $obj = new NonLoadableClass();
+} catch (Exception $e) {
+    echo $e->getMessage(), "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Want to load NonLoadableClass.
+Unable to load NonLoadableClass.
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Автоматическая загрузка с перехватом исключения в версиях 5.3.0+ - Отсутствие определенного пользователем исключения</title>
+    <para>
+     В данном примере вызывается недоступное исключение.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function __autoload($name) {
+    echo "Want to load $name.\n";
+    throw new MissingException("Unable to load $name.");
+}
+
+try {
+    $obj = new NonLoadableClass();
+} catch (Exception $e) {
+    echo $e->getMessage(), "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Want to load NonLoadableClass.
+Want to load MissingException.
+
+Fatal error: Class 'MissingException' not found in testMissingException.php on line 4
+]]>
+    </screen>
+   </example>
   </para>
+
+  <simplesect role="seealso">
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><function>unserialize</function></member>
+     <member><link linkend="unserialize-callback-func">unserialize_callback_func</link></member>
+     <member><function>spl_autoload</function></member>
+     <member><function>spl_autoload_register</function></member>
+    </simplelist>
+   </para>
+  </simplesect>
 
  </sect1>
  
@@ -100,7 +176,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
