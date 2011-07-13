@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 1b5772cda4348ef39f3b0a214d4a3cde6748cd8d  Maintainer: irker Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
  <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
   <title>Исключения</title>
 
   <para>
-   Модель исключений (exceptions) в PHP 5 проще, чем в других языках программирования
+   Модель исключений (exceptions) в PHP 5 проще, чем в других языках программирования.
    Исключение можно сгенерировать (как говорят, "выбросить") при помощи оператора 
    <literal>throw</literal>, и можно перехватить (или, как говорят, "поймать")
-   оператором <literal>catch</literal>. Код выбрасывающий исключение, должен
+   оператором <literal>catch</literal>. Код генерирующий исключение, должен
    быть окружен блоком <literal>try</literal>, для того чтобы можно было
    перехватить исключение. Каждый блок <literal>try</literal>
    должен иметь как минимум один соответствующий блок <literal>catch</literal>. 
    Так же можно использовать несколько блоков <literal>catch</literal>,
    перехватывающих различные классы исключений.
-   Нормальное выполнение (когда не генерируется исключений в блоках 
+   Нормальное выполнение (когда не генерируются исключения в блоках 
    <literal>try</literal> или когда класс выброшенного исключения не
    совпадает с классами, объявленными в соответствующих блоках
-   <literal>catch</literal>) будет продолжено за последним  блоком
-   <literal>catch</literal>. Исключения так же могут быть сгенерированны (или
-   перегерерированы - т.е. выброшены снова) оператором <literal>throw</literal> 
+   <literal>catch</literal>) будет продолжено за последним блоком
+   <literal>catch</literal>. Исключения так же могут быть сгенерированы (или
+   вызваны еще раз) оператором <literal>throw</literal> 
    внутри блока <literal>catch</literal>.
   </para>
   <para>
@@ -28,9 +29,29 @@
    первый блок <literal>catch</literal>, перехватывающий исключение данного
    класса. Если исключение не будет перехвачено, PHP выдаст сообщение об
    ошибке: "<literal>Uncaught Exception ...</literal>" (Неперехваченное
-   исключение), если конечно не был определен обработчик ошибок при помощи
+   исключение), если не был определен обработчик ошибок при помощи
    функции <function>set_exception_handler</function>.
   </para>
+  <para>
+   Генерируемый объект должен принадлежать классу <classname>Exception</classname>
+   или наследоваться от <classname>Exception</classname>. Попытка сгенерировать 
+   исключение другого класса приведет к неисправимой ошибке.
+  </para>
+  <note>
+   <para>
+    Внутренние функции PHP в основном используют
+    <link linkend="ini.error-reporting">сообщения об ошибках</link>, и только
+    новые <link linkend="language.oop5">объектно-ориентированные</link>
+    расширения используют исключения. Однако, ошибки можно легко преобразовать
+    в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
+   </para>
+  </note>
+  <tip>
+   <para>
+    <link linkend="intro.spl">Стандартная библиотека PHP (SPL)</link> предоставляет
+    хороший набор <link linkend="spl.exceptions">встроенных классов исключений</link>.
+   </para>
+  </tip>
    <example>
     <title>Выброс исключений</title>
     <programlisting role="php">
@@ -64,7 +85,43 @@ Hello World
 ]]>
     </screen>
    </example>
+   <example>
+    <title>Вложенные исключения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
 
+class MyException extends Exception { }
+
+class Test {
+    public function testing() {
+        try {
+            try {
+                throw new MyException('foo!');
+            } catch (MyException $e) {
+                /* повторный выброс исключения */
+                throw $e;
+            }
+        } catch (Exception $e) {
+            var_dump($e->getMessage());
+        }
+    }
+}
+
+$foo = new Test;
+$foo->testing();
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+string(4) "foo!"
+]]>
+    </screen>
+   </example>
+   
   <sect1 xml:id="language.exceptions.extending">
    <title>Наследование исключений</title>
    <para>
@@ -79,29 +136,31 @@ Hello World
 <?php
 class Exception
 {
-    protected $message = 'Unknown exception';   // сообшение
-    protected $code = 0;                        // Код исключения,
-    определяемый пользователем
-    protected $file;                            // файл в котором было
-    выброшено исключение
-    protected $line;                            // строка в которой было
-    выброшено исключение
+    protected $message = 'Unknown exception';   // Сообшение
+    private   $string;                          // Свойство для __toString
+    protected $code = 0;                        // Код исключения, 
+                                                // определяемый пользователем
+    protected $file;                            // Файл в котором было
+                                                // выброшено исключение
+    protected $line;                            // Строка в которой было
+                                                // выброшено исключение
+    private   $trace;                           // Трассировка вызовов методов и функций 
+    private   $previous;                        // Предыдущее исключение, для
+                                                // вложенных блоков try
 
-    function __construct($message = null, $code = 0);
+    public function __construct($message = null, $code = 0, Exception $previous = null);
 
-    final function getMessage();                // Возвращает сообшение
-    исключения 
-    final function getCode();                   // Код исключения
-    final function getFile();                   // Файл, где выброшено
-    исключение
-    final function getLine();                   // Строка, выбросившая исключени
-    final function getTrace();                  // Массив backtrace()
-    final function getTraceAsString();          // Обратная трассировка как
-    строка
+    final private function __clone();           // Запрещает клонировать исключения
 
-    /* Overrideable - т.е. то, что можно переопределить */
-    function __toString();                       // должен вернуть
-    форматированную строку, для отображения
+    final public  function getMessage();        // Возвращает сообшение исключения 
+    final public  function getCode();           // Код исключения
+    final public  function getFile();           // Файл, где выброшено исключение
+    final public  function getLine();           // Строка, выбросившая исключени
+    final public  function getTrace();          // Массив backtrace()
+    final public  function getTraceAsString();  // Трассировка вызовов как строка
+
+    /* Переопределяемое */
+    public function __toString();               // форматированная строка для отображения
 }
 ?>
 ]]>
@@ -116,8 +175,15 @@ class Exception
     может быть переопределен, что бы обеспечить нужный вывод, когда объект
     преобразуется в строку.
    </para>
+   <note>
+    <para>
+     Исключения нельзя клонировать. Попытка <link
+     linkend="language.oop5.cloning">клонировать</link> исключение приведет
+     к неиспровимой ошибке <constant>E_ERROR</constant>.
+    </para>
+   </note>
    <example>
-    <title>Наследование класса Exception</title>
+    <title>Наследование класса Exception (PHP 5.3.0+)</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -127,10 +193,11 @@ class Exception
 class MyException extends Exception
 {
     // Переопределим исключение так, что параметр message станет обязательным
-    public function __construct($message, $code = 0) {
-        // какой-то код 
+    public function __construct($message, $code = 0, Exception $previous = null) {
+        // некоторый код 
     
-        parent::__construct($message, $code);
+        // убедитесь, что все передаваемые параметры верны
+        parent::__construct($message, $code, $previous);
     }
 
     // Переопределим строковое представление объекта.
@@ -188,7 +255,7 @@ try {
 }
 
 // Отсюда будет продолжено выполнение программы
-var_dump($o);
+var_dump($o); // Null
 echo "\n\n";
 
 
@@ -203,7 +270,7 @@ try {
 }
 
 // Отсюда будет продолжено выполнение программы
-var_dump($o);
+var_dump($o); // Null
 echo "\n\n";
 
 
@@ -215,7 +282,7 @@ try {
 }
 
 // Продолжение исполнения программы
-var_dump($o);
+var_dump($o); // Null
 echo "\n\n";
 
 
@@ -227,11 +294,46 @@ try {
 }
 
 // Продолжение выполнения программы
-var_dump($o);
+var_dump($o); // TestException
 echo "\n\n";
 ?>
 ]]>
     </programlisting>
+    <note>
+     <para>
+      PHP 5, до PHP 5.3.0, не поддерживал вложенные исключения.
+      Если есть необходимость запустить вышеприведенный пример в указанных версиях PHP,
+      то нужно заменить класс MyException.
+     </para>
+     <programlisting role="php">
+<![CDATA[
+<?php
+/**
+ * Определим свой класс исключения
+ */
+class MyException extends Exception
+{
+    // Переопределим исключение так, что параметр message станет обязательным
+    public function __construct($message, $code = 0) {
+        // некоторый код 
+    
+        // убедитесь, что все передаваемые параметры верны
+        parent::__construct($message, $code);
+    }
+
+    // Переопределим строковое представление объекта.
+    public function __toString() {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+    }
+
+    public function customFunction() {
+        echo "Мы можем определять новые методы в наследуемом классе\n";
+    }
+}
+?>
+]]>
+     </programlisting>
+    </note>
    </example>
   </sect1>
 
@@ -248,7 +350,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
