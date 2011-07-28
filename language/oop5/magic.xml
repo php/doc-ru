@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 03977edc1f92ef56b1141f05388cf400e3f09fcd Maintainer: irker Status: ready -->
 <!-- $Revision$ -->
+<!-- Reviewed: no -->
  <sect1 xml:id="language.oop5.magic" xmlns="http://docbook.org/ns/docbook">
   <title>Магические методы</title>
   <para>
    Имена методов
-   <literal>__construct</literal>,
-   <literal>__destruct</literal>
-   (см. <link linkend="language.oop5.decon">Конструкторы и деструкторы</link>),
-   <literal>__call</literal>,
-   <literal>__callStatic</literal>,
-   <literal>__get</literal>,
-   <literal>__set</literal>,
-   <literal>__isset</literal>,
-   <literal>__unset</literal>   
-   (см. <link linkend="language.oop5.overloading">Перегрузка</link>),
-   <literal>__sleep</literal>,
-   <literal>__wakeup</literal>,
-   <literal>__toString</literal>,
-   <literal>__set_state</literal> и
-   <link linkend="language.oop5.cloning">__clone</link>   
-   зарезервированы для "магических" методов в PHP. 
+   <link linkend="language.oop5.decon.constructor"><literal>__construct</literal></link>,
+   <link linkend="language.oop5.decon.destructor"><literal>__destruct</literal></link>,
+   <link linkend="language.oop5.overloading.methods"><literal>__call</literal></link>,
+   <link linkend="language.oop5.overloading.methods"><literal>__callStatic</literal></link>,
+   <link linkend="language.oop5.overloading.members"><literal>__get</literal></link>,
+   <link linkend="language.oop5.overloading.members"><literal>__set</literal></link>,
+   <link linkend="language.oop5.overloading.members"><literal>__isset</literal></link>,
+   <link linkend="language.oop5.overloading.members"><literal>__unset</literal></link>,
+   <link linkend="language.oop5.magic.sleep"><literal>__sleep</literal></link>,
+   <link linkend="language.oop5.magic.sleep"><literal>__wakeup</literal></link>,
+   <link linkend="language.oop5.magic.tostring"><literal>__toString</literal></link>,
+   <link linkend="language.oop5.magic.invoke"><literal>__invoke</literal></link>,
+   <link linkend="language.oop5.magic.set-state"><literal>__set_state</literal></link> и
+   <link linkend="language.oop5.cloning"><literal>__clone</literal></link>
+   зарезервированы для "магических" методов в PHP.
    Не стоит называть свои методы этими именами, если вы не хотите
    использовать их "магическую" функциональность.
   </para>
@@ -33,7 +33,7 @@
     "магический" функционал.
    </simpara>
   </caution>
- 
+
   <sect2 xml:id="language.oop5.magic.sleep">
    <title><literal>__sleep</literal> и <literal>__wakeup</literal></title>
    <para>
@@ -43,8 +43,16 @@
     очистить объект и предполагается, что будет возвращен массив с именами
     всех переменных объекта, который должен быть сериализован.
     Если метод ничего не возвращает кроме &null;, то это значит, что объект
-    сериализован и выдается предупреждение E_NOTICE.
+    сериализован и выдается предупреждение <constant>E_NOTICE</constant>.
    </para>
+   <note>
+   <para>
+    Недопустимо возвращать в <literal>__sleep</literal> имена приватных свойств
+ объекта в родительский класс. Это приведет к предупреждению
+ <constant>E_NOTICE</constant>. Вместо этого вы можете использовать интерфейс
+ <classname>Serializable</classname>.
+   </para>
+   </note>
    <para>
     Обычно <literal>__sleep</literal> используется для передачи ожидаемых
     данных или для выполнения обычных задач их очистки. Также, этот метод
@@ -55,7 +63,7 @@
     С другой стороны, функция <function>unserialize</function> проверяет
     наличие метода с "магическим" именем <literal>__wakeup</literal>.
     Если такой имеется, то он может воссоздать все ресурсы объекта,
-    которые тот имеет.
+    принадлежавшие ему.
    </para>
    <para>
     Обычно <literal>__wakeup</literal> используется для восстановления
@@ -68,10 +76,11 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-class Connection {
+class Connection
+{
     protected $link;
     private $server, $username, $password, $db;
-    
+
     public function __construct($server, $username, $password, $db)
     {
         $this->server = $server;
@@ -80,18 +89,18 @@ class Connection {
         $this->db = $db;
         $this->connect();
     }
-    
+
     private function connect()
     {
         $this->link = mysql_connect($this->server, $this->username, $this->password);
         mysql_select_db($this->db, $this->link);
     }
-    
+
     public function __sleep()
     {
         return array('server', 'username', 'password', 'db');
     }
-    
+
     public function __wakeup()
     {
         $this->connect();
@@ -108,7 +117,9 @@ class Connection {
    <para>
     Метод <literal>__toString</literal> позволяет классу решать
     самостоятельно, как он должен реагировать при преобразовании в
-    строку.
+    строку. Например, что напечатает <literal>echo $obj;</literal>. Этот метод
+    должен возвращать строку, иначе выдастся неисправимая ошибка
+ <constant>E_RECOVERABLE_ERROR</constant>.
    </para>
    <example>
     <title>Простой пример</title>
@@ -120,11 +131,13 @@ class TestClass
 {
     public $foo;
 
-    public function __construct($foo) {
+    public function __construct($foo)
+    {
         $this->foo = $foo;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
         return $this->foo;
     }
 }
@@ -142,7 +155,7 @@ echo $class;
     </screen>
    </example>
    <para>
-    Ранее, до PHP 5.2.0, метод <literal>__toString</literal> вызывался 
+    Ранее, до PHP 5.2.0, метод <literal>__toString</literal> вызывался
     только непосредственно в сочетании с функциями <function>echo</function>
     или <function>print</function>.
     Начиная с PHP 5.2.0, он вызывается в любом строчном контексте
@@ -158,23 +171,25 @@ echo $class;
   <sect2 xml:id="language.oop5.magic.invoke">
    <title><literal>__invoke</literal></title>
    <para>
-    The <literal>__invoke</literal> method is called when a script tries to
-    call an object as a function.
+    Метод <literal>__invoke</literal> вызывается, когда скрипты пытается
+ выполнить объект как функцию.
    </para>
    <note>
     <para>
-     This feature is available since PHP 5.3.0.
+     Данный метод доступен начиная с PHP 5.3.0.
     </para>
    </note>
    <example>
-    <title>Using <literal>__invoke</literal></title>
+    <title>Использование <literal>__invoke</literal></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class CallableClass {
-	function __invoke($x) {
-		var_dump($x);
-	}
+class CallableClass
+{
+    public function __invoke($x)
+    {
+  var_dump($x);
+ }
 }
 $obj = new CallableClass;
 $obj(5);
@@ -262,7 +277,7 @@ sgml-indent-step:1
 sgml-indent-data:t
 indent-tabs-mode:nil
 sgml-parent-document:nil
-sgml-default-dtd-file:"../../manual.ced"
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
 sgml-exposed-tags:nil
 sgml-local-catalogs:nil
 sgml-local-ecat-files:nil
