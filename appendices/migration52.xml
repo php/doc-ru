@@ -1,0 +1,2029 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<appendix xml:id="migration52" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Переход с PHP 5.1.x на PHP 5.2.x</title>
+ <para>
+  &manual.migration.seealso;
+  <link linkend="migration5">5.0.x</link>, 
+  <link linkend="migration51">5.1.x</link> и 
+  <link linkend="migration53">5.3.x</link>.
+ </para>
+ 
+ <section xml:id="migration52.changes">
+  <title>Изменения в PHP 5.2.x</title>
+  <para>
+   Большая часть изменений в PHP 5.2.x не затронет существующий код. Тем не
+   менее, есть <link linkend="migration52.incompatible">несколько
+   несовместимых изменений</link> и
+   <link linkend="migration52.error-messages">новых сообщений об ошибках</link>,
+   которые должны быть учтены при переходе. Также рекомендуется
+   оттестировать код перед переходом на новую версию PHP в боевой установке.
+  </para>
+  <para>
+   Прочтите раздел "<link linkend="migration51">Переход на PHP 5.1.x</link>",
+   если предыдущей версией PHP была PHP 5.0.x.
+  </para>
+  <para>
+   Аналогично, если предыдущей версией была PHP 4, прочтите также раздел
+   "<link linkend="migration5">Переход с PHP 4 на PHP 5</link>".
+  </para>
+ </section>
+ 
+ <section xml:id="migration52.incompatible">
+  <title>Изменения, нарушающие обратную совместимость</title>
+  <para>
+   Хотя большая часть существущего кода на PHP 5 должна работать без изменений,
+   нужно обратить внимание на следующие нарушения обратной совместимости:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>getrusage</function> возвращает &null;, если переданы
+     несовместимые аргументы, начиная с PHP 5.2.1.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>ZipArchive::setCommentName</function>
+     возвращает &true; при удачном выполнении, начиная с PHP 5.2.1.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>ZipArchive::setCommentIndex</function>
+     возвращает &true; при удачном выполнении, начиная с PHP 5.2.1.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>SplFileObject::getFilename</function> возвращает
+     имя файла, а не относительный/путь/к/файлу, начиная с PHP 5.2.1.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Изменён приоритет переменной окружения <varname>PHPRC</varname> в Win32.
+    </simpara>
+    <simpara>
+     Переменная окружения <varname>PHPRC</varname> имеет теперь больший приоритет,
+     чем путь, сохранённый в реестре Windows.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     CLI SAPI больше не проверяет текущую директорию на наличие
+     &php.ini; или <filename>php-cli.ini</filename>.
+    </simpara>
+    <simpara>
+     В PHP 5.1.x существовала недокументированная особенность:
+     исполняемый файл CLI проверял текущую директорию на наличие конфигурационного
+     файла PHP. Это потенциально могло привести к непредсказуемому поведению в случае,
+     если был найден нежелательный конфигурационный файл. Эта функциональность была
+     удалена в версии 5.2.0 и PHP более не ищет в текущей директории файлы
+     &php.ini; или <filename>php-cli.ini</filename>. См. также раздел
+     "<link linkend="features.commandline">Командная строка</link>" данного
+     руководства.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Добавлено предупреждение при поиске остатка от деления на 0
+    </simpara>
+    <simpara>
+     В предыдущих версиях PHP выполнение операции "integer % 0" не вызывало
+     никаких предупреждений. Результатом операции было значение &false;.
+     Начиная с PHP 5.2.0 эта операция вызовет <constant>E_WARNING</constant>,
+     как и в любом другом случае деления на 0.
+    </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+print 10 % 0;
+/* Warning:  Division by zero in filename on line n */
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>__toString</function> вызывается в случаях преобразования в строку.
+    </simpara>
+    <simpara>
+     "Магический" метод <function>__toString</function> вызывается в строковом контексте,
+     то есть во всех случаях, когда объект используется как строка.
+    </simpara>
+    <simpara>
+     В версии PHP 5.2.0 была удалена функциональность по умолчанию,
+     возвращавшая строку с идентификатором объекта. Эта функциональность
+     вызывала проблемы, поскольку идентификатор в общем случае не уникален.
+     Это изменение означает, что ваше приложение будет вести себя неправильно,
+     если оно полагается на идентификатор объекта в виде возвращаемого значения.
+     Попытка использовать это значение как строку вызовет перехватываемую
+     фатальную ошибку.
+    </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class foo {}
+$foo = new foo;
+print $foo;
+/* Catchable fatal error:  Object of class foo could
+   not be converted to string in filename on line n */
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    <simpara>
+     Даже с методом <function>__toString</function> объекты не могут использоваться
+     для индексации массива. Возможно, позднее будет реализовано встроенное хэширование
+     для таких случаев, но в PHP 5.2.x вам придётся реализовать собственное
+     вычисление хэш-значений или использовать новую функцию SPL:
+     <function>spl_object_hash</function>.
+    </simpara>
+    <simpara>
+     Из метода <function>__toString</function> нельзя бросать исключения.
+    </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class foo {
+    public function __toString() {
+        throw new Exception;
+    }
+}
+
+try {
+    print new foo;
+    /* Fatal error:  Method foo::__toString() must
+       not throw an exception in filename on line n */
+} catch(Exception $e) {}
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </listitem>
+   <listitem>
+    <simpara>
+     Не поддерживаются абстрактные статические методы классов.
+    </simpara>
+    <simpara>
+     По недосмотру, PHP 5.0.x и 5.1.x позволяли определять абстрактные
+     статические методы классов. Начиная с PHP 5.2.x такие методы могут быть
+     только у интерфейсов.
+    </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+abstract class foo {
+    abstract static function bar();
+    /* Strict Standards:  Static function foo::bar()
+       should not be abstract in filename on line n */
+}
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ref.oci8">Расширение Oracle</link> требует как минимум Oracle
+     10 под Windows.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Добавлена поддержка RFC2397 (<literal>data:</literal> stream).
+    </simpara>
+    <simpara>
+     Добавление URL-схемы "data" может потенциально привести к нарушению работы кода
+     под Windows. Если вы работаете с файловой системой <acronym>NTFS</acronym>,
+     используете мета-потоки и ваше приложение работает с файлом "data:",
+     не указывая путь к нему, это вызовет ошибку. Чтобы исправить её, используйте 
+     протокол "file:" для доступа к файлу.
+    </simpara>
+    <simpara>
+     См. также <link xlink:href="&url.rfc;2397">RFC 2397</link> 
+    </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+/* При allow_url_include равной OFF (по умолчанию) */
+include "data:;base64,PD9waHAgcGhwaW5mbygpOz8+";
+/* Warning:  include(): URL file-access is disabled
+   in the server configuration in filename on line n */
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </listitem>
+   <listitem>
+    <simpara>
+     Регрессия в шаблонах <literal>glob()</literal>
+    </simpara>
+    <simpara>
+     В версии 5.2.4 исправление безопасности привело к регрессии для
+     шаблонов вида "/foo/*/bar/*". Начиная с версии 5.2.5 функция 
+     <literal>glob()</literal> больше не будет выдавать предупреждение,
+     а возвратит &false;, если нарушены ограничения
+     <literal>openbase_dir</literal>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.error-messages">
+  <title>Новые сообщения об ошибках</title>
+  <para>
+   Ниже перечислены новые сообщения об ошибках, не упоминавшиеся
+   ранее в этом документе.   
+  </para>
+  <para>
+   <example>
+    <title>В ядре PHP</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+echo " ";
+session_regenerate_id();
+/*  Warning:  session_regenerate_id(): Cannot regenerate
+    session id - headers already sent in filename on line n */
+
+str_word_count("string", 4);
+/* Warning:  str_word_count(): Invalid format value 4
+   in filename on line n */
+
+strripos("foo", "f", 4);
+/* Notice:  strripos(): Offset is greater than the
+   length of haystack string in filename on line n */
+
+strrpos("foo", "f", 4);
+/* Notice:  strrpos(): Offset is greater than the
+   length of haystack string in filename on line n */
+
+/* Начиная с PHP 5.2.1, при значении allow_url_include = OFF (по умолчанию) */
+include "php://input";
+/* Warning:  include(): URL file-access is disabled
+   in the server configuration in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><link linkend="language.oop5">Объектно-ориентированный код</link> в ядре PHP</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+interface foo {
+}
+class bar implements foo, foo {
+}
+/* Fatal error: Class bar cannot implement previously
+   implemented interface foo in filename on line n */
+
+
+class foo {
+    public $bar;
+    function __get($var)
+    {
+        return $this->bar;
+    }
+}
+
+$foo = new foo;
+$bar =& $foo->prop;
+/* Notice: Indirect modification of overloaded property
+   foo::$prop has no effect in filename on line n */
+
+
+class foo implements iterator {
+    public function current() {
+    }
+    public function next() {
+    }
+    public function key() {
+    }
+    public function valid() {
+    }
+    public function rewind() {
+    }
+}
+
+$foo = new foo();
+foreach($foo as &$ref) {}
+/* Fatal error: An iterator cannot be used with foreach
+   by reference in filename on line n */
+
+
+class foo {
+    private function __construct() {
+    }
+}
+class bar extends foo {
+    public function __construct() {
+        parent::__construct();
+        /* Fatal error:  Cannot call private
+           foo::__construct() in filename on line n */
+    }
+}
+new bar;
+
+
+stream_filter_register("", "class");
+/* Warning:  stream_filter_register(): Filter name
+   cannot be empty in filename on line n */
+
+
+stream_filter_register("filter", "");
+/* Warning:  stream_filter_register(): Class name
+   cannot be empty in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.bzip2">bzip2</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+bzopen("", "w");
+/* Warning:  bzopen(): filename cannot be empty
+   in filename on line n */
+
+bzopen("foo", "a");
+/* Warning:  bzopen(): 'a' is not a valid mode for
+   bzopen(). Only 'w' and 'r' are supported in
+   filename on line n */
+
+$fp = fopen("foo", "w");
+bzopen($fp, "r");
+/* Warning:  bzopen(): cannot read from a stream
+   opened in write only mode in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.datetime">datetime</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+strtotime("today", "now");
+/* Warning:  strtotime() expects parameter 2 to be
+   long, string given in filename on line n */
+
+/* As of PHP 5.2.1 */
+new DateTime(new stdclass);
+/* Fatal error: Uncaught exception 'Exception' with
+   message 'DateTime::__construct() expects parameter
+   1 to be string, object given' in filename:n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.dbase">dBase</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+dbase_open("foo", -1);
+/* Warning: Invalid access mode -1 in filename on line n */
+
+/* As of PHP 5.2.1 */
+dbase_open("foo", null);
+/* Warning: The filename cannot be empty in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.mcrypt">mcrypt</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$key = "секретный ключ";
+$td = mcrypt_module_open('tripledes', '', 'ecb', '');
+$iv = mcrypt_create_iv (mcrypt_enc_get_iv_size($td),
+                        MCRYPT_RAND);
+mcrypt_generic_init($td, $key, $iv);
+$encrypted_data = mcrypt_generic($td, "");
+/* Warning: mcrypt_generic(): An empty string was
+   passed in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.oci8">oci8</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+oci_connect("user", "pass", "db", "bogus_charset");
+/* Warning: Invalid character set name:
+   bogus_charset in filename on line n */
+
+$oci = oci_connect("user", "pass", "db");
+oci_password_change($oci, "", "old", "new");
+/* Warning: username cannot be empty in filename
+   on line n */
+
+oci_password_change($oci, "user", "", "new");
+/* Warning: old password cannot be empty in filename
+   on line n */
+
+oci_password_change($oci, "user", "old", "");
+/* Warning: new password cannot be empty in filename
+   on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.spl">SPL</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$obj = new SplFileObject(__FILE__);
+$obj->fgetcsv("foo");
+/* Warning:  SplFileObject::fgetcsv(): delimiter must
+   be a character in filename on line n */
+
+$obj->fgetcsv(",", "foo");
+/* Warning:  SplFileObject::fgetcsv(): enclosure must
+   be a character in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>В расширении <link linkend="ref.sem">Semaphore</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Warning:  maximum size of the message has to be
+   greater then zero in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример <link linkend="ref.zip">Zip</link> для версий 5.2.1+</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$obj = new ZipArchive();
+$obj->open('archive.zip');
+$obj->setCommentName('', 'комментарий');
+/* Notice:  ZipArchive::setCommentName(): Empty string
+   as entry name in filename on line n */
+
+/* Начиная с PHP 5.2.1 */
+$obj->getCommentName('');
+/* Notice:  ZipArchive::getCommentName(): Empty string
+   as entry name in filename on line n */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </section>
+ 
+ <section xml:id="migration52.datetime">
+  <title>Изменения в поддержке <link linkend="ref.datetime">datetime</link>
+   в PHP</title>
+  
+  <para>
+   Начиная с PHP 5.1.0, в ядро PHP включено расширение <literal>date</literal>.
+   Это новая реализация поддержки работы с датой и временем в PHP.
+   Хотя расширение попытается угадать системные настройки часовой зоны,
+   лучше установить их вручную. Это можно сделать одним из трёх способов:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     в &php.ini; при помощи параметра
+     <link linkend="ini.date.timezone">date.timezone</link>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     в системе при помощи переменной окружения <varname>TZ</varname>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     из скрипта при помощи функции 
+     <link linkend="function.date-default-timezone-get"><function>date_default_timezone_set</function></link>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Поддерживаемые <link linkend="timezones">идентификаторы часовых поясов</link> перечислены в документации.
+  </para>
+  <para>
+   Начиная с PHP 5.2.x существует объектное представление даты и часового пояса:
+   <literal>DateTime</literal> и <literal>DateTimeZone</literal> соответственно.
+   Их методы соответствуют существующим функциям для работы с датой.
+  </para>
+ </section>
+ 
+ <section xml:id="migration52.parameters">
+  <title>Новые параметры</title>
+  <para>
+   В PHP 5.2.x у некоторых функций появились новые, необязательные параметры:
+  </para>
+  
+  <para>Ядро PHP:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>htmlentities</function>
+     - добавлен параметр <parameter>double_encode</parameter> в PHP 5.2.3.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>htmlspecialchars</function>
+     - добавлен параметр <parameter>double_encode</parameter> в PHP 5.2.3.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>base64_decode</function>
+     - добавлен параметр <parameter>strict</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>setcookie</function>
+     - добавлен параметр <parameter>httponly</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>setrawcookie</function>
+     - добавлен параметр <parameter>httponly</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>session_set_cookie_params</function>
+     - добавлен параметр <parameter>httponly</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>memory_get_usage</function>
+     - добавлен параметр <parameter>real_usage</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>get_loaded_extensions</function>
+     - добавлен параметр <parameter>zend_extensions</parameter> в PHP 5.2.4
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.curl">curl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>curl_multi_info_read</function>
+     - добавлен параметр <parameter>msgs_in_queue</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.datetime">datetime</link></para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>date</function>
+     - добавлен символ форматирования "u" (миллисекунды) в PHP 5.2.2
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.imap">imap</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>imap_open</function>
+     - добавлен параметр <parameter>n_retries</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>imap_reopen</function>
+     - добавлен параметр <parameter>n_retries</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.mbstring">mbstring</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>mb_strrpos</function>
+     - добавлен параметр <parameter>offset</parameter>
+    </simpara>
+    <warning>
+     <simpara>
+      Параметр <parameter>offset</parameter> добавлен на место параметра
+      <parameter>encoding</parameter>. Обратная совместимость обеспечивается
+      указанием <parameter>encoding</parameter> как третьего параметра.
+      Однако использовать это не рекомендуется, так как поддержка 
+      <parameter>encoding</parameter> как третьего параметра будет удалена
+      в последующих версиях PHP.
+     </simpara>
+    </warning>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.ming">ming</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="function.swfmovie.streammp3"><function>swfmovie::streamMP3</function></link>
+     - добавлен параметр <parameter>skip</parameter> в PHP 5.2.1
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.openssl">openssl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>openssl_verify</function>
+     - добавлен параметр <parameter>signature_algo</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.pgsql">pgsql</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>pg_escape_bytea</function>
+     - добавлен параметр <parameter>connection</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>pg_escape_string</function>
+     - добавлен параметр <parameter>connection</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.simplexml">simplexml</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="simplexmlelement.construct"><function>SimpleXMLElement::__construct</function></link>
+     - добавлен параметр <parameter>is_prefix</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="simplexmlelement.attributes"><function>SimpleXMLElement::attributes</function></link>
+     - добавлен параметр <parameter>is_prefix</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="simplexmlelement.children"><function>SimpleXMLElement::children</function></link>
+     - добавлен параметр <parameter>is_prefix</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>simplexml_load_file</function>
+     - добавлен параметр <parameter>is_prefix</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>simplexml_load_string</function>
+     - добавлен параметр <parameter>is_prefix</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.spl">spl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     array iterator_to_array(Traversable it [, bool use_keys = true])
+     - добавлен параметр <parameter>use_keys</parameter> в PHP 5.2.1
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="book.xmlreader">xmlreader</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>XMLReader::open</function>
+     - добавлены параметры <parameter>encoding</parameter>
+     и <parameter>options</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>XMLReader::XML</function>
+     - добавлены параметры <parameter>encoding</parameter>
+     и <parameter>options</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.xmlwriter">XMLWriter</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="function.xmlwriter-write-element"><function>XMLWriter::WriteElement</function></link>
+     - параметр <parameter>content</parameter> стал необязательным в PHP 5.2.3
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="function.xmlwriter-write-element-ns"><function>XMLWriter::WriteElementNs</function></link>
+     - параметр <parameter>content</parameter> стал необязательным в PHP 5.2.3
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.functions">
+  <title>Новые функции</title>
+  <para>
+   В PHP 5.2.x было добавлено несколько новых функций:
+  </para>
+  
+  <para>Ядро PHP:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>array_fill_keys</function>
+     - Создаёт массив, используя элементы первого параметра в виде ключей и
+     присваивая всем значение <literal>val</literal>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>error_get_last</function>
+     - Возвращает последнюю ошибку в ассоциативном массиве или &null;,
+     если ошибок не было.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>image_type_to_extension</function>
+     - Возвращает расширение файла для типа изображения, полученного
+     из <function>getimagesize</function>, <function>exif_read_data</function>,
+     <function>exif_thumbnail</function>, <function>exif_imagetype</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>memory_get_peak_usage</function>
+     - Возвращает максимум выделенной для PHP памяти
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>sys_get_temp_dir</function>
+     - Возвращает путь к директории для временных файлов. (Добавлено в 5.2.1)
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>timezone_abbreviations_list</function>
+     - Возвращает ассоциативный массив, содержащий для каждой аббревиатуры часового пояса 
+     флаг летнего времени (DST), смещение от стандартного времени и название пояса.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>timezone_identifiers_list</function>
+     - Возвращает массив идентификаторов всех часовых поясов.     
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>timezone_name_from_abbr</function>
+     - Возвращает название часового пояса по аббревиатуре
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>stream_socket_shutdown</function>
+     - Закрывает соединение или его часть на сокете, связанном
+     с потоком, который будет закрыт. Начиная с PHP 5.2.1.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.image">Image</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>imagegrabscreen</function>
+     - Делает снимок всего экрана. Начиная с PHP 5.2.2.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>imagegrabwindow</function>
+     - Делает снимок окна. Начиная с PHP 5.2.2.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="book.libxml">libXML</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>libxml_disable_entity_loader</function>
+     - Отключает возможность загрузки внешних сущностей. Начиная с PHP 5.2.11.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.mbstring">mbstring</link>:</para>
+  <itemizedlist>
+   <!--
+   FIXME: Apparently these two never made it into a release
+          see bug#41070
+   <listitem>
+    <simpara>
+     <function>mb_list_encodings_alias_names</function>
+     - Returns an array of all supported entity encodings
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_list_mime_names</function>
+     - Returns an array or string of all supported mime names
+    </simpara>
+   </listitem>
+   -->
+   <listitem>
+    <simpara>
+     <function>mb_stripos</function>
+     - Находит позицию первого вхождения строки в другой строке. Регистронезависимая.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_stristr</function>
+     - Находит первое вхождение строки в другой строке. Регистронезависимая.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_strrchr</function>
+     - Находит последнее вхождение символа строки в другой строке.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_strrichr</function>
+     - Находит последнее вхождение символа из строки в другой строке. Регистронезависимая.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_strripos</function>
+     - Находит позицию последнего вхождения строки в другой строке. Регистронезависимая.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_strstr</function>
+     - Находит первое вхождение строки в другой строке.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.ming">ming</link> (Начиная с PHP 5.2.1):</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     void ming_setSWFCompression(int num)
+     - Устанавливает сжатие выходного потока.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void swfmovie::namedanchor(string name)
+     - Создаёт якорь.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void swfmovie::protect([string password])
+     - Защищает выходной поток.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.openssl">openssl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>openssl_csr_get_public_key</function>
+     - Извлекает открытый ключ из CERT и подготавливает его к использованию.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>openssl_csr_get_subject</function>
+     - Возвращает предмет (subject) CERT
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>openssl_pkey_get_details</function>
+     - Возвращает массив с информацией о ключе (bits, pkey, type)
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.spl">spl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>spl_object_hash</function>
+     - Возвращает хэш-значение для данного объекта
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int iterator_apply(Traversable it, mixed function [, mixed params])
+     - Вызывает функцию для каждого элемента итератора.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.pcre">pcre</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>preg_last_error</function>
+     - Возвращает код ошибки для последнего поиска по регулярному выражению.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.pgsql">pgsql</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>pg_field_table</function>
+     - Возвращает название таблицы, которой принадлежит поле, или oid
+     таблицы, если <literal>oid_only</literal> содержит &true;
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.posix">posix</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>posix_initgroups</function>
+     - Вычисляет групповой список доступа пользователя по его имени.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.gmp">gmp</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>gmp_nextprime</function>
+     - Находит следующее простое число.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.xmlwriter">xmlwriter</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>xmlwriter_full_end_element</function>
+     - Закрывает текущий элемент, возвращает &false; при ошибке.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>xmlwriter_write_raw</function>
+     - Пишет текст, возвращает &false; при ошибке.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>xmlwriter_start_dtd_entity</function>
+     - Начинает DTD-сущность, возвращает &false; при ошибке.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>xmlwriter_end_dtd_entity</function>
+     - Заканчивает текущую DTD-сущность, возвращает &false; при ошибке.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>xmlwriter_write_dtd_entity</function>
+     - Записывает полную DTD-сущность, возвращает &false; при ошибке.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.methods">
+  <title>Новые методы</title>
+  <para>
+   В 5.2.0 были добавлены новые методы:
+  </para>
+  
+  <para><link linkend="book.dom">dom</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>DOMDocument::registerNodeClass</function>
+     - Регистрирует расширенный класс для создания базового типа узла.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>DOMElement::setIDAttribute</function>
+     - Объявляет атрибут, указанный по имени, типом указанного идентификатора.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>DOMElement::setIDAttributeNode</function>
+     - Объявляет атрибут, указанный по узлу, типом указанного идентификатора.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>DOMElement::setIDAttributeNS</function>
+     - Объявляет атрибут, указанный по локальному имени и URI пространства
+     имен, типом указанного идентификатора.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <methodname>DOMNode::C14N</methodname>([bool exclusive [, bool with_comments [, array xpath [, array ns_prefixes]]]])
+     - Возвращает каноническую строковую запись узлов. (Canonicalize)
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <methodname>DOMNode::C14NFile</methodname>(string uri [, bool exclusive [, bool with_comments [, array xpath [, array ns_prefixes]]]])
+     - Записывает каноническую запись узлов в файл.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <methodname>DOMNode::getNodePath</methodname>()
+     - Возвращает <literal>xpath</literal> узла
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.soap">soap</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <methodname>SoapServer::setObject</methodname>(object obj)
+     - Устанавливает объект-обработчик SOAP-запросов.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.spl">spl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::asort</methodname>(void)
+     - Сортирует массив по значениям.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::ksort</methodname>(void)
+     - Сортирует массив по ключам.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::natcasesort</methodname>(void)
+     - Сортирует массив по ключам, используя регистронезависимую
+     сортировку алгоритмом "natural order".
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::natsort</methodname>(void)
+     - Сортирует массив по значениям, используя сортировку
+     алгоритмом "natural order"..
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::uasort</methodname>(callback cmp_function)
+     - Сортирует массив по значениям, используя функцию сравнения, заданную пользователем.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>ArrayObject::uksort</methodname>(callback cmp_function)
+     - Сортирует массив по ключам, используя функцию сравнения, заданную пользователем.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     ArrayIterator <methodname>AppendIterator::getArrayIterator</methodname>()
+     - Предоставляет доступ к внутреннему итератору (<literal>ArrayIterator</literal>).
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>AppendIterator::getIteratorIndex</methodname>()
+     - Возвращает индекс итератора.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     bool <methodname>CachingIterator::getCache</methodname>()
+     - Возвращает флаг кэша.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     int <methodname>CachingIterator::getFlags</methodname>()
+     - Возвращает внутренние флаги.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     bool <methodname>CachingIterator::offsetExists</methodname>(mixed index)
+     - Возвращает &true;, если индекс существует.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     string <methodname>CachingIterator::offsetGet</methodname>(mixed index)
+     - Возвращает внутренний кэш при его использовании.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void <methodname>CachingIterator::offsetSet</methodname>(mixed index, mixed newval)
+     - Устанавливает индекс в кэше.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void <methodname>CachingIterator::offsetUnset</methodname>(mixed index)
+     - Очищает индекс в кэше.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void <methodname>CachingIterator::setFlags</methodname>()
+     - Устанавливает внутренние флаги.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     array("delimiter" =>, "enclosure" =>) <methodname>SplFileObject::getCsvControl</methodname>(void)
+     - Возвращает разделяющий и обрамляющий символы, используемые в <function>fgetcsv</function>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     void <methodname>SplFileObject::setCsvControl</methodname>([string delimiter = ',' [, string enclosure = '"']])
+     - Устанавливает разделяющий и обрамляющий символы, используемые в <function>fgetcsv</function>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.tidy">Tidy</link></para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     tidyNode <methodname>tidyNode::getParent</methodname>()
+     - Возвращает родительский узел текущего. (Добавлено в PHP 5.2.2)
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="book.xmlreader">XMLReader</link></para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     boolean <function>XMLReader::setSchema</function>
+     - Использует W3C XSD схему для проверки документа при обработке. Можно
+    использовать перед первым вызовом <function>XMLReader::read</function>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.zip">zip</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <methodname>ZipArchive::addEmptyDir</methodname>()
+     - Создаёт пустую директорию в архиве.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.removed-extensions">
+  <title>Удалённые расширения</title>
+  <para>
+   Эти расширения были перенесены в PECL и более не являются частью
+   дистрибутива PHP. Пакеты в PECL для этих расширений будут
+   создаваться по запросам пользователей.
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="ref.filepro">filePro</link>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ref.hwapi">Hyperwave API</link>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.new-extensions">
+  <title>Новые расширения</title>
+  <para>
+   Следующие расширения были добавлены (по умолчанию) в PHP 5.2.0:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="ref.filter">Filter</link>
+     - Проверяет и фильтрует данные. Разработан для работы с небезопасными
+     данными, такими, как пользовательский ввод. Это расширение включено
+     по умолчанию. Режим RAW (по умолчанию) не влияет на входные данные.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ref.json">JSON</link>
+     - Реализует работу с форматом обмена данными the JavaScript Object 
+     Notation (JSON). Это расширение включено по умолчанию.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ref.zip">Zip</link>
+     - Позволяет прозрачно читать и писать ZIP-архивы и файлы в них.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.classes">
+  <title>Новые классы</title>
+  <para>
+   Следующие классы были добавлены в PHP 5.2.0:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="ref.datetime">DateTime</link>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ref.datetime">DateTimeZone</link>
+    </simpara>
+   </listitem>
+   
+   <listitem>
+    <simpara>
+     RegexIterator - extends <classname>FilterIterator</classname>;
+     implements <classname>Iterator</classname>, <classname>Traversable</classname>,
+     <classname>OuterIterator</classname>
+    </simpara>
+    <simpara>
+     Константы:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::ALL_MATCHES</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::GET_MATCH</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::MATCH</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::REPLACE</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::SPLIT</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RegexIterator::USE_KEY</constant>
+      </simpara>
+     </listitem>
+    </itemizedlist>
+    <simpara>
+     Свойства:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       public <property>replacement</property>
+      </simpara>
+     </listitem>
+    </itemizedlist>
+    <simpara>
+     Методы:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       RegexIterator::__construct(Iterator it, string regex [, int mode [, int flags [, int preg_flags]]])
+       - Создаёт <literal>RegexIterator</literal> из другого итератора и регулярного
+       выражения.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::accept()
+       - Проверяет (string)current() на соответствие регулярному выражению.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::getFlags()
+       - Возвращает текущие флаги.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::getMode()
+       - Возвращает текущий режим работы.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::getPregFlags()
+       - Фозвращает текущие флаги PREG (или &null;, если они не используются)
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::setFlags(int new_flags)
+       - Устанавливает флаги.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::setMode(int new_mode)
+       - Устанавливает новый режим работы.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RegexIterator::setPregFlags(int new_flags)
+       - Устанавливает флаги PREG.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+   
+   <listitem>
+    <simpara>
+     RecursiveRegexIterator
+    </simpara>
+    <simpara>
+     Константы:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::ALL_MATCHES</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::GET_MATCH</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::MATCH</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::REPLACE</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::SPLIT</constant>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <constant>RecursiveRegexIterator::USE_KEY</constant>
+      </simpara>
+     </listitem>
+    </itemizedlist>
+    <simpara>
+     Методы:
+    </simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       RecursiveRegexIterator::__construct(RecursiveIterator it, string regex [, int mode [, int flags [, int preg_flags]]])
+       - Создаёт <literal>RecursiveRegexIterator</literal> из другого рекурсивного итератора
+       и регулярного выражения.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       RecursiveRegexIterator RecursiveRegexIterator::getChildren()
+       - Возвращает внутренний итератор потомков, содержащихся в текущем <literal>RecursiveRegexIterator</literal>.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       bool RecursiveRegexIterator::hasChildren()
+       - Проверяет, есть ли у текущего элемента внутреннего итератора потомки.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.global-constants">
+  <title>Новые глобальные константы</title>
+  
+  <para>Ядро PHP:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>M_EULER</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>M_LNPI</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>M_SQRT3</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>M_SQRTPI</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PATHINFO_FILENAME</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PREG_BACKTRACK_LIMIT_ERROR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PREG_BAD_UTF8_ERROR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PREG_INTERNAL_ERROR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PREG_NO_ERROR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PREG_RECURSION_LIMIT_ERROR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>UPLOAD_ERR_EXTENSION</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>STREAM_SHUT_RD</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>STREAM_SHUT_WR</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>STREAM_SHUT_RDWR</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.curl">curl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>CURLE_FILESIZE_EXCEEDED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLE_FTP_SSL_FAILED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLE_LDAP_INVALID_URL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPAUTH_DEFAULT</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPAUTH_SSL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPAUTH_TLS</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPSSL_ALL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPSSL_CONTROL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPSSL_NONE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLFTPSSL_TRY</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_FTP_SSL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_FTPSSLAUTH</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_TCP_NODELAY</constant>
+    </simpara>
+    <simpara>
+     Добавлено в PHP 5.2.1.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_TIMEOUT_MS</constant>
+    </simpara>
+    <simpara>
+     Добавлено в PHP 5.2.3
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_CONNECTTIMEOUT_MS</constant>
+    </simpara>
+    <simpara>
+     Добавлено в PHP 5.2.3
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.gmp">GMP</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>GMP_VERSION</constant>
+    </simpara>
+    <simpara>
+     Добавлено в PHP 5.2.2.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.ming">ming</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>SWFTEXTFIELD_USEFONT</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWFTEXTFIELD_AUTOSIZE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_NOT_COMPRESSED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_ADPCM_COMPRESSED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_MP3_COMPRESSED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_NOT_COMPRESSED_LE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_NELLY_COMPRESSED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_5KHZ</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_11KHZ</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_22KHZ</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_44KHZ</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_8BITS</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_16BITS</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_MONO</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SWF_SOUND_STEREO</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.openssl">openssl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>OPENSSL_VERSION_NUMBER</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>OPENSSL_VERSION_TEXT</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.snmp">snmp</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>SNMP_OID_OUTPUT_FULL</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SNMP_OID_OUTPUT_NUMERIC</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.sem">Semaphore</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>MSG_EAGAIN</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>MSG_ENOMSG</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.class-constants">
+  <title>Новые константы классов</title>
+  
+  <para><link linkend="intro.pdo">pdo</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>PDO::ATTR_DEFAULT_FETCH_MODE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PDO::FETCH_PROPS_LATE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>PDO::FETCH_KEY_PAIR</constant>
+    </simpara>
+    <simpara>
+     Преобразует 2-колоночный результат в ассоциативный массив. (Добавлено в PHP 5.2.3)
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  
+  <para><link linkend="ref.spl">spl</link>:</para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>CachingIterator::FULL_CACHE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CachingIterator::TOSTRING_USE_INNER</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SplFileObject::READ_AHEAD</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SplFileObject::READ_CSV</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>SplFileObject::SKIP_EMPTY</constant>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.newconf">
+  <title>Новые конфигурационные параметры INI</title>
+  <para>
+   Новые директивы &php.ini;, добавленные в PHP 5.2.0:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="ini.allow-url-include">allow_url_include</link>
+    </simpara>
+    <simpara>
+     Эта опция даёт возможность различать стандартные файловые операции 
+     с удалёнными файлами и подключение удалённых файлов. Хотя
+     обычно требуется первое, второе может привести к проблемам с
+     безопасностью. Начиная с PHP 5.2.0, вы можете разрешить операции
+     с удалёнными файлами и при этом запретить их подключение к локальным 
+     скриптам. Это конфигурация по умолчанию.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ini.pcre.backtrack-limit">pcre.backtrack_limit</link>
+    </simpara>
+    <simpara>
+     Лимит обратных ссылок PCRE.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ini.pcre.recursion-limit">pcre.recursion_limit</link>
+    </simpara>
+    <simpara>
+     Лимит рекурсии PCRE. Пожалуйста, имейте в виду, что при установке
+     достаточно большого значения в этом параметре, весь доступный
+     стек процесса может быть занят и PHP остановится из-за превышения размера стека, установленного
+     операционной системой.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="ini.session.cookie-httponly">session.cookie_httponly</link>
+    </simpara>
+    <simpara>
+     Устанавливает доступ в отсылаемых cookies только через протокол HTTP.
+     Это означает, что cookies не будут доступны скриптовым языкам,
+     например, таким как JavaScript. Эта установка может помочь в борьбе с XSS-атаками,
+     хотя она и поддерживается не всеми браузерами.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Новые директивы в PHP 5.2.2:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <link linkend="ini.max-input-nesting-level">max_input_nesting_level</link>
+    </simpara>
+    <simpara>
+     Ограничивает вложенность <link linkend="language.variables.external">входных
+     переменных</link>, по умолчанию 64.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+ 
+ <section xml:id="migration52.errorrep">
+  <title>Сообщения об ошибках</title>
+  <para>
+   Некоторые существующие ошибки (<constant>E_ERROR</constant>)
+   теперь можно поймать при помощи обработчиков. Если <link
+   linkend="errorfunc.constants"><constant>E_RECOVERABLE_ERROR</constant></link>
+   не обработана, она будет вести себя как <constant>E_ERROR</constant>.
+   Ошибки этого типа записываются в лог как <literal>Catchable fatal
+   error</literal>.
+  </para>
+  <para>
+   Это означает, что значение константы <constant>E_ALL</constant>
+   <link linkend="ini.error-reporting">error_reporting</link>
+   теперь равно 6143, тогда как предыдущее значение было 2047.
+   Так как имена констант не имеют смысла вне PHP, иногда
+   используются их числовые значения. То есть, например, при
+   установке error_reporting через <link
+   linkend="apache.configuration">httpd.conf</link> или
+   <filename>.htaccess</filename>, данное значение нужно будет сменить при переходе
+   на новую версию PHP. То же касается и числовых значений, если
+   они используются вместо имён констант в скриптах.
+  </para>
+  <para>
+   Как побочный эффект этих изменений, чтобы предотвратить двойное сообщение
+   об ошибке при параметре <link linkend="ini.track-errors">track_errors</link>
+   выставленном в <literal>On</literal>, теперь необходимо возвращать &false;
+   из пользовательских обработчиков, чтобы отобразилось значение
+   <varname>$php_errormsg</varname>. Это позволяет точно контролировать уровни
+   сообщений.
+  </para>
+ </section>
+
+ <section xml:id="migration52.other">
+  <title>Другие улучшения</title>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Улучшено управление памятью и увеличен лимит памяти по умолчанию.
+    </simpara>
+    <simpara>
+     Новый менеджер памяти выделяет меньше памяти и работает быстрее, чем
+     предыдущая реализация. Он запрашивает память большими блоками и затем
+     управляет кучей сам. Значение <literal>memory_limit</literal> в
+     &php.ini; проверяется не при каждом вызове <literal>emalloc()</literal>,
+     как раньше, а только при действительном запросе памяти у системы. Это
+     означает, что <literal>memory_limit</literal> гораздо более точен, чем
+     раньше, так как старый менеджер памяти не учитывал дополнительные затраты
+     библиотеки <literal>malloc</literal>.
+    </simpara>
+    <simpara>
+     Благодаря новому механизму может показаться, что используется больше памяти,
+     тогда как на самом деле это не так. Чтобы скомпенсировать это кажущееся
+     увеличение, значение <literal>memory_limit</literal> также увеличено с 8 до 16
+     мегабайт.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Добавлена поддержка конструкторов в интерфейсах. Это позволяет проверять
+     сигнатуру конструкторов в реализациях интерфейса.
+    </simpara>
+    <simpara>
+     Начиная с PHP 5.2.0, интерфейсы могут содержать конструкторы. Если вы объявляете
+     конструктор в интерфейсе, каждая его реализация должна иметь конструктор с
+     той же сигнатурой, что и конструктор интерфейса. Под "сигнатурой" мы понимаем
+     возвращаемый тип и набор параметров, включая указание типов и передачу параметров
+     по ссылке или значению.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </section>
+</appendix>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
