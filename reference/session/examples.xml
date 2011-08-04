@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 79dcbe011fb254dcd92c597064571fe313362a09 Maintainer: aur Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+
+<appendix xml:id="session.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <section xml:id="session.examples.basic">
+  <title>Basic usage</title>
+  <note>
+   <para>
+    По состоянию на PHP 4.1.0, <varname>$_SESSION</varname> доступна в качестве 
+    глобальной переменной так же, как доступны <varname>$_POST</varname>,
+    <varname>$_GET</varname>, <varname>$_REQUEST</varname> и прочие.
+    В отличие от <varname>$HTTP_SESSION_VARS</varname> переменная
+    <varname>$_SESSION</varname> всегда глобальна. Таким образом, нет 
+    необходимости в использовании ключевого слова <link
+    linkend="language.variables.scope"><command>global</command></link>
+    для <varname>$_SESSION</varname>. Обратите внимание, данная документация
+    была изменена для повсеместного использования <varname>$_SESSION</varname>.
+    Если вы предпочитаете старый стиль, можете использовать также
+    <varname>$HTTP_SESSION_VARS</varname>. Следует также отметить, что для
+    доступа к <varname>$_SESSION</varname> необходимо предварительно выполнить
+    <function>session_start</function>.
+   </para>
+   <para>
+    Имена ключей ассоциативного массива <varname>$_SESSION</varname>
+    подчиняются тем же ограничениям, что и обычные имена переменных PHP.
+    Например, они не могут начинаться с цифры и должны начинаться с буквы 
+    или знака нижнего подчеркивания.
+    Для дополнительных деталей смотрите раздел о
+    <link linkend='language.variables'>переменных</link> данного руководства.
+   </para>
+  </note>
+
+  <para>
+   Если <link
+   linkend="ini.register-globals">register_globals</link>
+   выключена, только члены глобального ассоциативного массива
+   <varname>$_SESSION</varname> могут быть зарегистрированы в качестве 
+   сессионной переменной. Переменные восстановленной сессии могут быть доступны
+   только в массиве <varname>$_SESSION</varname>.
+  </para>
+  <para>
+   Использование <varname>$_SESSION</varname> (или
+   <varname>$HTTP_SESSION_VARS</varname> в PHP 4.0.6 и младше) рекомендуется 
+   для увеличения безопасности и повышения читаемости кода.
+   При использовании <varname>$_SESSION</varname> нет необходимости в 
+   использовании функций <function>session_register</function>,
+   <function>session_unregister</function> и
+   <function>session_is_registered</function>. Сессионные переменные 
+   доступны как и все прочие переменные.
+   <example>
+    <title>
+     Регистрация переменную с помощью <varname>$_SESSION</varname>.
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+session_start();
+// Используем $HTTP_SESSION_VARS в PHP 4.0.6 или более ранних
+if (!isset($_SESSION['count'])) {
+  $_SESSION['count'] = 0;
+} else {
+  $_SESSION['count']++;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>
+     Дерегистрация переменной с помощью <varname>$_SESSION</varname> 
+     при выключенной
+     <link
+     linkend="ini.register-globals">register_globals</link>.
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+session_start();
+// Используем $HTTP_SESSION_VARS в PHP 4.0.6 или более ранних
+unset($_SESSION['count']);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <caution>
+    <para>
+     НЕ ОЧИЩАЙТЕ <varname>$_SESSION</varname> целиком, испольуя      
+     <literal>unset($_SESSION)</literal>, так как это отключит возможность 
+     регистрации сессионных переменных через суперглобальную переменную
+     <varname>$_SESSION</varname>.
+    </para>
+   </caution>
+  </para>
+  <warning>
+   <para>
+    Вы не можете использовать ссылки в сессионных переменных, так как не 
+    существует реального способа восстановления ссылки к другой переменной.
+   </para>
+  </warning>
+  <para>
+   Если <link
+   linkend="ini.register-globals">register_globals</link>
+   включена, то любая глобальная переменная может быть зарегистрирована в 
+   качестве сессионной. При перезапуске сессии эти переменные будут 
+   восстановлены в соответствующие им глобальные переменные.
+   Ввиду того, что PHP должен знать, какие именно глобальные переменные 
+   зарегистрированы в качестве сессионных,
+   пользователям следует регистрировать переменные с использованием функции
+   <function>session_register</function>. Этого можно избежать при использовании
+   только  <varname>$_SESSION</varname>.
+   <caution>
+    <para>
+     В версии PHP 4.3.0 и более ранних при использовании <varname>$_SESSION</varname> 
+     и выключенной
+     <link linkend="ini.register-globals">register_globals</link>,
+     не пользуйтесь <function>session_register</function>,
+     <function>session_is_registered</function> или
+     <function>session_unregister</function>.
+      Рекомендуется выключить <link
+      linkend="ini.register-globals">register_globals</link>
+      с точки зрения безопасности и производительности.
+    </para>
+   </caution>
+  </para>
+  <para>
+   Если <link
+   linkend="ini.register-globals">register_globals</link>
+   включена, то глобальные переменные и записи в
+   <varname>$_SESSION</varname> будут автоматически ссылаться на одни и те же значения,
+   которые были зарегистрированы в предыдущем экземпляре сессии.
+   Тем не менее, если переменная зарегистрирована в <varname>$_SESSION</varname>, то 
+   глобальная переменная будет доступна начиная со следующего запроса.
+  </para>
+  <para>
+   В версии PHP 4.2.3 и более ранних присутствует дефект. Если зарегистрировать новую
+   сессионную переменную, используя <function>session_register</function>, то 
+   переменная в глобальной области и запись в <varname>$_SESSION</varname> 
+   не будут ссылаться на одно и то же значение до тех пор, пока не будет 
+   выполнен следующий <function>session_start</function>. Это значит, что 
+   изменение вновь зарегистрированной глобальной переменной не будет отражено
+   в <varname>$_SESSION</varname>. Это поведение было исправлено в PHP 4.3.0.
+  </para>
+ </section>
+  
+ <section xml:id="session.idpassing">
+  <title>Передача идентификатора сессии</title>
+  <para>
+   Существуют два метода передачи идентификатора сессии:
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Cookies
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Параметр URL
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   Модуль сессии поддерживает оба метода. Метод с cookies является оптимальным, 
+   но он не всегда доступен. 
+   Поэтому PHP предоставляет второй способ, который внедряет идентификатор сессии
+   непосредственно в URL.
+  </para>
+  <para>
+   PHP умеет преобразовывать ссылки прорзачно. Однако, если вы используете 
+   версию PHP младше 4.2.0, вам следует включить эту возможность вручную при 
+   сборке PHP. Под UNIX следует передать конфигуратору опцию 
+   <link linkend="ini.session.use-trans-sid">--enable-trans-sid</link>. 
+   Если эта опция сборки и опция времени исполнения 
+   <literal>session.use_trans_sid</literal> включены,
+   в относительные URI будут автоматически добавляться идентификаторы сессии.
+   <note>
+    <para>
+    Директива 
+   <link linkend="ini.arg-separator.output">arg_separator.output</link> из 
+    &php.ini; позволяет настраивать разделитель аргументов. Для полной 
+    совместимости с 
+    XHTML следует указывать &amp;amp;.
+    </para>
+   </note> 
+  </para>
+  <para>
+   В качестве альтернативы вы можете использовать константу 
+   <constant>SID</constant>, которая устанавливается при запуске сессии.
+   Если клиентское ПО не хранит подходящую сессионную
+   cookie, SID имеет вид <literal>session_name=session_id</literal>.
+   В противном случае содержит пустую строку. Таким образом, вы можете 
+   в любом случае внедрять его в URL.
+  </para>
+  <para>
+   Приведенный ниже пример демонстрирует, как зарегистрировать переменную и как 
+   правильно построить ссылку на другую страницу, используя <constant>SID</constant>.
+   <example>
+    <title>Подсчет количества посещений конкретного пользователя</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+session_start();
+
+if (empty($_SESSION['count'])) {
+ $_SESSION['count'] = 1;
+} else {
+ $_SESSION['count']++;
+}
+?>
+
+<p>
+Здравствуйте, посетитель, вы видели эту страницу <?php echo $_SESSION['count']; ?> раз.
+</p>
+
+<p>
+<a href="nextpage.php?<?php echo htmlspecialchars(SID); ?>">Нажмите сюда
+here</a>, чтобы продолжить.
+</p>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Функция <function>htmlspecialchars</function> может использоваться для вывода 
+   <constant>SID</constant> с целью предотвращения XSS-аттак.
+  </para>
+  <para>
+   Вывод <constant>SID</constant> способом, показанном выше, не является 
+   обязательным, если опция <link linkend="ini.session.use-trans-sid">
+   --enable-trans-sid</link> была использована при компиляции PHP.
+  </para>
+  <note>
+   <para>
+    Подразумевается, что неотносительные URL указывают только на внешние сайты и 
+    потому <constant>SID</constant> к ним не добавляется, так как 
+    это увеличивало бы риски в области безопасности, в частности, риск 
+    утечки <constant>SID</constant> другому серверу.
+   </para>
+  </note>
+ </section>
+ 
+ <section xml:id="session.customhandler">
+  <title>Пользовательские обработчики сессии</title>
+  <para>
+   Для реализации хранилища данных (или любого иного хранилища) следует 
+   использовать <function>session_set_save_handler</function>, чтобы создать 
+   набор пользовательских функций хранилища.
+  </para>
+ </section>
+</appendix>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
