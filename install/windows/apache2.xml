@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="install.windows.apache2" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Apache 2.x on Microsoft Windows</title>
+ <para>
+  Этот раздел содержит инструкции по установке PHP для Apache 2.x
+  на системы Microsoft Windows. Мы также имеем <link linkend="install.windows.apache1">инструкции для
+  пользователей Apache 1.3.x на отдельной странице</link>.
+ </para>
+ <note>
+  <para>
+   Сначала вам необходимо прочитать <link linkend="install.windows.manual">пошаговое
+   руководство по установке</link>
+  </para>
+ </note>
+ <note>
+  <title>Поддержка Apache 2.2</title>
+  <para>
+   Пользователям Apache 2.2 следует отметить, что DLL файл для Apache 2.2 называется
+   <filename>php5apache2_2.dll</filename>, а не <filename>php5apache2.dll</filename>
+   и он доступен только для PHP 5.2.0 и более поздних версий.
+   Смотрите также <link xlink:href="&url.php.snapshots;">&url.php.snapshots;</link>
+  </para>
+ </note>
+ 
+ <para>
+  Вам настоятельно рекомендуется ознакомиться с
+  <link xlink:href="&url.apache2.docs;">Документацией по Apache</link>, чтобы получить
+  базовые знания о Apache 2.x Server. Также перед чтением данной справки обратите внимание
+  на <link xlink:href="&url.apache2.windows;">Рекомендации для Windows</link>
+  по Apache 2.x.
+ </para>
+ 
+ <para>
+  Apache 2.x предназначен для работы в серверных версиях Windows,
+  таких как Windows NT 4.0, Windows 2000, Windows XP или Windows 7.
+  Хотя Apache 2.x может использоваться на Windows 9x, эти
+  платформы не поддерживаются полностью, и некоторые функции не будут работать
+  правильно. Исправление этой ситуации не планируется.
+ </para>
+
+ <para>
+  Скачайте наиболее актуальную версию <link xlink:href= "&url.apache;">
+  Apache 2.x</link> и подходящую версию PHP.
+  Следуйте <link linkend="install.windows.manual">Пошаговому руководству по установке</link>
+  и вернитесь для продолжения интеграции PHP и Apache.
+ </para>
+
+ <para>
+  Существует три пути установки PHP для Apache на Windows.
+  Вы можете запустить PHP как обработчик, как CGI, или под FastCGI.
+ </para>
+ 
+ &note.apache.slashes;
+ 
+ <sect2 xml:id="install.windows.apache2.module">
+  <title>Установка PHP как обработчика под Apache</title>
+  <para>
+   Вам необходимо добавить следующие строки в ваш конфигурационный файл Apache
+   &httpd.conf; для загрузки PHP-модуля для Apache 2.x:
+   <example>
+    <title>PHP как обработчик Apache 2.x</title>
+    <programlisting role="apache-conf">
+<![CDATA[
+#
+LoadModule php5_module "c:/php/php5apache2.dll"
+AddHandler application/x-httpd-php .php
+
+# конфигурирование пути к php.ini
+PHPIniDir "C:/php"
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <note>
+   <simpara>
+    Не забудьте указать актуальный путь к директории PHP вместо
+    <filename>C:/php/</filename> в приведенном примере. Позаботьтесь, чтобы
+    в директиве LoadModule использовались либо <filename>php5apache2.dll</filename> либо
+    <filename>php5apache2_2.dll</filename> и удостоверьтесь, что указанный файл
+    фактически находится по пути, который вы указали в директиве.
+   </simpara>
+  </note>
+  <para>
+   Приведенная выше конфигурация позволит PHP обработать любой файл, который имеет
+   расширение .php, даже если имеются другие расширения. К примеру, файл с именем
+   <filename>example.php.txt</filename> будет запущен обработчиком PHP. Чтобы гарантировать,
+   что только файлы, которые <emphasis>имеют расширение</emphasis><filename>.php</filename>
+   будут запущены, используйте следующую конфигурацию:
+  </para>
+
+  <example>
+   <programlisting role="apache-conf">
+<![CDATA[
+ <FilesMatch \.php$>
+      SetHandler application/x-httpd-php
+ </FilesMatch>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+
+ <sect2 xml:id="install.windows.apache2.cgi">
+  <title>Запуск PHP как CGI</title>
+
+  <para>
+   Вы должны обратиться к документации <link xlink:href="&url.apache.cgi;">Apache CGI
+   </link> для более полного понимания о запуске CGI под Apache.
+  </para>
+  
+  <para>
+   Для запуска PHP как CGI, вам необходимо поместить ваши php-cgi файлы в
+   директорию, обозначенную как директория CGI, используя директиву ScriptAlilas.
+  </para>
+
+  <para>
+   После этого вам необходимо добавить строку #! в PHP файлы, указывающую
+   на местоположение исполняемого файла PHP.
+   
+   <example>
+    <title>PHP как CGI под Apache 2.x</title>
+    <programlisting>
+<![CDATA[
+#!C:/php/php.exe
+<?php
+  phpinfo();
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  &warn.install.cgi;
+ </sect2>
+
+ <sect2 xml:id="install.windows.apache2.fastcgi">
+  <title>Запуск PHP под FastCGI</title>
+
+  <para>
+   Запуск PHP под FastCGI имеет ряд преимуществ по сравнению с запуском как
+   CGI. Установка же довольно проста:
+  </para>
+  <para>
+   Получить mod_fcgid здесь:
+   <link xlink:href="&url.apache.fcgid;">&url.apache.fcgid;</link>.
+   исполняемые файлы под Win32 доступны для скачивания с этого сайта. Установите модуль
+   в соответствии с прилагаемыми инструкциями.
+  </para>
+  <para>
+   Настроить свой веб сервер как указано ниже, позаботившись о соответствии всех
+   путей установки на вашей конкретной системе:
+
+   <example>
+    <title>Конфигурация Apache для запуска PHP как FastCGI</title>
+    <programlisting>
+<![CDATA[
+LoadModule fcgid_module modules/mod_fcgid.so  
+
+# Где находится ваш php.ini?
+FcgidInitialEnv PHPRC        "c:/php"
+
+AddHandler fcgid-script .php  
+FcgidWrapper "c:/php/php-cgi.exe" .php  
+]]>
+    </programlisting>
+   </example>
+
+   Файлы с расширением .php в таком случае будут запускаться с помощью
+   оболочки PHP FastCGI.
+  </para>
+
+ </sect2>
+
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
