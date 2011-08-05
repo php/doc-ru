@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 14ecbf565eaa1b0ab68e4ea9c205a18d170fc272 Maintainer: shein Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.filter-var" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -11,10 +12,10 @@
   <methodsynopsis>
    <type>mixed</type><methodname>filter_var</methodname>
    <methodparam><type>mixed</type><parameter>variable</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>filter</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>filter</parameter><initializer>FILTER_DEFAULT</initializer></methodparam>
    <methodparam choice="opt"><type>mixed</type><parameter>options</parameter></methodparam>
   </methodsynopsis>
-
+  
  </refsect1>
  <refsect1 role="parameters">
   &reftitle.parameters;
@@ -32,8 +33,7 @@
      <term><parameter>filter</parameter></term>
      <listitem>
       <para>
-       ID используеиого фильтра.
-       По умолчанию <constant>FILTER_SANITIZE_STRING</constant>.
+       ID используемого фильтра. Список доступных фильтров <xref linkend="filter.filters" />.
       </para>
      </listitem>
     </varlistentry>
@@ -41,9 +41,47 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Ассоциативный массив параметров либо логическое ИЛИ флагов. Если фильтр
-       принимает параметры, флаги могут быть указаны в элементе массива "flags". Для
-       фильтра "callback" должен быть указан тип <type>callback</type>.
+       Ассоциативный массив параметров либо логическая дизъюнкция (операция
+       ИЛИ) флагов. Если фильтр принимает параметры, флаги могут быть
+       указаны в элементе массива "flags". Для фильтра "callback" должен
+       быть указан тип <type>callback</type>. Фильтр "callback" должен
+       принимать один аргумент, значение для фильтрации, и возвращать
+       значение после фильтрации.
+      </para>
+      <para>
+       <programlisting role="php">
+<![CDATA[
+<?php
+// используйте этот формат для фильтров с дополнительными параметрами
+$options = array(
+    'options' => array(
+        'default' => 3, // значение, возвращаемое, если фильтрация завершилась неудачей
+        // другие параметры
+        'min_range' => 0
+    ),
+    'flags' => FILTER_FLAG_ALLOW_OCTAL,
+);
+$var = filter_var('0755', FILTER_VALIDATE_INT, $options);
+
+// для фильтра, который принимает только флаги, вы можете передать их непосредственно
+$var = filter_var('oops', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+// для фильтра, который принимает только флаги, вы так же можете передать их как массив
+$var = filter_var('oops', FILTER_VALIDATE_BOOLEAN,
+                  array('flags' => FILTER_NULL_ON_FAILURE));
+
+// фильтр "callback"
+function foo($value)
+{
+    $ret = new stdClass;
+    $ret->value = filter_var($value, FILTER_VALIDATE_BOOLEAN,
+                             array('flags' => FILTER_NULL_ON_FAILURE));
+    return $ret;
+}
+$var = filter_var('yes', FILTER_CALLBACK, array('options' => 'foo'));
+?>
+        ]]>
+       </programlisting>
       </para>
      </listitem>
     </varlistentry>
@@ -53,10 +91,11 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает отфильтрованные данные или &false;, если фильтрация завершилась неудачей.
+   Возвращает отфильтрованные данные или &false;, если фильтрация
+   завершилась неудачей.
   </para>
  </refsect1>
-
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -66,7 +105,7 @@
 <![CDATA[
 <?php
 var_dump(filter_var('bob@example.com', FILTER_VALIDATE_EMAIL));
-var_dump(filter_var('example.com', FILTER_VALIDATE_URL, FILTER_FLAG_SCHEME_REQUIRED));
+var_dump(filter_var('http://example.com', FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED));
 ?>
 ]]>
     </programlisting>
@@ -88,6 +127,7 @@ bool(false)
     <member><function>filter_var_array</function></member>
     <member><function>filter_input</function></member>
     <member><function>filter_input_array</function></member>
+    <member><xref linkend="filter.filters" /></member>
     <member>&seealso.callback;</member>
    </simplelist>
   </para>
