@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="function.bindec" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>bindec</refname>
+  <refpurpose>Двоичное в десятичное</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>number</type><methodname>bindec</methodname>
+   <methodparam><type>string</type><parameter>binary_string</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает десятичный эквивалент двоичного числа <parameter>binary_string</parameter>.
+  </para>
+  <para>
+   <function>bindec</function> преобразует двоичное число в
+   <type>integer</type> или, если необходимо по причинам размера, в <type>float</type>.
+  </para>
+  <para>
+   <function>bindec</function> интерпетирует значения
+   <parameter>binary_string</parameter> как беззнаковое число. Так как <function>bindec</function> воспринимает
+   старший бит как еще один порядок величины, а не знаковый бит.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>binary_string</parameter></term>
+     <listitem>
+      <para>
+       Бинарная строка для преобразования
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <warning>
+   <para>
+    Параметр должен быть строкой.
+    Использование иных типов данных приведет к непредсказуемому результату.
+   </para>
+  </warning>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Десятичное значение <parameter>binary_string</parameter>
+  </para>
+ </refsect1>
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>Начиная с 4.1.0</entry>
+       <entry>
+        Теперь функция может преобразовывать числа, слишком большие для того, чтобы вместиться в тип
+        <type>integer</type>, ограниченный платформой.
+        В этом случае большие значения возвращаются как тип <type>float</type>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>bindec</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+echo bindec('110011') . "\n";
+echo bindec('000110011') . "\n";
+
+echo bindec('111');
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+51
+51
+7
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример. <function>bindec</function> интерпретирует ввод как беззнаковое число</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/*
+ * Смысл этого примера можно найти в выводе скрипта,
+ * а не в коде PHP.
+ */
+
+$magnitude_lower = pow(2, (PHP_INT_SIZE * 8) - 2);
+p($magnitude_lower - 1);
+p($magnitude_lower, 'Видите резкую смену значений? Смотрите в следующий раз...');
+
+p(PHP_INT_MAX, 'PHP_INT_MAX');
+p(~PHP_INT_MAX, 'интерпретируется как увеличенное на единицу значение PHP_INT_MAX');
+
+if (PHP_INT_SIZE == 4) {
+    $note = 'интерпретируется как самое большое целое без знака (unsigned integer)';
+} else {
+    $note = 'интерпретируется как самое большое целое без знака (unsigned integer)
+              (18446744073709551615), но искажается из-за недостаточной точности float';
+}
+p(-1, $note);
+
+
+function p($input, $note = '') {
+    echo "input:        $input\n";
+
+    $format = '%0' . (PHP_INT_SIZE * 8) . 'b';
+    $bin = sprintf($format, $input);
+    echo "binary:       $bin\n";
+
+    ini_set('precision', 20);  // Для надежности на 64-битных системах.
+    $dec = bindec($bin);
+    echo 'bindec():     ' . $dec . "\n";
+
+    if ($note) {
+        echo "NOTE:         $note\n";
+    }
+
+    echo "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.32bit;
+    <screen>
+<![CDATA[
+input:        1073741823
+binary:       00111111111111111111111111111111
+bindec():     1073741823
+
+input:        1073741824
+binary:       01000000000000000000000000000000
+bindec():     1073741824
+NOTE:         Видите резкую смену значений? Смотрите в следующий раз...
+
+input:        2147483647
+binary:       01111111111111111111111111111111
+bindec():     2147483647
+NOTE:         PHP_INT_MAX
+
+input:        -2147483648
+binary:       10000000000000000000000000000000
+bindec():     2147483648
+NOTE:         интерпретируется как увеличенное на единицу значение PHP_INT_MAX
+
+input:        -1
+binary:       11111111111111111111111111111111
+bindec():     4294967295
+NOTE:         интерпретируется как самое большое целое без знака (unsigned integer)
+]]>
+    </screen>
+    &example.outputs.64bit;
+    <screen>
+<![CDATA[
+input:        4611686018427387903
+binary:       0011111111111111111111111111111111111111111111111111111111111111
+bindec():     4611686018427387903
+
+input:        4611686018427387904
+binary:       0100000000000000000000000000000000000000000000000000000000000000
+bindec():     4611686018427387904
+NOTE:         Видите резкую смену значений? Смотрите в следующий раз...
+
+input:        9223372036854775807
+binary:       0111111111111111111111111111111111111111111111111111111111111111
+bindec():     9223372036854775807
+NOTE:         PHP_INT_MAX
+
+input:        -9223372036854775808
+binary:       1000000000000000000000000000000000000000000000000000000000000000
+bindec():     9223372036854775808
+NOTE:         интерпретируется как увеличенное на единицу значение PHP_INT_MAX
+
+input:        -1
+binary:       1111111111111111111111111111111111111111111111111111111111111111
+bindec():     18446744073709551616
+NOTE:         интерпретируется как самое большое целое без знака (unsigned integer)
+              (18446744073709551615), но искажается из-за недостаточной точности float
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>decbin</function></member>
+    <member><function>octdec</function></member>
+    <member><function>hexdec</function></member>
+    <member><function>base_convert</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
