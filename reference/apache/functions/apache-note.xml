@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.apache-note" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>apache_note</refname>
-  <refpurpose>Установить и получить аннотации к запросу Apache</refpurpose>
+  <refpurpose>Возвращает и установливает уведомления к запросу Apache</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,9 +16,14 @@
    <methodparam choice="opt"><type>string</type><parameter>note_value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>apache_note</function> является специфичной для сервера Apache,
-   которая получает и устанавливает значения в таблице
-   <literal>notes</literal> запроса.
+   Эта функция является оберткой для <literal>table_get</literal> и
+   <literal>table_set</literal>. С её помощью можно редактировать таблицу уведомлений 
+   (apache notes table), которая создаётся во время передачи запроса. 
+   Таблица уведомлений позволяет модулям Apache обмениваться данными.
+  </para>
+  <para>
+   Основное назначение <function>apache_note</function>  - передавать информацию из одного модуля
+   в другой внутри одного запроса.
   </para>
  </refsect1>
 
@@ -29,7 +35,7 @@
      <term><parameter>note_name</parameter></term>
      <listitem>
       <para>
-       Название аннотации.
+       Название уведомления.
       </para>
      </listitem>
     </varlistentry>
@@ -37,7 +43,7 @@
      <term><parameter>note_value</parameter></term>
      <listitem>
       <para>
-       Значение аннотации.
+       Значение уведомления.
       </para>
      </listitem>
     </varlistentry>
@@ -49,13 +55,78 @@
   &reftitle.returnvalues;
   <para>
    Если функция вызывается с одним аргументом, она возвращает текущее значение
-   аннотации <literal>note_name</literal>. Если функция
-   вызывается с двумя аргументами, она устанавливает значение аннотации
+   уведомления <literal>note_name</literal>. Если функция
+   вызывается с двумя аргументами, она устанавливает значение уведомления
    <literal>note_name</literal> в <literal>note_value</literal> 
-   и возвращает предыдущее значение аннотации <literal>note_name</literal>.
-   Если значение аннотации не может быть получено, будет возвращено &false;.
+   и возвращает предыдущее значение <literal>note_name</literal>.
+   Если значение уведомления не может быть получено, будет возвращено &false;.
   </para>
  </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример передачи информации между PHP и Perl</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+apache_note('name', 'Fredrik Ekengren');
+
+// Call perl script
+virtual("/perl/some_script.pl");
+
+$result = apache_note("resultdata");
+?>
+]]>
+    </programlisting>
+    <programlisting role="perl">
+<![CDATA[
+# Получить запрашиваемый объект Apache
+my $r = Apache->request()->main();
+
+# Получить переданные данные
+my $name = $r->notes('name');
+
+# Некоторые действия с данными
+
+# Передача результата назад в PHP
+$r->notes('resultdata', $result);
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример записи значений в access.log</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+apache_note('sessionID', session_id());
+
+?>
+]]>
+    </programlisting>
+    <programlisting role="apache">
+<![CDATA[
+# "%{sessionID}n" может быть использован в директиве LogFormat
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>virtual</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
