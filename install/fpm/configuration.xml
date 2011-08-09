@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 07821cd88ca3eba45a5a7a230c6fe61bb457b968 Maintainer: das Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="install.fpm.configuration" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Настройка</title>
+ <para>
+  FPM использует синтаксис &php.ini; для своего файла конфигурации <filename>php-fpm.conf</filename>.
+ </para>
+ <sect2>
+  <title>Список глобальных директив <filename>php-fpm.conf</filename></title>
+  <variablelist>
+   <varlistentry xml:id="pid">
+    <term>
+     <parameter>pid</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Путь к PID файлу. Значение по умолчанию: none.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="error-log">
+    <term>
+     <parameter>error_log</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Путь к файлу журнала ошибок. Значение по умолчанию:
+      <literal>#INSTALL_PREFIX#/log/php-fpm.log</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="log-level">
+    <term>
+     <parameter>log_level</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Уровень журналирования ошибок. Возможные значения: alert, error, warning, notice,
+      debug. Значение по умолчанию: notice.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="emergency-restart-threshold">
+    <term>
+     <parameter>emergency_restart_threshold</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      При данном числе рабочих процессов, завершенных с SIGSEGV или SIGBUS
+      за промежуток времени, установленный <literal>emergency_restart_interval</literal>
+      FPM будет перезагружен. Значение 0 означает 'Off' (отключено). Значение по умолчанию: 0 (Off).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="emergency-restart-interval">
+    <term>
+     <parameter>emergency_restart_interval</parameter>
+     <type>mixed</type>
+    </term>
+    <listitem>
+     <para>
+      Интервал времени, используемый emergency_restart_interval, чтобы
+      определить, когда FPM будет мягко перезагружен.
+      Это полезно для избежания случайных повреждений 
+   общей памяти ускорителя (accelerator).
+      Доступные единицы измерения: s(секунды), m(минуты), h(часы), или d(дни).
+      Единица измерения по умолчанию: секунды. Значение по умолчанию: 0 (Off).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="process-control-timeout">
+    <term>
+     <parameter>process_control_timeout</parameter>
+     <type>mixed</type>
+    </term>
+    <listitem>
+     <para>
+      Время, в течение которого дочерние процессы ждут ответа на сигналы мастер-процессу.
+      Доступные единицы измерения: s(секунды), m(минуты), h(часы) или d(дни).
+      Единица измерения по умолчанию: секунды. Значение по умолчанию: 0.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="daemonize">
+    <term>
+     <parameter>daemonize</parameter>
+     <type>boolean</type>
+    </term>
+    <listitem>
+     <para>
+      Запустить FPM в фоновом режиме. Установите значение 'no', чтобы запустить FPM
+      в диспетчере для отладки. Значение по умолчанию: yes.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+ 
+ <sect2>
+  <title>Список директив для пулов.</title>
+  <para>
+   Вы можете запускать несколько FPM пулов процессов с различными настройками.
+   Эти параметры могут быть переданы пулу.
+  </para>
+  <variablelist>
+   <varlistentry xml:id="listen">
+    <term>
+     <parameter>listen</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Адрес, который будет принимать FastCGI-запросы.
+      Синтаксис: 'ip.add.re.ss:port', 'port', '/path/to/unix/socket'.
+      Эта опция обязательна для каждого пула.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="listen-backlog">
+    <term>
+     <parameter>listen.backlog</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Устанавливает listen(2) backlog. Значение '-1' означает неограничено.
+      Значение по умолчанию: -1.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="listen-allowed-clients">
+    <term>
+     <parameter>listen.allowed_clients</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Список IPv4 адресов FastCGI-клиентов, которые имеют право подключения.
+      Эквивалент переменной окружения среды FCGI_WEB_SERVER_ADDRS в
+      оригинальном PHP FastCGI (5.2.2+). Имеет смысл только с TCP-сокетом.
+      Каждый адрес должен быть отделен запятой. Если оставить значение пустым,
+      то соединения будут приниматься с любого IP. Значение по умолчанию: any.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="listen-owner">
+    <term>
+     <parameter>listen.owner</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Задает права для unix socket, если они используются. В Linux, чтобы разрешить соединения web серверу,
+   должны быть установлены права на чтение/запись.
+      Во многих основанных на BSD системах возможность соединения не зависит от прав доступа.
+      Значение по умолчанию: используется пользователь и группа, от имени которого запущен сервер, установлен режим 0666.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="listen-group">
+    <term>
+     <parameter>listen.group</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      См. <literal>listen.owner</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="listen-mode">
+    <term>
+     <parameter>listen.mode</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      См. <literal>listen.owner</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="user">
+    <term>
+     <parameter>user</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Unix-пользователь FPM-процессов. Этот параметр является обязательным.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="group">
+    <term>
+     <parameter>group</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Unix-группа FPM-процессов. Если не установлен, группа по умолчанию равняется имени пользователя.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm">
+    <term>
+     <parameter>pm</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Выбор того, как менеджер процессов будет контролировать создание дочерних процессов.
+      Возможные значения: <literal>static</literal>, <literal>dynamic</literal>.
+      Этот параметр является обязательным.
+     </para>
+     <para>
+      <literal>static</literal> - фиксированное число дочерних процессов (<literal>pm.max_children</literal>).
+     </para>
+     <para>
+      <literal>dynamic</literal> - динамически изменяющееся число дочерних процессов, задается на основании
+      следующих директив: <literal>pm.max_children</literal>, <literal>pm.start_servers</literal>,
+      <literal>pm.min_spare_servers</literal>, <literal>pm.max_spare_servers</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.max-chidlren">
+    <term>
+     <parameter>pm.max_children</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Число дочерних процессов, которые будут созданы, когда <literal>pm</literal> установлен в
+      <literal>static</literal>, или же  максимальное число процессов, которые будут созданы,
+      когда <literal>pm</literal> установлен в <literal>dynamic</literal>.
+      Этот параметр является обязательным.
+     </para>
+     <para>
+      Этот параметр устанавливает ограничение на число одновременных запросов,
+      которые будут обслуживаться. Эквивалент директивы ApacheMaxClients с
+      mpm_prefork и переменной окружения среды <varname>PHP_FCGI_CHILDREN</varname> в
+      в оригинальном PHP FastCGI.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.start-servers">
+    <term>
+     <parameter>pm.start_servers</parameter>
+     <type>in</type>
+    </term>
+    <listitem>
+     <para>
+      Число дочерних процессов, содаваемых при запуске.
+      Используется, только когда <literal>pm</literal> установлен в <literal>dynamic</literal>.
+      Значение по умолчанию: min_spare_servers + (max_spare_servers -
+      min_spare_servers) / 2.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.min-spare-servers">
+    <term>
+     <parameter>pm.min_spare_servers</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Желаемое минимальное число неактивных процессов сервера. Используется, только когда
+      <literal>pm</literal> установлено в <literal>dynamic</literal>. Кроме того,
+      это обязательный параметр в этом случае.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.max-spare-servers">
+    <term>
+     <parameter>pm.max_spare_servers</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Желаемое максимальное число неактивных процессов сервера. Используется, только когда
+      <literal>pm</literal> установлен в <literal>dynamic</literal>. Кроме того,
+      это обязательный параметр в этом случае.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.max-requests">
+    <term>
+     <parameter>pm.max_requests</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Число запросов дочернего процесса, после которого процесс будет перезапущен.
+      Это полезно для избежания утечек памяти при использовании сторонних
+      библиотек. Для бесконечной обработки запросов укажите '0'. Эквивалент
+      <varname>PHP_FCGI_MAX_REQUESTS</varname>. Значение по умолчанию: 0.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="pm.status-path">
+    <term>
+     <parameter>pm.status_path</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Ссылка, по которой можно посмотреть страницу состояния FPM. Если значение не установлено, то
+      страница статуса отображаться не будет. Значение по умолчанию: none.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ping.path">
+    <term>
+     <parameter>ping.path</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Ссылка на ping-страницу мониторинга FPM. Если значение не становлено,
+      ping-страница отображаться не будет. Может быть использовано для тестирования
+      извне, чтобы убедиться, что FPM жив и реагирует. Обратите внимание, что значение должно
+      начинаться с косой черты (/).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ping.response">
+    <term>
+     <parameter>ping.response</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Эта директива может быть использована на настройки ответа на ping-запрос. 
+   Ответ формируется как text/plain со кодом ответа 200.
+      Значение по умолчанию: pong.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="request-terminate-timeout">
+    <term>
+     <parameter>request_terminate_timeout</parameter>
+     <type>mixed</type>
+    </term>
+    <listitem>
+     <para>
+      Таймаут для обслуживания одного запроса, после чего рабочий процесс
+      будет завершен. Этот вариант следует использовать, когда опция 
+   'max_execution_time' в php.ini не останавливает выполнение скрипта по каким-то причинам.
+      Значение '0' означает 'выключено'.
+      Доступные единицы измерения: s(секунды), m(минуты), h(часы) или d(дни).
+      Значение по умолчению: 0.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="request-slowlog-timeout">
+    <term>
+     <parameter>request_slowlog_timeout</parameter>
+     <type>mixed</type>
+    </term>
+    <listitem>
+     <para>
+      Таймаут для обслуживания одного запроса, после чего PHP backtrace
+      будет сохранен в файл 'showlog'. Значение '0' означает 'выключено'.
+      Доступные единицы измерения: s(секунды), m(минуты), h(часы) или d(дни).
+      Значение по умолчению: 0.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="slowlog">
+    <term>
+     <parameter>slowlog</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Лог-файл для медленных запросов. Значение по умолчанию:
+      <literal>#INSTALL_PREFIX#/log/php-fpm.log.slow</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="rlimit-files">
+    <term>
+     <parameter>rlimit_files</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Устанавливает лимит дестрипторов открытых файлов rlimit.
+      Значение по умолчанию: определяется значением системы.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="rlimit-core">
+    <term>
+     <parameter>rlimit_core</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Устанавливает максимальное количество используемых ядер rlimit.
+      Возможные значения: 'unlimited' или целое число большее или равное 0.
+      Значение по умолчанию: определяется значением системы.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="chroot">
+    <term>
+     <parameter>chroot</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Директория chroot окружения при старте. Это значение должно быть определено
+      как абсолютный путь. Если значение не установлено, chroot не используется.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="chdir">
+    <term>
+     <parameter>chdir</parameter>
+     <type>string</type>
+    </term>
+    <listitem>
+     <para>
+      Chdir изменяет текущую директорию при старте. Это значение должно быть определено
+      как абсолютный путь. Значение по умолчанию: текущая директория или / при использовании chroot.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="catch-workers-output">
+    <term>
+     <parameter>catch_workers_output</parameter>
+     <type>boolean</type>
+    </term>
+    <listitem>
+     <para>
+      Перенаправление STDOUT и STDERR рабочего процесса в главный лог ошибок.
+      Если не установлен, STDOUT и STDERR будут перенаправлены в /dev/null
+      в соответствуии со спецификацией FastCGI.
+      Значение по умолчанию: no.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+  <para>
+   Можно передать дополнительные переменные окружения и обновить настройки PHP для определенного пула.
+   Для этого вам необходимо добавить следующие параметры в <filename>php-fpm.conf</filename>
+   <example>
+    <title>Передача переменных окружения и настроек PHP пулу</title>
+    <programlisting role="ini">
+<![CDATA[
+       env[HOSTNAME] = $HOSTNAME
+       env[PATH] = /usr/local/bin:/usr/bin:/bin
+       env[TMP] = /tmp
+       env[TMPDIR] = /tmp
+       env[TEMP] = /tmp
+
+       php_admin_value[sendmail_path] = /usr/sbin/sendmail -t -i -f www@my.domain.com
+       php_flag[display_errors] = off
+       php_admin_value[error_log] = /var/log/fpm-php.www.log
+       php_admin_flag[log_errors] = on
+       php_admin_value[memory_limit] = 32M
+       ]]>
+    </programlisting>
+   </example>
+   PHP настройки, переданные через <literal>php_value</literal> или
+   <literal>php_flag</literal> перезапишут их предыдущие значения.
+   Пожалуйста, обратите внимание, что определения
+   <link linkend="ini.disable-functions">disable_functions</link> или
+   <link linkend="ini.disable-classes">disable_classes</link> не
+   будут будут перезаписывать ранее определенные в <filename>php.ini</filename> значения,
+   а добавят новые значения.
+  </para>
+  <para>
+   Настройки, определенные через <literal>php_admin_value</literal> и <literal>php_admin_flag</literal>,
+   не могут быть перезаписаны через <function>ini_set</function>.
+  </para>
+ </sect2>
+ 
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
