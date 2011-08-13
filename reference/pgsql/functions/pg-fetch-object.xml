@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 18b6d437bc717532e758cb2edf522aad28bb4ada Maintainer: mch Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<!-- splitted from ./en/functions/pgsql.xml, last change in rev 1.2 -->
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.pg-fetch-object">
+ <refnamediv>
+  <refname>pg_fetch_object</refname>
+  <refpurpose>Выбирает строку результата запроса и возвращает данные в виде объекта</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>object</type><methodname>pg_fetch_object</methodname>
+   <methodparam><type>resource</type><parameter>result</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>row</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>result_type</parameter><initializer>PGSQL_ASSOC</initializer></methodparam>
+  </methodsynopsis>
+  <methodsynopsis>
+   <type>object</type><methodname>pg_fetch_object</methodname>
+   <methodparam><type>resource</type><parameter>result</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>row</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>class_name</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>params</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>pg_fetch_object</function> возвращает объект, свойства которого 
+   соответствуют именам полей выборки. Также функция может создать экземпляр  
+   конкретного класса и передать параметры его конструктору.
+  </para>
+  &database.fetch-null;
+  <para>
+   По скорости функция идентична <function>pg_fetch_array</function> 
+   и немного медленней <function>pg_fetch_row</function> 
+   (разница незначительна).
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>result</parameter></term>
+     <listitem>
+      <para>
+       Ресурс результата запроса PostgreSQL, возвращаемый функциями 
+       <function>pg_query</function>, <function>pg_query_params</function> 
+       или <function>pg_execute</function> (в числе прочих). 
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>row</parameter></term>
+     <listitem>
+      <para>
+       Номер выбираемой из результата запроса строки. Нумерация начинается 
+       с нуля. Если аргумент опущен или равен &null;, берется следующая по 
+       очереди строка. 
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>result_type</parameter></term>
+      <listitem>
+       <para>
+        Устарел и не используется.
+       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>class_name</parameter></term>
+      <listitem>
+       <para>
+        Имя класса создаваемого и возвращаемого объекта. Если не задано, 
+        функция создаст экземпляр класса <classname>stdClass</classname>. 
+       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>params</parameter></term>
+      <listitem>
+       <para>
+        Необязательный аргумент. Массив параметров для передачи в конструктор 
+        создаваемого объекта.
+       </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   <type>object</type>, имена и значения свойств которого соответствуют 
+   именам и значениям полей результата запроса. Значения <literal>NULL</literal> 
+   базы данных преобразуются в PHP &null;. 
+  </para>
+  <para>
+   &false;, когда <parameter>row</parameter> превышает число строк в 
+   результате запроса, когда строк в результате не осталось, и при 
+   прочих ошибках.   
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.0.0</entry>
+       <entry>
+        Добавлены аргументы <parameter>class_name</parameter> и 
+        <parameter>params</parameter>. Устаревший вариант с 
+        <parameter>result_type</parameter> оставлен для обратной совместимости.
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Значение по-умолчанию аргумента <parameter>result_type</parameter> 
+        изменено с <constant>PGSQL_BOTH</constant> на <constant>PGSQL_ASSOC</constant> 
+        с тех пор как перестали использоваться численно индексированные массивы. 
+       </entry>
+      </row>
+      <row>
+       <entry>4.1.0</entry>
+       <entry>
+        Аргумент <parameter>row</parameter> стал необязательным.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>pg_fetch_object</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php 
+
+$database = "store";
+
+$db_conn = pg_connect("host=localhost port=5432 dbname=$database");
+if (!$db_conn) {
+  echo "Невозможно соединиться с postgres базой $database\n";
+  exit;
+}
+
+$qu = pg_query($db_conn, "SELECT * FROM books ORDER BY author");
+
+
+while ($data = pg_fetch_object($qu)) {
+  echo $data->author . " (";
+  echo $data->year . "): ";
+  echo $data->title . "<br />";
+}
+
+pg_free_result($qu);
+pg_close($db_conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>pg_query</function></member>
+    <member><function>pg_fetch_array</function></member>
+    <member><function>pg_fetch_assoc</function></member>
+    <member><function>pg_fetch_row</function></member>
+    <member><function>pg_fetch_result</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
