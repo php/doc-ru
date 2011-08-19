@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- Reviewed: yes -->
+<!-- $Revision$ -->
+<!-- splitted from ./en/functions/pgsql.xml, last change in rev 1.2 -->
+<refentry xml:id="function.pg-send-execute" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>pg_send_execute</refname>
+  <refpurpose>
+   Запускает предварительно подготовленный SQL запрос и 
+   передает ему параметры; не ожидает возвращаемого результата 
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>pg_send_execute</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam><type>string</type><parameter>stmtname</parameter></methodparam>
+   <methodparam><type>array</type><parameter>params</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Запускает предварительно подготовленный SQL запрос и 
+   передает ему параметры; не ожидает возвращаемого результата. 
+  </para>
+  <para>
+   Работает аналогично функции <function>pg_send_query_params</function>, 
+   только вместо строки с запросом принимает имя предварительно 
+   подготовленного SQL запроса. Аргументы функции обрабатываются так же, как 
+   и в функции <function>pg_execute</function>. Как и 
+   <function>pg_execute</function> эта функция не будет работать на 
+   соединениях с серверами PostgreSQL версий ниже 7.4. 
+  </para>
+ </refsect1>
+
+<refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Ресурс подключения к базе данных PostgreSQL. Если параметр
+       <parameter>connection</parameter> не задан, будет использовано
+       подключение по умолчанию - последнее соединение, открытое функцией  
+       <function>pg_connect</function> или <function>pg_pconnect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>stmtname</parameter></term>
+     <listitem>
+      <para>
+       Имя подготовленного к исполнению запроса. Если передана пустая строка "",
+       будет выполнен безымянный запрос. Имя и содержимое запроса должны быть 
+       подготовлены функцией <function>pg_prepare</function>, 
+       <function>pg_send_prepare</function> либо с помощью SQL-команды 
+       <literal>PREPARE</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>params</parameter></term>
+     <listitem>
+      <para>
+       Массив значений параметров запроса для замены псевдопеременных $1, $2 и т.д. 
+       в исходной строке запроса. Количество элементов массива должно точно совпадать с 
+       количеством псевдопеременных. 
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает &true; в случае успешной передачи запроса, &false; в 
+   случае ошибки. Для получения результата запроса используйте 
+   функцию <function>pg_get_result</function>. 
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>pg_send_execute</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+  $dbconn = pg_connect("dbname=publisher") or die("Could not connect");
+
+  // Подготовка запроса
+  if (!pg_connection_busy($dbconn)) {
+    pg_send_prepare($dbconn, "my_query", 'SELECT * FROM shops WHERE name = $1');
+    $res1 = pg_get_result($dbconn);
+  }
+
+  // Запуск запроса на выполнение. Стоит отметить, что нет необходимости экранировать 
+  // спецсимволы в строке "Joe's Widgets" 
+  if (!pg_connection_busy($dbconn)) {
+    pg_send_execute($dbconn, "my_query", array("Joe's Widgets"));
+    $res2 = pg_get_result($dbconn);
+  }
+  
+  // Запуск на выполнение того же запроса, но с другим параметром  
+  if (!pg_connection_busy($dbconn)) {
+    pg_send_execute($dbconn, "my_query", array("Clothes Clothes Clothes"));
+    $res3 = pg_get_result($dbconn);
+  }
+  
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>pg_prepare</function></member>
+    <member><function>pg_send_prepare</function></member>
+    <member><function>pg_execute</function></member>    
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

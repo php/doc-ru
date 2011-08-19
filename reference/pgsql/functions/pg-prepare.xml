@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- Reviewed: yes -->
+<!-- $Revision$ -->
+<!-- splitted from ./en/functions/pgsql.xml, last change in rev 1.2 -->
+<refentry xml:id="function.pg-prepare" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>pg_prepare</refname>
+  <refpurpose> Посылает запрос на создание параметризованного SQL выражения 
+  и ждет его завершения</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>pg_prepare</methodname>
+   <methodparam choice="opt"><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam><type>string</type><parameter>stmtname</parameter></methodparam>
+   <methodparam><type>string</type><parameter>query</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>pg_prepare</function> создает заготовку SQL выражения на сервере 
+   для последующего запуска функциями <function>pg_execute</function> 
+   или <function>pg_send_execute</function>. Это позволяет многократно 
+   выполнять единожды созданные запросы с различными параметрами. 
+   <function>pg_prepare</function> поддерживается PostgreSQL версии 7.4 
+   и выше. Функция не будет работать c серверами ранних версий. 
+  </para>
+  <para>
+   Функция создает заготовку SQL запроса с названием <parameter>stmtname</parameter> 
+   и телом <parameter>query</parameter>, которое должно содержать одно 
+   SQL выражение. <parameter>stmtname</parameter> может быть пустой строкой, 
+   тогда будет создана безымянная заготовка. Если какая-либо безымянная 
+   заготовка уже определена, она будет заменена на новую автоматически. 
+   В остальных случаях совпадение имен новой и существующей в данной сессии 
+   заготовок приведет к ошибке. Если в <parameter>query</parameter> 
+   будут передаваться параметры, то они заменят псевдопеременные 
+   $1, $2 и т.д. при передаче запроса.
+  </para>
+  <para>
+   Подобные заготовки запросов также можно делать с помощью SQL команды 
+   <literal>PREPARE</literal> (но <function>pg_prepare</function> 
+   более гибкая, так как не требует строгой типизации своих параметров).
+   Важно отметить, что в PHP нет функций для удаления подготовленных 
+   SQL выражений, для этого используйте команду SQL 
+   <literal>DEALLOCATE</literal>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Ресурс подключения к базе данных PostgreSQL. Если параметр
+       <parameter>connection</parameter> не задан, будет использовано
+       подключение по умолчанию - последнее соединение, открытое функцией  
+       <function>pg_connect</function> или <function>pg_pconnect</function>.  
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>stmtname</parameter></term>
+     <listitem>
+      <para>
+       Имя создаваемой заготовки. Должно быть уникальным в пределах сессии. 
+       Если задана пустая строка, будет создано безымянное SQL выражение. При 
+       этом оно перезапишет уже существующее безымянное выражение, 
+       определенное ранее.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>query</parameter></term>
+     <listitem>
+      <para>
+       Параметризованный SQL запрос. Должен содержать только одно выражение 
+       (несколько выражений разделенных точкой с запятой не поддерживаются). 
+       Если в запрос будут передаваться параметры, то они заменят 
+       псевдопеременные $1, $2 и т.д.  
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Ресурс результата запроса&return.falseforfailure;.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>pg_prepare</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Подключение к базе данных "mary" 
+$dbconn = pg_connect("dbname=mary");
+
+// Подготовка запроса 
+$result = pg_prepare($dbconn, "my_query", 'SELECT * FROM shops WHERE name = $1');
+
+// Запуск запроса на выполнение. Стоит отметить, что нет необходимости экранировать 
+// спецсимволы в строке "Joe's Widgets" 
+$result = pg_execute($dbconn, "my_query", array("Joe's Widgets"));
+
+// Запуск на выполнение того же запроса, но с другим параметром  
+$result = pg_execute($dbconn, "my_query", array("Clothes Clothes Clothes"));
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>pg_execute</function></member>
+    <member><function>pg_send_execute</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
