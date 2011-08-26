@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 4090bf0267c52bda7db45fb3496860fa34c32d83 Maintainer: shein Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.unset" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>unset</refname>
-  <refpurpose>Удаляет данную переменную</refpurpose>
+  <refpurpose>Удаляет переменную</refpurpose>
  </refnamediv>
  
  <refsect1 role="description">
@@ -12,7 +13,6 @@
   <methodsynopsis>
    <type>void</type><methodname>unset</methodname>
    <methodparam><type>mixed</type><parameter>var</parameter></methodparam>
-   <methodparam choice="opt"><type>mixed</type><parameter>var</parameter></methodparam>
    <methodparam choice="opt"><type>mixed</type><parameter>...</parameter></methodparam>
   </methodsynopsis>
   <para>
@@ -20,13 +20,13 @@
   </para>
   <para>
    Поведение <function>unset</function> внутри пользовательской функции
-   может различаться, в зависимости от того, какой тип имеет переменная, которую необходимо
+   может отличаться, в зависимости от того, какой тип имеет переменная, которую необходимо
    удалить.
   </para>
   <para>
    Если переменная, объявленная глобальной, удаляется внутри
-   функции, удаляется только локальная переменная. Переменная
-   в окружении вызова функции сохранит то же значение, что и до вызова
+   функции, то будет удалена только локальная переменная. Переменная
+   в области видимости вызова функции сохранит то же значение, что и до вызова
    <function>unset</function>.
    <informalexample>
     <programlisting role="php">
@@ -57,7 +57,7 @@ bar
    </informalexample>
   </para>
   <para>
-   Если необходимо удалить глобальную переменную внутри функции, 
+   Если необходимо удалить глобальную переменную внутри функции,
    то для этого нужно использовать массив <varname>$GLOBALS</varname>:
    <informalexample>
     <programlisting role="php">
@@ -77,8 +77,8 @@ foo();
   </para>
   <para>
    Если переменная, которая передается ПО ССЫЛКЕ,
-   удаляется внутри функции, будет удалена только локальная
-   пременная. Переменная в окружении вызова функции сохранит то же значение,
+   удаляется внутри функции, то будет удалена только локальная
+   пременная. Переменная в области видимости вызова функции сохранит то же значение,
    что и до вызова <function>unset</function>.
    <informalexample>
     <programlisting role="php">
@@ -114,8 +114,8 @@ something
   <para>
    Если статическая переменная удаляется внутри
    функции, <function>unset</function> удалит переменную только
-   в контексте дальнейшего выполнения функции. При последующем вызове предыдущее значение переменной
-   будет восстановлено.
+   в контексте дальнейшего выполнения функции. При последующем
+   вызове предыдущее значение переменной будет восстановлено.
    <informalexample>
     <programlisting role="php">
 <![CDATA[
@@ -127,7 +127,7 @@ function foo()
     echo "До удаления: $bar, ";
     unset($bar);
     $bar = 23;
-    echo "после удаления: $bar\n";
+    echo "После удаления: $bar\n";
 }
 
 foo();
@@ -143,9 +143,9 @@ foo();
    <informalexample>
     <screen>
 <![CDATA[
-До удаления: 1, после удаления: 23
-До удаления: 2, после удаления: 23
-До удаления: 3, после удаления: 23
+До удаления: 1, После удаления: 23
+До удаления: 2, После удаления: 23
+До удаления: 3, После удаления: 23
 ]]>
     </screen>
    </informalexample>
@@ -160,15 +160,7 @@ foo();
      <term><parameter>var</parameter></term>
      <listitem>
       <para>
-       Переменная, которую необходимо удалить.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>var</parameter></term>
-     <listitem>
-      <para>
-       Другая переменная ..
+       Удаляемая переменная.
       </para>
      </listitem>
     </varlistentry>
@@ -176,6 +168,7 @@ foo();
      <term><parameter>...</parameter></term>
      <listitem>
       <para>
+       Другая переменная ...
       </para>
      </listitem>
     </varlistentry>
@@ -203,10 +196,9 @@ foo();
      </thead>
      <tbody>
       <row>
-       <entry>4.0.0</entry>
+       <entry>4.0.1</entry>
        <entry>
-        <function>unset</function> становится выражением. (В PHP 3
-        <function>unset</function> всегда возвращала 1).
+        Добавлена поддержка нескольких аргументов.
        </entry>
       </row>
      </tbody>
@@ -223,13 +215,13 @@ foo();
     <programlisting role="php">
 <![CDATA[
 <?php
-// удалить одну переменную
+// удаляем одну переменную
 unset($foo);
 
-// удалить один элемент массива
+// удаляем один элемент массива
 unset($bar['quux']);
 
-// удалить несколько переменных
+// удаляем несколько переменных
 unset($foo1, $foo2, $foo3);
 ?>
 ]]>
@@ -260,8 +252,14 @@ var_dump((unset) $name);
   </note>
   <note>
    <para>
-    Невозможно удалить <literal>$this</literal> внутри метода объекта,
-    начиная с PHP 5.
+    Начиная с PHP 5 невозможно удалить <literal>$this</literal> внутри метода объекта.
+   </para>
+  </note>
+  <note>
+   <para>
+    При использовании <function>unset</function> на недоступных или необъявленных свойствах объекта,
+    будет вызван встроенный метод объекта <link linkend="language.oop5.overloading.members">__unset</link>,
+    если он определен.
    </para>
   </note>
  </refsect1>
@@ -272,6 +270,7 @@ var_dump((unset) $name);
    <simplelist>
     <member><function>isset</function></member>
     <member><function>empty</function></member>
+    <member><link linkend="language.oop5.overloading.members">__unset</link></member>
     <member><function>array_splice</function></member>
    </simplelist>
   </para>

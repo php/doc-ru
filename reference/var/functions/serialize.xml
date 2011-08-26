@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 1e37e327ed73a459d24ab7835d293152b3077593 Maintainer: shein Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.serialize" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -18,10 +19,10 @@
   </para>
   <para>
    Это полезно для хранения или передачи значений PHP между скриптами без
-   потери типа и структуры.
+   потери их типа и структуры.
   </para>
   <para>
-   Для превращения сериализованной строки обратно в значение PHP, используйте
+   Для превращения сериализованной строки обратно в PHP-значение, используйте
    функцию <function>unserialize</function>.  
   </para>
  </refsect1>
@@ -35,20 +36,28 @@
      <listitem>
       <para>
        Значение, которое необходимо сериализовать. <function>serialize</function>
-       обрабатывает все типы, кроме типа <type>resource</type>.
+       обрабатывает все типы, кроме <type>resource</type>.
        Возможно также сериализовать массивы, которые содержат
-       ссылки на себя. Циклические ссылки внутри массива/объекта, который необходимо 
-       сериализовать, также сохраняются. Любые другие 
+       ссылки на себя. Циклические ссылки внутри сериализуемого
+       массива/объекта также сохраняются. Любые другие
        ссылки будут потеряны.
       </para>
       <para>
        При сериализации объекта PHP пытается вызвать магический метод
-       <link linkend="language.oop5.magic">__sleep</link> перед сериализацией. 
-       Это делается для того, чтобы позволить объекту в последний момент произвести очистку, и т.д. перед 
-       сериализацией. Так же, когда объект восстанавливается с использованием 
+       <link linkend="language.oop5.magic.sleep">__sleep</link> перед сериализацией.
+       Это делается для того, чтобы позволить объекту в последний
+       момент произвести очистку и тому подобные операции перед сериализацией.
+       Аналогично, когда объект восстанавливается функцией
        <function>unserialize</function>, вызывается магический метод <link 
-       linkend="language.oop5.magic">__wakeup</link>.
+       linkend="language.oop5.magic.sleep">__wakeup</link>.
       </para>
+      <note>
+       <para>
+        В начало имен приватных членов объекта дополняется имя класса,
+        а в начало имен защищенных членов '*'. Эти дополненные
+        значения окружаются нулевым байтом (0x00) с обеих сторон.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -79,10 +88,10 @@ $conn = odbc_connect("webdb", "php", "chicken");
 $stmt = odbc_prepare($conn,
       "UPDATE sessions SET data = ? WHERE id = ?");
 $sqldata = array (serialize($session_data), $_SERVER['PHP_AUTH_USER']);
-if (!odbc_execute($stmt, &$sqldata)) {
+if (!odbc_execute($stmt, $sqldata)) {
     $stmt = odbc_prepare($conn,
      "INSERT INTO sessions (id, data) VALUES(?, ?)");
-    if (!odbc_execute($stmt, &$sqldata)) {
+    if (!odbc_execute($stmt, $sqldata)) {
         /* Код, выполняемый при ошибке.. */
     }
 }
@@ -111,15 +120,6 @@ if (!odbc_execute($stmt, &$sqldata)) {
         Был исправлен процесс сериализации объектов.
        </entry>
       </row>
-      <row>
-       <entry>4.0.0</entry>
-       <entry>
-        При сериализации объекта методы теперь не теряются. 
-        См. 
-        <link linkend="language.oop5.serialization">Serializing Objects</link>
-        для более подробной информации.
-       </entry>
-      </row>
      </tbody>
     </tgroup>
    </informaltable>
@@ -130,7 +130,20 @@ if (!odbc_execute($stmt, &$sqldata)) {
   &reftitle.notes;
   <note>
    <para>
-    Невозможно сериализовать встроенные объекты PHP.
+    Заметьте, что много встроенных в PHP объектов не может быть
+    сериализовано. Однако, те из них, которые поддерживают эту
+    возможность, реализуют или интерфейс
+    <interfacename>Serializable</interfacename>, или
+    магические методы <link linkend="language.oop5.magic.sleep">__sleep</link>
+    и <link linkend="language.oop5.magic.sleep">__wakeup</link>. Если
+    встроенный класс не удовлетворяет этим требованиям,
+    он не может быть надежно сериализован.
+   </para>
+   <para>
+    Исторически есть некоторые исключения из вышеуказанного правила,
+    когда некоторые внутренние объекты могут быть сериализованы без
+    реализации интерфейса или магических методов. К примеру,
+    <classname>ArrayObject</classname> до PHP 5.2.0.
    </para>
   </note>
  </refsect1>
@@ -140,7 +153,9 @@ if (!odbc_execute($stmt, &$sqldata)) {
   <para>
    <simplelist>
     <member><function>unserialize</function></member>
-    <member><link linkend="language.oop5.serialization">Serializing Objects</link></member>
+    <member><link linkend="language.oop5.serialization">Сериализация объектов</link></member>
+    <member><link linkend="language.oop5.magic.sleep">__sleep</link></member>
+    <member><link linkend="language.oop5.magic.sleep">__wakeup</link></member>
    </simplelist>
   </para>
  </refsect1>
