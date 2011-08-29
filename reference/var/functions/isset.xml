@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: aafc074ad834ee8260a1d21fa2fde9e01da6e4da Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.isset" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>isset</refname>
-  <refpurpose>Устанавливает, определена ли переменная</refpurpose>
+  <refpurpose>Определяет, была ли установлена переменная значением отличным от &null;</refpurpose>
  </refnamediv>
  
  <refsect1 role="description">
@@ -12,16 +13,15 @@
   <methodsynopsis>
    <type>bool</type><methodname>isset</methodname>
    <methodparam><type>mixed</type><parameter>var</parameter></methodparam>
-   <methodparam choice="opt"><type>mixed</type><parameter>var</parameter></methodparam>
-   <methodparam choice="opt"><parameter>...</parameter></methodparam>
+   <methodparam choice="opt"><type>mixed</type><parameter>...</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Устанавливает, определена ли переменная.
+   Определяет, была ли установлена переменная значением отличным от &null;
   </para>
   <para>
    Если переменная была удалена с помощью <function>unset</function>, то она больше
-   не является определенной. <function>isset</function> вернет &false; если проверяемой
-   переменной присвоено значение &null;. Следует помнить, что &null;-байт
+   не считается установленной. <function>isset</function> вернет &false;, если проверяемая
+   переменная имеет значение &null;. Следует помнить, что &null;-байт
    (<literal>"\0"</literal>) не является эквивалентом константе PHP &null;.
   </para>
   <para>
@@ -44,17 +44,10 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>var</parameter></term>
-     <listitem>
-      <para>
-       Другая переменная ..
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
      <term><parameter>...</parameter></term>
      <listitem>
       <para>
+       Другая переменная ...
       </para>
      </listitem>
     </varlistentry>
@@ -65,7 +58,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если <parameter>var</parameter> определена; &false; в противном случае.
+   Возвращает &true;, если <parameter>var</parameter> определена и
+   значение отличное от &null;, и &false; в противном случае.
   </para>
  </refsect1>
 
@@ -82,7 +76,7 @@ $var = '';
 
 // Проверка вернет TRUE, поэтому текст будет напечатан.
 if (isset($var)) {
-    echo "This var is set so I will print.";
+    echo "Эта переменная определена, поэтому меня и напечатали.";
 }
 
 // В следующем примере мы используем var_dump для вывода
@@ -114,7 +108,7 @@ var_dump(isset($foo));   // FALSE
 <![CDATA[
 <?php
 
-$a = array ('test' => 1, 'hello' => NULL);
+$a = array ('test' => 1, 'hello' => NULL, 'pie' => array('a' => 'apple'));
 
 var_dump(isset($a['test']));            // TRUE
 var_dump(isset($a['foo']));             // FALSE
@@ -123,6 +117,11 @@ var_dump(isset($a['hello']));           // FALSE
 // Элемент с ключом 'hello' равен NULL, поэтому он считается неопределенным
 // Если Вы хотите проверить существование ключей со значением NULL, используйте: 
 var_dump(array_key_exists('hello', $a)); // TRUE
+
+// Проверка вложенных элементов массива
+var_dump(isset($a['pie']['a']));        // TRUE
+var_dump(isset($a['pie']['b']));        // FALSE
+var_dump(isset($a['cake']['a']['b']));  // FALSE
 
 ?>
 ]]>
@@ -142,6 +141,14 @@ var_dump(array_key_exists('hello', $a)); // TRUE
    </para>
   </warning>
   &note.language-construct;
+  <note>
+   <para>
+    При использовании <function>isset</function> на недоступных свойствах
+    объекта, будет вызываться перегруженный метод
+    <link linkend="language.oop5.overloading.members">__isset</link>,
+    если он существует.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1 role="seealso">
@@ -149,9 +156,10 @@ var_dump(array_key_exists('hello', $a)); // TRUE
   <para>
    <simplelist>
     <member><function>empty</function></member>
+    <member><link linkend="language.oop5.overloading.members">__isset</link></member>
     <member><function>unset</function></member>
     <member><function>defined</function></member>
-    <member><link linkend="types.comparisons">Таблица сравнения типов в PHP</link></member>
+    <member><link linkend="types.comparisons">Таблица сравнения типов</link></member>
     <member><function>array_key_exists</function></member>
     <member><function>is_null</function></member>
     <member>Оператор управления ошибками <link linkend="language.operators.errorcontrol">@</link></member>
