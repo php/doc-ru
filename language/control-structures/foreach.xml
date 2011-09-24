@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 17220cac83cafe46226d7bcf79b5e1fb4de6b1da Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+
+<sect1 xml:id="control-structures.foreach" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title><literal>foreach</literal></title>
+ <?phpdoc print-version-for="foreach"?>
+ <para>
+  Конструкция <literal>foreach</literal> предоставляет простой способ
+  перебора массивов.<literal>Foreach</literal> работает только с
+  массивами (и объектами), и будет генерировать ошибку при попытке
+  использования с переменными других типов или неинициализированными переменными.
+  Существует два варианта синтаксиса, второй из них неосновной, но полезно дополняющий первый:
+  <informalexample>
+   <programlisting>
+<![CDATA[
+foreach (array_expression as $value)
+    statement
+foreach (array_expression as $key => $value)
+    statement
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <simpara>
+  Первый вариант перебирает массив, задаваемый с помощью 
+  <literal>array_expression</literal>. На каждой итерации значение
+  текущего элемента присваивается переменной <literal>$value</literal> и
+  внутренний указатель массива увеличивается на единицу (таким образом,
+  на следующем витке цикла работа будет происходить со следующим элементом).
+ </simpara>
+ <simpara>
+  Второй вариант делает те же действия, за исключением того, что
+  ключ текущего элемента не присваивается переменной
+  <literal>$key</literal> на каждой итерации.
+ </simpara>
+ <simpara>
+  Начиная с 5-й версии PHP, возможно также настроить
+  <link linkend="language.oop5.iterations">итераторы объектов</link>.
+ </simpara>
+ <para>
+  <note>
+   <para>
+    Когда оператор <literal>foreach</literal> начинает исполнение, внутренний
+ указатель массива автоматически устанавливается на первый элемент этого массива.
+ Это означает, что вам нет необходимости вызывать функцию
+    <function>reset</function> до цикла <literal>foreach</literal>.
+   </para>
+  </note>
+ </para>
+ <para>
+  <note>
+   <para>
+    Если массив передается куда-либо <link linkend="language.references">по ссылке</link>,
+    оператор <literal>foreach</literal> работает с копией указанного массива, а не
+ с самим массивом. Оператор <literal>foreach</literal> оказывает некоторые побочные эффекты
+ на указатель массива.  Не полагайтесь на указатель массива во время работы оператора или
+ после его работы, до тех пор, пока он не будет сброшен (установлен на первый элемент).
+   </para>
+  </note>
+ </para>
+ <para>
+  В PHP 5, вы можете легко изменять элементы массива с помощью
+  предшествующего переменной <literal>$value</literal> символа &amp;.
+  Это позволит назначить <link linkend="language.references">ссылку</link>
+  вместо копирования значения.
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$arr = array(1, 2, 3, 4);
+foreach ($arr as &$value) {
+    $value = $value * 2;
+}
+// массив $arr сейчас таков: array(2, 4, 6, 8)
+unset($value); // разорвать ссылку на последний элемент
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  Это возможно только если на итерируемый массив можно ссылаться по ссылке
+  (то есть если он является переменной). Это означает, что следующий код не будет работать.
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+foreach (array(1, 2, 3, 4) as &$value) {
+    $value = $value * 2;
+}
+
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <warning>
+  <para>
+   Ссылка <literal>$value</literal> на последний элемент массива
+   остается даже после того, как оператор <literal>foreach</literal> отработал цикл.
+   Рекомендуется уничтожить ее с помощью функции <function>unset</function>.
+  </para>
+ </warning>
+ <para>
+  <note>
+   <para>
+    Оператор <literal>foreach</literal> не поддерживает возможность подавления
+ сообщений об ошибках с помощью префикса '@'.
+   </para>
+  </note>
+ </para>
+ <para>
+  Вы могли заметить, что следующие конструкции функционально
+  идентичны:
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$arr = array("one", "two", "three");
+reset($arr);
+while (list(, $value) = each($arr)) {
+    echo "Значение: $value<br />\n";
+}
+
+foreach ($arr as $value) {
+    echo "Значение: $value<br />\n";
+}
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  Следующие конструкции также функционально идентичны:
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$arr = array("one", "two", "three");
+reset($arr);
+while (list($key, $value) = each($arr)) {
+    echo "Ключ: $key; Значение: $value<br />\n";
+}
+
+foreach ($arr as $key => $value) {
+    echo "Ключ: $key; Значение: $value<br />\n";
+}
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <para>
+  Вот еще несколько примеров, чтобы продемонстрировать варианты использования оператора:
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+/* Пример 1: только значение */
+
+$a = array(1, 2, 3, 17);
+
+foreach ($a as $v) {
+    echo "Текущее значение переменной \$a: $v.\n";
+}
+
+/* Пример 2: значение (для иллюстрации массив выводится в виде значения с ключем) */
+
+$a = array(1, 2, 3, 17);
+
+$i = 0; /* только для пояснения */
+
+foreach ($a as $v) {
+    echo "\$a[$i] => $v.\n";
+    $i++;
+}
+
+/* Пример 3: ключ и значение */
+
+$a = array(
+    "one" => 1,
+    "two" => 2,
+    "three" => 3,
+    "seventeen" => 17
+);
+
+foreach ($a as $k => $v) {
+    echo "\$a[$k] => $v.\n";
+}
+
+/* Пример 4: многомерные массивы */
+$a = array();
+$a[0][0] = "a";
+$a[0][1] = "b";
+$a[1][0] = "y";
+$a[1][1] = "z";
+
+foreach ($a as $v1) {
+    foreach ($v1 as $v2) {
+        echo "$v2\n";
+    }
+}
+
+/* Пример 5: динамические массивы */
+
+foreach (array(1, 2, 3, 4, 5) as $v) {
+    echo "$v\n";
+}
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
