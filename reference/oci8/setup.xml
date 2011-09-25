@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 69faf0d6c655c8c2054db57cb4ee57d258b8a012 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
 
 <chapter xml:id="oci8.setup" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -9,124 +10,61 @@
  <section xml:id="oci8.requirements">
   &reftitle.required;
   <para>
-   Вам понадобятся клиентские библиотеки Oracle для того, чтобы использовать
-   этот модуль. Пользователям Windows необходимы библиотеки минимум
-   версии 10 для того, чтобы использовать <filename>php_oci8.dll</filename>.
+   Расширению OCI8 требуются клиентские библиотеки
+   Oracle 9iR2, 10g или 11g. Если база данных Oracle установлена на одной
+   машине с PHP, то база данных уже содержит все необходимые библиотеки
+   для установки. Если PHP находится на другой машине, используйте
+   библиотеки 
+   <link xlink:href="&url.oracle.instant.client;">Oracle Instant Client</link>.
   </para>
   <para>
-   Мы рекомендуем вам использовать Oracle Instant Client, доступный по
-   адресу <link xlink:href="&url.oracle.instant.client;">&url.oracle.instant.client;</link>.
-   Для использования модуля OCI8 достаточно установить "basic" версию пакета 
-   Oracle Instant Client. Instant Client не требует установки переменных 
-   ORACLE_SID или ORACLE_HOME. Однако, вам возможно понадобится установить 
-   переменные окружения LD_LIBRARY_PATH и NLS_LANG.
+   Для использования Oracle Instant Client, установите 
+   <literal>basic</literal> или <literal>basiclite</literal> zip-архив
+   Oracle Instant Client или RPM-пакет. При сборке PHP из исходного кода,
+   также установите zip-архив <literal>sdk</literal> или
+   <literal>devel</literal> RPM-пакет.
   </para>
   <para>
-   Перед использованием этого модуля, проверьте, что вы установили все
-   необходимые переменные окружения. Эти переменные, перечисленные ниже,
-   должны быть доступны пользователю Oracle и пользователю, с правами
-   которого работает веб-сервер. Переменные окружения, необходимые для
-   корректной работы с Oracle:
-   <itemizedlist>
-    <listitem>
-     <simpara>
-      ORACLE_HOME
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      ORACLE_SID
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      LD_PRELOAD
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      LD_LIBRARY_PATH
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      NLS_LANG
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      ORA_NLS33
-     </simpara>
-    </listitem>
-   </itemizedlist>
+   В Windows, DLL-библиотеке php_oci8 необходимы библиотеки из версии
+   10gR2 или выше. В версиях PHP от 5.3 и до 5.3.5 включительно,
+   DLL-библиотеке необходимы клиентские библиотеки версии
+   Oracle 11gR1 и выше. Начиная с версии PHP 5.3.6 DLL-библиотеке
+   php_oci8_11g требуются клиентские библиотеки версии Oracle 11gR2 и
+   выше. В некоторых версиях Instant Client вам также могут дополнительно
+   потребоваться библиотеки <filename>mfc71.dll</filename> и
+   <filename>msvcr71.dll</filename>.
   </para>
   <para>
-   После установки среды окружения для веб-сервера, добавьте
-   пользователя, с правами которого работает веб-сервер, в группу oracle.
+   Необходимо использовать PHP с теми же или более свежими версиями
+   библиотек Oracle, чем те, с которыми было собрано расширение OCI8.
   </para>
   <note>
-   <title>Если ваш веб-сервер не стартует или возвращает ошибку при старте</title>
    <para>
-    Проверьте, что Apache был слинкован с библиотекой
-    <literal>pthread</literal>: 
+    Если OCI8 использует клиентские библиотеки 9iR2 или 10g, то PHP сможет
+    соединиться с базой данных Oracle 8i, 9iR2, 10g или 11g. Если OCI8
+    использует клиентские библиотеки 11g, то база данных может иметь версии
+    9iR2, 10g и 11g.
    </para>
+  </note>
+  <note>
    <para>
-   <informalexample>
-    <screen>
-<![CDATA[
-# ldd /www/apache/bin/httpd 
-  libpthread.so.0 => /lib/libpthread.so.0 (0x4001c000)
-  libm.so.6 => /lib/libm.so.6 (0x4002f000)
-  libcrypt.so.1 => /lib/libcrypt.so.1 (0x4004c000)
-  libdl.so.2 => /lib/libdl.so.2 (0x4007a000)
-  libc.so.6 => /lib/libc.so.6 (0x4007e000)
-  /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x40000000)
-]]>
-    </screen>
-   </informalexample>
-  </para>
-  <para>
-   Если libpthread не присутствует в списке, то вам придется переустановить Apache:
-  </para>
-  <para>
-   <informalexample>
-    <screen>
-<![CDATA[
-# cd /usr/src/apache_1.3.xx
-# make clean
-# LIBS=-lpthread ./config.status
-# make
-# make install
-]]>
-    </screen>
-   </informalexample>
-  </para>
-  <para>
-   Обратите внимание на то, что на некоторых системах, например, UnixWare,
-   вместо <literal>libthread</literal> присутствует
-   <literal>libpthread</literal>. PHP и Apache также должны быть собраны с 
-    EXTRA_LIBS=-lthread.
-  </para>
- </note>
+    Полный набор возможностей OCI8 возможен только при использовании
+    новейших версий клиентских библиотек и базы данных.
+   </para>
+  </note>
  </section>
  <!-- }}} -->
 
  <!-- {{{ Installation -->
- <section xml:id="oci8.installation">
-  &reftitle.install;
-  &no.install;
- </section>
+  &reference.oci8.configure;
+ <!-- }}} -->
+
+ <!-- {{{ Testing -->
+ &reference.oci8.testing;
  <!-- }}} -->
 
  <!-- {{{ Configuration -->
  &reference.oci8.ini;
- <!-- }}} -->
-
- <!-- {{{ Resources -->
- <section xml:id="oci8.resources">
-  &reftitle.resources;
-  &no.resource;
- </section>
  <!-- }}} -->
 
 </chapter>
