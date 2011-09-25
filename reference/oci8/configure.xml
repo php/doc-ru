@@ -1,25 +1,538 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 9425da2dfab7583014c3d42746d2253399ea1986 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-<section xml:id="oci8.installation" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<section xml:id="oci8.installation">
  &reftitle.install;
+
+
+<section xml:id="oci8.configure" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Сборка PHP совместно с OCI8</title>
  <para>
-  PHP должен быть сконфигурирован с опцией 
-  <option role="configure">--with-oci8[=DIR]</option>, где
-  <literal>DIR</literal> соответствует директории, в которой 
-  находится установленный ранее сервер и/или клиент Oracle. По 
-  умолчанию значение <literal>DIR</literal> соответствует
-  переменной окружения <constant>ORACLE_HOME</constant>.
+  Перед сборкой OCI8 изучите предыдущий раздел 
+  "<link linkend="oci8.requirements">Требования</link>".
  </para>
  <para>
-  Если вы используете Oracle Instant Client, то для поддержки модуля OCI8
-  нужно, чтобы PHP был сконфигурирован с опцией
-  <option role="configure">--with-oci8-instant-client[=DIR]</option>. Обратите
-  внимание: поддержка Oracle Instant Client появилась только начиная с 
-  версий 4.3.11 и 5.0.4.
+  Для работы расширения OCI8, укажите при настройке PHP опцию
+  <option role="configure">--with-oci8</option>.
+ </para>
+ <para>
+  Перед стартом веб-сервера, OCI8 обычно требуется несколько переменных
+  окружения Oracle (см. ниже) для обнаружения библиотек, конфигурационных
+  файлов и установки некоторых базовых свойств, таких как кодировка,
+  используемая библиотеками Oracle. Эти переменные должны быть установлены
+  <emphasis>перед</emphasis> запуском любого PHP-процесса.
+ </para>
+ <para>
+  PHP должен использовать ту же, или более свежую основную версию библиотек
+  Oracle, чем ту, с которой он был собран. Например, если вы собрали
+  OCI8 с библиотеками Oracle 11.2, то PHP также должен работать с
+  библиотеками Oracle 11.2.
  </para>
 </section>
+<section>
+ <title>Установка OCI8 в виде подгружаемого (shared) расширения</title>
+ <para>
+  Указание опции конфигурации <literal>shared</literal> позволяет собрать
+  OCI8 в виде динамически подгружаемой библиотеки. Сборка в виде
+  подгружаемого расширения позволяет легко обновлять OCI8 без пересборки
+  всего PHP.
+ </para>
+ <para>
+  Соберите OCI8 с помощью одной из следующих опций.
+ </para>
+ <para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     При использовании Oracle Instant Client:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure --with-oci8=shared,instantclient,/путь/к/instant/client/lib
+]]>
+      </screen>
+     </informalexample>
+    </para>
+    <para>
+     Если Instant Client установлен из ZIP-архива, не забудьте создать
+     символическую ссылку на библиотеку, например, так:
+     <literal>ln -s libclntsh.so.11.1 libclntsh.so</literal>.
+    </para>
+    <para>
+     Если Oracle Instant Client был установлен с помощью RPM, команда
+     конфигурации будет выглядеть так:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure --with-oci8=shared,instantclient,/usr/lib/oracle/<version>/client/lib
+]]>
+      </screen>
+     </informalexample>
+    </para>
+    <para>
+     Например, <option role="configure">--with-oci8=shared,instantclient,/usr/lib/oracle/11.2/client/lib</option>.
+    </para>
+    <para>
+     Учтите, что поддержка Oracle Instant Client появилась только
+     начиная с версий PHP 4.3.11 и 5.0.4 и ранее использовалась с опцией
+     <option role="configure">--with-oci8-instant-client</option>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     При использовании базы данных Oracle database или полной установке
+     Oracle Client:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure --with-oci8=shared,$ORACLE_HOME
+]]>
+      </screen>
+     </informalexample>
+    </para>
+    <para>
+     Убедитесь, что пользователь, под которым запущен веб-сервер,
+     (<literal>nobody</literal>, <literal>www</literal>) имеет доступ
+     к библиотекам, файлам инициализации и
+     <filename>tnsnames.ora</filename> (если используется) в папке
+     <literal>$ORACLE_HOME</literal>. При использовании Oracle
+     10gR2, может понадобиться запуск утилиты
+     <filename>$ORACLE_HOME/install/changePerm.sh</filename> для
+     получения доступа к этой папке.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+ <para>
+  После настройки следуйте обычной процедуре сборки PHP, например,
+  <emphasis>make install</emphasis>, после чего будет создано
+  подгружаемая библиотека <filename>oci8.so</filename>. Возможно, вам
+  потребуется вручную перенести ее в папку расширений PHP, указанную
+  опцией <link linkend="ini.extension-dir">extension_dir</link> вашего
+  &php.ini;.
+ </para>
+ <para>
+  Для завершения установки OCI8 добавьте следующую строку в &php.ini;:
+ </para>
+ <para>
+  <informalexample>
+   <screen>
+<![CDATA[
+extension=oci8.so
+]]>
+   </screen>
+  </informalexample>
+ </para>
+</section>
+<section>
+ <title>Установка OCI8 в виде статически скомпилированного расширения</title>
+ <para>
+  Соберите OCI8 с помощью одной из следующих опций.
+ </para>
+ <para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     При использовании Oracle Instant Client:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure --with-oci8=instantclient,/путь/к/instant/client/lib
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     При использовании базы данных Oracle или полной установки
+     Oracle Client:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure --with-oci8=$ORACLE_HOME
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+ <para>
+  После настройки следуйте обычной процедуре установки PHP, например,
+  <emphasis>make install</emphasis>.  После успешной сборки нет необходимости
+  добавлять <filename>oci8.so</filename> в файл &php.ini;.
+  Никаких дополнительных шагов сборки больше не требуется.
+ </para>
+</section>
+<section>
+ <title>Установка OCI8 из PECL</title>
+ <para xmlns:xlink="http://www.w3.org/1999/xlink">
+  Расширение OCI8 может быть включено в текущую установку PHP как
+  автоматически, так и вручную с помощью
+  <link xlink:href="&url.pecl;">&url.pecl;</link>.
 
+  &pecl.info;
+  <link xlink:href="&url.pecl.package;oci8">&url.pecl.package;oci8</link>.
+
+ </para>
+ <para>
+  Для автоматической установки следуйте данным инструкциям:
+ </para>
+ <para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Если ваш компьютер находится за файрволлом, установите прокси для
+     PEAR, например:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+pear config-set http_proxy http://my-proxy.example.com:80/
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Запустите
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+pecl install oci8
+]]>
+      </screen>
+     </informalexample>
+    </para>
+    <para>
+     При запросе введите либо значение <literal>$ORACLE_HOME</literal>, либо
+     <literal>instantclient,/path/to/instant/client/lib</literal>.
+    </para>
+    <para>
+      Обратите внимание: Не вводите переменную <literal>$ORACLE_HOME</literal>,
+      т.к. она не будет развернута. Вместо этого, введите реальный путь
+      к домашней папке Oracle.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+ <para>
+  Для установки вручную, скачайте пакет установки PECL OCI8, например,
+  <filename>oci8-1.3.5.tgz</filename>.
+ </para>
+ <para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Разархивируйте пакет:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+tar -zxf oci8-1.3.5.tgz
+cd oci8-1.3.5
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Подготовьте к установке:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+phpize
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Настройте пакет, указав
+     <literal>$ORACLE_HOME</literal> или Instant Client:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure -with-oci8=shared,$ORACLE_HOME
+]]>
+      </screen>
+     </informalexample>
+    </para>
+    <para>
+     или
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+./configure -with-oci8=shared,instantclient,/path/to/instant/client/lib
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Установите пакет:
+    </para>
+    <para>
+     <informalexample>
+      <screen>
+<![CDATA[
+make install
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+ <para>
+  После автоматической или ручной установки отредактируйте ваш
+  &php.ini;, добавив в него следующую строку:
+ </para>
+ <para>
+  <informalexample>
+   <screen>
+<![CDATA[
+extension=oci8.so
+]]>
+   </screen>
+  </informalexample>
+ </para>
+ <para>
+  Убедитесь, что директива &php.ini;
+  <link linkend="ini.extension-dir">extension_dir</link> установлена
+  на ту самую папку, в которую была установлена библиотека
+  <filename>oci8.so</filename>.
+ </para>
+</section>
+<section>
+ <title>Установка OCI8 в Windows</title>
+ <para>
+  В Windows, при использовании клиентских библиотек
+  Oracle 10gR2, раскомментируйте строку &php.ini;
+  <literal>extension=php_oci8.dll</literal>.
+  При использовании клиентских библиотек Oracle 11g,
+  раскомментируйте строку
+  <literal>extension=php_oci8_11g.dll</literal>.
+  Эти две DLL-библиотеки содержат одинаковый функционал,
+  и могут быть включены только по отдельности. Убедитесь, что
+  <link linkend="ini.extension-dir">extension_dir</link> установлена
+  на папку, содержащую DLL-библиотеки расширений PHP.
+ </para>
+ <para>
+  При использовании Instant Client, установите системную переменную
+  окружения <literal>PATH</literal> на папку с библиотекой
+  Oracle.
+ </para>
+</section>
+<section>
+ <title>Установка окружения Oracle</title>
+ <para>
+  Перед использованием данного расширения, убедитесь, что
+  переменные окружения Oracle правильно настроены для пользователя,
+  под которым работает веб-сервер. Если ваш веб-сервер автоматически
+  стартует при загрузке, то убедитесь, что окружение при загрузке
+  также настроено корректно.
+ </para>
+ <note>
+  <para>
+   Не устанавливайте переменные окружения Oracle через
+   <function>putenv</function> в PHP-скрипте, потому что библиотеки
+   Oracle могут быть загружены и проинициализированы до запуска
+   вашего скрипта. Переменные, установленные через
+   <function>putenv</function> могут затем вызывать конфликты, падения
+   и прочее непредсказуемое поведение. Некоторые функции могут работать,
+   в то время как другие давать мелкие ошибки. Необходимо устанавливать
+   эти переменные <emphasis>до</emphasis> запуска веб-сервера.
+  </para>
+ </note>
+ <para>
+  В Red Hat Linux и его вариантах, экспортируйте переменные в конце файла
+  <filename>/etc/sysconfig/httpd</filename>.  Другие системы с
+  Apache 2 могут использовать скрипт <filename>envvars</filename>
+  из папки <filename>bin</filename> в дистрибутиве Apache. Третьим вариантом
+  является директива Apache <literal>SetEnv</literal> в файле
+  <filename>httpd.conf</filename>, на каких-то системах она может работать,
+  однако, известно, что на некоторых ее недостаточно.
+ </para>
+ <para>
+  Чтобы удостовериться в корректной настройке переменных окружения,
+  используйте функцию <function>phpinfo</function> и проверьте, что раздел
+  <emphasis>Environment</emphasis> (не <emphasis>Apache
+  Environment</emphasis>) содержит ожидаемые переменные.
+ </para>
+ <para>
+  Следующая таблица содержит переменные, которые могут вам потребоваться.
+  За подробностями обо всех переменных обращайтесь к документации
+  Oracle.
+  <table>
+   <title>Общие переменные окружения Oracle</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Название</entry>
+      <entry>Цель</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>ORACLE_HOME</entry>
+      <entry>Указывает на папку, с полностью установленной базой данных
+       Oracle. Не устанавливайте эту переменную при использовании
+       Oracle Instant Client, т.к. в этом нет необходимости и может
+       вызвать проблемы при установке.</entry>
+     </row>
+     <row>
+      <entry>ORACLE_SID</entry>
+      <entry>Содержит имя базы данных на локальной машине, к которой
+      идет подключение. Нет необходимости устанавливать эту переменную
+      при использовании Oracle Instant Client, или всегда передавать
+       в параметрах соединения в функцию
+       <function>oci_connect</function>.</entry>
+     </row>
+     <row>
+      <entry>LD_LIBRARY_PATH</entry>
+      <entry>Установите эту переменную (или ее эквивалент на используемой
+      платформе, например,
+      <literal>DYLD_LIBRARY_PATH</literal>, <literal>LIBPATH</literal>
+      или <literal>SHLIB_PATH</literal>) в местоположение библиотек
+      Oracle, например, <filename>$ORACLE_HOME/lib</filename> или
+      <filename>/usr/lib/oracle/11.1/client/lib</filename>. В этой переменной
+      нет необходимости, если библиотеки указываются другим механизмом
+      поиска, например, <filename>ldconfig</filename> или
+      <literal>LD_PRELOAD</literal>.</entry>
+     </row>
+     <row>
+      <entry>NLS_LANG</entry>
+      <entry>Это основная переменная, используемая для указания
+       кодировки и настроек глобализации в библиотеках Oracle.</entry>
+     </row>
+     <row>
+      <entry>ORA_SDTZ</entry>
+      <entry>Устанавливает временную зону сессии Oracle.</entry>
+     </row>
+     <row>
+      <entry>TNS_ADMIN</entry>
+      <entry>Содержит папку, в которой хранятся конфигурационные файлы
+      Oracle Net Services, такие как <filename>tnsnames.ora</filename>
+      и <filename>sqlnet.ora</filename>. В ней нет необходимости, если
+      строка соединения в функции <function>oci_connect</function>
+      использует синтаксис Easy Connect, такой как, например,
+      <literal>localhost/XE</literal>.  В ней также нет необходимости, если
+      сетевые конфигурационные файлы содержатся в местах хранения по умолчанию,
+      таких как <filename>$ORACLE_HOME/network/admin</filename> или
+      <filename>/etc</filename>.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+   Менее используемые переменные окружения Oracle включают в себя
+  <literal>TWO_TASK</literal>, <literal>ORA_TZFILE</literal>, а также
+   различные установки глобализации Oracle наподобие переменных
+   <literal>NLS*</literal> и <literal>ORA_NLS_*</literal>.
+ </para>
+</section>
+<section>
+ <title>Решение проблем</title>
+ <para>
+  Самой частой проблемой при установке OCI8 является неправильная
+  установка окружения Oracle. Обычно это выражается в проблеме при
+  использовании функций <function>oci_connect</function> или
+  <function>oci_pconnect</function>. Ошибка может проявляться в
+  виде ошибок PHP, например, <emphasis>Call to undefined function
+  oci_connect()</emphasis>, ошибок Oracle, таких как ORA-12705,
+  или даже крушения Apache. Проверьте лог-файлы Apache на наличие
+  ошибок запуска и вышеописанные разделы для разрешения этой проблемы.
+ </para>
+ <para>
+  Несмотря на то, что сетевые ошибки, наподобие ORA-12154 или
+  ORA-12514 сигнализируют ошибку в именовании или конфигурации сети
+  Oracle, реальной причиной может быть некорректно установленное
+  окружение PHP, из-за чего библиотеки Oracle не могут найти
+  конфигурационный файл <filename>tnsnames.ora</filename>.
+ </para>
+ <para>
+  В Windows, использование нескольких версий Oracle на одной машине
+  может легко вызвать их конфликты, которых можно избежать
+  при соблюдении особых мер предосторожности, предусматривающих, что
+  PHP использует корректную версию Oracle.
+ </para>
+ <para>
+  Утилита, помогающая определить искомые и загруженные в итоге библиотеки,
+  может помочь в случае проблем при отсутствующих или конфликтующих
+  библиотеках, особенно в Windows.
+ </para>
+ <note>
+  <title>Если веб-сервер не стартует или падает при старте</title>
+  <para>
+   Проверьте, что Apache слинкован с библиотекой pthread:
+  </para>
+  <para>
+   <informalexample>
+    <screen>
+<![CDATA[
+# ldd /www/apache/bin/httpd
+  libpthread.so.0 => /lib/libpthread.so.0 (0x4001c000)
+  libm.so.6 => /lib/libm.so.6 (0x4002f000)
+  libcrypt.so.1 => /lib/libcrypt.so.1 (0x4004c000)
+  libdl.so.2 => /lib/libdl.so.2 (0x4007a000)
+  libc.so.6 => /lib/libc.so.6 (0x4007e000)
+  /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x40000000)
+]]>
+    </screen>
+   </informalexample>
+  </para>
+  <para>
+   Если libpthread нет в списке, переустановите Apache:
+  </para>
+  <para>
+   <informalexample>
+    <screen>
+<![CDATA[
+# cd /usr/src/apache_1.3.xx
+# make clean
+# LIBS=-lpthread ./config.status
+# make
+# make install
+]]>
+    </screen>
+   </informalexample>
+  </para>
+  <para>
+   Имейте в виду, что на некоторых системах, наподобие UnixWare,
+   libpthread называется libthread. Таким образом, PHP и Apache должны быть
+   настроены с помощью EXTRA_LIBS=-lthread.
+  </para>
+ </note>
+</section>
+
+
+</section> <!-- oci8.installation -->
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
