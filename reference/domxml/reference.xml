@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+
+ <reference xml:id="ref.domxml" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>DOM XML (PHP 4) &Functions;</title>
+
+  <partintro>
+   <section xml:id="domxml.deprecated">
+    <title>Устаревшие функции</title>
+    <para>
+     Довольно много функций в расширении не вписываются в стандарт DOM и не
+     будут в дальнейшем использоваться. Эти функции представлены в приведенном
+     ниже списке. Функция <function>DomNode_append_child</function> изменила 
+     свое поведение. Теперь она добавляет только сына узла и не добавляет
+     брата. Если это поведение неприемлемо для вашего приложения, используйте
+     не-DOM функцию <function>DomNode_append_sibling</function>.
+    </para>
+    <para>
+    <table>
+     <title>Устаревшие и их заменяющие функции</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Устаревшая функция</entry>
+        <entry>Новая функция</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>xmldoc</entry>
+        <entry><function>domxml_open_mem</function></entry>
+       </row>
+       <row>
+        <entry>xmldocfile</entry>
+        <entry><function>domxml_open_file</function></entry>
+       </row>
+       <row>
+        <entry>domxml_new_xmldoc</entry>
+        <entry><function>domxml_new_doc</function></entry>
+       </row>
+       <row>
+        <entry>domxml_dump_mem</entry>
+        <entry><function>DomDocument_dump_mem</function></entry>
+       </row>
+       <row>
+        <entry>domxml_dump_mem_file</entry>
+        <entry><function>DomDocument_dump_file</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_dump_mem_file</entry>
+        <entry><function>DomDocument_dump_file</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_add_root</entry>
+        <entry><function>DomDocument_create_element</function> followed by
+               <function>DomNode_append_child</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_dtd</entry>
+        <entry><function>DomDocument_doctype</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_root</entry>
+        <entry><function>DomDocument_document_element</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_children</entry>
+        <entry><function>DomNode_child_nodes</function></entry>
+       </row>
+       <row>
+        <entry>DomDocument_imported_node</entry>
+        <entry>No replacement.</entry>
+       </row>
+       <row>
+        <entry>DomNode_add_child</entry>
+        <entry>
+         Создает новый узел, например функцией
+         <function>DomDocument_create_element</function>, и добавляет его
+         функцией <function>DomNode_append_child</function>.
+        </entry>
+       </row>
+       <row>
+        <entry>DomNode_children</entry>
+        <entry><function>DomNode_child_nodes</function></entry>
+       </row>
+       <row>
+        <entry>DomNode_parent</entry>
+        <entry><function>DomNode_parent_node</function></entry>
+       </row>
+       <row>
+        <entry>DomNode_new_child</entry>
+        <entry>
+         Создает новый узел, например функцией
+         <function>DomDocument_create_element</function>, и добавляет его
+         функцией <function>DomNode_append_child</function>.
+        </entry>
+       </row>
+       <row>
+        <entry>DomNode_set_content</entry>
+        <entry>
+         Создает новый узел, например функцией
+         <function>DomDocument_create_text_node</function>, и добавляет его
+         функцией <function>DomNode_append_child</function>.
+        </entry>
+       </row>
+       <row>
+        <entry>DomNode_get_content</entry>
+        <entry>
+         Контент - это просто текстовый узел, доступ к которому можно 
+         получить посредством <function>DomNode_child_nodes</function>.
+        </entry>
+       </row>
+       <row>
+        <entry>DomNode_set_content</entry>
+        <entry>
+         Контент - это просто текстовый узел, который можно добавить
+         посредством <function>DomNode_append_child</function>.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+   </section>
+
+   <!--
+      FIXME:
+        Maybe someone, someday, wants to upgrade this mess to use the
+        new OO markup..
+   -->
+   <section xml:id="domxml.classes">
+    <title>Классы</title>
+    <para>
+     API этого модуля соответствует стандарту DOM Level 2 настолько, насколько
+     это возможно. В частности, API полностью объектно-ориентированный.
+     Было бы неплохой идеей иметь под рукой стандарт DOM при работе с этим
+     модулем.
+     Несмотря на то, что API объектно-ориентирован, есть множество функций,
+     которые могут вызываться в процедурном стиле посредством передачи 
+     объекта обработки первым аргументом функции. Эти функции предназначены
+     для сохранения совместимости со старыми версиями расширения и не должны
+     применяться в новых создаваемых скриптах.
+    </para>
+    <para>
+     Этот API отличается от официального DOM API по двум направлениям. 
+     Во-первых, все свойства класса представлены в виде одноименных функций.
+     Во-вторых, имена функций соответствуют правилам именования функций в PHP.
+     Это означает, что DOM-функция lastChild() будет записана как last_child().
+    </para>
+    <para>
+     В модуле определены классы, которые приведены в списке ниже, включая 
+     свои методы. Классы, являющиеся аналогом классов в стандарте DOM,
+     имеют название вида DOMxxx.
+    </para>
+ 
+    <para>
+    <table>
+     <title>Список классов</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Имя класса</entry>
+        <entry>Родительские классы</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>DomAttribute</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomCData</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomComment</entry>
+        <entry>DomCData : DomNode</entry>
+       </row>
+       <row>
+        <entry>DomDocument</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomDocumentType</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomElement</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomEntity</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomEntityReference</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomProcessingInstruction</entry>
+        <entry>DomNode</entry>
+       </row>
+       <row>
+        <entry>DomText</entry>
+        <entry>DomCData : DomNode</entry>
+       </row>
+       <row>
+        <entry>Parser</entry>
+        <entry>На данный момент все еще именуется, как DomParser</entry>
+       </row>
+       <row>
+        <entry>XPathContext</entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс DomDocument (DomDocument : DomNode)</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>doctype</entry>
+        <entry><function>DomDocument_doctype</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>document_element</entry>
+        <entry><function>DomDocument_document_element</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_element</entry>
+        <entry><function>DomDocument_create_element</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_text_node</entry>
+        <entry><function>DomDocument_create_text_node</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_comment</entry>
+        <entry><function>DomDocument_create_comment</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_cdata_section</entry>
+        <entry><function>DomDocument_create_cdata_section</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_processing_instruction</entry>
+        <entry><function>DomDocument_create_processing_instruction</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_attribute</entry>
+        <entry><function>DomDocument_create_attribute</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>create_entity_reference</entry>
+        <entry><function>DomDocument_create_entity_reference</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>get_elements_by_tagname</entry>
+        <entry><function>DomDocument_get_elements_by_tagname</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>get_element_by_id</entry>
+        <entry><function>DomDocument_get_element_by_id</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>dump_mem</entry>
+        <entry><function>DomDocument_dump_mem</function></entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry>dump_file</entry>
+        <entry><function>DomDocument_dump_file</function></entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry>html_dump_mem</entry>
+        <entry><function>DomDocument_html_dump_mem</function></entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry>xpath_init</entry>
+        <entry>xpath_init</entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry>xpath_new_context</entry>
+        <entry>xpath_new_context</entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry>xptr_new_context</entry>
+        <entry>xptr_new_context</entry>
+        <entry>отсутствует в стандарте DOM</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс DomElement (DomElement : DomNode)</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>tagname</entry>
+        <entry><function>DomElement_tagname</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>get_attribute</entry>
+        <entry><function>DomElement_get_attribute</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>set_attribute</entry>
+        <entry><function>DomElement_set_attribute</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>remove_attribute</entry>
+        <entry><function>DomElement_remove_attribute</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>get_attribute_node</entry>
+        <entry><function>DomElement_get_attribute_node</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>set_attribute_node</entry>
+        <entry><function>DomElement_set_attribute_node</function></entry>
+        <entry></entry>
+       </row>
+   
+       <row>
+        <entry>get_elements_by_tagname</entry>
+        <entry><function>DomElement_get_elements_by_tagname</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>has_attribute</entry>
+        <entry><function>DomElement_has_attribute</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс DomNode</title>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry><function>DomNode_node_name</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_node_value</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_node_type</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_last_child</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_first_child</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_child_nodes</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_previous_sibling</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_next_sibling</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_parent_node</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_owner_document</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_insert_before</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_append_child</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_append_sibling</function></entry>
+        <entry>
+         Отсутствует в стандарте DOM. Эта функция эмулирует поведение
+         <function>DomNode_append_child</function>, касающееся создания
+         узла.
+        </entry>
+       </row>
+       <row>
+        <entry><function>DomNode_remove_child</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_has_child_nodes</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_has_attributes</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_clone_node</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_attributes</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><function>DomNode_unlink_node</function></entry>
+        <entry>Отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry><function>DomNode_replace_node</function></entry>
+        <entry>Отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry><function>DomNode_set_content</function></entry>
+        <entry>Отсутствует в стандарте DOM, устарела</entry>
+       </row>
+       <row>
+        <entry><function>DomNode_get_content</function></entry>
+        <entry>Отсутствует в стандарте DOM, устарела </entry>
+       </row>
+       <row>
+        <entry><function>DomNode_dump_node</function></entry>
+        <entry>Отсутствует в стандарте DOM</entry>
+       </row>
+       <row>
+        <entry><function>DomNode_is_blank_node</function></entry>
+        <entry>Отсутствует в стандарте DOM</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс DomAttribute (DomAttribute : DomNode)</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry></entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>name</entry>
+        <entry><function>DomAttribute_name</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>value</entry>
+        <entry><function>DomAttribute_value</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>specified</entry>
+        <entry><function>DomAttribute_specified</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс DomProcessingInstruction (DomProcessingInstruction : DomNode)</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>target</entry>
+        <entry><function>DomProcessingInstruction_target</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>data</entry>
+        <entry><function>DomProcessingInstruction_data</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс Parser</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>add_chunk</entry>
+        <entry><function>Parser_add_chunk</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>end</entry>
+        <entry><function>Parser_end</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+     <title>Класс XPathContext</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>eval</entry>
+        <entry><function>XPathContext_eval</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>eval_expression</entry>
+        <entry><function>XPathContext_eval_expression</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>register_ns</entry>
+        <entry><function>XPathContext_register_ns</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+    <table>
+      <title>Класс DomDocumentType (DomDocumentType : DomNode)</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Имя метода</entry>
+        <entry>Имя функции</entry>
+        <entry>Замечание</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>name</entry>
+        <entry><function>DomDocumentType_name</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>entities</entry>
+        <entry><function>DomDocumentType_entities</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>notations</entry>
+        <entry><function>DomDocumentType_notations</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>public_id</entry>
+        <entry><function>DomDocumentType_public_id</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>system_id</entry>
+        <entry><function>DomDocumentType_system_id</function></entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>internal_subset</entry>
+        <entry><function>DomDocumentType_internal_subset</function></entry>
+        <entry></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    </para>
+
+    <para>
+     Класс DomDtd исключен из DomNode. DomComment исключен из DomCData.
+    </para>
+   </section>
+
+   <section xml:id="domxml.examples">
+    &reftitle.examples;
+    <para>
+     Многие примеры в этом разделе требуют наличия строки XML. Вместо 
+     повторения этой строки в каждом примере, она помещена в файл, который 
+     будет добавляться в примерах. Содержимое этого файла приведено ниже в 
+     подразделе примеров. С другой стороны, ничего не мешает вам создать 
+     собственный XML документ и прочитать его функцией
+     <function>DomDocument_open_file</function>.
+    </para>
+    <para>
+     <example>
+      <title>
+       Включаемый файл example.inc c XML-строкой
+      </title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+$xmlstr = "<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE chapter SYSTEM '/share/sgml/Norman_Walsh/db3xml10/db3xml10.dtd'
+[ <!ENTITY sp \"spanish\">
+]>
+<!-- lsfj  -->
+<chapter language='en'><title language='en'>Title</title>
+ <para language='ge'>
+  &sp;
+  <!-- comment -->
+  <informaltable ID='findme' language='&sp;'>
+   <tgroup cols='3'>
+    <tbody>
+     <row><entry>a1</entry><entry
+morerows='1'>b1</entry><entry>c1</entry></row>
+<row><entry>a2</entry><entry>c2</entry></row>
+     <row><entry>a3</entry><entry>b3</entry><entry>c3</entry></row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </para>
+</chapter>";
+?>
+]]>
+      </programlisting>
+     </example>
+    </para>
+   </section>
+  </partintro>
+
+&reference.domxml.entities.functions;
+
+ </reference>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
