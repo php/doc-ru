@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- EN-Revision: 176fc5fa0bd644d2f22530fcb9cffe94cf1d895a Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+<refentry xml:id="tidynode.isasp" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>tidyNode::isAsp</refname>
+  <refpurpose>Проверяет текущий узел на соответствие ASP</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>tidyNode::isAsp</methodname>
+   <void/>
+  </methodsynopsis>
+  <para>
+   Проверяет текущий узел на соответствие ASP.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает &true;, если узел является ASP, &false; - в противном случае.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Извлечение кода ASP из смешанного HTML-документа</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$html = <<< HTML
+<html><head>
+<?php echo '<title>заголовок</title>'; ?>
+<# 
+  /* JSTE код */
+  alert('Привет Мир');
+#>
+</head>
+<body>
+
+<?php
+  // PHP код
+  echo 'привет мир!';
+?>
+
+<%
+  /* ASP код */
+  response.write("Привет Мир!")
+%>
+
+<!-- Комментарии -->
+Привет Мир
+</body></html>
+За пределами HTML кода
+HTML;
+
+
+$tidy = tidy_parse_string($html);
+$num = 0;
+
+get_nodes($tidy->html());
+
+function get_nodes($node) {
+
+    // проверяет текущий узел на соответствие требуемому типу
+    if($node->isAsp()) {
+        echo "\n\n# asp узел #" . ++$GLOBALS['num'] . "\n";
+        echo $node->value;
+    }
+
+    // проверяет существование потомков у текущего узла
+    if($node->hasChildren()) {
+        foreach($node->child as $child) {
+            get_nodes($child);
+        }
+    }
+}
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+# asp нода #1
+<%
+  /* ASP код */
+  response.write("Привет Мир!")
+%>
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;  
+  <note>
+   <para>
+    Эта функция называлась <function>tidy_node::is_asp</function> в
+    PHP 4/Tidy 1.
+   </para>
+  </note>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
