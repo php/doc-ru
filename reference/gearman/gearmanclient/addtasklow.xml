@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 8b6d169424ff189bb563ef4c3f35f8adff3f42c5 Maintainer: mch Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+
+<refentry xml:id="gearmanclient.addtasklow" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>GearmanClient::addTaskLow</refname>
+  <refpurpose>Добавить низкоприоритетную задачу для работы в параллельном режиме</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>GearmanTask</type><methodname>GearmanClient::addTaskLow</methodname>
+   <methodparam><type>string</type><parameter>function_name</parameter></methodparam>
+   <methodparam><type>string</type><parameter>workload</parameter></methodparam>
+   <methodparam choice="opt"><type>mixed</type><parameter role="reference">context</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>unique</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Добавляет низкоприоритетную задачу для параллельной работы с другими задачами.
+   Вызовите этот метод для всех задач, которые будут работать параллельно, а затем вызовите
+   <methodname>GearmanClient::runTasks</methodname> для выполнения работ. 
+   Задачи с низким приоритетом будут выбраны из очереди после задач с нормальным или высоким приоритетом.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>function_name</parameter></term>
+     <listitem>
+      <para>
+       &gearman.parameter.functionname;
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>workload</parameter></term>
+     <listitem>
+      <para>
+       &gearman.parameter.workload;
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>context</parameter></term>
+     <listitem>
+      <para>
+       &gearman.parameter.context;
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>unique</parameter></term>
+     <listitem>
+      <para>
+       &gearman.parameter.unique;
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+    Объект <classname>GearmanTask</classname> или &false;, если задача не может быть добавлена.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Низкоприоритетная задача вместе с двумя нормальными задачами</title>
+    <para>
+     Низкоприоритетная задача включена среди двух других задач. Единственный рабочий
+  доступен, так что задачи запускаются одна за другой, низкоприоритетные задачи выполняются
+  в последнюю очередь.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+# создание клиента
+$gmc= new GearmanClient();
+
+# добавление сервера задач по умолчанию
+$gmc->addServer();
+
+# установка функции обратного вызова по завершению задачи
+$gmc->setCompleteCallback("reverse_complete");
+
+# добавление задач, одна из которых с низким приоритетом
+$task= $gmc->addTask("reverse", "Hello World!", null, "1");
+$task= $gmc->addTaskLow("reverse", "!dlroW olleH", null, "2");
+$task= $gmc->addTask("reverse", "Hello World!", null, "3");
+
+if (! $gmc->runTasks())
+{
+    echo "Ошибка " . $gmc->error() . "\n";
+    exit;
+}
+echo "Готово\n";
+
+function reverse_complete($task)
+{
+    echo "Выполнено: " . $task->unique() . ", " . $task->data() . "\n";
+}
+
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Выполнено: 3, !dlroW olleH
+Выполнено: 1, !dlroW olleH
+Выполнено: 2, Hello World!
+Готово
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><methodname>GearmanClient::addTask</methodname></member>
+    <member><methodname>GearmanClient::addTaskHigh</methodname></member>
+    <member><methodname>GearmanClient::addTaskBackground</methodname></member>
+    <member><methodname>GearmanClient::addTaskHighBackground</methodname></member>
+    <member><methodname>GearmanClient::addTaskLowBackground</methodname></member>
+    <member><methodname>GearmanClient::runTasks</methodname></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
