@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.stream-filter-register" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>stream_filter_register</refname>
+  <refpurpose>Регистрирует потоковый фильтр, определённый пользователем</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>stream_filter_register</methodname>
+   <methodparam><type>string</type><parameter>filtername</parameter></methodparam>
+   <methodparam><type>string</type><parameter>classname</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>stream_filter_register</function> позволяет вам реализовать
+   ваш собственный фильтр на любом зарегистрированном потоке, используемом со всеми другими
+   функциями файловой системы (такими как <function>fopen</function>,
+   <function>fread</function> и т. д.).
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>filtername</parameter></term>
+     <listitem>
+      <para>
+       Название регистрируемого фильтра.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>classname</parameter></term>
+     <listitem>
+      <para>
+       Для того, чтобы реализовать фильтр, вам нужно определить класс как расширение
+       <literal>php_user_filter</literal> c функциями-членами как указано ниже. При
+       выполнении операций чтения/записи на потоке, к которому прикреплён ваш фильтр,
+       PHP будет передавать данные через ваш фильтр (и через любые другие фильтры, 
+       прикреплённые к потоку) так что данные могут быть изменены как требуется. 
+       Вы должны реализовать методы точно как описано ниже. Иная реализация 
+       приведёт к непредсказуемому поведению.
+      </para>
+      <methodsynopsis>
+       <type>int</type><methodname>filter</methodname>
+       <methodparam><type>resource</type><parameter>in</parameter></methodparam>
+       <methodparam><type>resource</type><parameter>out</parameter></methodparam>
+       <methodparam><type>int</type><parameter role="reference">consumed</parameter></methodparam>
+       <methodparam><type>bool</type><parameter>closing</parameter></methodparam>
+      </methodsynopsis>
+      <para>
+       Этот метод вызывается каждый раз, когда данные читаются или записываются в 
+       прикреплённый поток (такой, как с функциями <function>fread</function> или <function>fwrite</function>). 
+       Переменная <parameter>in</parameter> - это ресурс, указывающий на последовательный поток данных 
+       (<literal>bucket brigade</literal>), который содержит одну или больше единиц данных
+       (<literal>bucket</literal>), содержащих данные для фильтрации. 
+       Переменная <parameter>out</parameter> - это ресурс, указывающий на второй последовательный 
+       поток данных (<literal>bucket brigade</literal>), в который должны быть помещены ваши 
+       модифицированные единицы данных (buckets). 
+       Переменная <parameter>consumed</parameter>, которая должна 
+       <emphasis>всегда</emphasis> передаваться по ссылке, должна быть увеличена на длину 
+       данных, которые ваш фильтр читает и изменяет. В большинстве случаев это означает, 
+       что вы будете увеличивать  <parameter>consumed</parameter> на 
+       <literal>$bucket->datalen</literal> для каждого <literal>$bucket</literal>. 
+       Если поток в процессе закрытия (и таким образом это последний проход по цепочке 
+       фильтров), параметр  <parameter>closing</parameter> будет установлен в значение 
+       &true;. Метод  <methodname>filter</methodname> должен возвращать одно из трёх 
+       предопределённых значений после завершения.
+       <informaltable>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Возвращаемое значение</entry>
+           <entry>Смысл</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><constant>PSFS_PASS_ON</constant></entry>
+           <entry>
+            Фильтр отработал успешно, данные доступны в 
+            <parameter>out</parameter> <literal>bucket brigade</literal>.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>PSFS_FEED_ME</constant></entry>
+           <entry>
+            Фильтр отработал успешно,однако данные не доступны для возврата. Требуется
+            больше данных из потока или предыдущего фильтра.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>PSFS_ERR_FATAL</constant> (по умолчанию)</entry>
+           <entry>
+            Фильтр получил неисправимую ошибку и не может продолжать.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </informaltable>
+      </para>
+      <methodsynopsis>
+       <type>bool</type><methodname>onCreate</methodname>
+       <void/>
+      </methodsynopsis>
+      <simpara>
+       Этот метод вызывается во время создания объекта класса
+    фильтра. Если ваш фильтр выделяет или инициализирует любые другие
+    ресурсы (такие, как буфер), то нужно делать это здесь. Ваша реализация
+    этого метода должна возвращать &false; в случае неудачи или &true; в случае успеха.
+      </simpara>
+      <simpara>
+       Когда создаётся первый экземпляр вашего фильтра и вызывается метод
+       <literal>yourfilter-&gt;onCreate()</literal>, будет доступно несколько свойств,
+       показанных в таблице ниже.
+      </simpara>
+      <para>
+       <informaltable>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Свойство</entry>
+           <entry>Содержимое</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><literal>FilterClass-&gt;filtername</literal></entry>
+           <entry>
+            Строка, содержащая название фильтра, экземпляр которого был создан.
+            Фильтры могут быть зарегистрированы под разными именами или шаблонами.
+            Используйте это свойство для того, чтобы определить какое название было
+            использовано.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>FilterClass-&gt;params</literal></entry>
+           <entry>
+            Содержимое параметра <parameter>params</parameter>, переданного 
+            функции <function>stream_filter_append</function>
+            или <function>stream_filter_prepend</function>.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>FilterClass-&gt;stream</literal></entry>
+           <entry>
+            Ресурс фильтруемого потока. Может быть доступен только во время вызовов
+            <methodname>filter</methodname>, когда параметр <literal>closing</literal> 
+            установлен в значение &false;.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </informaltable>
+      </para>
+      <methodsynopsis>
+       <type>void</type><methodname>onClose</methodname>
+       <void/>
+      </methodsynopsis>
+      <para>
+       Этот метод вызывается во время завершения фильтра (обычно это происходит во время
+       завершения потока), и выполняется  <emphasis>после</emphasis> того, как был
+    вызван метод <literal>flush</literal>. Если любые ресурсы были выделены или
+    инициализированы во время вызова метода <literal>onCreate()</literal>, то
+    здесь следует их уничтожить или избавиться от них.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+  <para>
+   <function>stream_filter_register</function> будет возвращать  &false; если
+   фильтр с именем <parameter>filtername</parameter> уже определён.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Фильтр для перевода букв в верхний регистр в потоке <filename>foo-bar.txt</filename></title>
+    <para>
+     Пример ниже реализует фильтр с названием <literal>strtoupper</literal>
+     на файловом потоке  <filename>foo-bar.txt</filename>, который будет переводить 
+     в заглавные все буквы, которые пишутся/читаются из этого потока.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* Определяем наш класс фильтра */
+class strtoupper_filter extends php_user_filter {
+  function filter($in, $out, &$consumed, $closing)
+  {
+    while ($bucket = stream_bucket_make_writeable($in)) {
+      $bucket->data = strtoupper($bucket->data);
+      $consumed += $bucket->datalen;
+      stream_bucket_append($out, $bucket);
+    }
+    return PSFS_PASS_ON;
+  }
+}
+
+/* Регистрируем наш фильтр в  PHP */
+stream_filter_register("strtoupper", "strtoupper_filter")
+    or die("Не удалось зарегистрировать фильтр");
+
+$fp = fopen("foo-bar.txt", "w");
+
+/* Присоединяем зарегистрированный фильтр к только что открытому потоку */
+stream_filter_append($fp, "strtoupper");
+
+fwrite($fp, "Line1\n");
+fwrite($fp, "Word - 2\n");
+fwrite($fp, "Easy As 123\n");
+
+fclose($fp);
+
+/* Читаем содержимое снова
+ */
+readfile("foo-bar.txt");
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+LINE1
+WORD - 2
+EASY AS 123
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Регистрация стандартного фильтра, соответствующего множественным именам фильтров.</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* Определяем наш класс фильтра */
+class string_filter extends php_user_filter {
+  var $mode;
+
+  function filter($in, $out, &$consumed, $closing)
+  {
+    while ($bucket = stream_bucket_make_writeable($in)) {
+      if ($this->mode == 1) {
+        $bucket->data = strtoupper($bucket->data);
+      } elseif ($this->mode == 0) {
+        $bucket->data = strtolower($bucket->data);
+      }
+
+      $consumed += $bucket->datalen;
+      stream_bucket_append($out, $bucket);
+    }
+    return PSFS_PASS_ON;
+  }
+
+  function onCreate()
+  {
+    if ($this->filtername == 'str.toupper') {
+      $this->mode = 1;
+    } elseif ($this->filtername == 'str.tolower') {
+      $this->mode = 0;
+    } else {
+      /* Был вызван какой-то другой фильтр str.*,
+         возвращаем ошибку, чтобы  PHP мог продолжить его поиск */
+      return false;
+    }
+
+    return true;
+  }
+}
+
+/* Регистрируем наш фильтр в  PHP */
+stream_filter_register("str.*", "string_filter")
+    or die("Не удалось зарегистрировать фильтр");
+
+$fp = fopen("foo-bar.txt", "w");
+
+/* Присоединяем зарегистрированный фильтр к только что открытому потоку
+   Мы могли бы использовать здесь  str.tolower */
+stream_filter_append($fp, "str.toupper");
+
+fwrite($fp, "Line1\n");
+fwrite($fp, "Word - 2\n");
+fwrite($fp, "Easy As 123\n");
+
+fclose($fp);
+
+/* Читаем содержимое снова
+ */
+readfile("foo-bar.txt");
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+LINE1
+WORD - 2
+EASY AS 123
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>stream_wrapper_register</function></member>
+    <member><function>stream_filter_append</function></member>
+    <member><function>stream_filter_prepend</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
