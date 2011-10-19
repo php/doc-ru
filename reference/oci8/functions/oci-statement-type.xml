@@ -1,73 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 64042ccbff18c092f57ab4cc7547a554ba5b51d5 Maintainer: aur Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-statement-type" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_statement_type</refname>
-    <refpurpose>Возвращает тип выражения</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>string</type><methodname>oci_statement_type</methodname>
-      <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>oci_statement_type</function> возвращает одно из
-     нижеперечисленных значений:
-     <orderedlist>
-      <listitem><simpara><literal>SELECT</literal></simpara></listitem>
-      <listitem><simpara><literal>UPDATE</literal></simpara></listitem>
-      <listitem><simpara><literal>DELETE</literal></simpara></listitem>
-      <listitem><simpara><literal>INSERT</literal></simpara></listitem>
-      <listitem><simpara><literal>CREATE</literal></simpara></listitem>
-      <listitem><simpara><literal>DROP</literal></simpara></listitem>
-      <listitem><simpara><literal>ALTER</literal></simpara></listitem>
-      <listitem><simpara><literal>BEGIN</literal></simpara></listitem>
-      <listitem><simpara><literal>DECLARE</literal></simpara></listitem>
-      <listitem><simpara><literal>UNKNOWN</literal></simpara></listitem>
-     </orderedlist>
-    </para>
-    <para>
-     Параметр <parameter>statement</parameter> должен быть равен
-     идентификатору выражения, который был получен в результате выполнения
-     <function>oci_parse</function>.
-    </para>
-    <para>
-     <example>
-      <title>Примеры использования <function>oci_statement_type</function></title>
-      <programlisting role="php">
+<refentry xml:id="function.oci-statement-type" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_statement_type</refname>
+  <refpurpose>Возвращает тип выражения</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>string</type><methodname>oci_statement_type</methodname>
+   <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает выражение, соответствующее одному из типов параметра 
+   <parameter>statement</parameter> OCI8.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>statement</parameter></term>
+     <listitem>
+      <para>
+       Допустимый идентификатор оператора OCI8, возвращаемый <function>oci_parse</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает тип параметра <parameter>statement</parameter>, который может быть
+   одним из нижеследующих значений:
+   <table>
+    <title>Тип оператора</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Возвращаемое значение</entry>
+       <entry>Примечание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal>ALTER</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>BEGIN</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>CALL</literal></entry>
+       <entry>Представлено в PHP 5.2.1 (PECL OCI8 1.2.3)</entry>
+      </row>
+      <row>
+       <entry><literal>CREATE</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>DECLARE</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>DELETE</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>DROP</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>INSERT</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>SELECT</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>UPDATE</literal></entry>
+       <entry></entry>
+      </row>
+      <row>
+       <entry><literal>UNKNOWN</literal></entry>
+       <entry></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Возвращает &false; в случае ошибки.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>oci_statement_type</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-    $conn = oci_connect("scott", "tiger");
-    $sql  = "delete from emp where deptno = 10";
-   
-    $stmt = oci_parse($conn, $sql);
-    if (oci_statement_type($stmt) == "DELETE") {
-        die("You are not allowed to delete from this table<br />");
-    }
-   
-    oci_close($conn);
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+
+$stid = oci_parse($conn, 'DELETE FROM departments WHERE department_id = 130;');
+if (oci_statement_type($stid) == "DELETE") {
+    trigger_error('Вы не имеете прав для удаления записей из таблицы', E_USER_ERROR);
+}
+else {
+    oci_execute($stid);  // удалить запись
+}
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <note>
-     <para>
-      В версиях PHP ниже 5.0.0 эта функция называлась
-      <function>ocistatementtype</function>. 
-      В PHP 5.0.0 и выше <function>ocistatementtype</function> является
-      алиасом <function>oci_statement_type</function>, поэтому вы можете
-      продолжать использовать это имя, однако это не рекомендуется.
-     </para>
-    </note>
-    <para>
-     <function>oci_statement_type</function> возвращает &false; в случае
-     ошибки.
-    </para>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    В PHP до версии 5.0.0 необходимо использовать
+    метод <function>ocistatementtype</function>.
+    &oci.name.compat.note;
+   </para>
+  </note>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
