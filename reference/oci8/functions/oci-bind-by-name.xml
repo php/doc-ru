@@ -1,247 +1,843 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: f453f7036c74f5f8ce5e15d3d5abbaf8dfd599e2 Maintainer: aur Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-bind-by-name" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_bind_by_name</refname>
-    <refpurpose>
-     Привязывает переменную PHP к соответствующей метке в SQL-выражении.
-    </refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>bool</type><methodname>oci_bind_by_name</methodname>
-      <methodparam><type>resource</type><parameter>stmt</parameter></methodparam>
-      <methodparam><type>string</type><parameter>ph_name</parameter></methodparam>
-      <methodparam><type>mixed</type><parameter>&amp;variable</parameter></methodparam>
-      <methodparam choice="opt"><type>int</type><parameter>maxlength</parameter></methodparam>
-      <methodparam choice="opt"><type>int</type><parameter>type</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>oci_bind_by_name</function> привязывает переменную
-     <parameter>variable</parameter> к метке <parameter>ph_name</parameter>.
-     Будет ли она использоваться для вывода или ввода - выяснится в процессе
-     выполнения и необходимые ресурсы будут выделены по необходимости.
-     Параметр <parameter>length</parameter> устанавливает максимальный объем
-     в байтах получаемой переменной. Если параметр <parameter>length</parameter>
-     равен -1, то  <function>oci_bind_by_name</function> будет использовать
-     текущую длину <parameter>variable</parameter> как максимальную.
-    </para>
-    <para>
-     Если вы хотите привязать абстрактный тип данных (LOB/ROWID/BFILE), то
-     вам необходимо сначала создать дескриптор с помощью 
-     <function>oci_new_descriptor</function>. Параметр
-     <parameter>length</parameter> не используется с абстрактными типами
-     данных и должен быть равен -1. Параметр <parameter>type</parameter> 
-     говорит Oracle, какой тип дескриптора мы хотим использовать. Возможные
-     значения этого параметра:
-     <itemizedlist>
-      <listitem>
-       <para>
-        <constant>OCI_B_FILE</constant> - для BFILE;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_CFILE</constant> - для CFILE;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_CLOB</constant> - для CLOB;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_BLOB</constant> - для BLOB;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_ROWID</constant> - для ROWID;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_NTY</constant> - для именованных типов данных;
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-        <constant>OCI_B_CURSOR</constant> - для курсоров, созданных ранее с
-        помощью <function>oci_new_cursor</function>.
-       </para>
-      </listitem>
-     </itemizedlist>
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_bind_by_name</function></title>
-      <programlisting role="php">
+<refentry xml:id="function.oci-bind-by-name" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_bind_by_name</refname>
+  <refpurpose>Прикрепляет переменную PHP к соответствующей метке в SQL-выражении</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>oci_bind_by_name</methodname>
+   <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
+   <methodparam><type>string</type><parameter>bv_name</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter role="reference">variable</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>maxlength</parameter><initializer>-1</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>type</parameter><initializer>SQLT_CHR</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Прикрепляет переменную <parameter>variable</parameter> к метке 
+   <parameter>bv_name</parameter>. Такое прикрепеление позволяет повысить
+   производительность и избежать SQL-инъекций.
+  </para>
+
+  <para>
+    Прикрепление переменной позволяет базе данных повторно использовать 
+    кэшированные контекстные выражения от предыдущих запросов,
+    даже если они первоначально были запущены другим пользователем
+    или процессом. Это также снижает риск SQL-инъекций, поскольку
+    данные в таком случае никогда не рассматриваются как инструкции SQL.
+    Данные не требуется экранировать или заключать в кавычки.
+  </para>
+
+  <para>
+    Прикрепленные PHP-переменные могут быть изменены и снова выполнены
+    без необходимости повторной обработки запроса или повторного
+    прикрепления.
+  </para>
+
+  <para>
+    В Oracle, прикрепление переменных обычно разделяют на
+    <literal>IN</literal> (прикрепляет значения, передаваемые в
+    базу данных) и <literal>OUT</literal> (прикрепляет значения, 
+    возвращаемые PHP). Переменная может быть одновременно 
+    <literal>IN</literal> и <literal>OUT</literal>.  Независимо от
+    этого, характер прикрепленния переменных будет определен во
+    время выполнения.
+  </para>
+
+  <para>
+    Необходимо указать <parameter>maxlength</parameter> при использовании
+    <literal>OUT</literal>-привязки, что позволяет PHP зарезервировать
+    больше памяти для хранения возвращаемого значения
+  </para>
+
+  <para>
+    Для <literal>IN</literal>-привязки рекомендуется также указать
+    параметр <parameter>maxlength</parameter>, если выражение
+    выполняется несколько раз с раздичными значениями PHP-переменной.
+    В противном случае, Oracle может урезать размер данных до размера
+    первоначального значения переменной PHP. Если максимальная длина
+    значения неизвестна, рекомендуется вызывать 
+    <function>oci_bind_by_name</function> перед каждым вызовом
+    <function>oci_execute</function>.
+    Прикрепление неоправданно большой переменной повлияет на 
+    процесс сохранения базы данных.
+  </para>
+
+  <para>
+    Вид прикрепления указывает Oracle как работать с памятью при
+    чтении данных. Для <literal>IN</literal>-прикрепления адрес в памяти должен
+    содержать допустимые данные при вызове 
+    <function>oci_execute</function>.  Это значит, что значение переменной
+    должно находиться в памяти во время исполнения. Если это не так,
+    возможны некорректные результаты или ошибки наподобие
+    "ORA-01460: unimplemented or unreasonable conversion requested"
+    (запрошены невыполнимые или некорректные преобразования)
+    Для <literal>OUT</literal>-прикрепления основным признаком
+    является установка значения в переменную PHP.
+  </para>
+
+  <para>
+    Для многократно выполняемого выражения, привязка одних и тех
+    же значений может уменьшить возможности оптимизатора Oracle
+    по выработке наилучшего варианта выполнения инструкции. Длительное
+    прикрепление выражений, которые редко исполняются, может также
+    не принести пользы. Тем не менее, в обоих случаях, прикрепление
+    является более безопасным, чем конкатенация строки запроса и
+    непроверенных пользовательских данных.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>statement</parameter></term>
+     <listitem>
+      <para>
+       Допустимый идентификатор выражения OCI8.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>bv_name</parameter></term>
+     <listitem>
+      <para>
+       Метка с префиксом в виде двоеточия, используемая в выражении. 
+       Двоеточие опционально в <parameter>bv_name</parameter>. 
+       Oracle не использует знак вопроса для меток.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>variable</parameter></term> 
+     <listitem>
+      <para>
+       Переменная PHP, ассоциированная с <parameter>bv_name</parameter>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>maxlength</parameter></term>
+     <listitem>
+      <para>
+       Устанавливает максимальный размер данных. Если указать -1,
+       функция будет использовать текущий размер переменной
+       <parameter>variable</parameter> в качестве максимального.
+       При этом переменная <parameter>variable</parameter> должна
+       существовать и содержать данные во время вызова
+       <function>oci_bind_by_name</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       Тип данных, к которому Oracle будет приводить значения.
+       По умолчанию <parameter>type</parameter> имеет значение
+       <constant>SQLT_CHR</constant>. Oracle приводит данные от
+       данного типа к типу поля (или типу переменной PL/SQL), если
+       это возможно.
+      </para>
+      <para>
+       Если необходимо прикрепить переменную абстрактного типа
+       (LOB/ROWID/BFILE), следует предварительно использовать
+       <function>oci_new_descriptor</function>. Параметр
+       <parameter>length</parameter> не используется для абстрактных типов
+       и должен быть установлен в -1.
+      </para>
+      <para>
+       Допустимые значения параметра <parameter>type</parameter>:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <constant>SQLT_BFILEE</constant> или <constant>OCI_B_BFILE</constant>
+          <!-- really only single E --> - для BFILE-объектов;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_CFILEE</constant> или <constant>OCI_B_CFILEE</constant>
+          - для CFILE-объектов;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_CLOB</constant> или <constant>OCI_B_CLOB</constant>
+          - для CLOB-объектов;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_BLOB</constant> или <constant>OCI_B_BLOB</constant>
+          - для BLOB-объектов;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_RDD</constant> или <constant>OCI_B_ROWID</constant>
+          - для ROWID-объектов;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_NTY</constant> или <constant>OCI_B_NTY</constant>
+          - для именованных типов даты;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_INT</constant> или <constant>OCI_B_INT</constant> - для целых чисел;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_CHR</constant> - для символов VARCHAR;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_BIN</constant> или <constant>OCI_B_BIN</constant>
+          - для RAW-полей;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_LNG</constant> - для LONG-полей;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_LBI</constant> - для LONG RAW полей;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_RSET</constant> - для курсоров, созданных
+          функцией <function>oci_new_cursor</function>.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Добавление данных с использованием <function>oci_bind_by_name</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-/* oci_bind_by_name example thies at thieso dot net (980221)
-  inserts 3 records into emp, and uses the ROWID for updating the 
-  records just after the insert.
-*/
 
-$conn = oci_connect("scott", "tiger");
+// Создание таблицы:
+//   CREATE TABLE mytab (id NUMBER, text VARCHAR2(40));
 
-$stmt = oci_parse($conn, "
-                          INSERT INTO 
-                                     emp (empno, ename) 
-			       VALUES 
-                                     (:empno,:ename) 
-                            RETURNING 
-                                     ROWID 
-                                 INTO 
-                                     :rid
-                                         ");
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
 
-$data = array(
-              1111 => "Larry", 
-              2222 => "Bill", 
-              3333 => "Jim"
-             );
+$stid = oci_parse($conn,"INSERT INTO mytab (id, text) VALUES(:id_bv, :text_bv)");
+
+$id = 1;
+$text = "Data to insert     ";
+oci_bind_by_name($stid, ":id_bv", $id);
+oci_bind_by_name($stid, ":text_bv", $text);
+oci_execute($stid);
+
+// В таблице содержится: 1, 'Data to insert     '
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Одна привязка для многократного использования</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Создание таблицы:
+//   CREATE TABLE mytab (id NUMBER);
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$a = array(1,3,5,7,11);  // данные для вставки
+
+$stid = oci_parse($conn, 'INSERT INTO mytab (id) VALUES (:bv)');
+oci_bind_by_name($stid, ':bv', $v, 20);
+foreach ($a as $v) {
+    $r = oci_execute($stid, OCI_DEFAULT);  // не использовать автоматическое завершение транзакции
+}
+oci_commit($conn); // завершение транзакции
+
+// Таблица содержит пять записей: 1, 3, 5, 7, 11
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление в цикле <function>foreach</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$sql = 'SELECT * FROM departments WHERE department_name = :dname AND location_id = :loc';
+$stid = oci_parse($conn, $sql);
+
+$ba = array(':dname' => 'IT Support', ':loc' => 1700);
+
+foreach ($ba as $key => $val) {
+
+    // oci_bind_by_name($stid, $key, $val) не работает,
+    // потому что прикрепляет каждое значение в одно место: $val
+    // Вместо этого следует указывать конкретное место: $ba[$key]
+    oci_bind_by_name($stid, $key, $ba[$key]);
+}
+
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS);
+foreach ($row as $item) {
+    print $item."<br>\n";
+}
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление в выражение WHERE</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect("hr", "hrpwd", "localhost/XE");
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$sql = 'SELECT last_name FROM employees WHERE employee_id = :eidbv';
+$stid = oci_parse($conn, $sql);
+$myeid = 101;
+oci_bind_by_name($stid, ':eidbv', $myeid);
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC);
+echo $row['LAST_NAME'] ."<br>\n";
+
+// Выводом будет
+//    Kochhar
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление в выражение LIKE</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+// Поиск всех городов, начинающихся на 'South'
+$stid = oci_parse($conn, "SELECT city FROM locations WHERE city LIKE :bv");
+$city = 'South%';  // '%' - это знак шаблона SQL
+oci_bind_by_name($stid, ":bv", $city);
+oci_execute($stid);
+oci_fetch_all($stid, $res);
+
+foreach ($res['CITY'] as $c) {
+    print $c . "<br>\n";
+}
+// Выводом будет:
+//   South Brunswick
+//   South San Francisco
+//   Southlake
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление в выражение REGEXP_LIKE</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+// Поиск названий городов, содержащих 'ing'
+$stid = oci_parse($conn, "SELECT city FROM locations WHERE REGEXP_LIKE(city, :bv)");
+$city = '.*ing.*';
+oci_bind_by_name($stid, ":bv", $city);
+oci_execute($stid);
+oci_fetch_all($stid, $res);
+
+foreach ($res['CITY'] as $c) {
+    print $c . "<br>\n";
+}
+// Выводом будет:
+//   Beijing
+//   Singapore
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+    Для небольшого, фиксированного количества условий в выражении IN,
+    используются индивидуальные имена переменных. Неизвестные значения
+    при исполнении могут быть установлены в NULL.
+    Это позволяет использовать одно выражение нескольким пользователям,
+    что повышает эффективность кэширования Oracle DB.
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление нескольких значений в выржаение IN</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$sql = 'SELECT last_name FROM employees WHERE employee_id in (:e1, :e2, :e3)';
+$stid = oci_parse($conn, $sql);
+$mye1 = 103;
+$mye2 = 104;
+$mye3 = NULL; // притворимся, что не получили это значение
+oci_bind_by_name($stid, ':e1', $mye1);
+oci_bind_by_name($stid, ':e2', $mye2);
+oci_bind_by_name($stid, ':e3', $mye3);
+oci_execute($stid);
+oci_fetch_all($stid, $res);
+foreach ($res['LAST_NAME'] as $name) {
+    print $name ."<br>\n";
+}
+
+// Выводом будет:
+//   Ernst
+//   Hunold
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепеление ROWID, возвращаемое запросом</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Создадим и наполним таблицу:
+//   CREATE TABLE mytab (id NUMBER, salary NUMBER, name VARCHAR2(40));
+//   INSERT INTO mytab (id, salary, name) VALUES (1, 100, 'Chris');
+//   COMMIT;
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, 'SELECT ROWID, name FROM mytab WHERE id = :id_bv FOR UPDATE');
+$id = 1;
+oci_bind_by_name($stid, ':id_bv', $id);
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS);
+$rid = $row['ROWID'];
+$name = $row['NAME'];
+
+// Переведем имя в верхний регистр и зафиксируем изменения
+$name = strtoupper($name);
+$stid = oci_parse($conn, 'UPDATE mytab SET name = :n_bv WHERE ROWID = :r_bv');
+oci_bind_by_name($stid, ':n_bv', $name);
+oci_bind_by_name($stid, ':r_bv', $rid, -1, OCI_B_ROWID);
+oci_execute($stid);
+
+// Теперь таблица содержит: 1, 100, CHRIS
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>OUT-прикрепление ROWID, возвращаемое при INSERT</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// В данном примере добавляется запись с идентификатором и именем,
+// после чего увеличивается заработная плата
+// Создание таблицы:
+//   CREATE TABLE mytab (id NUMBER, salary NUMBER, name VARCHAR2(40));
+//
+// На основе собственных ROWID на примере thies[at]thieso.net (980221)
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$sql = "INSERT INTO mytab (id, name) VALUES(:id_bv, :name_bv)
+        RETURNING ROWID INTO :rid";
+
+$ins_stid = oci_parse($conn, $sql);
 
 $rowid = oci_new_descriptor($conn, OCI_D_ROWID);
+oci_bind_by_name($ins_stid, ":id_bv",   $id,    10);
+oci_bind_by_name($ins_stid, ":name_bv", $name,  32);
+oci_bind_by_name($ins_stid, ":rid",     $rowid, -1, OCI_B_ROWID);
 
-oci_bind_by_name($stmt, ":empno", $empno, 32);
-oci_bind_by_name($stmt, ":ename", $ename, 32);
-oci_bind_by_name($stmt, ":rid",   $rowid, -1, OCI_B_ROWID);
+$sql = "UPDATE mytab SET salary = :salary WHERE ROWID = :rid";
+$upd_stid = oci_parse($conn, $sql);
+oci_bind_by_name($upd_stid, ":rid", $rowid, -1, OCI_B_ROWID);
+oci_bind_by_name($upd_stid, ":salary", $salary,   32);
 
-$update = oci_parse($conn, "
-                            UPDATE
-                                  emp 
-                               SET 
-                                  sal = :sal 
-                             WHERE 
-                                  ROWID = :rid
-                             ");
-oci_bind_by_name($update, ":rid", $rowid, -1, OCI_B_ROWID);
-oci_bind_by_name($update, ":sal", $sal,   32);
+// идентификаторы и имена для вставки
+$data = array(1111 => "Larry",
+              2222 => "Bill",
+              3333 => "Jim");
 
-$sal = 10000;
+// Заработная плата для каждого сотрудника
+$salary = 10000;
 
-while (list($empno, $ename) = each($data)) {
-    oci_execute($stmt);
-    oci_execute($update);
-} 
+// Вставка и немедленное обновление каждой строки
+foreach ($data as $id => $name) {
+    oci_execute($ins_stid);
+    oci_execute($upd_stid);
+}
 
 $rowid->free();
+oci_free_statement($upd_stid);
+oci_free_statement($ins_stid);
 
-oci_free_statement($update);
-oci_free_statement($stmt);
-
-$stmt = oci_parse($conn, "
-                          SELECT 
-                                * 
-                            FROM 
-                                emp 
-                           WHERE 
-                                empno 
-                              IN 
-                                (1111,2222,3333)
-                              ");
-oci_execute($stmt);
-                              
-while ($row = oci_fetch_assoc($stmt)) {
+// Показать новые записи
+$stid = oci_parse($conn, "SELECT * FROM mytab");
+oci_execute($stid);
+while ($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS)) {
     var_dump($row);
 }
 
-oci_free_statement($stmt);
-
-/* delete our "junk" from the emp table.... */
-$stmt = oci_parse($conn, "
-                          DELETE FROM
-                                     emp 
-                                WHERE 
-                                     empno 
-                                   IN 
-                                     (1111,2222,3333)
-                                   ");
-oci_execute($stmt);
-oci_free_statement($stmt);
-
+oci_free_statement($stid);
 oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     Помните о том, что при использовании этой функции, конечные пробелы у
-     строки будут обрезаны. Смотрите следующий пример:
-    </para>
-    <para>
-     <example>
-      <title>Пример <function>oci_bind_by_name</function></title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Прикрепление для хранимой функции PL/SQL</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-    $connection = oci_connect('apelsin','kanistra');
-    $query = "INSERT INTO test_table VALUES(:id, :text)";
 
-    $statement = oci_parse($query);
-    oci_bind_by_name($statement, ":id", 1);
-    oci_bind_by_name($statement, ":text", "trailing spaces follow     ");
-    oci_execute($statement);
-    /*
-     Этот код добавит в базу только строку 'trailing spaces follow', без
-     пробелов в конце строки
-    */
+//  Перед запуском PHP-сценария, создайте хранимую функцию в
+//  SQL*Plus или SQL Developer:
+//
+//  CREATE OR REPLACE FUNCTION myfunc(p IN NUMBER) RETURN NUMBER AS
+//  BEGIN
+//      RETURN p * 3;
+//  END;
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+$p = 8;
+
+$stid = oci_parse($conn, 'begin :r := myfunc(:p); end;');
+oci_bind_by_name($stid, ':p', $p);
+
+// Возвращаемое значение OUT-прикреплено. По умолчаннию типом данных будет строка.
+// Прикрепление со значением 40 означает, что будет возвращено 40 символов.
+oci_bind_by_name($stid, ':r', $r, 40);
+
+oci_execute($stid);
+
+print "$r\n";   // выведет 24
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     <example>
-      <title>Пример <function>oci_bind_by_name</function></title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+  <example>
+   <title>Прикрепление параметров для PL/SQL хранимой процедуры</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-    $connection = oci_connect('apelsin','kanistra');
-    $query = "INSERT INTO test_table VALUES(:id, 'trailing spaces follow      ')";
 
-    $statement = oci_parse($query);
-    oci_bind_by_name($statement, ":id", 1);
-    oci_execute($statement);
-    /*
-     А этот код добавит в базу строку 'trailing spaces follow      ' вместе с
-     пробелами в конце строки
-    */
+//  Перед запуском PHP-сценария, создайте хранимую процедуру в
+//  SQL*Plus или SQL Developer:
+//
+//  CREATE OR REPLACE PROCEDURE myproc(p1 IN NUMBER, p2 OUT NUMBER) AS
+//  BEGIN
+//      p2 := p1 * 2;
+//  END;
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+$p1 = 8;
+
+$stid = oci_parse($conn, 'begin myproc(:p1, :p2); end;');
+oci_bind_by_name($stid, ':p1', $p1);
+
+// Второй параметр процедуры OUT-прикреплен. По умолчаннию типом данных будет строка.
+// Прикрепление со значением 40 означает, что будет возвращено 40 символов.
+oci_bind_by_name($stid, ':p2', $p2, 40);
+
+oci_execute($stid);
+
+print "$p2\n";   // выведет 16
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <warning>
-     <para>
-      Использовать <link
-       linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link>,
-      <link linkend="ini.magic-quotes-runtime">magic_quotes_runtime</link> или
-      <function>addslashes</function> вместе с <function>oci_bind_by_name</function>
-      - это определенно плохая идея, т.к. в этих случаях кавычки будут
-      записаны в базу вместе с данными. <function>oci_bind_by_name</function>
-      не может отличить "магические кавычки" от тех, что были добавлены
-      намеренно.
-     </para> 
-    </warning>
-    <note>
-     <para>
-      В версиях PHP ниже 5.0.0 эта функция называлась <function>ocinewcollection</function>. 
-      В PHP 5.0.0 и выше <function>ocinewcollection</function> является
-      алиасом <function>oci_new_collection</function>, поэтому вы можете
-      продолжать использовать это имя, однако это не рекомендуется.
-     </para>
-    </note>
-    <para>
-     &return.success;
-    </para>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+  <example>
+   <title>Прикрепление CLOB-объекта</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Создаем таблицу:
+//     CREATE TABLE mytab (mykey NUMBER, myclob CLOB);
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+$mykey = 12343;  // произвольный ключ для примера
+
+$sql = "INSERT INTO mytab (mykey, myclob)
+        VALUES (:mykey, EMPTY_CLOB())
+        RETURNING myclob INTO :myclob";
+
+$stid = oci_parse($conn, $sql);
+$clob = oci_new_descriptor($conn, OCI_D_LOB);
+oci_bind_by_name($stid, ":mykey", $mykey, 5);
+oci_bind_by_name($stid, ":myclob", $clob, -1, OCI_B_CLOB);
+oci_execute($stid, OCI_DEFAULT);
+$clob->save("A very long string");
+
+oci_commit($conn);
+
+// Получение CLOB-данных
+
+$query = 'SELECT myclob FROM mytab WHERE mykey = :mykey';
+
+$stid = oci_parse ($conn, $query);
+oci_bind_by_name($stid, ":mykey", $mykey, 5);
+oci_execute($stid);
+
+print '<table border="1">';
+while ($row = oci_fetch_array($stid, OCI_ASSOC)) {
+  $result = $row['MYCLOB']->load();
+  print '<tr><td>'.$result.'</td></tr>';
+}
+print '</table>';
+
+?>
+]]>
+   </programlisting>
+  </example>
+  </para>
+
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <warning>
+   <para>
+    Не используйте <link
+     linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link> или
+    <function>addslashes</function>
+    одновременно с <function>oci_bind_by_name</function>, так как кавычек быть
+    не должно. Все указанные кавычки будут записаны в базу данных,
+    потому что <function>oci_bind_by_name</function>
+    вставляет данные дословно и не удаляет кавычки или символы экранирования.
+   </para>
+  </warning>
+  <note>
+   <para>
+    Если прикрепляется строка к <literal>CHAR</literal>-полю в
+    выражении <literal>WHERE</literal>, помните, что Oracle использует
+    при сравнении значения <literal>CHAR</literal>, дополненные пробелами.
+    Переменная PHP должна быть дополнена пробелами до того же размера,
+    что и поле, чтобы выражение <literal>WHERE</literal> выполнялось верно.
+   </para>
+  </note>
+  <note>
+   <para>
+     Переменная PHP <parameter>variable</parameter> является ссылкой.  Некоторые
+     виды циклов могут работать не так, как ожидается:
+   </para>
+   <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+foreach ($myarray as $key => $value)  {
+    oci_bind_by_name($stid, $key, $value);
+}
+?>
+]]>
+     </programlisting>
+   </informalexample>
+   <para>
+     В этом случае каждый ключ прикрепляется к $value, 
+     поэтому все прикрепленные переменные указывают на значение
+     в последней итерации цикла. Вместо этого следует использовать:
+   </para>
+   <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+foreach ($myarray as $key => $value) {
+    oci_bind_by_name($stid, $key, $myarray[$key]);
+}
+?>
+]]>
+     </programlisting>
+   </informalexample>
+  </note>
+  <note>
+   <para>
+    В версиях PHP ниже 5.0.0 следует использовать
+    функцию <function>ocibindbyname</function>.
+    &oci.name.compat.note;
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>oci_bind_array_by_name</function></member>
+    <member><function>oci_parse</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
