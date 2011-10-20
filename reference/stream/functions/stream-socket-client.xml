@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.stream-socket-client" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>stream_socket_client</refname>
+  <refpurpose>Открывает соединение с интернет-сокетом или с доменным сокетом Unix</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>stream_socket_client</methodname>
+   <methodparam><type>string</type><parameter>remote_socket</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter role="reference">errno</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter role="reference">errstr</parameter></methodparam>
+   <methodparam choice="opt"><type>float</type><parameter>timeout</parameter><initializer>ini_get("default_socket_timeout")</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>STREAM_CLIENT_CONNECT</initializer></methodparam>
+   <methodparam choice="opt"><type>resource</type><parameter>context</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Начинает потоковое или датаграммное соединение с удалённым сокетом, указанным 
+   параметром <parameter>remote_socket</parameter>. Тип создаваемого сокета
+   определяется по транспорту, указанному с использованием стандартного форматирования URL:
+   <literal>transport://target</literal>. Для интернет-сокетов,
+   (AF_INET) таких, как TCP и UDP, часть <literal>target</literal> 
+   параметра <parameter>remote_socket</parameter> должна состоять из
+   имени хоста или  IP-адреса, за которым следует двоеточие и номер порта. Для доменных
+   сокетов Unix, часть <parameter>target</parameter> должна указывать на
+   файл сокета в файловой системе.
+  </para>
+  <note>
+   <para>
+    По умолчанию поток будет откыт в блокирующем режиме. Вы можете 
+    переключить его в неблокирующий режим, используя функцию
+    <function>stream_set_blocking</function>.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="parameters"><!-- {{{ -->
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>remote_socket</parameter></term>
+     <listitem>
+      <para>
+       Адрес удалённого сокета для соединения.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>errno</parameter></term>
+     <listitem>
+      <para>
+       Будет присвоен номер системной ошибки, если соединение не удалось установить.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>errstr</parameter></term>
+     <listitem>
+      <para>
+       Будет присвоено сообщение о системной ошибке, если соединение не удалось установить.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>timeout</parameter></term>
+     <listitem>
+      <para>
+       Число секунд, в течение которых должен произойти тайм-аут системного
+       вызова <literal>connect()</literal>.
+       <note>
+        <simpara>
+         Этот параметр применяется только если не происходит попытка
+   асинхронного соединения.
+        </simpara>
+       </note>
+       <note>
+        <para>
+         Чтобы указать тайм-аут для чтения/записи данных через сокет, используйте функцию
+         <function>stream_set_timeout</function>, так как параметр
+         <parameter>timeout</parameter> применяется только при создании соединения через 
+         сокет.
+        </para>
+       </note>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>flags</parameter></term>
+     <listitem>
+      <para>
+       Поле битовой маски, которое может принимать значение любой комбинации флагов соединения.
+       В настоящее время набор флагов соединения ограничен следующими значениями
+       <constant>STREAM_CLIENT_CONNECT</constant> (по умолчанию),
+       <constant>STREAM_CLIENT_ASYNC_CONNECT</constant> и
+       <constant>STREAM_CLIENT_PERSISTENT</constant>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>context</parameter></term>
+     <listitem>
+      <para>
+       Действующий ресурс контекста, созданный при помощи функции <function>stream_context_create</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1><!-- }}} -->
+
+ <refsect1 role="returnvalues"><!-- {{{ -->
+  &reftitle.returnvalues;
+  <para>
+   В случае успеха возвращается ресурс потока, который может быть 
+   использован с другими файловыми функциями (такими, как
+   <function>fgets</function>, <function>fgetss</function>,
+   <function>fwrite</function>, <function>fclose</function>, и
+   <function>feof</function>), в случае неудачи возвращается &false;.
+  </para>
+ </refsect1><!-- }}} -->
+ 
+ <refsect1 role="errors"><!-- {{{ -->
+  &reftitle.errors;
+  <para>
+   В случае неудачного вызова функции аргументы  <parameter>errno</parameter> и
+   <parameter>errstr</parameter> будут заполнены системной ошибкой,
+    которая произошла при системном вызове
+   <literal>connect()</literal>. Если значение, возвращённое в аргументе
+   <parameter>errno</parameter> равно <literal>0</literal> и функция 
+   возвратила значение &false;, это означает, что ошибка 
+   произошла до вызова  <literal>connect()</literal>. Это произошло
+   скорее всего из-за проблемы инициализации сокета. Примите во внимание,
+   что аргументы <parameter>errno</parameter> и
+   <parameter>errstr</parameter> всегда будут передаваться по ссылке.
+  </para>
+ </refsect1><!-- }}} -->
+ 
+ 
+ <refsect1 role="examples"><!-- {{{ -->
+  &reftitle.examples;
+  <para>
+   <example xml:id="stream-socket-client.example.basic"><!-- {{{ -->
+    <title>Пример использования функции <function>stream_socket_client</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$fp = stream_socket_client("tcp://www.example.com:80", $errno, $errstr, 30);
+if (!$fp) {
+    echo "$errstr ($errno)<br />\n";
+} else {
+    fwrite($fp, "GET / HTTP/1.0\r\nHost: www.example.com\r\nAccept: */*\r\n\r\n");
+    while (!feof($fp)) {
+        echo fgets($fp, 1024);
+    }
+    fclose($fp);
+}
+?>
+]]>
+    </programlisting>
+   </example><!-- }}} -->
+   <example xml:id="stream-socket-client.example.daytime"><!-- {{{ -->
+    <title>Использование  UDP-соединения</title>
+    <para>
+     Получения дня и времени от  UDP-сервиса "daytime" (порт 13)
+     на  localhost.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$fp = stream_socket_client("udp://127.0.0.1:13", $errno, $errstr);
+if (!$fp) {
+    echo "ОШИБКА: $errno - $errstr<br />\n";
+} else {
+    fwrite($fp, "\n");
+    echo fread($fp, 26);
+    fclose($fp);
+}
+?>
+]]>
+    </programlisting>
+   </example><!-- }}} -->
+  </para>
+ </refsect1><!-- }}} -->
+
+ <refsect1 role="notes"><!-- {{{ -->
+  &reftitle.notes;
+  <warning>
+   <simpara>
+     UDP-сокеты иногда могут открываться без ошибки,
+     даже если удалённый хост недоступен. Ошибка станет заметной
+     только когда вы будете читать или писать данные из/в сокет.
+     Причина этого в том, что  UDP - это протокол без соединения,
+     что означает, что операционная система не пытается установить 
+     соединение с сокетом до тех пор, пока ей в действительности 
+     не нужно отправить или получить данные.
+   </simpara>
+  </warning>
+  &ipv6.brackets;
+  <note>
+   <para>
+    В зависимости от окружения,  Unix-домены или произвольный
+    таймаут соединения могут быть недоступны. Список доступных 
+    транспортов может быть получен используя функцию <function>stream_get_transports</function>.
+    Смотрите список встроенных транспортов на странице <xref linkend="transports"/>.
+   </para>
+  </note>
+ </refsect1><!-- }}} -->
+
+ <refsect1 role="seealso"><!-- {{{ -->
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>stream_socket_server</function></member>
+    <member><function>stream_set_blocking</function></member>
+    <member><function>stream_set_timeout</function></member>
+    <member><function>stream_select</function></member>
+    <member><function>fgets</function></member>
+    <member><function>fgetss</function></member>
+    <member><function>fwrite</function></member>
+    <member><function>fclose</function></member>
+    <member><function>feof</function></member>
+    <member><xref linkend="ref.curl" /></member>
+   </simplelist>
+  </para>
+ </refsect1><!-- }}} -->
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
