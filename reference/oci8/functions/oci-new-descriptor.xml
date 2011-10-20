@@ -1,63 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-new-descriptor" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_new_descriptor</refname>
-    <refpurpose>Инициализирует новый дескриптор объекта LOB или FILE</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>object</type><methodname>oci_new_descriptor</methodname>
-      <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
-      <methodparam choice="opt"><type>int</type><parameter>type</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>oci_new_descriptor</function> выделяет ресурсы, необходимые для
-     хранения дескриптора объекта. Аргумент <parameter>type</parameter> может
-     принимать следующие значения: <constant>OCI_D_FILE</constant>, 
-     <constant>OCI_D_LOB</constant> или <constant>OCI_D_ROWID</constant>.
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_new_descriptor</function></title>
-      <programlisting role="php">
-<![CDATA[
-<?php   
-    /* This script is designed to be called from a HTML form.
-     * It expects $user, $password, $table, $where, and $commitsize
-     * to be passed in from the form.  The script then deletes
-     * the selected rows using the ROWID and commits after each
-     * set of $commitsize rows. (Use with care, there is no rollback)
-     */
-    $conn = oci_connect($user, $password);
-    $stmt = oci_parse($conn, "select rowid from $table $where");
-    $rowid = oci_new_descriptor($conn, OCI_D_ROWID);
-    oci_define_by_name($stmt, "ROWID", $rowid);   
-    oci_execute($stmt);
-    while (oci_fetch($stmt)) {
-       $nrows = oci_num_rows($stmt);
-       $delete = oci_parse($conn, "delete from $table where ROWID = :rid");
-       oci_bind_by_name($delete, ":rid", $rowid, -1, OCI_B_ROWID);
-       oci_execute($delete);      
-       echo "$nrows\n";
-       if (($nrows % $commitsize) == 0) {
-           oci_commit($conn);      
-       }   
-    }
-    $nrows = oci_num_rows($stmt);   
-    echo "$nrows deleted...\n";
-    oci_free_statement($stmt);  
-    oci_close($conn);
-?>  
-]]>
-      </programlisting>
-      <programlisting role="php">
+<refentry xml:id="function.oci-new-descriptor" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_new_descriptor</refname>
+  <refpurpose>Инициализирует новый дескриптор объекта LOB или FILE</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>OCI-Lob</type><methodname>oci_new_descriptor</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>type</parameter><initializer>OCI_DTYPE_LOB</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Резервирует ресурсы, необходимые для хранения дескриптора объекта или LOB-локатора. 
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор соединения с сервером Oracle, возвращаемый функцией
+       <function>oci_connect</function> или <function>oci_pconnect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       Допустимые значения параметра <parameter>type</parameter>: 
+       <constant>OCI_DTYPE_FILE</constant>, <constant>OCI_DTYPE_LOB</constant> и
+       <constant>OCI_DTYPE_ROWID</constant>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает новый LOB или дескриптор FILE в случае успеха или &false; при ошибке.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>oci_new_descriptor</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-    /* This script demonstrates file upload to LOB columns
-     * The formfield used for this example looks like this
+/* Приведенный скрипт разработан для использования с HTML формами.
+ * Это подразумевает, что $user, $password, $table, $where, и $commitsize
+ * получены из формы. Скрипт удаляет записи с использованием
+ * ROWID и закрывает транзакцию после каждого
+ * $commitsize записей. (Используйте осторожно, откат изменений невозможен)
+ */
+$conn = oci_connect($user, $password);
+$stmt = oci_parse($conn, "select rowid from $table $where");
+$rowid = oci_new_descriptor($conn, OCI_D_ROWID);
+oci_define_by_name($stmt, "ROWID", $rowid);
+oci_execute($stmt);
+while (oci_fetch($stmt)) {
+    $nrows = oci_num_rows($stmt);
+    $delete = oci_parse($conn, "delete from $table where ROWID = :rid");
+    oci_bind_by_name($delete, ":rid", $rowid, -1, OCI_B_ROWID);
+    oci_execute($delete);
+    echo "$nrows\n";
+    if (($nrows % $commitsize) == 0) {
+        oci_commit($conn);
+    }
+}
+$nrows = oci_num_rows($stmt);
+echo "$nrows deleted...\n";
+oci_free_statement($stmt);
+oci_close($conn);
+?>
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+    /* Данный скрипт реализует загрузку файлов в LOB-столбцы
+     * HTML-форма для скрипта выглядит примерно так:
      * <form action="upload.php" method="post" enctype="multipart/form-data">
      * <input type="file" name="lob_upload" />
      * ...
@@ -71,16 +108,16 @@ Upload file: <input type="file" name="lob_upload" /><br />
 <?php
   } else {
 
-     // $lob_upload contains the temporary filename of the uploaded file
+     // $lob_upload содержит временное имя загруженного файла
 
-     // see also the features section on file upload,
-     // if you would like to use secure uploads
-     
+     // см. также раздел особенностей загрузки файлов,
+     // если необходимо реализовать безопасную загрузку
+
      $conn = oci_connect($user, $password);
      $lob = oci_new_descriptor($conn, OCI_D_LOB);
-     $stmt = oci_parse($conn, "insert into $table (id, the_blob) 
+     $stmt = oci_parse($conn, "insert into $table (id, the_blob)
                values(my_seq.NEXTVAL, EMPTY_BLOB()) returning the_blob into :the_blob");
-     oci_bind_by_name($stmt, ':the_blob', &$lob, -1, OCI_B_BLOB);
+     oci_bind_by_name($stmt, ':the_blob', $lob, -1, OCI_B_BLOB);
      oci_execute($stmt, OCI_DEFAULT);
      if ($lob->savefile($lob_upload)){
         oci_commit($conn);
@@ -94,54 +131,66 @@ Upload file: <input type="file" name="lob_upload" /><br />
   }
 ?>
 ]]>
-      </programlisting>
-     </example>
-     <example>
-      <title>Второй пример использования <function>oci_new_descriptor</function></title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+   <example>
+    <title>Пример использования <function>oci_new_descriptor</function></title>
+    <programlisting role="php">
 <![CDATA[
-<?php   
-    /* Calling PL/SQL stored procedures which contain clobs as input
-     * parameters (PHP 4 >= 4.0.6). 
-     * Example PL/SQL stored procedure signature is:
-     *
-     * PROCEDURE save_data
-     *   Argument Name                  Type                    In/Out Default?
-     *   ------------------------------ ----------------------- ------ --------
-     *   KEY                            NUMBER(38)              IN
-     *   DATA                           CLOB                    IN
-     *
-     */
+<?php
+/* Вызов хранимой процедуры PL/SQL, параметрами которой являются объекты CLOB
+ * (PHP 4 >= 4.0.6).
+ * Пример PL/SQL процедуры:
+ *
+ * PROCEDURE save_data
+ *   Argument Name                  Type                    In/Out Default?
+ *   ------------------------------ ----------------------- ------ --------
+ *   KEY                            NUMBER(38)              IN
+ *   DATA                           CLOB                    IN
+ *
+ */
 
-    $conn = oci_connect($user, $password);
-    $stmt = oci_parse($conn, "begin save_data(:key, :data); end;");
-    $clob = oci_new_descriptor($conn, OCI_D_LOB);
-    oci_bind_by_name($stmt, ':key', $key);
-    oci_bind_by_name($stmt, ':data', $clob, -1, OCI_B_CLOB);
-    $clob->write($data);
-    oci_execute($stmt, OCI_DEFAULT);
-    oci_commit($conn);
-    $clob->free();
-    oci_free_statement($stmt);
+$conn = oci_connect($user, $password);
+$stmt = oci_parse($conn, "begin save_data(:key, :data); end;");
+$clob = oci_new_descriptor($conn, OCI_D_LOB);
+oci_bind_by_name($stmt, ':key', $key);
+oci_bind_by_name($stmt, ':data', $clob, -1, OCI_B_CLOB);
+$clob->write($data);
+oci_execute($stmt, OCI_DEFAULT);
+oci_commit($conn);
+$clob->free();
+oci_free_statement($stmt);
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <note>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
      <para>
       В версиях PHP ниже 5.0.0 эта функция называлась
       <function>ocinewdescriptor</function>. 
       В PHP 5.0.0 и выше <function>ocinewdescriptor</function> является
       алиасом <function>oci_new_descriptor</function>, поэтому вы можете
       продолжать использовать это имя, однако это не рекомендуется.
-     </para>
-    </note>
-    <para>
-     <function>oci_new_descriptor</function> вернет &false; в случае ошибки.
-    </para>
-   </refsect1>
-  </refentry>
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>oci_bind_by_name</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
