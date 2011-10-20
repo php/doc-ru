@@ -1,78 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-commit" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_commit</refname>
-    <refpurpose>Завершает и подтверждает транзакцию</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>bool</type><methodname>oci_commit</methodname>
-      <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>oci_commit</function> завершает и подтверждает транзакцию, 
-     вводя в действие все ожидающие SQL-выражения для соединения
-     <parameter>connection</parameter>. 
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_commit</function></title>
-      <programlisting role="php">
+<refentry xml:id="function.oci-commit" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_commit</refname>
+  <refpurpose>Фиксирует транзакцию базы данных</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>oci_commit</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Фиксирует транзакцию соединения <parameter>connection</parameter>.
+   Фиксация завершает текущую транзакцию и делает все изменения
+   постоянными. Она также освобождает все установленные блокировки.
+  </para>
+  <para>
+   Транзакция начинается при первом SQL-запросе, изменяющим данные,
+   который был запущен с помощью функции <function>oci_execute</function>
+   и флага <constant>OCI_NO_AUTO_COMMIT</constant>. Последующие изменения
+   данных от других запросов также становятся частью данной транзакции.
+   Изменения, сделанные в транзакции, являются временными до тех пор,
+   пока транзакция не будет зафиксирована или будет произведен ее откат.
+   Другие пользователи базы данных не смогут увидеть изменения до их
+   фиксации.
+  </para>
+  <para>
+   При вставке или обновлении данных рекомендуется использовать
+   транзакции для сохранения целостности данных и увеличения
+   производительности.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор соединения Oracle, полученный из функций
+       <function>oci_connect</function>, <function>oci_pconnect</function>
+       или <function>oci_new_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>oci_commit</function></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-    // Login to Oracle server
-    $conn = oci_connect('scott', 'tiger');
-     
-    // Parse SQL
-    $stmt = oci_parse($conn, "
-                              INSERT INTO 
-                                         employees (name, surname) 
-                                   VALUES 
-                                         ('Maxim', 'Maletsky')
-                             ");
 
-    /* Execute statement
-       OCI_DEFAULT tells oci_execute() 
-       not to commit statement immediately */
-    oci_execute($stmt, OCI_DEFAULT);
+// Вставка в несколько таблиц, откат изменений в случае ошибки
 
-    /*
-    ....
-    Parsing and executing other statements here ...
-    ....
-    */
-    
-    // Commit transaction
-    $committed = oci_commit($conn);
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
 
-    // Test whether commit was successful. If error occurred, return error message
-    if (!$committed) {
-        $error = oci_error($conn);
-        echo 'Commit failed. Oracle reports: ' . $error['message'];
-    }
+$stid = oci_parse($conn, "INSERT INTO mysalary (id, name) VALUES (1, 'Chris')");
+
+// Флаг OCI_NO_AUTO_COMMIT сообщает Oracle не фиксировать запрос INSERT при его поступлении
+// Для PHP <= 5.3.1 используйте OCI_DEFAULT, эти два флага эквивалентны
+$r = oci_execute($stid, OCI_NO_AUTO_COMMIT);
+if (!$r) {
+    $e = oci_error($stid);
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, 'INSERT INTO myschedule (startday) VALUES (12)');
+$r = oci_execute($stid, OCI_NO_AUTO_COMMIT);
+if (!$r) {
+    $e = oci_error($stid);
+    oci_rollback($conn);  // откат изменений из обоих таблиц
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+// Фиксация изменений в обоих таблицах
+$r = oci_commit($conn);
+if (!r) {
+    $e = oci_error($conn);
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
 
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <note>
-     <para>
-      В версиях PHP ниже 5.0.0 эта функция называлась <function>ocicommit</function>. 
-      В PHP 5.0.0 и выше <function>ocicommit</function> является
-      алиасом <function>oci_commit</function>, поэтому вы можете
-      продолжать использовать это имя, однако это не рекомендуется.
-     </para>
-    </note>
-    <simpara>
-     См. также <function>oci_rollback</function> и
-     <function>oci_execute</function>.
-    </simpara>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Транзакции будут автоматически откачены при закрытии соединения или
+    окончании скрипта (в зависимости от того, что случится раньше).
+    Для фиксации транзакции необходимо явно вызвать функцию
+    <function>oci_commit</function>.
+   </para>
+   <para>
+    Все вызовы <function>oci_execute</function>, явно или по умолчанию
+    использующие режим <constant>OCI_COMMIT_ON_SUCCESS</constant>
+    зафиксируют любую предыдущую незафиксированную транзакцию.
+   </para>
+   <para>
+    Любой DDL-запрос Oracle, такой как <literal>CREATE</literal>
+    или <literal>DROP</literal> автоматически фиксирует любую незафиксированную
+    транзакцию.
+   </para>
+  </note>
+  <note>
+   <para>
+    В версиях PHP до 5.0.0 необходимо использовать
+    <function>ocicommit</function> вместо данной функции.
+    &oci.name.compat.note;
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>oci_execute</function></member>
+    <member><function>oci_rollback</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
