@@ -1,45 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: ebcddfa91d7fb9bb3dbb92faa8a2104f3da6e14e Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-parse" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_parse</refname>
-    <refpurpose>Подготавливает запрос к выполнению</refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>resource</type><methodname>oci_parse</methodname>
-      <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
-      <methodparam><type>string</type><parameter>query</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     <function>oci_parse</function> подготавливает
-     <parameter>query</parameter> к выполнению,
-     используя соединение <parameter>connection</parameter> и
-     возвращает идентификатор выражения. Параметр <parameter>query</parameter> 
-     может быть выражением SQL или набором команд PL/SQL.
-    </para>
-    <note>
-     <para>
-      Эта функция <emphasis>не проверяет</emphasis> синтаксис запроса
-      <parameter>query</parameter>. Единственный способ проверить правильность
-      запроса - это выполнить его.
-     </para>
-    </note>
-    <note>
-     <para>
-      В версиях PHP ниже 5.0.0 эта функция называлась <function>ociparse</function>. 
-      В PHP 5.0.0 и выше <function>ociparse</function> является
-      алиасом <function>oci_parse</function>, поэтому вы можете
-      продолжать использовать это имя, однако это не рекомендуется.
-     </para>
-    </note>
-    <para>
-     <function>oci_parse</function> возвращает &false; в случае ошибки.
-    </para>
-   </refsect1>
-  </refentry>
+<refentry xml:id="function.oci-parse" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_parse</refname>
+  <refpurpose>Подготавливает запрос к выполнению</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>oci_parse</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam><type>string</type><parameter>sql_text</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Подготавливает <parameter>sql_text</parameter> к выполнению,
+   используя соединение <parameter>connection</parameter> и
+   возвращает идентификатор выражения, который может быть далее использован
+   функциями<function>oci_bind_by_name</function>,<function>oci_execute</function>
+   и другими.
+  </para>
+  <para>
+   Идентификаторы выражений могут быть освобождены функцией
+   <function>oci_free_statement</function> или установкой переменной в
+   &null;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор соединения Oracle, полученный из функций
+       <function>oci_connect</function>, <function>oci_pconnect</function>
+       или <function>oci_new_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>sql_text</parameter></term>
+     <listitem>
+      <para>
+       Запрос SQL или PL/SQL.
+      </para>
+      <para>
+       SQL-запросы <emphasis>не должны</emphasis> заканчиваться
+       точкой с запятой (&quot;;&quot;). PL/SQL-запросы
+       <emphasis>должны</emphasis> оканчиваться точкой с запятой
+       (&quot;;&quot;).
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает дескриптор выражения в случае успеха, или &false; в случае ошибки.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>oci_parse</function> с SQL-запросами</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+
+// Парсинг запроса. Обратите внимание на отсутствие точки запятой в конце SQL-запроса
+$stid = oci_parse($conn, 'SELECT * FROM employees');
+oci_execute($stid);
+
+echo "<table border='1'>\n";
+while ($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS)) {
+    echo "<tr>\n";
+    foreach ($row as $item) {
+        echo "    <td>" . ($item !== null ? htmlentities($item, ENT_QUOTES) : "&nbsp;") . "</td>\n";
+    }
+    echo "</tr>\n";
+}
+echo "</table>\n";
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования <function>oci_parse</function> с PL/SQL-запросами</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/*
+  Перед запуском PHP-скрипта, создайте хранимую процедуру в
+  SQL*Plus или SQL Developer:
+
+  CREATE OR REPLACE PROCEDURE myproc(p1 IN NUMBER, p2 OUT NUMBER) AS
+  BEGIN
+      p2 := p1 * 2;
+  END;
+
+*/
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$p1 = 8;
+
+// При парсинге PL/SQL запросов необходимо наличие точки с запятой в конце строки
+$stid = oci_parse($conn, 'begin myproc(:p1, :p2); end;');
+oci_bind_by_name($stid, ':p1', $p1);
+oci_bind_by_name($stid, ':p2', $p2, 40);
+
+oci_execute($stid);
+
+print "$p2\n";   // prints 16
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Эта функция <emphasis>не проверяет</emphasis> синтаксис запроса
+    <parameter>sql_text</parameter>. Единственный способ проверить правильность
+    SQL или PL/SQL-запроса <parameter>sql_text</parameter> - это выполнить его.
+   </para>
+  </note>
+  <note>
+   <para>
+    В версиях PHP ниже 5.0.0 необходимо использовать
+    <function>ociparse</function> вместо этой функции.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>oci_execute</function></member>
+    <member><function>oci_free_statement</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
