@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+<!-- splitted from ./en/functions/network.xml, last change in rev 1.18 -->
+<refentry xml:id="function.stream-set-timeout" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>stream_set_timeout</refname>
+  <refpurpose>Устанавливает значение тайм-аута на потоке</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>stream_set_timeout</methodname>
+   <methodparam><type>resource</type><parameter>stream</parameter></methodparam>
+   <methodparam><type>int</type><parameter>seconds</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>microseconds</parameter><initializer>0</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Устанавливает значение тайм-аута на потоке <parameter>stream</parameter>,
+   равное сумме параметров <parameter>seconds</parameter> и
+   <parameter>microseconds</parameter>. 
+  </para>
+  <para>
+   Когда время работы потока истекает, ключ 'timed_out' массива, возвращаемого
+   функцией <function>stream_get_meta_data</function>, устанавливается в значение &true;, хотя
+   ошибка или предупреждение не генерируется.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>stream</parameter></term>
+     <listitem>
+      <para>
+       Целевой поток.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>seconds</parameter></term>
+     <listitem>
+      <para>
+       Секунды в устанавливаемом тайм-ауте.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>microseconds</parameter></term>
+     <listitem>
+      <para>
+       Микросекунды в устанавливаемом тайм-ауте.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Начиная с  PHP 4.3 эта функция может (потенциально) работать на любом типе 
+        потока. В PHP 4.3 потоки, основанные на сокетах - это единственный тип потоков,
+        поддерживаемый в ядре PHP, хотя потоки из других расширений
+        могут поддерживать эту функцию.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>stream_set_timeout</function></title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$fp = fsockopen("www.example.com", 80);
+if (!$fp) {
+    echo "Невозможно открыть сокет\n";
+} else {
+
+    fwrite($fp, "GET / HTTP/1.0\r\n\r\n");
+    stream_set_timeout($fp, 2);
+    $res = fread($fp, 2000);
+
+    $info = stream_get_meta_data($fp);
+    fclose($fp);
+
+    if ($info['timed_out']) {
+        echo 'Истекло время соединения!';
+    } else {
+        echo $res;
+    }
+
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Эта функция не работает с продвинутыми операциями, такими, как
+    <function>stream_socket_recvfrom</function>. Используйте вместо неё
+    <function>stream_select</function> с параметром тайм-аута
+   </para>
+  </note>
+  <para>
+   Эта функция раньше вызывалась через
+   <function>set_socket_timeout</function> и позднее через
+   <function>socket_set_timeout</function>, но это использование устарело.
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><function>fsockopen</function></member>
+   <member><function>fopen</function></member>
+  </simplelist>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
