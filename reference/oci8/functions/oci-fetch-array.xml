@@ -1,174 +1,595 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- EN-Revision: 0640e024d4b8a9400d457143ccd0ea66e5f98ead Maintainer: irker Status: ready -->
+<!-- Reviewed: no -->
 <!-- $Revision$ -->
-  <refentry xml:id="function.oci-fetch-array" xmlns="http://docbook.org/ns/docbook">
-   <refnamediv>
-    <refname>oci_fetch_array</refname>
-    <refpurpose>Возвращает следующую строку из результата запроса в виде
-     ассоциативного массива, числового массива или оба сразу
-    </refpurpose>
-   </refnamediv>
-   <refsect1>
-    <title>Описание</title>
-     <methodsynopsis>
-      <type>array</type><methodname>oci_fetch_array</methodname>
-      <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
-      <methodparam choice="opt"><type>int</type><parameter>mode</parameter></methodparam>
-     </methodsynopsis>
-    <para>
-     Возвращает массив, который соответствует строке из результата запроса
-     или &false;, если строк в результате больше не осталось.
-    </para>
-    <para>
-     По умолчанию, <function>oci_fetch_array</function> возвращает
-     массив с ассоциативными и числовыми индексами.
-    </para>
-    <para>
-     Необязательный второй параметр может принимать значение одной или суммы
-     из нескольких констант. Вы можете использовать следующие константы:
-     <simplelist>
-      <member>
-       <constant>OCI_BOTH</constant> - возвращать массив с ассоциативными и
-       числовыми индексами (то же, что и <constant>OCI_ASSOC</constant> 
-       + <constant>OCI_NUM</constant>), это значение используется по умолчанию.
-      </member>
-      <member>
-       <constant>OCI_ASSOC</constant> - возвращать массив с ассоциативными
-       индексами (именно так работает <function>oci_fetch_assoc</function>).
-      </member>
-      <member>
-       <constant>OCI_NUM</constant> - возвращать массив с числовыми индексами,
-       начинающимися с нуля (именно так работает
-       <function>oci_fetch_row</function>).
-      </member>
-      <member>
-       <constant>OCI_RETURN_NULLS</constant> - создавать пустые элементы для
-       полей со значением &null;.
-      </member>
-      <member>
-       <constant>OCI_RETURN_LOBS</constant> - возвращать значение поля LOB
-       вместо дескриптора.
-      </member>
-     </simplelist>
-     Значение по умолчанию для <parameter>mode</parameter> равно 
-     <constant>OCI_BOTH</constant> + <constant>OCI_RETURN_NULLS</constant>.
-    </para>
-    <para>
-     Нужно также упомянуть тот факт, что <function>oci_fetch_array</function>
-     <emphasis>незначительно</emphasis> медленней, чем 
-     <function>oci_fetch_row</function>, но предоставляет более гибкий
-     интерфейс.
-    </para>
-    <note>
-     <simpara>
-      Вам не следует забывать о том, что Oracle возвращает имена полей в
-      ВЕРХНЕМ регистре, поэтому индексы ассоциативного массива будут также в
-      ВЕРХНЕМ регистре.
-     </simpara>
-    </note>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_fetch_array</function> с
-       флагом OCI_BOTH</title>
-      <programlisting role="php">
+<refentry xml:id="function.oci-fetch-array" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>oci_fetch_array</refname>
+  <refpurpose>Возвращает следующую строку из результата запроса в виде ассоциативного или нумерованного массива
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>oci_fetch_array</methodname>
+   <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>mode</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает массив, содержащий следующую строку результата запроса.
+   Каждый элемент массива соответствует одному полю из строки. Эта функция
+   обычно вызывается в цикле, пока она не вернет &false;, который указывает
+   на отсутствие последующих строк.
+  </para>
+  &oci.datatypes;
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>statement</parameter></term>
+     <listitem>
+       &oci.arg.statement.id;
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>mode</parameter></term>
+     <listitem>
+      <para>
+       Необязательный второй параметр может состоять из любой комбинации следующих
+       констант:
+       <table>
+        <title><function>oci_fetch_array</function> Modes</title>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Константа</entry>
+           <entry>Описание</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><constant>OCI_BOTH</constant></entry>
+           <entry>Возвращает массив как с ассоциативными и числовыми
+            индексами. Эта константа то же самое что и
+            <constant>OCI_ASSOC</constant>
+            + <constant>OCI_NUM</constant>, и она используется по умолчанию.</entry>
+          </row>
+          <row>
+           <entry><constant>OCI_ASSOC</constant></entry>
+           <entry>Возвращает ассоциативный массив.</entry>
+          </row>
+          <row>
+           <entry><constant>OCI_NUM</constant></entry>
+           <entry>Возвращает нумерованный массив.</entry>
+          </row>
+          <row>
+           <entry><constant>OCI_RETURN_NULLS</constant></entry>
+           <entry>Создает элементы для полей равных &null;. Значение элемента
+             будет равно PHP &null;.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>OCI_RETURN_LOBS</constant></entry>
+           <entry>Возвращает содержимое полей типа LOB, вместо LOB
+               указателя.</entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
+      </para>
+      <para>
+       По умолчанию <parameter>mode</parameter> равен <constant>OCI_BOTH</constant>.
+      </para>
+      <para>
+       Используйте оператор сложения &quot;+&quot; для указания
+       более одного режима.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Вовзвращает массив с ассоциативными и/или числовыми ключами. Если
+   больше нет строк в <parameter>statement</parameter>, то возвращается
+   &false;.
+  </para>
+  <para>
+    По умолчанию, поля <literal>LOB</literal> возвращаются как указатели LOB.
+  </para>
+  <para>
+   Поля типа <literal>DATE</literal> вовзращаются в формате строк, соответствующем
+   текущему формату даты. Формат по умолчанию может быть изменен
+   с помощью переменных окружения Oracle, таких как <literal>NLS_LANG</literal>, или
+   предварительным выполнением комманды <literal>ALTER SESSION SET
+   NLS_DATE_FORMAT</literal>.
+  </para>
+  <para>
+   Регистронезависимые (по умолчанию в Oracle) имена полей будут иметь
+   ассоциативные индексы в верхнем регистре в результирующем массиве.
+   Регистрозависимые имена полей будут иметь индексы с теми же регистрами символов, что и само поле.
+   Используйте <function>var_dump</function> для результирующего массива, чтобы
+   проверить соответствие регистов символов для каждого запроса.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <constant>OCI_BOTH</constant></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$connection = oci_connect("apelsin", "kanistra");
 
-$query = "SELECT id, name FROM fruits";
-
-$statement = oci_parse ($connection, $query);
-oci_execute ($statement);
-
-while ($row = oci_fetch_array ($statement, OCI_BOTH)) {
-    echo $row[0]." and ".$row['ID']." is the same<br>";
-    echo $row[1]." and ".$row['NAME']." is the same<br>";
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
 }
+
+$stid = oci_parse($conn, 'SELECT department_id, department_name FROM departments');
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_BOTH))) {
+    // Используйте название полей в верхнем регистре для ассоциативных индексов
+    echo $row[0] . " и " . $row['DEPARTMENT_ID']   . " идентичны<br>\n";
+    echo $row[1] . " и " . $row['DEPARTMENT_NAME'] . " идентичны<br>\n";
+}
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_fetch_array</function> с
-       флагом OCI_NUM</title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <constant>OCI_NUM</constant></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$connection = oci_connect("user", "password");
 
-$query = "SELECT id, name, lob_field FROM fruits";
+/*
+  Перед выполнением создайте таблицу:
+      CREATE TABLE mytab (id NUMBER, description CLOB);
+      INSERT INTO mytab (id, description) values (1, 'A very long string');
+      COMMIT;
+*/
 
-$statement = oci_parse ($connection, $query);
-oci_execute ($statement);
-
-while ($row = oci_fetch_array ($statement, OCI_NUM)) {
-    echo $row[0]."<br>";
-    echo $row[1]."<br>";
-    echo $row[2]->read(100)."<br>";  //this will output first 100 bytes from LOB
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
 }
+
+$stid = oci_parse($conn, 'SELECT id, description FROM mytab');
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_NUM))) {
+    echo $row[0] . "<br>\n";
+    echo $row[1]->read(11) . "<br>\n"; // это выведет первые 11 байт DESCRIPTION
+}
+
+// Выведет:
+//    1
+//    A very long
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_fetch_array</function> с
-       флагом OCI_ASSOC</title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <constant>OCI_ASSOC</constant></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$connection = oci_connect("user", "password");
 
-$query = "SELECT id, name, lob_field FROM fruits";
+/*
+  Перед выполнением создайте таблицу:
+      CREATE TABLE mytab (id NUMBER, description CLOB);
+      INSERT INTO mytab (id, description) values (1, 'A very long string');
+      COMMIT;
+*/
 
-$statement = oci_parse ($connection, $query);
-oci_execute ($statement);
-
-while ($row = oci_fetch_array ($statement, OCI_NUM)) {
-    echo $row['ID']."<br>";
-    echo $row['NAME']."<br>";
-    echo $row['LOB_FIELD']."<br>";  //this will output "Object id #1"
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
 }
+
+$stid = oci_parse($conn, 'SELECT id, description FROM mytab');
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_ASSOC))) {
+    echo $row['ID'] . "<br>\n";
+    echo $row['DESCRIPTION']->read(11) . "<br>\n"; // это выведет первые 11 байт DESCRIPTION
+}
+
+// Выведет:
+//    1
+//    A very long
+
+oci_free_statement($stid);
+oci_close($conn);
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     <example>
-      <title>Пример использования <function>oci_fetch_array</function> с
-       флагом OCI_RETURN_LOBS</title>
-      <programlisting role="php">
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <constant>OCI_RETURN_NULLS</constant></title>
+    <programlisting role="php">
 <![CDATA[
 <?php
-$connection = oci_connect("user", "password");
 
-$query = "SELECT id, name, lob_field FROM fruits";
-
-$statement = oci_parse ($connection, $query);
-oci_execute ($statement);
-
-while ($row = oci_fetch_array ($statement, OCI_NUM)) {
-    echo $row[0]."<br>";
-    echo $row[1]."<br>";
-    echo $row['LOB_FIELD']."<br>";  //this will output LOB's content
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
 }
+
+$stid = oci_parse($conn, 'SELECT 1, null FROM dual');
+oci_execute($stid);
+while (($row = oci_fetch_array ($stid, OCI_ASSOC))) { // Игнорирует NULL значения
+    var_dump($row);
+}
+
+/*
+Вышеуказанный код выведет:
+  array(1) {
+    [1]=>
+    string(1) "1"
+  }
+*/
+
+$stid = oci_parse($conn, 'SELECT 1, null FROM dual');
+oci_execute($stid);
+while (($row = oci_fetch_array ($stid, OCI_ASSOC+OCI_RETURN_NULLS))) { // Получает NULL значения
+    var_dump($row);
+}
+
+/*
+Вышеуказанный код выведет:
+  array(2) {
+    [1]=>
+    string(1) "1"
+    ["NULL"]=>
+    NULL
+  }
+*/
+
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-    <para>
-     См. также <function>oci_fetch_assoc</function>,
-     <function>oci_fetch_object</function>,
-     <function>oci_fetch_row</function> и
-     <function>oci_fetch_all</function>. 
-    </para>
-   </refsect1>
-  </refentry>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <constant>OCI_RETURN_LOBS</constant></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/*
+  Перед выполнением создайте таблицу:
+      CREATE TABLE mytab (id NUMBER, description CLOB);
+      INSERT INTO mytab (id, description) values (1, 'A very long string');
+      COMMIT;
+*/
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, 'SELECT id, description FROM mytab');
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_LOBS))) {
+    echo $row['ID'] . "<br>\n";
+    echo $row['DESCRIPTION'] . "<br>\n"; // содержит весь DESCRIPTION
+}
+
+// Выведет:
+//    1
+//    A very long string
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с регистрозависимыми названиями полей</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/*
+   Перед выполнением создайте таблицу:
+      CREATE TABLE mytab ("Name" VARCHAR2(20), city VARCHAR2(20));
+      INSERT INTO mytab ("Name", city) values ('Chris', 'Melbourne');
+      COMMIT;
+*/
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, 'select * from mytab');
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS);
+
+// Так как 'Name' было создан как регистрозависимое поле, то
+// те же регисты символов используются для индексов массива.
+// Тем не менее для 'CITY' должен использоваться индекс в верхнем регистре.
+print $row['Name'] . "<br>\n";   //  выведет Chris
+print $row['CITY'] . "<br>\n";   //  выведет Melbourne
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с полями с одинаковыми названиями</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/*
+  Перед выполнением создайте таблицу:
+      CREATE TABLE mycity (id NUMBER, name VARCHAR2(20));
+      INSERT INTO mycity (id, name) values (1, 'Melbourne');
+      CREATE TABLE mycountry (id NUMBER, name VARCHAR2(20));
+      INSERT INTO mycountry (id, name) values (1, 'Australia');
+      COMMIT;
+*/
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$sql = 'SELECT mycity.name, mycountry.name
+        FROM mycity, mycountry
+        WHERE mycity.id = mycountry.id';
+$stid = oci_parse($conn, $sql);
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC);
+var_dump($row);
+
+// Выведет только одну записаь "NAME":
+//    array(1) {
+//      ["NAME"]=>
+//      string(9) "Australia"
+//    }
+
+// Для получения полей с повторяющимся названием используйте SQL псевдонимы (alias) для полей. Например "AS ctnm":
+$sql = 'SELECT mycity.name AS ctnm, mycountry.name
+        FROM mycity, mycountry
+        WHERE mycity.id = mycountry.id';
+$stid = oci_parse($conn, $sql);
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC);
+var_dump($row);
+
+// Выведет записи из обоих полей:
+//    array(2) {
+//      ["CTNM"]=>
+//      string(9) "Melbourne"
+//      ["NAME"]=>
+//      string(9) "Australia"
+//    }
+
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с полями <literal>DATE</literal></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+// Устанавливаем формат даты для данного соединения.
+// Для повышения производительности вместо этого
+// используйте изменение формата в триггере или переменной окружения.
+$stid = oci_parse($conn, "ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD'");
+oci_execute($stid);
+
+$stid = oci_parse($conn, 'SELECT hire_date FROM employees WHERE employee_id = 188');
+oci_execute($stid);
+$row = oci_fetch_array($stid, OCI_ASSOC);
+echo $row['HIRE_DATE'] . "<br>\n";  // выведет 1997-06-14
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <literal>REF CURSOR</literal></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/*
+  Создайте PL/SQL хранимую процедуру:
+
+  CREATE OR REPLACE PROCEDURE myproc(p1 OUT SYS_REFCURSOR) AS
+  BEGIN
+    OPEN p1 FOR SELECT * FROM all_objects WHERE ROWNUM < 5000;
+  END;
+*/
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, 'BEGIN myproc(:rc); END;');
+$refcur = oci_new_cursor($conn);
+oci_bind_by_name($stid, ':rc', $refcur, -1, OCI_B_CURSOR);
+oci_execute($stid);
+
+// Выполняет вовзращенный REF CURSOR и получает его в виде идентификатора выражения
+oci_execute($refcur);
+echo "<table border='1'>\n";
+while ($row = oci_fetch_array($refcur, OCI_ASSOC+OCI_RETURN_NULLS)) {
+    echo "<tr>\n";
+    foreach ($row as $item) {
+        echo "    <td>".($item !== null ? htmlentities($item, ENT_QUOTES) : "")."</td>\n";
+    }
+    echo "</tr>\n";
+}
+echo "</table>\n";
+
+oci_free_statement($refcur);
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> с <literal>LIMIT</literal>-подобным запросом</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+// Запрос, который необходимо выполнить
+$sql = 'SELECT city, postal_code FROM locations ORDER BY city';
+
+// Этот вложенный выбирает часть строк из $sql.
+// При реальной разработке будьте внимательны и избегайте
+// возможности SQL-инъекции при объединении SQL выражений.
+$limit_sql =
+   'select *
+    from ( select a.*, rownum as rnum
+        from (' . $sql . ') a
+        where rownum < :FIRST_ROW + :NUM_ROWS )
+    where rnum >= :FIRST_ROW';
+
+$first = 1;  // start with the first row
+$num   = 5;  // return 5 rows
+$stid = oci_parse($conn, $limit_sql);
+oci_bind_by_name($stid, ':FIRST_ROW', $first);
+oci_bind_by_name($stid, ':NUM_ROWS', $num);
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_ASSOC))) {
+    echo $row['CITY'] . " " . $row['POSTAL_CODE'] . "<br>\n";
+}
+
+// Выведет:
+//    Beijing 190518x
+//    Bern 3095x
+//    Bombay 490231x
+//    Geneva 1730x
+//    Hiroshima 6823x
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Индексы ассоциативного массива необходимо приводить в верхний регистр
+    для стандартных полей Oracle, созданных с регистронезависимыми названиями.
+   </para>
+  </note>
+  <note>
+   &oci.use.setprefetch;
+  </note>
+  <note>
+   <para>
+    Функция <function>oci_fetch_array</function>
+    <emphasis>немного</emphasis> медленней
+    <function>oci_fetch_assoc</function>
+    или <function>oci_fetch_row</function>, но более гибкая.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>oci_fetch</function></member>
+    <member><function>oci_fetch_all</function></member>
+    <member><function>oci_fetch_assoc</function></member>
+    <member><function>oci_fetch_object</function></member>
+    <member><function>oci_fetch_row</function></member>
+    <member><function>oci_set_prefetch</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
@@ -190,3 +611,4 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
+
