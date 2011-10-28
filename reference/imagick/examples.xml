@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 79dcbe011fb254dcd92c597064571fe313362a09 Maintainer: alien Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="imagick.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <section xml:id="imagick.examples-1">
+  <title>Базовое использование</title>
+  <para>
+   В PHP очень легко управлять объектом Imagick используя ОО
+   интерфейс. Вот небольшой пример, как сделать миниатюру:
+   <example>
+    <title>Создание миниатюры в Imagick</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+header('Content-type: image/jpeg');
+
+$image = new Imagick('image.jpg');
+
+// Если в качестве ширины или высоты передан 0,
+// то сохраняется соотношение сторон
+$image->thumbnailImage(100, 0);
+
+echo $image;
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   С использованием SPL и других OO функций поддерживаемых в Imagick, можно очень легко
+   изменить размеры всех файлов в директории (полезно для пакетного изменения больших изображений
+   с цифровой камеры для просмотра в Web). Здесь мы используем изменение размера, используя
+   определённые мета-данные:
+   <example>
+    <title>Создание миниатюр для всех JPG файлов в директории</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$images = new Imagick(glob('images/*.JPG'));
+
+foreach($images as $image) {
+
+    // Передаём 0 в thumbnailImage для сохранения соотношения сторон
+    $image->thumbnailImage(1024,0);
+
+}
+
+$images->writeImages();
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Этот пример создаёт отражение изображения.
+   Отражение создаётся зеркальным отображением и наложением градиента на нём.
+   Затем оригинальное изображение и его отражение накладываются на холст.
+   <example>
+    <title>Создание отражения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Чтение изображения */
+$im = new Imagick("test.png");
+
+/* Миниатюра изображения */
+$im->thumbnailImage(200, null);
+
+/* Создание рамки для изображения */
+$im->borderImage(new ImagickPixel("white"), 5, 5);
+
+/* Клонируем изображение и зеркально поворачиваем его */
+$reflection = $im->clone();
+$reflection->flipImage();
+
+/* Создаём градиент. Это будет наложением для отражения */
+$gradient = new Imagick();
+
+/* Градиент должен быть достаточно большой для изображения и его рамки */
+$gradient->newPseudoImage($reflection->getImageWidth() + 10, $reflection->getImageHeight() + 10, "gradient:transparent-black");
+
+/* Наложение градиента на отражение */
+$reflection->compositeImage($gradient, imagick::COMPOSITE_OVER, 0, 0);
+
+/* Добавляем прозрачность. Требуется ImageMagick 6.2.9 или выше */
+$reflection->setImageOpacity( 0.3 );
+
+/* Создаём пустой холст */
+$canvas = new Imagick();
+
+/* Холст должен быть достаточно большой, чтобы вместить оба изображения */
+$width = $im->getImageWidth() + 40;
+$height = ($im->getImageHeight() * 2) + 30;
+$canvas->newImage($width, $height, new ImagickPixel("black"));
+$canvas->setImageFormat("png");
+
+/* Наложение оригинального изображения и отражения на холст */
+$canvas->compositeImage($im, imagick::COMPOSITE_OVER, 20, 10);
+$canvas->compositeImage($reflection, imagick::COMPOSITE_OVER, 20, $im->getImageHeight() + 10);
+
+/* Вывод изображения */
+header("Content-Type: image/png");
+echo $canvas;
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <mediaobject>
+     <alt>Пример вывода: Создание отражения изображения</alt>
+     <imageobject>
+      <imagedata fileref="en/reference/imagick/figures/hello_world_reflection.png"/>
+     </imageobject>
+    </mediaobject>
+   </example>
+  </para>
+  <para>
+   Этот пример иллюстрирует как использовать заливку во время рисования.
+   <example>
+    <title>Заливка текста градиентом</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* Создание нового объекта imagick */
+$im = new Imagick();
+
+/* Создание нового изображения. Будет использоваться как шаблон заливки */
+$im->newPseudoImage(50, 50, "gradient:red-black");
+
+/* Создаём объект imagickdraw */
+$draw = new ImagickDraw();
+
+/* Запускаем новый шаблон с названием "gradient" */
+$draw->pushPattern('gradient', 0, 0, 50, 50);
+
+/* Смешиваем градиент с шаблоном */
+$draw->composite(Imagick::COMPOSITE_OVER, 0, 0, 50, 50, $im);
+
+/* Закрываем шаблон */
+$draw->popPattern();
+
+/* Используем шаблон с названием "gradient" для заливки */
+$draw->setFillPatternURL('#gradient');
+
+/* Устанавливаем размер шрифта в 52 */
+$draw->setFontSize(52);
+
+/* Добавляем свой текст */
+$draw->annotation(20, 50, "Hello World!");
+
+/* Создаём новый объект холста и белое изображение */
+$canvas = new Imagick();
+$canvas->newImage(350, 70, "white");
+
+/* Рисуем ImagickDraw на холсте */
+$canvas->drawImage($draw);
+
+/* устанавливаем чёрную рамку шириной 1px вокруг изображения */
+$canvas->borderImage('black', 1, 1);
+
+/* Устанавливаем формат PNG */
+$canvas->setImageFormat('png');
+
+/* Вывод изображения */
+header("Content-Type: image/png");
+echo $canvas;
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <mediaobject>
+     <alt>Пример вывода: Заливка текста градиентом</alt>
+     <imageobject>
+      <imagedata fileref="en/reference/imagick/figures/hello_world.png"/>
+     </imageobject>
+    </mediaobject>
+   </example>
+  </para>
+  <para>
+   Работа с анимированными GIF-изображениями
+   <example>
+    <title>Чтение GIF изображения и изменение размера всех фреймов</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* Создание нового объекта imagick и чтение в GIF */
+$im = new Imagick("example.gif");
+
+/* Изменение размера всех фреймов */
+foreach ($im as $frame) {
+    /* фреймы 50x50 */
+    $frame->thumbnailImage(50, 50);
+
+    /* Устанавливаем виртуальный холст для коррекции размера */
+    $frame->setImagePage(50, 50, 0, 0);
+}
+
+/* Обратите внимание, writeImages вместо writeImage */
+$im->writeImages("example_small.gif", true);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </section>
+</chapter>
+
+
