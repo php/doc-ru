@@ -1,61 +1,407 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: n/a Maintainer: shein Status: old -->
+<!-- $Revision$ -->
+<!-- EN-Revision: 4c3035c04d91cc6df78509ba96bda465f8b1b88e Maintainer: mch Status: ready -->
 <!-- $Revision$ -->
 <chapter xml:id="oci8.connection" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Connecting Handling</title>
- <para>
-  The oci8 extension provides you with 3 different functions for
-  connecting to Oracle.  It is up to you to use the most appropriate
-  function for your application, and the information in this section is
-  intended to help you make an informed choice.
- </para>
- <para>
-  Connecting to an Oracle server is a reasonably expensive operation, in
-  terms of the time that it takes to complete.  The <function>oci_pconnect</function>
-  function uses a persistent cache of connections that can be re-used
-  across different script requests.  This means that you will typically
-  only incur the connection overhead once per php process (or apache child).
- </para>
- <para>
-  If your application connects to Oracle using a different set of
-  credentials for each web user, the persistent cache employed by
-  <function>oci_pconnect</function> will become less useful as the
-  number of concurrent users increases, to the point where it may
-  start to adversely affect the overall performance of your Oracle
-  server due to maintaining too many idle connections. If your
-  application is structured in this way, it is recommended that
-  you either tune your application using the <link
-   linkend="ini.oci8.max-persistent">oci8.max_persistent</link> and <link
-   linkend="ini.oci8.persistent-timeout">oci8.persistent_timeout</link>
-  configuration settings (these will give you control over the
-  persistent connection cache size and lifetime) or use
-  <function>oci_connect</function> instead.
- </para>
- <para>
-  Both <function>oci_connect</function> and <function>oci_pconnect</function>
-  employ a connection cache; if you make multiple calls to
-  <function>oci_connect</function>, using the same parameters, in a
-  given script, the second and subsequent calls return the existing
-  connection handle.  The cache used by <function>oci_connect</function>
-  is cleaned up at the end of the script run, or when you explicitly close
-  the connection handle. <function>oci_pconnect</function> has similar
-  behaviour, although its cache is maintained separately and survives
-  between requests.
- </para>
- <para>
-  This caching feature is important to remember, because it gives the
-  appearance that the two handles are not transactionally isolated (they
-  are in fact the same connection handle, so there is no isolation of any
-  kind).  If your application needs two separate, transactionally isolated
-  connections, you should use <function>oci_new_connect</function>.
- </para>
- <para>
-  <function>oci_new_connect</function> always creates a new connection to
-  the Oracle server, regardless of what other connections might already exist.
-  High traffic web applications should try to avoid using
-  <function>oci_new_connect</function>, especially in the busiest sections of
-  the application.
- </para>
+ <title>Работа с соединениями</title>
+ <section>
+  <title>Функции подключения</title>
+  <para>
+   Расширение OCI8 предоставляет три различных функции для подключения
+   к серверу Oracle. Стандартная функция соединения - это
+   <function>oci_connect</function>. Она создает соединение к базе данных
+   Oracle и возвращает ресурс, который используется при последующих обращениях
+   к БД.
+  </para>
+  <para>
+   Подключение к серверу Oracle является достаточно дорогостоящей операцией
+   с точки зрения времени, которое требуется для выполнения.
+   Функция <function>oci_pconnect</function> использует постоянный
+   кэш соединений, которые могут быть повторно использованы различными
+   запросами скриптов. Это означает, что затраты на установку соединения,
+   как правило, происходят только единожды на один процесс PHP
+   (или на потомка Apache).
+  </para>
+  <para>
+   Если приложение соединяется к серверу Oracle, используя особый набор
+   данных для каждого веб-пользователя, то постоянный кэш соединений,
+   используемый функцией <function>oci_pconnect</function> будет менее
+   полезным, т.к. количество одновременных пользователей вырастает до
+   того уровня, где он может начать оказывать негативное влияние на
+   общую производительность сервера Oracle из-за поддержания слишком
+   большого количества простаивающих соединений. Если приложение
+   настроено таким образом, то рекомендуется либо настроить его с
+   помощью параметров конфигурации
+   <link linkend="ini.oci8.max-persistent">oci8.max_persistent</link>
+   и <link linkend="ini.oci8.persistent-timeout">oci8.persistent_timeout</link>
+   (это даст возможность управления размером кэша постоянных соединений и
+   их время жизни), либо использовать Oracle 11g Database
+   Resident Connection Pooling, либо использовать функцию
+   <function>oci_connect</function> вместо нее.
+  </para>
+  <para>
+   Вместе <function>oci_connect</function>
+   и <function>oci_pconnect</function> используют кэш подключений; если
+   множество вызовов <function>oci_connect</function> использует одинаковые
+   параметры в данном скрипте, второй и последующие вызовы вернут
+   существующий дескриптор соединения. Кэш, используемый функцией
+   <function>oci_connect</function>, очищается по завершению выполнения
+   скрипта, или когда соединение неявно закрывается. У функции
+   <function>oci_pconnect</function> похожее поведение, хотя ее кэш
+   обрабатывается отдельно и остается действующим между
+   запросами HTTP.
+  </para>
+  <para>
+   Эта возможность кеширования означает, что два дескриптора не изолированы
+   транзакционно (они на самом деле являются одним и тем же дескриптором, поэтому здесь
+   нет никакой изоляции). Если приложению необходимы два отдельных
+   транзакционно изолированных соединения, то необходимо использовать
+   функцию <function>oci_new_connect</function>.
+  </para>
+  <para>
+   Кеш функции <function>oci_pconnect</function> очищается и закрываются
+   все соединения к БД, когда завершается процесс PHP. Поэтому
+   эффективное использование постоянных соединений требует, чтобы PHP был
+   модулем Apache или использовался с FCGI или подобным. Постоянные соединения
+   не будут иметь никаких преимуществ перед <function>oci_connect</function>,
+   когда PHP используется с CGI или через командную строку.
+  </para>
+  <para>
+   Функция <function>oci_new_connect</function> всегда создает
+   новое соединение с сервером Oracle, невзирая на то, что другие
+   соединения могут уже существовать. Высоконагруженным веб-приложениям
+   следует избегать использования <function>oci_new_connect</function>, особенно
+   в самых загруженных частях приложения.
+  </para>
+ </section>
+ <section>
+  <title>Создание пула соединений DRCP</title>
+  <para>
+   PHP 5.3 (PECL OCI8 1.3) поддерживает постоянный пул соединений Oracle 11g
+   (DRCP).  DRCP позволяет более эффективно изпользовать память СУБД и предоставляет
+   высокую масштабируемость. Изменять код приложения для использования DRCP либо
+   нет необходимости, либо требуются минимальные изменения.
+  </para>
+  <para>
+   DRCP подходит для приложений, которые подключаются используя несколько
+   схем БД и сохраняют соединения к БД открытыми короткий промежуток времени.
+   Другим приложениям следует использовать доступные по умолчанию
+   <literal>Dedicated</literal> серверные процессы или
+   использовать <literal>Shared</literal> сервера.
+  </para>
+  <para>
+   DRCP приносит пользу всем трем функциям подключения, однако предоставляет
+   самую высокую масштабируемость, когда соединения создаются с
+   помощью функции <function>oci_pconnect</function>.
+  </para>
+  <para>
+   Чтобы функционал DRCP был доступен в OCI8, клиентские библиотеки Oracle, используемые в
+   PHP, и версия сервера баз данных должны быть 11g.
+  </para>
+  <para>
+   Документация по DRCP находится в нескольких руководствах Oracle. К примеру,
+   см. <link xlink:href="&url.oracle.drcp.configure;">Конфигурирование
+   пула постоянных соединений базы данных</link> в документации Oracle
+   для информации по использованию.
+   Документ <link xlink:href="&url.oracle.drcp.whitepaper;">техническое
+   описание DRCP</link> содержит дополнительную информацию по DRCP.
+  </para>
+  <para>
+   Для использования DRCP, скомпилируйте PHP с расширением OCI8 1.3
+   и библиотеками Oracle 11g и затем выполните следующие действия:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Как привилегированный администратор БД воспользуйтесь программой
+      наподобие SQL*Plus, чтобы запустить пул соединений в СУБД:
+     </para>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    SQL> execute dbms_connection_pool.start_pool;
+]]>
+       </screen>
+      </informalexample>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Дополнительно можно использовать
+   <literal>dbms_connection_pool.alter_param()</literal>,
+      чтобы конфигурировать параметры DRPC. Текущие настройки пула могут быть
+      получени из представления <literal>DBA_CPOOL_INFO</literal>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Обновите используемую строку соединения. К примеру, для приложений PHP, которые
+      сейчас соединяются, используя Network Connect Name
+      <literal>MYDB</literal>:
+     </para>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    $c = oci_pconnect("myuser", "mypassword", "MYDB");
+]]>
+       </screen>
+      </informalexample>
+     </para>
+     <para>
+      измените файл tnsnames.ora и добавьте
+      оператор <literal>(SERVER=POOLED)</literal>, например:
+     </para>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    MYDB = (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp) (HOST=myhost.dom.com)
+           (PORT=1521))(CONNECT_DATA=(SERVICE_NAME=sales)
+           (SERVER=POOLED)))
+]]>
+       </screen>
+      </informalexample>
+     </para>
+     <para>
+      В качестве альтернативы можно изменить синтаксис упрощенного соединения
+      в PHP и добавить туда <literal>:POOLED</literal> после имени сервиса:
+     </para>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    $c = oci_pconnect("myuser", "mypassword", "myhost.dom.com:1521/sales:POOLED");
+]]>
+       </screen>
+      </informalexample>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Отредактируйте &php.ini; и выберите имя класса соединения. Это имя
+      устанавливает логическое разделение пула соединений и может использоваться,
+      чтобы изолировать пул для отдельных приложений. Любое PHP-приложение
+      с одинаковым именем пользователя и классом для соединения
+      будет иметь возможность совместно использовать соединения в пуле, получая
+      бОльшую масштабируемость.
+     </para>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    oci8.connection_class = "MY_APPLICATION_NAME"
+]]>
+       </screen>
+      </informalexample>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Запустите приложение, соединяющееся с базой 11g.
+     </para>
+    </listitem>
+    </itemizedlist>
+  </para>
+  <note>
+   <para>
+    Приложения, использующие Oracle 10g, которые требуют производительности
+    от постоянных соединений, могут уменьшить количество памяти сервера БД,
+    которое используется <literal>Shared</literal>-серверами Oracle
+    (ранее известные как многопоточные сервера). Обратитесь к документации
+    Oracle для более подробной информации.
+   </para>
+  </note>
+ </section>
+ <section>
+  <title>Рекомендации по DRCP и известные ограничения</title>
+  <para>
+   При изменении пароля через DRCP-соединение будет выдаваться
+   ошибка <emphasis>ORA-56609: Usage not supported with DRCP</emphasis>.
+   Это документированное ограничение of Oracle Database 11g.
+  </para>
+  <para>
+   C расширением OCI8 версии 1.3 постоянные соединения теперь могут быть
+   закрыты пользователем. Это позволяет получить больший контроль над использованием
+   ресурсов соединений. Постоянные соединения теперь будут также закрываться автоматически,
+   когда отсутствует указывающая на них переменная PHP, например, в таких случаях, как
+   в конце области видимости пользовательской функции PHP. Это откатит любую
+   незавершенную транзакцию. Эти изменения в постоянных соединениях делают их
+   поведение похожим на поведение непостоянных соединений, упрощая интерфейс и позволяя
+   приложениям быть более логичными и предсказуемыми.
+   Для сохранения предыдущего поведения используйте директиву
+   <link linkend="ini.oci8.old-oci-close-semantics">oci8.old_oci_close_semantics</link>,
+   принимающую значение <emphasis>On</emphasis> .
+  </para>
+  <para>
+   Если СУБД Oracle версии 11.1.0.6, то для использования DRCP должен быть применен
+   патч для СУБД Oracle для устранения ошибки 6474441.
+   Без этого патча могут происходить ошибки, такие как <emphasis>ORA-01000: maximum
+   open cursors exceeded</emphasis>, <emphasis>ORA-01001 invalid
+   cursor</emphasis> или <emphasis>ORA-01002 fetch out of
+   sequence</emphasis>. Эти ошибки исправлены в Oracle версии
+   11.1.0.7 и более поздних.
+  </para>
+   <para>
+   Если патч для СУБД Oracle 11.1.0.6 не может быть применен, тогда
+   вместо этого можно воспользоваться тремя методами:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Соединение используя Oracle <literal>Dedicated</literal>
+      или <literal>Shared</literal> сервера вместо DRCP.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Установить директиву PHP <link linkend="ini.oci8.statement-cache-size">oci8.statement_cache_size</link>
+      в 0.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Установить событие в файле параметров инициализации базы:
+      <emphasis>event="56699 trace name context forever, level 128"</emphasis>.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   Патч 6474441 для БД Oracle версий 11.1.0.7 и 11.1.0.6
+   позволяет приложениям на PHP с DRCP-соединением использовать
+   триггер базы <literal>LOGON</literal> для установки параметров сессии
+   в момент ее создания. Примерами таких параметров являются язык NLS и
+   формат даты.
+  </para>
+  <para>
+   Если патч к БД Oracle 11.1.0.6 не может быть установлен, то
+   можно использовать несколько методов вместо использования
+   триггеров <literal>LOGON</literal>:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+   После авторизации, явно установите свойства сессии используя
+   код приложения PHP.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+   Соединитесь, используя Oracle <literal>Dedicated</literal>
+   или <literal>Shared</literal> сервера вместо DRCP.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   Автоматическое повторное установление постоянного соединения PHP
+   после порождения нового процесса Apache или FGCI означает, что
+   использование триггеров <literal>LOGON</literal> в PHP рекомендуется
+   только для установки атрибутов сессии, а не для пользовательских запросов
+   на соединение для каждого приложения. Это даже более проявляется с DRCP за
+   счет автоматического изменения размера буфера соединений и со способом триггеров <literal>LOGON</literal>
+   конфликтующим с DRCP аутентификацией.
+  </para>
+ </section>
+ <section>
+  <title>Поддержка быстрого оповещение приложения (FAN)</title>
+  <para>
+   Поддержка FAN дает быструю обработку ситуации отказа соединения и высокую
+   доступность. Это посволяет скриптам PHP OCI8 быть уведомленными когда
+   компьютер или экземпляр базы данных становится недоступным. Без
+   FAN, OCI8 может зависнуть до тех пор, пока не пройдет таймаут TCP и не
+   возвратится ошибка, что может занимать несколько минут. Включение FAN в OCI8
+   позволяет приложениям определять ошибки и подсоединяться заново к доступному
+   экземпляру базы данных без уведомления веб-пользователя о перебое в работе.
+  </para>
+  <para>
+   Поддержка FAN доступна, когда клиентские библиотеки Oracle, с которыми был
+   собран PHP и СУБД Oracle, вместе имеют версию 10gR2 или 11g.
+  </para>
+  <para>
+   FAN приносит пользу пользователям кластерной технологии Oracle (RAC), потому что
+   соединения к оставшимся работоспособными экземплярам базы может быть осуществлено
+   незамедлительно. Пользователи Oracle Data Guard с брокером будут видеть
+   сгенерированные события FAN, когда резервная база данных становится доступной.
+   Автономные базы данных будут посылать FAN-события, когда база будет перезагружена.
+  </para>
+  <para>
+   Для активных соединений, когда машина или экземпляр базы данных становится
+   недоступным, будет возвращена функцией ошибка соединения OCI8,
+   которая в данный момент вызывается. При последующих попытках
+   соединение будет установлено к работоспособному экземпляру базы данных.
+   Расширение OCI8 также прозрачно обновляет все неиспользуемые соединения, которые
+   повредились из-за ошибок сервера БД или экземпляра соединения. Таким образом,
+   вызов функции соединения в PHP обновит соединение без уведобления скрипта о каких бы то
+   ни было нарушениях сервиса.
+  </para>
+  <para>
+   Когда директива <link linkend="ini.oci8.events">oci8.events</link>
+   принимает значение <literal>On</literal>, рекомендуется установить
+   <link linkend="ini.oci8.ping-interval">oci8.ping_interval</link>
+   в -1 для выключения пинга, так как включение FAN-событий, предоставляющих
+   упреждающее управление неиспользуемыми соединениями, сделает его невозможным
+   из-за нарушения обслуживания.
+  </para>
+  <para>
+   Для включения поддержки FAN в PHP необходимо собрать PHP с библиотеками
+   Oracle 10gR2 или 11g и затем следовать следующим инструкциям:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+   Как привилегированный администратор баз данных, используйте программу,
+   подобную SQL*Plus, для включения сервиса БД по отправке FAN-событий.
+   Например:
+     </simpara>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    SQL> execute dbms_service.modify_service(
+                   SERVICE_NAME        => 'sales',
+                   AQ_HA_NOTIFICATIONS => TRUE);
+]]>
+       </screen>
+      </informalexample>
+     </para>
+    </listitem>
+    <listitem>
+     <simpara>
+      Отредактируйте php.ini и добавьте
+     </simpara>
+     <para>
+      <informalexample>
+       <screen>
+<![CDATA[
+    oci8.events = On
+]]>
+       </screen>
+      </informalexample>
+     </para>
+    </listitem>
+    <listitem>
+     <simpara>
+   Если приложение не обрабатывает ошибочные состояния OCI8, модифицируйте
+   его, чтобы определить ошибки и принять соответствующие действия.
+   Это может включать повторное соединение и повторное выполнение
+   выражений.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+   Запустите приложение, соединяющееся к базе Oracle 10gR2 или 11g.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </section>
 </chapter>
 
 <!-- Keep this comment at the end of the file
