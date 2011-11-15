@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+
+<chapter xml:id="pdf.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+&reftitle.examples;
+ <section xml:id="pdf.examples-basic">
+  <title>Примеры использования</title>
+  <para>
+   Большинство функций достаточно просты в использовании. Самой сложной частью, 
+   вероятно, является создание первого PDF-файла. Следующий пример должен 
+   помочь начать работу. Пример разработан для PHP 4 и создаёт
+   файл <filename>hello.pdf</filename> с одной страницей.
+   При этом наполняется содержимое документа, загружается шрифт Helvetica-Bold
+   и создается текст "Hello world! (says PHP)".
+  </para>
+  <para>
+   <example>
+    <title>Пример PDFlib на PHP 4</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$p = PDF_new();
+
+/*  Создание нового PDF-файла; указание имени PDF-файла для размещения на диске */
+if (PDF_begin_document($p, "", "") == 0) {
+    die("Error: " . PDF_get_errmsg($p));
+}
+
+PDF_set_info($p, "Creator", "hello.php");
+PDF_set_info($p, "Author", "Rainer Schaaf");
+PDF_set_info($p, "Title", "Hello world (PHP)!");
+
+PDF_begin_page_ext($p, 595, 842, "");
+
+$font = PDF_load_font($p, "Helvetica-Bold", "winansi", "");
+
+PDF_setfont($p, $font, 24.0);
+PDF_set_text_pos($p, 50, 700);
+PDF_show($p, "Hello world!");
+PDF_continue_text($p, "(says PHP)");
+PDF_end_page_ext($p, "");
+
+PDF_end_document($p, "");
+
+$buf = PDF_get_buffer($p);
+$len = strlen($buf);
+
+header("Content-type: application/pdf");
+header("Content-Length: $len");
+header("Content-Disposition: inline; filename=hello.pdf");
+print $buf;
+
+PDF_delete($p);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   Следующий пример показывает использование PDFlib в PHP 5.
+   Он использует новые обработки исключений и инкапсуляцию, доступные в PHP 5.
+   Он создаёт файл <filename>hello.pdf</filename> с одной страницей. 
+   Пример определяет некоторое содержимое документа, загружает шрифт Helvetica-Bold
+   и выводит текст "Hello world! (says PHP)".
+  </para>
+  <para>
+   <example>
+    <title>Пример PDFlib на PHP 5</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+try {
+    $p = new PDFlib();
+
+    /*  Создание нового PDF-файла с указанием имени PDF-файла на диске */
+    if ($p->begin_document("", "") == 0) {
+        die("Error: " . $p->get_errmsg());
+    }
+
+    $p->set_info("Creator", "hello.php");
+    $p->set_info("Author", "Rainer Schaaf");
+    $p->set_info("Title", "Hello world (PHP)!");
+
+    $p->begin_page_ext(595, 842, "");
+
+    $font = $p->load_font("Helvetica-Bold", "winansi", "");
+
+    $p->setfont($font, 24.0);
+    $p->set_text_pos(50, 700);
+    $p->show("Hello world!");
+    $p->continue_text("(says PHP)");
+    $p->end_page_ext("");
+
+    $p->end_document("");
+
+    $buf = $p->get_buffer();
+    $len = strlen($buf);
+
+    header("Content-type: application/pdf");
+    header("Content-Length: $len");
+    header("Content-Disposition: inline; filename=hello.pdf");
+    print $buf;
+}
+catch (PDFlibException $e) {
+    die("PDFlib exception occurred in hello sample:\n" .
+    "[" . $e->get_errnum() . "] " . $e->get_apiname() . ": " .
+    $e->get_errmsg() . "\n");
+}
+catch (Exception $e) {
+    die($e);
+}
+$p = 0;
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </section>
+</chapter>
