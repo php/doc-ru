@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 282c4d05098f0fd25bf90795855a44e5f33bc4c0 Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+ <section xml:id="oci8.test">
+  <title xmlns="http://docbook.org/ns/docbook">Testing</title>
+   <section xml:id="oci8.testing" xmlns="http://docbook.org/ns/docbook">
+    <para>
+     Набор тестов для OCI8 находится в директории 
+     <filename>ext/oci8/tests</filename>. После прогона этих тестов, в этой
+     директории также окажутся файлы журналов произошедших событий и ошибок.
+    </para>
+   </section>
+   <section>
+    <para>
+     Перед запуском тестов необходимо отредактировать файл
+     <filename>details.inc</filename> и задать значения переменным
+     $user, $password и строке соединения $dbase. Набор тестов OCI8
+     разрабатывался с использованием учетной записи
+     <literal>SYSTEM</literal>. Некоторые тесты не будут выполняться, если
+     у тестирующего пользователя нет аналогичных прав доступа.
+    </para>
+    <para>
+     Для тестирования функции Oracle 11g создания пулов соединений
+     (Database Resident Connection Pooling) необходимо установить переменную
+     $test_drcp в <literal>TRUE</literal>, а также убедитесь, что в строке
+     соединения задан соответствующий адрес DRCP сервера.
+    </para>
+    <para>
+     В качестве альтернативы редактированию файла
+     <filename>details.inc</filename> можно задать значения переменным
+     окружения, например:
+     <programlisting>
+<![CDATA[
+    $ export PHP_OCI8_TEST_USER=system
+    $ export PHP_OCI8_TEST_PASS=oracle
+    $ export PHP_OCI8_TEST_DB=localhost/XE
+    $ export PHP_OCI8_TEST_DRCP=FALSE
+]]>
+     </programlisting>
+     Обратите внимание, что в некоторых оболочках эти переменные могут
+     неправильно транслироваться в PHP процесс, и в тестах будут возникать
+     ошибки подключения к базе данных. Будьте аккуратны при использовании этого
+     метода настройки расширения.
+    </para>
+    <para>
+     Далее необходимо задать окружение базы данных Oracle. Для Oracle 10gR2 XE
+     это:
+     <programlisting>
+<![CDATA[
+    $ . /usr/lib/oracle/xe/app/oracle/product/10.2.0/server/bin/oracle_env.sh
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Для Oracle 11gR2 XE:
+     <programlisting>
+<![CDATA[
+    $ . /u01/app/oracle/product/11.2.0/xe/bin/oracle_env.sh
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Для других версий:
+     <programlisting>
+<![CDATA[
+    $ . /usr/local/bin/oraenv
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Некоторые оболочки требуют, чтобы в &php.ini; параметр
+     variables_order содержал литеру <literal>E</literal>, например:
+     <programlisting>
+<![CDATA[
+    variables_order = "EGPCS"
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Запуск всех PHP тестов можно осуществить командой:
+     <programlisting>
+<![CDATA[
+    $ cd your_php_src_directory
+    $ make test
+]]>
+     </programlisting>
+     либо можно запустить только OCI8 тесты:
+     <programlisting>
+<![CDATA[
+    $ cd your_php_src_directory
+    $ make test TESTS=ext/oci8
+]]>
+     </programlisting>
+    </para>
+    <para>
+     По завершении тестирования, просмотрите журналы на наличие ошибок.
+     На слабых машинах время выполнения некоторых тестов может превысить
+     значение настройки таймаута в файле <filename>run-tests.php</filename>.
+     Чтобы это исправить, задайте переменной окружения
+     <literal>TEST_TIMEOUT</literal> значение по-больше (значение в секундах).
+    </para>
+    <para>
+     На быстрых вычислительных системах с локальной базой данных, рассчитанных
+     на небольшие нагрузки (например Oracle 11gR2 XE), некоторые тесты могут
+     вызывать ORA-12516 или ORA-12520 ошибки. Для их предотвращения необходимо
+     увеличить значение параметра базы данных <literal>PROCESSES</literal>
+     по инструкции ниже:
+    </para>
+    <para>
+     Подключиться к базе данных в роли суперпользователя:
+     <programlisting>
+<![CDATA[
+    $ su - oracle
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Задать необходимое окружение с помощью сценариев
+     <filename>oracle_env.sh</filename> или
+     <filename>oraenv</filename>, как описано выше.
+    </para>
+    <para>
+     Запустить утилиту командной строки SQL*Plus и увеличить значение 
+     <literal>PROCESSES</literal>
+     <programlisting>
+<![CDATA[
+    $ sqlplus / as sysdba
+    SQL> alter system set processes=100 scope=spfile
+]]>
+     </programlisting>
+    </para>
+    <para>
+     Перезапустить базу данных:
+     <programlisting>
+<![CDATA[
+    SQL> startup force
+]]>
+     </programlisting>
+    </para>
+   </section>
+ </section>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
