@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 79dcbe011fb254dcd92c597064571fe313362a09 Maintainer: mch Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="image.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <section xml:id="image.examples-png">
+  <title>Создание PNG средствами PHP</title>
+  <para>
+   <example>
+    <title>Создание PNG средствами PHP</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+header("Content-type: image/png");
+$string = $_GET['text'];
+$im     = imagecreatefrompng("images/button1.png");
+$orange = imagecolorallocate($im, 220, 210, 60);
+$px     = (imagesx($im) - 7.5 * strlen($string)) / 2;
+imagestring($im, 3, $px, 9, $string, $orange);
+imagepng($im);
+imagedestroy($im);
+
+?>
+]]>
+    </programlisting>
+   </example>
+   Этот пример можно было бы вызвать на странице с тегом: <literal>&lt;img
+   src=&quot;button.php?text=text&quot;&gt;</literal>. Выше скрипт <filename>button.php</filename>
+   возьмет строку <literal>&quot;text&quot;</literal> и наложит её поверх базового изображения,
+   которое явлется, в данном случае <literal>&quot;images/button1.png&quot;</literal>
+   и выведет конечное изображение. Это очень удобный способ,
+   чтобы избежать необходимости создания новой кнопки всякий раз,
+   когда вы хотите изменить текст кнопки. С помощью этого метода она
+   генерируются динамически.
+  </para>
+ </section>
+ <section xml:id="image.examples-watermark">
+  <title>Добавление водяных знаков на изображения с помощью альфа-каналов</title>
+  <para>
+   <example>
+    <title>Добавление водяных знаков на изображения с помощью альфа-каналов</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Загрузка штампа и фото, для которого применяется водяной знак (называется штамп или печать)
+$stamp = imagecreatefrompng('stamp.png');
+$im = imagecreatefromjpeg('photo.jpeg');
+
+// Установка полей для штампа и получение высоты/ширины штампа
+$marge_right = 10;
+$marge_bottom = 10;
+$sx = imagesx($stamp);
+$sy = imagesy($stamp);
+
+// Копирование изображения штампа на фотографию с помощью смещения края
+// и ширины фотографии для расчета позиционирования штампа. 
+imagecopy($im, $stamp, imagesx($im) - $sx - $marge_right, imagesy($im) - $sy - $marge_bottom, 0, 0, imagesx($stamp), imagesy($stamp));
+
+// Вывод и освобождение памяти
+header('Content-type: image/png');
+imagepng($im);
+imagedestroy($im);
+?>
+]]>
+    </programlisting>
+    <mediaobject>
+     <alt>Добавление водяных знаков на изображения с помощью альфа-каналов</alt>
+     <imageobject>
+      <imagedata fileref="en/reference/image/figures/watermarks.png" />
+     </imageobject>
+    </mediaobject>
+   </example>
+   Этот пример является простым способом добавить водяные знаки и штампы на фотографии и изображения,  
+   защищенные авторским правом. Обратите внимание, что наличие альфа-канала в изображении
+   штампа, как текст сглаживается. Это сохранилось во время копирования.
+  </para>
+ </section>
+ <section xml:id="image.examples.merged-watermark">
+  <title>Использование <function>imagecopymerge</function> чтобы создать полупрозрачный водяной знак</title>
+  <para>
+   <example>
+    <title>Использование <function>imagecopymerge</function> создать полупрозрачный водяной знак</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Загрузка штампа и фото, для которого применяется водяной знак (называется штамп или печать)
+$im = imagecreatefromjpeg('photo.jpeg');
+
+// Сначала создаем наше изображение штампа вручную с помощью GD
+$stamp = imagecreatetruecolor(100, 70);
+imagefilledrectangle($stamp, 0, 0, 99, 69, 0x0000FF);
+imagefilledrectangle($stamp, 9, 9, 90, 60, 0xFFFFFF);
+$im = imagecreatefromjpeg('photo.jpeg');
+imagestring($stamp, 5, 20, 20, 'libGD', 0x0000FF);
+imagestring($stamp, 3, 20, 40, '(c) 2007-9', 0x0000FF);
+
+// Установка полей для штампа и получение высоты/ширины штампа
+$marge_right = 10;
+$marge_bottom = 10;
+$sx = imagesx($stamp);
+$sy = imagesy($stamp);
+
+// Слияние штампа с фотографией. Прозрачность 50%
+imagecopymerge($im, $stamp, imagesx($im) - $sx - $marge_right, imagesy($im) - $sy - $marge_bottom, 0, 0, imagesx($stamp), imagesy($stamp), 50);
+
+// Сохранение фотографии в файл и освобождение памяти
+imagepng($im, 'photo_stamp.png');
+imagedestroy($im);
+
+?>
+]]>
+    </programlisting>
+    <mediaobject>
+     <alt>Использование imagecopymerge()  для создания полупрозрачного водяного знака</alt>
+     <imageobject>
+      <imagedata fileref="en/reference/image/figures/watermark-merged.png" />
+     </imageobject>
+    </mediaobject>
+   </example>
+   В этом примере используется <function>imagecopymerge</function> для объединения штампа
+   с нашим исходным изображением. С помощью этого мы можем установить прозрачность нашего штампа - 
+   в нашем примере мы установили его на 50% непрозрачности (opacity) (другой термин для прозрачности (transparency)).
+   На практике это было бы полезным для защиты авторских прав, полупрозрачные водяные знаки трудно удалить и 
+   позволяют зрителям увидеть изображение.
+  </para>
+ </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
