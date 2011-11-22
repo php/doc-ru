@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 3e2947ca55e1c4e6217808a3ad7cb2816dcfad70 Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.set-error-handler" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>set_error_handler</refname>
+  <refpurpose>
+   Задает определенный пользователем обработчик ошибок
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>mixed</type><methodname>set_error_handler</methodname>
+   <methodparam><type>callback</type><parameter>error_handler</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>error_types</parameter><initializer>E_ALL | E_STRICT</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Задает пользовательскую функцию (<parameter>error_handler</parameter>),
+   как обработчик ошибок в скрипте.
+  </para>
+  <para>
+   Эта функция используется для определения собственного обработчика ошибок
+   времени выполнения скрипта. Например, если требуется очистить данные/файлы,
+   когда произошла критическая ошибка, или если нужно переключить тип ошибки,
+   исходя из каких-то условий (используя функцию
+   <function>trigger_error</function>).
+  </para>
+  <para>
+   Важно помнить, что стандартный обработчик ошибок PHP не будет обрабатывать
+   никакие типы ошибок, определенные в <parameter>error_types</parameter>,
+   пока callback-функция не вернет &false;. Пользовательский обработчик будет
+   вызываться при любой ошибке, независимо от настроек, заданных функцией
+   <function>error_reporting</function>. Однако, вы можете прочитать текущее
+   значение <link linkend="ini.error-reporting">error_reporting</link> и
+   задать в обработчике соответствующие действия. В частности, это значение
+   будет равно 0, если выражение, вызвавшее ошибку, начинается с
+   <link linkend="language.operators.errorcontrol">оператора контроля
+   ошибок @</link>.
+  </para>
+  <para>
+   Также важно помнить, что на совести обработчика лежит вызов функции
+   <function>die</function> в случае необходимости. Если происходит возврат
+   их обработчика ошибок, управление передается следующему выражению,
+   стоящему за тем, что вызвало ошибку.
+  </para>
+  <para>
+   Ошибки следующих типов не могут быть обработаны пользователем:
+   <constant>E_ERROR</constant>, <constant>E_PARSE</constant>,
+   <constant>E_CORE_ERROR</constant>, <constant>E_CORE_WARNING</constant>,
+   <constant>E_COMPILE_ERROR</constant>,
+   <constant>E_COMPILE_WARNING</constant>, и большинство 
+   <constant>E_STRICT</constant> ошибок, произошедших в файле, где вызвана
+   функция <function>set_error_handler</function>.
+  </para>
+  <para>
+   Если ошибки возникают до запуска скрипта (например, пока файл загружается),
+   пользовательский обработчик не будет вызываться, если на этот момент он
+   еще не зарегистрирован.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>error_handler</parameter></term>
+     <listitem>
+      <para>
+       Пользовательская функция должна принимать два аргумента: код ошибки и
+       строку с ее описанием. Также есть три необязательных аргумента: имя
+       файла, в котором произошла ошибка; номер строки, в которой произошла
+       ошибка; контекст, в котором произошла ошибка (массив, указывающий на 
+       действующую таблицу символов в точке, где произошла ошибка). Функция
+       может быть представлена в таком виде:
+      </para>
+      <para>
+       <methodsynopsis>
+        <methodname><replaceable>handler</replaceable></methodname>
+        <methodparam><type>int</type><parameter>errno</parameter></methodparam>
+        <methodparam><type>string</type><parameter>errstr</parameter></methodparam>
+        <methodparam choice="opt"><type>string</type><parameter>errfile</parameter></methodparam>
+        <methodparam choice="opt"><type>int</type><parameter>errline</parameter></methodparam>
+        <methodparam choice="opt"><type>array</type><parameter>errcontext</parameter></methodparam>
+       </methodsynopsis>
+       <variablelist>
+        <varlistentry>
+         <term><parameter>errno</parameter></term>
+         <listitem>
+          <simpara>
+           Первый аргумента <parameter>errno</parameter> содержит уровень
+           ошибки в виде целого числа.
+          </simpara>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>errstr</parameter></term>
+         <listitem>
+          <simpara>
+           Второй аргумент <parameter>errstr</parameter> содержит сообщение
+           об ошибке в виде строки.
+          </simpara>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>errfile</parameter></term>
+         <listitem>
+          <simpara>
+           Третий необязательный аргумент <parameter>errfile</parameter>
+           содержит имя файла, в котором произошла ошибка, в виде строки.
+          </simpara>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>errline</parameter></term>
+         <listitem>
+          <simpara>
+           Четвертый необязательный аргумент <parameter>errline</parameter>
+           содержит номер строки, в которой произошла ошибка, в виде целого 
+           числа.
+          </simpara>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>errcontext</parameter></term>
+         <listitem>
+          <simpara>
+           Пятый необязательный аргумент <parameter>errcontext</parameter>
+           содержит массив указателей на активную таблицу символов в точке, где
+           произошла ошибка. Другими словами, <parameter>errcontext</parameter>
+           будет содержать массив всех переменных, существующих в области 
+           видимости, где произошла ошибка. Пользовательский обработчик не
+           должен изменять этот контекст.
+          </simpara>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
+      <para>
+       Если функция возвращает &false;, управление передается встроенному
+       обработчику ошибок.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>error_types</parameter></term>
+     <listitem>
+      <para>
+       Может использоваться для задания маски, в соответствии с которой будет
+       вызываться <parameter>error_handler</parameter>, по аналогии с ini
+       настройкой <link linkend="ini.error-reporting">error_reporting</link>,
+       которая отвечает за то, какие ошибки будут показаны в отчете. Без этой
+       маски <parameter>error_handler</parameter> будет вызываться для
+       обработки всех происходящих ошибок, вне зависимости от настроек в
+       <link linkend="ini.error-reporting">error_reporting</link>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает строку содержащую предыдущий заданный обработчик ошибок (если
+   есть). Если на данный момент используется встроенный обработчик, функция
+   вернет &null;. В случае ошибки в работе самой функции, например,
+   недопустимый обратный вызов, функция также вернет &null;. Если предыдущий 
+   определенный обработчик является методом класса, функция вернет массив
+   содержащий имя класса и имя метода.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.2.0</entry>
+       <entry>
+        Обработчик должен вернуть &false;, чтобы заполнилось значение
+        переменной <varname>$php_errormsg</varname>.
+       </entry>
+      </row>
+      <row>
+       <entry>5.0.0</entry>
+       <entry>
+        Добавлен аргумент <parameter>error_types</parameter>.
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Вместо имени функции можно передать массив, содержащий ссылку на 
+        объект и имя метода, который будет использован в качестве обработчика
+        <parameter>error_handler</parameter>.
+       </entry>
+      </row>
+      <row>
+       <entry>4.0.2</entry>
+       <entry>
+        Добавлены три необязательных аргумента, которые может принимать
+        функция <parameter>error_handler</parameter>. Это имя файла, номер
+        строки и контекст.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>
+     Обработка ошибок с помощью функций <function>set_error_handler</function>
+     и <function>trigger_error</function>
+    </title>
+    <para>
+     Пример ниже демонстрирует обработку внутренних исключений путем
+     вызова ошибок разных типов и их обработки пользовательской функцией:
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// функция обработки ошибок
+function myErrorHandler($errno, $errstr, $errfile, $errline)
+{
+    if (!(error_reporting() & $errno)) {
+        // Этот код ошибки не включен в error_reporting
+        return;
+    }
+
+    switch ($errno) {
+    case E_USER_ERROR:
+        echo "<b>My ERROR</b> [$errno] $errstr<br />\n";
+        echo "  Фатальная ошибка в строке $errline файла $errfile";
+        echo ", PHP " . PHP_VERSION . " (" . PHP_OS . ")<br />\n";
+        echo "Завершение работы...<br />\n";
+        exit(1);
+        break;
+
+    case E_USER_WARNING:
+        echo "<b>My WARNING</b> [$errno] $errstr<br />\n";
+        break;
+
+    case E_USER_NOTICE:
+        echo "<b>My NOTICE</b> [$errno] $errstr<br />\n";
+        break;
+
+    default:
+        echo "Неизвестная ошибка: [$errno] $errstr<br />\n";
+        break;
+    }
+
+    /* Не запускаем внутренний обработчик ошибок PHP */
+    return true;
+}
+
+// функция для тестирования обработчика ошибок
+function scale_by_log($vect, $scale)
+{
+    if (!is_numeric($scale) || $scale <= 0) {
+        trigger_error("log(x) для x <= 0 не определен, вы используете: scale = $scale", E_USER_ERROR);
+    }
+
+    if (!is_array($vect)) {
+        trigger_error("Некорректный входной вектор, пропущен массив значений", E_USER_WARNING);
+        return null;
+    }
+
+    $temp = array();
+    foreach($vect as $pos => $value) {
+        if (!is_numeric($value)) {
+            trigger_error("Значение на позиции $pos не является числом, будет использован 0 (ноль)", E_USER_NOTICE);
+            $value = 0;
+        }
+        $temp[$pos] = log($scale) * $value;
+    }
+
+    return $temp;
+}
+
+// переключаемся на пользовательский обработчик
+$old_error_handler = set_error_handler("myErrorHandler");
+
+// вызовем несколько ошибок, во-первых, определим массив с нечисловым элементом
+echo "vector a\n";
+$a = array(2, 3, "foo", 5.5, 43.3, 21.11);
+print_r($a);
+
+// теперь создадим еще один массив
+echo "----\nvector b - a notice (b = log(PI) * a)\n";
+/* Значение на позиции $pos не является числом, будет использован 0 (ноль)*/
+$b = scale_by_log($a, M_PI);
+print_r($b);
+
+// проблема, мы передаем строку вместо массива
+echo "----\nvector c - a warning\n";
+/* Некорректный входной вектор, пропущен массив значений */
+$c = scale_by_log("not array", 2.3);
+var_dump($c); // NULL
+
+// критическая ошибка, логарифм от неположительного числа не определен
+echo "----\nvector d - fatal error\n";
+/* log(x) для x <= 0 не определен, вы используете: scale = $scale */
+$d = scale_by_log($a, -2.5);
+var_dump($d); // До сюда не доберемся никогда
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+vector a
+Array
+(
+    [0] => 2
+    [1] => 3
+    [2] => foo
+    [3] => 5.5
+    [4] => 43.3
+    [5] => 21.11
+)
+----
+vector b - a notice (b = log(PI) * a)
+<b>My NOTICE</b> [1024]  Значение на позиции 2 не является числом, будет использован 0 (ноль)<br />
+Array
+(
+    [0] => 2.2894597716988
+    [1] => 3.4341896575482
+    [2] => 0
+    [3] => 6.2960143721717
+    [4] => 49.566804057279
+    [5] => 24.165247890281
+)
+----
+vector c - a warning
+<b>My WARNING</b> [512] Некорректный входной вектор, пропущен массив значений<br />
+NULL
+----
+vector d - fatal error
+<b>My ERROR</b> [256] log(x) for x <= 0 is undefined, you used: scale = -2.5<br />
+  Фатальная ошибка в строке 35 файла trigger_error.php, PHP 5.2.1 (FreeBSD)<br />
+Завершение работы...<br />
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><classname>ErrorException</classname></member>
+    <member><function>error_reporting</function></member>
+    <member><function>restore_error_handler</function></member>
+    <member><function>trigger_error</function></member>
+    <member><link linkend="errorfunc.constants">Константы уровней ошибок</link></member>
+    <member>&seealso.callback;</member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
