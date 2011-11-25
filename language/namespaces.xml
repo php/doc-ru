@@ -1,0 +1,1567 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EN-Revision: 77e57fc9c7f3d98f082b4533e24f26072e3a094d Maintainer: mch Status: ready -->
+<!-- $Revision: $ -->
+<!-- Reviewed: no -->
+
+ <!--
+
+ Local Translation Standards:
+ 
+ Namespace - пространство имен
+ Global scope - глобальное пространство
+ Unqualified name - неполное имя
+ Qualified name - полное имя
+ Fully Qualified name - абсолютное имя
+
+ -->
+
+
+<chapter xml:id="language.namespaces" xmlns="http://docbook.org/ns/docbook"
+ version="1.1">
+ <title>Пространства имен</title>
+ <sect1 xml:id="language.namespaces.rationale">
+  <title>Обзор пространств имен</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <simpara>
+   Что такое пространства имен? В широком смысле - это один из способов инкапсуляции элементов.
+   Такое абстрактное понятие можно увидеть во многих местах. Например, в любой операционной
+   системе директории служат для группировки связанных файлов и выступают в качестве 
+   пространства имен для находящихся в них файлов. В качестве конкретного примера файл
+   <literal>foo.txt</literal> может находиться сразу в обоих директориях: <literal>/home/greg</literal> 
+   и <literal>/home/other</literal>, но две копии <literal>foo.txt</literal> не могут
+   существовать в одной директории. Кроме того, для доступа к <literal>foo.txt</literal> извне 
+   директории <literal>/home/greg</literal>, мы должны добавить имя директории перед именем файла
+   используя разделитель, чтобы получить <literal>/home/greg/foo.txt</literal>. Этот же принцип 
+   распространяется и на пространства имен в программировании.
+  </simpara>
+  <simpara>
+   В PHP пространства имен используются для решения двух проблем, с которыми
+   сталкиваются авторы библиотек и приложений при создании повторно используемых
+   элементов кода, таких как классы и функции:
+  </simpara>
+  <para>
+   <orderedlist>
+    <listitem>
+     <simpara>
+      Конфликт имен между вашим кодом и
+	  внутренними классами/функциями/константами PHP или сторонними.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Возможность создавать псевдонимы (или сокращения) для Ну_Очень_Длинных_Имен, чтобы облегчить
+      первую проблему и улучшить читаемость исходного кода.
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <simpara>
+   Пространства имен PHP предоставляют возможность группировать логически связанные
+   классы, интерфейсы, функции и константы.
+  </simpara>
+  <example>
+   <title>Пример синтаксиса, использующего пространство имен</title>
+   <programlisting role="php">
+   <![CDATA[
+<?php
+namespace my\name; // см. раздел "Определение пространств имен"
+
+class MyClass {}
+function myfunction() {}
+const MYCONST = 1;
+
+$a = new MyClass;
+$c = new \my\name\MyClass; // см. раздел "Глобальная область видимости"
+
+$a = strlen('hi'); // см. раздел "Использование пространств имен: возврат
+                   // к глобальной функции/константе"
+
+$d = namespace\MYCONST; // см. раздел "оператор пространства имен и
+                        // константа __NAMESPACE__"
+$d = __NAMESPACE__ . '\MYCONST';
+echo constant($d); // см. раздел "Пространства имен и динамические особенности языка"
+?>
+    ]]>
+   </programlisting>
+  </example>
+  <note>
+   <para>
+    Названия пространств имен <literal>PHP</literal> и <literal>php</literal>, и составные названия,
+	начинающиеся с этих (такие как <literal>PHP\Classes</literal>), являются зарезервированными для
+	нужд языка и их не следует использовать в пользовательском коде.
+   </para>
+  </note>
+ </sect1>
+
+ <sect1 xml:id="language.namespaces.definition">
+  <title>Определение пространств имен</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Хотя любой исправный PHP-код может находиться внутри пространства имен, только
+   классы, интерфейсы, функции и константы зависят от него.
+  </para>
+  <para>
+   Пространства имен объявляются с помощью зарезервированного слова <literal>namespace</literal>.
+   Файл, содержащий пространство имен, должен содержать его объявление в начале 
+   перед любым другим кодом, кроме зарезервированного слова
+   <xref linkend="control-structures.declare" />.
+   <example>
+    <title>Объявление единого пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+
+?>
+]]>
+    </programlisting>
+   </example>
+   Только выражение <literal>declare</literal> может находиться перед объявлением 
+   пространства имен для указания кодировки файла. Кроме того, объявлению пространства имен
+   не должен предшествовать не PHP-код, в том числе лишние пробелы:
+   <example>
+    <title>Объявление простого пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<html>
+<?php
+namespace MyProject; // fatal error - объявление пространства имен должно быть первым выражением в скрипте
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Кроме того, в отличии от любой другой конструкции PHP, одно и тоже пространство имен
+   можно определять в нескольких файлах, что позволяет распределять находящееся в них по файловой системе.
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.nested">
+  <title>Определение подпространств имен</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Так же как файлы и каталоги, пространства имен PHP позволяют создавать
+   иерархию имен. Таким образом, имя пространства может быть определено
+   с подуровнями:
+   <example>
+    <title>Определение пространства имен с иерархией</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject\Sub\Level;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+
+?>
+]]>
+    </programlisting>
+   </example>
+   Вышеприведенный пример создает константу <literal>MyProject\Sub\Level\CONNECT_OK</literal>,
+   класс <literal>MyProject\Sub\Level\Connection</literal> и функцию
+   <literal>MyProject\Sub\Level\connect</literal>.
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.definitionmultiple">
+  <title>Описание нескольких пространств имен в одном файле</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Несколько пространств имен также можно описать в одном файле с помощью двух допустимых 
+   синтаксических конструкций.
+  </para>
+  <para>
+   <example>
+    <title>Описание нескольких пространств имен, простой синтаксис</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+
+namespace AnotherProject;
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Данный синтаксис не рекомендуется для комбинирования пространств имен в одном файле.
+   Вместо этого рекомендуется использовать альтернативный синтаксис со скобками.
+  </para>
+  <para>
+   <example>
+    <title>Описание нескольких пространств имен, синтаксис со скобками</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+namespace AnotherProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Настоятельно не рекомендуется при программировании комбинировать несколько пространств имен
+   в один файл. Основным применением этому может быть объединение нескольких PHP файлов в
+   один файл.
+  </para>
+  <para>
+   Для объединения кода в глобальном пространстве имен с кодом в других пространствах имен, 
+   используется только синтаксис со скобками. Глобальный код должен быть
+   помещен в конструкцию описания пространства имен без указания имени:
+   <example>
+    <title>Описание глобального и обычного пространства имен в одном файле</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+namespace {       // глобальный код
+session_start();
+$a = MyProject\connect();
+echo MyProject\Connection::start();
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   PHP-код не может находиться вне скобок конструкции пространства имен, кроме 
+   начального выражения declare.
+   <example>
+    <title>Описание глобального и обычного пространства имен в одном файле</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+declare(encoding='UTF-8');
+namespace MyProject {
+
+const CONNECT_OK = 1;
+class Connection { /* ... */ }
+function connect() { /* ... */  }
+}
+
+namespace {      // глобальный код
+session_start();
+$a = MyProject\connect();
+echo MyProject\Connection::start();
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.basics">
+  <title>Использование пространства имен: основы</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   До обсуждения использования пространств имен важно понять как PHP узнает
+   какие элементы из пространства имен запрашиваются в вашем коде. Можно провести аналогию 
+   между пространствами имен PHP и файловой системой. Есть три способа обратиться к файлу 
+   в файловой системе:
+   <orderedlist>
+    <listitem>
+     <simpara>
+      Относительное имя файла, такое как <literal>foo.txt</literal>, преобразуемое в 
+      <literal>currentdirectory/foo.txt</literal>, где currentdirectory текущая
+      директория, в которой мы находимся. Тогда, если текущая директория
+      <literal>/home/foo</literal>, то имя преобразуется в <literal>/home/foo/foo.txt</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Относительное имя пути, такое как <literal>subdirectory/foo.txt</literal>, преобразуется
+      в <literal>currentdirectory/subdirectory/foo.txt</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Абсолютное имя пути, такое как <literal>/main/foo.txt</literal>, которое остается
+      таким же: <literal>/main/foo.txt</literal>.
+     </simpara>
+    </listitem>
+   </orderedlist>
+   Тот же принцип применим и к элементам из пространств имен PHP. Для примера,
+   имя класса может быть указано тремя способами:
+   <orderedlist>
+    <listitem>
+     <simpara>
+      Неполные имена (имена классов без префикса), такие как
+      <literal>$a = new foo();</literal> или
+      <literal>foo::staticmethod();</literal>. Если текущее пространство имен
+      <literal>currentnamespace</literal>, то эти имена преобразуются в
+      <literal>currentnamespace\foo</literal>. Если код находится в глобальном
+	  пространстве имен, то имена остаются такими же: <literal>foo</literal>.
+     </simpara>
+     <simpara>
+      Предупреждение: неполные имена для функций и констант будут определяться
+      в глобальном пространстве имен, если они не определены в текущем пространстве имен.  
+      Подробнее в <link linkend="language.namespaces.fallback">Использование пространств имен:
+      доступ к глобальным функциям и классам</link>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Полные имена (имена классов с префиксами), такие как
+      <literal>$a = new subnamespace\foo();</literal> или
+      <literal>subnamespace\foo::staticmethod();</literal>. Если текущее пространство имен
+      <literal>currentnamespace</literal>, то эти имена преобразуются в
+      <literal>currentnamespace\subnamespace\foo</literal>. Если
+      код находится в глобальном пространстве имен, то имена преобразуются в <literal>subnamespace\foo</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Абсолютные имена или имена с предшествующим префиксом, обозначающим глобальное пространство.
+      <literal>$a = new \currentnamespace\foo();</literal> или
+      <literal>\currentnamespace\foo::staticmethod();</literal>. Имена всегда
+      определяются также как и записаны: <literal>currentnamespace\foo</literal>.
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <para>
+   Ниже приведен пример трех вариантов синтаксиса в реальном коде:
+   <informalexample>
+    <simpara>file1.php</simpara>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace Foo\Bar\subnamespace;
+
+const FOO = 1;
+function foo() {}
+class foo
+{
+    static function staticmethod() {}
+}
+?>
+     ]]>
+    </programlisting>
+    <simpara>file2.php</simpara>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace Foo\Bar;
+include 'file1.php';
+
+const FOO = 2;
+function foo() {}
+class foo
+{
+    static function staticmethod() {}
+}
+
+/* Неполные имена */
+foo(); // определяется как функция Foo\Bar\foo
+foo::staticmethod(); // определяется как класс Foo\Bar\foo с методом staticmethod
+echo FOO; // определяется как константа Foo\Bar\FOO
+
+/* Полные имена */
+subnamespace\foo(); // определяется как функция Foo\Bar\subnamespace\foo
+subnamespace\foo::staticmethod(); // определяется как класс Foo\Bar\subnamespace\foo
+                                  // c методом staticmethod
+echo subnamespace\FOO; // определяется как константа Foo\Bar\subnamespace\FOO
+                                  
+/* Абсолютные имена */
+\Foo\Bar\foo(); // определяется как функция Foo\Bar\foo
+\Foo\Bar\foo::staticmethod(); // определяется как класс Foo\Bar\foo с методом staticmethod
+echo \Foo\Bar\FOO; // определяется как константа Foo\Bar\FOO
+?>
+     ]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  <para>
+   Обратите внимание, что для доступа к любым глобальным
+   классам, функциям или константам, может использоваться абсолютное имя, такое как
+   <function>\strlen</function>, или <classname>\Exception</classname>, или
+   <literal>\INI_ALL</literal>.
+   <example>
+    <title>Доступ к глобальным классам, функциям и константам из пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace Foo;
+
+function strlen() {}
+const INI_ALL = 3;
+class Exception {}
+
+$a = \strlen('hi'); // вызывает глобальную функцию strlen
+$b = \INI_ALL; // получает доступ к глобальной константе INI_ALL
+$c = new \Exception('error'); // Создает экземпляр глобального класса Exception
+?>
+     ]]>
+    </programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.dynamic">
+  <title>Пространства имен и динамические особенности языка</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   На реализацию пространств имен в PHP повлияли и динамические особенности языка.
+   Преобразуем нижеследующий код для использования пространств имен:
+   <example>
+    <title>Динамически доступные элементы</title>
+    <simpara>example1.php:</simpara>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+class classname
+{
+    function __construct()
+    {
+        echo __METHOD__,"\n";
+    }
+}
+function funcname()
+{
+    echo __FUNCTION__,"\n";
+}
+const constname = "global";
+
+$a = 'classname';
+$obj = new $a; // выводит classname::__construct
+$b = 'funcname';
+$b(); // выводит funcname
+echo constant('constname'), "\n"; // выводит global
+?>
+    ]]>
+    </programlisting>
+   </example>
+   Необходимо использовать абсолютное имя (имя класса с префиксом пространства имен).
+   Обратите внимание, что нет никакой разницы между полным именем и абсолютным
+   внутри динамического имени класса, функции или константы. Начальный обратный
+   слэш не является необходимым.
+   <example>
+    <title>Динамически доступные элементы пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace namespacename;
+class classname
+{
+    function __construct()
+    {
+        echo __METHOD__,"\n";
+    }
+}
+function funcname()
+{
+    echo __FUNCTION__,"\n";
+}
+const constname = "namespaced";
+
+include 'example1.php';
+
+$a = 'classname';
+$obj = new $a; // выводит classname::__construct
+$b = 'funcname';
+$b(); // выводит funcname
+echo constant('constname'), "\n"; // выводит global
+
+/* обратите внимание, что при использовании двойных кавычек символ обратного слэша должен быть заэкранирован. Например, "\\namespacename\\classname" */
+$a = '\namespacename\classname';
+$obj = new $a; // выводит namespacename\classname::__construct
+$a = 'namespacename\classname';
+$obj = new $a; // также выводит namespacename\classname::__construct
+$b = 'namespacename\funcname';
+$b(); // выводит namespacename\funcname
+$b = '\namespacename\funcname';
+$b(); // также выводит namespacename\funcname
+echo constant('\namespacename\constname'), "\n"; // выводит namespaced
+echo constant('namespacename\constname'), "\n"; // также выводит namespaced
+?>
+    ]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Обязательно прочитайте <link linkend="language.namespaces.faq.quote">примечание об
+   экранировании имен пространства имен в строках</link>.
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.nsconstants">
+  <title>Ключевое слово namespace и константа __NAMESPACE__</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   PHP поддерживает два способа к абстрактно доступным элементамв текущем пространстве имен
+   таким, как магическая константа <constant>__NAMESPACE__</constant> и
+   ключевое слово <literal>namespace</literal>.
+  </para>
+  <para>
+   Значение константы <constant>__NAMESPACE__</constant> - это строка, которая содержит
+   имя текущего пространства имен. В глобальном пространстве, вне пространства имен, она
+   содержит пустую строку.
+   <example>
+    <title>Пример использование константы __NAMESPACE__ в коде с пространством имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject;
+
+echo '"', __NAMESPACE__, '"'; // выводит "MyProject"
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>Пример использование константы __NAMESPACE__ в глобальном пространстве</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+
+echo '"', __NAMESPACE__, '"'; // выводит ""
+?>
+]]>
+    </programlisting>
+   </example>
+   Константа <constant>__NAMESPACE__</constant> полезна для динамически конструируемых
+   имен, например:
+   <example>
+    <title>использование константы  __NAMESPACE__ для динамического конструирования имени</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject;
+
+function get($classname)
+{
+    $a = __NAMESPACE__ . '\\' . $classname;
+    return new $a;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Ключевое слово <literal>namespace</literal> может быть использовано для
+   явного запроса элемента из текущего пространства имен или из подпространства.
+   Это эквивалент оператора <literal>self</literal> для классов в пространстве имен.
+   <example>
+    <title>Оператор namespace, внутри пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace MyProject;
+
+use blah\blah as mine; // см. "Использование пространств имен: импорт/создание псевдонима имени"
+
+blah\mine(); // вызывает функцию MyProject\blah\mine()
+namespace\blah\mine(); // вызывает функцию MyProject\blah\mine()
+
+namespace\func(); // вызывает функцию MyProject\func()
+namespace\sub\func(); // вызывает функцию MyProject\sub\func()
+namespace\cname::method(); // вызывает статический метод "method" класса MyProject\cname
+$a = new namespace\sub\cname(); // Создает экземпляр класса MyProject\sub\cname
+$b = namespace\CONSTANT; // присваивает значение константы MyProject\CONSTANT переменной $b
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>Оператор namespace в глобальном коде</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+
+namespace\func(); // вызывает функцию  func()
+namespace\sub\func(); // вызывает функцию  sub\func()
+namespace\cname::method(); // вызывает статический метод "method" класса cname
+$a = new namespace\sub\cname(); // Создает экземпляр класса sub\cname
+$b = namespace\CONSTANT; // присваивает значение константы CONSTANT переменной $b
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.importing">
+  <title>Использование пространств имен: импорт/создание псевдонима имени</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Возможность ссылаться на внешнее абсолютное имя по псевдониму или импортирование
+   - это важная особенность пространств имен. Это похоже на возможность
+   файловых систем unix создавать символические ссылки на файл или директорию.
+  </para>
+  <para>
+   Пространства имен PHP поддерживают
+   три вида создания псевдонима имени или импорта: создание псевдонима для имени класса, создание псевдонима
+   для имени интерфейса и для имени пространства имен.
+   Обратите внимание, что импорт функций или констант не поддерживается.
+  </para>
+  <para>
+   В PHP создание псевдонима имени выполняется с помощью оператора <literal>use</literal>. Вот
+   пример, показывающий 3 типа импорта:
+   <example>
+    <title>импорт/создание псевдонима имени с помощью оператора use</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace foo;
+use My\Full\Classname as Another;
+
+// это тоже самое, что и использование My\Full\NSname как NSname
+use My\Full\NSname;
+
+// импортирование глобального класса
+use ArrayObject;
+
+$obj = new namespace\Another; // создает экземпляр класса foo\Another
+$obj = new Another; // создает объект класса My\Full\Classname
+NSname\subns\func(); // вызывает функцию My\Full\NSname\subns\func
+$a = new ArrayObject(array(1)); // создает объект класса ArrayObject
+// без выражения "use ArrayObject" мы создадим объект класса foo\ArrayObject
+?>
+]]>
+    </programlisting>
+   </example>
+   Обратите внимание, что для имен в пространстве имен (абсолютные имена, содержащие
+   разделитель пространств имен, такие как <literal>Foo\Bar</literal>, в отличие от глобальных имен,
+   которые его не содержат, такие как <literal>FooBar</literal>) нет необходимости в начальном обратном слеше (\)
+   и его присутствие там не рекомендуется, так как импортируемые имена должны быть абсолютными и не обрабатываются
+   относительно текущего пространства имен.
+  </para>
+  <para>
+   PHP дополнительно поддерживает удобное сокращение для задания нескольких операторов use
+   в одной и той же строке
+   <example>
+    <title>импорт/создание псевдонима имени с помощью оператора use, комбинирование нескольких операторов use</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // создает объект класса My\Full\Classname
+NSname\subns\func(); // вызывает функцию My\Full\NSname\subns\func
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Импорт выполняется во время компиляции, и не влияет на имена динамических классов, функций
+   или констант.
+   <example>
+    <title>Импорт и динамические имена</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // создает объект класса My\Full\Classname
+$a = 'Another';
+$obj = new $a;      // создает объект класса Another
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   В дополнение, импорт распространяется только на неполные и полные имена. Абсолютные имена
+   не затрагиваются операцией импорта.
+   <example>
+    <title>Импортирование и абсолютные имена</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+use My\Full\Classname as Another, My\Full\NSname;
+
+$obj = new Another; // создает объект класса My\Full\Classname
+$obj = new \Another; // создает объект класса Another
+$obj = new Another\thing; // создает объект класса My\Full\Classname\thing
+$obj = new \Another\thing; // создает объект класса Another\thing
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <sect2 xml:id="language.namespaces.importing.scope">
+   <title>Scoping rules for importing</title>
+   <para>
+    Ключевое слово <literal>use</literal> должно быть указано в
+    самом начале файла (в глобальной области) или внутри объявления пространства
+    имен. Это необходимо потому, что импорт выполняется во время компиляции, а
+    не во время исполнения, поэтому оно не может быть заключено в блок.
+    Следующий пример показывает недопустимое применение 
+    ключевого слова <literal>use</literal>:
+   </para>
+   <para>
+    <example>
+     <title>Недопустимое правило импорта</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace Languages;
+
+class Greenlandic
+{
+    use Languages\Danish;
+
+    ...
+}
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <note>
+    <para>
+	 Правила импорта задаются на каждый файл отдельно. Это означает, что
+	 присоединяемые файлы <emphasis>НЕ</emphasis> будут наследовать правила импорта
+	 из родительского файла.
+    </para>
+   </note>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="language.namespaces.global">
+  <title>Глобальное пространство</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Без определения пространства имен, определения всех классов и функций
+   находятся в глобальном пространстве - также как это было в PHP до введения
+   пространств имен. Добавление префикса <literal>\</literal> к именам означает, что
+   это имя должно находиться в глобальном пространстве, даже если вы находитесь в
+   контексте определенного пространства имен.
+   <example>
+    <title>Использованиие глобального пространства и его задание</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace A\B\C;
+
+/* Эта функция является A\B\C\fopen */
+function fopen() { 
+     /* ... */
+     $f = \fopen(...); // вызов глобальной функции fopen
+     return $f;
+} 
+?>
+    ]]>
+    </programlisting>
+   </example>
+  </para>
+ </sect1>
+ <sect1 xml:id="language.namespaces.fallback">
+  <title>Использование пространств имен: переход к глобальной функции/константе</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Внутри пространства имен, когда PHP встречает неполное имя класса, функции или
+   константы, он преобразует эти имена с разными приоритетами. Имена классов всегда
+   преобразуются к текущему имени пространства имен. Таким образом, чтобы получить доступ
+   ко внутреннему классу или пользовательскомуклассу вне пространства имен, необходимо
+   ссылаться по их абсолютному имени. Например:
+   <example>
+    <title>Доступ к глобальным классам внутри пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace A\B\C;
+class Exception extends \Exception {}
+
+$a = new Exception('hi'); // $a - это объект класса A\B\C\Exception
+$b = new \Exception('hi'); // $b - это объект класса Exception
+
+$c = new ArrayObject; // фатальная ошибка, класс A\B\C\ArrayObject не найден
+?>
+    ]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Для функций и констант, PHP будет прибегать к глобальным функциям или константам,
+   если функция или константа не существует в пространстве имен.
+   <example>
+    <title>Необходимость прибегнуть к глобальным функциям/константам внутри пространства имен</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+namespace A\B\C;
+
+const E_ERROR = 45;
+function strlen($str)
+{
+    return \strlen($str) - 1;
+}
+
+echo E_ERROR, "\n"; // выводит "45"
+echo INI_ALL, "\n"; // выводит "7" - прибегнет к глобальной INI_ALL
+
+echo strlen('hi'), "\n"; // выводит "1"
+if (is_array('hi')) { // выводит строку "это не массив"
+    echo "это массив\n";
+} else {
+    echo "это не массив\n";
+}
+?>
+    ]]>
+    </programlisting>
+   </example>
+  </para>
+ </sect1>
+
+ <sect1 xml:id="language.namespaces.rules">
+  <title>Правила разрешения имен</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Для этих правил здесь приведены несколько важных определений:
+   <variablelist>
+    <title>Определения имени пространства имен</title>
+    <varlistentry>
+     <term>Неполное имя</term>
+     <listitem>
+      <para>
+	   Это идентификатор без разделителя пространств имен, например, <literal>Foo</literal>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Полное имя</term>
+     <listitem>
+      <para>
+       Это идентификатор с разделителем пространств имен, например, <literal>Foo\Bar</literal>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>Абсолютное имя</term>
+     <listitem>
+      <para>
+       Это идентификатор с разделителем пространств имен, который начинается с разделителя пространств имен,
+	   например, <literal>\Foo\Bar</literal>. Идентификатор <literal>namespace\Foo</literal>
+       также является абсолютным именем.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <para>
+   Имена разрешаются согласно следующим правилам:
+   <orderedlist>
+    <listitem>
+     <simpara>
+	  Вызовы абсолютных функций, классов или констант разрешаются во время компиляции.
+      Например, <literal>new \A\B</literal> разрешается в класс <literal>A\B</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+	  Все неполные и полные имена (не абсолютные) переводятся в процессе
+      компиляции в соответствии с текущими правилами импорта.
+	  Например, если пространство имен <literal>A\B\C</literal> заимпортировано как 
+	  <literal>C</literal>, вызов
+	  <literal>C\D\e()</literal> преобразуется к <literal>A\B\C\D\e()</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+	  Внутри пространства имен все полные имена, не переведенные в соответствии
+	  с правилами импорта, получают префикс текущего пространства имен.
+	  Например, если происходит вызов
+	  <literal>C\D\e()</literal>, он преобразуется внутри пространства имен <literal>A\B</literal>
+      к <literal>A\B\C\D\e()</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+	  Неполные имена классов преобразуются в процессе компиляции в соответствии с текущими
+	  правилами импорта (полное имя заменено на короткое импортируемое имя). Например,
+	  если пространство имен <literal>A\B\C</literal> заимпортировано как C, выражение <literal>new C()</literal>
+	  преобразовывается к выражению <literal>new A\B\C()</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+	  Внутри пространства имен (скажем, A\B), вызовы к неполным именам функций преобразуются
+	  во время исполнения. Вот, к примеру, как преобразуется вызов
+	  функции <literal>foo()</literal>:
+     </simpara>
+      <orderedlist>
+       <listitem>
+        <simpara>
+		 Производится поиск функции из текущего пространства имен:
+         <literal>A\B\foo()</literal>.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>
+         PHP пытается найти и вызвать функцию <emphasis>глобального пространства</emphasis>
+         <literal>foo()</literal>.
+        </simpara>
+       </listitem>
+      </orderedlist>
+    </listitem>
+    <listitem>
+     <simpara>
+	  Внутри пространства имен (скажем, <literal>A\B</literal>), вызовы к неполным или полным
+	  именам классов (неабсолютным)
+	  преобразуются во время исполнения. Вот как выражение
+      <literal>new C()</literal> или <literal>new D\E()</literal> преобразуется.
+      Для <literal> new C()</literal>:
+     </simpara>
+     <orderedlist>
+      <listitem>
+       <simpara>
+        Ищется класс из текущего пространства имен:
+        <literal>A\B\C</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Производится попытка автозагрузки <literal>A\B\C</literal>.
+       </simpara>
+      </listitem>
+     </orderedlist>
+     <simpara>
+      Для <literal> new D\E()</literal>:
+     </simpara>
+     <orderedlist>
+      <listitem>
+       <simpara>
+        Ищется класс с помощью префиксации текущего пространства имен:
+        <literal>A\B\D\E</literal>.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Производится попытка автозагрузки <literal>A\B\D\E</literal>.
+       </simpara>
+      </listitem>
+     </orderedlist>
+     <simpara>
+	  Для обращения к любому глобальному классу в глобальном пространстве,
+	  должно использоваться его абсолютное имя <literal>new \C()</literal>.
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <example>
+   <title>Примеры разрешения имен</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+namespace A;
+use B\D, C\E as F;
+
+// вызовы функций
+
+foo();      // сперва пытается вызвать "foo", определенную в пространстве имен "A",
+            // затем вызывает глобальную функцию "foo"
+
+\foo();     // вызывает функцию "foo", определенную в глобальном пространстве
+
+my\foo();   // вызывает функцию "foo", определенную в пространстве "A\my"
+
+F();        // сперва пытается вызвать "F", определенную в пространстве имен "A",
+            // затем вызывает глобальную функцию "F"
+
+// ссылки на классы
+
+new B();    // создает объект класса "B", определенного в пространстве имен "A".
+            // если не найден, то пытается сделать автозагрузку класса "A\B"
+
+new D();    // используя правила импорта, создает объект класса "D", определенного в пространстве имен "B"
+            // если не найден, то пытается сделать автозагрузку класса "B\D"
+
+new F();    // используя правила импорта, создает объект класса "E", определенного в пространстве имен "C"
+            // если не найден, то пытается сделать автозагрузку класса "C\E"
+
+new \B();   // создает объект класса "B", определенного в глобальном пространстве,
+            // если не найден, то пытается сделать автозагрузку класса "B"
+
+new \D();   // создает объект класса "D", определенного в глобальном пространстве,
+            // если не найден, то пытается сделать автозагрузку класса "D"
+
+new \F();   // создает объект класса "F", определенного в глобальном пространстве,
+            // если не найден, то пытается сделать автозагрузку класса "F"
+
+// статические методы/функции пространства имен из другого пространства имен
+
+B\foo();    // вызывает функцию "foo" из пространства имен "A\B"
+
+B::foo();   // вызывает метод "foo" из класса "B", определенного в пространстве имен "A"
+            // если класс "A\B" не найден, то пытается сделать автозагрузку класса "A\B"
+
+D::foo();   // используя правила импорта, вызывает метод "foo" класса "D", определенного в пространстве имен "B"
+            // если класс "B\D" не найден, то пытается сделать автозагрузку класса "B\D"
+
+\B\foo();   // вызывает функцию "foo" из пространства имен "B"
+
+\B::foo();  // вызывает метод "foo" класса "B" из глобального пространства
+            // если класс "B" не найден, то пытается сделать автозагрузку класса "B"
+
+// статические методы/функции пространства имен из текущего пространства имен
+
+A\B::foo();   // вызывает метод "foo" класса "B" из пространства имен "A\A"
+              // если класс "A\A\B" не найден, то пытается сделать автозагрузку класса "A\A\B"
+
+\A\B::foo();  // вызывает метод "foo" класса "B" из пространства имен "A"
+              // если класс "A\B" не найден, то пытается сделать автозагрузку класса "A\B"
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect1>
+ <sect1 xml:id="language.namespaces.faq">
+  <title>Часто задаваемые вопросы (FAQ): вещи, которые вам необходимо знать о пространствах имен</title>
+  <?phpdoc print-version-for="namespaces"?>
+  <para>
+   Этот список вопросов разделен на две части: общие вопросы и некоторые особенности
+   реализации, которые полезны для более полного понимания.
+  </para>
+  <para>
+   Сперва, общие вопросы.
+   <orderedlist>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.shouldicare">Если я не использую пространства имен, следует
+      ли считать что-либо из этого важным ?</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.globalclass">Как мне использовать внутренние или глобальные
+      классы в пространстве имен ?</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.innamespace">Как мне использовать функции классов в
+	  пространствах имен, или константы в их собственном пространстве имен ?</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.full">
+       Как такое имя как <literal>\my\name</literal> или <literal>\name</literal>
+       преобразуется ?
+      </link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.qualified">Как такое имя, как
+      <literal>my\name</literal> преобразуется ?</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.shortname1">Как неполное имя класса
+      такое как <literal>name</literal> преобразуется ?</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.shortname2">Как неполное имя функции
+      или неполное имя константы такое
+      как <literal>name</literal> преобразуется ?</link>
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <para>
+   Некоторые детали реализации пространств имен, которые
+   полезно понимать.
+   <orderedlist>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.conflict">Импортируемые имена не могут конфликтовать с
+      классами, определенными в том же файле.</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.nested">Вложенные пространства имен недопустимы.
+      </link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.nofuncconstantuse">Ни функции, ни
+      константы не могут быть заимпортированы с помощью оператора <literal>use</literal>.
+	  </link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.quote">Динамические имена пространств имен (идентификаторы,
+      взятые в кавычки) должны экранировать символ обратного слеша.</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.constants">Ссылаться на неопределенные константы,
+	  используя обратный слеш, нельзя. Выводится фатальная ошибка</link>
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      <link linkend="language.namespaces.faq.builtinconst">Невозможно переопределить специальные
+      константы, такие как NULL, TRUE, FALSE, ZEND_THREAD_SAFE или ZEND_DEBUG_BUILD</link>
+     </simpara>
+    </listitem>
+   </orderedlist>
+  </para>
+  <sect2 xml:id="language.namespaces.faq.shouldicare">
+   <title>Если я не использую пространства имен, следует ли считать что-либо из этого важным ?</title>
+   <para>
+    Нет. Пространства имен не оказывают никакого влияния ни на какой существующий код ни в каком виде или
+    на любой написанный код, который не содержит пространств имен. Вы можете
+	написать такой код, если желаете:
+   </para>
+   <para>
+    <example>
+     <title>Доступ к глобальным классам вне пространства имен</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$a = new \stdClass;
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <para>
+    Это функционально эквивалентно следующему:
+   </para>
+   <para>
+    <example>
+     <title>Доступ к глобальным классам вне пространства имен</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$a = new stdClass;
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.globalclass">
+   <title>Как мне использовать внутренние или глобальные классы в пространстве имен ?</title>
+   <para>
+    <example>
+     <title>Доступ ко внутренним классам в пространствах имен</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+$a = new \stdClass;
+
+function test(\ArrayObject $typehintexample = null) {}
+
+$a = \DirectoryIterator::CURRENT_AS_FILEINFO;
+
+// расширение внутреннего или глобального класса
+class MyException extends \Exception {}
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.innamespace">
+   <title>
+    Как мне использовать функции классов в пространствах имен, или
+	константы в их собственном пространстве имен ?
+   </title>
+   <para>
+    <example>
+     <title>Доступ ко внутренним классам, функциям или константам в пространствах имен</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+
+class MyClass {}
+
+// использование класса из текущего пространства имен
+function test(MyClass $typehintexample = null) {}
+// другой способ использовать класс из текущего пространства имен
+function test(\foo\MyClass $typehintexample = null) {}
+
+// расширение класса из текущего пространства имен
+class Extended extends MyClass {}
+
+// доступ к глобальной функции
+$a = \globalfunc();
+
+// доступ к глобальной константе
+$b = \INI_ALL;
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.full">
+   <title>
+     Как такое имя как <literal>\my\name</literal> или <literal>\name</literal>
+     преобразуется ?
+   </title>
+   <para>
+    Имена, которые начинаются с <literal>\</literal> всегда преобразуются к тому как
+    они выглядят, т.е. <literal>\my\name</literal> - это на самом деле <literal>my\name</literal>,
+    и <literal>\Exception</literal> - это <literal>Exception</literal>.
+    <example>
+     <title>Абсолютные имена</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+$a = new \my\name(); // создает экземпляр класса "my\name"
+echo \strlen('hi'); // вызывает функцию "strlen"
+$a = \INI_ALL; // переменной $a присваивается значение константы "INI_ALL"
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.qualified">
+   <title>Как такое имя, как <literal>my\name</literal> преобразуется ?</title>
+   <para>
+    Имена, которые содержат обратный слеш, но не начинаются с него, такие как
+    <literal>my\name</literal> могут быть преобразованы двумя различными способами.
+   </para>
+   <para>
+    Если присутствует
+    импортирующее выражение, которое создает синоним <literal>my</literal> другого имени, то
+    этот синоним применяется к <literal>my</literal> в <literal>my\name</literal>.
+   </para>
+   <para>
+    В ином случае, текущее имя пространства имен становится префиксом к <literal>my\name</literal>.
+   </para>
+   <para>
+    <example>
+     <title>Полные имена</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+use blah\blah as foo;
+
+$a = new my\name(); // создает экземпляр класса "foo\my\name"
+foo\bar::name(); // вызывает статический метод "name" в классе "blah\blah\bar"
+my\bar(); // вызывает функцию "foo\my\bar"
+$a = my\BAR; // присваивает переменной $a значение константы "foo\my\BAR"
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.shortname1">
+   <title>Как неполное имя класса такое как <literal>name</literal> преобразуется ?</title>
+   <para>
+    Имена классов, которые не содержат обратный слеш, такие как
+    <literal>name</literal> могут быть преобразованы двумя различными способами.
+   </para>
+   <para>
+    Если присутствует
+	импортирующее выражение, которое создает синоним <literal>name</literal> другого имени, то
+	применяется этот синоним.
+   </para>
+   <para>
+    В ином случае, текущее имя пространства имен становится префиксом к <literal>my\name</literal>.
+   </para>
+   <para>
+    <example>
+     <title>Неполные имена классов</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+use blah\blah as foo;
+
+$a = new name(); // создает экземпляр класса "foo\name"
+foo::name(); // вызывает статический метод "name" в классе "blah\blah"
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.shortname2">
+   <title>Как неполное имя функции или неполное имя константы такое
+    как <literal>name</literal> преобразуется ?
+   </title>
+   <para>
+    Имена функций или констант, которые не содержат обратного слеша, такие как
+	<literal>name</literal> могут быть преобразованы двумя различными способами.
+   </para>
+   <para>
+    Сперва, текущее имя пространства имен становится префиксом к <literal>name</literal>.
+   </para>
+   <para>
+    Затем, если константа или функция <literal>name</literal> не существует
+	в текущем пространстве имен, используется глобальная константа или функция <literal>name</literal>,
+	если она существует.
+   </para>
+   <para>
+    <example>
+     <title>Неполные имена функций или констант</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+namespace foo;
+use blah\blah as foo;
+
+const FOO = 1;
+
+function my() {}
+function foo() {}
+function sort(&$a)
+{
+    sort($a);
+    $a = array_flip($a);
+    return $a;
+}
+
+my(); // вызывает "foo\my"
+$a = strlen('hi'); // вызывает глобальную функцию "strlen", потому что "foo\strlen" не существует
+$arr = array(1,3,2);
+$b = sort($arr); // вызывает функцию "foo\sort"
+$c = foo(); // вызывает функцию "foo\foo" - импорт не применяется
+
+$a = FOO; // присваивает переменной $a значение константы "foo\FOO" - импорт не применяется
+$b = INI_ALL; // присваивает переменной $b значение глобальной константы "INI_ALL"
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.conflict">
+   <title>Импортируемые имена не могут конфликтовать с классами, определенными в том же файле.</title>
+   <para>
+    Следующие комбинации скриптов допустимы:
+    <informalexample>
+     <simpara>file1.php</simpara>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace my\stuff;
+class MyClass {}
+?>
+     ]]>
+     </programlisting>
+     <simpara>another.php</simpara>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace another;
+class thing {}
+?>
+     ]]>
+     </programlisting>
+     <simpara>file2.php</simpara>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace my\stuff;
+include 'file1.php';
+include 'another.php';
+
+use another\thing as MyClass;
+$a = new MyClass; // создает экземпляр класса "thing" из пространства имен "another"
+?>
+     ]]>
+     </programlisting>
+    </informalexample>
+   </para>
+   <para>
+    Конфликт имен отсутствует даже несмотря на то, что класс <literal>MyClass</literal> существует
+	внутри пространства имен <literal>my\stuff</literal>, потому что определение MyClass
+	находится в отдельном файле. Однако следующий пример приводит к фатальной ошибке с конфликтом
+	имен, потому что класс MyClass определен в том же файле, где находится оператор use.
+    <informalexample>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace my\stuff;
+use another\thing as MyClass;
+class MyClass {} // фатальная ошибка: MyClass конфликтует с выражением импорта
+$a = new MyClass;
+?>
+     ]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.nested">
+   <title>Вложенные пространства имен недопустимы.</title>
+   <para>
+    PHP не позволяет вложение пространств имен одно в другое
+    <informalexample>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace my\stuff {
+    namespace nested {
+        class foo {}
+    }
+}
+?>
+     ]]>
+     </programlisting>
+    </informalexample>
+    Однако, сымитировать вложенные пространства имен так:
+    <informalexample>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace my\stuff\nested {
+    class foo {}
+}
+?>
+     ]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.nofuncconstantuse">
+   <title>Ни функции, ни константы не могут быть заимпортированы с помощью оператора <literal>use</literal>.</title>
+   <para>
+    Элементы, которые подвержены действию оператора <literal>use</literal> - это пространства имен и
+    имена классов. Для сокращения длинных имен констант или функций, заимпортируйте их содержимое
+    в пространство имен.
+    <informalexample>
+     <programlisting role="php">
+     <![CDATA[
+<?php
+namespace mine;
+use ultra\long\ns\name;
+
+$a = name\CONSTANT;
+name\func();
+?>
+     ]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.quote">
+   <title>Динамические имена пространств имен (идентификаторы, взятые в кавычки) должны экранировать символ обратного слеша.</title>
+   <para>
+    Очень важно представлять это, потому что обратный слеш используется как экранирующий символ
+	внутри строк. Он всегда должен быть продублирован, когда используется внутри строки, иначе
+	появляется риск возникновения неумышленных последствий:
+    <example>
+     <title>Подводные камни при использовании имени пространства имен внутри строки с двойными кавычками</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+$a = new "dangerous\name"; // \n - это переход на новую строку внутри строки с двойными кавычками!
+$obj = new $a;
+
+$a = new 'not\at\all\dangerous'; // нет проблем тут.
+$obj = new $a;
+?>
+      ]]>
+     </programlisting>
+    </example>
+	Внутри строк, заключенных в одинарные кавычки, обратный слеш в качестве разделителя более безопасен, но
+	по-прежнему рекомендуемая практика экранирования обратного слеша во всех строках является наилучшим вариантом.
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.constants">
+   <title>Ссылаться на неопределенные константы, используя обратный слеш, нельзя. Выводится фатальная ошибка</title>
+   <para>
+    Любая неопределенная константа, являющаяся неполным именем, как <literal>FOO</literal>, будет
+	приводить к выводу сообщения о том, что PHP предположил, что <literal>FOO</literal> было значение
+	константы. Любая константа, с полным именеи или абсолютным, которая содержит
+	символ обратного слеша будет приводить к фатальной ошибке, если не будет найдена.
+    <example>
+     <title>Неопределенные константы</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+namespace bar;
+$a = FOO; // выводит предупреждение: undefined constants "FOO" assumed "FOO";
+$a = \FOO; // фатальная ошибка: undefined namespace constant FOO
+$a = Bar\FOO; // фатальная ошибка: undefined namespace constant bar\Bar\FOO
+$a = \Bar\FOO; // фатальная ошибка: undefined namespace constant Bar\FOO
+?>
+      ]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+  <sect2 xml:id="language.namespaces.faq.builtinconst">
+   <title>Невозможно переопределить специальные константы, такие как NULL, TRUE, FALSE, ZEND_THREAD_SAFE или ZEND_DEBUG_BUILD</title>
+   <para>
+    Любая попытка определить константу пространства имен, которая совпадает с названиями специальных встроенных констант,
+	приведет к фатальной ошибке.
+    <example>
+     <title>Неопределенные константы</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+namespace bar;
+const NULL = 0; // Фатальная ошибка;
+const true = 'stupid'; // также фатальная ошибка;
+// и т.д.
+?>
+      ]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+ </sect1>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+ Local variables:
+ mode: sgml
+ sgml-omittag:t
+ sgml-shorttag:t
+ sgml-minimize-attributes:nil
+ sgml-always-quote-attributes:t
+ sgml-indent-step:1
+ sgml-indent-data:t
+ indent-tabs-mode:nil
+ sgml-parent-document:nil
+ sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+ sgml-exposed-tags:nil
+ sgml-local-catalogs:nil
+ sgml-local-ecat-files:nil
+ End:
+ vim600: syn=xml fen fdm=syntax fdl=2 si
+ vim: et tw=78 syn=sgml
+ vi: ts=1 sw=1
+-->
