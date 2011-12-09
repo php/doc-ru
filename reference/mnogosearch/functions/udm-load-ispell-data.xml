@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: northcat Status: ready -->
+<!-- Reviewed: no -->
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.udm-load-ispell-data">
+ <refnamediv>
+  <refname>udm_load_ispell_data</refname>
+  <refpurpose>Загружает ispell-данные</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>udm_load_ispell_data</methodname>
+   <methodparam><type>resource</type><parameter>agent</parameter></methodparam>
+   <methodparam><type>int</type><parameter>var</parameter></methodparam>
+   <methodparam><type>string</type><parameter>val1</parameter></methodparam>
+   <methodparam><type>string</type><parameter>val2</parameter></methodparam>
+   <methodparam><type>int</type><parameter>flag</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>udm_load_ispell_data</function> загружает ispell-данные.
+  </para>
+  <para>
+   После использования этой функции, для того, чтобы освободить память, выделенную 
+   для ispell-данных, пожалуйста, используйте функцию
+   <function>udm_free_ispell_data</function>, даже если вы используете режим
+   <constant>UDM_ISPELL_TYPE_SERVER</constant>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>agent</parameter></term>
+     <listitem>
+      <para>
+       Ссылка на идентификатор агента, полученная после вызова
+       <function>udm_alloc_agent</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>var</parameter></term>
+     <listitem>
+      <para>
+       Указывает источник ispell-данных. Может принимать следующие значения:
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          <constant>UDM_ISPELL_TYPE_DB</constant> - указывает, что ispell-данные должны быть загружены из SQL.
+          В этом случае параметры <parameter>val1</parameter> и <parameter>val2</parameter>
+          игнорируются и должны быть пустыми. <parameter>flag</parameter>
+          должен быть равен <literal>1</literal>.
+         </simpara>
+         <note>
+          <para>
+           <parameter>flag</parameter> указывает, что после загрузки ispell-данных 
+           из определённого ресурса они должны быть отсортированы (это необходимо 
+           для корректной работы ispell). В случае загрузки ispell-данных из файлов
+           может быть несколько вызовов функции <function>udm_load_ispell_data</function>,
+           так что нет смысла сортировать данные после каждого вызова, кроме последнего.
+           Поскольку в режиме db все данные загружаются одним вызовом, 
+           этот параметр должен иметь значение <literal>1</literal>. В этом режиме,
+           в случае ошибки, например, если ispell-таблицы отсутствуют, 
+           функция возвратит &false;, а код и сообщение об ошибке будут доступны через 
+           <function>udm_error</function> и <function>udm_errno</function>.
+          </para>
+         </note>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>UDM_ISPELL_TYPE_AFFIX</constant> - указывает, что ispell-данные должны быть загружены из 
+          файла, и инициирует загрузку файла аффиксов. В этом случае <parameter>val1</parameter>
+          определяет двухбуквенный код языка, для которого загружаются аффиксы,
+          а <parameter>val2</parameter> - путь к файлу. Пожалуйста, обратите внимание, что, если
+          введён относительный путь, модуль ищет файл не в <constant>UDM_CONF_DIR</constant>,
+          а относительно текущего пути, т.е. пути, в котором выполняется скрипт.
+          В случае ошибки в этом режиме, например, если файл отсутствует, функция возвратит 
+          &false;, и будет выведено сообщение об ошибке. Текст сообщения об ошибке не может быть
+          получен через <function>udm_error</function> и <function>udm_errno</function>,
+          так как эти функции могут возвращать только сообщения, связанные с SQL. Пожалуйста,
+          посмотрите описание параметра <parameter>flag</parameter> в <constant>UDM_ISPELL_TYPE_DB</constant>.
+         </para>
+         <para>
+          <example>
+          <title>Пример использования <function>udm_load_ispell_data</function></title>
+           <programlisting role="php">
+<![CDATA[
+<?php
+if ((! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_AFFIX, 'en', '/opt/ispell/en.aff', 0)) ||
+    (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_AFFIX, 'ru', '/opt/ispell/ru.aff', 0)) ||
+    (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_SPELL, 'en', '/opt/ispell/en.dict', 0)) ||
+    (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_SPELL, 'ru', '/opt/ispell/ru.dict', 1))) {
+    exit;
+}
+?>
+]]>
+           </programlisting>
+          </example>
+         </para>
+         <note>
+          <para>
+           <parameter>flag</parameter> равен <literal>1</literal> только в последнем вызове.
+          </para>
+         </note>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>UDM_ISPELL_TYPE_SPELL</constant> - указывает, что ispell-данные должны быть загружены из 
+          файла, и инициирует загрузку файла ispell-словаря. В этом случае 
+          <parameter>val1</parameter> определяет двухбуквенный код языка, для которого 
+          загружаются аффиксы,
+          а <parameter>val2</parameter> - путь к файлу. Пожалуйста, обратите внимание, что, если
+          введён относительный путь, модуль ищет файл не в <constant>UDM_CONF_DIR</constant>,
+          а относительно текущего пути, т.е. пути, в котором выполняется скрипт.
+          В случае ошибки в этом режиме, например, если файл отсутствует, функция возвратит 
+          &false;, и будет выведено сообщение об ошибке. Текст сообщения об ошибке не может быть
+          получен через <function>udm_error</function> и <function>udm_errno</function>,
+          так как эти функции могут возвращать только сообщения, связанные с SQL. Пожалуйста,
+          посмотрите описание параметра <parameter>flag</parameter> в <constant>UDM_ISPELL_TYPE_DB</constant>.
+         </para>
+         <informalexample>
+          <programlisting role="php">
+<![CDATA[
+<?php
+if ((! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_AFFIX, 'en', '/opt/ispell/en.aff', 0)) ||
+   (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_AFFIX, 'ru', '/opt/ispell/ru.aff', 0)) ||
+   (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_SPELL, 'en', '/opt/ispell/en.dict', 0)) ||
+   (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_SPELL, 'ru', '/opt/ispell/ru.dict', 1))) {
+ exit;
+ }
+?>
+]]>
+          </programlisting>
+         </informalexample>
+         <note>
+          <para>
+           <parameter>flag</parameter> равен <literal>1</literal> только в последнем вызове.
+          </para>
+         </note>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>UDM_ISPELL_TYPE_SERVER</constant> - включает поддержку spell-сервера.
+          Параметр <parameter>val1</parameter> указывает
+          адрес хоста запущенного spell-сервера. <parameter>val2</parameter> 
+          еще не используется, но в будущих версиях он будет указывать номер
+          порта, используемого spell-сервером. Параметр <parameter>flag</parameter> в
+          этом случае не нужен, так как ispell-данные хранятся на 
+          spell-сервере уже отсортированными.
+         </para>
+         <para>
+          Spelld-сервер читает spell-данные из отдельного файла конфигурации
+          (по умолчанию <filename>/usr/local/mnogosearch/etc/spelld.conf</filename>), сортирует их и сохраняет в
+          памяти. С клиентами сервер взаимодействует с помощью двунаправленного общения: 
+          все данные передаются в индексатор (так что индексатор стартует быстрее), из search.cgi сервер
+          получает слово для нормализации и затем передаёт клиенту (search.cgi) список
+          нормализованных словоформ. Это обеспечивает самую быструю, по сравнению с режимами db и text
+          обработку поисковых запросов (миную загрузку и сортировку всех spell-данных).
+         </para>
+         <para>
+          Функция <function>udm_load_ispell_data</function> в режиме <constant>UDM_ISPELL_TYPE_SERVER</constant>
+          на самом деле не загружает ispell-данные, а только определяет адрес сервера.
+          Фактически, сервер автоматически используется функцией <function>udm_find</function>
+          при выполнении поиска. В случае ошибок, например, если spell-сервер
+          не запущен или указан неправильный хост, возвращаемых сообщений нет
+          и конвертация ispell не работает.
+         </para>
+         <note>
+          <para>
+           Эта функция доступна в mnoGoSearch 3.1.12 или выше.
+          </para>
+         </note>
+         <simpara>Пример:</simpara>
+         <informalexample>
+          <programlisting role="php">
+<![CDATA[
+<?php
+if (!udm_load_ispell_data($udm, UDM_ISPELL_TYPE_SERVER, '', '', 1)) {
+    echo "Ошибка при загрузке ispell-данных с сервера<br />\n";
+    exit;
+}
+?>
+]]>
+          </programlisting>
+         </informalexample>
+        </listitem>
+       </itemizedlist>
+      </para>
+      <para>
+       Самым быстрым режимом является <constant>UDM_ISPELL_TYPE_SERVER</constant>.
+       <constant>UDM_ISPELL_TYPE_TEXT</constant> медленнее
+       а <constant>UDM_ISPELL_TYPE_DB</constant> самый медленный. Вышесказанное верно для
+       mnoGoSearch 3.1.10 - 3.1.11. Планируется ускорить режим DB в будущих 
+       версиях, и он будет быстрее режима TEXT.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>val1</parameter></term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>val2</parameter></term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>flag</parameter></term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>udm_load_ispell_data</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+if (! udm_load_ispell_data($udm, UDM_ISPELL_TYPE_DB, '', '', 1)) {
+  printf("Ошибка #%d: '%s'\n", udm_errno($udm), udm_error($udm));
+  exit;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
