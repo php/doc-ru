@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 14ecbf565eaa1b0ab68e4ea9c205a18d170fc272 Maintainer: shein Status: ready -->
+<!-- EN-Revision: b3445eefdd2974a0b408b3e83bdb9391e63b5049 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.filter-var" xmlns="http://docbook.org/ns/docbook">
@@ -33,7 +33,8 @@
      <term><parameter>filter</parameter></term>
      <listitem>
       <para>
-       ID используемого фильтра. Список доступных фильтров <xref linkend="filter.filters" />.
+       ID используемого фильтра. Список доступных фильтров доступен на
+       странице "<xref linkend="filter.filters" />".
       </para>
      </listitem>
     </varlistentry>
@@ -70,15 +71,21 @@ $var = filter_var('oops', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 $var = filter_var('oops', FILTER_VALIDATE_BOOLEAN,
                   array('flags' => FILTER_NULL_ON_FAILURE));
 
-// фильтр "callback"
+// callback-фильтр валидации
 function foo($value)
 {
-    $ret = new stdClass;
-    $ret->value = filter_var($value, FILTER_VALIDATE_BOOLEAN,
-                             array('flags' => FILTER_NULL_ON_FAILURE));
-    return $ret;
+    // Ожидаемый формат: Фамилия, Имена
+    if (strpos($value, ", ") === false) return false;
+    list($surname, $givennames) = explode(", ", $value, 2);
+    $empty = (empty($surname) || empty($givennames));
+    $notstrings = (!is_string($surname) || !is_string($givennames));
+    if ($empty || $notstrings) {
+        return false;
+    } else {
+        return $value;
+    }
 }
-$var = filter_var('yes', FILTER_CALLBACK, array('options' => 'foo'));
+$var = filter_var('Doe, Jane Sue', FILTER_CALLBACK, array('options' => 'foo'));
 ?>
         ]]>
        </programlisting>
