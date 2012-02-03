@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: cff6fa6abc65d088f4e93aa35a09c38c000fe79f Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+<!-- splitted from ./en/functions/image.xml, last change in rev 1.78 -->
+<refentry xml:id="function.exif-read-data" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>exif_read_data</refname>
+  <refpurpose>
+   Читает <acronym>EXIF</acronym>-заголовки <acronym>JPEG</acronym> 
+   и <acronym>TIFF</acronym> изображений
+  </refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>exif_read_data</methodname>
+   <methodparam><type>string</type><parameter>filename</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>sections</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>arrays</parameter><initializer>false</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>thumbnail</parameter><initializer>false</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>exif_read_data</function> читает <acronym>EXIF</acronym>-заголовки
+   <acronym>JPEG</acronym> и <acronym>TIFF</acronym>файлов. Таким образом можно
+   читать метаданные, генерируемые цифровыми фотоаппаратами.
+  </para>
+  <para>
+   По идее, <acronym>EXIF</acronym>-заголовки должны идти первыми в JPEG/TIFF 
+   файлах, генерируемых фотоаппаратами. Но, к сожалению, каждый производитель имеет
+   свое представление того, каким образом компоновать метаданные изображения.
+   Поэтому будьте готовы к ситуации, когда перед Exif-заголовком есть еще что-то.
+  </para>
+  <para>
+   <literal>Height</literal> и <literal>Width</literal> вычисляются аналогично
+   вычислениям <function>getimagesize</function>, так что эти параметры не обязаны
+   присутствовать в заголовке. <literal>html</literal> - текстовая строка, задающая
+   высоту/ширину, которую можно использовать в обычном <acronym>HTML</acronym>.
+  </para>
+  <para>
+   Если Exif-заголовок содержит сообщение об авторских правах (Copyright), само
+   сообщение может содержать 2 значения. Эта ситуация не описана в стандарте 
+   Exif 2.10, поэтому раздел <literal>COMPUTED</literal> будет содержать оба
+   этих значения в полях <literal>Copyright.Photographer</literal> и
+   <literal>Copyright.Editor</literal>. В то же время разделы 
+   <literal>IFD0</literal> будут содержать массив байт с NULL-символом в качестве
+   разделителся этих двух значений либо только первое значение, если тип файла 
+   определен неверно (нормальная ситуация для Exif). Раздел
+   <literal>COMPUTED</literal> будет также содержать <literal>Copyright</literal>,
+   это может быть либо исходная строка, либо список из владельца 
+   фотографии и редактора через запятую.
+  </para>
+  <para>
+   Тэг <literal>UserComment</literal> имеет те же проблемы, что и Copyright.
+   Он может хранить 2 значения. Первое - использованную кодировку, второе -
+   само значение. В этом случае раздел <literal>IFD</literal> содержит либо
+   кодировку, либо массив байт. Раздел <literal>COMPUTED</literal> будет хранить
+   оба этих значения в полях <literal>UserCommentEncoding</literal> и
+   <literal>UserComment</literal>. Содержимое <literal>UserComment</literal>
+   будет доступно в любом случае, поэтому предпочтительней использовать его вместо
+   раздела <literal>IFD0</literal>.
+  </para>
+  <para>
+   Также <function>exif_read_data</function> проверяет EXIF тэги на соответствие 
+   спецификации EXIF (<link
+   xlink:href="&url.exifspec;">&url.exifspec;</link>, стр. 20).
+  </para>
+  <note>
+   <para>
+    Windows Me/XP могут затирать Exif-заголовки при подключении фотоаппарата.
+   </para>
+  </note>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>filename</parameter></term>
+     <listitem>
+      <para>
+       Имя файла изображения. Нельзя передавать <acronym>URL</acronym>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>sections</parameter></term>
+     <listitem>
+      <para>
+       Список разделенных запятой разделов, которые должны быть представлены
+       в результирующем массиве <type>array</type>. Если ни один из разделов найти
+       не удастся, функция вернет &false;.
+       <informaltable>
+        <tgroup cols="2">
+         <tbody>
+          <row>
+           <entry>FILE</entry>
+           <entry>FileName, FileSize, FileDateTime, SectionsFound</entry>
+          </row>
+          <row>
+           <entry>COMPUTED</entry>
+           <entry>
+            html, Width, Height, IsColor, и другие.  Height and 
+            Width вычисляются аналогично <function>getimagesize</function>,
+            поэтому их не обязательно включать в заголовок. 
+            <literal>html</literal> - текстовая строка, задающая 
+            высоту/ширину, которую можно использовать в обычном 
+            <acronym>HTML</acronym>.
+           </entry>
+          </row>
+          <row>
+           <entry>ANY_TAG</entry>
+           <entry>Любая информация заключенная в тэг, например 
+           <literal>IFD0</literal>, <literal>EXIF</literal>, ...</entry>
+          </row>
+          <row>
+           <entry>IFD0</entry>
+           <entry>
+            Все данные тэга IFD0. В обычных изображениях в нем хранится размер
+            изображения.
+           </entry>
+          </row>
+          <row>
+           <entry>THUMBNAIL</entry>
+           <entry>
+            Если файл содержит второй раздел <literal>IFD</literal>, то считается,
+            что у изображения есть эскиз. Вся информация об эскизе хранится в этом
+            разделе.
+           </entry>
+          </row>
+          <row>
+           <entry>COMMENT</entry>
+           <entry>Заголовки комментариев JPEG изображений.</entry>
+          </row>
+          <row>
+           <entry>EXIF</entry>
+           <entry>
+            Раздел EXIF является подразделом <literal>IFD0</literal>. Он содержит
+            более детальную информацию об изображении. Большинство его записей
+            зависит от фотоаппарата.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </informaltable>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>arrays</parameter></term>
+      <listitem>
+      <para>
+       Определяет, формировать ли разделы в виде массивов. Разделы
+       <parameter>sections</parameter>, <literal>COMPUTED</literal>,
+       <literal>THUMBNAIL</literal> и <literal>COMMENT</literal> всегда
+       делаются массивами, так как они могут содержать значения, имена которых
+       будут конфликтовать с именами в других разделах.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>thumbnail</parameter></term>
+     <listitem>
+      <para>
+       Если &true;, будет прочитан сам эскиз. В противном случае будет прочитана
+       только информация в тэгах.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>    
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает ассоциативный массив <type>array</type>, в котором ключами будут
+   имена заголовков, а значениями - значения соответствующие этим заголовкам.
+   Если никаких данных вернуть нельзя, <function>exif_read_data</function>
+   вернет &false;.
+  </para>
+ </refsect1>
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Может читать все встроенные <acronym>IFD</acronym> данные, включая
+        массивы. Размер встроенного эскиза возвращается во вложенном
+        <literal>THUMBNAIL</literal>. Может возвращать эскизы в формате
+        <acronym>TIFF</acronym>. Больше нет ограничения максимальной длины
+        возвращаемых значений (но всю память выработать не получится).
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Если в PHP есть поддержка <link linkend="ref.mbstring">mbstring</link>,
+        кодировка пользовательского комментария может быть автоматически изменена.
+        Если пользовательский комментарий представлен в кодировках
+        <literal>Unicode</literal> или <literal>JIS</literal>, эти кодировки
+        будут автоматически преобразованы в соответствии с ini-настройками в
+        &php.ini;
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Если изображение содержит какие-либо данные в <literal>IFD0</literal>, то
+        <literal>COMPUTED</literal> будет содержать порядок байт
+        <literal>ByteOrderMotorola</literal> со значением 0 для
+        <literal>little-endian</literal> (intel) и 1 для
+        <literal>big-endian</literal> (motorola). Также,
+        <literal>COMPUTED</literal> и <literal>UserComment</literal> больше
+        не содержат первое значение copyright, если при определении типа данных 
+        файла возникла ошибка.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>exif_read_data</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+echo "test1.jpg:<br />\n";
+$exif = exif_read_data('tests/test1.jpg', 'IFD0');
+echo $exif===false ? "Не найдено данных заголовка.<br />\n" : "Изображение содержит заголовки<br />\n";
+
+$exif = exif_read_data('tests/test2.jpg', 0, true);
+echo "test2.jpg:<br />\n";
+foreach ($exif as $key => $section) {
+    foreach ($section as $name => $val) {
+        echo "$key.$name: $val<br />\n";
+    }
+}
+?>
+]]>
+    </programlisting>
+    <para>
+     Первых вызов завершается неудачей, так как в заголовках 
+     изображения нет информации.
+    </para>
+    &example.outputs.similar;
+    <screen role="php">
+<![CDATA[
+test1.jpg:
+No header data found.
+test2.jpg:
+FILE.FileName: test2.jpg
+FILE.FileDateTime: 1017666176
+FILE.FileSize: 1240
+FILE.FileType: 2
+FILE.SectionsFound: ANY_TAG, IFD0, THUMBNAIL, COMMENT
+COMPUTED.html: width="1" height="1"
+COMPUTED.Height: 1
+COMPUTED.Width: 1
+COMPUTED.IsColor: 1
+COMPUTED.ByteOrderMotorola: 1
+COMPUTED.UserComment: Exif test image.
+COMPUTED.UserCommentEncoding: ASCII
+COMPUTED.Copyright: Photo (c) M.Boerger, Edited by M.Boerger.
+COMPUTED.Copyright.Photographer: Photo (c) M.Boerger
+COMPUTED.Copyright.Editor: Edited by M.Boerger.
+IFD0.Copyright: Photo (c) M.Boerger
+IFD0.UserComment: ASCII
+THUMBNAIL.JPEGInterchangeFormat: 134
+THUMBNAIL.JPEGInterchangeFormatLength: 523
+COMMENT.0: Comment #1.
+COMMENT.1: Comment #2.
+COMMENT.2: Comment #3end
+THUMBNAIL.JPEGInterchangeFormat: 134
+THUMBNAIL.Thumbnail.Height: 1
+THUMBNAIL.Thumbnail.Height: 1
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>exif_thumbnail</function></member>
+    <member><function>getimagesize</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
