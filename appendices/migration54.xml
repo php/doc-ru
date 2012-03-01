@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e9cd6921c3d1252ea1cd142343224eeea8b1dbcf Maintainer: mch Status: ready -->
+<!-- EN-Revision: 9c27040f090acd30375517c6c6b9fa8ac334fb8c Maintainer: mch Status: ready -->
 <!-- Based on UPGRADING version 322438. Work in progess !-->
 <!-- $Revision$ -->
 <!-- Reviewed: no -->
@@ -9,7 +9,7 @@
   &manual.migration.seealso;
   <link linkend="migration5">5.0.x</link>,
   <link linkend="migration51">5.1.x</link>,
-  <link linkend="migration52">5.2.x</link> and
+  <link linkend="migration52">5.2.x</link> и
   <link linkend="migration53">5.3.x</link>.
  </simpara>
 
@@ -71,14 +71,6 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     Операторы <link linkend="control-structures.break"><literal>break</literal></link>
-     и <link linkend="control-structures.continue"><literal>continue</literal></link>
-     теперь не принимают аргументов в виде переменной. Используйте аргумент в 
-     виде статической константы.
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
      <link linkend="features.safe-mode"><literal>Безопасный режим</literal></link> более
      не поддерживается. Любое приложение, которое полагается на безопасный режим, возможно,
      требует внесения корректировок по части безопасности.
@@ -86,16 +78,90 @@
    </listitem>
    <listitem>
     <simpara>
-     Функции <function>import_request_variables()</function>, 
-     <function>session_register()</function>, <function>session_unregister()</function>, 
-     <function>session_is_registered()</function> были удалены.
+     <link linkend="security.magicquotes">"Волшебные" кавычки</link> теперь не работают. Приложения, которые основываются
+     на этой возможности, нуждаются в обновлении для избежания проблем безопасности.
+    </simpara>
+    <simpara>
+     Функции <function>get_magic_quotes_gpc</function> и <function>get_magic_quotes_runtime</function>
+     теперь всегда возвращают false. Функция <function>set_magic_quotes_runtime</function> вызывает ошибку
+     <constant>E_CORE_ERROR</constant>.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Функции <function>get_magic_quotes_gpc()</function> и <function>get_magic_quotes_runtime()</function>
-     теперь всегда возвращают false. Функция <function>set_magic_quotes_runtime()</function> вызывает ошибку
-     <constant>E_CORE_ERROR</constant>.
+     INI-директивы <link linkend="ini.register-globals">register_globals</link> и
+     <link linkend="ini.register-long-arrays">register_long_arrays</link>
+     были удалены.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Возможность <link linkend="language.references.pass">передачи по ссылке во время вызова функции</link> была убрана.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Операторы <link linkend="control-structures.break"><literal>break</literal></link>
+     и <link linkend="control-structures.continue"><literal>continue</literal></link>
+     теперь не принимают аргументов в виде переменной. Например, выражение
+     <literal>break 1 + foo() * $bar;</literal> невозможно.
+     Вы по-прежнему можете использовать явный аргумент в 
+     виде статической константы. Например, <literal>break 2;</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     В расширении <link linkend="book.datetime">date and time</link> временная зона не может быть более
+     установлена с помощью переменной окружения TZ. Вместо этого вам необходимо указать временную зону, используя
+     INI-опцию <link linkend="ini.date.timezone">date.timezone</link> или функцию <function>date_default_timezone_set</function>.
+     PHP теперь не будет пытаться догадываться какая временная зона используется. Вместо этого будет установлена зона "UTC" и
+     выдано предупреждение.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Нецифровые смещения строк, например <literal>$a['foo']</literal>, где $a - это строка, теперь возвращают
+     false в функции <function>isset</function> и true в функции <function>empty</function> и
+     вызывают предупреждение при подобном использовании. Смещения, заданные типами double, bool и null также приводят
+     к генерации предупреждения, а строки, содержащие числа (<literal>$a['2']</literal>), все еще работают как и раньше.
+     Обратите внимание, что смещения, подобные '<literal>'12.3'</literal>' и '<literal>'5 foobar'</literal>' рассматриваются как нечисловые
+     и вызывают предупреждение, но преобразовываются к 12 и 5 соответственно по причине необходимости сохранения совместимости.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Преобразование массива в строку теперь приводит к предупреждению <constant>E_NOTICE</constant>. Результат
+     преобразования будет по-прежнему <literal>"Array"</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Преобразование &null;, &false; или пустой строки в объект путем добавления свойства
+     теперь будет генерировать предупреждение вместо ошибки <constant>E_STRICT</constant>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Имена параметров, которые "затеняют" имена суперглобальных переменных, теперь расцениваются как фатальная ошибка.
+     Это правило запрещает код, подобный этому: <literal>function foo($_GET, $_POST) {}</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <link linkend="book.hash">Хеш-алгоритмы</link> Salsa10 и Salsa20 были удалены.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Функция <function>array_combine</function> теперь возвращает <literal>array()</literal> вместо <literal>FALSE</literal>,
+     когда в качестве параметров заданы два пустых массива.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Функция <function>htmlentities</function> теперь генерирует предупреждение <constant>E_STRICT</constant>, когда используется с
+     азиатскими наборами символов, так как в этом случае функция <function>htmlentities</function> имеет (и уже имела до этой версии)
+     ту же самую функциональность, что и <function>htmlspecialchars</function>.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -116,7 +182,37 @@
    </listitem>
    <listitem>
     <simpara>
-     insteadof
+     <link linkend="language.oop5.traits">insteadof</link>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <simpara>
+   Следующие функции были удалены из PHP:
+  </simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>define_syslog_variables</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>import_request_variables</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>session_is_registered</function>, <function>session_register</function>
+     и <function>session_unregister</function>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Алиасы
+     <function>mysqli_bind_param</function>, <function>mysqli_bind_result</function>,
+     <function>mysqli_client_encoding</function>, <function>mysqli_fetch</function>,
+     <function>mysqli_param_count</function>, <function>mysqli_get_metadata</function>,
+     <function>mysqli_send_long_data</function>, mysqli::client_encoding() и mysqli_stmt::stmt().
     </simpara>
    </listitem>
   </itemizedlist>
@@ -125,7 +221,7 @@
  <section xml:id="migration54.new-features">
   <title>Новые возможности</title>
   <simpara>
-   PHP 5.4.0 предлагает широкий спектр новых возможностей:
+   PHP версии 5.4.0 предлагает широкий спектр новых возможностей:
   </simpara>
   <itemizedlist>
    <listitem>
@@ -144,33 +240,8 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <!-- Placeholder for "Changes made to Windows support" -->
-    </simpara>
-   </listitem>
-  </itemizedlist>
-  <simpara>
-   Была добавлена поддержка Windows для следующих функций:
-  </simpara>
-  <itemizedlist>
-   <listitem>
-    <simpara>
-     <!-- Placeholder for "Changes made to Windows support" -->
-     
-     <!-- Example for a previous versions entry for this list
-
-     <function>checkdnsrr</function>
-     
-     -->
-    </simpara>
-   </listitem>
-  </itemizedlist>
-  <simpara>
-   Другие изменения:
-  </simpara>
-  <itemizedlist>
-   <listitem>
-    <simpara>
-     <!-- Placeholder for "Other changes:" -->
+     Функция <function>is_link</function> теперь работает правильно с символическими ссылками в системе Windows Vista
+     или более поздними. Более ранние версии не поддерживали символические ссылки.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -181,7 +252,7 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     Доступен новый модуль SAPI, называемый cli-server.
+     Доступен новый модуль SAPI, называемый <literal>cli-server</literal>.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -193,19 +264,19 @@
    </listitem>
    <listitem>
     <simpara>
-     Добавлена ссылка #inisetting=value для изменения INI-опций в процессе работы скрипта при интерактивной работе в консоли.
+     Добавлена ссылка <literal>#inisetting=value</literal> для изменения INI-опций в процессе работы скрипта при интерактивной работе в консоли.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Добавлены функции, совместимые с Apache: <function>apache_child_terminate()</function>,
-     <function>getallheaders()</function>, <function>apache_request_headers()</function>
-     и <function>apache_response_headers()</function> для FastCGI SAPI.
+     Добавлены функции, совместимые с Apache: <function>apache_child_terminate</function>,
+     <function>getallheaders</function>, <function>apache_request_headers</function>
+     и <function>apache_response_headers</function> для FastCGI SAPI.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     PHP-FPM : Добавлена опция process.max для контроля количества ветвлений FPM-процессов.
+     PHP-FPM: Добавлена опция <literal>process.max</literal> для контроля количества ветвлений FPM-процессов.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -224,7 +295,8 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <!-- Placeholder for deprecated INI entries. -->
+     <literal>magic_quotes_gpc</literal> <literal>magic_quotes_runtime</literal> и
+     <literal>magic_quotes_sybase</literal>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -234,18 +306,22 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>mysql_list_dbs()</function>
+     <function>mysql_list_dbs</function>
     </simpara>
    </listitem>
-  </itemizedlist>
-  <simpara>
-   Устаревшие возможности:
-  </simpara>
-  <itemizedlist>
    <listitem>
     <simpara>
-     INI-настройки <literal>magic_quotes_gpc</literal> <literal>magic_quotes_runtime</literal> и
-     <literal>magic_quotes_sybase</literal>.
+     <function>get_magic_quotes_gpc</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>get_magic_quotes_runtime</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mcrypt_generic_end</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -271,39 +347,14 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     Функция <function>scandir()</function> теперь принимает константу <constant>SCANDIR_SORT_NONE</constant> в качестве возможного значения параметра sorting_order.
-    </simpara>
-   </listitem>
-  </itemizedlist>
-
-  <!-- Placeholder for "New Parameters" by books.
-
-  <simpara><link linkend="book.json">json</link>:</simpara>
-  <itemizedlist>
-   <listitem>
-    <simpara>
-     <function>json_encode</function>
-     - Added <parameter>options</parameter>.
+     Добавлен необязательный аргумент к функциям <function>debug_backtrace</function> и
+     <function>debug_print_backtrace</function> для ограничения количества возвращаемых фреймов стека.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     <function>json_decode</function>
-     - Added <parameter>depth</parameter>.
-    </simpara>
-   </listitem>
-  </itemizedlist>
-  
-  -->
-
-  <simpara>
-   Новые параметры методов в PHP 5.4.0:
-  </simpara>
-  <simpara>Ядро PHP:</simpara>
-  <itemizedlist>
-   <listitem>
-    <simpara>
-     <!-- Placeholder for "New Parameters" for PHP Core methods. -->
+     У функций <function>is_a</function> и <function>is_subclass_of</function> теперь имеется третий
+     параметр типа boolean, который указывает, является ли первый аргумент строкой с названием класса.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -311,8 +362,18 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     В функции <function>openssl_encrypt()</function> и <function>openssl_decrypt()</function>
+     В функции <function>openssl_encrypt</function> и <function>openssl_decrypt</function>
      добавлена опция "no padding" (не дополнять размер шифруемого блока).
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <simpara>Intl:</simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Функции <function>idn_to_ascii</function> и <function>idn_to_utf8</function> теперь принимают два дополнительных
+     параметра: один указывает вид (IDNA 2003 или UTS #46) и другой, передаваемый по ссылке,
+     предназначен для возврата детальной информации об операции в случае выбора UTS #46.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -327,17 +388,42 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>hex2bin()</function> - Преобразует шестнадцатеричное представление данных в двоичное
+     <function>hex2bin</function> - Преобразует шестнадцатеричное представление данных в двоичное
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     <function>http_reponse_code()</function> - Получить или установить код ответа HTTP
+     <function>http_reponse_code</function> - Получить или установить код ответа HTTP
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     <function>header_register_callback()</function> - Вызвать функцию перед отправкой заголовков
+     <function>get_declared_traits</function> - Получить список задекларированных трейтов
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>getimagesizefromstring</function> <!-- DOC-RU TODO: Добавить тут описание функции -->
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>stream_set_chunk_size</function> <!-- DOC-RU TODO: Добавить тут описание функции -->
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>socket_import_stream</function> <!-- DOC-RU TODO: Добавить тут описание функции -->
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>trait_exists</function> <!-- DOC-RU TODO: Добавить тут описание функции -->
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>header_register_callback</function> <!-- DOC-RU TODO: Добавить тут описание функции -->
     </simpara>
    </listitem>
   </itemizedlist>
@@ -345,47 +431,74 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>class_uses()</function> - Возвращает трейты, используемые данным классом.
+     <function>class_uses</function>
     </simpara>
    </listitem>
-  </itemizedlist>
-
-  <simpara>
-   Следующие функции теперь полностью реализованы в PHP на всех ОС, на которых
-   может работать PHP:
-  </simpara>
+   </itemizedlist>
+   <simpara><link linkend="book.session">Сессии:</link></simpara>
   <itemizedlist>
    <listitem>
     <simpara>
-     <!-- Placeholder for natively implemented functions. -->
+     <function>session_status</function>
+    </simpara>
+    <simpara>
+     <function>session_register_shutdown</function>
     </simpara>
    </listitem>
-  </itemizedlist>
- </section>
-
- <section xml:id="migration54.new-stream-wrappers">
-  <title>Новые обертки потоков</title>
-  <simpara>
-   Следующие обертки потоков были введены в версии 5.4.0:
-  </simpara>
+   </itemizedlist>
+   <simpara><link linkend="book.mysqli">Mysqli:</link></simpara>
   <itemizedlist>
    <listitem>
     <simpara>
-     <!-- Placeholder for "New stream wrappers". -->
+     <function>mysqli_error_list</function>
+    </simpara>
+    <simpara>
+     <function>mysqli_stmt_error_list</function>
     </simpara>
    </listitem>
-  </itemizedlist>
- </section>
-
- <section xml:id="migration54.new-stream-filters">
-  <title>Новые фильтры потоков</title>
-  <simpara>
-   Следующие фильтры потоков были введены в версии 5.4.0:
-  </simpara>
+   </itemizedlist>
+   <simpara><link linkend="book.libxml">Libxml:</link></simpara>
   <itemizedlist>
    <listitem>
     <simpara>
-     <!-- Placeholder for "New stream filters". -->
+     <function>libxml_set_external_entity_loader</function>
+    </simpara>
+   </listitem>
+   </itemizedlist>
+   <simpara><link linkend="book.ldap">LDAP:</link></simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>ldap_control_paged_results</function>
+    </simpara>
+     <simpara>
+     <function>ldap_control_paged_results_response</function>
+    </simpara>
+   </listitem>
+   </itemizedlist>
+   <simpara><link linkend="book.intl">Intl:</link></simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>transliterator_create</function>
+    </simpara>
+     <simpara>
+     <function>transliterator_create_from_rules</function>
+    </simpara>
+    <simpara>
+     <function>transliterator_create_inverse</function>
+    </simpara>
+    <simpara>
+     <function>transliterator_get_error_code</function>
+    </simpara>
+    <simpara>
+     <function>transliterator_get_error_message</function>
+    </simpara>
+    <simpara>
+     <function>transliterator_list_ids</function>
+    </simpara>
+    <simpara>
+     <function>transliterator_transliterate</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -396,34 +509,6 @@
   <simpara>
    Некоторые новые константы классов были добавлены в версии 5.4.0:
   </simpara>
-  <simpara><link linkend="book.pdo">PDO</link>:</simpara>
-  <itemizedlist>
-   <listitem>
-    <simpara>
-     <constant>PDO::MYSQL_ATTR_SSL_CA</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>PDO::MYSQL_ATTR_SSL_CAPATH</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>PDO::MYSQL_ATTR_SSL_CERT</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>PDO::MYSQL_ATTR_SSL_CIPHER</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>PDO::MYSQL_ATTR_SSL_KEY</constant>
-    </simpara>
-   </listitem>
-  </itemizedlist>
  </section>
 
  <section xml:id="migration54.methods">
@@ -435,8 +520,8 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>XsltProcessor::setSecurityPrefs()</function> и 
-     <function>XsltProcessor::getSecurityPrefs()</function>
+     <function>XsltProcessor::setSecurityPrefs</function> и 
+     <function>XsltProcessor::getSecurityPrefs</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -444,18 +529,18 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>RegexIterator::getRegex()</function>
-     <function>SplObjectStorage::getHash()</function>
-     <function>DirectoryIterator::getExtension()</function>
-     <function>SplDoublyLinkedList::serialize()</function>
-     <function>SplDoublyLinkedList::unserialize()</function>
-     <function>SplFileInfo::getExtension()</function>
-     <function>SplFileObject::fputcsv()</function>
-     <function>SplQueue::serialize()</function>
-     <function>SplQueue::unserialize()</function>
-     <function>SplStack::serialize()</function>
-     <function>SplStack::unserialize()</function>
-     <function>SplTempFileObject::fputcsv()</function>
+     <function>RegexIterator::getRegex</function>
+     <function>SplObjectStorage::getHash</function>
+     <function>DirectoryIterator::getExtension</function>
+     <function>SplDoublyLinkedList::serialize</function>
+     <function>SplDoublyLinkedList::unserialize</function>
+     <function>SplFileInfo::getExtension</function>
+     <function>SplFileObject::fputcsv</function>
+     <function>SplQueue::serialize</function>
+     <function>SplQueue::unserialize</function>
+     <function>SplStack::serialize</function>
+     <function>SplStack::unserialize</function>
+     <function>SplTempFileObject::fputcsv</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -463,9 +548,9 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>ReflectionExtension::isPersistent()</function>
-     <function>ReflectionExtension::isTemporary()</function>
-     <function>ReflectionClass::isCloneable()</function>
+     <function>ReflectionExtension::isPersistent</function>
+     <function>ReflectionExtension::isTemporary</function>
+     <function>ReflectionClass::isCloneable</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -473,8 +558,8 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>Closure::bind()</function>
-     <function>Closure::bindTo()</function>
+     <function>Closure::bind</function>
+     <function>Closure::bindTo</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -482,7 +567,20 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>PDO::newRowset()</function>
+     <function>PDO::newRowset</function>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <simpara><classname>StreamWrapper</classname>:</simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>StreamWrapper::stream_metadata</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>StreamWrapper::stream_truncate</function>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -540,7 +638,7 @@
    <listitem>
     <simpara>
      <link linkend="book.mysqli">mysqli</link>
-     - <function>mysqli_result()</function> теперь реализует класс <link linkend="class.traversable">Traversable</link>
+     - <function>mysqli_result</function> теперь реализует класс <link linkend="class.traversable">Traversable</link>
     </simpara>
    </listitem>
   </itemizedlist>
@@ -551,6 +649,16 @@
      - Удалена поддержка возможности сборки с клиентскими библиотеками MySQL старше версии 4.1.
     </simpara>
    </listitem>
+  </itemizedlist>
+  <itemizedlist>
+   <listitem>
+  <simpara>
+   Расширения <link linkend="book.mysql">mysql</link>,
+   <link linkend="book.mysqli">mysqli</link> и <link linkend="ref.pdo-mysql">PDO_mysql</link>
+   используют <link linkend="book.mysqlnd">mysqlnd</link> в качестве библиотеки по умолчанию. Все еще возможно использовать
+   libmysql, указав путь в конфигурационных настройках.
+    </simpara>
+  </listitem>
   </itemizedlist>
   <itemizedlist>
    <listitem>
@@ -635,16 +743,6 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <constant>CURLOPT_MAX_RECV_SPEED_LARGE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>CURLOPT_MAX_SEND_SPEED_LARGE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
      <constant>ENT_DISALLOWED</constant>
     </simpara>
    </listitem>
@@ -715,46 +813,6 @@
    </listitem>
    <listitem>
     <simpara>
-     <constant>JSON_BIGINT_AS_STRING</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>JSON_OBJECT_AS_ARRAY</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>JSON_PRETTY_PRINT</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>JSON_UNESCAPED_SLASHES</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>JSON_UNESCAPED_UNICODE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>LIBXML_HTML_NODEFDTD</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>LIBXML_HTML_NOIMPLIED</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>LIBXML_PEDANTIC</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
      <constant>MCAST_JOIN_GROUP</constant>
     </simpara>
    </listitem>
@@ -783,6 +841,43 @@
      <constant>MCAST_LEAVE_SOURCE_GROUP</constant>
     </simpara>
    </listitem>
+  </itemizedlist>
+  
+   <simpara><link linkend="book.curl">Curl</link>:</simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_MAX_RECV_SPEED_LARGE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>CURLOPT_MAX_SEND_SPEED_LARGE</constant>
+    </simpara>
+   </listitem>
+   </itemizedlist>
+   
+  <simpara><link linkend="book.libxml">LibXML</link>:</simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>LIBXML_HTML_NODEFDTD</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>LIBXML_HTML_NOIMPLIED</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>LIBXML_PEDANTIC</constant>
+    </simpara>
+   </listitem>
+   </itemizedlist>
+   
+   <simpara><link linkend="book.openssl">OpenSSL</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>OPENSSL_CIPHER_AES_128_CBC</constant>
@@ -808,6 +903,10 @@
      <constant>OPENSSL_ZERO_PADDING</constant>
     </simpara>
    </listitem>
+   </itemizedlist>
+   
+  <simpara><link linkend="book.outcontrol">Буферизация вывода</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>PHP_OUTPUT_HANDLER_CLEAN</constant>
@@ -858,16 +957,10 @@
      <constant>PHP_OUTPUT_HANDLER_WRITE</constant>
     </simpara>
    </listitem>
-   <listitem>
-    <simpara>
-     <constant>PHP_QUERY_RFC1738</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>PHP_QUERY_RFC3986</constant>
-    </simpara>
-   </listitem>
+   </itemizedlist>
+  
+   <simpara><link linkend="book.session">Сессии</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>PHP_SESSION_ACTIVE</constant>
@@ -883,31 +976,10 @@
      <constant>PHP_SESSION_NONE</constant>
     </simpara>
    </listitem>
-   <listitem>
-    <simpara>
-     <constant>SCANDIR_SORT_ASCENDING</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>SCANDIR_SORT_DESCENDING</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>SCANDIR_SORT_NONE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>SORT_FLAG_CASE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>SORT_NATURAL</constant>
-    </simpara>
-   </listitem>
+   </itemizedlist>
+   
+   <simpara><link linkend="book.stream">Потоки</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>STREAM_META_ACCESS</constant>
@@ -938,26 +1010,10 @@
      <constant>STREAM_META_TOUCH</constant>
     </simpara>
    </listitem>
-   <listitem>
-    <simpara>
-     <constant>T_CALLABLE</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>T_INSTEADOF</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>T_TRAIT</constant>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     <constant>T_TRAIT_C</constant>
-    </simpara>
-   </listitem>
+   </itemizedlist>
+   
+   <simpara><link linkend="book.zlib">Zlib</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>ZLIB_ENCODING_DEFLATE</constant>
@@ -973,6 +1029,10 @@
      <constant>ZLIB_ENCODING_RAW</constant>
     </simpara>
    </listitem>
+  </itemizedlist>
+  
+  <simpara><link linkend="book.intl">Intl</link>:</simpara>
+  <itemizedlist>
    <listitem>
     <simpara>
      <constant>U_IDNA_DOMAIN_NAME_TOO_LONG_ERROR</constant>
@@ -1089,6 +1149,16 @@
    </listitem>
    <listitem>
     <simpara>
+     <constant>JSON_NUMERIC_CHECK</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <constant>JSON_UNESCAPED_UNICODE</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
      <constant>JSON_BIGINT_AS_STRING</constant>
     </simpara>
    </listitem>
@@ -1163,6 +1233,23 @@
      <literal>zend.multibyte</literal> - для управления новой возможностью автоопределения закодированных Unicode скриптов и файлов.
     </simpara>
    </listitem>
+   <listitem>
+    <simpara>
+     <literal>session.upload_progress.enabled</literal>, <literal>session.upload_progress.cleanup</literal>,
+     <literal>session.upload_progress.prefix</literal>, <literal>session.upload_progress.name</literal>,
+     <literal>session.upload_progress.freq</literal>, <literal>session.upload_progress.min_freq</literal>     
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <literal>enable_post_data_reading</literal> - Когда отключено, данные POST не читаются (и не обрабатываются)
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <literal>windows_show_crt_warning</literal>
+    </simpara>
+   </listitem>
    </itemizedlist>
   <simpara>
    Следующие INI-директивы были изменены:
@@ -1208,6 +1295,23 @@
     <simpara>
      У <link linkend="book.snmp">SNMP</link> теперь есть объектно-ориентированный API.
     </simpara>
+    <simpara>
+      Функции теперь возвращают FALSE на каждую ошибку, включая относящиеся к SNMP.
+      (Нет такого экземпляра, конец MIB и т.д.). Таким образом, в частности, изменяется
+      предыдущее поведение функций get/walk, которые возвращали пустую строку при ошибках,
+      относящихся к SNMP.
+    </simpara>
+    <simpara>
+      Теперь поддерживаются множественные запросы OID get/getnext/set.
+    </simpara>
+    <simpara>
+     Исключен код совместимости с UCD-SNMP, учитывая что обновление до net-snmp v5.3+, Net-SNMP v5.4+ является
+     необходимым для версии под Windows.
+    </simpara>
+    <simpara>
+     Ради добавления поддержки IPv6 разрешение DNS имен в удаленном SNMP агенте теперь
+     выполнено с помощью расширения, а не через библиотеку Net-SNMP.
+    </simpara>
    </listitem>
    <listitem>
     <simpara>
@@ -1244,12 +1348,52 @@
    </listitem>
    <listitem>
     <simpara>
-     Изменено поведение при преобразовании массива в строку. Теперь будет выводиться ошибка <constant>E_NOTICE</constant>.
+     Добавлены новые хэш-алгоритмы: fnv132, fnv164, joaat
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Теперь работает задание смещений в строке последовательно, например: $a[0][0], где $a - строка.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Добавлен бинарный формат чисел. Например: 0b001001101.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Добавлен краткий синтаксис задания массивов. Например: $a = [1, 2, 3, 4];
+     $a = ['one' => 1, 'two' => 2, 'three' => 3, 'four' => 4];
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Поддерживается следующий синтаксис: Class::{expr}().
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Доступ к массиву, который является результатом работы функции может осуществляться так: foo()[0]
     </simpara>
    </listitem>
    <listitem>
     <simpara>
      Классы создания анонимных функций (Closures) теперь поддерживают границы видимости и <literal>$this</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Преобразование массивов из <type>SimpleXMLElement</type> теперь всегда содержит все узлы вместо
+     только первого подходящего узла. Теперь выводятся все потомки <type>SimpleXMLElement</type>
+     при использовании функций <function>var_dump</function>, <function>var_export</function> и
+     <function>print_r</function>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Стало актуальным требование присутствия аргументов абстрактного конструктора класса __construct
+     в базовом классе при наследовании.
     </simpara>
    </listitem>
   </itemizedlist>
