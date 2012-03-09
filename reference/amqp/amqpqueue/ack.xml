@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8b6d169424ff189bb563ef4c3f35f8adff3f42c5 Maintainer: mch Status: ready -->
+<!-- EN-Revision: dc1dcfb27b0a3dcbaa771035ce891c3ce31a03c7 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 
@@ -14,10 +14,10 @@
   <methodsynopsis>
    <modifier>public</modifier> <type>bool</type><methodname>AMQPQueue::ack</methodname>
    <methodparam><type>int</type><parameter>delivery_tag</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>NULL</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>AMQP_NOPARAM</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-    Этот метод позволяет получить подтверждение для сообщения, что оно извлечено с флагом <constant>AMQP_NOACK</constant> через
+    Этот метод позволяет получить подтверждение для сообщения, что оно извлечено без флага <constant>AMQP_AUTOACK</constant> через
     <methodname>AMQPQueue::get</methodname> или <methodname>AMQPQueue::consume</methodname>.
   </para>
  </refsect1>
@@ -45,7 +45,17 @@
    </variablelist>
   </para>
  </refsect1>
-
+ 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Генерирует исключение <classname>AMQPChannelException</classname>, если канал не открыт.
+  </para>
+  <para>
+   Генерирует исключение  <classname>AMQPConnectionException</classname>, если соединение с брокером было потеряно.
+  </para>
+ </refsect1>
+ 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
@@ -66,14 +76,16 @@
 $connection = new AMQPConnection();
 $connection->connect();
 
-/* создание очереди */
-$queue = new AMQPQueue($connection);
+$channel = new AMQPChannel($connection);
+
+/* создание объекта очереди */
+$queue = new AMQPQueue($channel);
 
 //объявление очереди
 $queue->declare('myqueue');
 
 //получение следующего сообщения, но не отмечая как доставленное
-$message = $queue->get(AMQP_NOACK);
+$message = $queue->get(AMQP_NOPARAM);
 
 echo $message['msg'];
 
