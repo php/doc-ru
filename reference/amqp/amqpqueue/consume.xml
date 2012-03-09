@@ -1,91 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e90268fb155ae35c1b1f2439a631b4b22d141fb9 Maintainer: mch Status: ready -->
+<!-- EN-Revision: dc1dcfb27b0a3dcbaa771035ce891c3ce31a03c7 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 
 <refentry xml:id="amqpqueue.consume" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>AMQPQueue::consume</refname>
-  <refpurpose>Использовать цель</refpurpose>
+  <refpurpose>Использовать сообщения из очереди</refpurpose>
  </refnamediv>
- 
+
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>array</type><methodname>AMQPQueue::consume</methodname>
-   <methodparam choice="opt"><type>array</type><parameter>options</parameter><initializer>array()</initializer></methodparam>
+   <modifier>public</modifier> <type>void</type><methodname>AMQPQueue::consume</methodname>
+   <methodparam><type>callback</type><parameter>callback</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>AMQP_NOPARAM</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-    Это блокирующая функция, которая не будет возвращать ответа пока минимальное количество сообщений, 
-    указанное в <parameter>min</parameter>, не будет прочитано из очереди.  
-    Для использования неблокирующей функции смотри <methodname>AMQPQueue::get</methodname>.
+   Это блокирующая функция, которая получает следующее сообщение из очереди, когда оно становится доступным, и передает его функции обратного вызова.
   </para>
  </refsect1>
- 
+
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
    <variablelist>
+     <varlistentry>
+      <term><parameter>callback</parameter></term>
+      <listitem>
+       <para>
+        Функция обратного вызова, которой передается сообщение. Эта функция должна принимать минимум один параметр - это объект <classname>AMQPEnvelope</classname>
+        и второй опциональный параметр - объект <classname>AMQPQueue</classname>, из которого было прочитано сообщение.
+       </para>
+       <para>
+         Метод <methodname>AMQPQueue::consume</methodname> не будет возвращать назад управление скрипту PHP до тех пор, пока функция обратного вызова не вернет &false;.
+       </para>
+      </listitem>
+     </varlistentry>
     <varlistentry>
-     <term><parameter>options</parameter></term>
+     <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       <parameter>options</parameter> - массив используемых опций.
-       Ключи, используемые в массиве <parameter>options</parameter>: min, max, и ack.        
-       Все другие ключи будут проигнорированы.
-      </para>
-      <para>
-       Для каждой недостающей опции расширение будет проверять ini-настройки или использовать значение по умолчанию.
+       Битовая маска, состоящая из таких флагов: <constant>AMQP_NOACK</constant>.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
- 
- <refsect1 role="returnvalues">
-  &reftitle.returnvalues;
+
+ <refsect1 role="errors">
+  &reftitle.errors;
   <para>
-   Массив, содержащий использованные сообщения. 
-   Число возвращенных сообщений будет, по крайней мере, числом заданным <parameter>min</parameter> в массиве <parameter>options</parameter>. 
-   Но не больше, чем число заданное параметром <parameter>max</parameter>.
+   Генерирует исключение <classname>AMQPChannelException</classname>, если канал не открыт.
+  </para>
+  <para>
+   Генерирует исключение  <classname>AMQPConnectionException</classname>, если соединение с брокером было потеряно.
   </para>
  </refsect1>
- 
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
     <title>Пример использования <methodname>AMQPQueue::consume</methodname></title>
     <programlisting role="php">
-<![CDATA[
-<?php
+     <![CDATA[
+     <?php
 
-/* создание соединения, используя все учетные данные по умолчанию: */
-$connection = new AMQPConnection();
-$connection->connect();
+     /* Создание соединения, используя все учетные данные по умолчанию: */
+     $connection = new AMQPConnection();
+     $connection->connect();
 
-/* создание очереди */
-$queue = new AMQPQueue($connection);
+     $channel = new AMQPChannel($connection);
 
-//объявление очереди
-$queue->declare('myqueue');
+     /* создание объекта очереди */
+     $queue = new AMQPQueue($channel);
 
-$options = array(
-    'min' => 1,
-    'max' => 10,
-    'ack' => true
-);
+     // объявление очереди
+     $queue->declare('myqueue');
 
-//получение сообщений
-$messages = $queue->consume($options);
+     $i = 0;
+     function processMessage($envelope, $queue) {
+        global $i;
+        echo "Сообщение $i: " . $envelope->getBody() . "\n";
+        $i++;
+        if ($i > 10) {
+            // Выходим после 10 сообщений
+            return false;
+        }
+     }
 
-foreach ($messages as $message) {
-    echo $message['message_body'];
-}
+     // получение сообщений
+     $queue->consume("processMessage");
 
-?>
-]]>
+     ?>
+     ]]>
     </programlisting>
    </example>
   </para>
