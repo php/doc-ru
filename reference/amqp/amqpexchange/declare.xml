@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e90268fb155ae35c1b1f2439a631b4b22d141fb9 Maintainer: mch Status: ready -->
+<!-- EN-Revision: dc1dcfb27b0a3dcbaa771035ce891c3ce31a03c7 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 
@@ -12,54 +12,17 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <type>bool</type><methodname>AMQPExchange::declare</methodname>
-   <methodparam choice="opt"><type>string</type><parameter>exchange_name</parameter><initializer>""</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>exchange_type</parameter><initializer><constant>AMQP_EX_TYPE_DIRECT</constant></initializer></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
+   <modifier>public</modifier> <type>int</type><methodname>AMQPExchange::declare</methodname>
+   <void />
   </methodsynopsis>
   <para>
-   Объявляет новый обменник на брокере с данной информацией. 
-   Если обменник с данным именнем уже существует и указаны параметры
-   <parameter>exchange_type</parameter> и/или <parameter>flags</parameter>, 
-   то настроки обменника будут обновлены.
+   Объявляет новый обменник на брокере. 
   </para>
-  <para>
-   Если не определён параметр <parameter>exchange_type</parameter> и обменник не существует, то тип обменника по умолчанию будет прямой (direct).
-  </para>
-  
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
-   <variablelist>
-    <varlistentry>
-     <term><parameter>exchange_name</parameter></term>
-     <listitem>
-      <para>
-        Имя обменника.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>exchange_type</parameter></term>
-     <listitem>
-      <para>
-        Тип обменника. Может быть любым из <constant>AMQP_EX_TYPE_DIRECT</constant>, <constant>AMQP_EX_TYPE_FANOUT</constant>, 
-       <constant>AMQP_EX_TYPE_TOPIC</constant> или <constant>AMQP_EX_TYPE_HEADER</constant>.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>flags</parameter></term>
-     <listitem>
-      <para>
-       Битовая маска из флагов: <constant>AMQP_PASSIVE</constant>, 
-       <constant>AMQP_DURABLE</constant>, <constant>AMQP_AUTODELETE</constant>.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
   </para>
  </refsect1>
 
@@ -73,7 +36,13 @@
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выдаёт исключение <classname>AMQPExchangeException</classname> в случае неуспеха.
+   Генерирует исключение  <classname>AMQPExchangeException</classname> в случае неудачи.
+  </para>
+  <para>
+   Генерирует исключение <classname>AMQPChannelException</classname>, если канал не открыт.
+  </para>
+  <para>
+   Генерирует исключение  <classname>AMQPConnectionException</classname>, если соединение с брокером было потеряно.
   </para>
  </refsect1>
 
@@ -90,8 +59,13 @@
 $cnn = new AMQPConnection();
 $cnn->connect();
 
-$ex = new AMQPExchange($cnn);
-$ex->declare('new_topic_exchange', AMQP_EX_TYPE_DIRECT, AMQP_DURABLE | AMQP_AUTODELETE);
+$ch = new AMQPChannel($cnn);
+
+$ex = new AMQPExchange($ch);
+$ex->setName('new_topic_exchange');
+$ex->setType(AMQP_EX_TYPE_DIRECT);
+$ex->setFlags(AMQP_DURABLE | AMQP_AUTODELETE);
+$ex->declare();
 
 ?>
 ]]>
