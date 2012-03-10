@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a56106f69198dfe88c6084593c78a71c26b24353 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 55f644c156f21a22428e7b3ca12d78db4a437ed1 Maintainer: aur Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 
@@ -146,7 +146,7 @@ unset($_SESSION['count']);
    в <varname>$_SESSION</varname>. Это поведение было исправлено в PHP 4.3.0.
   </para>
  </section>
-  
+
  <section xml:id="session.idpassing">
   <title>Передача идентификатора сессии</title>
   <para>
@@ -171,7 +171,7 @@ unset($_SESSION['count']);
    непосредственно в URL.
   </para>
   <para>
-   PHP умеет преобразовывать ссылки прорзачно. Однако, если вы используете 
+   PHP умеет преобразовывать ссылки прозрачно.  Однако, если вы используете 
    версию PHP младше 4.2.0, вам следует включить эту возможность вручную при 
    сборке PHP. Под UNIX следует передать конфигуратору опцию 
    <link linkend="ini.session.use-trans-sid">--enable-trans-sid</link>. 
@@ -186,7 +186,7 @@ unset($_SESSION['count']);
     совместимости с 
     XHTML следует указывать &amp;amp;.
     </para>
-   </note> 
+   </note>
   </para>
   <para>
    В качестве альтернативы вы можете использовать константу 
@@ -244,14 +244,54 @@ here</a>, чтобы продолжить.
    </para>
   </note>
  </section>
- 
+
  <section xml:id="session.customhandler">
   <title>Пользовательские обработчики сессии</title>
   <para>
    Для реализации хранилища данных (или любого иного хранилища) следует 
    использовать <function>session_set_save_handler</function>, чтобы создать 
-   набор пользовательских функций хранилища.
+   набор пользовательских функций хранилища. Начиная с PHP 5.4.0 вы можете создать обработчики сессий,
+   используя класс <classname>SessionHandlerInterface</classname>, или расширить внутренние обработчики PHP,
+   унаследовав класс <classname>SessionHandler</classname>.
   </para>
+  <para>
+   Функции обратного вызова, указанные в <function>session_set_save_handler</function>, являются методами,
+   вызываемыми PHP в течении жизненного цикла сессии: <parameter>open</parameter>, <parameter>read</parameter>,
+   <parameter>write</parameter> и <parameter>close</parameter> и для служебных задач:
+   <parameter>destroy</parameter> для удаления сессии и <parameter>gc</parameter> для периодической
+   сборки мусора.
+  </para>
+  <para>
+   Следовательно, в PHP всегда необходимы обработчики, сохраняющие сессии. По умолчанию работает
+   внутренний обработчик 'files', сохраняющий сессии в файлы. Пользовательский обработчик может быть установлен,
+   используя функцию <function>session_set_save_handler</function>. Альтернативные обработчики для сохранения сессии
+   также доступны в расширениях PHP, таких как <parameter>sqlite</parameter>,
+   <parameter>memcache</parameter> и <parameter>memcached</parameter> и могут быть установлены с помощью
+   <link linkend="ini.session.save-handler">session.save_handler</link>.
+  </para>
+  <para>
+   Когда стартует сессия, PHP внутренне вызовет обработчик <parameter>open</parameter> с последующим
+   вызовом обработчика <parameter>read</parameter>, который должен вернуть закодированную строку - в точности такую,
+   какая передавалась для сохранения. После возвращения обработчиком <parameter>read</parameter> закодированной строки, PHP
+   декодирует ее и заполнит получившимся массивом суперглобальный массив <varname>$_SESSION</varname>.
+  </para>
+  <para>
+   Когда PHP завершает исполнение скрипта (или когда вызвана функция <function>session_write_close</function>),
+   PHP внутренне закодирует суперглобальный массив <varname>$_SESSION</varname>, и передаст
+   эти данные с идентификатором сессии функции обратного вызова <parameter>write</parameter>.
+   После того, как отработает функция обратного вызова <parameter>write</parameter>, PHP внутренне вызовет
+   обработчик функции обратного вызова <parameter>close</parameter>.
+  </para>
+  <para>
+   Когда сессия специально уничтожена, PHP вызовет обработчик <parameter>destroy</parameter> с
+   идентификатором сессии.
+  </para>
+ <para>
+   PHP будет вызывать обработчик функции обратного вызова <parameter>gc</parameter> время от времени,
+   чтобы пометить сессии как истекшие в соответствии с временем жизни сессий.
+   Эта операция удалит все записи из постоянного хранилища, к которым не осуществлялся доступ
+   более, чем интервал времени, заданный в параметре <parameter>$lifetime</parameter>.
+ </para>
  </section>
 </appendix>
 
@@ -275,4 +315,3 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
-
