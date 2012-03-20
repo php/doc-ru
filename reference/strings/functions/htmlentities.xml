@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c204d791d40c1a7f14d2c086684d1e109eb84f18 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 2c4e6c66495953b315efb50f22639fcc6c759cb8 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
-<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.htmlentities">
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.htmlentities" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>htmlentities</refname>
   <refpurpose>Преобразует все возможные символы в соответствующие HTML-сущности</refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>string</type><methodname>htmlentities</methodname>
    <methodparam><type>string</type><parameter>string</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>ENT_COMPAT | ENT_HTML401</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>charset</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>encoding</parameter><initializer>'UTF-8'</initializer></methodparam>
    <methodparam choice="opt"><type>bool</type><parameter>double_encode</parameter><initializer>true</initializer></methodparam>
   </methodsynopsis>
   <para>
@@ -75,10 +75,8 @@
            <entry><constant>ENT_IGNORE</constant></entry>
            <entry>
             Молча отбрасывает некорректные кодовые последовательности
-            вместо возврата пустой строки.
-            Данная возможность предоставляется в целях обратной совместимости,
-            избегайте ее использования, т.к. она может внести уязвимости
-            в ваш код.
+            вместо возврата пустой строки. Использование этого флага не рекомендуется, так как это
+            <link xlink:href="&url.delete.nonchars;">может внести уязвимости в ваш код</link>.
            </entry>
           </row>
           <row>
@@ -93,9 +91,11 @@
           <row>
            <entry><constant>ENT_DISALLOWED</constant></entry>
            <entry>
-            Заменяет кодовые последовательности, несоответствующие указанному
-            типу документа символом замены Юникода U+FFFD в случае использования
-            UTF-8 и &amp;#FFFD; при использовании другой кодировки.
+            Заменяет неверные коды символов для заданного типа документа символом
+            замены юникода U+FFFD (UTF-8) или &amp;#FFFD;
+            (при использовании другой кодировки) вместо того, чтобы оставлять все как есть. Это может быть полезно,
+            например, для того, чтобы убедиться в формальной правильности XML-документов со
+            встроенным внешним контентом.
            </entry>
           </row>
           <row>
@@ -129,16 +129,17 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>charset</parameter></term>
+     <term><parameter>encoding</parameter></term>
      <listitem>
       <para>
-       Подобно <function>htmlspecialchars</function>, необязательный третий
-       аргумент <parameter>charset</parameter> определяет кодировку,
+       Подобно <function>htmlspecialchars</function>,
+       функция <function>htmlentities</function> принимает необязательный третий
+       аргумент <parameter>encoding</parameter>, который задает кодировку,
        используемую при преобразовании.
-       По умолчанию, в настоящее время используется кодировка ISO-8859-1.
-       Однако, наиболее вероятно это значение изменится в будущих версиях
-       PHP; строго рекомендуется указывать кодировку вручную при
-       использовании данной функции.
+       Если он не указан, то по умолчанию используется кодировка ISO-8859-1 в
+       версиях PHP до 5.4.0 и UTF-8 - начиная с 5.4.0 и далее.
+       Несмотря на то, что этот аргумент формально является необязательным, настоятельно
+       рекомендуется указать правильное значение в вашем коде.
       </para>
       &reference.strings.charsets;
      </listitem>
@@ -162,6 +163,12 @@
   <para>
    Возвращает преобразованную строку.
   </para>
+  <para>
+   При наличии во входном параметре <parameter>string</parameter> недопустимой последовательности
+   символов в заданной кодировке <parameter>encoding</parameter> будет возвращена
+   пустая строка, если не установлены флаги <constant>ENT_IGNORE</constant> или
+   <constant>ENT_SUBSTITUTE</constant>.
+  </para>
  </refsect1>
 
  <refsect1 role="changelog">
@@ -179,7 +186,14 @@
       <row>
        <entry>5.4.0</entry>
        <entry>
-        Добавлены константы <constant>ENT_SUBSTITUTE</constant>, <constant>ENT_DISALLOWED</constant>,
+        Значение по умолчанию для параметра <parameter>encoding</parameter> было
+        изменено на UTF-8.
+       </entry>
+      </row>
+      <row>
+       <entry>5.4.0</entry>
+       <entry>
+        The constants <constant>ENT_SUBSTITUTE</constant>, <constant>ENT_DISALLOWED</constant>,
         <constant>ENT_HTML401</constant>, <constant>ENT_XML1</constant>,
         <constant>ENT_XHTML</constant> и <constant>ENT_HTML5</constant>.
        </entry>
@@ -199,7 +213,7 @@
       <row>
        <entry>4.1.0</entry>
        <entry>
-        Добавлен параметр <parameter>charset</parameter>.
+        Добавлен параметр <parameter>encoding</parameter>.
        </entry>
       </row>
       <row>
@@ -234,7 +248,7 @@ echo htmlentities($str, ENT_QUOTES);
     </programlisting>
    </example>
   </para>
-
+  
   <para>
    <example>
     <title>Использование <constant>ENT_IGNORE</constant></title>

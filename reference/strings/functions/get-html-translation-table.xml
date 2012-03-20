@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- EN-Revision: 96f001d90681732d9c92a8088df34e0fb8e45cc9 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 4effeb4d1f73ec710ca622289472778ed50b2621 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.get-html-translation-table">
  <refnamediv>
   <refname>get_html_translation_table</refname>
-  <refpurpose>Возвращает таблицу преобразований, используемую функциями
-   <function>htmlspecialchars</function> и <function>htmlentities</function>
-  </refpurpose>
+  <refpurpose>Возвращает таблицу преобразований, используемую функциями <function>htmlspecialchars</function> и <function>htmlentities</function></refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>array</type><methodname>get_html_translation_table</methodname>
    <methodparam choice="opt"><type>int</type><parameter>table</parameter><initializer>HTML_SPECIALCHARS</initializer></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>quote_style</parameter><initializer>ENT_COMPAT</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>charset_hint</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>ENT_COMPAT | ENT_HTML401</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>encoding</parameter><initializer>'UTF-8'</initializer></methodparam>
   </methodsynopsis>
   <para>
    <function>get_html_translation_table</function> возвращает таблицу
    преобразований, используемую функциями <function>htmlspecialchars</function>
-   и <function>htmlentities</function> с кодировкой по умолчанию.
+   и <function>htmlentities</function>.
   </para>
   <note>
    <para>
@@ -43,32 +41,69 @@
      <term><parameter>table</parameter></term>
      <listitem>
       <para>
-       Существуют две новые константы (<constant>HTML_ENTITIES</constant>,
-       <constant>HTML_SPECIALCHARS</constant>), позволяющие указать нужную
-       таблицу преобразований.
+       Указывает, какую таблицу использовать для преобразований. Либо <constant>HTML_ENTITIES</constant>, либо
+       <constant>HTML_SPECIALCHARS</constant>.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>quote_style</parameter></term>
+     <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Аналогично функциям <function>htmlspecialchars</function> и
-       <function>htmlentities</function> можно задать необязательный
-       аргумент <parameter>quote_style</parameter>. Описание
-       режимов этого параметра см. в описании функции
-       <function>htmlspecialchars</function>.
+       Битовая маска, состоящая из одного или нескольких перечисленных ниже флагов, которые указывают
+       какие кавычки будет содержать таблица, а также для какого документа таблица предназначена. Значение
+       по умолчанию <literal>ENT_COMPAT | ENT_HTML401</literal>.
+       <table>
+        <title>Доступные константы в параметре <parameter>flags</parameter></title>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Имя константы</entry>
+           <entry>Описание</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><constant>ENT_COMPAT</constant></entry>
+           <entry>Таблица будет содержать сущности для двойных кавычек, но не будет для одинарных.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_QUOTES</constant></entry>
+           <entry>Таблица будет содержать сущности как для двойных кавычек, так и для одинарных.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_NOQUOTES</constant></entry>
+           <entry>Таблица не будет содержать сущности ни для двойных кавычек, ни для одинарных.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_HTML401</constant></entry>
+           <entry>Таблица для HTML 4.01.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_XML1</constant></entry>
+           <entry>Таблица для XML 1.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_XHTML</constant></entry>
+           <entry>Таблица для XHTML.</entry>
+          </row>
+          <row>
+           <entry><constant>ENT_HTML5</constant></entry>
+           <entry>Таблица для HTML 5.</entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>charset_hint</parameter></term>
+     <term><parameter>encoding</parameter></term>
      <listitem>
       <para>
-       Аналогично функции <function>htmlentities</function>, данная функция
-       принимает необязательный третий параметр <parameter>charset</parameter>,
-       определяющий используемую при преобразовании кодировку.
-       В настоящий момент по умолчанию используется ISO-8859-1.
+       Используемая кодировка.
+       Если не указана, то значением по умолчанию для этого аргумента является ISO-8859-1 в
+       версиях PHP до 5.4.0 и UTF-8, начиная с версии 5.4.0 и далее.
       </para>
       &reference.strings.charsets;
      </listitem>
@@ -80,7 +115,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает таблицу преобразований в виде массива.
+   Возвращает таблицу преобразований в виде массива с оригинальными символами в качестве
+   ключей и сущностями в качестве значений.
   </para>
  </refsect1>
 
@@ -97,9 +133,23 @@
      </thead>
      <tbody>
       <row>
+       <entry>5.4.0</entry>
+       <entry>
+        Значение по умолчанию для параметра <parameter>encoding</parameter> было
+        изменено на UTF-8.
+       </entry>
+      </row>
+      <row>
+       <entry>5.4.0</entry>
+       <entry>
+        Были добавлены константы <constant>ENT_HTML401</constant>, <constant>ENT_XML1</constant>,
+        <constant>ENT_XHTML</constant> и <constant>ENT_HTML5</constant>.
+       </entry>
+      </row>
+      <row>
        <entry>5.3.4</entry>
        <entry>
-        Добавлен параметр <parameter>charset_hint</parameter>.
+        Добавлен параметр <parameter>encoding</parameter>.
        </entry>
       </row>
      </tbody>
@@ -116,18 +166,35 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$trans = get_html_translation_table(HTML_ENTITIES);
-$str = "Hallo & <Frau> & Krämer";
-$encoded = strtr($str, $trans);
-
-echo $encoded;
+var_dump(get_html_translation_table(HTML_ENTITIES, ENT_QUOTES | ENT_HTML5));
 ?>
 ]]>
     </programlisting>
-    &example.outputs;
+    &example.outputs.similar;
     <screen>
 <![CDATA[
-Hallo &amp; &lt;Frau&gt; &amp; Kr&auml;mer
+array(1510) {
+  ["    "]=>
+  string(5) "&Tab;"
+  ["
+"]=>
+  string(9) "&NewLine;"
+  ["!"]=>
+  string(6) "&excl;"
+  ["""]=>
+  string(6) "&quot;"
+  ["#"]=>
+  string(5) "&num;"
+  ["$"]=>
+  string(8) "&dollar;"
+  ["%"]=>
+  string(8) "&percnt;"
+  ["&"]=>
+  string(5) "&amp;"
+  ["'"]=>
+  string(6) "&apos;"
+  // ...
+}
 ]]>
     </screen>
    </example>
