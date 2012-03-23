@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 71b49c35730c0aa739bf8ca7b15456ca002c57cf Maintainer: shein Status: ready -->
+<!-- EN-Revision: 4effeb4d1f73ec710ca622289472778ed50b2621 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.html-entity-decode">
@@ -7,18 +7,18 @@
   <refname>html_entity_decode</refname>
   <refpurpose>Преобразует все HTML-сущности в соответствующие символы</refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>string</type><methodname>html_entity_decode</methodname>
    <methodparam><type>string</type><parameter>string</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>quote_style</parameter><initializer>ENT_COMPAT</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>charset</parameter><initializer>'UTF-8'</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>ENT_COMPAT | ENT_HTML401</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>encoding</parameter><initializer>'UTF-8'</initializer></methodparam>
   </methodsynopsis>
   <para>
    <function>html_entity_decode</function> является противоположностью функции
-   <function>htmlentities</function>, она преобразует все HTML-сущности в строке
+   <function>htmlentities</function>. Она преобразует все HTML-сущности в строке
    <parameter>string</parameter> в соответствующие символы.
   </para>
  </refsect1>
@@ -36,14 +36,13 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>quote_style</parameter></term>
+     <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Необязательный аргумент <parameter>quote_style</parameter> позволяет
-       указать способ обработки 'одиночных' и "двойных" кавычек. Значением
-       этого аргумента может быть одна из трех следующих констант:
+       Битовая маска, состоящая из одного или более флагов, которые указывают как
+       обращаться с кавычками и какой тип документа использовать. По умолчанию маска принимает значение <literal>ENT_COMPAT | ENT_HTML401</literal>.
        <table>
-        <title>Константы <parameter>quote_style</parameter></title>
+        <title>Константы <parameter>flags</parameter></title>
         <tgroup cols="2">
          <thead>
           <row>
@@ -64,6 +63,30 @@
            <entry><constant>ENT_NOQUOTES</constant></entry>
            <entry>И двойные, и одиночные кавычки остаются без изменений.</entry>
           </row>
+          <row>
+           <entry><constant>ENT_HTML401</constant></entry>
+           <entry>
+            Обрабатывать код как HTML 4.01.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>ENT_XML1</constant></entry>
+           <entry>
+            Обрабатывать код как XML 1.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>ENT_XHTML</constant></entry>
+           <entry>
+            Обрабатывать код как XHTML.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>ENT_HTML5</constant></entry>
+           <entry>
+            Обрабатывать код как HTML 5.
+           </entry>
+          </row>
          </tbody>
         </tgroup>
        </table>
@@ -71,13 +94,12 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>charset</parameter></term>
+     <term><parameter>encoding</parameter></term>
      <listitem>
       <para>
-       Определяет кодировку, используемую при преобразовании. Передача
-       пустой строки включит автоматическое определение кодировки,
-       основанное на значениях внутренней кодировки mbstring
-       и текущей локали.
+       Кодировка для использования.
+       Если не указана, то значением по умолчанию для этого аргумента является ISO-8859-1 в
+       версиях PHP до 5.4.0 и UTF-8 начиная с PHP 5.4.0 и далее.
       </para>
       &reference.strings.charsets;
      </listitem>
@@ -112,9 +134,16 @@
        </entry>
       </row>
       <row>
+       <entry>5.4.0</entry>
+       <entry>
+        Были добавлены константы <constant>ENT_HTML401</constant>, <constant>ENT_XML1</constant>,
+        <constant>ENT_XHTML</constant> и <constant>ENT_HTML5</constant>.
+       </entry>
+      </row>
+      <row>
        <entry>5.0.0</entry>
        <entry>
-        Добавлена поддержка многобайтных символов.
+        Добавлена поддержка многобайтных кодировок.
        </entry>
       </row>
      </tbody>
@@ -140,28 +169,10 @@ $b = html_entity_decode($a);
 echo $a; // I'll &quot;walk&quot; the &lt;b&gt;dog&lt;/b&gt; now
 
 echo $b; // I'll "walk" the <b>dog</b> now
-
-
-// в версиях до PHP 4.3.0 можно сделать так:
-function unhtmlentities($string)
-{
-    // заменяет числовые сущности
-    $string = preg_replace('~&#x([0-9a-f]+);~ei', 'chr(hexdec("\\1"))', $string);
-    $string = preg_replace('~&#([0-9]+);~e', 'chr("\\1")', $string);
-    // заменяем буквенные сущности
-    $trans_tbl = get_html_translation_table(HTML_ENTITIES);
-    $trans_tbl = array_flip($trans_tbl);
-    return strtr($string, $trans_tbl);
-}
-
-$c = unhtmlentities($a);
-
-echo $c; // I'll "walk" the <b>dog</b> now
-
 ?>
 ]]>
     </programlisting>
-   </example>
+   </example>   
   </para>
  </refsect1>
 
