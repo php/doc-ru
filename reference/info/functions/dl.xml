@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: e900578fcc7dabd07d4320ae71ebfec10435de65 Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+<refentry xml:id="function.dl" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>dl</refname>
+  <refpurpose>Загружает PHP расширение во время выполнения</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>dl</methodname>
+   <methodparam><type>string</type><parameter>library</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Загружает PHP расширение заданное аргументом <parameter>library</parameter>.
+  </para>
+  <para>
+   Чтобы проверить, что заданное расширение уже загружено, используйте функцию
+   <function>extension_loaded</function>. Эта функция работает как для встроенных
+   расширений, так и для динамически загруженных (т.е. загруженных как через
+   &php.ini;, так и через <function>dl</function>).
+  </para>
+  <warning>
+   <simpara>
+    Эта функция удалена из некоторых SAPI в PHP 5.3.
+   </simpara>
+  </warning>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>library</parameter></term>
+     <listitem>
+      <para>
+       Этот аргумент содержит <emphasis>только</emphasis> имя файла расширения,
+       которое требуется загрузить. Это имя зависит от платформы. Например,
+       расширение <link linkend="ref.sockets">sockets</link> (если скомпилировано,
+       как загружаемый модуль, а не модуль по умолчанию!) будет называться
+       <filename>sockets.so</filename> на Unix платформах, и
+       <filename>php_sockets.dll</filename> в Windows среде.
+      </para>
+      <para>
+       Директория, из которой расширение должно быть загружено также зависит от
+       платформы:
+      </para>
+      <para>
+       Windows - Если явно не задано в &php.ini;, расширение будет грузиться из
+       <filename>C:\php4\extensions\</filename> (PHP 4) или 
+       <filename>C:\php5\</filename> (PHP 5) по умолчанию.
+      </para>
+      <para>
+       Unix - Если явно не задано в &php.ini;, директория по умолчанию зависит от
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          PHP собран с настройкой <literal>--enable-debug</literal> или без нее
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          PHP собран с (экспериментально) ZTS (Zend Thread Safety) поддержкой или нет
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          текущего внутреннего номера <literal>ZEND_MODULE_API_NO</literal>
+          (номер внутреннего модуля Zend API, который как правило является датой
+          значительного изменения API модуля, например <literal>20010901</literal>)
+         </simpara>
+        </listitem>
+       </itemizedlist>
+       Принимая во внимание вышесказанное, получаем следующие умолчания для
+       директории расширения
+       <literal>&lt;install-dir&gt;/lib/php/extensions/ &lt;debug-or-not&gt;-&lt;zts-or-not&gt;-ZEND_MODULE_API_NO</literal>,
+       непример
+       <filename>/usr/local/php/lib/php/extensions/debug-non-zts-20010901</filename>
+       или
+       <filename>/usr/local/php/lib/php/extensions/no-debug-zts-20010901</filename>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success; Если механизм загрузки модулей недоступен или отключен
+   (либо значением off настройки <link linkend="ini.enable-dl">enable_dl</link>,
+   либо включен &safemode; в &php.ini;), будет выдана ошибка
+   <constant>E_ERROR</constant>, и выполнение будет остановлено. Если
+   <function>dl</function> не сможет загрузить заданную библиотеку, то в дополнение
+   к &false; будет выдано сообщение <constant>E_WARNING</constant>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Примеры использования <function>dl</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Пример загрузки расширения, основываясь на ОС
+if (!extension_loaded('sqlite')) {
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        dl('php_sqlite.dll');
+    } else {
+        dl('sqlite.so');
+    }
+}
+
+// Или на константе PHP_SHLIB_SUFFIX (доступна с PHP 4.3.0)
+if (!extension_loaded('sqlite')) {
+    $prefix = (PHP_SHLIB_SUFFIX === 'dll') ? 'php_' : '';
+    dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.3.0</entry>
+       <entry>
+        <function>dl</function> выключен в некоторых SAPI в связи с нестабильностью
+        работы. Из SAPI, поддерживающих <function>dl</function>, остались только
+        CLI и Embed. Используйте вместо dl
+        <link linkend="ini.extension">Директивы загрузки расширений</link>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    <function>dl</function> <emphasis>не</emphasis> поддерживается в PHP собранных
+    с поддержкой ZTS. Используйте вместо dl
+    <link linkend="ini.extension">Директивы загрузки расширений</link>.
+   </para>
+  </note>
+  <note>
+   <para>
+    <function>dl</function> чувствительна к регистру на Unix платформах.
+   </para>
+  </note>
+  &note.sm.disabled;
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><link linkend="ini.extension">Директивы загрузки расширений</link></member>
+    <member><function>extension_loaded</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
