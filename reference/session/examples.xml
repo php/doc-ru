@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 55f644c156f21a22428e7b3ca12d78db4a437ed1 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 81bfbea1330e9162b47abb4efb08d7cf6c6e7d40 Maintainer: aur Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 
@@ -7,58 +7,46 @@
  &reftitle.examples;
  <section xml:id="session.examples.basic">
   <title>Основы использования</title>
-  <note>
    <para>
-    По состоянию на PHP 4.1.0, <varname>$_SESSION</varname> доступна в качестве 
-    глобальной переменной так же, как доступны <varname>$_POST</varname>,
-    <varname>$_GET</varname>, <varname>$_REQUEST</varname> и прочие.
-    В отличие от <varname>$HTTP_SESSION_VARS</varname> переменная
-    <varname>$_SESSION</varname> всегда глобальна. Таким образом, нет 
-    необходимости в использовании ключевого слова <link
-    linkend="language.variables.scope"><command>global</command></link>
-    для <varname>$_SESSION</varname>. Обратите внимание, данная документация
-    была изменена для повсеместного использования <varname>$_SESSION</varname>.
-    Если вы предпочитаете старый стиль, можете использовать также
-    <varname>$HTTP_SESSION_VARS</varname> вместо <varname>$_SESSION</varname>. Следует также отметить, что для
-    доступа к <varname>$_SESSION</varname> необходимо предварительно выполнить
-    <function>session_start</function>.
+    Сессии являются простым способом хранения информации для отдельных пользователей с уникальным идентификатором сессии.
+    Это может использоваться для сохранения состояния между запросами страниц. Идентификаторы сессий обычно
+    отправляются браузеру через сессионный cookie и используются для получения имеющихся данных сессии.
+    Отсутствие идентификатора сессии или сессионного cookie сообщает PHP о том, что необходимо создать новую сессию и сгенерировать
+    новый идентификатор сессии.
    </para>
    <para>
-    Имена ключей ассоциативного массива <varname>$_SESSION</varname>
-    подчиняются тем же ограничениям, что и обычные имена переменных PHP.
-    Например, они не могут начинаться с цифры и должны начинаться с буквы 
-    или знака нижнего подчеркивания.
-    Для дополнительных деталей смотрите раздел о
-    <link linkend="language.variables">переменных</link> данного руководства.
+    Сессии используют простую технологию. Когда сессия создана, PHP будет либо получать существующую сессию,
+    используя переданный идентификатор (обычно из сессионного cookie) или, если ничего не передавалось,
+    будет создана новая сессия. PHP заполнит суперглобальную переменную <varname>$_SESSION</varname>
+    сессионной информацией после того, как будет запущена сессия. Когда PHP завершает работу, он автоматически
+    сериализует содержимое суперглобальной переменной <varname>$_SESSION</varname> и отправит для
+    сохранения, используя сессионный обработчик для записи сессии.
    </para>
-  </note>
-
+   <para>
+    По умолчанию PHP использует внутренний обработчик <parameter>files</parameter> для сохранения сессий,
+    который установлен в INI-переменной <link linkend="ini.session.save-handler">session.save_handler</link>.
+    Этот обработчик сохраняет данные на сервере в директории, указанной в
+    конфигурационной директиве <link linkend="ini.session.save-path">session.save_path</link>.
+   </para>
+   <para>
+    Сессии могут запускаться вручную с помощью функции <function>session_start</function>
+    и, если директива <link linkend="ini.session.auto-start">session.auto_start</link> установлена в
+    <parameter>1</parameter>, сессия автоматически запустится, когда PHP посылает любые данные
+    в буфер вывода.
+   </para>
+   <para>
+    Сессия обычно завершает свою работу, когда PHP заканчивает исполнять скрипт, но может быть
+    завершена и вручную с помощью функции <function>session_write_close</function>.
+   </para>
   <para>
-   Если <link
-   linkend="ini.register-globals">register_globals</link>
-   выключена, только члены глобального ассоциативного массива
-   <varname>$_SESSION</varname> могут быть зарегистрированы в качестве 
-   сессионной переменной. Переменные восстановленной сессии могут быть доступны
-   только в массиве <varname>$_SESSION</varname>.
-  </para>
-  <para>
-   Использование <varname>$_SESSION</varname> (или
-   <varname>$HTTP_SESSION_VARS</varname> в PHP 4.0.6 и младше) рекомендуется 
-   для увеличения безопасности и повышения читаемости кода.
-   При использовании <varname>$_SESSION</varname> нет необходимости в 
-   использовании функций <function>session_register</function>,
-   <function>session_unregister</function> и
-   <function>session_is_registered</function>. Сессионные переменные 
-   доступны как и все прочие переменные.
    <example>
     <title>
-     Регистрация переменную с помощью <varname>$_SESSION</varname>.
+     Регистрация переменной с помощью <varname>$_SESSION</varname>.
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 session_start();
-// Используем $HTTP_SESSION_VARS в PHP 4.0.6 или более ранних
 if (!isset($_SESSION['count'])) {
   $_SESSION['count'] = 0;
 } else {
@@ -70,16 +58,12 @@ if (!isset($_SESSION['count'])) {
    </example>
    <example>
     <title>
-     Дерегистрация переменной с помощью <varname>$_SESSION</varname> 
-     при выключенной
-     <link
-     linkend="ini.register-globals">register_globals</link>.
+     Отмена объявления переменной с помощью <varname>$_SESSION</varname>.
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 session_start();
-// Используем $HTTP_SESSION_VARS в PHP 4.0.6 или более ранних
 unset($_SESSION['count']);
 ?>
 ]]>
@@ -102,49 +86,6 @@ unset($_SESSION['count']);
     существует реального способа восстановления ссылки к другой переменной.
    </para>
   </warning>
-  <para>
-   Если <link
-   linkend="ini.register-globals">register_globals</link>
-   включена, то любая глобальная переменная может быть зарегистрирована в 
-   качестве сессионной. При перезапуске сессии эти переменные будут 
-   восстановлены в соответствующие им глобальные переменные.
-   Ввиду того, что PHP должен знать, какие именно глобальные переменные 
-   зарегистрированы в качестве сессионных,
-   пользователям следует регистрировать переменные с использованием функции
-   <function>session_register</function>. Этого можно избежать при использовании
-   только  <varname>$_SESSION</varname>.
-   <caution>
-    <para>
-     В версии PHP 4.3.0 и более ранних при использовании <varname>$_SESSION</varname> 
-     и выключенной
-     <link linkend="ini.register-globals">register_globals</link>,
-     не пользуйтесь <function>session_register</function>,
-     <function>session_is_registered</function> или
-     <function>session_unregister</function>.
-      Рекомендуется выключить <link
-      linkend="ini.register-globals">register_globals</link>
-      с точки зрения безопасности и производительности.
-    </para>
-   </caution>
-  </para>
-  <para>
-   Если <link
-   linkend="ini.register-globals">register_globals</link>
-   включена, то глобальные переменные и записи в
-   <varname>$_SESSION</varname> будут автоматически ссылаться на одни и те же значения,
-   которые были зарегистрированы в предыдущем экземпляре сессии.
-   Тем не менее, если переменная зарегистрирована в <varname>$_SESSION</varname>, то 
-   глобальная переменная будет доступна начиная со следующего запроса.
-  </para>
-  <para>
-   В версии PHP 4.2.3 и более ранних присутствует дефект. Если зарегистрировать новую
-   сессионную переменную, используя <function>session_register</function>, то 
-   переменная в глобальной области и запись в <varname>$_SESSION</varname> 
-   не будут ссылаться на одно и то же значение до тех пор, пока не будет 
-   выполнен следующий <function>session_start</function>. Это значит, что 
-   изменение вновь зарегистрированной глобальной переменной не будет отражено
-   в <varname>$_SESSION</varname>. Это поведение было исправлено в PHP 4.3.0.
-  </para>
  </section>
 
  <section xml:id="session.idpassing">
@@ -208,9 +149,9 @@ unset($_SESSION['count']);
 session_start();
 
 if (empty($_SESSION['count'])) {
- $_SESSION['count'] = 1;
+   $_SESSION['count'] = 1;
 } else {
- $_SESSION['count']++;
+   $_SESSION['count']++;
 }
 ?>
 
@@ -219,8 +160,8 @@ if (empty($_SESSION['count'])) {
 </p>
 
 <p>
-<a href="nextpage.php?<?php echo htmlspecialchars(SID); ?>">Нажмите сюда
-here</a>, чтобы продолжить.
+<a href="nextpage.php?<?php echo htmlspecialchars(SID); ?>">Нажмите
+сюда</a>, чтобы продолжить.
 </p>
 ]]>
     </programlisting>
