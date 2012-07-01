@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1821ec72a025e9fe9caec423ae0bc9f6f733c0b1 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 6bfcf7d9af614b4155c72e84814a61607be21229 Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <!-- splitted from ./index.xml, last change in rev 1.66 -->
@@ -130,19 +130,21 @@
 <?php
 
 // сохранение хэшированного пароля
+// $random_chars получены например использованием /dev/random
 $query  = sprintf("INSERT INTO users(name,pwd) VALUES('%s','%s');",
-            pg_escape_string($username), crypt($password, '$2a$07$usesomesillystringforsalt$'));
+            pg_escape_string($username),
+            pg_escape_string(crypt($password, '$2a$07$' . $random_chars . '$')));
 $result = pg_query($connection, $query);
 
 // проверка введенного пользователем пароля на корректность
-$query = sprintf("SELECT 1 FROM users WHERE name='%s' AND pwd='%s';",
-            pg_escape_string($username), crypt($password, '$2a$07$usesomesillystringforsalt$'));
-$result = pg_query($connection, $query);
+$query = sprintf("SELECT pwd FROM users WHERE name='%s';",
+            pg_escape_string($username));
+$row = pg_fetch_assoc(pg_query($connection, $query));
 
 if (pg_num_rows($result) > 0) {
-    echo 'Добро пожаловать, $username!';
+    echo 'Добро пожаловать, ' . htmlspecialchars($username) . '!';
 } else {
-    echo 'Авторизация не удалась, $username.';
+    echo 'Авторизация не удалась, ' . htmlspecialchars($username) . '.';
 }
 
 ?>
@@ -239,8 +241,7 @@ insert into pg_shadow(usename,usesysid,usesuper,usecatupd,passwd)
 <?php
 
 $query  = "SELECT id, name, inserted, size FROM products
-                  WHERE size = '$size'
-                  ORDER BY $order LIMIT $limit, $offset;";
+           WHERE size = '$size'";
 $result = odbc_exec($conn, $query);
 
 ?>
@@ -284,20 +285,20 @@ $query = "UPDATE usertable SET pwd='$pwd' WHERE uid='$uid';";
       </programlisting>
      </example>
      Но злоумышленник может ввести значение
-     <literal>' or uid like'%admin%'; --</literal> для переменной <varname>$uid</varname> для
+     <literal>' or uid like'%admin%'</literal> для переменной <varname>$uid</varname> для
      изменения пароля администратора или просто присвоить переменной <varname>$pwd</varname> значение
-     <literal>"hehehe', admin='yes', trusted=100 "</literal> (с завершающими пробелами)
+     <literal>hehehe', trusted=100, admin='yes</literal>
      для получения дополнительных привелегий. При выполнении запросы переплетаются:
      <informalexample>
       <programlisting role="php">
 <![CDATA[
 <?php
 
-// $uid == ' or uid like'%admin%'; --
-$query = "UPDATE usertable SET pwd='...' WHERE uid='' or uid like '%admin%'; --";
+// $uid: ' or uid like '%admin%
+$query = "UPDATE usertable SET pwd='...' WHERE uid='' or uid like '%admin%';";
 
-// $pwd == "hehehe', admin='yes', trusted=100 "
-$query = "UPDATE usertable SET pwd='hehehe', admin='yes', trusted=100 WHERE
+// $pwd: hehehe', trusted=100, admin='yes
+$query = "UPDATE usertable SET pwd='hehehe', trusted=100, admin='yes' WHERE
 ...;";
 
 ?>
@@ -331,8 +332,8 @@ $result = mssql_query($query);
 <?php
 
 $query  = "SELECT * FROM products
-                    WHERE id LIKE '%a%'
-                    exec master..xp_cmdshell 'net user test testpass /ADD'--";
+           WHERE id LIKE '%a%'
+           exec master..xp_cmdshell 'net user test testpass /ADD' --%'";
 $result = mssql_query($query);
 
 ?>
@@ -395,6 +396,15 @@ $result = mssql_query($query);
       </listitem>
       <listitem>
        <simpara>
+        используйте подготовленные выражения с привязанными переменными.
+        Эта возможность предоставляется расширениями
+        <link linkend="pdo.prepared-statements">PDO</link>,
+        <link linkend="mysqli.quickstart.prepared-statements">MySQLi</link>
+        и другими библиотеками.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
         Всегда проверяйте введенные данные на соответствие ожидаемому типу.
         В <acronym>PHP</acronym> есть множество функций для проверки данных: начиная от простейших
         <link linkend="ref.var">функций для работы с переменными</link> и
@@ -407,7 +417,7 @@ $result = mssql_query($query);
       <listitem>
        <para>
         В случае, если приложение ожидает цифровой ввод, примените функцию
-        <function>is_numeric</function> для проверки введенных данных, или
+        <function>ctype_digit</function> для проверки введенных данных, или
         принудительно укажите их тип при помощи <function>settype</function>, 
         или просто используйте числовое представление при помощи функции
         <function>sprintf</function>.
@@ -432,18 +442,16 @@ $query = sprintf("SELECT id, name FROM products ORDER BY name LIMIT 20 OFFSET %d
       </listitem>
       <listitem>
        <simpara>
-        Экранируйте любой нецифровой ввод, используемый в запросах к БД при помощи
+        Если на уровне базы данных не поддерживаются привязанные переменные, то
+        всегда экранируйте любые нечисловые данные, используемый в запросах к БД при помощи
         специальных экранирующих функций, специфичных для используемой
         вами базы данных (например,
         <function>mysql_real_escape_string</function>,
-        <function>sqlite_escape_string</function>  и т.д.). Если нет
-        экранирующей функции, специально разработанной для вашей базы
-        данных, то, возможно, функции <function>addslashes</function>
-        и <function>str_replace</function> смогут оказаться полезными
-        (в зависимости от типа базы данных).
-        Обратите внимание на <link linkend="security.database.storage">первый пример</link>.
-        Следует помнить, что одного использования кавычек в запросе мало, это легко
-        обойти.
+        <function>sqlite_escape_string</function>  и т.д.). 
+        Общие функции такие как <function>addslashes</function> полезны
+        только в определенных случаях (например MySQL в однобайтной кодировке
+        с отключенным <varname>NO_BACKSLASH_ESCAPES</varname>), поэтому лучше
+        избегать их использование.        
        </simpara>
       </listitem>
       <listitem>
