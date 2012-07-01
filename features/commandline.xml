@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 84b8fca68fc762fefe85acde180a38b2e77a28b9 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4778c21b0ced33780bd3809e4f5ad824a0d21804 Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <chapter xml:id="features.commandline" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -1653,22 +1653,29 @@ php >
   </para>
   
   <para>
+    Запросы обслуживаются последовательно.
+  </para>
+  
+  <para>
     URI запросы обслуживаются из текущей директории, в которой был запущен PHP,
     если не используется опция -t для явного указания корневого документа.
-  </para>
-
-  <para>
     Если URI запроса не указывает на определенный файл, то будет возвращен
-    либо index.php, либо index.html в данной директории. Если не существует
-    ни одного из них, то возвращается 404 код ответа.
+    либо index.php либо index.html в указанной директории. Если оба файла
+    отсутствуют, то возвращается 404 код ответа.
   </para>
 
   <para>
     Если PHP-файл указывается в командной строке, когда запускается веб-сервер, 
-    то он рассматривается как скрипт "маршрутизации" web-сервера.
-    Скрипт выполняется в самом начале после каждого HTTP-запроса. Если этот 
-    скрипт возвращает &false;, то запрашиваемый ресурс возвращается как есть. 
+    то он рассматривается как скрипт "маршрутизации". Скрипт выполняется 
+    в самом начале после каждого HTTP-запроса. Если этот скрипт возвращает 
+    &false;, то запрашиваемый ресурс возвращается как есть. 
     В противном случае браузеру будет возвращен вывод этого скрипта.
+  </para>  
+  
+  <para>
+    Стандартные MIME типы возращаются для файлов со следующими расширениями: 
+    .css, .gif, .htm, .html, .jpe, .jpeg, .jpg, .js, .png, .svg, и .txt.
+    Расширения .htm и .svg определяются начиная с PHP 5.4.4.
   </para>
 
   <example>
@@ -1733,16 +1740,16 @@ Press Ctrl-C to quit
   <example>
    <title>Использование скрипта маршрутизации</title> 
 <para>
-  Запросы к изображениям будут возращать их, но запросы к HTML файлам
-  будут возращать "Welcome to PHP".
+  В этом примере, запросы изображений будут возвращать их, но запросы HTML файлов
+  будут возвращать "Welcome to PHP".
 </para>
    <programlisting role="php">
 <![CDATA[
 <?php
 // router.php
-if (preg_match('/\.(?:png|jpg|jpeg|gif)$/', $_SERVER["REQUEST_URI"]))
+if (preg_match('/\.(?:png|jpg|jpeg|gif)$/', $_SERVER["REQUEST_URI"])) {
     return false;    // сервер возвращает файлы напрямую.
-else { 
+} else { 
     echo "<p>Welcome to PHP</p>";
 }
 ?>]]>
@@ -1752,20 +1759,68 @@ else {
 $ php -S localhost:8000 router.php
 ]]>
    </programlisting>
-   <para>
-     После нескольких URI запросов в консоли выведется примерно следующее:
-   </para>
-   <screen>
+  </example>
+  
+  <example>
+   <title>Проверка использования CLI web-сервера</title> 
+<para>
+  Для совместного использования скрипта маршрутизации при разработке с 
+  CLI web-сервером и в дальнейшем с боевым web-сервером:
+</para>
+   <programlisting role="php">
 <![CDATA[
-PHP 5.4.0 Development Server started at Thu Jul 21 10:53:19 2011
-Listening on localhost:8000
-Document root is /home/me/public_html
-Press Ctrl-C to quit.
-[Thu Jul 21 10:53:45 2011] ::1:55801 GET /mylogo.jpg - Request read
-[Thu Jul 21 10:53:52 2011] ::1:55803 GET /abc.html - Request read
-[Thu Jul 21 10:53:52 2011] ::1:55804 GET /favicon.ico - Request read
+<?php
+// router.php
+if (php_sapi_name() == 'cli-server') {
+    /* Маршрутизация с заданными правилами и выход с возвращением false */
+}
+/* продолжение с обычными операциями index.php */
+?>]]>
+   </programlisting>
+   <programlisting role="shell">
+<![CDATA[
+$ php -S localhost:8000 router.php
 ]]>
-   </screen>
+   </programlisting>
+  </example>
+
+  <example>
+   <title>Поддержка неподдерживаемых типов файлов</title> 
+<para>
+  Если вам нужно обслуживать статические ресурсы с MIME типами неподдерживаемыми
+  CLI web-сервером:
+</para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// router.php
+$path = pathinfo($_SERVER["SCRIPT_FILENAME"]);
+if ($path["extension"] == "ogg") {
+    header("Content-Type: video/ogg");
+    readfile($_SERVER["SCRIPT_FILENAME"]);
+}
+else {
+    return FALSE;
+}
+?>]]>
+   </programlisting>
+   <programlisting role="shell">
+<![CDATA[
+$ php -S localhost:8000 router.php
+]]>
+   </programlisting>
+  </example>
+
+  <example>
+   <title>Доступ к CLI web-серверу с удаленных машин</title> 
+<para>
+  Вы можете сделать web-сервер доступным на 8000 порту для всех сетевых интерфейсов:
+</para>
+   <programlisting role="shell">
+<![CDATA[
+$ php -S 0.0.0.0:8000
+]]>
+   </programlisting>
   </example>
 
  </section>
