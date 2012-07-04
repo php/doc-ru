@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 5faa7a6747bca628b3bdcc9f93aec5603b65581f Maintainer: irker Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="rararchive.open" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>RarArchive::open</refname>
+  <refname>rar_open</refname>
+  <refpurpose>Открывает RAR архив</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <para>&style.oop; (method):</para>
+   <methodsynopsis>
+   <modifier>public</modifier> <modifier>static</modifier> <type>RarArchive</type><methodname>RarArchive::open</methodname>
+   <methodparam><type>string</type><parameter>filename</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>password</parameter><initializer>NULL</initializer></methodparam>
+   <methodparam choice="opt"><type>callable</type><parameter>volume_callback</parameter><initializer>NULL</initializer></methodparam>
+   </methodsynopsis>
+  <para>&style.procedural;:</para>
+  <methodsynopsis>
+   <type>RarArchive</type><methodname>rar_open</methodname>
+   <methodparam><type>string</type><parameter>filename</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>password</parameter><initializer>NULL</initializer></methodparam>
+   <methodparam choice="opt"><type>callable</type><parameter>volume_callback</parameter><initializer>NULL</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Открывает указанный RAR архив и возвращает объект
+   <type>RarArchive</type>, представляющий его.
+  </para>
+  <note>
+   <para>
+    При открытии многотомного архива петь к первому тому
+    должен быть передан первым параметром. Иначе не будут видны
+    все файлы.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>filename</parameter></term>
+     <listitem>
+      <para>
+       Путь к Rar архиву.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>password</parameter></term>
+     <listitem>
+      <para>
+       Пароль, если необходимо расшифровать заголовки архива.
+       Этот же пароль будет использоваться по умолчанию, если будут найдены 
+       зашифрованные файлы. Учтите, что файлы могут быть зашифрованы с 
+       разными паролями.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>volume_callback</parameter></term>
+     <listitem>
+      <para>
+       Функция, которой передается единственный параметр - 
+       путь к тому, который не был найден, и возвращающая строку
+       с правильным путем для этого тома или &null;, если данный
+       том не существует или неизвестен. Разработчик должен быть уверен,
+       что данная функция не приведет к зацикливанию, так как она 
+       вызывается повторно, если путь полученный предыдущим вызовом 
+       не соответствует нужному тому. Указание этого параметра
+       устраняет предупреждения, которые появлялись бы, если бы 
+       том не был бы найден. В случае, если функция возвращает 
+       только &null;, то не будет ни одного предупреждения.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <warning>
+   <para>
+    До версии 2.0.0 эта функция не обрабатывала правильно 
+    относительные пути. В таких случаях используйте
+    <function>realpath</function>.
+   </para>
+  </warning>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возаращает запрашиваемый объект <type>RarArchive</type> 
+   &return.falseforfailure;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>3.0.0</entry>
+       <entry>
+        Был добавлен <parameter>volume_callback</parameter>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>&style.oop;</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$rar_arch = RarArchive::open('encrypted_headers.rar', 'samplepassword');
+if ($rar_arch === FALSE)
+    die("Failed opening file");
+    
+$entries = $rar_arch->getEntries();
+if ($entries === FALSE)
+    die("Failed fetching entries");
+
+echo "Found " . count($entries) . " files.\n";
+
+if (empty($entries))
+    die("No valid entries found.");
+    
+$stream = reset($entries)->getStream();
+if ($stream === FALSE)
+    die("Failed opening first file");
+
+$rar_arch->close();
+
+echo "Content of first one follows:\n";
+echo stream_get_contents($stream);
+
+fclose($stream);
+?>
+]]>
+     </programlisting>
+     &example.outputs.similar;
+     <screen>
+<![CDATA[
+Found 2 files.
+Content of first one follows:
+Encrypted file 1 contents.
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>&style.procedural;</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$rar_arch = rar_open('encrypted_headers.rar', 'samplepassword');
+if ($rar_arch === FALSE)
+    die("Failed opening file");
+    
+$entries = rar_list($rar_arch);
+if ($entries === FALSE)
+    die("Failed fetching entries");
+
+echo "Found " . count($entries) . " files.\n";
+
+if (empty($entries))
+    die("No valid entries found.");
+    
+$stream = reset($entries)->getStream();
+if ($stream === FALSE)
+    die("Failed opening first file");
+
+rar_close($rar_arch);
+
+echo "Content of first one follows:\n";
+echo stream_get_contents($stream);
+
+fclose($stream);
+?>
+]]>
+     </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Volume Callback</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* В этом примере есть том с именем multi_broken.part1.rar
+ * а следующий том имеет имя  multi.part2.rar */
+function resolve($vol) {
+    if (preg_match('/_broken/', $vol))
+        return str_replace('_broken', '', $vol);
+    else
+        return null;
+}
+$rar_file1 = rar_open(dirname(__FILE__).'/multi_broken.part1.rar', null, 'resolve');
+$entry = $rar_file1->getEntry('file2.txt');
+$entry->extract(null, dirname(__FILE__) . "/temp_file2.txt");
+?>
+]]>
+     </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><link linkend="wrappers.rar"><literal>rar://</literal> wrapper</link></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
