@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: c9ee929e0fdbbd8e9e9803a6baeea1dd9e4e85fb Maintainer: irker Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="mysqli-stmt.affected-rows" xmlns="http://docbook.org/ns/docbook">
+    <refnamediv>
+        <refname>mysqli_stmt::$affected_rows</refname>
+        <refname>mysqli_stmt_affected_rows</refname>
+        <refpurpose>Возвращает общее количество строк, измененных, удаленных или
+            добавленных последним выполненным выражением
+        </refpurpose>
+    </refnamediv>
+
+    <refsect1 role="description">
+        &reftitle.description;
+        <para>&style.oop;</para>
+        <fieldsynopsis><type>int</type><varname linkend="mysqli-stmt.affected-rows">mysqli_stmt->affected_rows</varname></fieldsynopsis>
+        <para>&style.procedural;</para>
+        <methodsynopsis>
+            <type>int</type><methodname>mysqli_stmt_affected_rows</methodname>
+            <methodparam><type>mysqli_stmt</type><parameter>stmt</parameter></methodparam>
+        </methodsynopsis>
+        <para>
+            Возвращает количество строк, измененных запросом <literal>INSERT</literal>,
+            <literal>UPDATE</literal> или <literal>DELETE</literal>.
+        </para>
+        <para>
+            Эта функция работает только с запросами, обновляющими таблицу. Для получения
+            количества строк для запроса SELECT используйте вместо нее
+            <function>mysqli_stmt_num_rows</function>.
+        </para>
+    </refsect1>
+
+    <refsect1 role="parameters">
+        &reftitle.parameters;
+        <para>
+            <variablelist>
+                &mysqli.stmt.description;
+            </variablelist>
+        </para>
+    </refsect1>
+
+    <refsect1 role="returnvalues">
+        &reftitle.returnvalues;
+        <para>
+            Целое число больше нуля показывает количество измененных или найденных
+            строк.
+            Ноль показывает, что не было обновлено ни одной записи для оператора
+            UPDATE/DELETE, ни одна строка не удовлетворила условию WHERE в запросе
+            или что ни один запрос еще не выполнен. -1 показывает, что запрос
+            выполнен с ошибкой. NULL показывает, что функция получила неверный
+            аргумент.
+        </para>
+        <note>
+            <para>
+                Если количество измененных строк больше, чем максимальное значение для
+                типа int в PHP, то это количество будет возвращено в виде строкового
+                значения.
+            </para>
+        </note>
+    </refsect1>
+
+    <refsect1 role="examples">
+        &reftitle.examples;
+        <example>
+            <title>&style.oop;</title>
+            <programlisting role="php">
+                <![CDATA[
+<?php
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+
+/* проверка соединения */
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    exit();
+}
+
+/* создание временной таблицы */
+$mysqli->query("CREATE TEMPORARY TABLE myCountry LIKE Country");
+
+$query = "INSERT INTO myCountry SELECT * FROM Country WHERE Code LIKE ?";
+
+/* подготовленное выражение */
+if ($stmt = $mysqli->prepare($query)) {
+
+    /* привязка переменной к метке */
+    $code = 'A%';
+    $stmt->bind_param("s", $code);
+
+    /* выполнение выражения */
+    $stmt->execute();
+
+    printf("rows inserted: %d\n", $stmt->affected_rows);
+
+    /* закрытие подготовленного выражения */
+    $stmt->close();
+}
+
+/* закрытие соединения */
+$mysqli->close();
+?>
+]]>
+            </programlisting>
+        </example>
+        <example>
+            <title>&style.procedural;</title>
+            <programlisting role="php">
+                <![CDATA[
+<?php
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
+
+/* проверка соединения */
+if (mysqli_connect_errno()) {
+    printf("Connect failed: %s\n", mysqli_connect_error());
+    exit();
+}
+
+/* создание временной таблицы */
+mysqli_query($link, "CREATE TEMPORARY TABLE myCountry LIKE Country");
+
+$query = "INSERT INTO myCountry SELECT * FROM Country WHERE Code LIKE ?";
+
+/* подготовленное выражение */
+if ($stmt = mysqli_prepare($link, $query)) {
+
+    /* привязка переменной к метке */
+    $code = 'A%';
+    mysqli_stmt_bind_param($stmt, "s", $code);
+
+    /* выполнение выражения */
+    mysqli_stmt_execute($stmt);
+
+    printf("rows inserted: %d\n", mysqli_stmt_affected_rows($stmt));
+
+    /* закрытие подготовленного выражения */
+    mysqli_stmt_close($stmt);
+}
+
+/* закрытие соединения */
+mysqli_close($link);
+?>
+]]>
+            </programlisting>
+            &examples.outputs;
+            <screen>
+                <![CDATA[
+rows inserted: 17
+]]>
+            </screen>
+        </example>
+    </refsect1>
+
+    <refsect1 role="seealso">
+        &reftitle.seealso;
+        <para>
+            <simplelist>
+                <member><function>mysqli_stmt_num_rows</function></member>
+                <member><function>mysqli_prepare</function></member>
+            </simplelist>
+        </para>
+    </refsect1>
+
+</refentry>
+
+        <!-- Keep this comment at the end of the file
+        Local variables:
+        mode: sgml
+        sgml-omittag:t
+        sgml-shorttag:t
+        sgml-minimize-attributes:nil
+        sgml-always-quote-attributes:t
+        sgml-indent-step:1
+        sgml-indent-data:t
+        indent-tabs-mode:nil
+        sgml-parent-document:nil
+        sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+        sgml-exposed-tags:nil
+        sgml-local-catalogs:nil
+        sgml-local-ecat-files:nil
+        End:
+        vim600: syn=xml fen fdm=syntax fdl=2 si
+        vim: et tw=78 syn=sgml
+        vi: ts=1 sw=1
+        -->
