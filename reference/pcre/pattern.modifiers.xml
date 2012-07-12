@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ed5c3caa2cc9740019f40a03cf48718f9947df7b Maintainer: shein Status: ready -->
+<!-- EN-Revision: cca4900cad4991211c0508abbeda88ca532cee14 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
+<!-- splitted from ./en/functions/pcre.xml, last change in rev 1.2 -->
 <article xml:id="reference.pcre.pattern.modifiers" xmlns="http://docbook.org/ns/docbook">
  <title>Модификаторы шаблонов</title>
  <titleabbrev>Описывает возможные модификаторы шаблонов Perl-совместимых регулярных выражений (PCRE)</titleabbrev>
@@ -73,7 +74,7 @@
         неэкранированным символом '#' (если он не является частью
         символьного класса) и символом перевода строки (включая
         сами символы '\n' и '#'). Это эквивалентно Perl-модификатору
-        /x, и позволяет размещать комментарии в сложных шаблонах.
+        /x, и позволяет размещать комментарий в сложных шаблонах.
         Замечание: это касается только символьных данных. Пробельные
         символы не фигурируют в служебных символьных последовательностях,
         к примеру, в последовательности '(?(', открывающей условную
@@ -111,6 +112,54 @@
          об ошибке парсинга на строке, содержащей вызов
          <function>preg_replace</function>.
         </para>
+       </caution>
+       <caution>
+        <para>
+         Использовать этот модификатор <emphasis>не рекомендуется</emphasis>, так как это может легко
+         добавить уязвимости в системе безопасности:
+        </para>
+        <informalexample>
+         <programlisting role="php">
+<![CDATA[
+<?php
+$html = $_POST['html'];
+
+// Заголовки в верхнем регистре
+$html = preg_replace(
+    '(<h([1-6])>(.*?)</h\1>)e',
+    '"<h$1>" . strtoupper("$2") . "</h$1>"',
+    $html
+);
+]]>
+         </programlisting>
+        </informalexample>
+        <para>
+         Приведенный выше код может быть легко скомпрометирован путем передачи такой строки как
+         <literal>&lt;h1&gt;{${eval($_GET[php_code])}}&lt;/h1&gt;</literal>. Это дает атакующему
+         возможность исполнить произвольный PHP-код и по существу предоставляет ему почти
+         полный доступ к вашему серверу.
+        </para>
+        <para>
+         Для предотвращения этого типа уязвимости с удаленным исполнением кода
+         следует использовать функцию <function>preg_replace_callback</function>:
+        </para>
+        <informalexample>
+         <programlisting role="php">
+<![CDATA[
+<?php
+$html = $_POST['html'];
+
+// Заголовки в верхнем регистре
+$html = preg_replace_callback(
+    '(<h([1-6])>(.*?)</h\1>)',
+    function ($m) {
+        return "<h$m[1]>" . strtoupper($m[2]) . "</h$m[1]>";
+    },
+    $html
+);
+]]>
+         </programlisting>
+        </informalexample>
        </caution>
        <note>
         <para>
