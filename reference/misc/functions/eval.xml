@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 0d66a6cf2c0cad946dd8b766ac6ea09b96989114 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.eval" xmlns="http://docbook.org/ns/docbook">
@@ -12,26 +12,21 @@
   &reftitle.description;
   <methodsynopsis>
    <type>mixed</type><methodname>eval</methodname>
-   <methodparam><type>string</type><parameter>code_str</parameter></methodparam>
+   <methodparam><type>string</type><parameter>code</parameter></methodparam>
   </methodsynopsis>
   <para>
    Исполняет строку, переданную в параметре <parameter>code_str</parameter>,
-   как код PHP. Помимо прочего, это может быть полезно при хранении кода в
-   текстовом поле базы данных для его вызова по необходимости.
+   как код PHP.
   </para>
-  <para>
-   При использовании функции <function>eval</function> необходимо учитывать
-   несколько факторов. Помните о том, что используемые строки должны содержать
-   правильный PHP код, включая, к примеру, использование точки с запятой в
-   завершение строки так, чтобы парсер не отключился на строке после
-   <function>eval</function> и правильно обработал строку
-   <parameter>code_str</parameter>. Для совмещения вывода HTML и PHP кода
-   вы можете использовать закрывающий тег PHP.
-  </para>
-  <para>
-   Также помните, что значения переменных, заданных в <function>eval</function>,
-   будут перенесены в главный скрипт.
-  </para>
+  <caution>
+   <para>
+    Использование <function>eval</function> может быть <emphasis>очень опасно</emphasis>,
+    поскольку позволяет исполнить произвольный код. <emphasis>Использование данной функции
+    не рекомендуется.</emphasis> Если вы полностью убеждены, что нет иного способа воспроизведения
+    необходимого функционала, обратите особое внимание на <emphasis>исключения обработки 
+    таким образом данных, вводимых пользователем,</emphasis> без специальной обработки и валидации.
+   </para>
+  </caution>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -39,16 +34,33 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>code_str</parameter></term>
+     <term><parameter>code</parameter></term>
      <listitem>
       <para>
-       Исполняемая строка кода.
-       Строка <parameter>code_str</parameter> может не содержать <link
-       linkend="language.basic-syntax.phpmode">открывающий тег PHP</link>.
+       Исполняемая строка кода PHP.
       </para>
       <para>
-       Использование <literal>return</literal> позволяет немедленно
-       прекратить выполнение кода, указанного в строке.
+       Код не должен быть обрамлен открывающимся и закрывающимся 
+       <link linkend="language.basic-syntax.phpmode">тегами PHP</link>, т.е.
+       строка должна быть, например, такой <literal>'echo "Привет!";'</literal>,
+       но не такой <literal>'&lt;? echo "Привет!"; &gt;'</literal>. 
+       Возможно переключатся между режимами PHP и HTML кода, например
+       <literal>'echo "Код PHP!"; ?&gt;Код HTML&lt;? echo "Снова код PHP!";'</literal>.
+      </para>
+      <para>
+       Передаваемый код должен быть верный исполняемым кодом PHP. Это значит, что
+       операторы должны быть разделены точкой с запятой (;).
+       При исполнении строки <literal>'echo "Привет!"'</literal> будет сгенерирована ошибка,
+       а строка <literal>'echo "Привет!";'</literal> будет успешно выполнена.
+      </para>
+      <para>
+       Указание в коде ключевого слова <literal>return</literal> прекращает
+       исполнение кода в строке. 
+      </para>
+      <para>
+       Исполняемый код из строки будет выполняться в области видимости кода, вызвавшего 
+       <function>eval</function>. Таким образом, любык переменные, определенные или измененные кодом, 
+       выполненным <function>eval</function>, будут доступны после его выполнения в теле программы.
       </para>
      </listitem>
     </varlistentry>
