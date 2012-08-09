@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 377cbed58017458cd07b087a70d26624def218a4 Maintainer: aur Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+
+<book xml:id="book.eio" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Eio</title>
+ <titleabbrev>Eio</titleabbrev>
+<!--{{{ preface -->
+ <preface xml:id="intro.eio">
+  &reftitle.intro;
+  <para>
+   Данное расширение реализует подсистему ввода-вывода POSIX I/O by средств <link
+   xlink:href="&url.eio.libeio;">libeio</link> Библиотека C
+   Написана Марком Леманном (Marc Lehmann).
+  </para>
+
+  &note.no-windows.extension;
+
+  <para>
+
+  <warning>
+  <simpara>
+  Следует учесть, что каждый запрос выполняется в отдельном потоке,
+  при этом исполнение запросов непрерывно, а их порядок в очереди исполнения 
+  непредсказуем. Например, нижеприведенный пример кода неверен.
+  </simpara>
+  </warning>
+
+  <example>
+  <title>Пример неправильных запросов</title>
+  <programlisting role="php"><![CDATA[
+<?php
+// Запрос на создание символической ссылки $link на файл $filename
+eio_symlink($filename, $link);
+
+// Запрос на переименование файла $filename в $new_filename
+eio_rename($filename, $new_filename);
+
+// Выполнение запросов
+eio_event_loop();
+?>
+]]>
+   </programlisting>
+   </example>
+
+   В приведенном выше примере запрос <function>eio_rename</function> может быть выполнен
+   перед <function>eio_symlink</function>. Правильным решением будет вызов 
+   <function>eio_rename</function> функцией обратного вызова в <function>eio_symlink</function>
+   (т.н. callback-функции):
+  <example>
+   <title>Создание запроса с использование функции обратного вызова</title>
+   <programlisting role="php"><![CDATA[
+<?php
+function my_symlink_done($filename, $result) {
+ // Запрос на переменование $filename в $new_filename
+ eio_rename($filename, "/path/to/new-name");
+
+ // Выполнение запросов
+ eio_event_loop();
+}
+
+// Запрос на создание символической ссылки $link на файл $filename
+eio_symlink($filename, $link, EIO_PRI_DEFAULT, "my_symlink_done", $filename);
+
+// Выполнение запросов
+eio_event_loop();
+?>
+   ]]>
+   </programlisting>
+  </example>
+
+  Альтернативным решением является создание группы запросов:
+
+  <example>
+   <title>Создание запроса с использование функции обратного вызова</title>
+   <programlisting role="php"><![CDATA[
+<?php
+/* Функция вызывается после выполнения группы запросов */
+function my_grp_done($data, $result) {
+ // ...
+}
+
+function my_symlink_done($filename, $result) {
+ // Создание запроса eio_rename и добавление его в группу
+ $req = eio_rename($filename, "/path/to/new-name");
+ eio_grp_add($grp, $req);
+ // Возможно, вы захотите добавить больше запросов...
+}
+
+// Создание группы запросов
+$grp = eio_grp("my_grp_done", "my_grp_data");
+
+// Создание запроса eio_symlink request и добавление в группу
+// Передача $filename в функцию обратного вызова
+$req = eio_symlink($filename, $link,
+  EIO_PRI_DEFAULT, "my_symlink_done", $filename);
+eio_grp_add($grp, $req);
+
+// Выполнение запросов
+eio_event_loop();
+?>
+]]></programlisting>
+  </example>
+
+  Группа - это специальный вид запроса, позволяющий создать набор обычных
+  <emphasis>eio</emphasis>-запросов. Это может быть использовано для создания
+  сложных запросов, открывающих, читающих и закрывающих файл.
+  </para>
+  <para>
+  Начиная с версии 0.3.0 alpha, переменная, используемая для внутреннего 
+  взаимодействия с libeio, может быть получена функцией
+  <function>eio_get_event_stream</function>. Переменная может быть использована
+  для привязке к циклу обработки, поставляемого сторонним расширением.
+  Возможно организовать простой цикл обработки, где eio и libevent работают совместно.
+  <example>
+   <title>Использование eio совместно с libevent</title>
+   <programlisting role="php"><![CDATA[
+<?php
+function my_eio_poll($fd, $events, $arg) {
+    /* Некоторые действия с libevent могут быть здесь */
+    if (eio_nreqs()) {
+        eio_poll();
+    }
+    /* .. и здесь */
+}
+
+function my_res_cb($d, $r) {
+    var_dump($r); var_dump($d);
+}
+
+$base = event_base_new();
+$event = event_new();
+
+// Этот поток требуется для привязки к libevent
+$fd = eio_get_event_stream();
+
+eio_nop(EIO_PRI_DEFAULT, "my_res_cb", "nop data");
+eio_mkdir("/tmp/abc-eio-temp", 0750, EIO_PRI_DEFAULT, "my_res_cb", "mkdir data");
+/* Прочие eio_* запросы  ... */
+
+
+// Установка флагов события
+event_set($event, $fd, EV_READ /*| EV_PERSIST*/, "my_eio_poll", array($event, $base));
+
+// Установка основы события 
+event_base_set($event, $base);
+
+// Включение события
+event_add($event);
+
+// Запуск цикла обработки
+event_base_loop($base);
+
+/* То же самое доступно через интерфейс буфера libevent */
+?>
+]]></programlisting>
+  </example>
+
+  </para>
+ </preface>
+<!--}}}-->
+ &reference.eio.setup;
+ &reference.eio.constants;
+ &reference.eio.examples;
+ &reference.eio.reference;
+
+</book>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml fdm=marker
+vi: ts=1 sw=1
+-->
