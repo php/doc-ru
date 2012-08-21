@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- EN-Revision: a56106f69198dfe88c6084593c78a71c26b24353 Maintainer: mch Status: ready -->
+<!-- EN-Revision: ef51bbad9554137f7784be22150dc98e51a4300d Maintainer: mch Status: ready -->
 <!-- $Revision$ -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdo.commit" xmlns="http://docbook.org/ns/docbook">
@@ -33,7 +33,41 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
-   <example><title>Фиксация транзакции</title>
+   <example>
+    <title>Фиксация обычной транзакции</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Начало транзакции, отключение автоматической фиксации */
+$dbh->beginTransaction();
+
+/* Вставка множества записей по принципу "все или ничего" */
+$sql = 'INSERT INTO fruit
+    (name, colour, calories)
+    VALUES (?, ?, ?)';
+
+$sth = $dbh->prepare($sql);
+
+foreach ($fruits as $fruit) {
+    $sth->execute(array(
+        $fruit->name,
+        $fruit->colour,
+        $fruit->calories,
+    ));
+}
+
+/* Фиксация изменений */
+$dbh->commit();
+
+/* Соединение с базой данных снова в режиме автоматической фиксации */
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Фиксация DDL-транзакции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -51,6 +85,14 @@ $dbh->commit();
 ]]>
     </programlisting>
    </example>
+   <note>
+    <simpara>
+     Не все базы данных позволяют транзакциям работать с DDL-выражениями:
+     в некоторых генерируются ошибки, тогда как в других (включая MySQL)
+     транзакция автоматически фиксируется после первого встретившегося
+     DDL-выражения.
+    </simpara>
+   </note>
   </para>
  </refsect1>
 
