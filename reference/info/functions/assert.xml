@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: dd9fa0aed7377da913904e3d26d59a22bec69015 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision: $ -->
 <refentry xml:id="function.assert" xmlns="http://docbook.org/ns/docbook">
@@ -15,6 +15,7 @@
   <methodsynopsis>
    <type>bool</type><methodname>assert</methodname>
    <methodparam><type>mixed</type><parameter>assertion</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>description</parameter></methodparam>
   </methodsynopsis>
   <para>
    <function>assert</function> проверит заданное утверждение
@@ -68,7 +69,10 @@
    файл, в котором утверждение не прошло проверку. Второй аргумент отвечает за
    номер строки в этом файле. В третьем аргументе будет передаваться выражение,
    содержащее ошибку (если таких несколько, строковые значение, вроде 1 или "два"
-   не будут передаваться через этот аргумент)
+   не будут передаваться через этот аргумент). Пользователи PHP версий 5.4.8 и
+   выше могут задать четвертый необязательный аргумент
+   <parameter>description</parameter>, который будет также передан в функцию
+   <function>assert</function>.
   </para>
  </refsect1>
 
@@ -84,6 +88,15 @@
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry>
+     <term><parameter>description</parameter></term>
+     <listitem>
+      <para>
+       Дополнительное описание, которое будет включено в сообщение об ошибке,
+       если проверка <parameter>assertion</parameter> завершится неудачей.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>
@@ -94,7 +107,32 @@
    &false; в случае провала проверки, &true; в остальных случаях.
   </para>
  </refsect1>
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.4.8</entry>
+       <entry>
+        Добавлен аргумент <parameter>description</parameter>. Также
+        <parameter>description</parameter> передается четвертым аргументом в
+        callback-функцию в режиме <constant>ASSERT_CALLBACK</constant>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
 
+  </para>
+ </refsect1>
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -127,6 +165,45 @@ assert('mysql_query("")');
 ?>
 ]]>
     </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Использование пользовательского обработчика для вывода описания ошибки</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Активируем утверждение и переводим в тихий режим
+assert_options(ASSERT_ACTIVE, 1);
+assert_options(ASSERT_WARNING, 0);
+assert_options(ASSERT_QUIET_EVAL, 1);
+
+// Создаем обработчик
+function my_assert_handler($file, $line, $code, $desc = null)
+{
+    echo "Проверка завершилась неудачей в $file:$line: $code";
+    if ($desc) {
+        echo ": $desc";
+    }
+    echo "\n";
+}
+
+// Задаем callback-функцию
+assert_options(ASSERT_CALLBACK, 'my_assert_handler');
+
+// Спровоцируем ошибку для проверки
+assert('2 < 1');
+assert('2 < 1', 'Два меньше одного');
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Assertion failed at test.php:21: 2 < 1
+Assertion failed at test.php:22: 2 < 1: Два меньше одного
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
