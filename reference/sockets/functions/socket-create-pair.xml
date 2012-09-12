@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: Countzero Status: ready -->
+<!-- Reviewed: no -->
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.socket-create-pair">
+ <refnamediv>
+  <refname>socket_create_pair</refname>
+  <refpurpose>Создаёт пару неразличимых сокетов и сохраняет их в массиве</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>socket_create_pair</methodname>
+   <methodparam><type>int</type><parameter>domain</parameter></methodparam>
+   <methodparam><type>int</type><parameter>type</parameter></methodparam>
+   <methodparam><type>int</type><parameter>protocol</parameter></methodparam>
+   <methodparam><type>array</type><parameter role="reference">fd</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>socket_create_pair</function> создаёт два соединённых и
+   неразличимых сокета, и сохраняет их в массиве <parameter>fd</parameter>.
+   Эта функция обычно используется IPC (межпроцессном взаимодействии).
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>domain</parameter></term>
+     <listitem>
+      <para>
+       Параметр <parameter>domain</parameter> определяет семейство
+       протоколов, которое будет использоваться сокетом. Смотрите их полный список в описании функции
+       <function>socket_create</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       Параметр <parameter>type</parameter> указывает тип коммуникации, 
+       которая будет использоваться сокетом. Смотрите их полный список в описании функции
+       <function>socket_create</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>protocol</parameter></term>
+     <listitem>
+      <para>
+       Параметр <parameter>protocol</parameter> устанавливает определённый протокол
+       в указанном семействе протоколов <parameter>domain</parameter>, который будет использоваться
+       при связи с полученными сокетами. Соответствующее значение может быть получено по имени
+       при помощи функции <function>getprotobyname</function>. Если
+       требуемый протокол TCP или UDP, то соответствующие константы
+       <constant>SOL_TCP</constant> и <constant>SOL_UDP</constant>
+       также могут быть использованы.
+      </para>
+      <para>
+       Смотрите полный список поддерживаемых протоколов в описании функции
+       <function>socket_create</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>fd</parameter></term>
+     <listitem>
+      <para>
+       Ссылка на массив, в который будут вставлены два ресурса сокетов.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.3.0</entry>
+       <entry>
+        Эта функция теперь вновь доступна на Windows-платформах.
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.0</entry>
+       <entry>
+        Эта функция из-за бага недоступна на Windows-платформах.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>socket_create_pair</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$sockets = array();
+
+/* На Windows нам нужно использовать AF_INET */
+$domain = (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN' ? AF_INET : AF_UNIX);
+
+/* Создаём пару сокетов */
+if (socket_create_pair($domain, SOCK_STREAM, 0, $sockets) === false) {
+    echo "Не получилось выполнить socket_create_pair. Причина: ".socket_strerror(socket_last_error());
+}
+/* Отправляем и получаем данные */
+if (socket_write($sockets[0], "ABCdef123\n", strlen("ABCdef123\n")) === false) {
+    echo "Не получилось выполнить socket_write(). Причина: ".socket_strerror(socket_last_error($sockets[0]));
+}
+if (($data = socket_read($sockets[1], strlen("ABCdef123\n"), PHP_BINARY_READ)) === false) {
+    echo "Не получилось выполнить socket_read(). Причина: ".socket_strerror(socket_last_error($sockets[1]));
+}
+var_dump($data);
+
+/* Закрываем сокеты */
+socket_close($sockets[0]);
+socket_close($sockets[1]);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования <function>socket_create_pair</function> в IPC</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$ary = array();
+$strone = 'Сообщение от родительского процесса.';
+$strtwo = 'Сообщение от дочернего процесса.';
+
+if (socket_create_pair(AF_UNIX, SOCK_STREAM, 0, $ary) === false) {
+    echo "Не получилось выполнить socket_create_pair(). Причина: ".socket_strerror(socket_last_error());
+}
+$pid = pcntl_fork();
+if ($pid == -1) {
+    echo 'Не могу создать новый процесс.';
+} elseif ($pid) {
+    /*родительский процесс*/
+    socket_close($ary[0]);
+    if (socket_write($ary[1], $strone, strlen($strone)) === false) {
+        echo "Не получилось выполнить socket_write(). Причина: ".socket_strerror(socket_last_error($ary[1]));
+    }
+    if (socket_read($ary[1], strlen($strtwo), PHP_BINARY_READ) == $strtwo) {
+        echo "Получено $strtwo\n";
+    }
+    socket_close($ary[1]);
+} else {
+    /*дочерний процесс*/
+    socket_close($ary[1]);
+    if (socket_write($ary[0], $strtwo, strlen($strtwo)) === false) {
+        echo "Не получилось выполнить socket_write(). Причина: ".socket_strerror(socket_last_error($ary[0]));
+    }
+    if (socket_read($ary[0], strlen($strone), PHP_BINARY_READ) == $strone) {
+        echo "Получено $strone\n";
+    }
+    socket_close($ary[0]);
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>socket_create</function></member>
+    <member><function>socket_create_listen</function></member>
+    <member><function>socket_bind</function></member>
+    <member><function>socket_listen</function></member>
+    <member><function>socket_last_error</function></member>
+    <member><function>socket_strerror</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
