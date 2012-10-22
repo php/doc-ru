@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-<!-- EN-Revision: 45bc78be1c290e1f53a5a330652b62e8d00a484c Maintainer: tmn Status: ready -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EN-Revision: 1d410ffe5d0a83520500e29192d7842424c4d823 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
-<!-- $Revision: $ -->
+<!-- $Revision$ -->
 <refentry xml:id="pdostatement.execute" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PDOStatement::execute</refname>
@@ -152,7 +152,6 @@ $sth->execute(array($calories, $colour));
    </programlisting>
   </example>
 
-
   <example>
    <title>
     Выполнение подготовленного запроса с привязкой значений к неименованным
@@ -170,6 +169,33 @@ $sth = $dbh->prepare('SELECT name, colour, calories
 $sth->bindParam(1, $calories, PDO::PARAM_INT);
 $sth->bindParam(2, $colour, PDO::PARAM_STR, 12);
 $sth->execute();
+?>
+]]>
+   </programlisting>
+  </example>
+  
+   <example>
+    <title>
+     Выполнение подготовленного запроса с использованием
+     массива для IN выражения
+    </title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+/* Выполнение подготовленного запроса с использованием массива для IN выражения */
+$params = array(1, 21, 63, 171);
+/* Создаем строку из знаков вопроса (?) в количестве равном количеству параметров */
+$place_holders = implode(',', array_fill(0, count($params), '?'));
+
+/*
+    В этом примере подготавливается запрос с достаточным количеством неименованных
+    псевдопеременных (?) для каждого значения из массива $params. Когда запрос будет
+    выполняться, эти знаки вопроса будут заменены на элементы массива. Это не то же
+    самое, что использовать PDOStatement::bindParam(), где привязка осуществлялась по
+    ссылке на переменную. PDOStatement::execute() связывает параметры по значению.
+*/
+$sth = $dbh->prepare("SELECT id, name FROM contacts WHERE id IN ($place_holders)");
+$sth->execute($params);
 ?>
 ]]>
    </programlisting>
