@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: d316f465df3ecaf4fe09440a05c261553c27d12d Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+<refentry xml:id="mysqli-stmt.prepare" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>mysqli_stmt::prepare</refname>
+  <refname>mysqli_stmt_prepare</refname>
+  <refpurpose>
+   Подготовка SQL запроса к выполнению
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <para>&style.oop;</para>
+  <methodsynopsis role="oop">
+   <type>mixed</type><methodname>mysqli_stmt::prepare</methodname>
+   <methodparam><type>string</type><parameter>query</parameter></methodparam>
+  </methodsynopsis>
+  <para>&style.procedural;</para>
+  <methodsynopsis>
+   <type>bool</type><methodname>mysqli_stmt_prepare</methodname>
+   <methodparam><type>mysqli_stmt</type><parameter>stmt</parameter></methodparam>
+   <methodparam><type>string</type><parameter>query</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Подготавливает SQL запрос переданный в виде строки с завершающим нулем.
+  </para>
+  <para>
+   Метки параметров должны быть связаны с переменными приложения функциями
+   <function>mysqli_stmt_bind_param</function> и/или
+   <function>mysqli_stmt_bind_result</function> до запуска запроса или выборки
+   строк.
+  </para>
+  <note>
+   <para>
+    В случае, если длина выражения, которое вы передаете в
+    <function>mysqli_stmt_prepare</function>, больше, чем
+    <literal>max_allowed_packet</literal> сервера, возвращаемые коды ошибки могут
+    различаться в зависимости от используемого драйвера. А это может быть либо
+    родной MySQL драйвер (<literal>mysqlnd</literal>), либо клиентская библиотека
+    MySQL (<literal>libmysql</literal>). Поведение функции будет следующим:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>mysqlnd</literal> на платформе Linux возвращает код ошибки 1153.
+      Сообщение об ошибке означает <quote>размер пакета превышает
+      <literal>max_allowed_packet</literal> байт</quote>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>mysqlnd</literal> на платформе Windows возвращает код ошибки 2006.
+      Это сообщение об ошибке означает <quote>сервер недоступен</quote>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>libmysql</literal> на всех платформах возвращает код ошибки 2006.
+      Это сообщение об ошибке означает <quote>сервер недоступен</quote>.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </note>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    &mysqli.stmt.description;
+    <varlistentry>
+     <term><parameter>query</parameter></term>
+     <listitem>
+      <para>
+       Текст запроса в виде строки. Запрос должен состоять из одного SQL выражения.
+      </para>
+      <para>
+       Запрос может содержать одну или несколько меток параметров SQL
+       запроса. Эти метки можно добавить путем встраивания знаков вопроса
+       (<literal>?</literal>) в места выражения, где требуется подставлять
+       параметры.
+      </para>
+      <note>
+       <para>
+        Нет необходимости в завершающей точке с запятой или символе
+        <literal>\g</literal> в конце выражения.
+       </para>
+      </note>
+      <note>
+       <para>
+        Метки параметров запроса можно встраивать только в определенные места в
+        выражении. Например, они допустимы в списке VALUES() выражения
+        INSERT (чтобы задать значения столбцов для строки),
+        или в операциях сравнения предложения 
+        WHERE для задания сравниваемого значения.
+       </para>
+       <para>
+        Однако, эти метки недопустимы в качестве идентификаторов (таких как
+        имена столбцов или таблиц), а также в списке псевдонимов столбцов
+        предложения SELECT. Нельзя также использовать параметры
+        для задания обоих операндов бинарного оператора (например, знак
+        равенства <literal>=</literal>). Последнее ограничение необходимо, так как
+        в противном случае невозможно будет определить тип операндов. В основном,
+        параметры допустимы в выражениях языка манипулирования данными (DML),
+        и недопустимы в выражениях языка определения данных (DDL).
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>&style.oop;</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+
+/* Проверяем соединение */
+if (mysqli_connect_errno()) {
+    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+    exit();
+}
+
+$city = "Amersfoort";
+
+/* создаем подготавливаемый запрос */
+$stmt =  $mysqli->stmt_init();
+if ($stmt->prepare("SELECT District FROM City WHERE Name=?")) {
+
+    /* привязываем переменные к параметрам */
+    $stmt->bind_param("s", $city);
+
+    /* выполняем запрос */
+    $stmt->execute();
+
+    /* привязываем результаты к переменным */
+    $stmt->bind_result($district);
+
+    /* выбираем данные из результата */
+    $stmt->fetch();
+
+    printf("%s находится в округе %s\n", $city, $district);
+
+    /* закрываем запрос */
+    $stmt->close();
+}
+
+/* закрываем соединение */
+$mysqli->close();
+?>
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>&style.procedural;</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
+
+/* Проверяем соединение */
+if (mysqli_connect_errno()) {
+    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+    exit();
+}
+
+$city = "Amersfoort";
+
+/* создаем подготавливаемый запрос */
+$stmt = mysqli_stmt_init($link);
+if (mysqli_stmt_prepare($stmt, 'SELECT District FROM City WHERE Name=?')) {
+
+    /* привязываем переменные к параметрам */
+    mysqli_stmt_bind_param($stmt, "s", $city);
+
+    /* выполняем запрос */
+    mysqli_stmt_execute($stmt);
+
+    /* привязываем результаты к переменным */
+    mysqli_stmt_bind_result($stmt, $district);
+
+    /* выбираем данные из результата */
+    mysqli_stmt_fetch($stmt);
+
+    printf("%s находится в округе %s\n", $city, $district);
+
+    /* закрываем запрос */
+    mysqli_stmt_close($stmt);
+}
+
+/* закрываем соединение */
+mysqli_close($link);
+?>
+]]>
+   </programlisting>
+   &examples.outputs;
+   <screen>
+<![CDATA[
+Amersfoort находится в округе Utrecht
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>mysqli_stmt_init</function></member>
+    <member><function>mysqli_stmt_execute</function></member>
+    <member><function>mysqli_stmt_fetch</function></member>
+    <member><function>mysqli_stmt_bind_param</function></member>
+    <member><function>mysqli_stmt_bind_result</function></member>
+    <member><function>mysqli_stmt_close</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
