@@ -1,0 +1,1845 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 68869c48399c84a2329bd7628104ea98587c387b Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+<chapter xml:id="mysqli.quickstart" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Краткое руководство</title>
+ <para>
+  Данное практическое руководство поможет освоить основные моменты API-интерфейса
+  MySQL сервера.
+ </para>
+ <para>
+  В этом руководстве приводится краткий обзор расширения mysqli. Для всех основных
+  особенностей API-интерфейса приведены примеры PHP кода. Также объясняются
+  принципы работы баз данных в целом, чтобы иметь возможность описать какие-то
+  отдельные моменты, присущие конкретно MySQL.
+ </para>
+ <para>
+  Требования: Знакомство с языком программирования PHP, SQL, а также знание основ
+  работы с MySQL сервером.
+ </para>
+ <section xml:id="mysqli.quickstart.dual-interface">
+  <title>Процедурный и объектно-ориентированный интерфейс</title>
+  <para>
+   Расширение mysqli предоставляет двойной интерфейс программисту. Поддерживаются
+   как процедурная, так и объектно-ориентированная парадигмы программирования.
+  </para>
+  <para>
+   Пользователи, переходящие со старого mysql расширения, возможно, предпочтут
+   процедурный интерфейс. Он весьма схож с интерфейсом страрого расширения, и во
+   многих случаях функции отличаются только префиксом в имени. Некоторые mysqli
+   функции принимают дескриптор соединения первым аргументом, в отличие от
+   соответствующих им функций старого расширения, которые принимают его в качестве
+   последнего необязательного аргумента.
+  </para>
+  <para>
+   <example>
+    <title>Простота перехода со старого mysql расширения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = mysqli_connect("example.com", "user", "password", "database");
+$res = mysqli_query($mysqli, "SELECT 'Пожалуйста, не используюте ' AS _msg FROM DUAL");
+$row = mysqli_fetch_assoc($res);
+echo $row['_msg'];
+
+$mysql = mysql_connect("localhost", "root", "");
+mysql_select_db("test");
+$res = mysql_query("SELECT 'расширение mysql в новых проектах.' AS _msg FROM DUAL", $mysql);
+$row = mysql_fetch_assoc($res);
+echo $row['_msg'];
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Пожалуйста, не используюте the расширение mysql в новых проектах.
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Объектно-ориентированный интерфейс</emphasis>
+  </para>
+  <para>
+   В дополнение к процедурному пользователи могут использовать
+   объектно-ориентированный интерфейс. Документация заточена именно под 
+   объектный интерфейс. Объектно-ориентированный интерфейс предлагает функции
+   сгруппированные по цели их применения, что облегчает их поиск и освоение. Тем
+   не менее, в практических примерах к функциям приводится код для обеих парадигм.
+  </para>
+  <para>
+   Каких-либо принципиальных отличий в производительности между интерфейсами нет.
+   Пользователи вольны в выборе интерфейса, основываясь на личных предпочтениях.
+  </para>
+  <para>
+   <example>
+    <title>Объектно-ориентированный и процедурный интерфейсы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = mysqli_connect("example.com", "user", "password", "database");
+if (mysqli_connect_errno($mysqli)) {
+    echo "Не удалось подключиться к MySQL: " . mysqli_connect_error();
+}
+
+$res = mysqli_query($mysqli, "SELECT 'A world full of ' AS _msg FROM DUAL");
+$row = mysqli_fetch_assoc($res);
+echo $row['_msg'];
+
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: " . $mysqli->connect_error;
+}
+
+$res = $mysqli->query("SELECT 'choices to please everybody.' AS _msg FROM DUAL");
+$row = $res->fetch_assoc();
+echo $row['_msg'];
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+A world full of choices to please everybody.
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Примеры в этом руководстве будут написаны в объектном стиле в виду того, что
+   объектному подходу отдавалось предпочтение при создании документации.
+  </para>
+  <para>
+   <emphasis role="bold">Смешивание стилей</emphasis>
+  </para>
+  <para>
+   Переключаться между стилями программирования можно сколь угодно часто и в любое
+   время, однако делать этого не рекомендуется, так как это ухужшает читаемость
+   кода и затрудняет его поддержку.
+  </para>
+  <para>
+   <example>
+    <title>Плохой стиль программирования</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: " . $mysqli->connect_error;
+}
+
+$res = mysqli_query($mysqli, "SELECT 'Этот код работает, но лучше так не писать.' AS _msg FROM DUAL");
+if (!$res) {
+    echo "Не удалось выполнить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if ($row = $res->fetch_assoc()) {
+    echo $row['_msg'];
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Этот код работает, но лучше так не писать.
+]]>
+    </screen>
+    </example>
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::__construct</methodname></member>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli_result::fetch_assoc</methodname></member>
+    <member><link linkend="mysqli.connect-errno">$mysqli::connect_errno</link></member>
+    <member><link linkend="mysqli.connect-error">$mysqli::connect_error</link></member>
+    <member><link linkend="mysqli.errno">$mysqli::errno</link></member>
+    <member><link linkend="mysqli.error">$mysqli::error</link></member>
+    <member><link linkend="mysqli.summary">Общее описание функций расширения MySQLi</link></member>
+   </simplelist>
+  </para>
+ </section>
+ 
+ <section xml:id="mysqli.quickstart.connections">
+  <title>Соединения</title>
+  <para>
+   Сервер MySQL поддерживает различные способы передачи данных. Соединения могут
+   использовать TCP/IP протоколы, сокеты Unix доменов или именованные пайпы
+   Windows.
+  </para>
+  <para>
+   Имя хоста <literal>localhost</literal> имеет специальное назначение. Оно
+   используется только в сокетах Unix доменов. Невозможно открыть TCP/IP соединение,
+   используя в качестве имени хоста <literal>localhost</literal>. Вместо него нужно
+   задать <literal>127.0.0.1</literal>.
+  </para>
+  <para>
+   <example>
+    <title>Специальное назначение localhost</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("localhost", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+echo $mysqli->host_info . "\n";
+
+$mysqli = new mysqli("127.0.0.1", "user", "password", "database", 3306);
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+echo $mysqli->host_info . "\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Localhost via UNIX socket
+127.0.0.1 via TCP/IP
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Умолчания для параметров соединений</emphasis>
+  </para>
+  <para>
+   В зависимости от функции, осуществляющей подключение, какие-то параметры можно
+   не задавать. Если параметр не задан, расширение попытается использовать
+   значение по умолчанию для этого параметра, которое задано в конфигурационном
+   файле PHP.
+  </para>
+  <para>
+   <example>
+    <title>Задание значений по умолчанию</title>
+    <programlisting role="ini">
+<![CDATA[
+mysqli.default_host=192.168.2.27
+mysqli.default_user=root
+mysqli.default_pw=""
+mysqli.default_port=3306
+mysqli.default_socket=/tmp/mysql.sock
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Далее, чтобы установить соединение, функция передает параметры в клиентскую
+   билиотеку, которой пользуется расширение. Если библиотека обнаружит пустые или
+   отсутствующие параметры, она может подставить вместо них свои встроенные
+   значения по умолчанию.
+  </para>
+  <para>
+   <emphasis role="bold">
+    Встроенные библиотечные умолчания для параметров соединения
+   </emphasis>
+  </para>
+  <para>
+   Если имя хоста не задано или передана пустая строка, клиентская библиотека
+   использует для подключения к Unix сокету хоста <literal>localhost</literal>.
+   Если сокет не задан или передана пустая строка, и при этом запрошено
+   подключение к Unix сокету, библиотека попытается подключиться к сокету
+   <literal>/tmp/mysql.sock</literal>.
+  </para>
+  <para>
+   В Windows системах, если в качестве имени хоста передается <literal>.</literal>,
+   библиотека попытается открыть соединение на основе именованного пайпа. В этом
+   случае имя сокета будет воспринято, как имя пайпа. Если имя сокета не задано, то
+   будет использовано значение <literal>\\.\pipe\MySQL</literal>.
+  </para>
+  <para>
+   Если соединение не использует ни сокет Unix домена, ни именованный пайп Windows,
+   и при этом не задан порт для подключения, библиотека использует номер порта
+   <literal>3306</literal>.
+  </para>
+  <para>
+   В драйвере <link linkend="mysqlnd.overview">mysqlnd</link> и Клиентской
+   библиотеке MySQL (libmysql) заложена та же логика определения умолчаний.
+  </para>
+  <para>
+   <emphasis role="bold">Настройки соединения</emphasis>
+  </para>
+  <para>
+   Настройки соединения позволяют, например, задать какие-то команды, которые
+   нужно выполнить сразу после подключения, или отдать распоряжение использовать
+   определенный набор символов. Настройки должны быть заданы до подключения к
+   серверу.
+  </para>
+  <para>
+   Когда требуется задать настройки соединения, операция подключения выполняется 
+   в три этапа: функцией <function>mysqli_init</function> создается дескриптор
+   подключения, затем подключение настраивается с помощью функции
+   <function>mysqli_options</function>, и наконец устанавливается сетевое
+   соединение с сервером посредством фукнции
+   <function>mysqli_real_connect</function>.
+  </para>
+  <para>
+   <emphasis role="bold">Объединение подключений в пул</emphasis>
+  </para>
+  <para>
+   Расширение mysqli поддерживает постоянные соединения с базой данных, которые
+   представляют из себя специальный вид объединяемых соединений. По умолчанию,
+   каждое открытое скриптом соединение закрывается либо самим скриптом в ходе
+   выполнения, либо автоматически по завершении работы скрипта. Постоянные
+   соединения отличаются тем, что не закрываются, а помещаются в пул для
+   повторного использования в дальнейшем. Если требуется подключиться к тому
+   же серверу и базе данных, с тем же именем пользователя, паролем, сокетом и
+   портом, то вместо создания нового подключения из пула извлекается уже
+   существующее. Повторное использование подключений позволяет избежать
+   накладных расходов на создание новых соединений.
+  </para>
+  <para>
+   Каждый PHP процесс использует свой пул подключений mysqli. В зависимости от
+   конфигурации веб-сервера, PHP процесс может обслуживать один или несколько
+   запросов. Соответственно, соединение из пула могут последовательно использовать
+   несколько скриптов.
+  </para>
+  <para>
+   <emphasis role="bold">Постоянное соединение</emphasis>
+  </para>
+  <para>
+   Новое подключение создается, только если в пуле не найдется свободного
+   подключения с теми же данными хоста, имени пользователя, пароля, сокета, порта
+   и базы данных по умолчанию. Механизм постоянных соединений можно включать
+   и выключать PHP директивой <link
+   linkend="ini.mysqli.allow-persistent">mysqli.allow_persistent</link>.
+   Максимальное количество соединений, которые может открыть скрипт, ограничено
+   значением <link linkend="ini.mysqli.max-links">mysqli.max_links</link>.
+   Максимальное количество соединений, которые может открыть один PHP процесс,
+   ограничено значением <link
+   linkend="ini.mysqli.max-persistent">mysqli.max_persistent</link>. Следует
+   заметить, что веб-сервер может порождать множество PHP процессов.
+  </para>
+  <para>
+   Главный недостаток постоянных подключений заключается в том, что перед
+   повторным использованием их состояние не сбрасывается к изначальному. Например,
+   открытые и незавершенные транзакции не будут автоматически откатываться. Также,
+   если во время нахождения соединения в пуле для процесса изменились
+   какие-либо разрешения или уровни доступа, этот факт никак не отразится на
+   подключении при его извлечении из пула. Такое поведение может привести к
+   нежелательным результатам. Хотя, с другой стороны, название
+   <literal>постоянный</literal> можно рассматривать, как обещание, что подключение
+   и правда останется в том состоянии, в котором оно было помещено в пул.
+  </para>
+  <para>
+   Расширение mysqli поддерживает обе интерпретации термина постоянное соединение:
+   состояние соединения может сохраняться, а может и сбрасываться в изначальное.
+   По умолчанию, при извлечении из пула соединение сбрасывается. mysqli делает
+   это неявным вызовом функции <function>mysqli_change_user</function> каждый раз,
+   когда подключение используется повторно. С точки зрения пользователя подключение
+   выглядит, как только что созданное.
+  </para>
+  <para>
+   Однако, вызов функции <function>mysqli_change_user</function> довольно
+   дорогостоящая операция. Для улучшения быстродействия можно перекомпилировать
+   расширение с установленным флагом
+   <constant>MYSQLI_NO_CHANGE_USER_ON_PCONNECT</constant>.
+  </para>
+  <para>
+   Выбор между безопасным поведением подключений и наилучшим быстродействием
+   остается за пользователем. Здесь нельзя дать однозначного совета. Для простоты
+   использования, по умолчанию включен безопасный режим с очисткой соединений.
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::__construct</methodname></member>
+    <member><methodname>mysqli::init</methodname></member>
+    <member><methodname>mysqli::options</methodname></member>
+    <member><methodname>mysqli::real_connect</methodname></member>
+    <member><methodname>mysqli::change_user</methodname></member>
+    <member><link linkend="mysqli.get-host-info">$mysqli::host_info</link></member>
+    <member><link linkend="mysqli.configuration">Настройки конфигурации MySQLi</link></member>
+    <member><link linkend="features.persistent-connections">Постоянные соединения с базами данных</link></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.statements">
+  <title>Выполнение запросов</title>
+  <para>
+   За выполнение запросов отвечают функции
+   <function>mysqli_query</function>, <function>mysqli_real_query</function>
+   и <function>mysqli_multi_query</function>. Чаще всего
+   применяется функция <function>mysqli_query</function>, так как она выполняет
+   сразу две задачи: выполняет запрос и буферизует на клиенте результат этого
+   запроса (если он есть). Вызов <function>mysqli_query</function> идентичен
+   последовательному вызову функций <function>mysqli_real_query</function> и
+   <function>mysqli_store_result</function>.
+  </para>
+  <para>
+   Функция <function>mysqli_multi_query</function> предназначена для выполнения
+   множественных или мультизапросов, когда текст запроса состоит из нескольких
+   выражений SQL.
+  </para>
+  <para>
+   <example>
+    <title>Плохой стиль программирования</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT)") ||
+    !$mysqli->query("INSERT INTO test(id) VALUES (1)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Буферизация результатов запроса</emphasis>
+  </para>
+  <para>
+   После выполнения запроса его результаты можно целиком буферизовать на клиенте,
+   либо читать построчно с сервера. Буферизация на клиенте позволяет серверу
+   как можно быстрее освобождать занятые запросом ресурсы. Построчное же чтение
+   и дальнейшая обработка результатов клиентом довольно медленный процесс. Поэтому
+   рекомендуется использовать буферизацию результирующих наборов. Функция
+   <function>mysqli_query</function> совмещает в себе операции выполнения запроса
+   и буферизации результирующего набора.
+  </para>
+  <para>
+   PHP приложения могут свободно оперировать данными внутри буферизованных
+   результирующих наборов. Быстрая навигация по строкам наборов обусловлена тем,
+   что наборы полностью располагаются в памяти клиента. Следует помнить, что
+   зачастую обработка результатов на клиенте проще, нежели средствами сервера.
+  </para>
+  <para>
+   <example>
+    <title>Навигация по строкам буферизованной результирующей таблицы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT)") ||
+    !$mysqli->query("INSERT INTO test(id) VALUES (1), (2), (3)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$res = $mysqli->query("SELECT id FROM test ORDER BY id ASC");
+
+echo "Обратный порядок...\n";
+for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+    $res->data_seek($row_no);
+    $row = $res->fetch_assoc();
+    echo " id = " . $row['id'] . "\n";
+}
+
+echo "Исходный порядок строк...\n";
+$res->data_seek(0);
+while ($row = $res->fetch_assoc()) {
+    echo " id = " . $row['id'] . "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Обратный порядок...
+ id = 3
+ id = 2
+ id = 1
+Исходный порядок строк...
+ id = 1
+ id = 2
+ id = 3
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Небуферизуемые результирующие наборы</emphasis>
+  </para>
+  <para>
+   Если клиентские ресурсы ограничены, и в тоже время не требуется поддерживать
+   низкую нагрузку на сервер, можно исользовать небуферизованные результирующие
+   наборы. Навигация по таким таблицам невозможна, потому что так или иначе должны
+   быть обработаны все строки набора.
+  </para>
+  <para>
+   <example>
+    <title>Навигация по строкам небуферизованной результирующей таблицы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli->real_query("SELECT id FROM test ORDER BY id ASC");
+$res = $mysqli->use_result();
+
+echo "Порядок строк в результирующем наборе...\n";
+while ($row = $res->fetch_assoc()) {
+    echo " id = " . $row['id'] . "\n";
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Типы данных значений в результирующем наборе</emphasis>
+  </para>
+  <para>
+   Функции <function>mysqli_query</function>,
+   <function>mysqli_real_query</function> и <function>mysqli_multi_query</function>
+   предназначены для выполнения неподготавливаемых запросов. На уровне протокола
+   клиент-серверного взаимодействия MySQL за выполнение запросов отвечают команда
+   <literal>COM_QUERY</literal> и текстовый протокол. Когда используется текстовый
+   протокол, сервер MySQL перед отправкой клиенту преобразует все данные в
+   результирующем наборе в текстовые строки. Это преобразование выполняется вне
+   зависимости от типа данных SQL столбца результирующей таблицы. Клиентские
+   библиотеки mysql, в свою очередь, получают все данные, принимая их за строки.
+   На клиенте не проводится никакого обратного преобразования к исходным типам, все
+   данные, полученные приложением остаются PHP строками.
+  </para>
+  <para>
+   <example>
+    <title>Текстовый протокол по умолчанию возвращает строки</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$res = $mysqli->query("SELECT id, label FROM test WHERE id = 1");
+$row = $res->fetch_assoc();
+
+printf("id = %s (%s)\n", $row['id'], gettype($row['id']));
+printf("label = %s (%s)\n", $row['label'], gettype($row['label']));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+id = 1 (string)
+label = a (string)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Если используется библиотека mysqlnd, можно включить преобразование
+   целочисленных значений и чисел с плавающей запятой из столбцов таблицы в
+   PHP числа. Делается это заданием настройки подключения
+   <constant>MYSQLI_OPT_INT_AND_FLOAT_NATIVE</constant>. В таком случае mysqlnd
+   будет проверять метаданные столбцов и преобразовывать SQL числа этих полей в
+   PHP числа, если эти значения не выходят за рамки допустимых диапазонов
+   типов данных PHP. То есть, например, SQL INT число попадет в PHP
+   приложение в виде целого (integer).
+  </para>
+  <para>
+   <example>
+    <title>Получение исходных типов данных в приложении</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = mysqli_init();
+$mysqli->options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
+$mysqli->real_connect("example.com", "user", "password", "database");
+
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$res = $mysqli->query("SELECT id, label FROM test WHERE id = 1");
+$row = $res->fetch_assoc();
+
+printf("id = %s (%s)\n", $row['id'], gettype($row['id']));
+printf("label = %s (%s)\n", $row['label'], gettype($row['label']));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+id = 1 (integer)
+label = a (string)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::__construct</methodname></member>
+    <member><methodname>mysqli::init</methodname></member>
+    <member><methodname>mysqli::options</methodname></member>
+    <member><methodname>mysqli::real_connect</methodname></member>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli::multi_query</methodname></member>
+    <member><methodname>mysqli::use_result</methodname></member>
+    <member><methodname>mysqli::store_result</methodname></member>
+    <member><methodname>mysqli_result::free</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.prepared-statements">
+  <title>Подготавливаемые запросы</title>
+  <para>
+   СУБД MySQL поддерживает подготавливаемые запросы. Подготавливаемые (или
+   параметризованные) запросы используются для повышения эффективности, когда
+   один запрос выполняется многократно.
+  </para>
+  <para>
+   <emphasis role="bold">Принцип работы</emphasis>
+  </para>
+  <para>
+   Выполнение подготавливаемого запроса проводится в два этапа: подготовка и
+   исполнение. На этапе подготовки на сервер посылается шаблон запроса. Сервер
+   выполняет синтаксическую проверку этого шаблона, строит план выполнения запроса
+   и выделяет под него ресурсы.
+  </para>
+  <para>
+   MySQL сервер поддерживает неименованные, или позиционные, псевдопеременные
+   <literal>?</literal>.
+  </para>
+  <para>
+   <example>
+    <title>Первый этап: подготовка</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+/* обычный запрос */
+if (!$mysqli->query("DROP TABLE IF EXISTS test") || !$mysqli->query("CREATE TABLE test(id INT)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+/* подготавливаемый запрос, первая стадия: подготовка */
+if (!($stmt = $mysqli->prepare("INSERT INTO test(id) VALUES (?)"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   За подготовкой идет выполнение. Во время запуска запроса клиент привязывает
+   к псевдопеременным реальные значения и посылает их на сервер. Сервер, в свою
+   очередь, подставляет их в шаблон и запускает уже готовый запрос на выполнение.
+  </para>
+  <para>
+   <example>
+    <title>Второй этап: привязка параметров и выполнение</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* подготавливаемый запрос, вторая стадия: привязка и выполнение */
+$id = 1;
+if (!$stmt->bind_param("i", $id)) {
+    echo "Не удалось привязать параметры: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+if (!$stmt->execute()) {
+    echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Повторное выполнение запроса</emphasis>
+  </para>
+  <para>
+   Подготовленный запрос можно запускать многократно. Перед каждым запуском
+   значения привязанных переменных будут передаваться на сервер и подставляться
+   в текст запроса. Сам текст запроса повторно не анализируется, равно как и не
+   отсылается повторно шаблон.
+  </para>
+  <para>
+   <example>
+    <title>Выражение INSERT один раз подготавливается, а затем многократно выполняется</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+/* обычный запрос */
+if (!$mysqli->query("DROP TABLE IF EXISTS test") || !$mysqli->query("CREATE TABLE test(id INT)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+/* подготавливаемый запрос, первая стадия: подготовка */
+if (!($stmt = $mysqli->prepare("INSERT INTO test(id) VALUES (?)"))) {
+     echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+/* подготавливаемый запрос, вторая стадия: привязка и выполнение */
+$id = 1;
+if (!$stmt->bind_param("i", $id)) {
+    echo "Не удалось привязать параметры: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+if (!$stmt->execute()) {
+    echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+/* подготавливаемый запрос: повторные выполнения, на сервер передаются только значения переменных */
+for ($id = 2; $id < 5; $id++) {
+    if (!$stmt->execute()) {
+        echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+    }
+}
+
+/* рекомендуется явно закрывать запросы */
+$stmt->close();
+
+/* обычный запрос */
+$res = $mysqli->query("SELECT id FROM test");
+var_dump($res->fetch_all());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(4) {
+  [0]=>
+  array(1) {
+    [0]=>
+    string(1) "1"
+  }
+  [1]=>
+  array(1) {
+    [0]=>
+    string(1) "2"
+  }
+  [2]=>
+  array(1) {
+    [0]=>
+    string(1) "3"
+  }
+  [3]=>
+  array(1) {
+    [0]=>
+    string(1) "4"
+  }
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Каждый подготавливаемый запрос использует ресурсы сервера. Если запрос больше
+   не нужен, его необходимо сразу закрыть. Если не сделать этого явно, запрос
+   закроется сам, но только когда PHP освободит его дескриптор, как правило это
+   происходит при выходе запроса из области видимости или при завершении работы
+   скрипта.
+  </para>
+  <para>
+   Использование подготавливаемых запросов не всегда приводит к повышению
+   эффективности. Если параметризованный запрос запускается лишь раз, это приводит
+   к большему количеству клиент-серверных обменов данными, нежели при выполнении
+   простого запроса. Именно по этой причине в примере выше выражение
+   <literal>SELECT</literal> выполнялось, как обычный запрос.
+  </para>
+  <para>
+   Также, имеет смысл рассмотреть SQL синтаксис вставки множества значений в
+   выражении INSERT. В примере выше мультивставка (значения для вставки
+   перечисляются через запятую) в предложении INSERT обошлась бы дешевле,
+   чем подготовленный запрос.
+  </para>
+  <para>
+   <example>
+    <title>Меньше обменов данными при использовании мультивставок SQL</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+if (!$mysqli->query("INSERT INTO test(id) VALUES (1), (2), (3), (4)")) {
+    echo "Не удалось выполнить множественную вставку: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Типы данных значений в результирующей таблице</emphasis>
+  </para>
+  <para>
+   В протоколе клиент-серверного взаимодействия MySQL для обычных и
+   подготавливаемых запросово пределены разные протоколы передачи данных клиенту.
+   Параметризованные запросы используют так называемый двоичный протокол. Сервер
+   MySQL посылает результирующий набор клиенту "как есть" в двоичном формате.
+   Данные в таблице не преобразуются в текст. Соответственно, клиентские библиотеки,
+   получив двоичные данные, пытаются привести их к подходящим типам данных PHP.
+   Например, столбец результатов запроса типа SQL <literal>INT</literal> PHP примет
+   и преобразует в тип integer.
+  </para>
+  <para>
+   <example>
+    <title>Исходные типы данных</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$stmt = $mysqli->prepare("SELECT id, label FROM test WHERE id = 1");
+$stmt->execute();
+$res = $stmt->get_result();
+$row = $res->fetch_assoc();
+
+printf("id = %s (%s)\n", $row['id'], gettype($row['id']));
+printf("label = %s (%s)\n", $row['label'], gettype($row['label']));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+id = 1 (integer)
+label = a (string)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Такое поведение не характерно для обычных запросов, которые по умолчанию
+   все результаты возвращают в виде текстовых строк. Это умолчание можно изменить,
+   настроив соединение соответствующим образом. После такой настройки разницы
+   между данными подготавливаемого и обычного запросов уже не будет.
+  </para>
+  <para>
+   <emphasis role="bold">Получение результатов запроса с привязкой переменных</emphasis>
+  </para>
+  <para>
+   Результаты из подготовленного запроса можно получить либо привязав выходные
+   переменные, либо запросив объект <classname>mysqli_result</classname>.
+  </para>
+  <para>
+   Выходные параметры нужно привязывать после выполнения запроса. Каждому столбцу
+   результирующей таблицы должна соответствовать ровно одна переменная.
+  </para>
+  <para>
+   <example>
+    <title>Привязка переменных к результату запроса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($stmt = $mysqli->prepare("SELECT id, label FROM test"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$stmt->execute()) {
+    echo "Не удалось выполнить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$out_id    = NULL;
+$out_label = NULL;
+if (!$stmt->bind_result($out_id, $out_label)) {
+    echo "Не удалось привязать выходные параметры: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+while ($stmt->fetch()) {
+    printf("id = %s (%s), label = %s (%s)\n", $out_id, gettype($out_id), $out_label, gettype($out_label));
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+id = 1 (integer), label = a (string)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Объекты подготавливаемых запросов по умолчанию возвращают небуферизованные
+   результирующие наборы. Эти таблицы никаким неявным образом не переносятся
+   на клиента, они остаются на сервере, занимая его ресурсы, пока клиентский
+   процесс самостоятельно не извлечет все данные. Если клиент не может извлечь
+   данные результирующего набора, или после закрытия объекта запроса остаются
+   невыбранными какие-то данные, то на <literal>mysqli</literal> ложится
+   ответственность неявно подчистить этот мусор за клиентским процессом.
+  </para>
+  <para>
+   Также можно буферизовать данные результирующих таблиц подготовленного запроса
+   с помощью функции <function>mysqli_stmt_store_result</function>.
+  </para>
+  <para>
+   <emphasis role="bold">
+    Извлечение результатов запроса посредством mysqli_result интерфейса
+   </emphasis>
+  </para>
+  <para>
+   Вместо использования привязки переменных к результатам запроса, результирующие
+   таблицы можно извлекать средствами mysqli_result интерфейса. Функция
+   <function>mysqli_stmt_get_result</function> возвращает буферизованный
+   результирующий набор строк.
+  </para>
+  <para>
+   <example>
+    <title>Использование mysqli_result для выборки результатов запроса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($stmt = $mysqli->prepare("SELECT id, label FROM test ORDER BY id ASC"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$stmt->execute()) {
+     echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+if (!($res = $stmt->get_result())) {
+    echo "Не удалось получить результат: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+var_dump($res->fetch_all());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(1) {
+  [0]=>
+  array(2) {
+    [0]=>
+    int(1)
+    [1]=>
+    string(1) "a"
+  }
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Использование <classname>mysqli_result interface</classname> имеет
+   дополнительное преимущество в том, что буферизация результирующих таблиц на
+   клиенте предлагает гибкую систему навигации по этим таблицам.
+  </para>
+  <para>
+   <example>
+    <title>Буферизация результирующего набора для удобства чтения данных</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT, label CHAR(1))") ||
+    !$mysqli->query("INSERT INTO test(id, label) VALUES (1, 'a'), (2, 'b'), (3, 'c')")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($stmt = $mysqli->prepare("SELECT id, label FROM test"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$stmt->execute()) {
+     echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+if (!($res = $stmt->get_result())) {
+    echo "Не удалось получить результат: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+for ($row_no = ($res->num_rows - 1); $row_no >= 0; $row_no--) {
+    $res->data_seek($row_no);
+    var_dump($res->fetch_assoc());
+}
+$res->close();
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(2) {
+  ["id"]=>
+  int(3)
+  ["label"]=>
+  string(1) "c"
+}
+array(2) {
+  ["id"]=>
+  int(2)
+  ["label"]=>
+  string(1) "b"
+}
+array(2) {
+  ["id"]=>
+  int(1)
+  ["label"]=>
+  string(1) "a"
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Экранирование и SQL инъекции</emphasis>
+  </para>
+  <para>
+   Значения привязанных к запросу переменных сервер экранирует автоматически.
+   Серверу необходима подсказка в виде указания типов привязываемых переменных,
+   чтобы правильно преобразовать их значения. Дополнительную информацию см. в
+   описании функции <function>mysqli_stmt_bind_param</function>.
+  </para>
+  <para>
+   Автоматическое экранирование параметров запроса иногда рассматривется
+   как встроенное средство безопасности сервера, предотвращающее SQL инъекции.
+   Того же уровня безопасности можно добиться и в обычных неподготавливаемых
+   запросах, если корректно экранировать входные параметры.
+  </para>
+  <para>
+   <emphasis role="bold">Эмуляция подготовленного запроса на клиенте</emphasis>
+  </para>
+  <para>
+   В API нет возможности эмулировать подготавливаемые запросы на клиенте.
+  </para>
+  <para>
+   <emphasis role="bold">
+    Сравнение обычного и подготавливаемого запросов
+   </emphasis>
+  </para>
+  <para>
+   В таблице ниже приведено сравнение обычного и подготовленного на сервере
+   запросов.
+  </para>
+  <informaltable>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry></entry>
+      <entry>Подготовленный запрос</entry>
+      <entry>Обычный запрос</entry>
+    </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>Количество обращений к серверу, SELECT, однократное выполнение</entry>
+      <entry>2</entry>
+      <entry>1</entry>
+     </row>
+     <row>
+      <entry>Количество строк с текстом запроса, переданных клиентом на сервер</entry>
+      <entry>1</entry>
+      <entry>1</entry>
+     </row>
+     <row>
+      <entry>Количество обращений к серверу, SELECT, n-кратное выполнение</entry>
+      <entry>1 + n</entry>
+      <entry>n</entry>
+     </row>
+     <row>
+      <entry>Количество строк с текстом запроса, переданных клиентом на сервер</entry>
+      <entry>1 шаблон, n раз параметры, если есть</entry>
+      <entry>n раз весь текст вместе с параметрами, если они есть</entry>
+     </row>
+     <row>
+      <entry>Привязка входных параметров средствами API</entry>
+      <entry>Есть, автоматическое экранирование значений параметров</entry>
+      <entry>Нет, параметры экранируются вручную</entry>
+     </row>
+     <row>
+      <entry>Привязка выходных параметров средствами API</entry>
+      <entry>Есть</entry>
+      <entry>Нет</entry>
+     </row>
+     <row>
+      <entry>Поддерживает использование API mysqli_result</entry>
+      <entry>Да, используется <function>mysqli_stmt_get_result</function></entry>
+      <entry>Да</entry>
+     </row>
+     <row>
+      <entry>Буферизация результирующих наборов</entry>
+      <entry>
+       Есть, можно использовать функцию <function>mysqli_stmt_get_result</function>
+       или <function>mysqli_stmt_store_result</function>
+      </entry>
+      <entry>Есть, это умолчание для <function>mysqli_query</function></entry>
+     </row>
+     <row>
+      <entry>Работа с небуферизованными результирующими наборами</entry>
+      <entry>Возможна, используется привязка выходных параметров с помощью API</entry>
+      <entry>
+       Возможна, используется функция <function>mysqli_real_query</function>
+       совместно с <function>mysqli_use_result</function>
+      </entry>
+     </row>
+     <row>
+      <entry>
+       Способ передачи данных протокола клиент-серверного взаимодействия
+       MySQL
+      </entry>
+      <entry>Двоичный протокол</entry>
+      <entry>Текстовый протокол</entry>
+     </row>
+     <row>
+      <entry>SQL типы значений результирующего набора</entry>
+      <entry>Сохраняются при извлечении</entry>
+      <entry>Преобразовываются в строки или сохраняются при извлечении</entry>
+     </row>
+     <row>
+      <entry>Поддерживает все SQL выражения</entry>
+      <entry>Последние версии MySQL поддерживают большинство, но не все</entry>
+      <entry>Да</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::__construct</methodname></member>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli::prepare</methodname></member>
+    <member><methodname>mysqli_stmt::prepare</methodname></member>
+    <member><methodname>mysqli_stmt::execute</methodname></member>
+    <member><methodname>mysqli_stmt::bind_param</methodname></member>
+    <member><methodname>mysqli_stmt::bind_result</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.stored-procedures">
+  <title>Хранимые процедуры</title>
+  <para>
+   СУБД MySQL поддерживает хранимые процедуры. Под этим термином понимается
+   последовательность операций, хранящаяся как единое целое в каталоге базы
+   данных на сервере. Приложения могут вызывать и запускать хранимые процедуры.
+   Для запуска хранимой процедуры используется SQL выражение
+   <literal>CALL</literal>.
+  </para>
+  <para>
+   <emphasis role="bold">Параметры</emphasis>
+  </para>
+  <para>
+   Хранимые процедуры могут иметь <literal>IN</literal>,
+   <literal>INOUT</literal> и <literal>OUT</literal> параметры в зависимости от
+   версии MySQL. Интерфейс mysqli не делает различий между этими типами
+   параметров.
+  </para>
+  <para>
+   <emphasis role="bold">Параметр IN</emphasis>
+  </para>
+  <para>
+   Входные параметры указываются внутри предложения <literal>CALL</literal>.
+   При передаче входных параметров важно убедиться, что их значения корректно
+   экранированы.
+  </para>
+  <para>
+   <example>
+    <title>Вызов хранимой процедуры</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") || !$mysqli->query("CREATE TABLE test(id INT)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$mysqli->query("DROP PROCEDURE IF EXISTS p") ||
+    !$mysqli->query("CREATE PROCEDURE p(IN id_val INT) BEGIN INSERT INTO test(id) VALUES(id_val); END;")) {
+    echo "Не удалось создать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$mysqli->query("CALL p(1)")) {
+    echo "Не удалось вызвать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($res = $mysqli->query("SELECT id FROM test"))) {
+    echo "Запрос SELECT потерпел неудачу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+var_dump($res->fetch_assoc());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(1) {
+  ["id"]=>
+  string(1) "1"
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Параметр INOUT/OUT</emphasis>
+  </para>
+  <para>
+   Значения <literal>INOUT</literal>/<literal>OUT</literal> параметров доступны
+   через переменные сессии.
+  </para>
+  <para>
+   <example>
+    <title>Использование переменных сессии</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP PROCEDURE IF EXISTS p") ||
+    !$mysqli->query('CREATE PROCEDURE p(OUT msg VARCHAR(50)) BEGIN SELECT "Hi!" INTO msg; END;')) {
+    echo "Не удалось создать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+
+if (!$mysqli->query("SET @msg = ''") || !$mysqli->query("CALL p(@msg)")) {
+    echo "Не удалось вызвать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($res = $mysqli->query("SELECT @msg as _p_out"))) {
+    echo "Получить данные не удалось: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$row = $res->fetch_assoc();
+echo $row['_p_out'];
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Hi!
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   Разработчики приложений и фреймворков могут предоставить более удобный API,
+   в котором наряду с сессионными переменными используется просмотр каталогов
+   базы данных напрямую. Однако, стоит учитывать, что такой подход снижает
+   быстродействие.
+  </para>
+  <para>
+   <emphasis role="bold">Обработка результирующих наборов</emphasis>
+  </para>
+  <para>
+   Хранимые процедуры могут возвращать результирующие наборы строк. Таблицы
+   результатов раборы хранимой процедуры нельзя корректно извлечь средствами
+   <function>mysqli_query</function>. Функция <function>mysqli_query</function>
+   выполняет две операции: запускает запрос и извлекает первый результирующий
+   набор, помещаяя его в буфер. Хранимые процедуры могут возвращать более одного
+   результирующего набора, но при использовании <function>mysqli_query</function>
+   все они, кроме первого, станут недоступны пользователю.
+  </para>
+  <para>
+   Результирующие таблицы хранимых процедур извлекаются фунциями
+   <function>mysqli_real_query</function> или
+   <function>mysqli_multi_query</function>. Обе фунции позволяют получить любое
+   количество результирующих наборов, возвращенных SQL запросами, таких как
+   <literal>CALL</literal>. Если в процессе работы не удается извлечь все
+   доступные результаты вызова хранимой процедуры, будет вызываться ошибка.
+  </para>
+  <para>
+   <example>
+    <title>Извлечение результатов работы хранимой процедуры</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT)") ||
+    !$mysqli->query("INSERT INTO test(id) VALUES (1), (2), (3)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$mysqli->query("DROP PROCEDURE IF EXISTS p") ||
+    !$mysqli->query('CREATE PROCEDURE p() READS SQL DATA BEGIN SELECT id FROM test; SELECT id + 1 FROM test; END;')) {
+    echo "Не удалось создать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$mysqli->multi_query("CALL p()")) {
+    echo "Не удалось вызвать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+do {
+    if ($res = $mysqli->store_result()) {
+        printf("---\n");
+        var_dump($res->fetch_all());
+        $res->free();
+    } else {
+        if ($mysqli->errno) {
+            echo "Не удалось получить результат на клиенте: (" . $mysqli->errno . ") " . $mysqli->error;
+        }
+    }
+} while ($mysqli->more_results() && $mysqli->next_result());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+---
+array(3) {
+  [0]=>
+  array(1) {
+    [0]=>
+    string(1) "1"
+  }
+  [1]=>
+  array(1) {
+    [0]=>
+    string(1) "2"
+  }
+  [2]=>
+  array(1) {
+    [0]=>
+    string(1) "3"
+  }
+}
+---
+array(3) {
+  [0]=>
+  array(1) {
+    [0]=>
+    string(1) "2"
+  }
+  [1]=>
+  array(1) {
+    [0]=>
+    string(1) "3"
+  }
+  [2]=>
+  array(1) {
+    [0]=>
+    string(1) "4"
+  }
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Использование подготавливаемых запросов</emphasis>
+  </para>
+  <para>
+   Специальных средств для извлечения данных при использовании подготавливаемых
+   запросов не требуется. Интерфейсы подготавливаемых и обычных запросов
+   одинаковы. Однако, нужно учитывать, что не все версии MYSQL поддерживают
+   подготовку в запросе SQL выражения <literal>CALL</literal>.
+  </para>
+  <para>
+   <example>
+    <title>Хранимые процедуры и подготавливаемые запросы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") ||
+    !$mysqli->query("CREATE TABLE test(id INT)") ||
+    !$mysqli->query("INSERT INTO test(id) VALUES (1), (2), (3)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$mysqli->query("DROP PROCEDURE IF EXISTS p") ||
+    !$mysqli->query('CREATE PROCEDURE p() READS SQL DATA BEGIN SELECT id FROM test; SELECT id + 1 FROM test; END;')) {
+    echo "Не удалось создать хранимую процедуру: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!($stmt = $mysqli->prepare("CALL p()"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$stmt->execute()) {
+    echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+do {
+    if ($res = $stmt->get_result()) {
+        printf("---\n");
+        var_dump(mysqli_fetch_all($res));
+        mysqli_free_result($res);
+    } else {
+        if ($stmt->errno) {
+            echo "Не удалось получить результат на клиенте: (" . $stmt->errno . ") " . $stmt->error;
+        }
+    }
+} while ($stmt->more_results() && $stmt->next_result());
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Само собой, поддерживается привязка результатов к объекту запроса.
+  </para>
+  <para>
+   <example>
+    <title>
+     Хранимые процедуры и подготавливаемые запросы с использованием привязки
+     результатов
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+if (!($stmt = $mysqli->prepare("CALL p()"))) {
+    echo "Не удалось подготовить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+if (!$stmt->execute()) {
+    echo "Не удалось выполнить запрос: (" . $stmt->errno . ") " . $stmt->error;
+}
+
+do {
+
+    $id_out = NULL;
+    if (!$stmt->bind_result($id_out)) {
+        echo "Не удалось связать результат с объектом запроса: (" . $stmt->errno . ") " . $stmt->error;
+    }
+ 
+    while ($stmt->fetch()) {
+        echo "id = $id_out\n";
+    }
+} while ($stmt->more_results() && $stmt->next_result());
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli::multi_query</methodname></member>
+    <member><methodname>mysqli_result::next-result</methodname></member>
+    <member><methodname>mysqli_result::more-results</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.multiple-statement">
+  <title>Множественные запросы</title>
+  <para>
+   MySQL поддерживает наличие нескольких SQL предложений в тексте одного запроса.
+   Пересылка на сервер нескольких выражений в одном запроса уменьшает количество
+   клиент-серверных взаимодействий, но требует специальной обработки.
+  </para>
+  <para>
+   Множественные запросы, или мультизапросы, должны запускаться функцией
+   <function>mysqli_multi_query</function>. Отдельные SQL предложения в
+   мультизапросе отделяются точкой с запятой. После выполнения мультизапроса
+   все результирующие наборы, которые он вернул, необходимо извлечь.
+  </para>
+  <para>
+   MySQL сервер поддерживает наличие в одном мультизапросе подзапросов, как
+   возвращающих результирующий набор, так и не возвращающих.
+  </para>
+  <para>
+   <example>
+    <title>Множественные запросы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (!$mysqli->query("DROP TABLE IF EXISTS test") || !$mysqli->query("CREATE TABLE test(id INT)")) {
+    echo "Не удалось создать таблицу: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+$sql = "SELECT COUNT(*) AS _num FROM test; ";
+$sql.= "INSERT INTO test(id) VALUES (1); ";
+$sql.= "SELECT COUNT(*) AS _num FROM test; ";
+
+if (!$mysqli->multi_query($sql)) {
+    echo "Не удалось выполнить мультизапрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+
+do {
+    if ($res = $mysqli->store_result()) {
+        var_dump($res->fetch_all(MYSQLI_ASSOC));
+        $res->free();
+    }
+} while ($mysqli->more_results() && $mysqli->next_result());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(1) {
+  [0]=>
+  array(1) {
+    ["_num"]=>
+    string(1) "0"
+  }
+}
+array(1) {
+  [0]=>
+  array(1) {
+    ["_num"]=>
+    string(1) "1"
+  }
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Рассмотрение аспектов безопасности</emphasis>
+  </para>
+  <para>
+   Фунции API <function>mysqli_query</function> и
+   <function>mysqli_real_query</function> во время работы не устанавливают
+   на сервере специальный флаг, необходимый для выполнения мультизапросов.
+   Отдельная API фунция для мультизапросов позволяет снизить вероятность
+   случайных SQL инъекций. Злоумышленник может попытаться добавить в конец запроса
+   выражения, вроде <literal>; DROP DATABASE mysql</literal> или
+   <literal>; SELECT SLEEP(999)</literal>. Если ему это удастся, но не будет
+   использоваться фунция <literal>mysqli_multi_query</literal>, сервер
+   не выполнит второе внедренное и опасное SQL выражение.
+  </para>
+  <para>
+   <example>
+    <title>SQL инъекция</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+$res    = $mysqli->query("SELECT 1; DROP TABLE mysql.user");
+if (!$res) {
+    echo "Ошибка при выполнении запроса: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Ошибка при выполнении запроса: (1064) You have an error in your SQL syntax;
+check the manual that corresponds to your MySQL server version for the right syntax 
+to use near 'DROP TABLE mysql.user' at line 1
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Подготавливаемые запросы</emphasis>
+  </para>
+  <para>
+   Использование множества выражений в подготавливаемом запросе не поддерживается.
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli::multi_query</methodname></member>
+    <member><methodname>mysqli_result::next-result</methodname></member>
+    <member><methodname>mysqli_result::more-results</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.transactions">
+  <title>API поддержка транзакций</title>
+  <para>
+   Поддержка транзакций в СУБД MySQL зависит от используемого движка хранилища
+   данных. Начиная с MySQL 5.5, по умолчанию используется движок InnoDB.
+   InnoDB полностью поддерживает ACID модель транзакций.
+  </para>
+  <para>
+   Транзакциями можно управлять как средствами SQL, так и вызовами API функций.
+   Для включения и выключения режима автофиксации изменений рекомендуется
+   пользоваться API функциями.
+  </para>
+  <para>
+   <example>
+    <title>Установка режима автофиксации средствами SQL и функциями API</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+/* Рекомендуется управлять настройками транзакций средствами API */
+$mysqli->autocommit(false);
+
+/* Не будет распознаваться и учитываться плагинами репликации и балансировки нагрузки */
+if (!$mysqli->query('SET AUTOCOMMIT = 0')) {
+    echo "Не удалось выполнить запрос: (" . $mysqli->errno . ") " . $mysqli->error;
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Дополнительные службы сервера, такие как плагины репликации и балансировки
+   нагрузки, могут отслеживать вызовы API функций. Плагин репликации может
+   сообщать балансировщику нагрузки о запущенной транзакции, если эта транзакция
+   обслуживается API функциями. Сервер не сможет распределять нагрузку между
+   репликами базы, если смена режима автофиксации, фиксация и откат транзакций
+   осуществляются SQL запросами.
+  </para>
+  <para>
+   <example>
+    <title>Фиксация и откат</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+$mysqli->autocommit(false);
+
+$mysqli->query("INSERT INTO test(id) VALUES (1)");
+$mysqli->rollback();
+
+$mysqli->query("INSERT INTO test(id) VALUES (2)");
+$mysqli->commit();
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Следует заметить, что сервер MySQL не может откатить результаты всех запросов.
+   Некоторые изменения фиксируются неявно.
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::autocommit</methodname></member>
+    <member><methodname>mysqli_result::commit</methodname></member>
+    <member><methodname>mysqli_result::rollback</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+
+ <section xml:id="mysqli.quickstart.metadata">
+  <title>Метаданные</title>
+  <para>
+   Результирующий набор MySQL содержит метаданные. Эти данные описывают столбцы
+   результирующей таблицы. Все сведения, которые передает MySQL, доступны через
+   <literal>mysqli</literal> интерфейс. Расширение не изменяет получаемые данные,
+   либо эти изменения незначительны. Различия между версиями MySQL также можно не
+   принимать во внимание.
+  </para>
+  <para>
+   Метаданные доступны через <classname>mysqli_result</classname> интерфейс.
+  </para>
+  <para>
+   <example>
+    <title>Доступ к метаданным результирующей таблицы</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("example.com", "user", "password", "database");
+if ($mysqli->connect_errno) {
+    echo "Не удалось подключиться к MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+$res = $mysqli->query("SELECT 1 AS _one, 'Hello' AS _two FROM DUAL");
+var_dump($res->fetch_fields());
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(2) {
+  [0]=>
+  object(stdClass)#3 (13) {
+    ["name"]=>
+    string(4) "_one"
+    ["orgname"]=>
+    string(0) ""
+    ["table"]=>
+    string(0) ""
+    ["orgtable"]=>
+    string(0) ""
+    ["def"]=>
+    string(0) ""
+    ["db"]=>
+    string(0) ""
+    ["catalog"]=>
+    string(3) "def"
+    ["max_length"]=>
+    int(1)
+    ["length"]=>
+    int(1)
+    ["charsetnr"]=>
+    int(63)
+    ["flags"]=>
+    int(32897)
+    ["type"]=>
+    int(8)
+    ["decimals"]=>
+    int(0)
+  }
+  [1]=>
+  object(stdClass)#4 (13) {
+    ["name"]=>
+    string(4) "_two"
+    ["orgname"]=>
+    string(0) ""
+    ["table"]=>
+    string(0) ""
+    ["orgtable"]=>
+    string(0) ""
+    ["def"]=>
+    string(0) ""
+    ["db"]=>
+    string(0) ""
+    ["catalog"]=>
+    string(3) "def"
+    ["max_length"]=>
+    int(5)
+    ["length"]=>
+    int(5)
+    ["charsetnr"]=>
+    int(8)
+    ["flags"]=>
+    int(1)
+    ["type"]=>
+    int(253)
+    ["decimals"]=>
+    int(31)
+  }
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">Подготавливаемые запросы</emphasis>
+  </para>
+  <para>
+   Метаданные результирующих наборов, полученных в результате выполнения
+   подготовленных запросов, можно получить аналогичным образом. Подходящий
+   дескриптор <classname>mysqli_result</classname> можно получить функцией
+   <function>mysqli_stmt_result_metadata</function>.
+  </para>
+  <para>
+   <example>
+    <title>Prepared statements metadata</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$stmt = $mysqli->prepare("SELECT 1 AS _one, 'Hello' AS _two FROM DUAL");
+$stmt->execute();
+$res = $stmt->result_metadata();
+var_dump($res->fetch_fields());
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <emphasis role="bold">См. также</emphasis>
+  </para>
+  <para>
+   <simplelist>
+    <member><methodname>mysqli::query</methodname></member>
+    <member><methodname>mysqli_result::fetch_fields</methodname></member>
+   </simplelist>
+  </para>
+ </section>
+</chapter>
