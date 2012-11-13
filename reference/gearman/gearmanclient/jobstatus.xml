@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 6a6061bbd4b1c78af2b50aba8ddd8fd5e4590b05 Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+
+<refentry xml:id="gearmanclient.jobstatus" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>GearmanClient::jobStatus</refname>
+  <refname>gearman_job_status</refname>
+  <refpurpose>Получение статуса выполнения фонового задания</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <para>&style.oop; (method):</para>
+   <methodsynopsis>
+   <modifier>public</modifier> <type>array</type><methodname>GearmanClient::jobStatus</methodname>
+   <methodparam><type>string</type><parameter>job_handle</parameter></methodparam>
+   </methodsynopsis>
+   <para>
+    Получает текущее состояние выполнения задания, запущенного в фоновом режиме.
+    Информация о состоянии включает данные о том, что задание известно обработчику,
+    выполняется ли задание в данный момент, а также процент обработанных данных.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>job_handle</parameter></term>
+     <listitem>
+      <para>
+       &gearman.parameter.jobhandle;
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Массив, содержащий информацию о задании, соответствующем заданному описателю.
+   Первый элемент массива указывает, знает ли обработчик об этом задании. Второй
+   элемент указывает, выполняется ли задание в данный момент. Третий и четвертый
+   элементы отвечают за долю выполненной работы и общий объем данных соответственно.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>
+     Мониторинг процесса обработки долго выполняющегося в
+     фоновом режиме задания
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* создаем клиента */
+$gmclient= new GearmanClient();
+
+/* добавляем сервер по умолчанию */
+$gmclient->addServer();
+
+/* запускаем клиент */
+$job_handle = $gmclient->doBackground("reverse", "this is a test");
+
+if ($gmclient->returnCode() != GEARMAN_SUCCESS)
+{
+  echo "Не удалось выполнить задание\n";
+  exit;
+}
+
+$done = false;
+do
+{
+   sleep(3);
+   $stat = $gmclient->jobStatus($job_handle);
+   if (!$stat[0]) // задание известно обработчику, но еще не завершено
+      $done = true;
+   echo "Обработка: " . ($stat[1] ? "true" : "false") . ", обработано: " . $stat[2] . ", всего: " . $stat[3] . "\n";
+}
+while(!$done);
+
+echo "обработка завершена!\n";
+
+?>
+]]>
+     </programlisting>
+     &example.outputs.similar;
+     <screen>
+<![CDATA[
+Обработка: true, обработано: 3, всего: 14
+Обработка: true, обработано: 6, всего: 14
+Обработка: true, обработано: 9, всего: 14
+Обработка: true, обработано: 12, всего: 14
+Обработка: false, обработано: 0, всего: 0
+обработка завершена!
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><methodname>GearmanClient::doStatus</methodname></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
