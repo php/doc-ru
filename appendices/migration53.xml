@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 84b8fca68fc762fefe85acde180a38b2e77a28b9 Maintainer: mch Status: ready -->
-<!-- $Revision$ -->
+<!-- EN-Revision: 8ad0d94e1c87b2daabff88e74acc31e8a11eec0a Maintainer: mch Status: ready -->
 <!-- Reviewed: yes -->
+<!-- $Revision$ -->
 <appendix xml:id="migration53" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Переход c PHP 5.2.x на PHP 5.3.x</title>
  <simpara>
   &manual.migration.seealso;
   <link linkend="migration5">5.0.x</link>,
-  <link linkend="migration51">5.1.x</link> и
-  <link linkend="migration52">5.2.x</link>.
+  <link linkend="migration51">5.1.x</link>,
+  <link linkend="migration52">5.2.x</link>,
+  <link linkend="migration54">5.4.x</link> и
+  <link linkend="migration55">5.5.x</link>.
  </simpara>
 
  <section xml:id="migration53.changes">
@@ -260,23 +262,61 @@
    </listitem>
    <listitem>
     <simpara>
-     Стал возможен динамический доступ к статическим методам.
+     Стал возможен динамический доступ к статическим методам:
     </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class C {
+   public static $foo = 123;
+}
+
+$a = "C";
+echo $a::$foo;
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+123
+]]>
+     </screen>
+    </informalexample>
    </listitem>
    <listitem>
     <simpara>
-     <link linkend="language.exceptions">Исключения</link> теперь могут быть вложенными.
+     <link linkend="language.exceptions">Исключения</link> теперь могут быть вложенными:
     </simpara>
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class MyCustomException extends Exception {}
+
+try {
+    throw new MyCustomException("Exceptional", 112);
+} catch (Exception $e) {
+    /* Обратите внимание, что для передачи $e
+     * в RuntimeException используется третий параметр. */
+    throw new RuntimeException("Rethrowing", 911, $e);
+}
+?>
+]]>
+     </programlisting>
+    </informalexample>
    </listitem>
    <listitem>
     <simpara>
-     Добавлен сборщик мусора для циклических ссылок. Он включен
-  по умолчанию.
+     Добавлен <link linkend="features.gc">сборщик мусора</link> для циклических ссылок.
+     Он включен по умолчанию.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
      Функция <function>mail</function> теперь поддерживает журналирование отправки письма
+     с помощью директивы <link linkend="ini.mail.log">mail.log</link>.
      (Примечание: это применимо только для писем, отправленных этой функцией.)
     </simpara>
    </listitem>
@@ -2211,22 +2251,24 @@
    </listitem>
    <listitem>
     <simpara>
-     <literal>zend_extension_debug</literal> и
-     <literal>zend_extension_ts</literal> были удалены. Используйте
-     директиву <literal>zend_extension</literal> для загрузки всех расширений Zend.
+     <link linkend="ini.zend-extension-debug">zend_extension_debug</link>,
+     <link linkend="ini.zend-extension-debug-ts">zend_extension_debug_ts</link>
+     и <link linkend="ini.zend-extension-ts">zend_extension_ts</link> были удалены.
+     Используйте директиву <link linkend="ini.zend-extension">zend_extension</link>
+     для загрузки всех расширений Zend.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Директива <literal>zend.ze1_compatibility_mode</literal> была удалена. Если эта
-     INI-директива установлена в On, то при запуске будет сгенерирована ошибка
-     <constant>E_ERROR</constant>.
+     Директива <link linkend="ini.zend.ze1-compatibility-mode">zend.ze1_compatibility_mode</link>
+     была удалена. Если эта INI-директива установлена в On, то при запуске
+     будет сгенерирована ошибка <constant>E_ERROR</constant>.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Сейчас стало возможно использование полного пути для загрузки модулей, используя
-     директиву "<link linkend="ini.extension"><literal>extension</literal></link>".
+     Стало возможным использование полного пути для загрузки модулей, используя
+     директиву "<link linkend="ini.extension">extension</link>".
     </simpara>
    </listitem>
    <listitem>
@@ -2238,7 +2280,8 @@
    <listitem>
     <simpara>
      В процессе исполнения скрипта возможно ужесточение ограничений, заданных
-     директивой<literal>open_basedir</literal>.
+     директивой <link linkend="ini.open-basedir">open_basedir</link>, и область
+     действия самой директивы теперь PHP_INI_ALL.
     </simpara>
    </listitem>
    <listitem>
@@ -2254,39 +2297,28 @@
    </listitem>
    <listitem>
     <simpara>
-     Добавлена новая директива mail.add_x_header
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     Новая директива user_ini.filename
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     Также новая user_ini.cache_ttl
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     Также новая exit_on_timeout
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
-     Директива open_basedir сейчас может быть установлена где угодно (PHP_INI_ALL)
+     Добавлены две новых почтовых директивы:
+     <link linkend="ini.mail.add-x-header">mail.add_x_header</link> и
+     <link linkend="ini.mail.log">mail.log</link>.
     </simpara>
    </listitem>
   </itemizedlist>
   <simpara>
-   Следующие новые INI-директивы были добавлены:
+   Были добавлены следующие INI-директивы:
   </simpara>
   <itemizedlist>
    <listitem>
     <simpara>
      <literal>user_ini.filename</literal> и
-     <literal>user_ini.cache_ttl</literal> для нового механизма INI-файла
-     в стиле .htaccess.
+     <literal>user_ini.cache_ttl</literal> для контроля
+     <link linkend="configuration.file.per-user">пользовательских INI-файлов</link>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Была добавлена директива <link linkend="ini.exit-on-timeout">exit_on_timeout</link>.
+     Она служит для принудительного завершения дочерних процессов Apache 1.x в случае
+     таймаута при выполнении PHP-кода.
     </simpara>
    </listitem>
    <listitem>
@@ -2298,7 +2330,7 @@
    </listitem>
    <listitem>
     <simpara>
-     Добавлена <literal>request_order</literal>.
+     Добавлена  <link linkend="ini.request-order">request_order</link>.
      Позволяет контролировать, какая внешняя переменная будет доступна в массиве
      <varname>$_REQUEST</varname>.
     </simpara>
@@ -2310,13 +2342,13 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <literal>session.use_only_cookies</literal> теперь установлена в
-     <literal>"1"</literal> (включено) по умолчанию.
+     <link linkend="ini.session.use-only-cookies">session.use_only_cookies</link>
+     теперь установлена в <literal>"1"</literal> (включено) по умолчанию.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     <literal>oci8.default_prefetch</literal> изменено с
+     <link linkend="ini.oci8.default-prefetch">oci8.default_prefetch</link> изменено с
      <literal>"10"</literal> на <literal>"100"</literal>.
     </simpara>
    </listitem>
