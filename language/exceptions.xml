@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 88a88985b966ce3acdc7835984636921e862e4c2  Maintainer: irker Status: ready -->
+<!-- EN-Revision: 8ad0d94e1c87b2daabff88e74acc31e8a11eec0a  Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
@@ -31,6 +31,14 @@
    ошибке: "<literal>Uncaught Exception ...</literal>" (Неперехваченное
    исключение), если не был определен обработчик ошибок при помощи
    функции <function>set_exception_handler</function>.
+  </para>
+  <para>
+   В PHP 5.5 и более поздних версиях также можно использовать блок <literal>finally</literal>
+   после блока <literal>catch</literal>. Код в блоке
+   <literal>finally</literal> всегда будет выполняться после кода в блоках
+   <literal>try</literal> и <literal>catch</literal>, вне зависимости было ли
+   брошено исключение или нет, перед тем как продолжится нормальное выполнение кода.
+   whether an exception has been thrown, and before normal execution resumes.
   </para>
   <para>
    Генерируемый объект должен принадлежать классу <classname>Exception</classname>
@@ -81,6 +89,50 @@ echo 'Hello World';
 <![CDATA[
 0.2
 Выброшено исключение: Деление на ноль.
+Hello World
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Вложенные исключения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function inverse($x) {
+    if (!$x) {
+        throw new Exception('Деление на ноль.');
+    }
+    else return 1/$x;
+}
+
+try {
+    echo inverse(5) . "\n";
+} catch (Exception $e) {
+    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
+} finally {
+    echo "Первое finally.\n";
+}
+
+try {
+    echo inverse(0) . "\n";
+} catch (Exception $e) {
+    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
+} finally {
+    echo "Второе finally.\n";
+}
+
+// Продолжение нормального выполнения
+echo 'Hello World';
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+0.2
+Первое finally.
+Поймано исключение: Деление на ноль.
+Второе finally.
 Hello World
 ]]>
     </screen>
@@ -157,6 +209,7 @@ class Exception
     final public  function getFile();           // Файл, где выброшено исключение
     final public  function getLine();           // Строка, выбросившая исключени
     final public  function getTrace();          // Массив backtrace()
+    final public  function getPrevious();       // Предыдущее исключение
     final public  function getTraceAsString();  // Трассировка вызовов как строка
 
     /* Переопределяемое */
