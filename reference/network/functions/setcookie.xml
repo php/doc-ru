@@ -1,0 +1,408 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 1e0cb85be781aedf9822622e3a654c1a6b8cd2cc Maintainer: tmn Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision: $ -->
+<refentry xml:id="function.setcookie" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>setcookie</refname>
+  <refpurpose>Посылает cookie</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>setcookie</methodname>
+   <methodparam><type>string</type><parameter>name</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>value</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>expire</parameter><initializer>0</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>path</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>domain</parameter></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>secure</parameter><initializer>false</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>httponly</parameter><initializer>false</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>setcookie</function> задает cookie, которое будет передано клиенту
+   вместе с другими HTTP заголовками. Как и любой другой заголовок, cookie должны
+   передаваться <emphasis>до</emphasis> того как будут выведены какие-либо другие
+   данные скрипта (это ограничение протокола). Это значит, что в скрипте вызовы
+   этой функции должны располагаться прежде остального вывода, включая вывод
+   тэгов <literal>&lt;html&gt;</literal> и <literal>&lt;head&gt;</literal>, а
+   также пустые строки и пробелы.
+  </para>
+  <para>
+   После передачи клиенту cookie станут доступны через массивы 
+   <varname>$_COOKIE</varname> и <varname>$HTTP_COOKIE_VARS</varname> при следующей
+   закгрузке страницы. Следует иметь в виду, что <link
+   linkend="language.variables.superglobals">суперглобальные переменные</link>,
+   такие как <varname>$_COOKIE</varname>, стали доступны только в PHP 4.1.0.
+   Значения cookie также есть в <varname>$_REQUEST</varname>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   Все аргументы, за исключением <parameter>name</parameter>, являются
+   необязательными. Если нужно пропустить какой-либо аргумент, можно вместо
+   него поставить пустую строку (<emphasis>&quot;&quot;</emphasis>). Это не
+   относится к аргументу <parameter>expire</parameter>. Так как он принимает
+   значение типа integer, для его замены пустая строка не подходит. Используйте
+   вместо нее ноль (<emphasis>0</emphasis>).
+  </para>
+  <para>
+   <link xlink:href="&url.rfc;6265">RFC 6265</link> дает конкретные указания,
+   как нужно интерпретировать каждый из параметров
+   <function>setcookie</function>.
+   <variablelist>
+    <varlistentry>
+     <term><parameter>name</parameter></term>
+     <listitem>
+      <para>
+       Наименование cookie.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>value</parameter></term>
+     <listitem>
+      <para>
+       Значение cookie. Это значение будет сохранено на клиентском компьютере;
+       не записывайте в cookie секретные данные. Значение присвоенное
+       cookie c именем <parameter>name</parameter>, допустим,
+       <literal>'cookiename'</literal>, будет доступно через
+       <varname>$_COOKIE['cookiename']</varname>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>expire</parameter></term>
+     <listitem>
+      <para>
+       Время, когда срок действия cookie истекает. Это метка времени Unix, то есть
+       это количество секунд с начала эпохи. Другими словами, желательно задавать
+       это время с помощью функции <function>time</function>, прибавляя время
+       в секундах, через которое срок действия cookie должен истечь. Либо можно
+       воспользоваться функцией <function>mktime</function>. 
+       <literal>time()+60*60*24*30</literal> установит срок действия cookie 30
+       дней. Если задать 0 или пропустить этот аргумент, срок действия cookie
+       истечет с окончанием сессии (при закрытии броузера).
+      </para>
+      <para>
+       <note>
+        <para>
+         Можно заметить, что <parameter>expire</parameter> принимает в качестве
+         значения метку времени Unix, а хранит его в формате
+         <literal>Wdy, DD-Mon-YYYY HH:MM:SS GMT</literal>. PHP делает внутреннее
+         преобразование автоматически.
+        </para>
+       </note>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>path</parameter></term>
+     <listitem>
+      <para>
+       Путь к директории на сервере, из которой будут доступны cookie. Если
+       задать <literal>'/'</literal>, cookie будут доступны во всем домене
+       <parameter>domain</parameter>. Если задать <literal>'/foo/'</literal>,
+       cookie будут доступны только из директории <literal>/foo/</literal> и всех
+       ее поддиректорий (например, <literal>/foo/bar/</literal>) домена
+       <parameter>domain</parameter>. По умолчанию значением является текущая
+       директория, в которой cookie устанавливается.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>domain</parameter></term>
+     <listitem>
+      <para>
+       Домен, которому доступны cookie. Задание домена
+       <literal>'www.example.com'</literal> сделает cookie доступными в поддомене
+       <literal>www</literal> и поддоменах более высоких порядков. Cookie доступные
+       низким уровням, таким как <literal>'example.com'</literal>, будут
+       доступны во всех поддоменах высших уровней, с том числе
+       <literal>'www.example.com'</literal>. Старые броузеры, следующие
+       устаревшим нормативам <link xlink:href="&url.rfc;2109">RFC 2109</link>,
+       могут требовать <literal>.</literal> перед доменом, чтобы включались
+       все поддомены.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>secure</parameter></term>
+     <listitem>
+      <para>
+       Указывает на то, что значение cookie должно передаваться от клиента
+       по защищенному HTTPS соединению. Если задано &true;, cookie от клиента
+       будет передано на сервер, только если установлено защищенное соединение.
+       При передаче cookie от сервера клиенту следить за тем, чтобы cookie
+       этого типа передавались по защищенному каналу, должен программист
+       веб-сервера (стоит обратить внимание на
+       <varname>$_SERVER["HTTPS"]</varname>).
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>httponly</parameter></term>
+     <listitem>
+      <para>
+       Если задано &true;, cookie будут доступны только через HTTP протокол.
+       То есть cookie в этом случае не будут доступны скриптовым языкам, вроде
+       JavaScript. Эта возможность была предложена в качестве меры, эффективно
+       снижающей количество краж личных данных посредством XSS атак (несмотря
+       на то, что поддерживается не всеми броузерами). Стоит однако же отметить, что
+       вокруг этой возможности часто возникают споры о ее эффективности и
+       целесообразности. Аргумент добавлен в PHP 5.2.0. Может принимать
+       значения &true; или &false;.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Если перед вызовом функции клиенту уже передавался какой-либо вывод (тэги,
+   пустые строки, пробелы, текст и т.п.),
+   <function>setcookie</function> вызовет отказ и вернет &false;. Если 
+   <function>setcookie</function> успешно отработает, то вернет &true;.
+   Это, однако, не означает, что клиентское приложение (броузер) правильно приняло
+   и обработало cookie.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   Ниже представлено несколько примеров, как отправлять cookie:
+   <example>
+    <title>Пример использования <function>setcookie</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$value = 'что-то где-то';
+
+setcookie("TestCookie", $value);
+setcookie("TestCookie", $value, time()+3600);  /* срок действия 1 час */
+setcookie("TestCookie", $value, time()+3600, "/~rasmus/", "example.com", 1);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Стоит отметить, что значение cookie перед отправкой клиенту подвергается
+   URL-кодированию. При обратном получении значение cookie декодируется и
+   помещается в переменную, с тем же именем, что и имя cookie. Если вы не хотите,
+   чтобы значения кодировались, используйте функцию
+   <function>setrawcookie</function> (работает в PHP 5). Посмотреть содержимое
+   наших тестовых cookie можно, запустив один из следующих примеров:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Вывести одно конкретное значение cookie
+echo $_COOKIE["TestCookie"];
+echo $HTTP_COOKIE_VARS["TestCookie"];
+
+// В целях тестирования и отладки может пригодиться вывод всех cookie
+print_r($_COOKIE);
+?>
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  <para>
+   <example>
+    <title>Пример удаления cookie посредством <function>setcookie</function></title>
+    <para>
+     Чтобы удалить cookie достаточно в качестве срока действия указать какое-либо
+     время в прошлом. Это запустит механизм броузера, удаляющий истекшие cookie.
+     В примерах ниже показано, как удалить cookie, заданные в предыдущих примерах:
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// установка даты истечения срока действия на час назад
+setcookie ("TestCookie", "", time() - 3600);
+setcookie ("TestCookie", "", time() - 3600, "/~rasmus/", "example.com", 1);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>setcookie</function> и массивы</title>
+    <para>
+     Имеется возможность помещать в cookie массивы. Для этого каждому cookie нужно
+     дать имя в соответствии с правилами именования массивов. Такая возможность
+     позволяет поместить столько значений, сколько имеется элементов в массиве.
+     При обратном получении все эти значения будут помещены в массив с
+     именем этого cookie:
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// отправка cookie
+setcookie("cookie[three]", "cookiethree");
+setcookie("cookie[two]", "cookietwo");
+setcookie("cookie[one]", "cookieone");
+
+// после перезагрузки страницы, выведем cookie
+if (isset($_COOKIE['cookie'])) {
+    foreach ($_COOKIE['cookie'] as $name => $value) {
+        $name = htmlspecialchars($name);
+        $value = htmlspecialchars($value);
+        echo "$name : $value <br />\n";
+    }
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+three : cookiethree
+two : cookietwo
+one : cookieone
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>5.2.0</entry>
+       <entry>
+        Добавлен параметр <parameter>httponly</parameter>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Чтобы иметь возможность отправлять вывод скрипта до вызова этой функции,
+    можно воспользоваться буферизацией. В этом случае весь вывод скрипта помещается
+    в буфер на сервере и остается там, пока вы явно не отправите его броузеру.
+    Управление буферизацией осуществляется функциями
+    <function>ob_start</function> и <function>ob_end_flush</function> в скрипте,
+    либо можно задать директиву <literal>output_buffering</literal> в файле
+    &php.ini; или конфигурационных файлах сервера.
+   </para>
+  </note>
+  <note>
+   <para>
+    Если PHP директива <link linkend="ini.register-globals">register_globals</link>
+    включена (задано значение <literal>on</literal>), значения cookie помимо всего
+    прочего будут помещаться в переменные. Для примеров выше будет существовать
+    переменная <varname>$TestCookie</varname>. Тем не менее, рекомендуется
+    использовать <varname>$_COOKIE</varname>.
+   </para>
+  </note>
+  <para>
+   Общие замечания:
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Cookie станут видимыми только после перезагрузки страницы, для которой
+      они должны быть видны. Для проверки, правильно ли cookie установились,
+      проверьте их при следующей загрузке страницы до истечения срока их
+      действия. Срок действия cookie задается в параметре
+      <parameter>expire</parameter>. Удобно проверять существование cookie простым
+      вызовом <literal>print_r($_COOKIE);</literal>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      При удалении cookie должны быть заданы те же параметры, что и при
+      установке. Если в качестве значения задать пустую строку или &false;,
+      а остальные параметры задать соответственно предыдущему вызову,
+      установившему cookie, тогда cookie c заданным именем будет удалено с
+      клиентской машины. Внутренне это выглядит так: cookie присваивается значение
+      'deleted', а срок действия переносится на год в прошлое.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Так как установка значения &false; приведет к удалению cookie, не следует
+      задавать cookie значения булевого типа. Вместо этого можно использовать
+      <emphasis>0</emphasis> для &false; и <emphasis>1</emphasis> для &true;.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Cookie можно именовать, как массивы, и они будут доступны в PHP скрипте,
+      как массивы, но на пользовательской машине они будут храниться в виде
+      отдельных записей. Для задания cookie c множеством имен и значений желательно
+      использовать функцию <function>explode</function>. Не рекомендуется для этих
+      целей использовать функцию <function>serialize</function>, так как это
+      негативно сказывается на безопасности скрипта.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <simpara>
+   При многократных вызовах <function>setcookie</function> функции
+   выполняются в том порядке, в котором вызывались.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>header</function></member>
+    <member><function>setrawcookie</function></member>
+    <member><link linkend="features.cookies">раздел cookies</link></member>
+    <member><link xlink:href="&url.rfc;6265">RFC 6265</link></member>
+    <member><link xlink:href="&url.rfc;2109">RFC 2109</link></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
