@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 84b8fca68fc762fefe85acde180a38b2e77a28b9 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 73e27eb2d954a586a7b48aa9b684341112107b2f Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.decon" xmlns="http://docbook.org/ns/docbook">
@@ -25,7 +25,10 @@
      если класс-потомок определяет собственный конструктор.
      Чтобы вызвать конструктор, объявленный в родительском классе,
      следует обратиться к методу <function>parent::__construct</function>
-     внутри конструктора класса-потомка.
+     внутри конструктора класса-потомка. Если в классе-потомке
+     не определен конструктор, то он может наследоваться от
+     родительского класса как обычный метод (если он не 
+     определен как приватный).     
     </simpara>
    </note>
    <example>
@@ -46,16 +49,28 @@ class SubClass extends BaseClass {
    }
 }
 
+class OtherSubClass extends BaseClass {
+    // inherits BaseClass's constructor
+}
+
+// In BaseClass constructor
 $obj = new BaseClass();
+
+// In BaseClass constructor
+// In SubClass constructor
 $obj = new SubClass();
-?> 
+
+// In BaseClass constructor
+$obj = new OtherSubClass();
+?>
 ]]>
     </programlisting>
    </example>
    <para>
     В целях обратной совместимости, если PHP 5 не может обнаружить
-    объявленный метод <link linkend="object.construct">__construct()</link>,
-    вызов конструктора произойдет по прежней схеме, через обращение к методу,
+    объявленный метод <link linkend="object.construct">__construct()</link> и этот метод
+    не наследуется от родительских классов, то
+    вызов конструктора произойдет по устаревшей схеме, через обращение к методу,
     имя которого соответствует имени класса. Может возникнуть только
     одна проблема совместимости старого кода, если в нём присутствуют
     классы с методами <link linkend="object.construct">__construct()</link>,
@@ -132,7 +147,8 @@ $obj = new MyDestructableClass();
     в родительском классе, не будут вызваны автоматически.
     Для вызова деструктора, объявленном в классе-родителе,
     следует обратиться к методу <function>parent::__destruct</function> в
-    теле деструктора-потомка.
+    теле деструктора-потомка. Также класс-потомок может унаследовать
+    деструктор из родительского класса, если он не определен в нем.
    </para>
    <para>
     Деструктор будет вызван даже в том случае, если скрипт был остановлен с
