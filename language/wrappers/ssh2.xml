@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8b6d169424ff189bb563ef4c3f35f8adff3f42c5 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 57492d2928a7aa5d19d9bc0d6af5c52ddcaace9f Maintainer: mch Status: ready -->
 <!-- $Revision$ -->
 <!-- Reviewed: no -->
 
@@ -38,7 +38,7 @@
  </refsect1><!-- }}} -->
 
  <refsect1 role="usage"> <!-- {{{ -->
-  &reftitle.options;
+  &reftitle.usage;
   <itemizedlist>
    <listitem><simpara><filename>ssh2.shell://user:pass@example.com:22/xterm</filename></simpara></listitem>
    <listitem><simpara><filename>ssh2.exec://user:pass@example.com:22/usr/local/bin/somecmd</filename></simpara></listitem>
@@ -248,6 +248,32 @@ $stream = fopen("ssh2.tunnel://$session/remote.example.com:1234", 'r');
 ?>
 ]]>
    </programlisting>
+  </example>
+  <example>
+   <title>Переменная <varname>$session</varname> должна быть доступна!</title>
+   <simpara>
+    Если вы хотите использовать какую-либо из оберток <filename>ssh2.*://$session</filename>,
+    необходимо сохранить доступным ресурс, хранящийся в переменной <varname>$session</varname>.
+    Следующий код не будет иметь желаемого эффекта:
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$session = ssh2_connect('example.com', 22);
+ssh2_auth_pubkey_file($session, 'username', '/home/username/.ssh/id_rsa.pub',
+                                            '/home/username/.ssh/id_rsa', 'secret');
+$connection_string = "ssh2.sftp://$session/";
+unset($session);
+$stream = fopen($connection_string . "path/to/file", 'r');
+?>
+]]>
+   </programlisting>
+   <simpara>
+    unset() закрывает сессию, потому что <varname>$connection_string</varname> не
+    является ссылкой на переменную <varname>$session</varname>, а только ее текстовым
+    представлением. Это также происходит и в случае неявного вызова <function>unset</function>
+    при выходе из области видимости (например, из функции).
+   </simpara>
   </example>
 
  </refsect1><!-- }}} -->
