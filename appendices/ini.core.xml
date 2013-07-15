@@ -316,14 +316,24 @@
        <para>
         Выдает факт присутствия PHP на сервере, включая передачу
         версии PHP в HTTP-заголовке (например, X-Powered-By: PHP/5.3.7).
-        Идентификаторы логотипов также показываются, таким образом, при
-        добавлении их к ссылке на сайте с PHP будет показан соответствующий
+        До версии PHP 5.5.0 также показывались идентификаторы логотипов, таким образом, при
+        добавлении их к ссылке на сайте с PHP показывался соответствующий
         логотип (например, <link xlink:href="&url.php;?=PHPE9568F34-D428-11d2-A769-00AA001ACF42">&url.php;?=PHPE9568F34-D428-11d2-A769-00AA001ACF42</link>).
-        Отключение данной опции также влияет на вывод функции
+        Отключение данной опции также влияло на вывод функции
         <function>phpinfo</function>, в этом случае
         логотип PHP и информация о разработчиках, принимавших участие
-        в разработке PHP, отображаться не будет.
+        в разработке PHP, не отображались.
        </para>
+       <note>
+        <para>
+         В версии PHP 5.5.0 данные идентификаторы логотипов и функция
+         <function>php_logo_guid</function> были удалены, теперь для отображения
+         логотипов используется механизм data URI. Таким образом добавление
+         идентификатора логотипа к ссылке (для показа логотипа) больше не работает.
+         Аналогично, выключение опции <parameter>expose_php</parameter> более не
+         влияет на отображение логотипа PHP в выводе функции <function>phpinfo</function>.
+        </para>
+       </note>
        <para>
         Смотрите также <function>php_logo_guid</function> и <function>phpcredits</function>.
        </para>
@@ -673,6 +683,12 @@
         <entry>Доступна с версии PHP 5.0.0. Помечена устаревшей в PHP 5.3.0. Удалена в PHP 5.4.0.</entry>
        </row>
        <row>
+        <entry><link linkend="ini.enable-post-data-reading">enable_post_data_reading</link></entry>
+        <entry>"1"</entry>
+        <entry>PHP_INI_PERDIR</entry>
+        <entry>Доступна с версии PHP 5.4.0</entry>
+       </row>
+       <row>
         <entry><link linkend="ini.post-max-size">post_max_size</link></entry>
         <entry>"8M"</entry>
         <entry>PHP_INI_PERDIR</entry>
@@ -682,7 +698,7 @@
         <entry><link linkend="ini.gpc-order">gpc_order</link></entry>
         <entry>"GPC"</entry>
         <entry>PHP_INI_ALL</entry>
-        <entry></entry>
+        <entry>Удалена в PHP 5.0.0.</entry>
        </row>
        <row>
         <entry><link linkend="ini.auto-prepend-file">auto_prepend_file</link></entry>
@@ -1044,7 +1060,7 @@
        </para>
        <note>
         <para>
-         Эта опция недоступна в PHP 4.
+         Эта опция была удалена в PHP 5.0.0.
          Вместо нее используйте <link linkend="ini.variables-order">variables_order</link>.
         </para>
        </note>
@@ -1326,6 +1342,27 @@ include_path=".;c:\php\includes"
         использовать <literal>include './file'</literal>, чем заставлять
         PHP каждый раз проверять текущую директорию при подключении каждого
         файла.
+       </para>
+       <note>
+        <para>
+         Переменные окружения (<literal>ENV</literal>) также доступны в .ini файлах.
+         Таким образом, можно ссылаться на домашнюю директорию с помощью директив
+         <literal>${LOGIN}</literal> и <literal>${USER}</literal>.
+        </para>
+        <para>
+         Переменные окружения могут отличаться между различными серверными API,
+         так как сами эти окружения отличаются друг от друга.
+        </para>
+       </note>
+       <para>
+        <example>
+         <title>Настройка include_path с помощью переменной окружения ${USER} в Unix</title>
+         <programlisting role="php.ini">
+<![CDATA[
+include_path = ".:${USER}/pear/php"
+]]>
+         </programlisting>
+        </example>
        </para>
       </listitem>
      </varlistentry>
@@ -1610,11 +1647,21 @@ include_path=".;c:\php\includes"
       <listitem>
        <para>
         Сообщает PHP, какой тип заголовков использовать при отправке
-        кода ответа HTTP. Если установлено в 0, PHP отправляет заголовок
+        кода ответа HTTP. Если установлено в 0, PHP отправляет
+        <link xlink:href="&url.rfc;3875">RFC 3875</link> заголовок
         "Status:", который поддерживается Apache и другими веб-серверами.
-        Если установлено в 1, PHP отправляет заголовок, соответствующий
-        <link xlink:href="&url.rfc;2616">RFC 2616</link>. Оставьте в значении
-        0, если вы не уверены в том, что это значит.
+        Если установлено в 1, PHP отправляет заголовки, соответствующие
+        <link xlink:href="&url.rfc;2616">RFC 2616</link>.
+       </para>
+       <para>
+        Если эта опция включена и вы используете PHP в окружении CGI (например,
+        PHP-FPM), то вместо использования HTTP-заголовков ответа в стиле
+        RFC 2616, нужно использовать их эквивалент из стандарта RFC 3875, например,
+        вместо header("HTTP/1.0 404 Not found"); нужно использовать
+        header("Status: 404 Not Found");
+       </para>
+       <para>
+        Оставьте в значении 0, если вы не уверены в том, что это значит.
        </para>
       </listitem>
      </varlistentry>
