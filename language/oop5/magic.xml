@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0dec5d1aea785cbc56e3f2b22304443f1a39247c Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4307b3bcdf87f058147f6a917051986871ed8fe1 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.magic" xmlns="http://docbook.org/ns/docbook">
@@ -18,8 +18,9 @@
    <link linkend="object.wakeup">__wakeup()</link>,
    <link linkend="object.tostring">__toString()</link>,
    <link linkend="object.invoke">__invoke()</link>,
-   <link linkend="object.set-state">__set_state()</link> and
-   <link linkend="object.clone">__clone()</link>
+   <link linkend="object.set-state">__set_state()</link>,
+   <link linkend="object.clone">__clone()</link> и
+   <link linkend="object.debuginfo">__debugInfo()</link>
    зарезервированы для "магических" методов в PHP.
    Не стоит называть свои методы этими именами, если вы не хотите
    использовать их "магическую" функциональность.
@@ -95,34 +96,31 @@
 class Connection
 {
     protected $link;
-    private $server, $username, $password, $db;
+    private $dsn, $username, $password;
     
-    public function __construct($server, $username, $password, $db)
+    public function __construct($dsn, $username, $password)
     {
-        $this->server = $server;
+        $this->dsn = $dsn;
         $this->username = $username;
         $this->password = $password;
-        $this->db = $db;
         $this->connect();
     }
     
     private function connect()
     {
-        $this->link = mysql_connect($this->server, $this->username, $this->password);
-        mysql_select_db($this->db, $this->link);
+        $this->link = new PDO($this->dsn, $this->username, $this->password);
     }
     
     public function __sleep()
     {
-        return array('server', 'username', 'password', 'db');
+        return array('dsn', 'username', 'password');
     }
     
     public function __wakeup()
     {
         $this->connect();
     }
-}
-?>
+}?>
 ]]>
     </programlisting>
    </example>
@@ -293,6 +291,55 @@ object(A)#2 (2) {
   int(5)
   ["var2"]=>
   string(3) "foo"
+}
+]]>
+    </screen>
+   </example>
+  </sect2>
+  
+  <sect2 xml:id="language.oop5.magic.debuginfo">
+   <title><link linkend="object.debuginfo">__debugInfo()</link></title>
+   <methodsynopsis xml:id="object.debuginfo">
+    <type>array</type><methodname>__debugInfo</methodname>
+    <void/>
+   </methodsynopsis>
+   <para>
+    Этот метод вызывается функцией <function>var_dump</function>, когда
+    необходимо вывести список свойст объекта. Если этот метод не определен,
+    тогда будут выведены все public, protected и private свойства объекта. 
+   </para>
+   <para>
+    Этот метод был добавлен в PHP 5.6.0.
+   </para>
+   <example>
+    <title>Использование <link linkend="object.debuginfo">__debugInfo()</link></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class C {
+    private $prop;
+
+    public function __construct($val) {
+        $this->prop = $val;
+    }
+
+    public function __debugInfo() {
+        return [
+            'propSquared' => $this->prop ** 2,
+        ];
+    }
+}
+
+var_dump(new C(42));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+object(C)#1 (1) {
+  ["propSquared"]=>
+  int(1764)
 }
 ]]>
     </screen>
