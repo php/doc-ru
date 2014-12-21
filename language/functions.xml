@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d22ce6b9c952e5bb15766b5f55cfe50dacf3f0b9 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 850354823a33c044b39aedcfd96b8c196f6e84f2 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
  <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
@@ -177,13 +177,10 @@ function recursion($a)
    </simpara> 
    <para>
     PHP поддерживает передачу аргументов по значению (по умолчанию), <link
-    linkend="functions.arguments.by-reference">передачу аргументов по ссылке</link>, 
-    и <link linkend="functions.arguments.default">значения по умолчанию</link>. 
+    linkend="functions.arguments.by-reference">передачу аргументов по ссылке</link>,
+    и <link linkend="functions.arguments.default">значения по умолчанию</link>.
     <link linkend="functions.variable-arg-list">Списки аргументов переменной длины
-    </link> также поддерживаются, смотрите также описания функций
-    <function>func_num_args</function>,
-    <function>func_get_arg</function> и
-    <function>func_get_args</function> для более детальной информации.
+    </link> также поддерживаются.
    </para>
    <para>
     <example>
@@ -356,7 +353,7 @@ echo makeyogurt("малины");   // отрабатывает правильн�
     </para>
     <note>
      <simpara>
-      Начиная с PHP 5, значения по умолчанию могут быть переданны по ссылке.
+      Начиная с PHP 5, аргументы, передаваемые по ссылке, могут иметь значения по умолчанию.
      </simpara>
     </note>
 
@@ -367,16 +364,170 @@ echo makeyogurt("малины");   // отрабатывает правильн�
 
     <simpara>
      PHP поддерживает списки аргументов переменной длины для функций,
-     определяемых пользователем. Реализация этой возможности достаточно прозрачна
-     и заключается в использовании функций <function>func_num_args</function>,
-     <function>func_get_arg</function> и
-     <function>func_get_args</function>.
+     определяемых пользователем. Это реализуется с помощью символов
+     <literal>...</literal> в PHP 5.6 и новее, и с помощью
+     <function>func_num_args</function>,
+     <function>func_get_arg</function>, и
+     <function>func_get_args</function> функциями в PHP 5.5 и более ранних.
     </simpara>
 
-    <simpara>
-     Необходимости в специфическом синтаксисе нет, при этом список аргументов 
-     также может быть указан явно и будет обладать тем же поведением.
-    </simpara>
+    <sect3 xml:id="functions.variable-arg-list.new">
+     <title><literal>...</literal> в PHP 5.6+</title>
+
+     <para>
+      В PHP 5.6 и более поздних версиях, список аргументов может содержать символы
+      <literal>...</literal> указывающие на то, что функция может принимать
+      переменное количество аргументов. Аргументы будут переданы в указанную переменную
+      в виде массива. Пример:
+      variable number of arguments. The arguments will be passed into the
+      given variable as an array; for example:
+
+      <example>
+       <title>Использование <literal>...</literal> для получения аргументов</title>
+       <programlisting role="php">
+<![CDATA[
+<?php
+function sum(...$numbers) {
+    $acc = 0;
+    foreach ($numbers as $n) {
+        $acc += $n;
+    }
+    return $acc;
+}
+
+echo sum(1, 2, 3, 4);
+?>
+]]>
+       </programlisting>
+       &example.outputs;
+       <screen>
+<![CDATA[
+10
+]]>
+       </screen>
+      </example>
+     </para>
+
+     <para>
+      Вы также можете использовать <literal>...</literal> при вызове функции
+      для разворачивания массива <type>array</type> или объекта <classname>Traversable</classname>
+      в аргументы функции:
+
+      <example>
+       <title>Использование <literal>...</literal> при передаче аргументов</title>
+       <programlisting role="php">
+<![CDATA[
+<?php
+function add($a, $b) {
+    return $a + $b;
+}
+
+echo add(...[1, 2])."\n";
+
+$a = [1, 2];
+echo add(...$a);
+?>
+]]>
+       </programlisting>
+       &example.outputs;
+       <screen>
+<![CDATA[
+3
+3
+]]>
+       </screen>
+      </example>
+     </para>
+
+     <para>
+      Вы можете указывать обычные аргументы перед <literal>...</literal>.
+      В этом случае в массив, создаваемый <literal>...</literal>, будут добавлены только те
+      аргументы, которые расположены после обычных.
+     </para>
+
+     <para>
+      Также можно добавлять <link linkend="language.oop5.typehinting">указание типа</link>
+      перед <literal>...</literal>. В этом случае все аргументы попадающие под
+      действие <literal>...</literal> должны быть указанного типа или класса.
+      <example>
+       <title>Указание типа для списка аргументов переменной длины</title>
+       <programlisting role="php">
+<![CDATA[
+<?php
+function total_intervals($unit, DateInterval ...$intervals) {
+    $time = 0;
+    foreach ($intervals as $interval) {
+        $time += $interval->$unit;
+    }
+    return $time;
+}
+
+$a = new DateInterval('P1D');
+$b = new DateInterval('P2D');
+echo total_intervals('d', $a, $b).' days';
+
+// Не выполнится, так как это не объект класса DateInterval.
+echo total_intervals('d', null);
+?>
+]]>
+       </programlisting>
+       &example.outputs;
+       <screen>
+<![CDATA[
+3 days
+Catchable fatal error: Argument 2 passed to total_intervals() must be an instance of DateInterval, null given, called in - on line 14 and defined in - on line 2
+]]>
+       </screen>
+      </example>
+     </para>
+
+     <para>
+      Также вы можете передавать аргументы
+      <link linkend="functions.arguments.by-reference">по ссылке</link>
+      указав перед <literal>...</literal> символ амперсанда
+      (<literal>&amp;</literal>).
+     </para>
+    </sect3>
+
+    <sect3 xml:id="functions.variable-arg-list.old">
+     <title>Старые версии PHP</title>
+
+     <para>
+      Специальный синтаксис для указания списка аргументов переменной длины отсутвует.
+      Доступ к таким аргументам осуществляется с помощью функций
+      <function>func_num_args</function>, <function>func_get_arg</function>
+      и <function>func_get_args</function>.
+     </para>
+
+     <para>
+      Следующий пример показывает, что нужно делать в PHP 5.5 и ранее:
+
+      <example>
+       <title>Доступ к аргументам в PHP 5.5 и ранее</title>
+       <programlisting role="php">
+<![CDATA[
+<?php
+function sum() {
+    $acc = 0;
+    foreach (func_get_args() as $n) {
+        $acc += $n;
+    }
+    return $acc;
+}
+
+echo sum(1, 2, 3, 4);
+?>
+]]>
+       </programlisting>
+       &example.outputs;
+       <screen>
+<![CDATA[
+10
+]]>
+       </screen>
+      </example>
+     </para>
+    </sect3>
 
    </sect2>
 
@@ -692,9 +843,72 @@ $greet('PHP');
    <simpara>
     Замыкания могут также наследовать переменные из родительской
     области видимости. Любая подобная переменная должна быть
-    объявлена в заголовке функции. Наследование переменных из
-    родительской области видимости <emphasis>не</emphasis> то же
-    самое, что использование глобальных переменных.
+    передана в языковую коснтрукцию <literal>use</literal>.
+   </simpara>
+
+   <example>
+    <title>Наследование переменных из родительской области видимости</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$message = 'hello';
+
+// Без "use"
+$example = function () {
+    var_dump($message);
+};
+echo $example();
+
+// Наследование $message
+$example = function () use ($message) {
+    var_dump($message);
+};
+echo $example();
+
+// Наследуемое значение переменной определяется в момент создания функции,
+// а не в момент ее вызова
+$message = 'world';
+echo $example();
+
+// Сброс $message
+$message = 'hello';
+
+// Наследование по ссылке
+$example = function () use (&$message) {
+    var_dump($message);
+};
+echo $example();
+
+// Измененное значение в родительской области видимости
+// отражается и внутрь функции
+$message = 'world';
+echo $example();
+
+// Замыканию также доступны и обычные аргументы
+$example = function ($arg) use ($message) {
+    var_dump($arg . ' ' . $message);
+};
+$example("hello");
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Notice: Undefined variable: message in /example.php on line 6
+NULL
+string(5) "hello"
+string(5) "hello"
+string(5) "hello"
+string(5) "world"
+string(11) "hello world"
+]]>
+    </screen>
+   </example>
+
+   <simpara>
+    Наследование переменных из родительской области видимости <emphasis>не</emphasis>
+    тоже самое, что и использование глобальных переменных.
     Глобальные переменные существуют в глобальной области видимости,
     которая не меняется, вне зависимости от того, какая функция
     выполняется в данный момент. Родительская область видимости
