@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 55d88a8d9cdc6b9ac991e7bdc397e565dd204c93 Maintainer: shein Status: ready -->
+<!-- EN-Revision: b0f439fdc034f8ccda336e4bd3961a7e033da804 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook" xml:id="function.crypt">
@@ -20,6 +20,17 @@
    полученную с помощью стандартного алгоритма UNIX, основанного
    на <abbrev>DES</abbrev>, или другого алгоритма, имеющегося в
    системе.
+  </para>
+  <para>
+   Параметр  <parameter>salt</parameter> вляется необязательным. Однако без <parameter>salt</parameter>
+   функция <function>crypt</function> создает слабый пароль. PHP 5.6 и новее вызывают ошибку E_NOTICE,
+   если не использовать соль. Убедитесь, что используете достаточно сложную соль для лучшей безопасности.
+  </para>
+  <para>
+   Функция <function>password_hash</function> использует сложный хэш, генерирует сложную соль и применяет 
+   правильно количество раундов хэширования автоматически.
+   <function>password_hash</function> является простой оберткой над  <function>crypt</function> 
+   и совместима с существующими хэшами паролей. Поэтому приветсвуется использование <function>password_hash</function>.
   </para>
   <para>
    Некоторые операционные системы поддерживают несколько алгоритмов
@@ -77,13 +88,18 @@
    <listitem>
     <simpara>
      <constant>CRYPT_BLOWFISH</constant> - Blowfish-шифрование со
-     следующей солью: "$2a$", весовой параметр из двух цифр, "$" и
+     следующей солью: "$2a$", "$2x$" или "$2y$", весовой параметр из двух цифр, "$" и
      22 цифры из алфавита "./0-9A-Za-z". Использование других
      символов в соли повлечет за собой возвращение пустой строки.
      Весовой параметр из двух цифр является двоичным логарифмом
      счетчика итераций низлежащего хэширующего алгоритма, основанного
      на Blowfish, и должен быть в диапазоне 04-31, значения вне
      данного диапазона вызовут отказ crypt().
+     Версии PHP до 5.3.7 поддерживали только префикс "$2a$" для соли: PHP
+     5.3.7 добавил новые префиксы для исправлени уязвимостей в реализации Blowfish.
+     Для полного понимания ознакомьтесь с <link xlink:href="&url.crypt.blowfish;">этим разделом</link>, но
+     если кратко, то разработчики должны использовать "$2y$" вместо "$2a$"
+     начиная с PHP 5.3.7.
     </simpara>
    </listitem>
    <listitem>
@@ -128,6 +144,12 @@
       <para>
        Хэшируемая строка.
       </para>
+      <caution>
+       <para>
+        При использовании алгоритма <constant>CRYPT_BLOWFISH</constant>, 
+        параметр <parameter>str</parameter> обрезается до 72 символов.
+       </para>
+      </caution>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -151,6 +173,13 @@
    Возвращает хэшированную строку или строку короче 13 символов,
    гарантированно отличающуюся от соли в случае ошибки.
   </para>
+  <warning>
+   <simpara>
+    При валидации паролей должны использоваться функции сравнения строк, устойчивые к 
+    атаке по времени, для сравнения вывода функции <function>crypt</function> с известным
+    хэшом. В PHP 5.6 и новее для этих целей есть функция <function>hash_equals</function>.
+   </simpara>
+  </warning>
  </refsect1>
 
  <refsect1 role="changelog">
@@ -165,6 +194,19 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>5.6.0</entry>
+       <entry>
+        Если параметр <parameter>salt</parameter> пропущен, то бросается предупреждение E_NOTICE.
+       </entry>
+      </row>
+      <row>
+       <entry>5.3.7</entry>
+       <entry>
+        Добавлены <literal>$2x$</literal> и <literal>$2y$</literal> режимы Blowfish
+        для предотвращения возможных "high-bit" атак.
+       </entry>
+      </row>
       <row>
        <entry>5.3.2</entry>
        <entry>
@@ -203,13 +245,13 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$password = crypt('mypassword'); // соль будет сгенерирована автоматически
+$hashed_password = crypt('mypassword'); // соль будет сгенерирована автоматически
 
 /* Для проверки пароля в качестве параметра salt следует передавать результат работы
    crypt() целиком во избежание проблем при использовании различных
    алгоритмов (как уже было отмечено выше, стандартный DES-алгоритм
    использует 2-символьную соль, а MD5 - 12-символьную. */
-if (crypt($user_input, $password) == $password) {
+if (hash_equals($hashed_password, crypt($user_input, $hashed_password)) {
    echo "Пароль верен!";
 }
 ?>
@@ -239,6 +281,9 @@ $hash = crypt($password);
     <programlisting role="php">
 <![CDATA[
 <?php
+/* Приведенная соль является только примером. Не используйте эту же соль в вашем коде.
+   Вы должны сгенерировать уникальную и правильную соль для каждого пароля.
+*/
 if (CRYPT_STD_DES == 1) {
     echo 'Стандартный DES: ' . crypt('rasmuslerdorf', 'rl') . "\n";
 }
@@ -294,6 +339,8 @@ SHA-512:         $6$rounds=5000$usesomesillystri$D4IrlXatmP7rx3P3InaxBeoomnAihCK
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member><function>hash_equals</function></member>
+    <member><function>password_hash</function></member>
     <member><function>md5</function></member>
     <member>Расширение <link linkend="ref.mcrypt">Mcrypt</link></member>
     <member>Страница руководства Unix по вашей функции crypt</member>
