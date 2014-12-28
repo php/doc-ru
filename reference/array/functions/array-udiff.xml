@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5faa7a6747bca628b3bdcc9f93aec5603b65581f Maintainer: shein Status: ready -->
+<!-- EN-Revision: 3ce14fde5cd5f15171a7ed2b64fdc7bd652c3842 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.array-udiff" xmlns="http://docbook.org/ns/docbook">
@@ -13,8 +13,8 @@
    <type>array</type><methodname>array_udiff</methodname>
    <methodparam><type>array</type><parameter>array1</parameter></methodparam>
    <methodparam><type>array</type><parameter>array2</parameter></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter> ...</parameter></methodparam>
-   <methodparam><type>callable</type><parameter>data_compare_func</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>...</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>value_compare_func</parameter></methodparam>
   </methodsynopsis>
   <para>
    Вычисляет расхождение массивов, используя для сравнения данных
@@ -43,7 +43,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>data_compare_func</parameter></term>
+     <term><parameter>value_compare_func</parameter></term>
      <listitem>
       <para>
        Callback-функция, используемая для сравнения.
@@ -68,28 +68,42 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>array_udiff</function></title>
+    <title>Пример использования <function>array_udiff</function> с обектами класса stdClass</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class cr {
-    private $priv_member;
-    function cr($val)
-    {
-        $this->priv_member = $val;
-    }
+// массивы для сравнения
+$array1 = array(new stdclass, new stdclass,
+                new stdclass, new stdclass,
+               );
 
-    static function comp_func_cr($a, $b)
-    {
-        if ($a->priv_member === $b->priv_member) return 0;
-        return ($a->priv_member > $b->priv_member)? 1:-1;
+$array2 = array(
+                new stdclass, new stdclass,
+               );
+
+// проставление некоторых свойств для объектов
+$array1[0]->width = 11; $array1[0]->height = 3;
+$array1[1]->width = 7;  $array1[1]->height = 1;
+$array1[2]->width = 2;  $array1[2]->height = 9;
+$array1[3]->width = 5;  $array1[3]->height = 7;
+
+$array2[0]->width = 7;  $array2[0]->height = 5;
+$array2[1]->width = 9;  $array2[1]->height = 2;
+
+function compare_by_area($a, $b) {
+    $areaA = $a->width * $a->height;
+    $areaB = $b->width * $b->height;
+    
+    if ($areaA < $areaB) {
+        return -1;
+    } elseif ($areaA > $areaB) {
+        return 1;
+    } else {
+        return 0;
     }
 }
-$a = array("0.1" => new cr(9), "0.5" => new cr(12), 0 => new cr(23), 1=> new cr(4), 2 => new cr(-15),);
-$b = array("0.2" => new cr(9), "0.5" => new cr(22), 0 => new cr(3), 1=> new cr(4), 2 => new cr(-15),);
 
-$result = array_udiff($a, $b, array("cr", "comp_func_cr"));
-print_r($result);
+print_r(array_udiff($array1, $array2, 'compare_by_area'));
 ?>
 ]]>
     </programlisting>
@@ -98,17 +112,102 @@ print_r($result);
 <![CDATA[
 Array
 (
-    [0.5] => cr Object
+    [0] => stdClass Object
         (
-            [priv_member:private] => 12
+            [width] => 11
+            [height] => 3
         )
 
-    [0] => cr Object
+    [1] => stdClass Object
         (
-            [priv_member:private] => 23
+            [width] => 7
+            [height] => 1
         )
 
 )
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования <function>array_udiff</function> с объектами класса DateTime</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+Class MyCalendar {
+    public $free = array();
+    public $booked = array();
+
+    public function __construct($week = 'now') {
+        $start = new DateTime($week);
+        $start->modify('Monday this week midnight');
+        $end = clone $start;
+        $end->modify('Friday this week midnight');
+        $interval = new DateInterval('P1D');
+        foreach (new DatePeriod($start, $interval, $end) as $freeTime) {
+            $this->free[] = $freeTime;
+        }
+    }
+
+    public function bookAppointment(DateTime $date, $note) {
+        $this->booked[] = array('date' => $date->modify('midnight'), 'note' => $note);
+    }
+
+    public function checkAvailability() {
+        return array_udiff($this->free, $this->booked, array($this, 'customCompare'));
+    }
+    
+    public function customCompare($free, $booked) {
+        if (is_array($free)) $a = $free['date'];
+        else $a = $free;
+        if (is_array($booked)) $b = $booked['date'];
+        else $b = $booked;
+        if ($a == $b) {
+            return 0;
+        } elseif ($a > $b) {
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+}
+
+// Создание календаря еженедельных встреч
+$myCalendar = new MyCalendar;
+
+// Запись некоторых еженедельных встреч
+$myCalendar->bookAppointment(new DateTime('Monday this week'), "Уборка квартиры сотрудника Google.");
+$myCalendar->bookAppointment(new DateTime('Wednesday this week'), "Катание на сноуборде.");
+$myCalendar->bookAppointment(new DateTime('Friday this week'), "Борьба с багами в коде.");
+
+// Проверка доступности дней путем сравнения дат в $booked с датами из $free
+echo "Я доступен в следующие дни на этой неделе...\n\n";
+foreach ($myCalendar->checkAvailability() as $free) {
+    echo $free->format('l'), "\n"; 
+}
+echo "\n\n";
+echo "Я занят в следующие дни на этой неделе...\n\n";
+foreach ($myCalendar->booked as $booked) {
+    echo $booked['date']->format('l'), ": ", $booked['note'], "\n"; 
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Я доступен в следующие дни на этой неделе...
+
+Tuesday
+Thursday
+
+
+Я занят в следующие дни на этой неделе...
+
+Monday: Уборка квартиры сотрудника Google.
+Wednesday: Катание на сноуборде.
+Friday: Борьба с багами в коде.
 ]]>
     </screen>
    </example>

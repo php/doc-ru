@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5faa7a6747bca628b3bdcc9f93aec5603b65581f Maintainer: shein Status: ready -->
+<!-- EN-Revision: 51d9ea4b24c4704fe6050529b166ba42cc7e8102 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.array-reduce" xmlns="http://docbook.org/ns/docbook">
@@ -11,14 +11,14 @@
   &reftitle.description;
   <methodsynopsis>
    <type>mixed</type><methodname>array_reduce</methodname>
-   <methodparam><type>array</type><parameter>input</parameter></methodparam>
-   <methodparam><type>callable</type><parameter>function</parameter></methodparam>
+   <methodparam><type>array</type><parameter>array</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
    <methodparam choice="opt"><type>mixed</type><parameter>initial</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
    <function>array_reduce</function> итеративно применяет callback-функцию
-   <parameter>function</parameter> к элементам массива
-   <parameter>input</parameter> и, таким образом, сводит массив
+   <parameter>callback</parameter> к элементам массива
+   <parameter>array</parameter> и, таким образом, сводит массив
    к единственному значению.
   </para>
  </refsect1>
@@ -27,7 +27,7 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>input</parameter></term>
+     <term><parameter>array</parameter></term>
      <listitem>
       <para>
        Входной массив.
@@ -35,16 +35,32 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>function</parameter></term>
+     <term><parameter>callback</parameter></term>
      <listitem>
-      <para>
-       Callback-функция.
-      </para>
       <methodsynopsis>
        <type>mixed</type><methodname><replaceable>callback</replaceable></methodname>
-       <methodparam><type>mixed</type><parameter role="reference">result</parameter></methodparam>
+       <methodparam><type>mixed</type><parameter>carry</parameter></methodparam>
        <methodparam><type>mixed</type><parameter>item</parameter></methodparam>
       </methodsynopsis>
+      <variablelist>
+       <varlistentry>
+        <term><parameter>carry</parameter></term>
+        <listitem>
+         <para>
+          Содержит результирующее значение с предыдущей итерации; в случае же первой итерации
+          содержит значение параметра <parameter>initial</parameter>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><parameter>item</parameter></term>
+        <listitem>
+         <para>
+          Содержит значение текущей итерации.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -103,32 +119,27 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-function rsum($v, $w)
+function sum($carry, $item)
 {
-    $v += $w;
-    return $v;
+    $carry += $item;
+    return $carry;
 }
 
-function rmul($v, $w)
+function multiplication($carry, $item)
 {
-    $v *= $w;
-    return $v;
+    $carry *= $item;
+    return $carry;
 }
 
 $a = array(1, 2, 3, 4, 5);
 $x = array();
-$b = array_reduce($a, "rsum");
-$c = array_reduce($a, "rmul", 10);
-$d = array_reduce($x, "rsum", "No data to reduce");
+
+var_dump(array_reduce($a, "sum")); // int(15)
+var_dump(array_reduce($a, "multiplication", 10)); // int(1200), потому что: 10*1*2*3*4*5
+var_dump(array_reduce($x, "sum", "No data to reduce")); // string(17) "No data to reduce"
 ?>
 ]]>
     </programlisting>
-    <para>
-     В результате переменная <varname>$b</varname> содержит
-     <literal>15</literal>, <varname>$c</varname> содержит
-     <literal>1200</literal> (= 10*1*2*3*4*5*10), и
-     <varname>$d</varname> содержит <literal>No data to reduce</literal>.
-    </para>
    </example>
   </para>
  </refsect1>
