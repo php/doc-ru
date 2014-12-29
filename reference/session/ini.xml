@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0fbb3e56aeb442f0032d9c01e3d4971f89acb9de Maintainer: aur Status: ready -->
+<!-- EN-Revision: 3ec11b4caeafba24c7547e2a9444c45686a0b081 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <section xml:id="session.configuration" xmlns="http://docbook.org/ns/docbook">
@@ -39,7 +39,7 @@
     <row>
      <entry><link linkend="ini.session.auto-start">session.auto_start</link></entry>
      <entry>"0"</entry>
-     <entry>PHP_INI_ALL</entry>
+     <entry>PHP_INI_PERDIR</entry>
      <entry></entry>
     </row>
     <row>
@@ -95,6 +95,12 @@
      <entry>""</entry>
      <entry>PHP_INI_ALL</entry>
      <entry>Доступна с PHP 5.2.0.</entry>
+    </row>
+    <row>
+     <entry><link linkend="ini.session.use-strict-mode">session.use_strict_mode</link></entry>
+     <entry>"0"</entry>
+     <entry>PHP_INI_ALL</entry>
+     <entry>Доступна с PHP 5.5.2.</entry>
     </row>
     <row>
      <entry><link linkend="ini.session.use-cookies">session.use_cookies</link></entry>
@@ -251,22 +257,29 @@
      См. также <function>session_save_path</function>.
     </simpara>
     <para>
-     У этой директивы также существует дополнительный аргумент N, определяющий
+     У этой директивы также существует дополнительный аргумент <literal>N</literal>, определяющий
      глубину размещения файлов сессии относительно указанной директории.
      Например, указание <literal>'5;/tmp'</literal> может в конечном итоге
      привести к такому размещению файла сессии:
      <literal>/tmp/4/b/1/e/3/sess_4b1e384ad74619bd212e236e52a5a174If
-     </literal>. Для того, чтобы использовать аргумент N, необходимо
+     </literal>. Для того, чтобы использовать аргумент <literal>N</literal>, необходимо
      предварительно создать все эти директории. Помочь в этом может
      небольшой скрипт, расположенный в <filename>ext/session</filename>.
      Версия для bash называется <filename>mod_files.sh</filename>, а
      Windows-версия - <filename>mod_files.bat</filename>.
-     Также следует учитывать, что если N определен и больше 0, то автоматическая
+     Также следует учитывать, что если <literal>N</literal> определен и больше 0, то автоматическая
      сборка мусора не выполняется, подробнее см. информацию в файле &php.ini;.
-     Если используется N, необходимо также удостовериться, что значение
+     Если используется <literal>N</literal>, необходимо также удостовериться, что значение
      <literal>session.save_path</literal> указано в кавычках, поскольку 
      разделитель (<literal>;</literal>) в &php.ini; используется как знак
      комментария.
+    </para>
+    <para>
+     Модуль хранения файлов создает файлы с правами 600 по умолчанию.
+     Это можно изменить с помощью необязательного аргумента <literal>MODE</literal>:
+     <literal>N;MODE;/path</literal>, где <literal>MODE</literal> - восьмиричное 
+     представление режима доступа к файлу.
+     Установка <literal>MODE</literal> не затрагивает umask.
     </para>
     <warning>
      <para>
@@ -276,6 +289,20 @@
       список файлов такой директории.
      </para>
     </warning>
+    <caution>
+     <para>
+      При использовании необязательного аргумента <literal>N</literal> уровня директорий,
+      как описано выше, учтите, что использование значений выше чем 1 или 2
+      недопустимо для большинства сайтов, так как требуется очень
+      большое количество директорий: например, значение 3 приводит к <literal>64^3</literal>
+      директориям в файловой системе, которые приводят к огромным потерям
+      места и inode.
+     </para>
+     <para>
+      Only use <literal>N</literal> greater than 2 if you are absolutely
+      certain that your site is large enough to require it.
+     </para>
+    </caution>
     <note>
      <simpara>
       До версии PHP 4.3.6, для использования механизма сессий
@@ -324,11 +351,21 @@
    <listitem>
     <simpara>
      <literal>session.serialize_handler</literal> определяет имя обработчика,
-     который используется для сериализации / десериализации данных. В настоящее
-     время используется внутренний формат PHP (наименование <literal>php</literal>
-     или <literal>php_binary</literal>), а также поддерживается WDDX
+     который используется для сериализации / десериализации данных. 
+     Формат сериализации PHP (наименование <literal>php_serialize</literal>), 
+     внутренний формат PHP (наименование <literal>php</literal> и 
+     <literal>php_binary</literal>), а также поддерживается WDDX
      (наименование <literal>wddx</literal>). WDDX доступен только в том случае,
      если PHP скомпилирован с <link linkend="ref.wddx">поддержкой WDDX</link>.
+     <literal>php_serialize</literal> доступен
+     с версии PHP 5.5.4. <literal>php_serialize</literal> использует 
+     простую функцию сериализации / десериализации для внутренних нужд и
+     не имеет тех же ограничений, что <literal>php</literal> и <literal>php_binary</literal>.
+     Более старые обработчики сериализации не могут хранить
+     ни числовые ни строковые индексы, содержащие специальные символы
+     (<literal>|</literal> и <literal>!</literal>) в $_SESSION.
+     Используйте <literal>php_serialize</literal>, чтобы обойти 
+     ошибки числовых и строковых индексов при завершении сктрипта.
      Значение по умолчанию: <literal>php</literal>.
     </simpara>
    </listitem>
@@ -344,8 +381,8 @@
      <literal>session.gc_probability</literal> в сочетании с
      <literal>session.gc_divisor</literal> определяет вероятность запуска
      функции сборщика мусора (gc, garbage collection).
-     По умолчанию равна <literal>1</literal>. См. подробнее в <link
-     linkend="ini.session.gc-divisor">session.gc_divisor</link>.
+     По умолчанию равна <literal>1</literal>. 
+     См. подробнее в <link linkend="ini.session.gc-divisor">session.gc_divisor</link>.
     </simpara>
    </listitem>
   </varlistentry>
@@ -379,8 +416,8 @@
      <literal>session.gc_maxlifetime</literal> задает отсрочку времени в
      секундах, после которой данные будут рассматриваться как "мусор" и
      потенциально будут удалены. Сбор мусора может произойти в течение старта
-     сессии (в зависимости от значений <link
-     linkend="ini.session.gc-probability">session.gc_probability</link> и
+     сессии (в зависимости от значений 
+     <link linkend="ini.session.gc-probability">session.gc_probability</link> и
      <link linkend="ini.session.gc-divisor">session.gc_divisor</link>).
     </simpara>
     <note>
@@ -441,6 +478,14 @@
      предписывает PHP использовать в качестве источника энтропии
      Windows Random API.
     </simpara>
+    <note>
+     <simpara>
+      Начиная с PHP 5.4.0 <literal>session.entropy_file</literal> имеет
+      значение по умолчанию равное <literal>/dev/urandom</literal> или 
+      <literal>/dev/arandom</literal>, если они доступны. В PHP 5.3.0 
+      эта директива по умолчанию пуста.
+     </simpara>
+    </note>
    </listitem>
   </varlistentry>
 
@@ -454,6 +499,22 @@
      <literal>session.entropy_length</literal> определяет количество байт,
      которые будут прочитаны из вышеуказанного файла. По умолчанию
      <literal>0</literal> (отключено).
+    </simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="ini.session.use-strict-mode">
+   <term>
+    <parameter>session.use_strict_mode</parameter>
+    <type>boolean</type>
+   </term>
+   <listitem>
+    <simpara>
+     <literal>session.use_strict_mode</literal> определяет 
+     будет ли модуль использовать реим строгого идентификатора (ID). 
+     Если от браузера получен неопределенный ID, то браузеру будет отправлен новый ID.
+     Таким образом приложения защищаются от внедрения сессии с помощью строгого режима.
+     Пол умолчанию <literal>0</literal> (отключено).
     </simpara>
    </listitem>
   </varlistentry>
@@ -622,12 +683,6 @@
      <literal>0</literal> (отключено).
     </simpara>
     <note>
-     <simpara>
-      В PHP 4.1.2 и более ранних версиях, данная опция доступна при компиляции с
-      <link linkend="configure.enable-trans-sid">
-      <literal>--enable-trans-sid</literal></link>.
-      Начиная с PHP 4.2.0, возможность trans-sid всегда доступна.
-     </simpara>
      <simpara>
       Управление сессией на основе URL имеет дополнительные риски
       безопасности по сравнению с управлением на основе cookies. В качестве
@@ -839,7 +894,7 @@
 
   <varlistentry xml:id="ini.session.upload-progress.min-freq">
    <term>
-    <parameter>session.upload_progress.min-freq</parameter>
+    <parameter>session.upload_progress.min_freq</parameter>
     <type>integer</type>
    </term>
    <listitem>
@@ -854,10 +909,7 @@
  </para>
 
  <para>
-  Настройки <link
-  linkend="ini.track-vars"><literal>track_vars</literal></link> и
-  <link
-  linkend="ini.register-globals"><literal>register_globals</literal></link>
+  Настройки <link linkend="ini.register-globals"><literal>register_globals</literal></link>
   влияют на способ хранения и использования переменных сессии.
  </para>
 
@@ -868,14 +920,6 @@
   Подробнее об этом смотрите в главе
   "<link linkend="session.upload-progress">Отслеживание прогресса загрузки файлов с помощью сессий</link>".
  </para>
-
- <note>
-  <para>
-   Начиная с PHP 4.0.3, опция <link
-   linkend="ini.track-vars"><literal>track_vars</literal></link> постоянно
-   включена.
-  </para>
- </note>
 
 </section>
 
