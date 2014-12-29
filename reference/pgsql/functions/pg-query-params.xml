@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 63283140b433618c33145891c847b21ef67279c1 Maintainer: aur Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <!-- splitted from ./en/functions/pgsql.xml, last change in rev 1.2 -->
@@ -33,8 +33,10 @@
   <para>
    Если используются параметры <parameter>params</parameter>, они заменяют 
    псевдопеременные $1, $2 и т.д. в строке запроса <parameter>query</parameter>. 
-   Значение &null; в массиве параметров будет означать SQL <literal>NULL</literal> 
-   в запросе.
+   Один и тот же параметр может быть указан больше одного раза в <parameter>query</parameter>;
+   в этом случае будут использованы одинаковые значения. <parameter>params</parameter> определяют 
+   текущие значения параметров. Значение &null; в массиве параметров будет означать 
+   SQL <literal>NULL</literal> в запросе.
   </para>
   <para>
    Главное преимущество <function>pg_query_params</function> перед 
@@ -72,6 +74,15 @@
        Если в запрос будут передаваться параметры, то они заменят 
        псевдопеременные $1, $2 и т.д.
       </para>
+      <para>
+       Пользовательские данные всегда должны передаваться как параметры, 
+       и не передаваться в строку запроса напрямую, где они могут привести
+       к возможным атакам через 
+       <link linkend="security.database.sql-injection">SQL инъекции</link>
+       и приводит к ошибкам, если данные содержат кавычки.
+       Если по каким-то причинам вы не можете использовать параметр, убедитесь, что
+       пользовательские данные <link linkend="function.pg-escape-string">правильно экранированы</link>.
+      </para>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -81,6 +92,10 @@
        Массив значений параметров запроса для замены псевдопеременных $1, $2 и т.д. 
        в исходной строке запроса. Количество элементов массива должно точно совпадать с 
        количеством псевдопеременных.
+      </para>
+      <para>
+       Значения предназначенные для <literal>bytea</literal> полей нельзя передавать в параметрах.
+       Используйте функцию <function>pg_escape_bytea</function> или функции для больших объектов.
       </para>
      </listitem>
     </varlistentry>
