@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0640e024d4b8a9400d457143ccd0ea66e5f98ead Maintainer: irker Status: ready -->
+<!-- EN-Revision: e85d788eabb67456a5101afd7b994b69a495af4f Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.oci-fetch-array" xmlns="http://docbook.org/ns/docbook">
@@ -22,6 +22,14 @@
    обычно вызывается в цикле, пока она не вернет &false;, который указывает
    на отсутствие последующих строк.
   </para>
+  <para>
+   Если <parameter>statement</parameter> соответствует PL/SQL блоку, 
+   возвращаемому Oracle Database 12c Implicit Result Sets, тогда будут 
+   последовательно извлеены ряды из всех наборов.
+   Если <parameter>statement</parameter> возвращается из
+   <function>oci_get_implicit_resultset</function>, тогда вернется только 
+   часть рядов для одного дочернего запроса.
+  </para>
   &oci.datatypes;
  </refsect1>
 
@@ -33,6 +41,9 @@
      <term><parameter>statement</parameter></term>
      <listitem>
        &oci.arg.statement.id;
+       <para>
+        Также может быть идентификатором, возвращаемым функцией <function>oci_get_implicit_resultset</function>.
+       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -85,7 +96,7 @@
        По умолчанию <parameter>mode</parameter> равен <constant>OCI_BOTH</constant>.
       </para>
       <para>
-       Используйте оператор сложения &quot;+&quot; для указания
+       Используйте оператор сложения "+" для указания
        более одного режима.
       </para>
      </listitem>
@@ -118,6 +129,12 @@
    Регистрозависимые имена полей будут иметь индексы с теми же регистрами символов, что и само поле.
    Используйте <function>var_dump</function> для результирующего массива, чтобы
    проверить соответствие регистров символов для каждого запроса.
+  </para>
+  <para>
+   Имя таблицы не входит в ассоциативны индекс. Если ваш запрос
+   содержит два разных поля с одинаковым именем, используйте <constant>OCI_NUM</constant>
+   или добавьте алиас для поля в запрос, так чтобы имена стали уникальными (смотрите пример #7).
+   Иначе будет возвращено только одно поле.
   </para>
  </refsect1>
 
@@ -176,7 +193,7 @@ if (!$conn) {
 $stid = oci_parse($conn, 'SELECT id, description FROM mytab');
 oci_execute($stid);
 
-while (($row = oci_fetch_array($stid, OCI_NUM))) {
+while (($row = oci_fetch_array($stid, OCI_NUM)) != false) {
     echo $row[0] . "<br>\n";
     echo $row[1]->read(11) . "<br>\n"; // это выведет первые 11 байт DESCRIPTION
 }
@@ -216,7 +233,7 @@ if (!$conn) {
 $stid = oci_parse($conn, 'SELECT id, description FROM mytab');
 oci_execute($stid);
 
-while (($row = oci_fetch_array($stid, OCI_ASSOC))) {
+while (($row = oci_fetch_array($stid, OCI_ASSOC)) != false) {
     echo $row['ID'] . "<br>\n";
     echo $row['DESCRIPTION']->read(11) . "<br>\n"; // это выведет первые 11 байт DESCRIPTION
 }
@@ -248,7 +265,7 @@ if (!$conn) {
 
 $stid = oci_parse($conn, 'SELECT 1, null FROM dual');
 oci_execute($stid);
-while (($row = oci_fetch_array ($stid, OCI_ASSOC))) { // Игнорирует NULL значения
+while (($row = oci_fetch_array ($stid, OCI_ASSOC)) != false) { // Игнорирует NULL значения
     var_dump($row);
 }
 
@@ -262,7 +279,7 @@ while (($row = oci_fetch_array ($stid, OCI_ASSOC))) { // Игнорирует NU
 
 $stid = oci_parse($conn, 'SELECT 1, null FROM dual');
 oci_execute($stid);
-while (($row = oci_fetch_array ($stid, OCI_ASSOC+OCI_RETURN_NULLS))) { // Получает NULL значения
+while (($row = oci_fetch_array ($stid, OCI_ASSOC+OCI_RETURN_NULLS)) != false) { // Получает NULL значения
     var_dump($row);
 }
 
@@ -307,6 +324,8 @@ oci_execute($stid);
 while (($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_LOBS))) {
     echo $row['ID'] . "<br>\n";
     echo $row['DESCRIPTION'] . "<br>\n"; // содержит весь DESCRIPTION
+    // В цикле, очищение больших переменных перед повторным получением данных, уменьшает пиковое потребление памяти PHP
+    unset($row); 
 }
 
 // Выведет:
@@ -482,10 +501,10 @@ oci_execute($stid);
 // Выполняет вовзращенный REF CURSOR и получает его в виде идентификатора выражения
 oci_execute($refcur);
 echo "<table border='1'>\n";
-while ($row = oci_fetch_array($refcur, OCI_ASSOC+OCI_RETURN_NULLS)) {
+while (($row = oci_fetch_array($refcur, OCI_ASSOC+OCI_RETURN_NULLS)) != false) {
     echo "<tr>\n";
     foreach ($row as $item) {
-        echo "    <td>".($item !== null ? htmlentities($item, ENT_QUOTES) : "")."</td>\n";
+        echo "    <td>".($item !== null ? htmlentities($item, ENT_QUOTES) : "&nbsp;")."</td>\n";
     }
     echo "</tr>\n";
 }
@@ -495,14 +514,14 @@ oci_free_statement($refcur);
 oci_free_statement($stid);
 oci_close($conn);
 
-?>
+?> 
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
    <example>
-    <title><function>oci_fetch_array</function> с <literal>LIMIT</literal>-подобным запросом</title>
+    <title>Постраничный вывод с помощью <function>oci_fetch_array</function> используя <literal>LIMIT</literal>-подобный запрос</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -513,36 +532,98 @@ if (!$conn) {
     trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
 }
 
-// Запрос, который необходимо выполнить
+// Определяем версию базы данных
+preg_match('/Release ([0-9]+)\./', oci_server_version($conn), $matches);
+$oracleversion = $matches[1];
+
+// Запрос, который необходимо сделать "постраничным"
 $sql = 'SELECT city, postal_code FROM locations ORDER BY city';
 
-// Этот вложенный выбирает часть строк из $sql.
-// При реальной разработке будьте внимательны и избегайте
-// возможности SQL-инъекции при объединении SQL выражений.
-$limit_sql =
-   'select *
-    from ( select a.*, rownum as rnum
-        from (' . $sql . ') a
-        where rownum < :FIRST_ROW + :NUM_ROWS )
-    where rnum >= :FIRST_ROW';
+if ($oracleversion >= 12) {
+    // Используем Oracle 12c OFFSET / FETCH NEXT синтаксис
+    $sql = $sql . ' OFFSET :offset ROWS FETCH NEXT :numrows ROWS ONLY';
+} else {
+    // Cтарые версии Oracle нуждаются в выборке с помощью подзапроса в $sql.
+    // Или, если SQL выражение известно на стадии разработки, то с помощью
+    // функции row_number(). Будьте осторожны и избегайте возможности
+    // SQL-инъекции при объединении строк в боевом окружении.
+    $sql = "SELECT * FROM (SELECT a.*, ROWNUM AS my_rnum
+                           FROM ($sql) a
+                           WHERE ROWNUM <= :offset + :numrows)
+            WHERE my_rnum > :offset";
+}
 
-$first = 1;  // start with the first row
-$num   = 5;  // return 5 rows
-$stid = oci_parse($conn, $limit_sql);
-oci_bind_by_name($stid, ':FIRST_ROW', $first);
-oci_bind_by_name($stid, ':NUM_ROWS', $num);
+$offset  = 0;  // skip this many rows
+$numrows = 5;  // return 5 rows
+$stid = oci_parse($conn, $sql);
+oci_bind_by_name($stid, ':numrows', $numrows);
+oci_bind_by_name($stid, ':offset', $offset);
 oci_execute($stid);
 
-while (($row = oci_fetch_array($stid, OCI_ASSOC))) {
+while (($row = oci_fetch_array($stid, OCI_ASSOC + OCI_RETURN_NULLS)) != false) {
     echo $row['CITY'] . " " . $row['POSTAL_CODE'] . "<br>\n";
 }
 
 // Выведет:
-//    Beijing 190518x
-//    Bern 3095x
-//    Bombay 490231x
-//    Geneva 1730x
-//    Hiroshima 6823x
+//    Beijing 190518
+//    Bern 3095
+//    Bombay 490231
+//    Geneva 1730
+//    Hiroshima 6823
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title><function>oci_fetch_array</function> c Oracle Database 12<emphasis>c</emphasis> Implicit Result Sets</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/pdborcl');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+// Требует OCI8 2.0 и Oracle Database 12c
+// также смотрите oci_get_implicit_resultset()
+$sql = 'DECLARE
+           c1 SYS_REFCURSOR;
+        BEGIN
+           OPEN c1 FOR SELECT city, postal_code FROM locations WHERE ROWNUM < 4 ORDER BY city;
+           DBMS_SQL.RETURN_RESULT(c1);
+           OPEN c1 FOR SELECT country_id FROM locations WHERE ROWNUM < 4 ORDER BY city;
+           DBMS_SQL.RETURN_RESULT(c1);
+        END;';
+
+$stid = oci_parse($conn, $sql);
+oci_execute($stid);
+
+// Обратите внимание: oci_fetch_all и oci_fetch() нельзя неприменимы здесь
+echo "<table>\n";
+while (($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS)) != false) {
+    echo "<tr>\n";
+    foreach ($row as $item) {
+        echo "  <td>".($item!==null?htmlentities($item, ENT_QUOTES|ENT_SUBSTITUTE):"&nbsp;")."</td>\n";
+    }
+    echo "</tr>\n";
+}
+echo "</table>\n";
+
+// Выведет:
+//    Beijing 190518
+//    Bern    3095
+//    Bombay  490231
+//    CN
+//    CH
+//    IN
 
 oci_free_statement($stid);
 oci_close($conn);

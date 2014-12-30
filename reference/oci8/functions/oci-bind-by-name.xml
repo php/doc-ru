@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5a3f0c18ac46e6d4313367e44866527badac5b73 Maintainer: aur Status: ready -->
+<!-- EN-Revision: a48bfbee2a121bdf25ceee2946aa27728e611365 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.oci-bind-by-name" xmlns="http://docbook.org/ns/docbook">
@@ -220,7 +220,13 @@
         <listitem>
          <para>
           <constant>SQLT_RSET</constant> - для курсоров, созданных
-          функцией <function>oci_new_cursor</function>.
+          функцией <function>oci_new_cursor</function>;
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>SQLT_BOL</constant> или <constant>OCI_B_BOL</constant>
+          - для PL/SQL BOOLEAN (Требуется OCI8 2.0.7 и Oracle Database 12c)
          </para>
         </listitem>
        </itemizedlist>
@@ -362,16 +368,21 @@ if (!$conn) {
     trigger_error(htmlentities($m['message']), E_USER_ERROR);
 }
 
-$sql = 'SELECT last_name FROM employees WHERE employee_id = :eidbv';
+$sql = 'SELECT last_name FROM employees WHERE department_id = :didbv ORDER BY last_name';
 $stid = oci_parse($conn, $sql);
-$myeid = 101;
-oci_bind_by_name($stid, ':eidbv', $myeid);
+$didbv = 60;
+oci_bind_by_name($stid, ':didbv', $didbv);
 oci_execute($stid);
-$row = oci_fetch_array($stid, OCI_ASSOC);
-echo $row['LAST_NAME'] ."<br>\n";
+while (($row = oci_fetch_array($stid, OCI_ASSOC)) != false) {
+    echo $row['LAST_NAME'] ."<br>\n";
+}
 
 // Выводом будет
-//    Kochhar
+//    Austin
+//    Ernst
+//    Hunold
+//    Lorentz
+//    Pataballa
 
 oci_free_statement($stid);
 oci_close($conn);
@@ -709,7 +720,7 @@ oci_close($conn);
 <![CDATA[
 <?php
 
-// Создаем таблицу:
+// Перед запуском создаем таблицу:
 //     CREATE TABLE mytab (mykey NUMBER, myclob CLOB);
 
 $conn = oci_connect('hr', 'welcome', 'localhost/XE');
@@ -742,11 +753,44 @@ oci_bind_by_name($stid, ":mykey", $mykey, 5);
 oci_execute($stid);
 
 print '<table border="1">';
-while ($row = oci_fetch_array($stid, OCI_ASSOC)) {
-  $result = $row['MYCLOB']->load();
-  print '<tr><td>'.$result.'</td></tr>';
+while ($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_LOBS)) {
+    print '<tr><td>'.$row['MYCLOB'].'</td></tr>';
+    // В цикле, очищение больших переменных перед повторным получением данных, уменьшает пиковое потребление памяти PHP
+    unset($row);  
 }
 print '</table>';
+
+?>
+]]>
+   </programlisting>
+  </example>
+  </para>
+
+  <para>
+  <example>
+   <title>Прикрепление PL/SQL BOOLEAN</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message']), E_USER_ERROR);
+}
+
+$plsql = 
+  "begin
+    :output1 := true;
+    :output2 := false;
+   end;";
+
+$s = oci_parse($c, $plsql);
+oci_bind_by_name($s, ':output1', $output1, -1, OCI_B_BOL);
+oci_bind_by_name($s, ':output2', $output2, -1, OCI_B_BOL);
+oci_execute($s);
+var_dump($output1);  // true
+var_dump($output2);  // false
 
 ?>
 ]]>
@@ -767,8 +811,7 @@ print '</table>';
   &reftitle.notes;
   <warning>
    <para>
-    Не используйте <link
-     linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link> или
+    Не используйте <link linkend="ini.magic-quotes-gpc">magic_quotes_gpc</link> или
     <function>addslashes</function>
     одновременно с <function>oci_bind_by_name</function>, так как кавычек быть
     не должно. Все указанные кавычки будут записаны в базу данных,
@@ -852,3 +895,4 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
+

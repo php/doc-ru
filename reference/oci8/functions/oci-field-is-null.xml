@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 8c1fe071140833a8e90b266523ff26a32520c4e7 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.oci-field-is-null" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>oci_field_is_null</refname>
-  <refpurpose>Проверяет, равняется ли поле &null;</refpurpose>
+  <refpurpose>Проверяет, равняется ли поле в текущем полученном ряду равным &null;</refpurpose>
  </refnamediv>
  
  <refsect1 role="description">
@@ -17,7 +17,7 @@
   </methodsynopsis>
   <para>
    Проверяет, является ли значение, переданное в поле <parameter>field</parameter>
-   из запроса <parameter>statement</parameter> равным &null;.
+   из текущего ряда <parameter>statement</parameter> равным &null;.
   </para>
  </refsect1>
  
@@ -37,8 +37,7 @@
      <term><parameter>field</parameter></term>
      <listitem>
       <para>
-       Может быть порядковый номер поля или имя поля (в верхнем
-       регистре).
+       Может быть порядковый номер поля (1-циферное) или имя поля.
       </para>
      </listitem>
     </varlistentry>
@@ -51,6 +50,50 @@
   <para>
    Возвращает &true;, если <parameter>field</parameter> равен &null;, и &false;
    если нет. 
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>oci_field_name</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Создайте таблицу:
+//   CREATE TABLE mytab (c1 NUMBER);
+//   INSERT INTO mytab VALUES (1);
+//   INSERT INTO mytab VALUES (NULL);
+
+$conn = oci_connect("hr", "hrpwd", "localhost/XE");
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, "SELECT * FROM mytab");
+oci_execute($stid);
+
+while (($row = oci_fetch_array($stid, OCI_RETURN_NULLS)) != false) {
+    $ncols = oci_num_fields($stid);
+    for ($col = 1; $col <= $ncols; $col++) {
+        var_dump(oci_field_is_null($stid, $col));
+    }    
+}
+
+// Выведет:
+//    bool(false)
+//    bool(true)
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
   </para>
  </refsect1>
  

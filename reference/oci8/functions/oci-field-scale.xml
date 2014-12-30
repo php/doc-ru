@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 8c1fe071140833a8e90b266523ff26a32520c4e7 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.oci-field-scale" xmlns="http://docbook.org/ns/docbook">
@@ -13,7 +13,7 @@
   <methodsynopsis>
    <type>int</type><methodname>oci_field_scale</methodname>
    <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
-   <methodparam><type>int</type><parameter>field</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter>field</parameter></methodparam>
   </methodsynopsis>
   <para>
    Возвращает масштаб поля под номером <parameter>field</parameter>.
@@ -54,6 +54,50 @@
   &reftitle.returnvalues;
   <para>
    Возвращает масштаб в виде числа, или &false; при ошибке.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title><function>oci_field_scale</function> Example</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Создайте таблицу:
+//   CREATE TABLE mytab (c1 NUMBER, c2 FLOAT, c3 NUMBER(4), c4 NUMBER(5,3));
+
+$conn = oci_connect("hr", "hrpwd", "localhost/XE");
+if (!$conn) {
+    $m = oci_error();
+    trigger_error(htmlentities($m['message']), E_USER_ERROR);
+}
+
+$stid = oci_parse($conn, "SELECT * FROM mytab");
+oci_execute($stid, OCI_DESCRIBE_ONLY); // используйте OCI_DESCRIBE_ONLY, если не получаете данных
+
+$ncols = oci_num_fields($stid);
+for ($i = 1; $i <= $ncols; $i++) {
+    echo oci_field_name($stid, $i) . " " 
+        . oci_field_precision($stid, $i) . " " 
+        . oci_field_scale($stid, $i) . "<br>\n";
+}
+
+// Выведет:
+//   C1    0 -127
+//   C2  126 -127
+//   C3    4    0
+//   C4    5    3
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
   </para>
  </refsect1>
  
