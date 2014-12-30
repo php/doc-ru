@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5a8719f61a2384a353959915bfdf3865f4e3ca79 Maintainer: mch Status: ready -->
+<!-- EN-Revision: bd151dd85d69d0fb72282e2aa2fda60f30199163 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
-<!-- Revision: $ -->
+<!-- $Revision$ -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ob-start">
  <refnamediv>
   <refname>ob_start</refname>
@@ -12,9 +12,9 @@
   &reftitle.description;
   <methodsynopsis>
    <type>bool</type><methodname>ob_start</methodname>
-   <methodparam choice="opt"><type>callable</type><parameter>output_callback</parameter></methodparam>
+   <methodparam choice="opt"><type>callable</type><parameter>output_callback</parameter><initializer>&null;</initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>chunk_size</parameter><initializer>0</initializer></methodparam>
-   <methodparam choice="opt"><type>bool</type><parameter>erase</parameter><initializer>true</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
    Эта функция включает буферизацию вывода. Если буферизация вывода активна,
@@ -55,21 +55,42 @@
      <term><parameter>output_callback</parameter></term>
      <listitem>
       <para>
-       В качестве необязательного параметра может быть указана функция
-    <parameter>output_callback</parameter>. Эта функция принимает строку
-    как параметр и должна возвращать строку. Функция будет вызвана при
-    сбросе (отправке) буфера вывода или очистке (вместе с
-    <function>ob_flush</function>, <function>ob_clean</function> или
-    аналогичной функцией) или когда буфер выводится в браузер в конце запроса.
-    При вызове <parameter>output_callback</parameter>, она принимает
-    содержимое буфера вывода как параметр и возвращает новое содержимое,
-    которое и отправляется в браузер. Если <parameter>output_callback</parameter>
-    не является вызываемой функцией, то эта функция вернет &false;.
+       Можно задать необязательный параметр <parameter>output_callback</parameter>. 
+       Эта функция принимает строку в виде аргумента и должна также вернуть строку.
+       Она вызывается при сбросе (отправке) или очистке (с помощью
+       <function>ob_flush</function>, <function>ob_clean</function> или подобных функций)
+       или если буффер вывода сбрасывается в браузер по окончанию запроса.
+       При вызове функции <parameter>output_callback</parameter>, она получает
+       содержимое буфера и должна вернуть обновленное содержимое для буфера вывода,
+       который будет отправлен браузеру.
+       Если <parameter>output_callback</parameter> не является допустимой функцией, то 
+       документируемая функция вернет &false;.
+       Описание функции для этого параметра:
       </para>
       <para>
-       Если callback-функции передано 2 параметра, то второй параметр
-       рассматривается как битовое значение состоящее из
-       <constant>PHP_OUTPUT_HANDLER_*</constant> constants.
+       <methodsynopsis>
+        <type>string</type><methodname><replaceable>handler</replaceable></methodname>
+        <methodparam><type>string</type><parameter>buffer</parameter></methodparam>
+        <methodparam choice="opt"><type>int</type><parameter>phase</parameter></methodparam>
+       </methodsynopsis>
+       <variablelist>
+        <varlistentry>
+         <term><parameter>buffer</parameter></term>
+         <listitem>
+          <simpara>
+           Содержимое буфера вывода.
+          </simpara>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>phase</parameter></term>
+         <listitem>
+          <simpara>
+           Битовая маска констант <constant>PHP_OUTPUT_HANDLER_*</constant>.
+          </simpara>
+         </listitem>
+        </varlistentry>
+       </variablelist>
       </para>
       <para>
        Если <parameter>output_callback</parameter> вернет &false;, то
@@ -119,13 +140,56 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>erase</parameter></term>
+     <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Если не обязательный параметр <parameter>erase</parameter> установлен
-       в &false;, то буфер не будет удален пока скрипт не закончит работу.
-       Это приведет к тому, что попытка сбросить или очистить буфер
-       выдаст уведомление и вернет &false; при вызове.
+       Параметр <parameter>flags</parameter> является битовой маской, которая
+       управляет операциями, которые можно совершать над буфером вывода.
+       По умолчанию она позволяет буферу вывода быть очищенным, сброшенным и удаленным, что
+       равносильно значению 
+       <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> |
+       <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> |
+       <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant>, или
+       <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant> как сокращение этой комбинации.
+      </para>
+      <para>
+       Each flag controls access to a set of functions, as described below:
+       <informaltable>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Константа</entry>
+           <entry>Функции</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant></entry>
+           <entry>
+            <function>ob_clean</function>,
+            <function>ob_end_clean</function>, и
+            <function>ob_get_clean</function>.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant></entry>
+           <entry>
+            <function>ob_end_flush</function>,
+            <function>ob_flush</function>, и
+            <function>ob_get_flush</function>.
+           </entry>
+          </row>
+          <row>
+           <entry><constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant></entry>
+           <entry>
+            <function>ob_end_clean</function>,
+            <function>ob_end_flush</function>, и
+            <function>ob_get_flush</function>.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </informaltable>
       </para>
      </listitem>
     </varlistentry>
@@ -153,6 +217,30 @@
      </thead>
      <tbody>
       <row>
+       <entry>7.0.0</entry>
+       <entry>
+        В случае, если <function>ob_start</function> используется внутри callback-функции буфера вывода,
+        эта функция больше не будет приводить к ошибке <constant>E_ERROR</constant>, а вместо
+        этого будет вызывать <constant>E_RECOVERABLE_ERROR</constant>, позволяя
+        сторонним обработчикам ошиок поймать ее.
+       </entry>
+      </row>
+      <row>
+       <entry>5.4.0</entry>
+       <entry>
+        Третий параметр <function>ob_start</function> изменен с
+        булева (<type>boolean</type>) параметра <parameter>erase</parameter> 
+        (который при установке в &false; предотвращал удаление буфера до тех пор,
+        пока не завершалась работа скрипта) на целочисленный (<type>integer</type>)
+        параметр <parameter>flags</parameter>.
+        К сожалению, это означает появление несовместимости API для кода, который 
+        использовал третий параметр до версии PHP 5.4.0. Смотрите
+        <link linkend="function.ob-start.flags-bc">пример с флагами</link>,
+        чтобы понять как работать с кодом, чтобы он поддерживал совместимость
+        с обеими версиями.
+       </entry>
+      </row>
+      <row>
        <entry>5.4.0</entry>
        <entry>
         Параметр <literal>chunk_size</literal>, установленный в <literal>1</literal>, теперь приводит к выводу по 1 байту
@@ -164,12 +252,6 @@
        <entry>
         Функция вернет &false; в случае, если
   <parameter>output_callback</parameter> не сможет быть выполнена.
-       </entry>
-      </row>
-      <row>
-       <entry>4.2.0</entry>
-       <entry>
-        Добавлен параметр <parameter>erase</parameter>.
        </entry>
       </row>
      </tbody>
@@ -218,6 +300,26 @@ ob_end_flush();
 </html>
 ]]>
     </screen>
+   </example>
+  </para>
+
+  <para>
+   <example xml:id="function.ob-start.flags-bc">
+    <title>Создание нестираемого буфера вывода с совместимостью с версиями PHP 5.3 и 5.4</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
+  ob_start(null, 0, PHP_OUTPUT_HANDLER_STDFLAGS ^
+    PHP_OUTPUT_HANDLER_REMOVABLE);
+} else {
+  ob_start(null, 0, false);
+}
+
+?>
+]]>
+    </programlisting>
    </example>
   </para>
  </refsect1>
