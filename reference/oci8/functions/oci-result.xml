@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 445c757a35e0f4f893796f7147336ad3f075c1d6 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.oci-result" xmlns="http://docbook.org/ns/docbook">
@@ -37,7 +37,9 @@
      <term><parameter>field</parameter></term>
      <listitem>
       <para>
-       Может быть задано номером поля (начиная с 1), либо по имени (в верхнем регистре).
+       Может быть задано номером поля (начиная с 1), либо по имени.
+       Регистр имени поля должен быть таким же, как и у поля описанного в метаданных Oracle,
+       которое всегда в верхнем регистре для полей, созданных регистронезависимыми.
       </para>
      </listitem>
     </varlistentry>
@@ -50,6 +52,44 @@
   <para>
    Возвращает все значения в виде строки за исключением абстрактных типов
    (ROWIDs, LOBs и FILEs). Возвращает &false; в случае ошибки.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title><function>oci_fetch</function> с <function>oci_result</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+if (!$conn) {
+    $e = oci_error();
+    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+}
+
+$sql = 'SELECT location_id, city FROM locations WHERE location_id < 1200';
+$stid = oci_parse($conn, $sql);
+oci_execute($stid);
+
+while (oci_fetch($stid)) {
+    echo oci_result($stid, 'LOCATION_ID') . " is ";
+    echo oci_result($stid, 'CITY') . "<br>\n";
+}
+
+// Выведет:
+//   1000 is Roma
+//   1100 is Venice
+
+oci_free_statement($stid);
+oci_close($conn);
+
+?>
+]]>
+    </programlisting>
+   </example>
   </para>
  </refsect1>
 
