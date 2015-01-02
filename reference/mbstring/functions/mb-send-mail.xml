@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2b587ab01f833234c6520e5f46e6a87919d23135 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: e41aab5ecacf449e51179886c17f1d41735b0234 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.mb-send-mail" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -57,14 +57,40 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>additional_headers</parameter></term>
+     <term><parameter>additional_headers</parameter> (необязательный)</term>
      <listitem>
       <para>
-       Значение <parameter>additional_headers</parameter> вставляется в конец
-       заголовка. Обычно его используют, чтобы добавлять дополнительные 
-       заголовки. Если дополнительных заголовков несколько, их необходимо 
-       разделять символом новой строки ("\n").
+       Строка, вставляемая в конец заголовка письма.
       </para>
+      <para>
+       Обычно используется для добавления дополнительных заголовков (From, Cc, и Bcc).
+       Несколько дополнительных заголовков должны разделяться с помощью CRLF (\r\n).
+       Проверяйте этот параметр, чтобы недопустить инъекции нежелательных заголовков.
+      </para>
+      <note>
+       <para>
+        При отправке письма, письмо <emphasis>обязано</emphasis> содержать
+        заголовок <literal>From</literal>. Его можно задать с помощью параметра
+        <parameter>additional_headers</parameter> или же через опцию в &php.ini;.
+       </para>
+       <para>
+        Если этого не сделать, то это приведет к сообщение об ошибке, 
+        примерно такого содержания: <literal>Warning: mail(): "sendmail_from" not
+        set in php.ini or custom "From:" header missing</literal>.
+        Заголовок <literal>From</literal> также устанавливает и заголовок
+        <literal>Return-Path</literal> в Windows.
+       </para>
+      </note>
+      <note>
+       <para>
+        Если письмо не доставилось, попробуйте использовать только LF (\n).
+        Некоторые Unix почтовые агенты (в первую очередь
+        <link xlink:href="&url.qmail;">qmail</link>) заменяют LF на CRLF
+        автоматически (что приводит к дублированию CR при использовании CRLF).
+        Это единственное решение, так как это поведение не соответвует
+        <link xlink:href="&url.rfc;2822">RFC 2822</link>.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -74,6 +100,24 @@
        Значением <parameter>additional_parameter</parameter> является параметр 
        командной строки MTA. Он полезен для задания корректного заголовка
        Return-Path при использовании функции sendmail.
+      </para>
+      <para>
+       Этот параметр экранируется функцией <function>escapeshellcmd</function> автоматически, 
+       чтобы предотвратить запуск других команд. <function>escapeshellcmd</function> предотвращает
+       запуск команд, но допускает добавление дополнительных аргументов, поэтому
+       для обечпечения безопасности нужно проверять эту опцию.
+      </para>
+      <para>
+       Так как <function>escapeshellcmd</function> применяется автоматически, то 
+       нельзя использовать некоторые символы, допустимые в email адресах. 
+       Нельзя использовать функцию <function>mail</function> для программ, которые требуют
+       использование таких символов.
+      </para>
+      <para>
+       Пользователь, под которым запущен web-сервер, должен быть добавленным в доверенные пользователи
+       в конфигурации sendmail, чтобы предотвратить добавление заголовка X-Warning
+       в сообщение, если отправитель письма задан с помощью этого параметра (-f).
+       Для пользователей sendmail, это файл <filename>/etc/mail/trusted-users</filename>.
       </para>
      </listitem>
     </varlistentry>
@@ -85,33 +129,6 @@
   &reftitle.returnvalues;
   <para>
    &return.success;
-  </para>
- </refsect1>
-
- <refsect1 role="changelog">
-  &reftitle.changelog;
-  <para>
-   <informaltable>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>&Version;</entry>
-       <entry>&Description;</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>5.0.0</entry>
-       <entry>
-        Заголовки <literal>Content-Type</literal> и 
-        <literal>Content-Transfer-Encoding</literal> можно переопределять, 
-        начиная с PHP 5.0.0. В ранних версиях всегда используются значения,
-        заданные функцией <function>mb_language</function>.
-       </entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </informaltable>
   </para>
  </refsect1>
 
