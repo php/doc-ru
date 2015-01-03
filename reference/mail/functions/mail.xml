@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 63ccfe404cdfe85af92b14033bc1b849b0a2eaba Maintainer: shein Status: ready -->
+<!-- EN-Revision: afc3f34c682418a582b0f9199db0bac4a087821f Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.mail" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -65,7 +65,7 @@
        Отправляемое сообщение.
       </para>
       <para>
-       Каждая строка должна быть отделена сиволом LF (\n).
+       Каждая строка должна быть отделена сиволом CRLF (\r\n).
        Строки не должны быть длиннее 70 символов.
       </para>
       <caution>
@@ -93,6 +93,8 @@ $text = str_replace("\n.", "\n..", $text);
       <para>
        Обычно используется для добавления дополнительных заголовков (From, Cc, and Bcc).
        Несколько дополнительных заголовков должны быть разделены CRLF (\r\n).
+       Если для составления этого заголовка используются внешние данные,
+       то они должны быть проверены для избежания инъекций нежелательных заголовков.
       </para>
       <note>
        <para>
@@ -133,6 +135,18 @@ $text = str_replace("\n.", "\n..", $text);
        <literal>-f</literal>.
       </para>
       <para>
+       Параметр автоматически экранируется функцией <function>escapeshellcmd</function>, 
+       чтобы недопустить выполнение комманд. Но <function>escapeshellcmd</function>
+       позволяет добавлять дополнительные параметры. В целях безопасности 
+       рекомендуется проверять и очищать этот параметр.
+      </para>
+      <para>
+       Так как <function>escapeshellcmd</function> применяется автоматически, то нельзя использовать
+       некоторые символы, допустимые к использованию в email-адресах некотопыми RFC.
+       <function>mail</function> не допускает такие символы, поэтому в программах, в которых они требуются,
+       рекомендуется использовать альтернативы для их отправки (например фреймворки или библиотеки). 
+      </para>
+      <para>
        Пользователь, под которым работает веб-сервер должен быть добавлен в список
        доверенных в конфигурации sendmail для того чтобы избежать добавления заголовка
        'X-Warning' при указании отправителя с помощью опции (-f).
@@ -168,28 +182,12 @@ $text = str_replace("\n.", "\n..", $text);
      </thead>
      <tbody>
       <row>
-       <entry>4.3.0 (только для Windows)</entry>
-       <entry>
-        Теперь поддерживаются все дополнительные заголовки (такие как From, Cc, Bcc и Date), и
-        являются регистро-независимыми.
-        (Так как дополнительные заголовки интерпретируются не почтовым агентом,
-        а PHP, PHP &lt; 4.3 поддерживал только заголовок Cc
-        и был регистро-зависимый).
-       </entry>
-      </row>
-      <row>
        <entry>4.2.3</entry>
        <entry>
         Параметр <parameter>additional_parameters</parameter> отключен в
         режиме <link linkend="ini.safe-mode">safe_mode</link> и при
         его использовании функция <function>mail</function> вызовет
         предупреждение и вернет &false;.
-       </entry>
-      </row>
-      <row>
-       <entry>4.0.5</entry>
-       <entry>
-        Был добавлен параметр <parameter>additional_parameters</parameter>.
        </entry>
       </row>
      </tbody>
@@ -210,10 +208,10 @@ $text = str_replace("\n.", "\n..", $text);
 <![CDATA[
 <?php
 // Сообщение
-$message = "Line 1\nLine 2\nLine 3";
+$message = "Line 1\r\nLine 2\r\nLine 3";
 
 // На случай если какая-то строка письма длиннее 70 символов мы используем wordwrap()
-$message = wordwrap($message, 70);
+$message = wordwrap($message, 70, "\r\n");
 
 // Отправляем
 mail('caffeinated@example.com', 'My Subject', $message);
