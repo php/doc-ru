@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: beca186e154916a3d2fea8578ab601b476192fc8 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 958cde3f4b847149e308ff8a2f7e144c2f6c0ca4 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.curl-setopt" xmlns="http://docbook.org/ns/docbook">
@@ -70,6 +70,8 @@
             константы <constant>CURLOPT_RETURNTRANSFER</constant>.
            </entry>
            <entry valign="top">
+            С PHP 5.1.3 эта опция больше не требуется: необработанный вывод
+            всегда возвращается при использовании опции <constant>CURLOPT_RETURNTRANSFER</constant>.
            </entry>
           </row>
           <row>
@@ -93,8 +95,21 @@
             при безопасных соединениях.
            </entry>
            <entry valign="top">
+            Добавлена в cURL 7.19.1.
             Доступна, начиная с версии PHP 5.3.2. Для корректной работы требует
             включенной опции <constant>CURLOPT_VERBOSE</constant>.
+           </entry>
+          </row>
+          <row>
+           <entry valign="top"><constant>CURLOPT_CONNECT_ONLY</constant></entry>
+           <entry valign="top">
+            &true; сообщает библиотеке, чтобы она провела необходимые аутентификацию прокси
+            и настройку соединения, но не передавала данные. Эта опция реализована для 
+            HTTP, SMTP и POP3.
+           </entry>
+           <entry valign="top">
+            Добавлена в 7.15.2.
+            Доступна с версии PHP 5.5.0.
            </entry>
           </row>
           <row>
@@ -117,7 +132,7 @@
           <row>
            <entry valign="top"><constant>CURLOPT_FAILONERROR</constant></entry>
            <entry valign="top">
-            &true; для тихого окончания работы, если полученный HTTP-код
+            &true; для подробного отчета при неудаче, если полученный HTTP-код
             больше или равен 400. Поведение по умолчанию возвращает страницу
             как обычно, игнорируя код.
            </entry>
@@ -206,6 +221,16 @@
            </entry>
           </row>
           <row>
+           <entry valign="top"><constant>CURLOPT_TCP_NODELAY</constant></entry>
+           <entry valign="top">
+            Задает на постоянной основе должна ли опция TCP_NODELAY установлена или
+            очищена (1 = установлена, 0 = очищена). По умолчанию опция очищается.
+           </entry>
+           <entry valign="top">
+            Доступна с версии PHP 5.2.1 для версий собранных с libcurl 7.11.2 или новее.
+           </entry>
+          </row>
+          <row>
            <entry valign="top"><constant>CURLOPT_FTPASCII</constant></entry>
            <entry valign="top">
             Псевдоним <constant>CURLOPT_TRANSFERTEXT</constant>.
@@ -264,6 +289,7 @@
             &true; для полного отключения сообщений функций cURL.
            </entry>
            <entry valign="top">
+            Удалена в cURL 7.15.5 (Можно использовать опцию CURLOPT_RETURNTRANSFER)
            </entry>
           </row>
           <row>
@@ -308,7 +334,7 @@
             SAPIs для корректной работы таймаут параметров.
            </entry>
            <entry valign="top">
-            Добавлен в cURL 7.10.
+            Добавлен в версии cURL 7.10.
            </entry>
           </row>
           <row>
@@ -340,6 +366,19 @@
             вывода в браузер.
            </entry>
            <entry valign="top">
+           </entry>
+          </row>
+          <row>
+           <entry valign="top"><constant>CURLOPT_SAFE_UPLOAD</constant></entry>
+           <entry valign="top">
+            &true; для отключения поддержки префикса <literal>@</literal> для
+            загружаемых файлов в <constant>CURLOPT_POSTFIELDS</constant>, который
+            означает, что значения, переданные с <literal>@</literal> могут безопасно
+            передаваться в виде полей. Вместо префикса можно использовать опцию <classname>CURLFile</classname>d.
+           </entry>
+           <entry valign="top">
+            Добавлена в PHP 5.5.0 со значением по умолчанию &false;. В PHP 5.6.0
+            стала по умолчанию равна &true;.
            </entry>
           </row>
           <row>
@@ -425,13 +464,16 @@
           <row>
            <entry valign="top"><constant>CURLOPT_CLOSEPOLICY</constant></entry>
            <entry valign="top">
-            Либо
-            <parameter>CURLCLOSEPOLICY_LEAST_RECENTLY_USED</parameter>, либо
-            <parameter>CURLCLOSEPOLICY_OLDEST</parameter>.
-            Есть еще три дополнительные константы <literal>CURLCLOSEPOLICY_</literal>,
-            но cURL на данный момент их не поддерживает.
+            Одна из констант <constant>CURLCLOSEPOLICY_*</constant>.
+            <note>
+             <para>
+              Эта опция устарела, так как никогда не была реализована в cURL и 
+              не работала.
+             </para>
+            </note>
            </entry>
            <entry valign="top">
+            Удалена в PHP 5.6.0.
            </entry>
           </row>
           <row>
@@ -686,14 +728,25 @@
             значение этого параметра должно быть 2 (установлено по умолчанию).
            </entry>
            <entry valign="top">
+            Поддержка значения 1 убрана в cURL 7.28.1
            </entry>
           </row>
           <row>
            <entry valign="top"><constant>CURLOPT_SSLVERSION</constant></entry>
            <entry valign="top">
-            Используемая версия SSL (2 или 3). По умолчанию, PHP
-            попытается определить ее сам, хотя в некоторых случаях
-            ее нужно устанавливать вручную.
+            Одна из констант <constant>CURL_SSLVERSION_DEFAULT</constant> (0),
+            <constant>CURL_SSLVERSION_TLSv1</constant> (1),
+            <constant>CURL_SSLVERSION_SSLv2</constant> (2),
+            <constant>CURL_SSLVERSION_SSLv3</constant> (3),
+            <constant>CURL_SSLVERSION_TLSv1_0</constant> (4),
+            <constant>CURL_SSLVERSION_TLSv1_1</constant> (5) или
+            <constant>CURL_SSLVERSION_TLSv1_2</constant> (6).
+            <note>
+             <para>
+              Рекомендуется не устанавливать эту опцию и оставить значение по умолчанию.              
+              Установка в 2 или 3 опасно и допускает применение известных уязвимостей в SSLv2 и SSLv3.
+             </para>
+            </note>
            </entry>
            <entry valign="top">
            </entry>
@@ -787,6 +840,21 @@
            </entry>
            <entry valign="top">
             Добавлено в cURL 7.16.1. 
+           </entry>
+          </row>
+          <row>
+           <entry valign="top"><constant>CURLOPT_IPRESOLVE</constant></entry>
+           <entry valign="top">
+            Позволяет приожению выбрать вид IP адреса, с которым определяется имя хоста. 
+            Это необходимо, если используется имя хоста, которое получается с использованием 
+            более одной версии IP адреса. Возможными значениями могут быть
+            <constant>CURL_IPRESOLVE_WHATEVER</constant>, 
+            <constant>CURL_IPRESOLVE_V4</constant>, 
+            <constant>CURL_IPRESOLVE_V6</constant>, и по умолчанию
+            <constant>CURL_IPRESOLVE_WHATEVER</constant>.
+           </entry>
+           <entry valign="top">
+            Добавлено в cURL 7.10.8.
            </entry>
           </row>
          </tbody>
@@ -980,6 +1048,13 @@
              Начиная с версии PHP 5.2.0, при передаче файлов с префиксом
              <literal>@</literal>, <parameter>value</parameter> должен быть
              массивом.
+            </simpara>
+            <simpara>
+             С версии PHP 5.5.0, префикс <literal>@</literal> устарел и 
+             файлы можно отправлять с помощью <classname>CURLFile</classname>.  
+             Префикс <literal>@</literal> можно отключить, чтобы можно
+             было передавать значения, начинающиеся с <literal>@</literal>,
+             задав опцию <constant>CURLOPT_SAFE_UPLOAD</constant> в значение &true;.
             </simpara>
            </entry>
            <entry valign="top">
@@ -1294,8 +1369,8 @@
       </para>
       <para>
        Для следующих значений параметра <parameter>option</parameter>,
-       параметр <parameter>value</parameter> должен быть корректной
-       строкой, указывающей имя callback-функции:
+       параметр <parameter>value</parameter> должен быть правильным именем функции
+       или замканием:
        <informaltable>
         <tgroup cols="3">
          <thead>
@@ -1308,7 +1383,7 @@
           <row>
            <entry valign="top"><constant>CURLOPT_HEADERFUNCTION</constant></entry>
            <entry valign="top">
-            Имя callback-функции, принимающей два параметра.
+            Callback-функция принимает два параметра.
             Первым параметром является дескриптор cURL, вторым параметром
             является строка с записываемыми заголовками. Заголовки должны
             быть записаны с помощью данной callback-функции. Должна возвратить
@@ -1318,7 +1393,7 @@
           <row>
            <entry valign="top"><constant>CURLOPT_PASSWDFUNCTION</constant></entry>
            <entry valign="top">
-            Имя callback-функции, принимающей три параметра.
+            Callback-функция принимает три параметра.
             Первым параметром является дескриптор cURL, вторым параметром
             является строка с запросом пароля, третьим параметром является
             максимальная длина пароля. Должна возвратить строку, содержащую пароль.
@@ -1327,16 +1402,29 @@
           <row>
            <entry valign="top"><constant>CURLOPT_PROGRESSFUNCTION</constant></entry>
            <entry valign="top">
-            Имя callback-функции, принимающей три параметра.
-            Первым параметром является дескриптор cURL, вторым параметром
-            является дескриптор файла, а третьим параметром - его длина.
-            Должна возвратить строку с данными.
+            <para>
+             Callback-функция принимает пять параметров.
+             Первый является декскриптором cURL, второй - общим количеством байт,
+             которое ожидается загрузить с сервера, третий - количество уже загруженных байт,
+             четвертый - общее количество байт, которое ожидается отправить на сервер,
+             и пятый - количество уже отправленных байт.
+            </para>
+            <note>
+             <para>
+              Callback-функция вызывается только, если опция <constant>CURLOPT_NOPROGRESS</constant>
+              установлена в значение &false;.
+             </para>
+            </note>
+            <para>
+             Можно вернуть ненулевое значение, чтобы отменить передачу.
+             В этом случае будет выставлена ошибка <constant>CURLE_ABORTED_BY_CALLBACK</constant>.
+            </para>
            </entry>
           </row>
           <row>
            <entry valign="top"><constant>CURLOPT_READFUNCTION</constant></entry>
            <entry valign="top">
-            Имя callback-функции, принимающей три параметра.
+            Callback-функция принимает три параметра.
             Первым параметром является дескриптор cURL,
             вторым параметром является ресурс потока, переданный
             cURL через опцию <constant>CURLOPT_INFILE</constant>,
@@ -1352,12 +1440,34 @@
           <row>
            <entry valign="top"><constant>CURLOPT_WRITEFUNCTION</constant></entry>
            <entry valign="top">
-            Имя callback-функции, принимающей два параметра.
+            Callback-функция принимает два параметра.
             Первым параметром является дескриптор cURL, а
             вторым параметром является строка с записываемыми данными.
             Данные должны быть сохранены с помощью данной функции.
             Она должна возвратить точное количество записанных байт, иначе
             закачка будет прервана с ошибкой.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </informaltable>
+      </para>
+      <para>
+       Другие значения:
+       <informaltable>
+        <tgroup cols="3">
+         <thead>
+          <row>
+           <entry>Параметр</entry>
+           <entry>Устанавливаемое значение <parameter>value</parameter></entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry valign="top"><constant>CURLOPT_SHARE</constant></entry>
+           <entry valign="top">
+            Результат выполнения функции <function>curl_share_init</function>.
+            Позволяет обработчику cURL использовать данные из общего обработчика.
            </entry>
           </row>
          </tbody>
@@ -1389,6 +1499,37 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>5.6.0</entry>
+       <entry>
+        Опция <constant>CURL_SAFE_UPLOAD</constant> теперь имеет значение по умолчанию равное &true;.
+       </entry>
+      </row>
+      <row>
+       <entry>5.6.0</entry>
+       <entry>
+        Удалена опция <constant>CURLOPT_CLOSEPOLICY</constant> и связанные с ней значения.
+       </entry>
+      </row>
+      <row>
+       <entry>5.5.0</entry>
+       <entry>
+        Ресурс cURL добавлен первым аргументом в callback-функцию
+        <constant>CURLOPT_PROGRESSFUNCTION</constant>.
+       </entry>
+      </row>
+      <row>
+       <entry>5.5.0</entry>
+       <entry>
+        Добавлена опция <constant>CURLOPT_SHARE</constant>.
+       </entry>
+      </row>
+      <row>
+       <entry>5.3.0</entry>
+       <entry>
+        Добавлена опция <constant>CURLOPT_PROGRESSFUNCTION</constant>.
+       </entry>
+      </row>
       <row>
        <entry>5.2.10</entry>
        <entry>
