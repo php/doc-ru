@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 62be8e53d5baf2dd884b560d8eb7a634d9bbf3b5 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 204bc2974d707bed4017414b13242171d719cb7c Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <chapter xml:id="language.constants" xmlns="http://docbook.org/ns/docbook">
@@ -70,11 +70,12 @@ define("__FOO__", "something");
     не может быть изменено или аннулировано.
    </simpara>
    <simpara>
-    Константы могут содержать только скалярные данные
+    До PHP 5.6 константы могут содержать только скалярные данные
     (<type>boolean</type>, <type>integer</type>, <type>float</type> и
-    <type>string</type> типов). Возможно также определять константы типа
-    <type>resource</type>, но этого следует избегать, так как это может
-    привести к неожиданным результатам.
+    <type>string</type> типов). С PHP 5.6 возможно также определять константы 
+    как скалярные выражения, и также можно определять константы с типом <type>array</type>.
+    Можно определять константы с типом <type>resource</type>, но не рекомендуется,
+    так как может привести к неожиданным результатам.
    </simpara>
    <simpara>
     Получить значение константы можно, указав ее имя. В отличие от переменных,
@@ -113,7 +114,7 @@ define("__FOO__", "something");
      </listitem>
      <listitem>
       <simpara>
-       Константы можно определить только с помощью функции
+       До PHP 5.3 константы можно определить только с помощью функции
        <function>define</function>, а не присваиванием значения;
       </simpara>
      </listitem>
@@ -130,7 +131,10 @@ define("__FOO__", "something");
      </listitem>
      <listitem>
       <simpara>
-       Константы могут иметь только скалярные значения.
+       Константы могут иметь только скалярные значения, или скалярные и массивы 
+       в PHP 5.6 и новее. Вы можете использовать массивы в скалярных выражениях констант
+       (например, <literal>const FOO = array(1,2,3)[0];</literal>), но результатом
+       должно быть скалярное выражение.
        </simpara>
      </listitem>
     </itemizedlist>
@@ -161,6 +165,11 @@ echo Constant; // выводит "Constant" и предупреждение.
 const CONSTANT = 'Здравствуй, мир.';
 
 echo CONSTANT;
+
+// Работает, начиная с версии PHP 5.6.0
+const ANOTHER_CONST = CONSTANT.'; Прощай, мир.';
+
+echo ANOTHER_CONST;
 ?>
 ]]>
      </programlisting>
@@ -173,7 +182,8 @@ echo CONSTANT;
      константы, объявленные с помощью ключевого слова <literal>const</literal>
      должны быть объявлены в самой верхней области видимости, потому что они
      определяются при компилировании скрипта. Это означает, что их нельзя объявлять
-     внутри функций, циклов или выражений <literal>if</literal>.
+     внутри функций, циклов, выражений <literal>if</literal> и <literal>try</literal>/
+     <literal>catch</literal> блоков.
     </para>
    </note>
 
@@ -220,12 +230,8 @@ echo CONSTANT;
        <row xml:id="constant.file">
         <entry><constant>__FILE__</constant></entry>
         <entry>
-         Полный путь и имя текущего файла. Если используется внутри
+         Полный путь и имя текущего файла с развернутыми симлинками. Если используется внутри
          подключаемого файла, то возвращается имя данного файла.
-         Начиная с версии PHP 4.0.2, <constant>__FILE__</constant>
-         всегда содержит абсолютный путь с разрешенными символическими
-         ссылками, тогда как в старых версиях в некоторых обстоятельствах
-         возвращался относительный путь.
         </entry>
        </row>
        <row xml:id="constant.dir">
@@ -234,25 +240,19 @@ echo CONSTANT;
          Директория файла.  Если используется внутри подключаемого файла,
          то возвращается директория этого файла. Это эквивалентно вызову
          <literal>dirname(__FILE__)</literal>. Возвращаемое имя директории
-         не оканчивается на слэш, за исключением корневой директории
-         (добавлена в PHP 5.3.0.)
+         не оканчивается на слэш, за исключением корневой директории.
         </entry>
        </row>
        <row xml:id="constant.function">
         <entry><constant>__FUNCTION__</constant></entry>
         <entry>
-         Имя функции. (Добавлена в PHP 4.3.0.) Начиная с PHP 5 эта константа
-         возвращает имя функции точно так, как оно было объявлено (с учетом
-         регистра). В PHP 4 это значение всегда было в нижнем регистре.
+         Имя функции.
         </entry>
        </row>
        <row xml:id="constant.class">
         <entry><constant>__CLASS__</constant></entry>
         <entry>
-         Имя класса. (Добавлена в PHP 4.3.0) Начиная с PHP 5 эта константа
-         возвращает имя класса точно так, как оно было объявлено (с учетом
-         регистра). В PHP 4 это значение всегда было в нижнем регистре. Имя класса
-         содержит название пространства имен, в котором класс был объявлен 
+         Имя класса. Это имя содержит название пространства имен, в котором класс был объявлен 
          (например, <literal>Foo\Bar</literal>).
          Обратите внимание, что начиная с PHP5.4 __CLASS__ также работает в
          трейтах. При использовании в методах трейтов __CLASS__ является именем
@@ -262,25 +262,20 @@ echo CONSTANT;
        <row xml:id="constant.trait">
         <entry><constant>__TRAIT__</constant></entry>
         <entry>
-         Имя трейта. (Добавлена в PHP 5.4.0) Начиная с PHP 5.4 эта константа 
-         возвращает имя трейта точно так, как оно было объявлено (с учетом
-         регистра). Это имя содержит название пространства имен, в котором трейт
+         Имя трейта. Это имя содержит название пространства имен, в котором трейт
          был объявлен (например, <literal>Foo\Bar</literal>).
         </entry>
        </row>
-       
        <row xml:id="constant.method">
         <entry><constant>__METHOD__</constant></entry>
         <entry>
-         Имя метода класса. (Добавлена в PHP 5.0.0) Имя метода возвращается так,
-         как оно было объявлено (с учетом регистра).
+         Имя метода класса.
         </entry>
        </row>
        <row xml:id="constant.namespace">
         <entry><constant>__NAMESPACE__</constant></entry>
         <entry>
-         Имя текущего пространства имен (с учетом регистра). Эта константа
-         определяется во время компиляции (Добавлена в версии PHP 5.3.0).
+         Имя текущего пространства имен.
         </entry>
        </row>
       </tbody>
@@ -294,6 +289,63 @@ echo CONSTANT;
     <function>file_exists</function>&listendand;
     <function>function_exists</function>.
    </para>
+   
+   <sect2 xml:id="language.constants.predefined.changelog">
+    &reftitle.changelog;
+
+    <para>
+     <informaltable>
+      <tgroup cols="2">
+       <thead>
+        <row>
+         <entry>&Version;</entry>
+         <entry>&Описание;</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>5.4.0</entry>
+         <entry>
+          Добавлена константа <constant>__TRAIT__</constant>
+         </entry>
+        </row>
+        <row>
+         <entry>5.3.0</entry>
+         <entry>
+          Добавлены константы <constant>__DIR__</constant> и <constant>__NAMESPACE__</constant>
+         </entry>
+        </row>
+        <row>
+         <entry>5.0.0</entry>
+         <entry>
+          Добавлена константа  <constant>__METHOD__</constant>
+         </entry>
+        </row>
+        <row>
+         <entry>5.0.0</entry>
+         <entry>
+          До этой версии значения некоторых магических констант были всегда в нижнем регистре.
+          Все они теперь являются регистрозависимыми (содержат имена такими, какими они были объявлены).
+         </entry>
+        </row>
+        <row>
+         <entry>4.3.0</entry>
+         <entry>
+          Добавлены константы <constant>__FUNCTION__</constant> и <constant>__CLASS__</constant>
+         </entry>
+        </row>
+        <row>
+         <entry>4.0.2</entry>
+         <entry>
+          <constant>__FILE__</constant> всегда содержит полный пусть с разрешенными симлинками.
+          Раньше в некоторых случаях она содержала относительный путь.
+         </entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </informaltable>
+    </para>
+   </sect2>
   </sect1>
  </chapter>
  
