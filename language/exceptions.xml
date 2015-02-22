@@ -1,178 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7aa0b252a3f29ae1d7e58d7f9363e4b922771b0d  Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4c4736f7d3bbe24552038e5887708b268da89fe8  Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
   <title>Исключения</title>
-
-  <para>
-   Модель исключений (exceptions) в PHP 5 проще, чем в других языках программирования.
-   Исключение можно сгенерировать (как говорят, "выбросить") при помощи оператора 
-   <literal>throw</literal>, и можно перехватить (или, как говорят, "поймать")
-   оператором <literal>catch</literal>. Код генерирующий исключение, должен
-   быть окружен блоком <literal>try</literal>, для того чтобы можно было
-   перехватить исключение. Каждый блок <literal>try</literal>
-   должен иметь как минимум один соответствующий ему блок <literal>catch</literal>. 
-   Так же можно использовать несколько блоков <literal>catch</literal>,
-   перехватывающих различные классы исключений.
-   Нормальное выполнение (когда не генерируются исключения в блоках 
-   <literal>try</literal> или когда класс сгенерированного исключения не
-   совпадает с классами, объявленными в соответствующих блоках
-   <literal>catch</literal>) будет продолжено за последним блоком
-   <literal>catch</literal>. Исключения так же могут быть сгенерированы (или
-   вызваны еще раз) оператором <literal>throw</literal> 
-   внутри блока <literal>catch</literal>.
-  </para>
-  <para>
-   При генерации исключения код следующий за оператором
-   <literal>throw</literal> исполнен не будет, а PHP предпримет попытку найти
-   первый блок <literal>catch</literal>, перехватывающий исключение данного
-   класса. Если исключение не будет перехвачено, PHP выдаст сообщение об
-   ошибке: "<literal>Uncaught Exception ...</literal>" (Неперехваченное
-   исключение), если не был определен обработчик ошибок при помощи
-   функции <function>set_exception_handler</function>.
-  </para>
-  <para>
-   В PHP 5.5 и более поздних версиях также можно использовать блок <literal>finally</literal>
-   после блока <literal>catch</literal>. Код в блоке
-   <literal>finally</literal> всегда будет выполняться после кода в блоках
-   <literal>try</literal> и <literal>catch</literal>, вне зависимости было ли
-   брошено исключение или нет, перед тем как продолжится нормальное выполнение кода.
-   whether an exception has been thrown, and before normal execution resumes.
-  </para>
-  <para>
-   Генерируемый объект должен принадлежать классу <classname>Exception</classname>
-   или наследоваться от <classname>Exception</classname>. Попытка сгенерировать 
-   исключение другого класса приведет к неисправимой ошибке.
-  </para>
-  <note>
-   <para>
-    Внутренние функции PHP в основном используют
-    <link linkend="ini.error-reporting">сообщения об ошибках</link>, и только
-    новые <link linkend="language.oop5">объектно-ориентированные</link>
-    расширения используют исключения. Однако, ошибки можно легко преобразовать
-    в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
-   </para>
-  </note>
-  <tip>
-   <para>
-    <link linkend="intro.spl">Стандартная библиотека PHP (SPL)</link> предоставляет
-    хороший набор <link linkend="spl.exceptions">встроенных классов исключений</link>.
-   </para>
-  </tip>
-   <example>
-    <title>Выброс исключений</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-function inverse($x) {
-    if (!$x) {
-        throw new Exception('Деление на ноль.');
-    }
-    return 1/$x;
-}
-
-try {
-    echo inverse(5) . "\n";
-    echo inverse(0) . "\n";
-} catch (Exception $e) {
-    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
-}
-
-// Продолжение выполнения
-echo "Hello World\n";
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-0.2
-Выброшено исключение: Деление на ноль.
-Hello World
-]]>
-    </screen>
-   </example>
-   <example>
-    <title>Вложенные исключения</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-function inverse($x) {
-    if (!$x) {
-        throw new Exception('Деление на ноль.');
-    }
-    return 1/$x;
-}
-
-try {
-    echo inverse(5) . "\n";
-} catch (Exception $e) {
-    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
-} finally {
-    echo "Первое finally.\n";
-}
-
-try {
-    echo inverse(0) . "\n";
-} catch (Exception $e) {
-    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
-} finally {
-    echo "Второе finally.\n";
-}
-
-// Продолжение нормального выполнения
-echo "Hello World\n";
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-0.2
-Первое finally.
-Поймано исключение: Деление на ноль.
-Второе finally.
-Hello World
-]]>
-    </screen>
-   </example>
-   <example>
-    <title>Вложенные исключения</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-
-class MyException extends Exception { }
-
-class Test {
-    public function testing() {
-        try {
-            try {
-                throw new MyException('foo!');
-            } catch (MyException $e) {
-                // повторный выброс исключения
-                throw $e;
-            }
-        } catch (Exception $e) {
-            var_dump($e->getMessage());
-        }
-    }
-}
-
-$foo = new Test;
-$foo->testing();
-
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-string(4) "foo!"
-]]>
-    </screen>
-   </example>
    
   <sect1 xml:id="language.exceptions.extending">
    <title>Наследование исключений</title>
@@ -389,6 +220,198 @@ class MyException extends Exception
     </note>
    </example>
   </sect1>
+
+  <simplesect xml:id="language.exceptions.introduction">
+   <para>
+    Модель исключений (exceptions) в PHP 5 схожа с используемыми в других языках программирования.
+    Исключение можно сгенерировать (как говорят, "выбросить") при помощи оператора
+    &throw;, и можно перехватить (или, как говорят, "поймать")
+    оператором &catch;. Код генерирующий исключение, должен
+    быть окружен блоком &try;, для того чтобы можно было
+    перехватить исключение. Каждый блок &try;
+    должен иметь как минимум один соответствующий ему блок &catch; или &finally;.
+   </para>
+
+   <para>
+    Генерируемый объект должен принадлежать классу <classname>Exception</classname>
+    или наследоваться от <classname>Exception</classname>. Попытка сгенерировать
+    исключение другого класса приведет к неисправимой ошибке.
+   </para>
+  </simplesect>
+
+  <simplesect xml:id="language.exceptions.catch">
+   <title><literal>catch</literal></title>
+   <para>
+    Можно использовать несколько блоков &catch;,
+    перехватывающих различные классы исключений.
+    Нормальное выполнение (когда не генерируются исключения в блоках
+    &try; или когда класс сгенерированного исключения не
+    совпадает с классами, объявленными в соответствующих блоках
+    &catch;) будет продолжено за последним блоком
+    &catch;. Исключения так же могут быть сгенерированы (или
+    вызваны еще раз) оператором &throw;
+    внутри блока &catch;.
+   </para>
+   <para>
+    При генерации исключения код следующий после описываемого выражения
+    исполнен не будет, а PHP предпримет попытку найти
+    первый блок &catch;, перехватывающий исключение данного
+    класса. Если исключение не будет перехвачено, PHP выдаст сообщение об
+    ошибке: "<literal>Uncaught Exception ...</literal>" (Неперехваченное
+    исключение), если не был определен обработчик ошибок при помощи
+    функции <function>set_exception_handler</function>.
+   </para>
+  </simplesect>
+
+  <simplesect xml:id="language.exceptions.finally">
+   <title><literal>finally</literal></title>
+   <para>
+    В PHP 5.5 и более поздних версиях также можно использовать блок &finally;
+    после или вместо блока &catch;. Код в блоке
+    &finally; всегда будет выполняться после кода в блоках
+    &try; и &catch;, вне зависимости было ли
+    брошено исключение или нет, перед тем как продолжится нормальное выполнение кода.
+    whether an exception has been thrown, and before normal execution resumes.
+   </para>
+  </simplesect>
+
+  <simplesect xml:id="language.exceptions.notes">
+   &reftitle.notes;
+
+   <note>
+    <para>
+     Внутренние функции PHP в основном используют
+     <link linkend="ini.error-reporting">сообщения об ошибках</link>, и только
+     новые <link linkend="language.oop5">объектно-ориентированные</link>
+     расширения используют исключения. Однако, ошибки можно легко преобразовать
+     в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
+    </para>
+   </note>
+   <tip>
+    <para>
+     <link linkend="intro.spl">Стандартная библиотека PHP (SPL)</link> предоставляет
+     хороший набор <link linkend="spl.exceptions">встроенных классов исключений</link>.
+    </para>
+   </tip>
+  </simplesect>
+
+  <simplesect xml:id="language.exceptions.examples">
+   &reftitle.examples;
+
+   <example>
+    <title>Выброс исключений</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function inverse($x) {
+    if (!$x) {
+        throw new Exception('Деление на ноль.');
+    }
+    return 1/$x;
+}
+
+try {
+    echo inverse(5) . "\n";
+    echo inverse(0) . "\n";
+} catch (Exception $e) {
+    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
+}
+
+// Продолжение выполнения
+echo "Hello World\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+0.2
+Выброшено исключение: Деление на ноль.
+Hello World
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Вложенные исключения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function inverse($x) {
+    if (!$x) {
+        throw new Exception('Деление на ноль.');
+    }
+    return 1/$x;
+}
+
+try {
+    echo inverse(5) . "\n";
+} catch (Exception $e) {
+    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
+} finally {
+    echo "Первое finally.\n";
+}
+
+try {
+    echo inverse(0) . "\n";
+} catch (Exception $e) {
+    echo 'Поймано исключение: ',  $e->getMessage(), "\n";
+} finally {
+    echo "Второе finally.\n";
+}
+
+// Продолжение нормального выполнения
+echo "Hello World\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+0.2
+Первое finally.
+Поймано исключение: Деление на ноль.
+Второе finally.
+Hello World
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Вложенные исключения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class MyException extends Exception { }
+
+class Test {
+    public function testing() {
+        try {
+            try {
+                throw new MyException('foo!');
+            } catch (MyException $e) {
+                // повторный выброс исключения
+                throw $e;
+            }
+        } catch (Exception $e) {
+            var_dump($e->getMessage());
+        }
+    }
+}
+
+$foo = new Test;
+$foo->testing();
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+string(4) "foo!"
+]]>
+    </screen>
+   </example>
+  </simplesect>
 
  </chapter>
  
