@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f09b8f712b4b353243b7ad22ee55ea7825049a61 Maintainer: irker Status: ready -->
-<!-- Reviewed: yes Maintainer: Alex Cooper -->
+<!-- EN-Revision: 45542e6edc95219199d5f7603a6c880446e8b354 Maintainer: irker Status: ready -->
+<!-- Reviewed: yes Maintainer: rjhdby -->
 <!-- $Revision$ -->
  <chapter xml:id="features.gc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
   <title>Сборка мусора</title>
 
   <para>
    В этом разделе описываются достоинства нового механизма сборки мусора
-   (также называемого Сборка мусора или GC), являющегося частью PHP 5.3.
+   (также называемого Garbage Collection или GC), являющегося частью PHP 5.3.
   </para>
 
   <sect1 xml:id="features.gc.refcounting-basics">
@@ -98,7 +98,7 @@ a: (refcount=2, is_ref=0)='new string'
     "refcount" станет равным нулю, контейнер уничтожается.
     "refcount" уменьшается на единицу при уходе переменной
     из области видимости (например, в конце функции) или при
-    вызове <function>unset</function> с данной переменной.
+    удалении этой переменной (например при вызове <function>unset</function>).
    </para>
    <para>
     <example>
@@ -109,7 +109,9 @@ a: (refcount=2, is_ref=0)='new string'
 $a = "new string";
 $c = $b = $a;
 xdebug_debug_zval( 'a' );
-unset( $b, $c );
+$b = 42;
+xdebug_debug_zval( 'a' );
+unset( $c );
 xdebug_debug_zval( 'a' );
 ?>
 ]]>
@@ -118,6 +120,7 @@ xdebug_debug_zval( 'a' );
      <screen>
 <![CDATA[
 a: (refcount=3, is_ref=0)='new string'
+a: (refcount=2, is_ref=0)='new string'
 a: (refcount=1, is_ref=0)='new string'
 ]]>
      </screen>
