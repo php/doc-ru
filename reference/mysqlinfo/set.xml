@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: b7f50f1b73cb39a55706cc5e21b19eed1f644cc1 Maintainer: rjhdby Status: ready -->
+<!-- $Revision$ -->
+<!-- Reviewed: no -->
+
+<set xml:id="set.mysqlinfo">
+ <title>MySQL драйверы и плагины</title>
+ <titleabbrev>MySQL</titleabbrev>
+
+ <info xml:id="mysqlinfo.info">
+  <abstract>
+   <para>
+    В PHP имеется несколько драйверов и плагинов для доступа к MySQL.
+   </para>
+   <para>
+    В данном разделе педставлен обзор отличий и функционала
+    различных расширений для работы с MySQL.
+   </para>
+  </abstract>
+ </info>
+
+ <book xml:id="mysql">
+  <title>Обзор PHP драйверов MySQL</title>
+
+  <info xml:id="mysqlinfo.intro">
+   <title>Введение</title>
+   <abstract>
+    <para>
+     В зависимости от версии PHP, можно использовать два либо три 
+     различных PHP API для доступа к базе данных MySQL. 
+     В PHP 5 доступны следующие расширения: устаревшее <link linkend="book.mysql">mysql</link>,
+     <link linkend="book.mysqli">mysqli</link> и <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
+     В PHP 7, устаревшее расширение <link linkend="book.mysql">mysql</link> не доступно.
+    </para>
+    <para>
+     В этом руководстве описывается
+     <link linkend="mysqlinfo.terminology">терминология</link> 
+     используемая в описаниях каждого API, информация по
+     <link linkend="mysqlinfo.api.choosing">выбору подходящего API</link>
+     ,и информация которая поможет вам выбрать подходящую, для
+     использования с этим API, MySQL <link linkend="mysqlinfo.library.choosing">библиотеку</link>.
+    </para>
+   </abstract>
+  </info>
+
+  <chapter xml:id="mysqlinfo.terminology" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+   <title>Обзор терминологии</title>
+   <para>
+    В этом разделе рассказывается про имеющиеся возможности
+    взаимодействия между PHP приложением и базой данных MySQL.
+   </para>
+
+   <para>
+    <emphasis role="bold">Что такое API?</emphasis>
+   </para>
+
+   <para>
+    Интерфейс программирования приложений(Application Programming Interface или API),
+    описывает классы, методы, функции и переменные, которые ваше приложение
+    должно использовать для выполнения поставленной задачи. В случае
+    PHP, API для доступа к базам данных доступны в качестве расширений PHP.
+   </para>
+
+   <para>
+    API может быть процедурным или объектно ориентированным.
+    В процедурном API, для совершения необходимых действий вы 
+    вызываете функции, тогда как в объектно ориентированном API 
+    вы инстанциируете классы и вызываете их методы. Более предпочтительным
+    является использование объектно ориентированого API, так как
+    подобный подход более современен и позволяет лучше организовать код.
+   </para>
+
+   <para>
+    Если вы пишите PHP приложение, которому необходимо взаимодействовать
+    с базой данных MySQL, то у вас есть несколько API на выбор. В этом
+    документе рассказывается про то, какие API есть и как выбрать 
+    наиболее подходящее для вашего приложения.
+   </para>
+
+   <para>
+    <emphasis role="bold">Что такое Коннектор?</emphasis>
+   </para>
+
+   <para>
+    В документации MySQL, термин <emphasis>коннектор(connector)</emphasis>
+    отсылает к той части программного обеспечения, которая позволяет 
+    вашему приложению соединиться с базой данных MySQL.
+    MySQL предоставляет коннекторы для многих языков программирования,
+    в том числе и для PHP.
+   </para>
+
+   <para>
+    Если ваше приложение должно взаимодействовать с базой данных,
+    вы должны написать PHP код для выполнения таких задач как 
+    соединение с базой данных, выполнение запросов и прочих функций.
+    Для предоставления вашему приложению необходимого API и для 
+    обеспечения взаимодествия между приложением и базой данных
+    требуется специальное программное обеспечение. Это ПО обычно 
+    называют коннектором. И именно оно позволяет вашему приложению
+    <emphasis>соединиться(connect)</emphasis> с базой данных.
+   </para>
+
+   <para>
+    <emphasis role="bold">Что такое Драйвер?</emphasis>
+   </para>
+
+   <para>
+    Драйвер - это специализированное ПО, созданное для взаимодействием 
+    с определенным сервером баз данных. Драйвер также может использовать
+    сторонние библиотеки, такие как "MySQL Client Library" 
+    или "MySQL Native Driver". Эти библиотеки реализуют 
+    низкоуровневый протокол взаимодействия с сервером MySQL.
+   </para>
+
+   <para>
+    Для примера, коннектор <link linkend="mysqli.overview.pdo">PHP
+    Data Objects (PDO)</link> может использовать различные специализированные
+    драйверы для различных баз данных. Один из них "PDO MYSQL driver",
+    предназначенный для взаимодействия с MySQL.
+   </para>
+
+   <para>
+    Иногда люди используют термины коннектор и драйвер, понимая
+    под ними одно и то же. Это неправильно и может привести к путанице.
+    В документации относящейся к MySQL, термин <quote>драйвер</quote>
+    обозначает ПО, предоставляющее специфичную для конкретного
+    сервера баз данных часть коннектора.
+   </para>
+
+   <para>
+    <emphasis role="bold">Что такое Расширение?</emphasis>
+   </para>
+
+   <para>
+    В документации PHP вы наверняка сталкивались с термином
+    <emphasis>расширение(extension)</emphasis>. Код PHP
+    состоит из базового функционала(ядра) и опциональных расширений,
+    дополняющих функционал ядра. Расширения связанные с MySQL,
+    такие как <literal>mysqli</literal> и <literal>mysql</literal>,
+    реализованы с использованием фреймворка расширений PHP.
+   </para>
+
+   <para>
+    Обычно, расширения предоставляют API для программиста, что бы 
+    он мог использовать из функционал в своих программах. Однако
+    существуют расширения не предоставляющие никакого API.
+   </para>
+
+   <para>
+    Например расширение "PDO MySQL driver" не предоставляет никакого 
+    API для разработчика. Вместо этого оно предоставляет интерфейс 
+    для вышестоящего уровня PDO.
+   </para>
+
+   <para>
+    Термины API и Расширение обозначают разные вещи, так как
+    расширение может не предоставлять никакого API.
+   </para>
+  </chapter>
+
+  <chapter xml:id="mysqlinfo.api.choosing" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+   <title>Выбор API</title>
+   <para>
+    PHP предоставляет три различных API для доступа к MySQL.
+    Ниже показаны API, предоставляемые расширениями mysql, mysqli и PDO.
+    В каждом примере кода создается соединение с сервером MySQL 
+    запущенном на сервере "example.com" с использованием логина
+    "user" и пароля "password"  и выполняется запроса к нему.
+   </para>
+   <para>
+    <example>
+     <title>Сравнение трех MySQL API</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+// mysqli
+$mysqli = new mysqli("example.com", "user", "password", "database");
+$result = $mysqli->query("SELECT 'Привет, дорогой пользователь MySQL!' AS _message FROM DUAL");
+$row = $result->fetch_assoc();
+echo htmlentities($row['_message']);
+
+// PDO
+$pdo = new PDO('mysql:host=example.com;dbname=database', 'user', 'password');
+$statement = $pdo->query("SELECT 'Привет, дорогой пользователь MySQL!' AS _message FROM DUAL");
+$row = $statement->fetch(PDO::FETCH_ASSOC);
+echo htmlentities($row['_message']);
+
+// mysql
+$c = mysql_connect("example.com", "user", "password");
+mysql_select_db("database");
+$result = mysql_query("SELECT 'Привет, дорогой пользователь MySQL!' AS _message FROM DUAL");
+$row = mysql_fetch_assoc($result);
+echo htmlentities($row['_message']);
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <para>
+    <emphasis role="bold">Рекомендованные API</emphasis>
+   </para>
+   <para>
+    Рекомендуется использовать <link linkend="book.mysqli">mysqli</link>
+    или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
+    Не рекомендуется использовать старое расширение <link linkend="ref.mysql">mysql</link>
+    ,так как оно объявлено устаревшим в PHP 5.5.0 и окончательно убрано
+    в PHP 7. Детальная матрица сравнения представлена ниже.
+    Общая производительность всех трех расширений примерно одинакова.
+    Производительность расширения привносит крайне малую лепту в
+    общую длительность выполнения веб-запроса, обычно не более 0.1%.
+   </para>
+   <para>
+    <emphasis role="bold">Сравнение возможностей</emphasis>
+   </para>
+   <informaltable>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry></entry>
+       <entry>ext/mysqli</entry>
+       <entry>PDO_MySQL</entry>
+       <entry>ext/mysql</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>Появилось в версии PHP</entry>
+       <entry>5.0</entry>
+       <entry>5.1</entry>
+       <entry>2.0</entry>
+      </row>
+      <row>
+       <entry>Работает в PHP 5.x</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Работает в PHP 7.x</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Статус разработки</entry>
+       <entry>Активный</entry>
+       <entry>Активный</entry>
+       <entry>Поддержка в 5.x; убрано в 7.x</entry>
+      </row>
+      <row>
+       <entry>Жизненный цикл</entry>
+       <entry>Активный</entry>
+       <entry>Активный</entry>
+       <entry>Устаревшее в 5.x; убрано в 7.x</entry>
+      </row>
+      <row>
+       <entry>Рекомендовано для новых проектов</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>ООП интерфейс</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Процедурный интерфейс</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>API поддерживает асинхронные, неблокирующие запросы mysqlnd</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Постоянные(persistent) соединения</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>API поддерживает кодировки(charset)</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>API поддерживает подготовленные запросы на стороне сервера</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>API поддерживает подготовленные запросы на стороне клиента</entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>API подерживает хранимые процедуры</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>API поддерживает множественные запросы</entry>
+       <entry>Да</entry>
+       <entry>Большинство</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>API поддерживает транзакции</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>Можно контролировать транзакции посредством SQL</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Поддерживает всю функциональность MySQL 5.1+</entry>
+       <entry>Да</entry>
+       <entry>Большинство</entry>
+       <entry>нет</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </chapter>
+
+  <chapter xml:id="mysqlinfo.library.choosing" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+   <title>Выбор библиотеки</title>
+   <para>
+    Расширения mysqli, PDO_MySQL и mysql - всего лишь легковесные обертки
+    над библиотеками написанными на языке C. Эти расширения могут использовать 
+    библиотеки <link linkend="book.mysqlnd">mysqlnd</link> и <literal>libmysqlclient</literal>. 
+    Выбор библиотеки необходимо сделать на этапе компиляции.
+   </para>
+   <para>
+    Библиотека mysqlnd является частью дистрибутива PHP начиная с версии 5.3.0.
+    Она предоставляет такие возможности как ленивое соединение(lazy connections)
+    и кеширование запросов. В библиотеке libmysqlclient данные возможности недоступны.
+    Так что крайне рекомендуется использовать именно встроенную библиотеку mysqlnd.
+    Для дополнительных сведений смотрите <link linkend="book.mysqlnd">документацию mysqlnd</link>.
+   </para>
+   <para>
+    <example>
+     <title>Комманды конфигурирования для mysqlnd и libmysqlclient</title>
+     <programlisting role="shell">
+<![CDATA[
+//Рекомендованная, компилирует с mysqlnd
+$ ./configure --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --with-mysql=mysqlnd
+
+//Рекомендованная, компилирует с mysqlnd начиная с PHP 5.4
+$ ./configure --with-mysqli --with-pdo-mysql --with-mysql
+
+//Не рекомендованная, компилирует с libmysqlclient
+$ ./configure --with-mysqli=/path/to/mysql_config --with-pdo-mysql=/path/to/mysql_config --with-mysql=/path/to/mysql_config
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <para>
+    <emphasis role="bold">Сравнение возможностей библиотек</emphasis>
+   </para>
+   <para>
+    Рекомендуется использовать библеотеку <link linkend="book.mysqlnd">mysqlnd</link>,
+    а не MySQL Client Server library (libmysqlclient). Обе библиотеки развиваются и 
+    поддерживаются производителями.
+   </para>
+   <informaltable>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry></entry>
+       <entry>MySQL native driver (<link linkend="book.mysqlnd">mysqlnd</link>)</entry>
+       <entry>MySQL client server library (<literal>libmysqlclient</literal>)</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>Часть дистрибутива PHP</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Появилась в версии PHP</entry>
+       <entry>5.3.0</entry>
+       <entry>Нет данных</entry>
+      </row>
+      <row>
+       <entry>Лицензия</entry>
+       <entry>PHP License 3.01</entry>
+       <entry>Двойная лицензия</entry>
+      </row>
+      <row>
+       <entry>Статус разработки</entry>
+       <entry>Активный</entry>
+       <entry>Активный</entry>
+      </row>
+      <row>
+       <entry>Жизненный цикл</entry>
+       <entry>Окончание не анонсировано</entry>
+       <entry>Окончание не анонсировано</entry>
+      </row>
+      <row>
+       <entry>PHP 5.4 и выше; компилируется по умолчанию</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>PHP 5.3; компилируется по умолчанию</entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Поддержка протокола сжатия</entry>
+       <entry>Да (5.3.1+)</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Поддержка SSL</entry>
+       <entry>Да (5.3.3+)</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Поддержка именованных конвееров(named pipes)</entry>
+       <entry>Да (5.3.4+)</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Неблокирующие, асинхронные запросы</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Статистика производительности</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>LOAD LOCAL INFILE уважает директиву <link linkend="ini.open-basedir">open_basedir</link></entry>
+       <entry>Да</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>Использует штатный менеджер памяти PHP (т.е., ограничения памяти PHP)</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Возвращает числовые значения как значения с плавающей запятой(float) (COM_QUERY)</entry>
+       <entry>Да</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>Возвращает числовые значения как строки (string) (COM_QUERY)</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Поддержка плагинов</entry>
+       <entry>Да</entry>
+       <entry>Ограниченно</entry>
+      </row>
+      <row>
+       <entry>Разделение Read/Write для репликации MySQL</entry>
+       <entry>Да, с плагином</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Балансировка нагрузки</entry>
+       <entry>Да, с плагином</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>отказоустойчивость</entry>
+       <entry>Да, с плагином</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>Ленивые соединения</entry>
+       <entry>Да, с плагином</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Кеширование запросов</entry>
+       <entry>Да, с плагином</entry>
+       <entry>нет</entry>
+      </row>
+      <row>
+       <entry>Прозрачная манипуляция запросами (т.е., auto-EXPLAIN или мониторинг)</entry>
+       <entry>Да, с плагином</entry>
+       <entry>Нет</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </chapter>
+  
+  &reference.mysqlinfo.concepts;
+  
+ </book>
+
+ &reference.mysqli.book;
+ &reference.mysql.book;
+ &reference.mysqlnd.book;
+ &reference.mysqlnd-ms.book;
+ &reference.mysqlnd-qc.book;
+ &reference.mysqlnd-uh.book;
+ &reference.mysqlnd-mux.book;
+ &reference.mysqlnd-memcache.book;
+
+</set>
