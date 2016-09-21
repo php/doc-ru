@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: ff4c97050881f69e37bc44cd4034c268566e376d Maintainer: aur Status: ready -->
+<!-- Reviewed: yes Maintainer: rjhdby -->
 <!-- $Revision$ -->
-<!-- EN-Revision: 377cbed58017458cd07b087a70d26624def218a4 Maintainer: aur Status: ready -->
-<!-- Reviewed: no -->
 
 <chapter xml:id="eio.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.examples;
@@ -192,7 +192,7 @@ bool(true)
 
 <para>
   <example>
-   <title>Использование eio совместно с libevent</title>
+   <title>Использование eio совместно с модулем libevent</title>
    <programlisting role="php"><![CDATA[
 <?php
 function my_eio_poll($fd, $events, $arg) {
@@ -247,6 +247,52 @@ string(10) "mkdir data"
 </example>
 </para>
 
+<para>
+  <example>
+   <title>Использование eio с модулем event</title>
+   <programlisting role="php"><![CDATA[
+<?php
+$base = new EventBase();
+
+// Получаем поток опроса eio.
+// Обратите внимание, что эта переменная должна быть жива все время
+// пока запущен цикл событий
+$eio_stream = eio_get_event_stream();
+
+// Связываем поток опроса eio polling с циклом событий.
+$poll_event = new Event($base, $eio_stream, Event::READ, function () {
+  if (eio_nreqs()) {
+    eio_poll();
+  }
+});
+$poll_event->add();
+
+// Добавляем задачу eio
+eio_nop(EIO_PRI_DEFAULT, function () {
+  echo "eio_nop\n";
+});
+
+// Добавляем события
+$timer = Event::timer($base, function () {
+  echo "прошло 2 секунды\n";
+});
+$timer->add(2);
+
+// Отправляем события
+$base->dispatch();
+?>
+]]></programlisting>
+
+&example.outputs.similar;
+<screen>
+ <![CDATA[
+eio_nop
+прошло 2 секунды
+ ]]>
+ </screen>
+</example>
+</para>
+ 
 </chapter>
 
 <!-- Keep this comment at the end of the file
