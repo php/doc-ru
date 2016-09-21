@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3ca0a2900f9bb782affee5c230ba70b9bb5d5e7d Maintainer: tmn Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 86da9d950137b26ef6a0fdabb052782fc9e5a1b9 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: yes Maintainer: rjhdby -->
 <!-- $Revision$ -->
 <refentry xml:id="function.set-exception-handler" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -34,7 +34,7 @@
        Имя функции, которая будет вызываться каждый раз, когда выбрасывается
        неперехватываемое исключение. Функция-обработчик
        должна принимать один аргумент - объект, представляющий выброшенное
-       исключение.
+       исключение. До PHP 7 такая функция выглядит так:
       </para>
       <para>
        <methodsynopsis>
@@ -43,9 +43,29 @@
        </methodsynopsis>
       </para>
       <para>
+       В PHP 7 большинство внутренних ошибок теперь генерируют исключение, но класса 
+       <classname>Error</classname>. Для них так же будет вызываться указанный
+       обработчик исключений. Классы <classname>Error</classname> и 
+       <classname>Exception</classname> реализуют интерфейс <classname>Throwable</classname>,
+       соответственно именно его следует использовать в сигнатуре функции-обработчика:
+      </para>
+      <para>
+       <methodsynopsis>
+        <type>void</type><methodname><replaceable>handler</replaceable></methodname>
+        <methodparam><type>Throwable</type><parameter>ex</parameter></methodparam>
+       </methodsynopsis>
+      </para>
+      <para>
        В качестве этого аргумента можно передать &null;. В этом случае
        обработчик вернется к своему изначальному состоянию.
       </para>
+      <caution>
+       <para>
+        Указание типа <classname>Exception</classname> для параметра 
+        <parameter>ex</parameter> в вашей функции-обработчике приведет
+        к проблемам в PHP 7 из-за измененной иерархии классов исключений.
+       </para>
+      </caution>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -74,6 +94,13 @@
      </thead>
      <tbody>
       <row>
+       <entry>7.0.0</entry>
+       <entry>
+        Тип параметра передаваемого в <parameter>exception_handler</parameter> изменен
+        с <classname>Exception</classname> на <classname>Throwable</classname>
+       </entry>
+      </row>
+      <row>
        <entry>5.5.0</entry>
        <entry>
         Раньше, если был передан &null;, то эта функция возвращала &true;.
@@ -97,12 +124,12 @@
 <![CDATA[
 <?php
 function exception_handler($exception) {
-  echo "Неперехватываемое исключение: " , $exception->getMessage(), "\n";
+  echo "Неперехваченное исключение: " , $exception->getMessage(), "\n";
 }
 
 set_exception_handler('exception_handler');
 
-throw new Exception('Неперехватываемое исключение');
+throw new Exception('Неперехваченное исключение');
 echo "Не выполнено\n";
 ?>
 ]]>
