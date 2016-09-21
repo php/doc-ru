@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d316f465df3ecaf4fe09440a05c261553c27d12d Maintainer: tmn Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 809b8ab4fd8bce37105d2e65a5267095ad470cf8 Maintainer: tmn Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli-result.fetch-fields" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_result::fetch_fields</refname>
   <refname>mysqli_fetch_fields</refname>
-  <refpurpose>
-   Возвращает массив объектов, представляющих поля результирующего набора
-  </refpurpose>
+  <refpurpose>Возвращает массив объектов, представляющих поля результирующего набора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -25,9 +23,8 @@
   </methodsynopsis>
 
   <para>
-   Эта функция служит для тех же целей, что и
-   <function>mysqli_fetch_field</function>, с той лишь разницей, что возвращает не
-   один объект для столбца, а массив таких объектов.
+   Эта функция служит для тех же целей, что и <function>mysqli_fetch_field</function>,
+   с той лишь разницей, что возвращает не один объект для столбца, а массив таких объектов.
   </para>
  </refsect1>
 
@@ -79,11 +76,19 @@
      </row>
      <row>
       <entry>length</entry>
-      <entry>Ширина поля, как она задана при определении таблицы.</entry>
+      <entry>
+       Длина поля в байтах, как она задана при определении таблицы.
+       Обратите внимание, что данная величина(в байтах) может отличаться
+       от величины в символах, указанной в опредлелении поля таблицы, так
+       как в разных кодировках один символ может может записываться
+       несколькими байтами. Например, поле VARCHAR(10) в кодировке UTF-8
+       вернет длину 30 = 10 символов * 3 байта на символ, а для кодировки
+       LATIN1 - длину 10, так как в этой кодировке один символ занимает один байт.
+      </entry>
      </row>
      <row>
       <entry>charsetnr</entry>
-      <entry>Количество наборов символов для поля.</entry>
+      <entry>Числовой идентификатор кодировки.</entry>
      </row>
      <row>
       <entry>flags</entry>
@@ -110,32 +115,42 @@
    <programlisting role="php">
 <![CDATA[
 <?php
-$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+$mysqli = new mysqli("127.0.0.1", "root", "foofoo", "sakila");
 
-/* проверка подключения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+/* Проверяем соединение */
+if ($mysqli->connect_errno) {
+    printf("Connect failed: %s\n", $mysqli->connect_error);
     exit();
 }
 
-$query = "SELECT Name, SurfaceArea from Country ORDER BY Code LIMIT 5";
+foreach (array('latin1', 'utf8') as $charset) {
 
-if ($result = $mysqli->query($query)) {
+    // Устанавливаем кодировку для демонстрации ее влияния на некоторые 
+    $mysqli->set_charset($charset);
 
-    /* Получим информацию обо всех столбцах */
-    $finfo = $result->fetch_fields();
+    $query = "SELECT actor_id, last_name from actor ORDER BY actor_id";
 
-    foreach ($finfo as $val) {
-        printf("Имя:         %s\n", $finfo->name);
-        printf("Таблица:     %s\n", $finfo->table);
-        printf("макс. длина: %d\n", $finfo->max_length);
-        printf("Флаги:       %d\n", $finfo->flags);
-        printf("Тип:         %d\n\n", $finfo->type);
+    echo "======================\n";
+    echo "Character Set: $charset\n";
+    echo "======================\n";
+    
+    if ($result = $mysqli->query($query)) {
+
+        /* Читаем информацию по всем столбцам */
+        $finfo = $result->fetch_fields();
+
+        foreach ($finfo as $val) {
+            printf("Name:      %s\n",   $val->name);
+            printf("Table:     %s\n",   $val->table);
+            printf("Max. Len:  %d\n",   $val->max_length);
+            printf("Length:    %d\n",   $val->length);
+            printf("charsetnr: %d\n",   $val->charsetnr);
+            printf("Flags:     %d\n",   $val->flags);
+            printf("Type:      %d\n\n", $val->type);
+        }
+        $result->free();
     }
-    $result->close();
 }
-
-/* закрываем подключение */
 $mysqli->close();
 ?>
 ]]>
@@ -146,32 +161,43 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
+$link = mysqli_connect("127.0.0.1", "my_user", "my_password", "sakila");
 
-/* проверка подключения */
+/* Проверяем соединение */
 if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+    printf("Connect failed: %s\n", mysqli_connect_error());
     exit();
 }
 
-$query = "SELECT Name, SurfaceArea from Country ORDER BY Code LIMIT 5";
+foreach (array('latin1', 'utf8') as $charset) {
 
-if ($result = mysqli_query($link, $query)) {
+    // Устанавливаем кодировку для демонстрации ее влияния на некоторые 
+    mysqli_set_charset($link, $charset);
 
-    /* Получим информацию обо всех столбцах */
-    $finfo = mysqli_fetch_fields($result);
+    $query = "SELECT actor_id, last_name from actor ORDER BY actor_id";
 
-    foreach ($finfo as $val) {
-        printf("Имя:         %s\n", $finfo->name);
-        printf("Таблица:     %s\n", $finfo->table);
-        printf("макс. длина: %d\n", $finfo->max_length);
-        printf("Флаги:       %d\n", $finfo->flags);
-        printf("Тип:         %d\n\n", $finfo->type);
+    echo "======================\n";
+    echo "Character Set: $charset\n";
+    echo "======================\n";
+
+    if ($result = mysqli_query($link, $query)) {
+
+        /* Читаем информацию по всем столбцам */
+        $finfo = mysqli_fetch_fields($result);
+
+        foreach ($finfo as $val) {
+            printf("Name:      %s\n",   $val->name);
+            printf("Table:     %s\n",   $val->table);
+            printf("Max. Len:  %d\n",   $val->max_length);
+            printf("Length:    %d\n",   $val->length);
+            printf("charsetnr: %d\n",   $val->charsetnr);
+            printf("Flags:     %d\n",   $val->flags);
+            printf("Type:      %d\n\n", $val->type);
+        }
+        mysqli_free_result($result);
     }
-    mysqli_free_result($result);
 }
 
-/* закрываем подключение */
 mysqli_close($link);
 ?>
 ]]>
@@ -179,18 +205,42 @@ mysqli_close($link);
    &examples.outputs;
    <screen>
 <![CDATA[
-Имя:         Name
-Таблица:     Country
-макс. длина: 11
-Флаги:       1
-Тип:         254
+======================
+Character Set: latin1
+======================
+Name:      actor_id
+Table:     actor
+Max. Len:  3
+Length:    5
+charsetnr: 63
+Flags:     49699
+Type:      2
 
-Имя:         SurfaceArea
-Таблица:     Country
-макс. длина: 10
-Флаги:       32769
-Тип:         4
+Name:      last_name
+Table:     actor
+Max. Len:  12
+Length:    45
+charsetnr: 8
+Flags:     20489
+Type:      253
 
+======================
+Character Set: utf8
+======================
+Name:      actor_id
+Table:     actor
+Max. Len:  3
+Length:    5
+charsetnr: 63
+Flags:     49699
+Type:      2
+
+Name:      last_name
+Table:     actor
+Max. Len:  12
+Length:    135
+charsetnr: 33
+Flags:     20489
 ]]>
    </screen>
   </example>

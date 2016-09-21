@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d78c0a4f3335f668b36ae2309350649b45486f78 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 221f0c17eeb602fdb40df87058658a5404c5badf Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.ftp-ssl-connect" xmlns="http://docbook.org/ns/docbook">
@@ -16,8 +16,12 @@
    <methodparam choice="opt"><type>int</type><parameter>timeout</parameter><initializer>90</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>ftp_ssl_connect</function> устанавливает SSL соединение с
-   FTP-сервером, заданным аргументом <parameter>host</parameter>.
+   <function>ftp_ssl_connect</function> устанавливает <emphasis>явное</emphasis> SSL соединение 
+   с FTP-сервером, заданным аргументом <parameter>host</parameter>. Это означает, что
+   <function>ftp_ssl_connect</function> будет успешным даже если сервер не
+   настроен для SSL-FTP, или его сертификат недействителен. Только когда будет вызвана
+   функция <function>ftp_login</function>, клиент пошлет необходимую комманду AUTH FTP,
+   так что в указанных случаях <function>ftp_login</function> завершится ошибкой.
   </para>
   <note>
    <title>Почему эта функция может быть не определена</title>
@@ -122,6 +126,11 @@ $conn_id = ftp_ssl_connect($ftp_server);
 
 // проверка имени пользователя и пароля
 $login_result = ftp_login($conn_id, $ftp_user_name, $ftp_user_pass);
+
+if (!$login_result) {
+    // В этом случае PHP уже выбросил сообщение уровня E_WARNING
+    die("can't login");
+}
 
 echo ftp_pwd($conn_id); // /
 
