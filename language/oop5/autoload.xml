@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5b5ab43c78ecf2d9b8c678569afceff8b5e79c5f Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4e85725855dcbe7a8265e63663c3827c01368f9c Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.autoload" xmlns="http://docbook.org/ns/docbook">
@@ -13,31 +13,33 @@
    длинный список подгружаемых файлов.
   </para>
   <para>
-   В PHP 5 это делать не обязательно.
-   Можно определить функцию <function>__autoload</function>, которая будет автоматически
-   вызвана при использовании ранее неопределенного класса или
-   интерфейса. Вызов этой функции - последний шанс для
-   интерпретатора загрузить класс прежде, чем он закончит
-   выполнение скрипта с ошибкой.
+   В PHP 5 это делать не обязательно. Функция <function>spl_autoload_register</function>
+   позволяет зарегистрировать необходимое количество автозагрузчиков, для
+   автоматической загрузки ранее не определенных классов и интерфейсов.
+   Вызов этой функции - последний шанс для интерпретатора загрузить класс 
+   прежде, чем он закончит выполнение скрипта с ошибкой.
   </para>
   <tip>
    <para>
-    <function>spl_autoload_register</function> предоставляет более
-    гибкую альтернативу для автоматической загрузки классов.
-    По этой причине использовать <function>__autoload</function>
-    не рекомендуется, а сама функция в будущем может перестать
-    поддерживаться или быть удалена.
+    В то время как функция <function>__autoload</function> также может быть
+    использована для автоматической загрузки классов и интерфейсов, следует
+    отдать предпочтение <function>spl_autoload_register</function>, потому, что
+    она предоставляет гораздо более гибкую альтернативу, позволяя
+    регистрировать необходимое количество автозагрузчиков, например
+    для корректной работы сторонних библиотек. В связи с этим, 
+    использование <function>__autoload</function> не рекомендуется и она может
+    быть объявлена устаревшей в будущем.
    </para>
   </tip>
   <note>
    <para>
-    До версии 5.3.0, исключения, вызванные в функции __autoload, не могли быть
-    перехвачены в блоке <link linkend="language.exceptions">catch</link>
-    и завершались с неисправимой ошибкой. Начиная с версии 5.3.0 эти исключения
-    можно перехватывать в ближайшем блоке <link linkend="language.exceptions">catch</link>.
-    Если бросить определенное пользователем исключение, то класс этого
-    исключения должен быть доступен. Функция __autoload также может использоваться
-    рекурсивно для автоматической загрузки пользовательских классов исключений.
+    До версии 5.3, исключения, вызванные в функции <function>__autoload</function>, 
+    не могли быть перехвачены в блоке <link linkend="language.exceptions">catch</link>
+    и завершались с неисправимой ошибкой. Начиная с версии 5.3, стало возможным
+    их перехватывать, в случае вызыва пользовательского исключения должен
+    быть доступен класс этого исключения. Функция <function>__autoload</function> 
+    также может использоваться рекурсивно для автоматической загрузки 
+    пользовательских классов исключений.
    </para>
   </note>
   <note>
@@ -65,9 +67,9 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-function __autoload($class_name) {
+spl_autoload_register(function ($class_name) {
     include $class_name . '.php';
-}
+});
 
 $obj  = new MyClass1();
 $obj2 = new MyClass2(); 
@@ -84,9 +86,9 @@ $obj2 = new MyClass2();
 <![CDATA[
 <?php
 
-function __autoload($name) {
+spl_autoload_register(function ($name) {
     var_dump($name);
-}
+});
 
 class Foo implements ITest {
 }
@@ -108,10 +110,10 @@ Fatal error: Interface 'ITest' not found in ...
     <programlisting role="php">
 <![CDATA[
 <?php
-function __autoload($name) {
-    echo "Want to load $name.\n";
-    throw new Exception("Unable to load $name.");
-}
+spl_autoload_register(function ($name) {
+    echo "Хочу загрузить $name.\n";
+    throw new Exception("Невозможно загрузить $name.");
+});
 
 try {
     $obj = new NonLoadableClass();
@@ -124,8 +126,8 @@ try {
     &example.outputs;
     <screen>
 <![CDATA[
-Want to load NonLoadableClass.
-Unable to load NonLoadableClass.
+Хочу загрузить NonLoadableClass.
+Невозможно загрузить NonLoadableClass.
 ]]>
     </screen>
    </example>
@@ -137,10 +139,10 @@ Unable to load NonLoadableClass.
     <programlisting role="php">
 <![CDATA[
 <?php
-function __autoload($name) {
-    echo "Want to load $name.\n";
-    throw new MissingException("Unable to load $name.");
-}
+spl_autoload_register(function ($name) {
+    echo "Хочу загрузить $name.\n";
+    throw new MissingException("Невозможно загрузить $name.");
+});
 
 try {
     $obj = new NonLoadableClass();
@@ -153,8 +155,8 @@ try {
     &example.outputs;
     <screen>
 <![CDATA[
-Want to load NonLoadableClass.
-Want to load MissingException.
+Хочу загрузить NonLoadableClass.
+Хочу загрузить MissingException.
 
 Fatal error: Class 'MissingException' not found in testMissingException.php on line 4
 ]]>
@@ -168,8 +170,9 @@ Fatal error: Class 'MissingException' not found in testMissingException.php on l
     <simplelist>
      <member><function>unserialize</function></member>
      <member><link linkend="unserialize-callback-func">unserialize_callback_func</link></member>
-     <member><function>spl_autoload</function></member>
      <member><function>spl_autoload_register</function></member>
+     <member><function>spl_autoload</function></member>
+     <member><function>__autoload</function></member>
     </simplelist>
    </para>
   </simplesect>
