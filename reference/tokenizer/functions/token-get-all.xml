@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: aur Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: fabcfdd3e2cbf87eef7ccdffd82045a61e0c05d6 Maintainer: aur Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.token-get-all" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -12,6 +12,7 @@
   <methodsynopsis>
    <type>array</type><methodname>token_get_all</methodname>
    <methodparam><type>string</type><parameter>source</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
    Функция <function>token_get_all</function> разбирает переданную строку <parameter>source</parameter> 
@@ -35,6 +36,22 @@
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry>
+     <term><parameter>flags</parameter></term>
+     <listitem>
+      <para>
+       Корректные флаги:
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          <constant>TOKEN_PARSE</constant> - Признает возможность использовать
+          зарезервированные слова в определенных контекстах.
+         </simpara>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>
@@ -48,31 +65,7 @@
    с оригинальным содержимым лексемы в первом элементе и номером строки во втором элементе.
   </para>
  </refsect1>
- <refsect1 role="examples">
-  &reftitle.examples;
-  <para>
-   <example>
-    <title>Пример использования <function>token_get_all</function></title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-$tokens = token_get_all('<?php echo; ?>'); /* => array(
-                                                  array(T_OPEN_TAG, '<?php'), 
-                                                  array(T_ECHO, 'echo'),
-                                                  ';',
-                                                  array(T_CLOSE_TAG, '?>') ); */
-
-/* Обратите внимание, в приведенном примере строка разбирается как T_INLINE_HTML
-   вместо ожидаемого T_COMMENT (T_ML_COMMENT в PHP <5).
-   Это происходит потому, что не используется открывающего/закрывающего тегов в "коде".
-   Это будет эквиалентно помещению комментариев вне тегов <?php ?> в нормальном файле. */
-$tokens = token_get_all('/* comment */'); // => array(array(T_INLINE_HTML, '/* comment */'));
-?>
-]]>
-    </programlisting>
-   </example>
-  </para>
- </refsect1>
+  
  <refsect1 role="changelog">
   &reftitle.changelog;
   <para>
@@ -86,6 +79,13 @@ $tokens = token_get_all('/* comment */'); // => array(array(T_INLINE_HTML, '/* c
      </thead>
      <tbody>
       <row>
+       <entry>7.0.0</entry>
+       <entry>
+        Добавлен необязательный параметр <parameter>flags</parameter>, который
+        может принимать значение <constant>TOKEN_PARSE</constant>.
+       </entry>
+      </row>
+      <row>
        <entry>5.2.2</entry>
        <entry>Номера строк возвращаются в элементе 2.
        </entry>
@@ -95,8 +95,121 @@ $tokens = token_get_all('/* comment */'); // => array(array(T_INLINE_HTML, '/* c
    </informaltable>
   </para>
  </refsect1>
-</refentry>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title><function>token_get_all</function> example</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$tokens = token_get_all('<?php echo; ?>');
 
+foreach ($tokens as $token) {
+    if (is_array($token)) {
+        echo "Line {$token[2]}: ", token_name($token[0]), " ('{$token[1]}')", PHP_EOL;
+    }
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Line 1: T_OPEN_TAG ('<?php ')
+Line 1: T_ECHO ('echo')
+Line 1: T_WHITESPACE (' ')
+Line 1: T_CLOSE_TAG ('?>')
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример неправильного использования <function>token_get_all</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$tokens = token_get_all('/* комментарий */');
+
+foreach ($tokens as $token) {
+    if (is_array($token)) {
+        echo "Line {$token[2]}: ", token_name($token[0]), " ('{$token[1]}')", PHP_EOL;
+    }
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Line 1: T_INLINE_HTML ('/* комментарий */')
+]]>
+    </screen>
+   </example>
+   Обратите внимание, в приведенном примере строка разбирается как <constant>T_INLINE_HTML</constant>
+   вместо ожидаемого <constant>T_COMMENT</constant>.
+   Это происходит потому, что не используется открывающего тега в "коде".
+   Это будет эквиалентно помещению комментариев вне тегов PHP в нормальном файле.
+  </para>
+  <para>
+   <example>
+    <title>
+     Пример использования <function>token_get_all</function> с классом, использующим зарезервированные слова
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$source = <<<'code'
+<?php
+
+class A
+{
+    const PUBLIC = 1;
+}
+code;
+
+$tokens = token_get_all($source, TOKEN_PARSE);
+
+foreach ($tokens as $token) {
+    if (is_array($token)) {
+        echo token_name($token[0]) , PHP_EOL;
+    }
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+T_OPEN_TAG
+T_WHITESPACE
+T_CLASS
+T_WHITESPACE
+T_STRING
+T_CONST
+T_WHITESPACE
+T_STRING
+T_LNUMBER
+]]>
+    </screen>
+   </example>
+   Без флага <constant>TOKEN_PARSE</constant>, предпоследний токен
+   (<constant>T_STRING</constant>) был бы <constant>T_PUBLIC</constant>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>token_name</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
