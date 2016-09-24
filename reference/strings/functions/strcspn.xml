@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 7e3e160e1b425ff62990223703f3ba349811f87e Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.strcspn">
@@ -12,15 +12,22 @@
   &reftitle.description;
   <methodsynopsis>
    <type>int</type><methodname>strcspn</methodname>
-   <methodparam><type>string</type><parameter>str1</parameter></methodparam>
-   <methodparam><type>string</type><parameter>str2</parameter></methodparam>
+   <methodparam><type>string</type><parameter>subject</parameter></methodparam>
+   <methodparam><type>string</type><parameter>mask</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>start</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>length</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает длину участка в начале строки <parameter>str1</parameter>,
-   который <emphasis>не содержит</emphasis> ни одного символа из строки
-   <parameter>str2</parameter>.
+   Возвращает длину участка в начале строки <parameter>subject</parameter>, который
+   <emphasis>не содержит</emphasis> ни одного символа из строки 
+   <parameter>mask</parameter>.
+  </para>
+  <para>
+   Если параметры <parameter>start</parameter> и <parameter>length</parameter>
+   не указаны, то все содержимое <parameter>subject</parameter> будет обследовано. 
+   Если же эти параметры указаны, то эффект будет таким же как при вызове
+   <literal>strcspn(substr($subject, $start, $length), $mask)</literal> 
+   (см. <xref linkend="function.substr" /> для дополнительной информации).
   </para>
  </refsect1>
 
@@ -29,18 +36,18 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>str1</parameter></term>
+     <term><parameter>subject</parameter></term>
      <listitem>
       <para>
-       Первая строка.
+       Строка для обследования.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>str2</parameter></term>
+     <term><parameter>mask</parameter></term>
      <listitem>
       <para>
-       Вторая строка.
+       Строка, содержащая каждый из запрещенных символов.
       </para>
      </listitem>
     </varlistentry>
@@ -48,7 +55,21 @@
      <term><parameter>start</parameter></term>
      <listitem>
       <para>
-       Начальная позиция сравнения строки.
+       Позиция в строке <parameter>subject</parameter> с которой начинается поиск.
+      </para>
+      <para>
+       Если <parameter>start</parameter> указан и не является отрицательным значением,
+       тогда <function>strcspn</function> начнет обследование строки 
+       <parameter>subject</parameter> с позиции, указанной в <parameter>start</parameter>.
+       '<literal>a</literal>', символ в позиции <literal>2</literal> это '<literal>c</literal>', и 
+       так далее.
+      </para>
+      <para>
+       Если <parameter>start</parameter> указан, но является отрицательным числом,
+       то <function>strspn</function> начнет обследование строки
+        <parameter>subject</parameter> с позиции, указанной в параметре
+       <parameter>start</parameter>,начиная с конца строки
+       <parameter>subject</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -56,7 +77,20 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Длина сравнения строки.
+       Длина фрагмента из <parameter>subject</parameter> для обследования.
+      </para>
+      <para>
+       Если <parameter>start</parameter> указан и не является отрицательным значением,
+       тогда <function>strcspn</function> начнет обследование строки
+       <parameter>subject</parameter> с позиции, указанной в <parameter>start</parameter>.
+       Например:в строке '<literal>abcdef</literal>', символ в позиции <literal>0</literal> это
+       '<literal>a</literal>', символ в позиции <literal>2</literal> это '<literal>c</literal>', 
+       и так далее.
+      </para>
+      <para>
+       Если <parameter>start</parameter> указан, но является отрицательным числом,
+       то <function>strspn</function> начнет обследование строки
+        <parameter>subject</parameter> с позиции, указанной в параметре  <parameter>start</parameter>,начиная с конца строки <parameter>subject</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -67,8 +101,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает длину фрагмента в виде целого числа.
+   Возвращает длину начального фрагмента строки <parameter>subject</parameter>, которая
+   состоит полностью из символов <emphasis>не</emphasis> включенных в параметр <parameter>mask</parameter>
   </para>
+  
+  <note>
+   <para>
+    Когда параметр <parameter>start</parameter> указан, возвращаемая длина определяется,
+    начиная с этой позиции, а не с начала строки <parameter>subject</parameter>.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1 role="examples">
@@ -82,11 +124,15 @@ $a = strcspn('abcd',  'apple');
 $b = strcspn('abcd',  'banana');
 $c = strcspn('hello', 'l');
 $d = strcspn('hello', 'world');
+$e = strcspn('abcdhelloabcd', 'abcd', -9);
+$f = strcspn('abcdhelloabcd', 'abcd', -9, -5);
 
 var_dump($a);
 var_dump($b);
 var_dump($c);
 var_dump($d);
+var_dump($e);
+var_dump($f);
 ?>
 ]]>
    </programlisting>
@@ -97,6 +143,8 @@ int(0)
 int(0)
 int(2)
 int(2)
+int(5)
+int(4)
 ]]>
    </screen>
   </example>
