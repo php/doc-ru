@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 14af302c9c0e561fa6f9cdd956268758ba9a89c5 Maintainer: tmn Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: e440c79af15cf829549736b2a292b5f8f6887142 Maintainer: tmn Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="pdostatement.fetch" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -56,7 +56,9 @@
         <listitem><para>
          <literal>PDO::FETCH_CLASS</literal>: создает и возвращает объект
          запрошенного класса, присваивая значения столбцов результирующего набора
-         именованным свойствам класса. Если <parameter>fetch_style</parameter>
+         именованным свойствам класса, и следом вызывает конструктор, если не задан
+         <literal>PDO::FETCH_PROPS_LATE</literal>.
+         Если <parameter>fetch_style</parameter>
          включает в себя атрибут PDO::FETCH_CLASSTYPE (например,
          <literal>PDO::FETCH_CLASS | PDO::FETCH_CLASSTYPE</literal>), то имя
          класса, от которого нужно создать объект, будет взято из первого столбца.
@@ -85,6 +87,11 @@
         <listitem><para>
          <literal>PDO::FETCH_OBJ</literal>: создает анонимный объект со свойствами,
          соответствующими именам столбцов результирующего набора
+        </para></listitem>
+        <listitem><para>
+         <literal>PDO::FETCH_PROPS_LATE</literal>: если используется с
+         <literal>PDO::FETCH_CLASS</literal>, конструктор класса будет вызван
+         перед назначением свойств из значений столбцов.
         </para></listitem>
        </itemizedlist>
       </para>
@@ -168,7 +175,7 @@ print("\n");
 print("PDO::FETCH_OBJ: ");
 print("Возвращаем следующую строку в виде анонимного объекта со свойствами, соответствующими столбцам\n");
 $result = $sth->fetch(PDO::FETCH_OBJ);
-print $result->NAME;
+print $result->name;
 print("\n");
 ?>
 ]]>
@@ -179,24 +186,24 @@ print("\n");
 PDO::FETCH_ASSOC: Возвращаем следующую строку в виде массива, индексированного именами столбцов
 Array
 (
-    [NAME] => apple
-    [COLOUR] => red
+    [name] => apple
+    [colour] => red
 )
 
 PDO::FETCH_BOTH: Возвращаем следующую строку в виде массива, индексированного как именами столбцов, так и их номерами
 Array
 (
-    [NAME] => banana
+    [name] => banana
     [0] => banana
-    [COLOUR] => yellow
+    [colour] => yellow
     [1] => yellow
 )
 
 PDO::FETCH_LAZY: Возвращаем следующую строку в виде анонимного объекта со свойствами, соответствующими столбцам
 PDORow Object
 (
-    [NAME] => orange
-    [COLOUR] => orange
+    [name] => orange
+    [colour] => orange
 )
 
 PDO::FETCH_OBJ: Возвращаем следующую строку в виде анонимного объекта со свойствами, соответствующими столбцам
@@ -263,7 +270,55 @@ readDataBackwards($conn);
 ]]>
     </screen>
    </example>
+<example><title>Порядок конструкторов</title>
+    <simpara>
+     Если объекты забираются с помощью <literal>PDO::FETCH_CLASS</literal>,
+     сначала присваиваются свойства объекта, а следом вызывается конструктор объекта.
+     Если также задано <literal>PDO::FETCH_PROPS_LATE</literal>, этот порядок
+     меняется на обратный.
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Person
+{
+    private $name;
 
+    public function __construct()
+    {
+        $this->tell();
+    }
+
+    public function tell()
+    {
+        if (isset($this->name)) {
+            echo "I am {$this->name}.\n";
+        } else {
+            echo "I don't have a name yet.\n";
+        }
+    }
+}
+
+$sth = $dbh->query("SELECT * FROM people");
+$sth->setFetchMode(PDO::FETCH_CLASS, 'Person');
+$person = $sth->fetch();
+$person->tell();
+$sth->setFetchMode(PDO::FETCH_CLASS|PDO::FETCH_PROPS_LATE, 'Person');
+$person = $sth->fetch();
+$person->tell();
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+I am Alice.
+I am Alice.
+I don't have a name yet.
+I am Bob.
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
