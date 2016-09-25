@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 204bc2974d707bed4017414b13242171d719cb7c Maintainer: shein Status: ready -->
+<!-- EN-Revision: 6145544e0148b1d6829887453052c84fd429e63d Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <chapter xml:id="language.constants" xmlns="http://docbook.org/ns/docbook">
@@ -66,12 +66,14 @@ define("__FOO__", "something");
    <simpara>
     Вы можете определить константу с помощью функции <function>define</function>
     или с помощью ключевого слова <literal>const</literal> вне объявления класса
-    начиная с версии PHP 5.3.0. После того, как константа определена, ее значение
+    начиная с версии PHP 5.3.0. В то время как <function>define</function> позволяет
+    задать константу через выражение, конструкция <literal>const</literal> ограничена
+    как описано в следующем параграфе. После того, как константа определена, ее значение
     не может быть изменено или аннулировано.
    </simpara>
    <simpara>
-    До PHP 5.6 константы могут содержать только скалярные данные
-    (<type>boolean</type>, <type>integer</type>, <type>float</type> и
+    Если использована конструкция <literal>const</literal>, константы могут содержать только
+    скалярные данные (<type>boolean</type>, <type>integer</type>, <type>float</type> и
     <type>string</type> типов). С PHP 5.6 возможно также определять константы 
     как скалярные выражения, и также можно определять константы с типом <type>array</type>.
     Можно определять константы с типом <type>resource</type>, но не рекомендуется,
@@ -101,8 +103,10 @@ define("__FOO__", "something");
     Смотрите также главу руководства, которая разъясняет, почему
     <link linkend="language.types.array.foo-bar">$foo[bar]</link> - это неправильно
     (конечно, если вы перед этим не объявили <literal>bar</literal> как константу с
-    помощью <function>define</function>). Если вы просто хотите проверить,
-    определена ли константа, используйте функцию <function>defined</function>.
+    помощью <function>define</function>). Это не относится к <link
+    linkend="language.namespaces.rules">(полностью) определенные константам</link>,
+    которые в случае удаления вызовут фатальную ошибку.
+    Если вы просто хотите проверить, определена ли константа, используйте функцию <function>defined</function>.
    </simpara>
    <para>
     Различия между константами и переменными:
@@ -131,10 +135,11 @@ define("__FOO__", "something");
      </listitem>
      <listitem>
       <simpara>
-       Константы могут иметь только скалярные значения, или скалярные и массивы 
-       в PHP 5.6 и новее. Вы можете использовать массивы в скалярных выражениях констант
-       (например, <literal>const FOO = array(1,2,3)[0];</literal>), но результатом
-       должно быть скалярное выражение.
+       Константы могут иметь только скалярные значения. С версии PHP 5.6 возможно задать
+       константу массивом используя <literal>const</literal>. С PHP 7, константы массивы
+       можно задавать через <function>define</function>.
+       Вы можете использовать массивы при задании констант, если результат выражения
+       будет допустимого типа. Например, <literal>const FOO = array(1,2,3)[0];</literal>).
        </simpara>
      </listitem>
     </itemizedlist>
@@ -168,8 +173,18 @@ echo CONSTANT;
 
 // Работает, начиная с версии PHP 5.6.0
 const ANOTHER_CONST = CONSTANT.'; Прощай, мир.';
-
 echo ANOTHER_CONST;
+
+const ANIMALS = array('dog', 'cat', 'bird');
+echo ANIMALS[1]; // выводит "cat"
+
+// Работает в PHP 7
+define('ANIMALS', array(
+    'dog',
+    'cat',
+    'bird'
+));
+echo ANIMALS[1]; // выводит "cat"
 ?>
 ]]>
      </programlisting>
@@ -240,7 +255,7 @@ echo ANOTHER_CONST;
          Директория файла.  Если используется внутри подключаемого файла,
          то возвращается директория этого файла. Это эквивалентно вызову
          <literal>dirname(__FILE__)</literal>. Возвращаемое имя директории
-         не оканчивается на слеш, за исключением корневой директории.
+         не оканчивается на слэш, за исключением корневой директории.
         </entry>
        </row>
        <row xml:id="constant.function">
@@ -337,7 +352,7 @@ echo ANOTHER_CONST;
         <row>
          <entry>4.0.2</entry>
          <entry>
-          <constant>__FILE__</constant> всегда содержит полный пусть с разрешенными симлинками.
+          <constant>__FILE__</constant> всегда содержит полный путь с разрешенными симлинками.
           Раньше в некоторых случаях она содержала относительный путь.
          </entry>
         </row>
