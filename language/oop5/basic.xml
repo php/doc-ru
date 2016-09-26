@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4b2619b58a3c2b68d2e8008bc3c8244372af578e Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4392990fb654c30e30019ef1ed41721956dd5bf8 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 
@@ -16,9 +16,9 @@
    <para>
     Именем класса может быть любое слово, при условии, что оно не входит в список
     <link linkend="reserved">зарезервированных слов</link> PHP, начинается с буквы или
-    символа подчеркивания и за которым следует любое количество букв, цифр или символов подчеркивания.
-    Если задать эти правила в виде регулярного выражения, то получится следующее выражение:
-    <literal>^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$</literal>.
+    символа подчеркивания и за которым следует любое количество букв, цифр или символов
+    подчеркивания. Если задать эти правила в виде регулярного выражения, то получится
+    следующее выражение: <literal>^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$</literal>.
    </para>
    <para>
     Класс может содержать собственные <link linkend="language.oop5.constants">константы</link>,
@@ -49,11 +49,22 @@ class SimpleClass
     является ссылкой на вызываемый объект. Обычно это тот объект, которому
     принадлежит вызванный метод, но может быть и другой объект, если метод был
     вызван <link linkend="language.oop5.static">статически</link> из контекста
-    другого объекта. Это показано на следующих примерах:
+    другого объекта.
+    Начиная с PHP 7.0.0, вызов нестатического метода статическим способом из
+    неподходящего контекста приведет к тому, что $this будет неопределен внутри метода.
+    Вызов нестатического метода статическим способом из неподходящего контекста было
+    объявлено устаревшив в PHP 5.6.0. Начиная с PHP 7.0.0, подобный вызов объявлен
+    совсем устаревшим (если только вызов не произошел из подходящего контекста).
+    До PHP 5.6.0, подобные вызовы уже сопровождались строгим уведомлением.
    </para>
    <para>
     <example xml:id="language.oop5.basic.class.this">
-     <title>Переменная <varname>$this</varname></title>
+     <title>Несколько примеров с псевдо-переменной <varname>$this</varname></title>
+     <simpara>
+      Мы предполагаем, что error_reporting отключен для этого примера; в противном случае
+      следующий код, в зависимости от версии PHP, вызовет предупреждения уровней
+      "устаревшее" или "строгое".
+     </simpara>
      <programlisting role="php">
 <![CDATA[
 <?php
@@ -75,7 +86,6 @@ class B
 {
     function bar()
     {
-        // Замечание: следующая строка вызовет предупреждение, если включен параметр E_STRICT.
         A::foo();
     }
 }
@@ -83,23 +93,30 @@ class B
 $a = new A();
 $a->foo();
 
-// Замечание: следующая строка вызовет предупреждение, если включен параметр E_STRICT.
 A::foo();
 $b = new B();
 $b->bar();
 
-// Замечание: следующая строка вызовет предупреждение, если включен параметр E_STRICT.
 B::bar();
 ?>
 ]]>
      </programlisting>
-     &example.outputs;
+     &example.outputs.5;
      <screen>
 <![CDATA[
 $this определена (A)
 $this не определена.
 $this определена (B)
 $this не определена.
+]]>
+     </screen>
+     &example.outputs.7;
+     <screen>
+<![CDATA[
+$this is defined (A)
+$this is not defined.
+$this is not defined.
+$this is not defined.
 ]]>
      </screen>
     </example>
@@ -129,8 +146,8 @@ $this не определена.
 $instance = new SimpleClass();
 
 // Это же можно сделать с помощью переменной:
-$className = 'Foo';
-$instance = new $className(); // Foo()
+$className = 'SimpleClass';
+$instance = new $className(); // new SimpleClass()
 ?>
 ]]>
     </programlisting>
@@ -221,7 +238,80 @@ bool(true)
     </screen>
    </example>
   </sect2>
+<sect2 xml:id="language.oop5.basic.properties-methods">
+   <title>Properties and methods</title>
+   <para>
+    Свойства и методы класса живут в разделенных "пространствах имен", так что
+    возможно задавать свойство и метод с одним и тем же именем.
+    Ссылки как на свойства, так и на методы имеют одинаковую нотацию, и получается,
+    что получите вы доступ к свойству или же вызовете метод - определяется контекстом
+    использования.
+   </para>
+   <example>
+    <title>Доступ к свойству vs. вызов метода</title>
+    <programlisting role="php">
+<![CDATA[
+class Foo
+{
+    public $bar = 'property';
+    
+    public function bar() {
+        return 'method';
+    }
+}
 
+$obj = new Foo();
+echo $obj->bar, PHP_EOL, $obj->bar(), PHP_EOL;
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+property
+method
+]]>
+    </screen>
+   </example>
+   <para>
+    Это означает, что вызвать <link linkend="functions.anonymous">анонимную
+    функцию</link>, присвоенную переменной напрямую не получится.
+    Вместо этого сначала присвойте свойство переменной, например.
+    Начиная с PHP 7.0.0 возможно осуществить подобный вызов, заключив свойство
+    в скобки.
+   </para>
+   <example>
+    <title>Вызов анонимной функции содержащейся в свойстве</title>
+    <programlisting role="php">
+<![CDATA[
+class Foo
+{
+    public $bar;
+    
+    public function __construct() {
+        $this->bar = function() {
+            return 42;
+        };
+    }
+}
+
+$obj = new Foo();
+
+// Начиная с PHP 5.3.0:
+$func = $obj->bar;
+echo $func(), PHP_EOL;
+
+// или так, начиная с of PHP 7.0.0:
+echo ($obj->bar)(), PHP_EOL;
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+42
+]]>
+    </screen>
+   </example>
+  </sect2>
   <sect2 xml:id="language.oop5.basic.extends">
    <title>extends</title>
    <para>
@@ -306,6 +396,13 @@ NS\ClassName
      </screen>
     </example>
    </para>
+   <note>
+    <para>Разрешение имен класса с использованием <literal>::class</literal> происходит
+     на этапе компиляции. Это означает, что на момент создания строки с именем класса
+     автоподгрузки класса не происходит. Как следствие, имена классов раскрываются, даже
+     если класс не существует. Ошибка в этом случае не выдается. 
+    </para>
+   </note>
   </sect2>
  </sect1>
 
