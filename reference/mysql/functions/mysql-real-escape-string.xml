@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 65e697ff671608989432a6e6bf8ae8128b2be2c7 Maintainer: shein Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 4aac5d83bda58b18c6a577bcf1599a9afca2d022 Maintainer: shein Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.mysql-real-escape-string" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysql_real_escape_string</refname>
   <refpurpose>Экранирует специальные символы в строках для использования в выражениях SQL</refpurpose>
  </refnamediv>
-
+ 
  <refsynopsisdiv>
   <warning>
    &mysql.alternative.note;
@@ -34,9 +34,8 @@
   <para>
    <function>mysql_real_escape_string</function> вызывает библиотечную функцию MySQL
    mysql_real_escape_string, которая добавляет обратную косую черту к следующим символам:
-   <literal>\x00</literal>, <literal>\n</literal>,
-   <literal>\r</literal>, <literal>\</literal>, <literal>'</literal>,
-   <literal>"</literal> и <literal>\x1a</literal>.
+   <literal>\x00</literal>, <literal>\n</literal>, <literal>\r</literal>, <literal>\</literal>,
+   <literal>'</literal>, <literal>"</literal> и <literal>\x1a</literal>.
   </para>
   <para>
    Эта функция должна всегда (за несколькими исключениями) использоваться для того, 
@@ -46,11 +45,10 @@
   <caution>
    <title>Безопасность: кодировка символов по умолчанию</title>
    <para>
-    Кодировка символов должна устанавливаться как на сервере, так и
-    с помощью функции <function>mysql_set_charset</function>, чтобы 
-    влиять на поведение <function>mysql_real_escape_string</function>. 
-    Подробнее описано в разделе <link linkend="mysqlinfo.concepts.charset">
-    кодировка символов</link>.
+    Кодировка символов должна устанваливаться как на сервере, так и с помощью функции
+    <function>mysql_set_charset</function>, чтобы влиять на поведение
+    <function>mysql_real_escape_string</function>. Подробнее описано в разделе <link
+    linkend="mysqlinfo.concepts.charset">кодировка символов</link>.
    </para>
   </caution>
  </refsect1>
@@ -80,6 +78,15 @@
   </para>
  </refsect1>
 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Запуск этой функции без существующего соединения с MySQL вызовет ошибку уровня
+   <constant>E_WARNING</constant>. Данную функцию можно запускать только если есть
+   соединение сMySQL.
+  </para>
+ </refsect1>
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -103,11 +110,46 @@ $query = sprintf("SELECT * FROM users WHERE user='%s' AND password='%s'",
   </para>
   <para>
    <example>
+    <title>Пример использования <function>mysql_real_escape_string</function> без наличия
+     соединения</title>
+    <para>
+     Этот пример показывает, что произойдет, если вызвать эту функцию без наличия
+     соединения с MySQL.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Коннекта к MySQL нет
+
+$lastname  = "O'Reilly";
+$_lastname = mysql_real_escape_string($lastname);
+
+$query = "SELECT * FROM actors WHERE last_name = '$_lastname'";
+
+var_dump($_lastname);
+var_dump($query);
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Warning: mysql_real_escape_string(): No such file or directory in /this/test/script.php on line 5
+Warning: mysql_real_escape_string(): A link to the server could not be established in /this/test/script.php on line 5
+
+bool(false)
+string(41) "SELECT * FROM actors WHERE last_name = ''"
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
     <title>Пример взлома с использованием SQL-инъекции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Мы не никак проверили переменную $_POST['password'],
+// Мы никак не проверили переменную $_POST['password'],
 // а она может содержать совсем не то, что мы ожидали. Например:
 $_POST['username'] = 'aidan';
 $_POST['password'] = "' OR ''='";
