@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: afc3f34c682418a582b0f9199db0bac4a087821f Maintainer: mch Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: f151d14e13833bba07b6d5d3c018f3d108e78409 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.ldap-connect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -12,12 +12,17 @@
   &reftitle.description;
   <methodsynopsis>
    <type>resource</type><methodname>ldap_connect</methodname>
-   <methodparam choice="opt"><type>string</type><parameter>hostname</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>host</parameter><initializer>&null;</initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>port</parameter><initializer>389</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Установить соединение с сервером LDAP, определённым параметрами
-   <parameter>hostname</parameter> и <parameter>port</parameter>.
+   Создает идентификатор соединения LDAP и проверяет правдоподобность
+   заданных <parameter>hostname</parameter> и <parameter>port</parameter>.
+  </para>
+  <para>
+   Обратите внимание: Эта функция <emphasis>НЕ</emphasis> открывает соединение.
+   Она проверяет, правдоподобны ли заданные параметры и могут ли они
+   использоваться для подключения, когда в нем возникнет нужна.
   </para>
  </refsect1>
 
@@ -29,10 +34,15 @@
      <term><parameter>hostname</parameter></term>
      <listitem>
       <para>
-       Если вы используете OpenLDAP 2.x.x, вы можете определить URL вместо
-       имя хоста. Чтобы использовать LDAP с SSL, скомпилируйте OpenLDAP 2.x.x
-    с поддержкой SSL, сконфигурируйте PHP с SSL, и установите этот
-    параметр как <literal>ldaps://hostname/</literal>.
+       Это поле поддерживает использование имени хоста или, при использовании
+       OpenLDAP 2.x.x и выше, полный URI в формате <literal>ldap://hostname:port</literal>
+       или <literal>ldaps://hostname/</literal>.
+      </para>
+      <para>Также, вы можете указать несколько LDAP-URI разделенных пробелом.
+      </para>
+      <para>
+       Обратите внимание, что <literal>hostname:port</literal> - это неподдерживаемый
+       LDAP URI, так как отсутствует схема.
       </para>
      </listitem>
     </varlistentry>
@@ -51,16 +61,18 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает положительный идентификатор ссылки LDAP в случае успеха или &false;  в случае ошибки.
-   Когда используется OpenLDAP 2.x.x , <function>ldap_connect</function> будет
-   всегда возвращать <type>resource</type>, поскольку она фактически
-   не соединяется, а только инициализирует параметры соединения.
-   Фактическое подключение происходит при последующих вызовах
-   ldap_* функций, обычно при вызове <function>ldap_bind</function>.
+   Возвращает положительный идентификатор ссылки LDAP если заданая комбирания имени
+   хоста и порта или LDAP URI правдоподобны. Она производит синтаксический разбор и
+   проверку переданных параметров, но соединения с сервером не происходит. Если проверка
+   синтаксиса провалилась - возвращается &false;. Когда используется OpenLDAP 2.x.x,
+   <function>ldap_connect</function> будет всегда возвращать <type>resource</type>,
+   поскольку она фактически не соединяется, а только инициализирует параметры соединения.
+   Фактическое подключение происходит при последующих вызовах ldap_* функций, обычно
+   при вызове <function>ldap_bind</function>.
   </para>
   <para>
-   Если никакие параметры не будут определены, тогда будет возвращен
-   идентификатор уже открытой ссылки.
+   Если никакие параметры не будут определены, тогда будет возвращен идентификатор уже
+   открытой ссылки.
   </para>
  </refsect1>
 
