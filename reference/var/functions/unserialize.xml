@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: da75c15e022c72fdab6ed68f936ee41ecc5909b1 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 153a97e29dc7a5bba8c394b8b16ea77bc20a7fbf Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.unserialize" xmlns="http://docbook.org/ns/docbook">
@@ -15,11 +15,27 @@
   <methodsynopsis>
    <type>mixed</type><methodname>unserialize</methodname>
    <methodparam><type>string</type><parameter>str</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>options</parameter></methodparam>
   </methodsynopsis>
   <simpara>
    <function>unserialize</function> принимает одну сериализованную переменную и
    конвертирует ее обратно в значение PHP.
   </simpara>
+  <warning>
+   <para>
+    Не передавайте непроверенные пользовательские данные в <function>unserialize</function>.
+    Десериализация может создать код, который выполнится при создании объекта или 
+    при автоматической закрузке кода, чем могут оспользоваться недобросовестные пользователи.
+    Лучше использовать более безопасные стандартные форматы 
+    обмена данными, такие как JSON (с помощью  функций <function>json_decode</function> 
+    и <function>json_encode</function>), если вам нужно передать сериализованные данные пользователю.
+   </para>
+   <para>
+    Если вам нужно десериализовать данные из внешних источников, используйте функцию
+    <function>hash_hmac</function> для проверки этих данных. Убедитесь, что эти данные
+    кроме вас никто не изменял.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -41,18 +57,56 @@
        <note>
         <title>Директива unserialize_callback_func</title>
         <para>
-         Существует возможность указать функцию обратного вызова, которая
-         будет вызвана, если в процессе десериализации должен быть
-         проинициализирован неопределенный класс.
-         (для предотвращения получения неполного объекта <type>object</type> "__PHP_Incomplete_Class".)
-         Используйте &php.ini;, <function>ini_set</function> или &htaccess; 
-         для определения функции '<literal>unserialize_callback_func</literal>'.
-         Данная функция будет вызываться каждый раз, когда должен быть
-         проинициализирован неопределенный класс. Для отключения этой возможности
-         просто оставьте значение директивы пустым.
+         Существует возможность указать функцию обратного вызова, которая будет вызвана,
+         если в процессе десериализации должен быть проинициализирован неопределенный
+         класс. (для предотвращения получения неполного объекта <type>object</type>
+         "__PHP_Incomplete_Class"). Используйте &php.ini;, <function>ini_set</function> или
+         &htaccess; для определения функции '<literal>unserialize_callback_func</literal>'.
+         Данная функция будет вызываться каждый раз, когда должен быть проинициализирован
+         неопределенный класс. Для отключения этой возможности просто оставьте значение
+         директивы пустым.
         </para>
        </note>
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>options</parameter></term>
+     <listitem>
+      <para>
+       Любые опции <function>unserialize</function> в виде ассоциативного массива.
+      </para>
+      <table>
+       <title>Корректные опции</title>
+       <tgroup cols="3">
+        <thead>
+         <row>
+          <entry>Имя</entry>
+          <entry>Тип</entry>
+          <entry>Описание</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>allowed_classes</literal></entry>
+          <entry><type>mixed</type></entry>
+          <entry>
+           <simpara>
+            Массив имен классов, которые должны быть приняты, &false; для указания не
+            принимать никаких классов или &true; для приема всех. Если эта опция задана, и
+            <function>unserialize</function> обнаружит объект неприемлемого класса, то он
+            не будет принят, а вместо этого, инстанцируется как объект класса
+            <classname>__PHP_Incomplete_Class</classname>.
+           </simpara>
+           <simpara>
+            Если опция не задана, то она будет считаться установленной в &true;: PHP
+            будет пытаться инстанцировать объекты любого класса.
+           </simpara>
+          </entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </table>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -62,7 +116,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращается преобразованное значение, которое принимать один
+   Возвращается преобразованное значение, которое принимает один
    из типов <type>boolean</type>, <type>integer</type>,
    <type>float</type>, <type>string</type>,
    <type>array</type> или <type>object</type>.
@@ -85,6 +139,12 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        Добавлен параметр <parameter>options</parameter>.
+       </entry>
+      </row>
       <row>
        <entry>5.6.0</entry>
        <entry>
@@ -164,22 +224,15 @@ function mycallback($classname)
     <constant>E_NOTICE</constant>.
    </para>
   </warning>
-  <warning>
-   <para>
-    Не передавайте непроверенные пользовательские данные в <function>unserialize</function>.
-    Десериализация может создать код, который выполнится при создании объекта или 
-    при автоматической загрузке кода, чем могут воспользоваться недобросовестные пользователи.
-    Лучше использовать более безопасные стандартные форматы 
-    обмена данными, такие как JSON (с помощью  функций <function>json_decode</function> 
-    и <function>json_encode</function>), если вам нужно передать сериализованные данные пользователю.
-   </para>
-  </warning>
  </refsect1>
 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member><function>json_encode</function></member>
+    <member><function>json_decode</function></member>
+    <member><function>hash_hmac</function></member>
     <member><function>serialize</function></member>
     <member><link linkend="language.oop5.autoload">Автозагрузка объектов</link></member>
     <member><link linkend="unserialize-callback-func">unserialize_callback_func</link></member>
