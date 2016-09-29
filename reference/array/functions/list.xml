@@ -19,6 +19,34 @@
    а языковая конструкция. <function>list</function> используется
    для того, чтобы присвоить списку переменных значения за одну операцию.
   </para>
+  <note>
+   <para>
+    <function>list</function> only works on numerical arrays and assumes
+    the numerical indices start at 0.
+   </para>
+  </note>
+  <warning>
+   <para>
+    В PHP 5, <function>list</function> присваивает значения начиная с самого правого. 
+    В PHP 7, <function>list</function> - с самого левого.
+   </para>
+   <para>
+    Если вы используете обычные переменные, можете не думать об этом, но, если вы
+    используете массивы с индексами, вы ожидаете, что порядок элементов в массиве 
+    будет ровно таким, как вы его определили в <function>list</function>, слева направо,
+    но в PHP 5 вы получите обратный порядок.
+   </para>
+   <para>
+    Вообще говоря, желательно не полагаться на конкретный порядок операций, так как 
+    будущем это поведение может быть изменено.
+   </para>
+  </warning>
+  <warning>
+   <para>
+    Изменение массива через <function>list</function> (т.е. так 
+    <literal>list($a, $b) = $b</literal>) приведет к неопределенному поведению.
+   </para>
+  </warning>
  </refsect1>
  <refsect1 role="parameters">
   &reftitle.parameters;
@@ -41,6 +69,49 @@
    Возвращает присвоенный массив.
   </para>
  </refsect1>
+ 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        <link linkend="migration70.incompatible.variable-handling.list.order">
+         Изменен порядок операций присвоения.
+        </link>
+       </entry>
+      </row>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        <link linkend="migration70.incompatible.variable-handling.list.empty">
+         Выражение <function>list</function> более не может быть полностью пустым.
+        </link>
+       </entry>
+      </row>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        <link linkend="migration70.incompatible.variable-handling.list.string">
+         Более нельзя разбирать строки с помощью этой функции.
+        </link>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -142,46 +213,75 @@ var_dump($a);
      Выведет (сравните порядок исходных элементов с порядком, в
      в котором они были перезаписаны <function>list</function>):
     </para>
+    &example.outputs.7;
+    <screen>
+<![CDATA[
+array(3) {
+  [0]=>
+  string(6) "coffee"
+  [1]=>
+  string(5) "brown"
+  [2]=>
+  string(8) "caffeine"
+}
+]]>
+    </screen>
+    &example.outputs.5;
     <screen>
 <![CDATA[
 array(3) {
   [2]=>
-  string(12) "кофеин"
+  string(8) "caffeine"
   [1]=>
-  string(20) "коричневый"
+  string(5) "brown"
   [0]=>
-  string(8) "кофе"
+  string(6) "coffee"
 }
 ]]>
     </screen>
    </example>
   </para>
+  <para>
+   <example>
+    <title><function>list</function> и порядок указания индексовs</title>
+    <simpara>
+     Порядок, в котором индексы массива будут употреблены функцией
+     <function>list</function>, на этапе задания не имеет значения.
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$foo = array(2 => 'a', 'foo' => 'b', 0 => 'c');
+$foo[1] = 'd';
+list($x, $y, $z) = $foo;
+var_dump($foo, $x, $y, $z);
+]]>
+    </programlisting>
+    <para>
+     Производит такой вывод (обратите внимание, на порядок, в котором элементы
+     были перечислены в синтаксе <function>list</function> и на порядок вывода):
+    </para>
+    <screen>
+<![CDATA[
+array(4) {
+  [2]=>
+  string(1) "a"
+  ["foo"]=>
+  string(1) "b"
+  [0]=>
+  string(1) "c"
+  [1]=>
+  string(1) "d"
+}
+string(1) "c"
+string(1) "d"
+string(1) "a"
+]]>
+    </screen>
+   </example>
+  </para>
  </refsect1>
- <refsect1 role="notes">
-  &reftitle.notes;
-  <warning>
-   <para>
-    <function>list</function> присваивает значения начиная с крайнего правого
-    параметра. Если вы используете простые переменные, можете не беспокоиться
-    об этом. Но если вы используете индексные массивы, вы можете ожидать, что в
-    результате выполнения функции <function>list</function> вы получите тот же
-    порядок элементов, что и в исходном массиве: слева направо; однако это не так.
-    Они будут присвоены в обратном порядке.
-   </para>
-  </warning>
-  <warning>
-   <para>
-    Изменение массива во время выполнения функции <function>list</function> (например,
-    использование <literal>list($a, $b) = $b</literal>) приводит к непредсказуемому поведению.
-   </para>
-  </warning>
-  <note>
-   <para>
-    <function>list</function> работает только с массивами, индексами
-    которых являются числа и нумерация которых начинается с 0.
-   </para>
-  </note>
- </refsect1>
+ 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>

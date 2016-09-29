@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4b824fda65773b3a907176feda258f278f6afac0 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 239e96a218079d1211bbf7f1d73947039a00ab5e Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <!-- Revision: $ -->
 
@@ -41,22 +41,25 @@ foreach (array_expression as $key => $value)
  <para>
   <note>
    <para>
-    Когда оператор <literal>foreach</literal> начинает исполнение, внутренний
+    В PHP 5, когда оператор <literal>foreach</literal> начинает исполнение, внутренний
     указатель массива автоматически устанавливается на первый его элемент
     Это означает, что нет необходимости вызывать функцию
     <function>reset</function> перед использованием цикла <literal>foreach</literal>.
     
    </para>
    <para>
-    Так как оператор <literal>foreach</literal> опирается на внутренний указатель массива, его изменение
-    внутри цикла может привести к непредсказуемому поведению.
+    Так как в PHP 5 оператор <literal>foreach</literal> опирается на внутренний указатель
+    массива, его изменение внутри цикла может привести к непредсказуемому поведению.
+   </para>
+   <para>
+    В PHP 7, <literal>foreach</literal> не использует внутренний указатель массива.
    </para>
   </note>
  </para>
  <para>
   Для того, чтобы напрямую изменять элементы массива внутри цикла,
-  переменной <literal>$value</literal> должен предшествовать знак &amp;. В этом случае значение будет присвоено по
- <link linkend="language.references">ссылке</link>.
+  переменной <literal>$value</literal> должен предшествовать знак &amp;. В этом случае
+  значение будет присвоено по <link linkend="language.references">ссылке</link>.
   <informalexample>
    <programlisting role="php">
 <![CDATA[
@@ -72,9 +75,45 @@ unset($value); // разорвать ссылку на последний эле
    </programlisting>
   </informalexample>
  </para>
+ <warning>
+  <para>
+   Ссылка <literal>$value</literal> на последний элемент массива останется после окончания
+   цикла <literal>foreach</literal>. Рекомендуется уничтожать ее с помощью <function>unset</function>.
+   В противном случае вы можете столкнуться с таким поведением:
+  </para>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$arr = array(1, 2, 3, 4);
+foreach ($arr as &$value) {
+    $value = $value * 2;
+}
+// $arr = array(2, 4, 6, 8)
+
+// Без unset($value), $value все еще ссылается на последний элемент: $arr[3]
+
+foreach ($arr as $key => $value) {
+    // $arr[3] будет перезаписываться значениями $arr при каждой итерации цикла
+    echo "{$key} => {$value} ";
+    print_r($arr);
+}
+// ...И в конце концов предпоследнее значение определит окончательное содержимое $arr[3]
+
+// вывод:
+// 0 => 2 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 2 )
+// 1 => 4 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 4 )
+// 2 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
+// 3 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </warning>
  <para>
-  Указатель на <literal>$value</literal> возможен, только если на перебираемый массив можно
-  ссылаться (т.е. если он является переменной). Следующий код не будет работать:
+  До PHP 5.5.0, указатель на <literal>$value</literal> возможен, только если на перебираемый
+  массив можно ссылаться (т.е. если он является переменной). 
+  Следующий код не будет работать:
   <informalexample>
    <programlisting role="php">
 <![CDATA[
@@ -87,13 +126,6 @@ foreach (array(1, 2, 3, 4) as &$value) {
    </programlisting>
   </informalexample>
  </para>
- <warning>
-  <para>
-   Ссылка <literal>$value</literal> на последний элемент массива
-   остается даже после того, как оператор <literal>foreach</literal> завершил работу.
-   Рекомендуется уничтожить ее с помощью функции <function>unset</function>.
-  </para>
- </warning>
  <para>
   <note>
    <para>
@@ -157,7 +189,7 @@ foreach ($a as $v) {
     echo "Текущее значение переменной \$a: $v.\n";
 }
 
-/* Пример 2: значение (для иллюстрации массив выводится в виде значения с ключом) */
+/* Пример 2: значение (для иллюстрации массив выводится в виде значения с ключем) */
 
 $a = array(1, 2, 3, 17);
 
@@ -307,6 +339,43 @@ A: 3; B: 4; C:
 ]]>
     </screen>
    </informalexample>
+  </para>
+ </sect2>
+ 
+ <sect2 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        <literal>foreach</literal> больше не использует внутренний указатель массива.
+       </entry>
+      </row>
+      <row>
+       <entry>5.5.0</entry>
+       <entry>
+        Поддержка ссылки <literal>$value</literal> для выражений.
+        ранее можно было ссылаться только на переменные.
+       </entry>
+      </row>
+      <row>
+       <entry>5.5.0</entry>
+       <entry>
+        Поддержка распаковки вложенных массивов с помощью <function>list</function>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
   </para>
  </sect2>
 </sect1>
