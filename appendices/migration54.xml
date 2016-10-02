@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8ad0d94e1c87b2daabff88e74acc31e8a11eec0a Maintainer: mch Status: ready -->
+<!-- EN-Revision: e5fcdd5264e78e3d17080eae66bbb94bdb4d66d9 Maintainer: mch Status: ready -->
 <!-- Based on UPGRADING version 322438. Work in progess !-->
 <!-- $Revision$ -->
 <!-- Reviewed: no -->
@@ -10,8 +10,9 @@
   <link linkend="migration5">5.0.x</link>,
   <link linkend="migration51">5.1.x</link>,
   <link linkend="migration52">5.2.x</link>,
-  <link linkend="migration53">5.3.x</link> и
-  <link linkend="migration55">5.5.x</link>.
+  <link linkend="migration53">5.3.x</link>,
+  <link linkend="migration55">5.5.x</link> и
+  <link linkend="migration56">5.6.x</link>.
  </simpara>
 
  <section xml:id="migration54.changes">
@@ -67,13 +68,15 @@
    </listitem>
    <listitem>
     <simpara>
-     <link linkend="security.magicquotes">"Волшебные" кавычки</link> теперь не работают. Приложения, которые используют
-     эту возможность, могут нуждаться в обновлении во избежание проблем с безопасностью.
+     <link linkend="security.magicquotes">"Волшебные" кавычки</link> теперь не работают.
+     Приложения, которые используют эту возможность, могут нуждаться в обновлении во
+     избежание проблем с безопасностью.
     </simpara>
     <simpara>
      Функции <function>get_magic_quotes_gpc</function> и <function>get_magic_quotes_runtime</function>
      теперь всегда возвращают &false;. Функция <function>set_magic_quotes_runtime</function> вызывает ошибку уровня
-     <constant>E_CORE_ERROR</constant>.
+     <constant>E_CORE_ERROR</constant> при попытке разрешить 
+     <link linkend="security.magicquotes">Магические кавычки</link>.
     </simpara>
    </listitem>
    <listitem>
@@ -81,6 +84,12 @@
      Директивы &php.ini; <link linkend="ini.register-globals">register_globals</link> и
      <link linkend="ini.register-long-arrays">register_long_arrays</link>
      были удалены.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Директива mbstring.script_encoding была удалена. Вместо нее используйте
+     <link linkend="ini.zend.script-encoding">zend.script_encoding</link>.
     </simpara>
    </listitem>
    <listitem>
@@ -93,29 +102,33 @@
      Операторы <link linkend="control-structures.break">break</link>
      и <link linkend="control-structures.continue">continue</link>
      теперь не принимают аргументов в виде переменной. Например, выражение
-     <literal>break 1 + foo() * $bar;</literal> невозможно.
-     Вы по-прежнему можете использовать явный аргумент в
-     виде статической константы. Например, <literal>break 2;</literal>. Побочным эффектом этого изменения является то, что
+     <literal>break 1 + foo() * $bar;</literal> невозможно. Вы по-прежнему можете использовать
+     явный аргумент в виде статической константы. Например, <literal>break 2;</literal>. 
+     Побочным эффектом этого изменения является то, что
      конструкции <literal>break 0;</literal> и <literal>continue 0;</literal> более недопустимы.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     В расширении <link linkend="book.datetime">date and time</link> временная зона не может быть более
-     установлена с помощью переменной окружения TZ. Вместо этого вам необходимо указать временную зону, используя
-     опцию &php.ini; <link linkend="ini.date.timezone">date.timezone</link> или функцию <function>date_default_timezone_set</function>.
-     PHP теперь не будет пытаться определять временную зону. Вместо этого будет установлена зона "UTC" и
-     выдано предупреждение <constant>E_WARNING</constant>.
+     В расширении <link linkend="book.datetime">date and time</link> временная зона не может
+     быть более установлена с помощью переменной окружения TZ. Вместо этого вам необходимо
+     указать временную зону, используя опцию &php.ini; <link
+     linkend="ini.date.timezone">date.timezone</link> или функцию <function>date_default_timezone_set</function>.
+     PHP теперь не будет пытаться определять временную зону. Вместо этого будет установлена зона
+     "UTC" и выдано предупреждение <constant>E_WARNING</constant>.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Нецифровые смещения строк, например <literal>$a['foo']</literal>, где $a - это строка, теперь возвращают
-     false в функции <function>isset</function> и true в функции <function>empty</function> и вызывают предупреждение <constant>E_WARNING</constant>
-     при подобном использовании. Смещения, заданные типами double, bool и null также приводят к генерации предупреждения <constant>E_NOTICE</constant>,
-     а строки, содержащие числа (<literal>$a['2']</literal>), все еще работают как и раньше. Обратите внимание, что смещения, подобные <literal>'12.3'</literal> и
-     <literal>'5 foobar'</literal> рассматриваются как нечисловые и вызывают предупреждение <constant>E_WARNING</constant>, но преобразовываются
-     к 12 и 5 соответственно по причине необходимости сохранения обратной совместимости.
+     Нецифровые смещения строк, например <literal>$a['foo']</literal>, где $a - это строка, теперь
+     возвращают false в функции <function>isset</function> и true в функции
+     <function>empty</function> и вызывают предупреждение <constant>E_WARNING</constant>
+     при подобном использовании. Смещения, заданные типами double, bool и null также приводят к
+     генерации предупреждения <constant>E_NOTICE</constant>, а строки, содержащие числа (<literal>$a['2']</literal>), все еще работают как и раньше. Обратите внимание, что смещения,
+     подобные <literal>'12.3'</literal> и <literal>'5 foobar'</literal> рассматриваются как
+     нечисловые и вызывают предупреждение <constant>E_WARNING</constant>, но
+     преобразовываются к 12 и 5 соответственно по причине необходимости сохранения обратной
+     совместимости.
     </simpara>
     <simpara>
      Примечание: следующий код возвращает различные результаты.
@@ -149,16 +162,26 @@
    </listitem>
    <listitem>
     <simpara>
-     Функция <function>array_combine</function> теперь возвращает <literal>array()</literal> вместо &false;,
-     когда в качестве параметров заданы два пустых массива.
+     Функция <function>array_combine</function> теперь возвращает <literal>array()</literal>
+     вместо &false;, когда в качестве параметров заданы два пустых массива.
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Если вы используете функцию <function>htmlentities</function> с азиатскими наборами символов,
-     то она работает также, как функция <function>htmlspecialchars</function>. Так всегда было
-     в предыдущих версиях PHP, а теперь генерируется ошибка
+     Если вы используете функцию <function>htmlentities</function> с азиатскими наборами
+     символов, то она работает также, как функция <function>htmlspecialchars</function>. 
+     Так всегда было в предыдущих версиях PHP, а теперь генерируется ошибка
      уровня <constant>E_STRICT</constant>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Третий параметр функции <function>ob_start</function> изменен с
+     <type>boolean</type> <parameter>erase</parameter> на <type>integer</type>
+     <parameter>flags</parameter>. Обратите внимание, что код, в котором 
+     <parameter>erase</parameter> явно задан как &false;, в PHP 5.4 изменит свое поведение.
+     Посмотрите <link linkend="function.ob-start.flags-bc">этот пример</link>, что бы понять, как
+     писать код работающий одинаковоto в PHP 5.3 и 5.4.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -323,11 +346,6 @@
   <itemizedlist>
    <listitem>
     <simpara>
-     <function>mcrypt_generic_end</function>
-    </simpara>
-   </listitem>
-   <listitem>
-    <simpara>
      <function>mysql_list_dbs</function>
     </simpara>
    </listitem>
@@ -351,6 +369,12 @@
     <simpara>
      Функция <function>is_link</function> теперь работает правильно с символическими ссылками в системе Windows Vista
      или более поздними. Более ранние версии не поддерживали символические ссылки.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>parse_url</function> теперь распознает хост, если схема не указана и присутствует
+     предшествующий разделитель компонент. С версии PHP 5.4.7.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -1257,10 +1281,16 @@
      <link linkend="ini.syntax-highlighting">highlight.bg</link>
     </simpara>
    </listitem>
+   
    <listitem>
     <simpara>
      <link linkend="ini.session.bug-compat-42">session.bug_compat_42</link> и
      <link linkend="ini.session.bug-compat-warn">session.bug_compat_warn</link>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     mbstring.script_encoding
     </simpara>
    </listitem>
    <listitem>
@@ -1441,10 +1471,11 @@
    </listitem>
    <listitem>
     <simpara>
-     Преобразование массивов из <type>SimpleXMLElement</type> теперь всегда содержит все узлы вместо
-     только первого подходящего узла. Теперь выводятся все потомки <type>SimpleXMLElement</type>
-     при использовании функций <function>var_dump</function>, <function>var_export</function> и
-     <function>print_r</function>.
+     Преобразование массивов из <type>SimpleXMLElement</type> теперь <emphasis>всегда
+     </emphasis>содержит все узлы вместо только первого подходящего узла. Теперь
+     <emphasis>всегда</emphasis> выводятся все потомки <type>SimpleXMLElement</type>
+     при использовании функций <function>var_dump</function>, <function>var_export</function>
+     и <function>print_r</function>.
     </simpara>
    </listitem>
    <listitem>
