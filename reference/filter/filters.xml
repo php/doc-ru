@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0b93d1fa3a46529bbec57ed1454cf19dd98ae42d Maintainer: shein Status: ready -->
+<!-- EN-Revision: 099acb26372ecdadbcefbb2b08d1416a44efe073 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <chapter xml:id="filter.filters" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -39,7 +39,7 @@
          <para>
           Если установлен флаг <constant>FILTER_NULL_ON_FAILURE</constant>, то &false;
           возвращается только для значений "0", "false", "off", "no" и "", а
-          &null; будет возвращен для всех не булевых значений.
+          &null; будет возвращен для всех небулевых значений.
          </para>
         </entry>
        </row>
@@ -50,7 +50,16 @@
          <parameter>default</parameter>
         </entry>
         <entry></entry>
-        <entry>Проверяет, что значение является корректным e-mail.</entry>
+        <entry>
+         <para>
+          Проверяет, что значение является корректным e-mail.
+         </para>
+         <para>
+          В целом, происходит проверка синтаксиса адреса в соответствии с RFC 822, с тем
+          исключением, что не поддерживаются комментарии и схлопывание пробельных
+          символов.
+         </para>
+         </entry>
        </row>
        <row>
         <entry><constant>FILTER_VALIDATE_FLOAT</constant></entry>
@@ -91,10 +100,19 @@
          <constant>FILTER_FLAG_NO_RES_RANGE</constant>
         </entry>
         <entry>
-         Проверяет, что значение является корректным IP-адресом,
-         при необходимости только для протоколов IPv4 или IPv6, а также
-         отсутствие вхождения в частные или зарезервированные диапазоны.
+         Проверяет, что значение является корректным IP-адресом, при необходимости только
+         для протоколов IPv4 или IPv6, а также отсутствие вхождения в частные или
+         зарезервированные диапазоны.
         </entry>
+       </row>
+       <row>
+        <entry><constant>FILTER_VALIDATE_MAC</constant></entry>
+        <entry>"validate_mac_address"</entry>
+        <entry>
+         <parameter>default</parameter>
+        </entry>
+        <entry></entry>
+        <entry>Проверяет, что значение - это корректный MAC-адрес.</entry>
        </row>
        <row>
         <entry><constant>FILTER_VALIDATE_REGEXP</constant></entry>
@@ -116,19 +134,19 @@
          <parameter>default</parameter>
         </entry>
         <entry>
+         <constant>FILTER_FLAG_SCHEME_REQUIRED</constant>,
+         <constant>FILTER_FLAG_HOST_REQUIRED</constant>,
          <constant>FILTER_FLAG_PATH_REQUIRED</constant>,
          <constant>FILTER_FLAG_QUERY_REQUIRED</constant>
         </entry>
-        <entry>
-         Проверяет значение на корректность URL (в соответствии с
-         <link xlink:href="&url.rfc;2396">&url.rfc;2396</link>), при желании
-         можно указать обязательные компоненты. Имейте в виду, что корректная
-         ссылка может не содержать HTTP-протокол <parameter>http://</parameter>,
-         т.е. необходима еще одна проверка, определяющая наличие необходимого
-         протокола у ссылки, например, <parameter>ssh://</parameter> или
-         <parameter>mailto:</parameter>. Обратите внимание, что функция работает
-         только с ASCII-ссылками, таким образом, интернациональные доменные имена (содержащие
-         не-ASCII символы) не пройдут проверку.
+        <entry>Проверяет значение как URL (в соответствии с <link
+         xlink:href="&url.rfc;2396">&url.rfc;2396</link>), опционально с требуемыми
+         компонентами. Помните, что URL не содержащий имя протокола <literal>http://</literal>
+         является корректный, так что может потребоваться дополнительная проверка того, 
+         что URL использует требуемый протокол, например <literal>ssh://</literal> или
+         <literal>mailto:</literal>. Обратите внимание, что эта функция считает корректными
+         только URL, состоящие из символов ASCII; Интернациональные доменные имена 
+         провалят проверку.
         </entry>
        </row>
       </tbody>
@@ -137,15 +155,48 @@
    </para>
    <note>
     <para>
-     Начиная с PHP 5.4.11, числа +0 и -0 проверяются оба и как целые, и как числа с плавающей точкой 
-     (используя <constant>FILTER_VALIDATE_FLOAT</constant> и
-     <constant>FILTER_VALIDATE_INT</constant>). До версии PHP 5.4.11 
-     они проверялись только как числа с плавающей точкой (<constant>FILTER_VALIDATE_FLOAT</constant>).
+     С PHP 5.4.11, числа +0 and -0 проходят проверку и как целые и как с плавающей запятой
+     (<constant>FILTER_VALIDATE_FLOAT</constant> и
+     <constant>FILTER_VALIDATE_INT</constant>). До PHP 5.4.11 они проходили проверку
+     только как числа с плавающей запятой (<constant>FILTER_VALIDATE_FLOAT</constant>).
     </para>
     <para>
-     Если установлен параметр <parameter>default</parameter>, то значение <parameter>default</parameter>используется, если не прошла валидация.
+     Если задан <parameter>default</parameter>, то значение 
+     <parameter>default</parameter> будет подставлено, если проверка провалилась.
     </para>
    </note>
+  
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <para>
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>&Version;</entry>
+        <entry>&Description;</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>5.5.0</entry>
+        <entry>
+         Добавлена <constant>FILTER_VALIDATE_MAC</constant>
+        </entry>
+       </row>
+       <row>
+        <entry>5.2.1</entry>
+        <entry>
+         <constant>FILTER_VALIDATE_URL</constant> теперь по умолчанию для
+         <constant>FILTER_FLAG_SCHEME_REQUIRED</constant> и
+         <constant>FILTER_FLAG_HOST_REQUIRED</constant>.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </simplesect>
  </section>
  <!--}}}-->
 
@@ -160,7 +211,6 @@
        <row>
         <entry>ID</entry>
         <entry>Имя</entry>
-        <entry>Параметры</entry>
         <entry>Флаги</entry>
         <entry>Описание</entry>
        </row>
@@ -170,19 +220,18 @@
         <entry><constant>FILTER_SANITIZE_EMAIL</constant></entry>
         <entry>"email"</entry>
         <entry></entry>
-        <entry></entry>
         <entry>
          Удаляет все символы, кроме букв, цифр и
-         <literal>!#$%&amp;'*+-/=?^_`{|}~@.[]</literal>.
+         <literal>!#$%&amp;'*+-=?^_`{|}~@.[]</literal>.
         </entry>
        </row>
        <row>
         <entry><constant>FILTER_SANITIZE_ENCODED</constant></entry>
         <entry>"encoded"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_STRIP_LOW</constant>,
          <constant>FILTER_FLAG_STRIP_HIGH</constant>,
+         <constant>FILTER_FLAG_STRIP_BACKTICK</constant>,
          <constant>FILTER_FLAG_ENCODE_LOW</constant>,
          <constant>FILTER_FLAG_ENCODE_HIGH</constant>
         </entry>
@@ -192,13 +241,11 @@
         <entry><constant>FILTER_SANITIZE_MAGIC_QUOTES</constant></entry>
         <entry>"magic_quotes"</entry>
         <entry></entry>
-        <entry></entry>
         <entry>Применяется функция <function>addslashes</function>.</entry>
        </row>
        <row>
         <entry><constant>FILTER_SANITIZE_NUMBER_FLOAT</constant></entry>
         <entry>"number_float"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_ALLOW_FRACTION</constant>,
          <constant>FILTER_FLAG_ALLOW_THOUSAND</constant>,
@@ -213,7 +260,6 @@
         <entry><constant>FILTER_SANITIZE_NUMBER_INT</constant></entry>
         <entry>"number_int"</entry>
         <entry></entry>
-        <entry></entry>
         <entry>
          Удаляет все символы, кроме цифр и знаков плюса и минуса.
         </entry>
@@ -221,10 +267,10 @@
        <row>
         <entry><constant>FILTER_SANITIZE_SPECIAL_CHARS</constant></entry>
         <entry>"special_chars"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_STRIP_LOW</constant>,
          <constant>FILTER_FLAG_STRIP_HIGH</constant>,
+         <constant>FILTER_FLAG_STRIP_BACKTICK</constant>,
          <constant>FILTER_FLAG_ENCODE_HIGH</constant>
         </entry>
         <entry>
@@ -235,29 +281,29 @@
        <row>
         <entry><constant>FILTER_SANITIZE_FULL_SPECIAL_CHARS</constant></entry>
         <entry>"full_special_chars"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>,
         </entry>
         <entry>
-         Эквивалентно вызову <function>htmlspecialchars</function> с установленным параметром <constant>ENT_QUOTES</constant>.
-         Кодирование кавычек может быть отключено с помощью установки флага <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>.
-         Аналогично <function>htmlspecialchars</function>, этот фильтр
-         принимает во внимание <link linkend="ini.default-charset">default_charset</link>
-         и, если будет обнаружена некорректная последовательность байт
-         для данной кодировки, то вся строка будет признана негодной и
-         и результатом будет строка нулевой длины.
-         При использовании этого фильтра в качестве фильтра по умолчанию, ознакомьтесь с предупреждением ниже об установке флагов по умолчанию в 0.
+         Эквивалентно вызову <function>htmlspecialchars</function> с установленным
+         параметром <constant>ENT_QUOTES</constant>. Кодирование кавычек может быть
+         отключено с помощью установки флага <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>.
+         Аналогично <function>htmlspecialchars</function>, этот фильтр принимает во внимание
+         <link linkend="ini.default-charset">default_charset</link> и, если будет обнаружена
+         некорректная последовательность байт для данной кодировки, то вся строка будет
+         признана негодной и результатом будет строка нулевой длины. При использовании этого
+         фильтра в качестве фильтра по умолчанию, ознакомьтесь с предупреждением ниже об
+         установке флагов по умолчанию в 0.
         </entry>
        </row>
        <row>
         <entry><constant>FILTER_SANITIZE_STRING</constant></entry>
         <entry>"string"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>,
          <constant>FILTER_FLAG_STRIP_LOW</constant>,
          <constant>FILTER_FLAG_STRIP_HIGH</constant>,
+         <constant>FILTER_FLAG_STRIP_BACKTICK</constant>,
          <constant>FILTER_FLAG_ENCODE_LOW</constant>,
          <constant>FILTER_FLAG_ENCODE_HIGH</constant>,
          <constant>FILTER_FLAG_ENCODE_AMP</constant>
@@ -268,13 +314,11 @@
         <entry><constant>FILTER_SANITIZE_STRIPPED</constant></entry>
         <entry>"stripped"</entry>
         <entry></entry>
-        <entry></entry>
         <entry>Псевдоним фильтра "string".</entry>
        </row>
        <row>
         <entry><constant>FILTER_SANITIZE_URL</constant></entry>
         <entry>"url"</entry>
-        <entry></entry>
         <entry></entry>
         <entry>
          Удаляет все символы, кроме букв, цифр и
@@ -284,18 +328,16 @@
        <row>
         <entry><constant>FILTER_UNSAFE_RAW</constant></entry>
         <entry>"unsafe_raw"</entry>
-        <entry></entry>
         <entry>
          <constant>FILTER_FLAG_STRIP_LOW</constant>,
          <constant>FILTER_FLAG_STRIP_HIGH</constant>,
+         <constant>FILTER_FLAG_STRIP_BACKTICK</constant>,
          <constant>FILTER_FLAG_ENCODE_LOW</constant>,
          <constant>FILTER_FLAG_ENCODE_HIGH</constant>,
          <constant>FILTER_FLAG_ENCODE_AMP</constant>
-        </entry>
-        <entry>
-         Бездействует, при необходимости удаляет или кодирует специальные символы. Этот фильтр 
-         также равнозначен константе <constant>FILTER_DEFAULT</constant>.
-        </entry>
+        </entry> 
+        <entry>Бездействует, при необходимости удаляет или кодирует специальные символы.
+        Этот фильтр так же является синонимом <constant>FILTER_DEFAULT</constant></entry>
        </row>
       </tbody>
      </tgroup>
@@ -303,10 +345,11 @@
    </para>
    <warning>
      <para>
-       При использовании одного из этих фильтров в качестве фильтра по умолчанию либо через ваш ini-файл,
-       либо через конфигурацию веб-сервера, флаги по умолчанию установлены в значение
-       <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>. Вам необходимо явно придать параметру
-       filter.default_flags значение 0 для наличия пустых кавычек по умолчанию. К примеру:
+       При использовании одного из этих фильтров в качестве фильтра по умолчанию либо через
+      ваш ini-файл, либо через конфигурацию веб-сервера, флаги по умолчанию установлены в
+      значение <constant>FILTER_FLAG_NO_ENCODE_QUOTES</constant>. Вам необходимо явно
+      придать параметру filter.default_flags значение 0 для наличия пустых кавычек по
+      умолчанию. К примеру:
        <example>
          <title>Настройка фильтра по умолчанию для работы аналогично функции htmlspecialchars</title>
          <programlisting role="php">
@@ -318,6 +361,30 @@ filter.default_flags = 0
        </example>
      </para>
    </warning>
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <para>
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>&Version;</entry>
+        <entry>&Description;</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>5.2.11/5.3.1</entry>
+        <entry>
+         Слеши (<literal>/</literal>) удаляются <constant>FILTER_SANITIZE_EMAIL</constant>.
+         Ранее они сохранялись.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </simplesect>
  </section>
  <!--}}}-->
 
@@ -390,6 +457,18 @@ filter.default_flags = 0
        </entry>
        <entry>
         Удаляет символы, код которых &gt;127.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_FLAG_STRIP_BACKTICK</constant></entry>
+       <entry>
+        <constant>FILTER_SANITIZE_ENCODED</constant>,
+        <constant>FILTER_SANITIZE_SPECIAL_CHARS</constant>,
+        <constant>FILTER_SANITIZE_STRING</constant>,
+        <constant>FILTER_UNSAFE_RAW</constant>
+       </entry>
+       <entry>
+        Удаляет символы обратной кавычки (`).
        </entry>
       </row>
       <row>
@@ -539,11 +618,17 @@ filter.default_flags = 0
         <constant>FILTER_VALIDATE_IP</constant>
        </entry>
        <entry>
-        Запрещает успешное прохождение проверки для следующих
-        зарезервированных IPv4-диапазонов:
-        <literal>0.0.0.0/8</literal>, <literal>169.254.0.0/16</literal>,
-        <literal>192.0.2.0/24</literal> и <literal>224.0.0.0/4</literal>.
-        Данный флаг не применяется к IPv6-адресам.
+        <para>
+         Запрещает успешное прохождение проверки для следующих
+         зарезервированных IPv4-диапазонов:
+         <literal>0.0.0.0/8</literal>, <literal>169.254.0.0/16</literal>,
+         <literal>192.0.2.0/24</literal> и <literal>224.0.0.0/4</literal>.
+        </para>
+        <para>
+         Запрещает прохождение проверки для зарезервированных диапазонов IPv6:
+         <literal>::1/128</literal>, <literal>::/128</literal>,
+         <literal>::ffff:0:0/96</literal> и <literal>fe80::/10</literal>.
+        </para>
        </entry>
       </row>
       <row>
@@ -552,8 +637,26 @@ filter.default_flags = 0
         <constant>FILTER_VALIDATE_URL</constant>
        </entry>
        <entry>
-        Включает содержание пути в <acronym>URL</acronym> в качестве
-        необходимого условия.
+        Включает содержание пути в <acronym>URL</acronym> в качестве необходимого
+        условия.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_FLAG_HOST_REQUIRED</constant></entry>
+       <entry>
+        <constant>FILTER_VALIDATE_URL</constant>
+       </entry>
+       <entry>
+        Требует, что бы <acronym>URL</acronym> содержал часть с хостом.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_FLAG_PATH_REQUIRED</constant></entry>
+       <entry>
+        <constant>FILTER_VALIDATE_URL</constant>
+       </entry>
+       <entry>
+        Требует, что бы <acronym>URL</acronym> содержал часть с путем.
        </entry>
       </row>
       <row>
@@ -562,14 +665,70 @@ filter.default_flags = 0
         <constant>FILTER_VALIDATE_URL</constant>
        </entry>
        <entry>
-        Включает содержание строки запроса (query string) в
-        <acronym>URL</acronym> в качестве необходимого условия.
+        Требует, что бы <acronym>URL</acronym> содержал часть со строкой запроса.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_REQUIRE_SCALAR</constant></entry>
+       <entry>
+       </entry>
+       <entry>
+        Требует, чтобы значение было скалярной величиной.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_REQUIRE_ARRAY</constant></entry>
+       <entry>
+       </entry>
+       <entry>
+        Требует, чтобы значение было массивом.
+       </entry>
+      </row>
+      <row>
+       <entry><constant>FILTER_FORCE_ARRAY</constant></entry>
+       <entry>
+       </entry>
+       <entry>
+        Если значение скалярное, то оно трактуется как массив с одним элементом, 
+        равным этому значению.
        </entry>
       </row>
      </tbody>
     </tgroup>
    </table>
   </para>
+  
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <para>
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>&Version;</entry>
+        <entry>&Description;</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>5.3.2</entry>
+        <entry>
+         Добавлена константа <constant>FILTER_FLAG_STRIP_BACKTICK</constant>.
+        </entry>
+       </row>
+       <row>
+        <entry>5.2.10</entry>
+        <entry>
+         Константа <constant>FILTER_FLAG_NO_RES_RANGE</constant> также поддерживает 
+         адреса IPv6.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </simplesect>
+  
  </section>
  <!--}}}-->
 </chapter>
