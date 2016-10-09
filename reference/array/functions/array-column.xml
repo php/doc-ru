@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 424e4bdde84f9b975515f6ce88b8d12662f5c87d Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.array-column" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>array_column</refname>
+  <refpurpose>Возвращает массив из значений одного столбца входного массива</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>array_column</methodname>
+   <methodparam><type>array</type><parameter>input</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter>column_key</parameter></methodparam>
+   <methodparam choice="opt"><type>mixed</type><parameter>index_key</parameter><initializer>null</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>array_column</function> возвращает массив из значений столбца массива
+    <parameter>input</parameter> с ключем <parameter>column_key</parameter>.
+    Опционально вы можете использовать <parameter>index_key</parameter> чтобы
+   индексировать возвращаемый массив значениями из столбца с ключем
+   <parameter>index_key</parameter> входного массива.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>input</parameter></term>
+     <listitem>
+      <para>
+       Многомерный массив или массив объектов, из которого будет производиться выборка
+       значений. Если задан массив объектов, то можно выбирать любые его публичные 
+       свойства. Для выборки приватных или защищенных свойств, объект должен 
+       реализовывать магические методы <function>__get</function> и <function>__isset</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>column_key</parameter></term>
+     <listitem>
+      <para>
+       Ключ столбца значения которого нужно вернуть. Может содержать как числовой ключ так
+       и строковой для ассоциативных массивов. А также может принимать значение &null; тогда
+       возвращаются не значения определенного столбца а весь массив (полезно использовать
+       вместе с <parameter>index_key</parameter> чтобы переиндексировать массив).
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>index_key</parameter></term>
+     <listitem>
+      <para>
+       Ключ столбца значения которого будут использоваться в качестве ключей
+       возвращаемого массива. Может быть как целочисленным ключем так и строковым.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает массив из значений одного столбца входного массива (набора записей).
+  </para>
+ </refsect1>
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        Добавлена возможность использовать массив объектов в <parameter>input</parameter>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Получим столбец с именами из набора записей</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Массив, представляющий из себя набор записей полученных из базы данных
+$records = array(
+    array(
+        'id' => 2135,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+    ),
+    array(
+        'id' => 3245,
+        'first_name' => 'Sally',
+        'last_name' => 'Smith',
+    ),
+    array(
+        'id' => 5342,
+        'first_name' => 'Jane',
+        'last_name' => 'Jones',
+    ),
+    array(
+        'id' => 5623,
+        'first_name' => 'Peter',
+        'last_name' => 'Doe',
+    )
+);
+ 
+$first_names = array_column($records, 'first_name');
+print_r($first_names);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Array
+(
+    [0] => John
+    [1] => Sally
+    [2] => Jane
+    [3] => Peter
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>
+     Получим столбец с фамилиями, а в качестве ключей возвращаемого массива используем значения из столбца "id"
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Используем массив $records из Примера #1
+$last_names = array_column($records, 'last_name', 'id');
+print_r($last_names);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Array
+(
+    [2135] => Doe
+    [3245] => Smith
+    [5342] => Jones
+    [5623] => Doe
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>
+     Получим столбец имен пользователей из публичного свойства "username" объекта
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class User
+{
+    public $username;
+
+    public function __construct(string $username)
+    {
+        $this->username = $username;
+    }
+}
+
+$users = [
+    new User('user 1'),
+    new User('user 2'),
+    new User('user 3'),
+];
+
+print_r(array_column($users, 'username'));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Array
+(
+    [0] => user 1
+    [1] => user 2
+    [2] => user 3
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>
+     Получим столбец имениз приватного свойства "name" объекта используя магический
+     метод <function>__get</function>.
+    </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class Person
+{
+    private $name;
+
+    public function __construct(string $name)
+    {
+        $this->name = $name;
+    }
+
+    public function __get($prop)
+    {
+        return $this->$prop;
+    }
+
+    public function __isset($prop) : bool
+    {
+        return isset($this->$prop);
+    }
+}
+
+$people = [
+    new Person('Fred'),
+    new Person('Jane'),
+    new Person('John'),
+];
+
+print_r(array_column($people, 'name'));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Array
+(
+    [0] => Fred
+    [1] => Jane
+    [2] => John
+)
+]]>
+    </screen>
+   </example>
+   Если в объекте не будет метода <function>__isset</function>, то вернется пустой массив.
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member>
+     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&url.arraycolumn.compat;">Рекомендации по самостоятельной реализации  при использовании версии PHP ниже 5.5</link>
+    </member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
