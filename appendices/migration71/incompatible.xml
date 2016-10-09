@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: b953523528f6429bea86ec1f81480ecdd279b7c7 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<sect1 xml:id="migration71.incompatible">
+ <title>Изменения, ломающие обратную совместимость</title>
+
+ <sect2 xml:id="migration71.incompatible.too-few-arguments-exception">
+  <title>Вызов исключения при передаче функции недостаточного количенства аргументов</title>
+
+  <para>
+   Ранее, если пользовательская функция вызывалась с недостаточным количеством 
+   аргументов, выдавалось предупреждение. Теперь же, вместо предупреждения будет
+   вызываться исключение класса Error. Это изменение затрагивает только пользовательские
+   функции и не оказывает влияния на встроенные. Например:
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+function test($param){}
+test();
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Fatal error: Uncaught ArgumentCountError: Too few arguments to function test(), 0 passed in %s on line %d and exactly 1 expected in %s:%d
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.forbid-dynamic-calls-to-scope-introspection-functions">
+  <title>Запрет динамического вызова функций интроспекции области видимости</title>
+
+  <para>
+   Динамические вызовы определенных функций были запрещены (в виде
+   <literal>$func()</literal> или <literal>array_map('extract', ...)</literal>, и т.д.)
+   Эти функции проверяют или модифицируют объекты другой области видимости, чем
+   вызывают неоднозначное и неопределенное поведение.
+   Список таких функций:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <function>assert</function> - со строкой в качестве первого аргумента
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>compact</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>extract</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>func_get_args</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>func_get_arg</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>func_num_args</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>get_defined_vars</function>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>mb_parse_str</function> - с одним аргументом
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <function>parse_str</function> - с одним аргументом
+    </simpara>
+   </listitem>
+  </itemizedlist>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+(function () {
+    $func = 'func_num_args';
+    $func();
+})();
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Warning: Cannot call func_num_args() dynamically in %s on line %d
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.invalid-class-names">
+  <title>Некорректные имена классов, интерфейсов и трейтов</title>
+
+  <para>
+   Следующие имена нельзя использовать как имена классов, интерфейсов или трейтов:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <simpara><type>void</type></simpara>
+   </listitem>
+   <listitem>
+    <simpara><type>iterable</type></simpara>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.numerical-strings-scientific-notation">
+  <title>Преобразование числовых строк теперь учитывает научную нотацию</title>
+
+  <para>
+   Целочисленные операции и конвертации числовых строк теперь учитывают научную нотацию,
+   включая приведение <literal>(int)</literal> и следующие функции:
+   <function>intval</function> (с базой 10), <function>settype</function>,
+   <function>decbin</function>, <function>decoct</function>, и <function>dechex</function>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.fixes-to-mt_rand-algorithm">
+  <title>Исправление алгоритма <function>mt_rand</function></title>
+
+  <para>
+   <function>mt_rand</function> теперь по умолчанию использует зафиксированную версию
+   алгоритма "Вихрь Мерсена". Если вы полагались на детерминированный вывод
+   <function>mt_srand</function>, для сохранения старого (неправильного) поведения,
+   можно использовать константу <constant>MT_RAND_PHP</constant> в качестве второго,
+   необязательного, параметра <function>mt_srand</function>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.rand-srand-aliases">
+  <title>
+   <function>rand</function> псевдоним для <function>mt_rand</function> и
+   <function>srand</function> псевдоним для <function>mt_srand</function>
+  </title>
+
+  <para>
+   <function>rand</function> и <function>srand</function> теперь являются просто синонимами
+   для <function>mt_rand</function> и <function>mt_srand</function>.
+   Это означает, что вывод следующих функций изменится: <function>rand</function>,
+   <function>shuffle</function>, <function>str_shuffle</function>, и 
+   <function>array_rand</function>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.delete-control-character-in-identifiers">
+  <title>Запрет использовать символ удаления из таблицы ASCII в идентификаторах</title>
+
+  <para>
+   Символ удаления ASCII (<literal>0x7F</literal>) больше нельзя использовать в 
+   идентификаторах, не обернутых в кавычки.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.error_log-syslog">
+  <title>
+   Значение <parameter>error_log</parameter> изменено на <literal>syslog</literal>
+  </title>
+
+  <para>
+   Если ini-параметр <parameter>error_log</parameter> установлен как
+   <literal>syslog</literal>, то уровни ошибок PHP проецируются на уровни ошибок "syslog".
+   Это позволяет более тонко логировать события, а не как раньше, когда они все
+   записывались с уровнем "notice".
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.dont-call-destructors">
+  <title>Деструкторы не вызываются на незавершенных объектах</title>
+
+  <para>
+   Теперь деструкторы никогда не вызываются, если было вызвано исключение в
+   конструкторе объекта. Раньше, это поведение зависило от того, была ли ссылка на
+   объект вне конструктора (например в бэктрейсе исключения).
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.call_user_func-with-ref-args">
+  <title>
+   <function>call_user_func</function> обрабатывает ссылки на аргументы
+  </title>
+
+  <para>
+   Теперь, <function>call_user_func</function> всегда вызывает предупреждение,
+   если вызывается функция, ожидающая ссылки в качестве параметров. 
+   Ранее это зависило от того, был ли вызов полностью определенным.
+  </para>
+  <para>
+   Дополнительно, <function>call_user_func</function> и
+   <function>call_user_func_array</function> больше не прекращают выполнение функции в
+   этом случае. Предупреждение "expected reference" будет вызвано, но сама функция 
+   продолжит выполнение.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.empty-string-index-operator">
+  <title>
+   Оператор пустого индекса более не применим к строкам
+  </title>
+
+  <para>
+   Применение оператора пустого индекса к строке (<literal>$str[] = $x</literal>)
+   вызывает фатальную ошибку, вместо тихого преобразование переменной к массиву.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration71.incompatible.removed-ini-directives">
+  <title>Удаленные ini-директивы</title>
+
+  <para>
+   Следующие ini-директивы были удалены:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <parameter>session.entropy_file</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <parameter>session.entropy_length</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <parameter>session.hash_function</parameter>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <parameter>session.hash_bits_per_character</parameter>
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2 xml:id="migration70.incompatible.array-order">
+  <title>
+   Порядок массива, когда элементы созданы автоматически через присвоение по ссылке, был
+   изменен
+  </title>
+
+  <para>
+   Порядок элементов в массиве был изменен, когда эти элементы были автоматически 
+   созданы с помощью ссылки на них в момент присвоения.
+   К примеру:
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$array = [];
+$array["a"] =& $array["b"];
+$array["b"] = 1;
+var_dump($array);
+?>
+]]>
+   </programlisting>
+   &example.outputs.70;
+   <screen>
+<![CDATA[
+array(2) {
+  ["a"]=>
+  &int(1)
+  ["b"]=>
+  &int(1)
+}
+]]>
+   </screen>
+   &example.outputs.71;
+   <screen>
+<![CDATA[
+array(2) {
+  ["b"]=>
+  &int(1)
+  ["a"]=>
+  &int(1)
+}
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
