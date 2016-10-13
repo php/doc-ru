@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 40410ea743ca693cdc9a57a6087ee39cfae91925 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="ds-map.put" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>Ds\Map::put</refname>
+  <refpurpose>Установка значения по заданному ключу</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>void</type><methodname>Ds\Map::put</methodname>
+   <methodparam><type>mixed</type><parameter>key</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Ассоциирует ключ <parameter>key</parameter> со значением
+   <parameter>value</parameter>, если элемент с таким ключем уже существует - его
+   значение перезаписывается.
+  </para>
+  
+  <note>
+   <para>
+    Поддерживаются значения типа <type>object</type>.
+    
+    Если объект реализует интерфейс <classname>Ds\Hashable</classname>,
+    проверка производится путем вызова метода объекта <code>equals</code>.
+    
+    Если объект не реализует интерфейс <classname>Ds\Hashable</classname>,
+    объекты должны ссылаться на один и тот-же экземпляр класса.
+   </para>
+  </note>
+  
+  <note>
+   <para>
+    Вы можете использовать синтаксис массива для доступа к значениям, т.е.
+     <code>$map["key"]</code>.
+   </para>
+  </note>
+  
+  <caution>
+   <para>
+    Будьте осторожны используя синтаксис массива. Скалярные ключи будут приведены
+    к целым ядром PHP. К примеру, <code>$map["1"]</code> будет пытаться обратиться
+    к <code>int(1)</code>, тогда как <code>$map-&gt;get("1")</code> обратится к 
+    правильному элементу.
+   </para>
+   <para>
+    Смотри раздел <link linkend="language.types.array">Массивы</link>.
+   </para>
+  </caution>
+  
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>key</parameter></term>
+    <listitem>
+     <para>
+      Ключ.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>value</parameter></term>
+    <listitem>
+     <para>
+      Значение.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.void;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>Ds\Map::put</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$map = new \Ds\Map();
+
+$map->put("a", 1);
+$map->put("b", 2);
+$map->put("c", 3);
+
+print_r($map);
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Ds\Map Object
+(
+    [0] => Ds\Pair Object
+        (
+            [key] => a
+            [value] => 1
+        )
+
+    [1] => Ds\Pair Object
+        (
+            [key] => b
+            [value] => 2
+        )
+
+    [2] => Ds\Pair Object
+        (
+            [key] => c
+            [value] => 3
+        )
+
+)
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример использования <function>Ds\Map::put</function> с объектами в качестве ключей</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class HashableObject implements \Ds\Hashable
+{
+    /**
+     * Значение, которое мы будем использовать в качестве хеша. Не определяет идентичность.
+     */
+    private $value;
+
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function hash()
+    {
+        return $this->value;
+    }
+
+    public function equals($obj): bool
+    {
+        return $this->value === $obj->value;
+    }
+}
+
+$map = new \Ds\Map();
+
+$obj = new \ArrayIterator([]);
+
+// Использование одного и того же экземпляра объекта несколько раз будет каждый раз
+// перезаписывать значение
+$map->put($obj, 1);
+$map->put($obj, 2);
+
+// Использование разных экземпляров одного и того же класса будет создавать новые
+// элементы
+$map->put(new \stdClass(), 3);
+$map->put(new \stdClass(), 4);
+
+// Использование объектов с одинаковыми хешами несколько раз будет каждый раз
+// перезаписывать значение
+$map->put(new \HashableObject(1), 5);
+$map->put(new \HashableObject(1), 6);
+$map->put(new \HashableObject(2), 7);
+$map->put(new \HashableObject(2), 8);
+
+var_dump($map);
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+object(Ds\Map)#1 (5) {
+  [0]=>
+  object(Ds\Pair)#7 (2) {
+    ["key"]=>
+    object(ArrayIterator)#2 (1) {
+      ["storage":"ArrayIterator":private]=>
+      array(0) {
+      }
+    }
+    ["value"]=>
+    int(2)
+  }
+  [1]=>
+  object(Ds\Pair)#8 (2) {
+    ["key"]=>
+    object(stdClass)#3 (0) {
+    }
+    ["value"]=>
+    int(3)
+  }
+  [2]=>
+  object(Ds\Pair)#9 (2) {
+    ["key"]=>
+    object(stdClass)#4 (0) {
+    }
+    ["value"]=>
+    int(4)
+  }
+  [3]=>
+  object(Ds\Pair)#10 (2) {
+    ["key"]=>
+    object(HashableObject)#5 (1) {
+      ["value":"HashableObject":private]=>
+      int(1)
+    }
+    ["value"]=>
+    int(6)
+  }
+  [4]=>
+  object(Ds\Pair)#11 (2) {
+    ["key"]=>
+    object(HashableObject)#6 (1) {
+      ["value":"HashableObject":private]=>
+      int(2)
+    }
+    ["value"]=>
+    int(8)
+  }
+}
+]]>
+   </screen>
+  </example>
+ </refsect1>
+ 
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
