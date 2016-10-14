@@ -1,0 +1,1120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 3793df05f3de205df0881748b3c8263e605c8bae Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<!-- Test -->
+<appendix xml:id="oop4" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Классы и объекты (PHP 4)</title>
+ 
+ <sect1 xml:id="keyword.class">
+  <title><literal>class</literal></title>
+  <para>
+   Класс - это совокупность переменных и функций, работающих с
+   этими переменными. Переменные определяются при помощи ключевого слова <literal>var</literal>,
+   а функции при помощи ключевого слова <literal>function</literal>. Класс определяется при
+   помощи следующего синтаксиса:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Cart {
+    var $items;  // Продукты в нашей корзине
+
+    // Добавляет $num товаров $artnr в корзину
+
+    function add_item($artnr, $num) {
+        $this->items[$artnr] += $num;
+    }
+
+    // Убирает $num товаров $artnr в корзину
+
+    function remove_item($artnr, $num) {
+        if ($this->items[$artnr] > $num) {
+            $this->items[$artnr] -= $num;
+            return true;
+        } elseif ($this->items[$artnr] == $num) {
+            unset($this->items[$artnr]);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+   
+   <para>
+    Здесь определён класс с именем Cart, который состоит из ассоциативного массива
+    товаров в корзине и двух функций для добавления и удаления продуктов из этой
+    корзины.
+   </para>
+   
+   <warning>
+    <simpara>
+     Вы <emphasis>НЕ</emphasis> можете разрывать определение класса в несколько
+     разных файлов. Вы также <emphasis>НЕ</emphasis> можете разрывать определение
+     класса в различные блоки PHP, кроме случая, если разрыв происходит внутри объявления
+     метода. Следующий код не будет работать:
+    </simpara>
+    <para>
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+class test {
+?>
+<?php
+    function test() {
+        print 'OK';
+    }
+}
+?>
+]]>
+      </programlisting>
+     </informalexample>
+    </para>
+    <simpara>
+     Однако, так делать можно:
+    </simpara>
+    <para>
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+class test {
+    function test() {
+        ?>
+        <?php
+        print 'OK';
+    }
+}
+?>
+]]>
+      </programlisting>
+     </informalexample>
+    </para>
+   </warning>
+   
+   <simpara>
+    Следующие предостерегающие замечания справедливы для PHP 4.
+   </simpara>
+   
+   <caution>
+    <simpara>
+     Имя <literal>stdClass</literal> зарезервировано для использования внутри Zend. Вы не
+     можете определить свой класс с именем <literal>stdClass</literal> в PHP.
+    </simpara>
+   </caution>
+   
+   <caution>
+    <simpara>
+     Функции <literal>__sleep</literal> и <literal>__wakeup</literal> являются волшебными в
+     классах PHP. Вы не можете создать функции с такими именами в ваших классах,
+     если вы не хотите использовать волшебную функциональность, связанную 
+     с ними. Смотрите больше информации ниже.
+    </simpara>
+   </caution>
+   
+   <caution>
+    <simpara>
+     В PHP зарезервированы имена функций, начинающихся с <literal>__</literal> как
+     волшебные. Рекомендуется не использовать имена функций, начинающиеся с
+     <literal>__</literal> в PHP, если только вы не хотите использовать какую-либо
+     документированную волшебную функциональность.
+    </simpara>
+   </caution>
+   
+   <simpara>
+    В PHP 4 допускаются только постоянные инициализаторы для переменных
+    <literal>var</literal>. Чтобы инициализировать переменные не постоянными
+    значениями, вам нужно использовать инициализирующую функцию, которая вызывается
+    автоматически когда объект конструируется из класса. 
+    Такая функция называется конструктором (смотрите ниже).
+   </simpara>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Cart {
+    /* Ничего из этого не будет работать в PHP 4. */
+    var $todays_date = date("Y-m-d");
+    var $name = $firstname;
+    var $owner = 'Фред ' . 'Джонс';
+    /* Хотя присвоение массивов с постоянными значениями будет работать. */
+    var $items = array("VCR", "TV");
+}
+
+/* Вот как нужно делать. */
+class Cart {
+    var $todays_date;
+    var $name;
+    var $owner;
+    var $items = array("VCR", "TV");
+
+    function Cart() {
+        $this->todays_date = date("Y-m-d");
+        $this->name = $GLOBALS['firstname'];
+        /* и т. д... */
+    }
+}
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    Классы - это типы, таким образом, они являются наметками для переменных.
+    Вы можете создать переменную желаемого типа при помощи оператора
+    <literal>new</literal>.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$cart = new Cart;
+$cart->add_item("10", 1);
+
+$another_cart = new Cart;
+$another_cart->add_item("0815", 3);
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    В листинге выше создаётся два объекта, <varname>$cart</varname> и
+    <varname>$another_cart</varname>, оба класса Cart. Функция
+    <literal>add_idem()</literal> объекта <varname>$cart</varname> вызывается для того,
+    чтобы добавить 1 товар артикула 10 к объекту <varname>$cart</varname>. 3 товара
+    артикула 0815 будут добавлены к объекту <varname>$another_cart</varname>.
+   </para>
+   
+   <para>
+    Оба объекта, <varname>$cart</varname> и <varname>$another_cart</varname>, имеют
+    функции <literal>add_item()</literal>, <literal>remove_item()</literal>
+    и переменную <varname>items</varname>. Однако это разные функции и переменные. Вы
+    можете представлять себе объект как нечто похожее на каталоги в файловой системе.
+    В файловой системе вы можете иметь два разных файла 
+    <filename>README.TXT</filename>, если они находятся в разных каталогах.
+    Так же, как и с каталогами, где вы должны ввести полный путь к файлу, чтобы обратиться
+    к файлу из каталога верхнего уровня, вы должны указать полное имя функции, которую вы
+    хотите вызвать: в нотации PHP, каталог верхнего уровня называется "Глобальное
+    пространство имен", а разделителем пути является символ <literal>-&gt;</literal>. Таким
+    образом, названия <varname>$cart-&gt;items</varname> и
+    <varname>$another_cart-&gt;items</varname> обозначают две разных переменных.
+    Заметьте, что переменная называется <varname>$cart-&gt;items</varname>, а не
+    <varname>$cart-&gt;$items</varname>, таким образом, название переменной в PHP имеет
+    только один знак доллара (<literal>$</literal>).
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Правильно, один символ $
+$cart->items = array("10" => 1); 
+
+// Неправильно, $cart->$items - это $cart->"", так как в глобальном пространстве имен
+// переменная $item не задана
+$cart->$items = array("10" => 1);
+
+// Сработает, но лучше так не делать.
+// $cart->$myvar превратится в $cart->items
+$myvar = 'items';
+$cart->$myvar = array("10" => 1);  
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    При определении класса, вы не знаете, под каким именем объект будет доступен в вашей
+    программе: во время описания класса Cart было неизвестно, как позднее будет назван
+    объект: <varname>$cart</varname>, <varname>$another_cart</varname> или как-нибудь
+    ещё. Таким образом, вы не можете написать <varname>$cart-&gt;items</varname> в классе Cart.
+    Вместо этого, для того, чтобы иметь возможность доступа к своим собственным переменным
+    и функциям внутри класса, можно использовать псевдо-переменную <varname>$this</varname>
+    которая может быть прочитана как 'мой собственный' или 'текущий объект'. Таким образом,
+    '<varname>$this-&gt;items[$artnr]</varname> += <varname>$num</varname>' может быть
+    прочитано как 'добавить <varname>$num</varname> к счётчику <varname>$artnr</varname>
+    моего собственного массива продуктов' или 'добавить <varname>$num</varname> к счётчику
+    <varname>$artnr</varname> массива продуктов текущего объекта'.
+   </para>
+   
+   <note>
+    <para>
+     Псевдо-переменная <varname>$this</varname> обычно не определена, если метод, который
+     обращается к ней, вызывается статически. Однако, это не строгое правило: переменная
+     <varname>$this</varname> определена, если метод вызывается статически из другого объекта. 
+     В этом случае значение переменной <varname>$this</varname> будет указывать на 
+     вызывающий объект. Это проиллюстрировано в следующем примере:
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+class A
+{
+    function foo()
+    {
+        if (isset($this)) {
+            echo '$this определена (';
+            echo get_class($this);
+            echo ")\n";
+        } else {
+            echo "\$this не определена.\n";
+        }
+    }
+}
+
+class B
+{
+    function bar()
+    {
+        A::foo();
+    }
+}
+
+$a = new A();
+$a->foo();
+A::foo();
+$b = new B();
+$b->bar();
+B::bar();
+?>
+]]>     
+      </programlisting>
+      &example.outputs;
+      <screen>
+<![CDATA[
+$this определена (a)
+$this не определена.
+$this определена (b)
+$this не определена.
+]]>
+      </screen>
+     </informalexample>
+    </para>
+   </note>
+   
+   <note>
+    <para>
+     Есть несколько прикольных функций для работы с классами и объектами. Если захотите
+     из изучить, смотрите раздел <link linkend="ref.classobj">Функции классов и объектов</link>.
+    </para>
+   </note>
+  </sect1>
+  
+  <sect1 xml:id="keyword.extends">
+   <title><literal>extends</literal></title>
+   
+   <para>
+    Часто вам могут понадобиться классы с функциями и переменными, похожими 
+    на другой существующий класс. На самом деле, хорошей практикой является
+    определение общего класса, который может быть использован во всех ваших
+    проектах и адаптация этого класса для нужд конкретного проекта.
+    Для достижения этого классы могут быть
+    расширениями других классов. Такой расширенный или производный класс
+    имеет все переменные и функции базового класса (это называется
+    'наследованием', несмотря на то, что никто не умер) и то, что
+    вы добавите в определение расширенного класса. Невозможно что-то
+    вычесть из расширенного класса, сделать неопределёнными какие-либо из существующих
+    функций или переменных. Расширенный класс всегда зависим от 
+    одного базового класса, таким образом, множественное наследование
+    не поддерживается. Классы расширяются при помощи ключевого слова '<literal>extends</literal>'.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Named_Cart extends Cart {
+    var $owner;
+  
+    function set_owner ($name) {
+        $this->owner = $name;
+    }
+}
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    В этом листинге определяется класс Named_Cart, который имеет все переменные и функции
+    класса Cart плюс дополнительную переменную <varname>$owner</varname> и
+    дополнительную функцию <literal>set_owner()</literal>. Объекты класса Nmamed_Cart
+    создаются так-же как и все остальные классы. И вы также можете использовать функции класса
+    Cart в Named_Cart:
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$ncart = new Named_Cart;    // Создаем Named_Cart
+$ncart->set_owner("kris");  // Задаем имя владельца корзины
+print $ncart->owner;        // Печатаем его
+$ncart->add_item("10", 1);  // Используем наследованный от Cart функционал
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    Такое поведение иногда называют отношением "родитель-потомок". Вы создаете класс "родитель",
+    а потом, используя инструкцию <literal>extends</literal>, создаете класс
+    <emphasis>потомок</emphasis> этого родителя. Далее вы можете работать с классом
+    потомком, как с любым другим классом и даже создавать на его базе других потомков, используя
+    его как родителя.
+   </para>
+   <note>
+    <para>
+     Классы должны быть определены перед их использованием! Если вы хотите создать класс
+     <literal>Named_Cart</literal>, расширяющий класс
+     <literal>Cart</literal>, вам нужно вначале определить класс
+     <literal>Cart</literal>. Если вы хотите создать другой класс, с названием
+     <literal>Yellow_named_cart</literal>, основанный на классе
+     <literal>Named_Cart</literal>, вам нужно вначале определить класс
+     <literal>Named_Cart</literal>. Короче говоря: порядок, в котором определены
+     классы - важен!
+    </para>
+   </note>
+  </sect1>
+  
+  <sect1 xml:id="oop4.constructor">
+   <title>Конструкторы</title>
+   
+   <para>
+    Конструкторы - это функции в классе, которые автоматически
+    вызываются, когда вы создаёте новый экземпляр класса при помощи ключевого слова
+    <literal>new</literal>. Функция является конструктором, если она имеет, 
+    то же имя, что и класс. Если класс не имеет
+    конструктора, то будет вызван конструктор базового класса, если он существует.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Auto_Cart extends Cart {
+    function Auto_Cart() {
+        $this->add_item("10", 1);
+    }
+}
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    Здесь определяется класс Auto_Cart, который является классом Cart плюс конструктор,
+    который инициализирует корзину одним товаром с артикулом "10"
+    каждый раз, когда новый объект класса Auto_Cart создаётся при помощи "<literal>new</literal>".
+    Конструкторы могут получать аргументы и эти аргументы могут быть необязательными, что
+    делает их намного более полезными. Чтобы было возможным всё ещё использовать класс
+    без параметров, все параметры к конструкторам должны быть
+    объявлены необязательными при помощи указания значений по умолчанию.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Constructor_Cart extends Cart {
+    function Constructor_Cart($item = "10", $num = 1) {
+        $this->add_item ($item, $num);
+    }
+}
+ 
+// Shop the same old boring stuff.
+$default_cart = new Constructor_Cart;
+ 
+// Shop for real...
+$different_cart = new Constructor_Cart("20", 17);
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    Вы также можете использовать оператор <literal>@</literal> для того, чтобы
+    <emphasis>заглушить</emphasis> ошибки, возникающие в конструкторе, например
+    <literal>@new</literal>.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class A
+{
+    function A()
+    {
+        echo "Я - конструктора классса A.<br />\n";
+    }
+
+    function B()
+    {
+        echo "Я обычная функция, названная B в классе A.<br />\n";
+        echo "Я не являюсь конструктором в классе A.<br />\n";
+    }
+}
+
+class B extends A
+{
+}
+
+// Здесь функция B() вызовется как конструктор
+$b = new B;
+?>
+]]>
+    </programlisting>
+   </informalexample>
+   
+   <para>
+    Функция B() класса A неожиданно станет
+    конструктором в классе B, хотя она никогда не была предназначена для такого
+    использования. PHP 4 всё равно - была ли функция определена в классе B,
+    или она была унаследована.
+   </para>
+   
+   <caution>
+    <simpara>
+     PHP не вызывает конструктор базового класса
+     автоматически из класса потомка. Вы должны делать
+     это самостоятельно.
+    </simpara>
+   </caution>
+   
+   <para>
+    Деструкторы - это функции, которые вызываются автоматически,
+    когда объект уничтожается, при помощи функции <function>unset</function>
+    или просто при выходе за область его видимости. В PHP нет деструкторов.
+    Вы можете использовать функцию <function>register_shutdown_function</function>
+    для того, чтобы симулировать большинство эффектов деструкторов.
+   </para>
+  </sect1>
+  
+  <sect1 xml:id="keyword.paamayim-nekudotayim"><!-- :-) -->
+   <title>Оператор разрешения области видимости (<literal>::</literal>)</title>
+  
+  <caution>
+   <simpara>
+    Следующее применимо только в PHP 4 и более поздних версиях.
+   </simpara>
+  </caution>
+  
+  <para>
+   Иногда бывает полезно обратиться к функциям и переменным
+   в базовых классах или обратиться к функциям в классах, которые 
+   ещё не имеют никаких экземпляров. Для этого можно использовать
+   оператор <literal>::</literal>.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class A {
+    function example() {
+        echo "Я - первоначальная функция A::example().<br />\n";
+    }
+}
+
+class B extends A {
+    function example() {
+        echo "Я - переопределённая функция B::example().<br />\n";
+        A::example();
+    }
+}
+
+// Ни одного объекта класса A не создано.
+//   Я - первоначальная функция A::example().<br />
+A::example();
+
+// Создадим объект класса B.
+$b = new B;
+
+// Будет напечатано
+//   Я - первоначальная функция A::example().<br />
+//   Я - переопределённая функция B::example().<br />
+$b->example();
+?>
+]]>
+    </programlisting>
+  </informalexample>
+  
+  <para>
+   Пример выше вызывается функцию <literal>example()</literal> в
+   классе A, но объекта класса A не существует, поэтому
+   мы не можем написать <literal>$a->example()</literal> или что-то похожее. Вместо этого 
+   мы вызываем <literal>example()</literal> как 'функцию класса', то есть, как функцию
+   самого класса, а не какого-либо объекта этого класса.
+  </para>
+  
+  <para>
+   Существуют функции класса, но не существует переменных класса.
+   На самом деле, в момент вызова функции не существует объекта вообще.
+   Поэтому функция класса не может использовать какие-либо переменные объекта (но
+   она может использовать локальные и глобальные переменные), и она не может использовать 
+   переменную <varname>$this</varname> вообще.
+  </para>
+  
+  <para>
+   В примере выше, класс B переопределяет функцию
+   <literal>example()</literal>. Первоначальное определение в классе A скрывается
+   и больше не доступно, если только вы не обращаетесь конкретно
+   к реализации функции <literal>example()</literal> в классе A используя оператор
+   ::. Напишите <literal>A::example()</literal>, чтобы сделать это (на самом деле, вам 
+   нужно писать <literal>parent::example()</literal>, как показано в следующем разделе).
+  </para>
+  
+  <para>
+   Если использовать подобный синтаксис ИЗНУТРИ самого объекта, то переменные объекта
+   и <varname>$this</varname> будут определены и их можно использовать.
+  </para>
+  
+  </sect1>
+  
+  <sect1 xml:id="keyword.parent">
+   <title><literal>Родитель</literal></title>
+  
+  <para>
+   Вы можете поймать себя на том, что пишите код,
+   который использует переменные и функции родительского
+   класса. Это совершенно нормально, если ваш класс
+   расширяет и дополняет код вашего базового класса.
+  </para>
+  
+  <para>
+   Вместо использования постоянного имени базового класса в вашем
+   коде вам нужно использовать специальное название
+   <literal>parent</literal>, которое указывает на название вашего 
+   базового класса, указанного в объявлении <literal>extends</literal>
+   вашего класса. Таким образом вы избежите использования
+   имени вашего базового класса более чем в одном месте. Если ваше
+   дерево наследования будет изменяться во время разработки, то
+   изменение легко произвести просто изменением объявления
+   <literal>extends</literal> в вашем классе.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class A {
+    function example() {
+        echo "Я - пример функции A::example() и я обеспечиваю базовую функциональность.<br />\n";
+    }
+}
+
+class B extends A {
+    function example() {
+        echo "Я - пример функции B::example() и обеспечиваю дополнительную функциональность.<br />\n";
+        parent::example();
+    }
+}
+
+$b = new B;
+
+// Вызовется B::example(), из которой вызовется call A::example().
+$b->example();
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  </sect1>
+  
+  <sect1 xml:id="oop4.serialization">
+   <title>Сериализация объектов - объекты в сессиях</title>
+   
+   <para>
+    Функция <function>serialize</function> возвращает строку, содержащую
+    поток байт, представляющий любые значения, которыми может оперировать PHP.
+    Функция <function>unserialize</function> служит для превращения
+    этой строки обратно в переменные PHP. Использование сериализации
+    с объектом, сохраняет все переменные объекта и имя его класса. Функции объекта
+    не сохраняются.
+   </para>
+   
+   <para>
+    Чтобы можно было использовать <function>unserialize</function> для объекта,
+    необходимо, чтобы его класс был определен. Так что, если у вас есть объект
+    <varname>$a</varname> класса A в <filename>page1.php</filename> и вы
+    его сериализовали, вы получите строку, содержащую значение всех его переменных и 
+    его имя. Если вы захотите его восстановить в файле <filename>page2.php</filename>, 
+    определение класса A должно обязательно присутствовать в файле
+    <filename>page2.php</filename>.
+    Этого можно достичь, например, описывая класс в отдельном файле и включая
+    его туда, гдже он будет нужен. В нашем случав в
+    <filename>page1.php</filename> и <filename>page2.php</filename>.
+   </para>
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// classa.inc:
+  
+  class A {
+      var $one = 1;
+    
+      function show_one() {
+          echo $this->one;
+      }
+  }
+  
+// page1.php:
+
+  include("classa.inc");
+  
+  $a = new A;
+  $s = serialize($a);
+  // Сохраняем $s там, где page2.php сможет его найти.
+  $fp = fopen("store", "w");
+  fwrite($fp, $s);
+  fclose($fp);
+
+// page2.php:
+  
+  // Это необходимо для корректной десериализации.
+  include("classa.inc");
+
+  $s = implode("", @file("store"));
+  $a = unserialize($s);
+
+  // теперь используем функцию show_one() объекта $a.
+  $a->show_one();
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  
+  <para>
+   Если вы пользуетесьб сессиями и используете <function>session_register</function>
+   для регистрации объектов, эти объекты сериализуются автоматически в
+   конце каждой страницы PHP, и автоматически десериализуются в начале каждой последующей.
+   Обычно это означает, что эти объекты доступны на любой из ваших страниц
+   в пределах сессии.
+  </para>
+  
+  <para>
+   Строго рекомендуется включать определение класса 
+   для зарегистрированных объектов на всех страницах,
+   даже если на каких то конкретных страницах вы этот
+   класс не используете. Если вы этого не сделаете, то
+   ваш класс не сможет корректно десериализоваться и 
+   превратится в тыкву (<classname>__PHP_Incomplete_Class_Name</classname>),
+   без каких либо функций и смысла.
+  </para>
+  
+  <para>
+   Таким образом, если в примере выше, <varname>$a</varname> станет частью
+   сессии, через использование <literal>session_register("a")</literal>, вы должны будете
+   включить файл <literal>classa.inc</literal> на всех своих страницах, а не только на
+   <filename>page1.php</filename> и <filename>page2.php</filename>.
+  </para>
+  </sect1>
+  
+  <sect1 xml:id="oop4.magic-functions">
+   <title>Волшебные функции <literal>__sleep</literal> и <literal>__wakeup</literal></title>
+   
+   <para>
+    Функция <function>serialize</function> проверяет, что ваш класс имеет функцию с названием
+    <literal>__sleep</literal>. Если это так, эта функция будет выполняться 
+    перед любой сериализацией. Она может очистить объект 
+    и должна возвращать массив с названиями всех переменных
+    объекта, которые должны быть сериализованы.
+    Если метод ничего не возвращает, то сериализуется &null; и
+    происходит ошибка уровня <constant>E_NOTICE</constant>.
+   </para>
+   
+   <para>
+    Функцию <literal>__sleep</literal> предполагается использовать
+    для приведения объекта в консистентное состояние, очистки
+    временных переменных и прочих подготовительных процедур.
+    Также она будет полезна, если ваш объект содержит
+    большие объемы данных, которые вам не нужно сохранять.
+   </para>
+   
+   <para>
+    Аналогично, <function>unserialize</function> проверяет наличие
+    магической функции <literal>__wakeup</literal>. Если она есть, 
+    то ее можно использовать для воссоздания необходимых
+    ресурсов класса.
+   </para>
+   
+   <para>
+    Функцию <literal>__wakeup</literal> предполагается использовать для
+    пересоздания соединений с базами данных, которые потеряются
+    при сериализации и десериализации, и проведении
+    других инициализирующих действий.
+  </para>
+  </sect1>
+  
+  <sect1 xml:id="oop4.newref">
+   <title>Ссылка внутри конструктора</title>
+  <para>
+   Создание ссылок в конструкторе может привести к конфузу.
+   Эта секция - своего рода памятка "как избежать проблем".
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Foo {
+    function Foo($name) {
+        // создание ссылки внутри глобального массива $globalref
+        global $globalref;
+        $globalref[] = &$this;
+        // устанавливаем имя
+        $this->setName($name);
+        // и печатаем его
+        $this->echoName();
+    }
+
+    function echoName() {
+        echo "<br />", $this->name;
+    }
+ 
+    function setName($name) {
+        $this->name = $name;
+    }
+}
+?>
+]]>
+     </programlisting>
+    </informalexample>
+  </para>
+  
+  <para>
+   Давайте проверим, какая разница между созданной копированием (<literal>=</literal>)
+   переменной <varname>$bar1</varname> и <varname>$bar2</varname>,
+   созданной по ссылке (<literal>=&amp;</literal>)...
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$bar1 = new Foo('set in constructor');
+$bar1->echoName();
+$globalref[0]->echoName();
+
+/* вывод:
+set in constructor
+set in constructor
+set in constructor */
+
+$bar2 =& new Foo('set in constructor');
+$bar2->echoName();
+$globalref[1]->echoName();
+
+/* output:
+set in constructor
+set in constructor
+set in constructor */
+?>
+]]>
+     </programlisting>
+    </informalexample>
+  </para>
+  <para>
+   На первый взгляд никакой разницы, но факт в том, что
+   <varname>$bar1</varname> и <varname>$globalref[0]</varname> _НЕ_ связаны,
+   они НЕ являются одной и той-же переменной. Это потому, что "<literal>new</literal>"
+   не возвращает не ссылку, а копию.
+   <note>
+    <simpara>
+     При возврате копии вместо ссылки нет никакой потери 
+     производительности (с PHP 4 и выше используется подсчет ссылок).
+     Напротив, чаще всего лучше просто работать с копиями вместо ссылок,
+     потому что создание ссылки требует времени, тогда как создание копии
+     создание копий практически не занимает времени (за исключением
+     когда работа идет с огромным массивом или объектом, которые
+     изменяются и это изменение должно отразиться на всех остальных.
+     Тогда, конечно, лучше использовать ссылки).
+    </simpara>
+   </note>
+   Для доказательства того, что написано выше, посмотрим код ниже.
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// теперь мы изменим name. какого поведения вы ожидаете?
+// вы ждете, что и $bar1 и $globalref[0] изменят name...
+$bar1->setName('set from outside');
+
+// как объяснено выше - не в этот раз.
+$bar1->echoName();
+$globalref[0]->echoName();
+
+/* вывод:
+set from outside
+set in constructor */
+
+// давайте повторим этот же фокус с $bar2 и $globalref[1]
+$bar2->setName('set from outside');
+
+// повезло! Они не только идентичны, они являются одной и той же переменной,
+// так что $bar2->name и $globalref[1]->name являются одним и тем же
+$bar2->echoName();
+$globalref[1]->echoName();
+
+/* вывод:
+set from outside
+set from outside */
+?>
+]]>
+     </programlisting>
+    </informalexample>   
+  </para>   
+  <para>
+   Еще один, последний, пример. Попробуйте в нем разобраться.
+    
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class A {
+    function A($i) {
+        $this->value = $i;
+        // почему нам тут ссылка не нужна?
+        $this->b = new B($this);
+    }
+
+    function createRef() {
+        $this->c = new B($this);
+    }
+
+    function echoValue() {
+        echo "<br />","class ",get_class($this),': ',$this->value;
+    }
+}
+
+
+class B {
+    function B(&$a) {
+        $this->a = &$a;
+    }
+
+    function echoValue() {
+        echo "<br />","class ",get_class($this),': ',$this->a->value;
+    }
+}
+
+// почему использование простой копии даст нежелательный
+// результат в строке помеченной звездочкой
+$a =& new A(10);
+$a->createRef();
+
+$a->echoValue();
+$a->b->echoValue();
+$a->c->echoValue();
+
+$a->value = 11;
+
+$a->echoValue();
+$a->b->echoValue(); // *
+$a->c->echoValue();
+
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+class A: 10
+class B: 10
+class B: 10
+class A: 11
+class B: 11
+class B: 11
+]]>
+     </screen>
+    </informalexample>
+  </para>
+  </sect1>
+  
+  <sect1 xml:id="oop4.object-comparison">
+   <title>Сравнение объектов</title>
+   <para>
+    В PHP 4 объекты сравниваются очень простым способом, а именно: Два экземпляра объектов
+    равны, если они имеют те же самые аттрибуты и значения, и являются 
+    экземплярами того же класса. Похожие правила применяются при сравнении двух объектов
+    c использованием оператора тождественного сравнения (<literal>===</literal>).
+   </para>
+   <para>
+    Если мы выполним код слующего примера:
+    <example>
+     <title>Пример сравнения объектов в PHP 4</title>
+     <programlisting role='php'>
+<![CDATA[
+<?php
+function bool2str($bool) {
+    if ($bool === false) {
+            return 'FALSE';
+    } else {
+            return 'TRUE';
+    }
+}
+
+function compareObjects(&$o1, &$o2) {
+    echo 'o1 == o2 : '.bool2str($o1 == $o2)."\n";
+    echo 'o1 != o2 : '.bool2str($o1 != $o2)."\n";
+    echo 'o1 === o2 : '.bool2str($o1 === $o2)."\n";
+    echo 'o1 !== o2 : '.bool2str($o1 !== $o2)."\n";
+}
+
+class Flag {
+    var $flag;
+
+    function Flag($flag=true) {
+            $this->flag = $flag;
+    }
+}
+
+class SwitchableFlag extends Flag {
+
+    function turnOn() {
+        $this->flag = true;
+    }
+
+    function turnOff() {
+        $this->flag = false;
+    }
+}
+
+$o = new Flag();
+$p = new Flag(false);
+$q = new Flag();
+
+$r = new SwitchableFlag();
+
+echo "Сравнение объектов, созданных с одинаковыми параметрами\n";
+compareObjects($o, $q);
+
+echo "\nСравнение объектов, созданных с разными параметрами\n";
+compareObjects($o, $p);
+
+echo "\nСравнение объекта родительского класса с объектом класса потомка\n";
+compareObjects($o, $r);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[    
+Сравнение объектов, созданных с одинаковыми параметрами
+o1 == o2 : TRUE
+o1 != o2 : FALSE
+o1 === o2 : TRUE
+o1 !== o2 : FALSE
+
+Сравнение объектов, созданных с разными параметрами
+o1 == o2 : FALSE
+o1 != o2 : TRUE
+o1 === o2 : FALSE
+o1 !== o2 : TRUE
+
+Сравнение объекта родительского класса с объектом класса потомка
+o1 == o2 : FALSE
+o1 != o2 : TRUE
+o1 === o2 : FALSE
+o1 !== o2 : TRUE
+]]>
+    </screen>
+   </example>
+   Какой же вывод можно сделать исходя из приведенных выше правил сравнения.
+   Только объекты одного и того же класса, содержащие аттрибуты с
+   одинаковыми значениями будут считаться одинаковыми.
+   </para>
+   <para>
+    Даже в случае композиции объектов эти правила будут определяющими.
+    В примере ниже мы создадим класс контейнер, содержащий ассоциативный массив
+    объектов класса <classname>Flag</classname>.
+    <example>
+     <title>Объединение объектов сравнения в PHP 4</title>
+     <programlisting role='php'>
+<![CDATA[
+<?php
+class FlagSet {
+    var $set;
+
+    function FlagSet($flagArr = array()) {
+        $this->set = $flagArr;
+    }
+
+    function addFlag($name, $flag) {
+        $this->set[$name] = $flag;
+    }
+
+    function removeFlag($name) {
+        if (array_key_exists($name, $this->set)) {
+            unset($this->set[$name]);
+        }
+    }
+}
+
+
+$u = new FlagSet();
+$u->addFlag('flag1', $o);
+$u->addFlag('flag2', $p);
+$v = new FlagSet(array('flag1'=>$q, 'flag2'=>$p));
+$w = new FlagSet(array('flag1'=>$q));
+
+echo "\nСравнение объектов u(o,p) и v(q,p)\n";
+compareObjects($u, $v);
+
+echo "\nu(o,p) и w(q)\n";
+compareObjects($u, $w);
+?>     
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Composite objects u(o,p) и v(q,p)
+o1 == o2 : TRUE
+o1 != o2 : FALSE
+o1 === o2 : TRUE
+o1 !== o2 : FALSE
+
+u(o,p) и w(q)
+o1 == o2 : FALSE
+o1 != o2 : TRUE
+o1 === o2 : FALSE
+o1 !== o2 : TRUE
+]]>
+    </screen>
+   </example>
+   </para>
+  </sect1>
+</appendix>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
