@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: a22b112736a8066d2454e76e13aab1f309526303 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+
+<sect1 xml:id="migration56.new-features" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Новые возможности</title>
+
+ <sect2 xml:id="migration56.new-features.const-scalar-exprs">
+  <title>Константные выражения</title>
+
+  <para>
+   Теперь стало возможно представить скалярное выражение, 
+   включающее цифровой и строковые литералы и/или константы, в 
+   то время где ранее ожидалось статическое значение, например, в 
+   объявлениях констант или значениях агрументов функцуий по-умолчанию.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+const ONE = 1;
+const TWO = ONE * 2;
+
+class C {
+    const THREE = TWO + 1;
+    const ONE_THIRD = ONE / self::THREE;
+    const SENTENCE = 'The value of THREE is '.self::THREE;
+
+    public function f($a = ONE + self::THREE) {
+        return $a;
+    }
+}
+
+echo (new C)->f()."\n";
+echo C::SENTENCE;
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+4
+The value of THREE is 3
+]]>
+   </screen>
+  </informalexample>
+
+  <para>
+   Также можно определить массив <type>array</type> с использованием ключевого слова 
+   <literal>const</literal>:
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+const ARR = ['a', 'b'];
+
+echo ARR[0];
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+a
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.variadics">
+  <title>Функции с переменным количеством аргументов используя синтаксис <literal>...</literal></title>
+
+  <para>
+   <link linkend="functions.variable-arg-list">Функции с переменным количеством аргументов</link>
+   теперь можно реализовывать используя оператор <literal>...</literal>, вместо того,
+   чтобы полагаться на <function>func_get_args</function>.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+function f($req, $opt = null, ...$params) {
+    // $params is an array containing the remaining arguments.
+    printf('$req: %d; $opt: %d; number of params: %d'."\n",
+           $req, $opt, count($params));
+}
+
+f(1);
+f(1, 2);
+f(1, 2, 3);
+f(1, 2, 3, 4);
+f(1, 2, 3, 4, 5);
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+$req: 1; $opt: 0; number of params: 0
+$req: 1; $opt: 2; number of params: 0
+$req: 1; $opt: 2; number of params: 1
+$req: 1; $opt: 2; number of params: 2
+$req: 1; $opt: 2; number of params: 3
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.splat">
+  <title>Развертывание аргументов с помощью <literal>...</literal></title>
+
+  <para>
+   <link linkend="language.types.array">Массивы</link> и объекты реализующие
+   интерфейс <interfacename>Traversable</interfacename> могут быть развернуты
+   в список аргументов при передаче в функцию с помощью оператора <literal>...</literal>.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+function add($a, $b, $c) {
+    return $a + $b + $c;
+}
+
+$operators = [2, 3];
+echo add(1, ...$operators);
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+6
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.exponentiation">
+  <title>Возведение в степень с помощью <literal>**</literal></title>
+
+  <para>
+   был добавлен право-ассоциативный оператор <literal>**</literal>, обозначающий
+   возведение в степень. Так же доступен короткий синтаксис <literal>**=</literal>.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+printf("2 ** 3 ==      %d\n", 2 ** 3);
+printf("2 ** 3 ** 2 == %d\n", 2 ** 3 ** 2);
+
+$a = 2;
+$a **= 3;
+printf("a ==           %d\n", $a);
+?>
+]]>
+   </programlisting>
+  &example.outputs;
+  <screen>
+<![CDATA[
+2 ** 3 ==      8
+2 ** 3 ** 2 == 512
+a ==           8
+]]>
+  </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.use">
+  <title><literal>use function</literal> и <literal>use const</literal></title>
+
+  <para>
+   Оператор
+   <link linkend="language.namespaces.importing"><literal>use</literal></link> 
+   был расширен для поддержки импорта функций и констант в дополнение к классам.
+   Это достигается с помощью конструкций <literal>use function</literal> и 
+   <literal>use const</literal> соответственно.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+namespace Name\Space {
+    const FOO = 42;
+    function f() { echo __FUNCTION__."\n"; }
+}
+
+namespace {
+    use const Name\Space\FOO;
+    use function Name\Space\f;
+
+    echo FOO."\n";
+    f();
+}
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+42
+Name\Space\f
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.phpdbg">
+  <title>phpdbg</title>
+
+  <para>
+   Теперь PHP содержит интерактивный дебаггер, называющийся "phpdbg" и реализованный
+   как модуль SAPI. Подробности читайте в разделе 
+   <link xlink:href="&url.phpdbg.docs;">Документация по phpdbg</link>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.default-encoding">
+  <title>Кодировка по умолчанию</title>
+
+  <para>
+   Добавлен ini-параметр
+   <link linkend="ini.default-charset">default_charset</link>, в котором можно указать
+   кодировку по умолчанию для использования в функциях <function>htmlentities</function>,
+   <function>html_entity_decode</function> и <function>htmlspecialchars</function>.
+   Обратите внимание, что если (сейчас считается устаревшим) заданы параметры кодировки
+   iconv и mbstring, они будут иметь преимущество пере default_charset для iconv и mbstring.
+  </para>
+
+  <para>
+   Значение этой настройки по умолчанию равно <literal>UTF-8</literal>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.reusable-input">
+  <title>Переиспользование <link linkend="wrappers.php.input"><literal>php://input</literal></link></title>
+
+  <para>
+   <link linkend="wrappers.php.input"><literal>php://input</literal></link>
+   теперь можно переоткрытьи читать столько раз, сколько нужно.
+   Это также привело к значительному уменьшению объема памяти, необходимой для работы 
+   с данными POST.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.large-file">
+  <title>Загрузка больших файлов</title>
+
+  <para>
+   Теперь можно загружать файлы размером более 2ГБ.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.gmp">
+  <title><link linkend="book.gmp">GMP</link> поддерживает перезагрузку операторов</title>
+
+  <para>
+   Объекты <link linkend="book.gmp">GMP</link> теперь поддерживают перезагрузку
+   операторов и приведение к скалярным типам. Это позволяет использовать GMP
+   в вашем коде более экспрессивно:
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$a = gmp_init(42);
+$b = gmp_init(17);
+
+if (version_compare(PHP_VERSION, '5.6', '<')) {
+    echo gmp_intval(gmp_add($a, $b)), PHP_EOL;
+    echo gmp_intval(gmp_add($a, 17)), PHP_EOL;
+    echo gmp_intval(gmp_add(42, $b)), PHP_EOL;
+} else {
+    echo $a + $b, PHP_EOL;
+    echo $a + 17, PHP_EOL;
+    echo 42 + $b, PHP_EOL;
+}
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+59
+59
+59
+]]>
+   </screen>
+  </informalexample>
+   
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.hash-equals">
+  <title><function>hash_equals</function> для предотвращение атак по времени при сравнении строк</title>
+
+  <para>
+   Была добавлена функция <function>hash_equals</function> для сравнения двух строк
+   за постоянное время. Это должно помочь избежать атак по времени; для экземпляров,
+   во время тестирования хэширования паролей функцией  <function>crypt</function>
+   (при условии, что вы не можете использовать <function>password_hash</function> и
+   <function>password_verify</function>, которые не восприимчивы к атакам по времени).
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$expected  = crypt('12345', '$2a$07$usesomesillystringforsalt$');
+$correct   = crypt('12345', '$2a$07$usesomesillystringforsalt$');
+$incorrect = crypt('1234',  '$2a$07$usesomesillystringforsalt$');
+
+var_dump(hash_equals($expected, $correct));
+var_dump(hash_equals($expected, $incorrect));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+bool(true)
+bool(false)
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.debuginfo">
+  <title><literal>__debugInfo()</literal></title>
+
+  <para>
+   Был добавлен магический метод <link linkend="language.oop5.magic.debuginfo">__debugInfo()</link>
+   для того, чтобы объект мог поменять значения свойств, выводимых при использовании
+   <function>var_dump</function>.
+  </para>
+
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class C {
+    private $prop;
+
+    public function __construct($val) {
+        $this->prop = $val;
+    }
+
+    public function __debugInfo() {
+        return [
+            'propSquared' => $this->prop ** 2,
+        ];
+    }
+}
+
+var_dump(new C(42));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+object(C)#1 (1) {
+  ["propSquared"]=>
+  int(1764)
+}
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.gost">
+  <title>Алгоритм хэширования gost-crypto</title>
+
+  <para>
+   Был добавлен алгоритм хэширования <literal>gost-crypto</literal>. 
+   Он реализует функцию хэширования GOST, используемую в таблицах CryptoPro S-box,
+   определенных в <link xlink:href="&url.rfc;4357">RFC 4357, секция 11.2</link>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.openssl">
+  <title>Улучшение SSL/TLS</title>
+
+  <para>
+   Очень многое было сделано для улучшения поддержки SSL/TLS в PHP 5.6. Включая
+   <link linkend="migration56.incompatible.peer-verification">разрешение верификации
+    пиров по умолчанию</link>, поддержка сверки отпечатков сертификатов, снижение
+   воздействия атаки пересоединения TLS и множества новых
+   <link linkend="context.ssl">опций контекста SSL</link> для более гранулированного
+   контроля над протоколом и настройками верификации при использовании
+   зашифрованных потоков.
+  </para>
+
+  <para>
+   Более подробно все эти изменения описаны в разделе этого руководства
+   <link linkend="migration56.openssl">Изменения OpenSSL в PHP 5.6.x</link>
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration56.new-features.postgresql">
+  <title>Поддержка асинхронности <link linkend="book.pgsql">pgsql</link></title>
+
+  <para>
+   Расширение <link linkend="book.pgsql">pgsql</link> теперь поддерживает асинхронные 
+   соединения и запросы, тем самым разрешая неблокирующее взаимодействие с базами данных
+   PostgreSQL. Асинхронные соединения могут быть установлены с помощью константы
+   <constant>PGSQL_CONNECT_ASYNC</constant>, и новые функции
+   <function>pg_connect_poll</function>, <function>pg_socket</function>,
+   <function>pg_consume_input</function> и <function>pg_flush</function>, могут быть
+   использованы для обработки асинхронных соединений и запросов.
+  </para>
+ </sect2>
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
