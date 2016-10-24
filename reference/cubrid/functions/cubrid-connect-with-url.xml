@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 7fdcfa3360f99cbcc12fa9cf4fa09504a5405e25 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.cubrid-connect-with-url" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>cubrid_connect_with_url</refname>
+  <refpurpose>Создает окружение для соединения с сервером CUBRID</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>cubrid_connect_with_url</methodname>
+   <methodparam><type>string</type><parameter>conn_url</parameter></methodparam>  
+   <methodparam choice="opt"><type>string</type><parameter>userid</parameter></methodparam>  
+   <methodparam choice="opt"><type>string</type><parameter>passwd</parameter></methodparam>  
+   <methodparam choice="opt"><type>bool</type><parameter>new_link</parameter><initializer>false</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция <function>cubrid_connect_with_url</function> используется для создания
+   окружения для соединения с сервером посредством информации заданной в виде
+   строки URL. Если в CUBRID разрешена функциональность высокой доступности, необходимо 
+   задать информация для соединения с резервным сервером, которая будет использоваться
+   для соединения, если с основным что-то случится. Если логин и пароль не заданы, то
+   по умолчанию будет использоваться соединение "PUBLIC".
+  </para>
+  <para>
+   &lt;url&gt; ::= CUBRID:&lt;host&gt;:&lt;db_name&gt;:&lt;db_user&gt;:&lt;db_password&gt;:[?&lt;properties&gt;]
+  </para>
+  <para>
+   &lt;properties&gt; ::= &lt;property&gt; [&amp;&lt;property&gt;]
+  </para>
+  <para>
+   &lt;properties&gt; ::= alhosts=&lt;alternative_hosts&gt;[ &amp;rctime=&lt;time&gt;]
+  </para>
+  <para>
+   &lt;properties&gt; ::= login_timeout=&lt;milli_sec&gt;
+  </para>
+  <para>
+   &lt;properties&gt; ::= query_timeout=&lt;milli_sec&gt;
+  </para>
+  <para>
+   &lt;properties&gt; ::= disconnect_on_query_timeout=true|false
+  </para>
+  <para>
+   &lt;alternative_hosts&gt; ::= &lt;standby_broker1_host&gt;:&lt;port&gt; [,&lt;standby_broker2_host&gt;:&lt;port&gt;]
+  </para>
+  <para>
+   &lt;host&gt; := HOSTNAME | IP_ADDR
+  </para>
+  <para>
+   &lt;time&gt; := SECOND
+  </para>
+  <para>
+   &lt;milli_sec&gt; := MILLI SECOND
+  </para>
+  <para>
+   <simplelist>
+    <member>host : Имя хоста или IP-адрес основного сервера</member>
+    <member>db_name : имя базы данных</member>
+    <member>db_user : Имя пользователя</member>
+    <member>db_password : пароль</member>
+    <member>
+     alhosts : Задает информацию о брокере резервного сервера, который будет использоваться 
+     в случае недоступности основного. Если вы зададите несколько резервных брокеров,
+     то попытки соединения будут происходить в том же порядке, как они описаны в URL.</member>
+    <member>
+     rctime : Интервал между попытками подключения к активному брокеру, в котором
+     произошел сбой. после возникновения ошибки, система соединится с резервным 
+     брокерам, указанном в в althosts (failover), откатит незавершенные транзакции, и затем
+     попытается соединиться с активным брокером основного узла через каждые rctime. 
+     Значение по умолчанию 600 секунд.</member>
+    <member>
+     login_timeout : Максимальное время (миллисекунды) ожидания авторизации. 
+     По умолчанию 0, что обозначает бесконечное время ожидания.
+    </member>
+    <member>
+     query_timeout : Максимальное время (миллисекунды) ожидания выполнения запроса. 
+     По исчерпании этого времени на сервер будет отослано сообщение о прекращении запроса.
+     Возвращенное значение запроса будет зависить от настройки disconnect_on_query_timeout;
+     даже если будет послано сообщение о прекращении запроса, он все еще может
+     завершиться удачно.
+    </member>
+    <member>
+     disconnect_on_query_timeout : Определяет, будет ли сразу после истечения таймаута 
+     для запроса возвращена ошибка. По умолчанию &false;.
+    </member>
+   </simplelist>
+  </para>
+  <note>
+   <para>
+    Символы <literal>?</literal> и <literal>:</literal> являются специальными в URL соединения
+    и не могут быть использованы в пароле. Пример некорректного пароля, который нельзя
+    использовать в строке соединения, потому, что в нем используются символы
+    "<literal>?:</literal>".
+   </para>
+   <para>
+    $url = "CUBRID:localhost:33000:tdb:dba:12?:?login_timeout=100";
+   </para>
+   <para>
+    Пароли, содержащие <literal>?</literal> или <literal>:</literal>
+    могут быть посланы отдельно.
+   </para>
+   <para>
+    $url = "CUBRID:localhost:33000:tbd:::?login_timeout=100";
+   </para>
+   <para>
+    $conn = cubrid_connect_with_url($url, "dba", "12?");
+   </para>
+   <para>
+    Если логин или пароль пусты, необходимо все равно сохранять символы "<literal>:</literal>":
+   </para>
+   <para>
+    $url = "CUBRID:localhost:33000:demodb:::";
+   </para>
+  </note>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>conn_url</parameter></term>
+     <listitem><para>Строка, содержащая информацию для соединения.</para></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>userid</parameter></term>
+     <listitem><para>Имя пользователя.</para></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>passwd</parameter></term>
+     <listitem><para>пароль.</para></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>new_link</parameter></term>
+     <listitem><para>Если функция <function>cubrid_connect_with_url</function> была вызвана
+      повторно с такими же аргументами, новое соединение не будет создано, вместо него
+      будет возвращен идентификатор уже существующего подключения.
+      Параметр <parameter>new_link</parameter> меняет такое поведение и вынуждает
+      <function>cubrid_connect_with_url</function> в любом случае создать новое соединение,
+      даже если функция <function>cubrid_connect_with_url</function> ранее была вызвана
+      с такими же аргументами.</para></listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Идентификатор подключения в случае успеха.
+  </para>
+  <para>
+   &false;, в случае неудачи.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>cubrid_connect_with_url</function> без задания свойств</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$conn_url = "CUBRID:localhost:33000:demodb:dba::";
+$con = cubrid_connect_with_url($conn_url);
+
+if ($con) {
+   echo "connected successfully";
+   cubrid_execute($con, "create table person(id int,name char(16))");
+   $req =cubrid_execute($con, "insert into person values(1,'James')");
+
+   if ($req) {
+      cubrid_close_request($req);
+      cubrid_commit($con);
+   } else {
+      cubrid_rollback($con);
+   }
+   cubrid_disconnect($con);
+}
+?>
+]]>
+   </programlisting>
+  </example>
+  
+  <example>
+   <title>Пример использования <function>cubrid_connect_with_url</function> с заданием свойств</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$conn_url = "CUBRID:127.0.0.1:33000:demodb:dba::?login_timeout=100"
+$con = cubrid_connect_with_url ($conn_url);
+
+if ($con) {
+   echo "connected successfully";
+   cubrid_execute($con, "create table person(id int,name char(16))");
+   $req =cubrid_execute($con, "insert into person values(1,'James')");
+
+   if ($req) {
+      cubrid_close_request($req);
+      cubrid_commit($con);
+   } else {
+      cubrid_rollback($con);
+   }
+   cubrid_disconnect($con);
+}
+?>
+]]>
+   </programlisting>
+  </example>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>cubrid_connect</function></member>
+    <member><function>cubrid_pconnect</function></member>
+    <member><function>cubrid_pconnect_with_url</function></member>
+    <member><function>cubrid_disconnect</function></member>
+    <member><function>cubrid_close</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
