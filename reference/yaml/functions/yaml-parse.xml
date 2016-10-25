@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: a305c183e2595da8c49102b96b6577df3ca167ca Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.yaml-parse" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>yaml_parse</refname>
+  <refpurpose>Разбирает поток YAML</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>mixed</type><methodname>yaml_parse</methodname>
+   <methodparam><type>string</type><parameter>input</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>pos</parameter><initializer>0</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter role="reference">ndocs</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>callbacks</parameter><initializer>null</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Конвертирует весь поток YAML или его часть и записывает в переменную.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>input</parameter></term>
+     <listitem>
+      <para>
+       <type>Строка</type> для парсинга как поток YAML.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>pos</parameter></term>
+     <listitem>
+      <para>
+       Документ для разбора (<literal>-1</literal> для всех документов, <literal>0</literal> для первого документа, ...).
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>ndocs</parameter></term>
+     <listitem>
+      <para>
+       Если <parameter>ndocs</parameter> найден, тогда он будет заменен на количество
+       документов в потоке YAML.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>callbacks</parameter></term>
+     <listitem>
+      <para>
+       Обработчик контент для узлов YAML. Ассоциативный массив, ключи которого являются
+       тегами YAML, а значения callback-функциями, которые будут их обрабатывать.
+       Более подробно этот механизм описан в разделе
+       <link linkend="yaml.callbacks.parse">callback-функции разбора</link>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает закодированое в <parameter>input</parameter> значение как соответствующий
+   тип PHP&return.falseforfailure;. Если параметр <parameter>pos</parameter> равен
+   <literal>-1</literal>, будет возвращен массив, содержащий по одной записи для каждого
+   документа, найденого в потоке.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>yaml_parse</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$yaml = <<<EOD
+---
+invoice: 34843
+date: "2001-01-23"
+bill-to: &id001
+  given: Chris
+  family: Dumars
+  address:
+    lines: |-
+      458 Walkman Dr.
+              Suite #292
+    city: Royal Oak
+    state: MI
+    postal: 48046
+    site: zxibit.esy.es
+ship-to: *id001
+product:
+- sku: BL394D
+  quantity: 4
+  description: Basketball
+  price: 450
+- sku: BL4438H
+  quantity: 1
+  description: Super Hoop
+  price: 2392
+tax: 251.420000
+total: 4443.520000
+comments: Late afternoon is best. Backup contact is Nancy Billsmer @ 338-4338.
+...
+EOD;
+
+$parsed = yaml_parse($yaml);
+var_dump($parsed);
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+array(8) {
+  ["invoice"]=>
+  int(34843)
+  ["date"]=>
+  string(10) "2001-01-23"
+  ["bill-to"]=>
+  &array(3) {
+    ["given"]=>
+    string(5) "Chris"
+    ["family"]=>
+    string(6) "Dumars"
+    ["address"]=>
+    array(4) {
+      ["lines"]=>
+      string(34) "458 Walkman Dr.
+        Suite #292"
+      ["city"]=>
+      string(9) "Royal Oak"
+      ["state"]=>
+      string(2) "MI"
+      ["postal"]=>
+      int(48046)
+    }
+  }
+  ["ship-to"]=>
+  &array(3) {
+    ["given"]=>
+    string(5) "Chris"
+    ["family"]=>
+    string(6) "Dumars"
+    ["address"]=>
+    array(4) {
+      ["lines"]=>
+      string(34) "458 Walkman Dr.
+        Suite #292"
+      ["city"]=>
+      string(9) "Royal Oak"
+      ["state"]=>
+      string(2) "MI"
+      ["postal"]=>
+      int(48046)
+    }
+  }
+  ["product"]=>
+  array(2) {
+    [0]=>
+    array(4) {
+      ["sku"]=>
+      string(6) "BL394D"
+      ["quantity"]=>
+      int(4)
+      ["description"]=>
+      string(10) "Basketball"
+      ["price"]=>
+      int(450)
+    }
+    [1]=>
+    array(4) {
+      ["sku"]=>
+      string(7) "BL4438H"
+      ["quantity"]=>
+      int(1)
+      ["description"]=>
+      string(10) "Super Hoop"
+      ["price"]=>
+      int(2392)
+    }
+  }
+  ["tax"]=>
+  float(251.42)
+  ["total"]=>
+  float(4443.52)
+  ["comments"]=>
+  string(68) "Late afternoon is best. Backup contact is Nancy Billsmer @ 338-4338."
+}
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <warning>
+   <para>
+    Обрабатывать не доверенный пользовательский ввод, в случае когда для узлов YAML,
+    использующих тег <literal>!php/object</literal>, разрешено использование функции <function
+    >unserialize</function>, крайне опасно. Это поведение можно отключить с помощью
+    ini-настройки <literal>yaml.decode_php</literal>.
+   </para>
+  </warning>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>yaml_parse_file</function></member>
+    <member><function>yaml_parse_url</function></member>
+    <member><function>yaml_emit</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
