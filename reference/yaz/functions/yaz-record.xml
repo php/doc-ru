@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: b72a6bf2e6cd37d1c36575e1e14ad667a3993d54 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.yaz-record" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>yaz_record</refname>
+  <refpurpose>Возвращает запись</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>string</type><methodname>yaz_record</methodname>
+   <methodparam><type>resource</type><parameter>id</parameter></methodparam>
+   <methodparam><type>int</type><parameter>pos</parameter></methodparam>
+   <methodparam><type>string</type><parameter>type</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция <function>yaz_record</function> проверяет запись в текущем результирующем
+   наборе на позиции, определенным параметром  <parameter>pos</parameter>. 
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>id</parameter></term>
+     <listitem>
+      <para>
+       Дескриптор соединения, возвращаемый <function>yaz_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>pos</parameter></term>
+     <listitem>
+      <para>
+       Позиция записи. Записи в результирующем наборе нумеруются как 1,
+       2, ... $hits, где $hits - число записей в результирующем наборе,   
+       которое возвращается функцией <function>yaz_hits</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       <parameter>type</parameter> определяет форму возвращаемой записи.
+      </para>
+      <note>
+       <para>
+        Только приложение несет ответственность за достоверность того, что 
+        возвращаемые записи с сервера Z39.50/SRW в надлежащем формате.
+        Задаваемый тип только определяет преобразование, которое имеет место
+        на стороне клиента (в PHP/YAZ).
+       </para>
+      </note>
+      <para>
+       Помимо преобразования переданной записи в строку/массив, PHP/YAZ
+       так же может преобразовывать кодировку записи. Особенно это актуально для 
+       форматов USMARC/MARC21, которые рекомендуется преобразовывать, поскольку они
+       обычно возвращаются в кодировке MARC-8, которую не понимают браузеры и другие
+       приложения. Чтобы определить преобразование, добавьте
+       <literal>; charset=</literal><replaceable>from</replaceable><literal>,
+       </literal><replaceable>to</replaceable>, где
+       <replaceable>from</replaceable> текущая кодировка записи
+       и <replaceable>to</replaceable> результирующая кодировка, которая
+       будет доступна PHP.
+      </para>
+      <variablelist>
+       <varlistentry>
+        <term><literal>string</literal></term>
+        <listitem>
+         <para>
+          Запись возвращается в виде строки для отображения.
+          В этом режиме все MARC-записи преобразуются в посторчное представление,
+          поскольку в формате ISO2709 их трудно прочитать.
+          Записи XML и SUTRS возвращаются в их родном формате.
+          GRS-1 возвращается в (безобразном) построчном представлении.
+         </para>
+         <para>
+          Данный формат применим для быстрого вывода записей на экран, для отладки,
+          или в случае, когда корректное отображение невозможно.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>xml</literal></term>
+        <listitem>
+         <para>
+          Запись возвращается как строка XML, если это возможно.
+          В этом режиме все MARC-записи преобразовываются в формат
+          <link xlink:href="&url.yaz-marcxml;">MARCXML</link>.
+          Записи XML и SUTRS возвращаются в их родном формате.
+          GRS-1 не поддерживается.
+         </para>
+         <para>
+          Этот формат схож с <parameter>string</parameter>, за исключением того,
+          что MARC-записи преобразуются к MARCXML.
+         </para>
+         <para>
+          Данный формат применим, если запись будет передана парсеру XML или 
+          XSLT-процессору.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>raw</literal></term>
+        <listitem>
+         <para>
+          Запись возвращается в виде строки в исходной форме.
+          Данный тип применим для MARC, XML и SUTRS, но не работает для GRS-1.
+         </para>
+         <para>
+          MARC-запись возвращается в формате ISO2709, XML и SUTRS возвращаются
+          как строка.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>syntax</literal></term>
+        <listitem>
+         <para>
+          Синтаксис возвращаемой записи, например <literal>USmarc</literal>, 
+          <literal>GRS-1</literal>, <literal>XML</literal>, и д.р.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>database</literal></term>
+        <listitem>
+         <para>
+          Имя базы данных, сопоставленное с записью.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>array</literal></term>
+        <listitem>
+         <para>
+          Запись возвращается в виде массива, сопоставленного со структурой 
+          GRS-1. Данный тип применим для MARC и GRS-1. XML, SUTRS не 
+          поддерживаются и, если исходная запись в формате XML или SUTRS,
+          возвращается пустая строка.
+         </para>
+         <para>
+          Возвращаемый массив состоит из списка, который соответствует
+          каждому внутреннему узлу или конечному элементу(leaf) формата GRS-1.
+          Каждый список состоит из подсписка, первым элементом которого 
+          будет <emphasis>путь</emphasis> и <emphasis>дата</emphasis> (если 
+          она доступна).
+         </para>
+         <para>
+          Путь, представленый в виде строки, содержит список каждой 
+          компоненты дерева (для структуры записи GRS-1) от корневого элемента
+          до конечного. Каждая компонента представлена парой тип поля и значение,
+          в форме (<literal><replaceable>тип</replaceable></literal>,
+          <literal><replaceable>значение</replaceable></literal>).
+          
+         </para>
+         <para>
+          Начальное поле обычно сопоставлено типу 3.
+          MARC-записи тоже могут быть возвращены в виде массива
+          (они конвертируются в GRS-1).
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает запись на позиции <parameter>pos</parameter> или пустую строку,
+   если на заданной позиции нет записей.
+  </para>
+  <para>
+   Если на заданной позиции в базе данных нет записей, будет возвращена 
+   пустая строка.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Массив для записи GRS-1</title>
+   <para>
+    Возьмем запись GRS-1, вида:
+    <screen>
+<![CDATA[
+(4,52)Robert M. Pirsig
+(4,70)
+      (4,90)
+            (2,7)Transworld Publishers, ltd.
+]]>
+    </screen>
+    Данная запись содержит два узла на верхнем(корневом) уровне. Первый элемент
+    корневого уровня (4,52) [тип 4, значение 52], и содержит данные <literal>Robert M. 
+    Pirsig</literal>. Второй элемент корневого уровня (4,70) содержит поддерево с 
+    единственным элементом (4,90). Элемент (4,90) в свою очередь содержит поддерево
+    (2,7) с данными <literal>Transworld Publishers, ltd.</literal>.
+   </para>
+   <para>
+    Если данная запись находится на позиции $p, тогда скрипт
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$ar = yaz_record($id, $p, "array");
+print_r($ar);
+
+?>
+]]>
+    </programlisting>
+    выведет:
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Array
+        (
+            [0] => (4,52)
+            [1] => Robert M. Pirsig
+        )
+    [1] => Array
+        (
+            [0] => (4,70)
+        )
+    [2] => Array
+        (
+            [0] => (4,70)(4,90)
+        )
+    [3] => Array
+        (
+            [0] => (4,70)(4,90)(2,7)
+            [1] => Transworld Publishers, ltd.
+        )
+)      
+]]>
+    </screen>
+   </para>
+  </example>
+  <example>
+   <title>Пример работы с MARCXML</title>
+   <para>
+    Скрипт ниже вернет запись MARC21/USMARC в формате MARCXML.
+    Исходная запись будет возвращена в кодировке marc-8 (неизвестной для 
+    большинства XML парсеров), поэтому она преобразуется в UTF-8.
+    <programlisting role="php">
+<![CDATA[
+<?php
+$rec = yaz_record($id, $p, "xml; charset=marc-8,utf-8");
+?>
+]]>
+    </programlisting>
+   </para>
+   <para>
+    Запись <literal>$rec</literal> может быть обработана 
+    процессором <link linkend="ref.xslt">Sablotron XSLT</link> так:
+   </para>
+   <para>
+    <programlisting role="php">
+<![CDATA[ 
+<?php
+
+$xslfile = 'display.xsl';
+$processor = xslt_create();
+$parms = array('/_xml' => $rec);
+$res = xslt_process($processor, 'arg:/_xml', $xslfile, NULL, $parms);
+xslt_free($processor);
+$res = preg_replace("'</?html[^>]*>'", '', $res);
+echo $res;
+
+?>
+]]>
+    </programlisting>
+   </para>
+   <para>
+    Для PHP 5 нужно использовать расширение <link linkend="book.xsl">XSL</link>
+    вместо Sablotron XSLT.
+   </para>
+  </example>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

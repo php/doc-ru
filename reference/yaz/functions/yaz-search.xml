@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.yaz-search" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>yaz_search</refname>
+  <refpurpose>Подготовка поиска</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>yaz_search</methodname>
+   <methodparam><type>resource</type><parameter>id</parameter></methodparam>
+   <methodparam><type>string</type><parameter>type</parameter></methodparam>
+   <methodparam><type>string</type><parameter>query</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>yaz_search</function> подготавливает поиск на заданном соединении.
+  </para>
+  <para>
+   Так же как и <function>yaz_connect</function> эта функция неблокирующая и только
+   подготавливает условия поиска, который будет выполнен функцией 
+   <function>yaz_wait</function>.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>id</parameter></term>
+     <listitem>
+      <para>
+       Дескриптор соединения, возвращаемый функцией <function>yaz_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       Данный параметр представляет собой тип запроса. Поддерживается только тип 
+       <literal>"rpn"</literal>. В этом случае третий аргумент определяет запрос Type-1
+       в префиксной нотации запросов. 
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>query</parameter></term>
+     <listitem>
+      <para>
+       Запрос RPN является текстовым представлением запроса Type-1, как указано
+       в стандарте Z39.50. Тем не менее в текстовом представлении, используемом 
+       в YAZ, применяется префиксная нотация, т.е. оператор предшествует операнду.
+       Строка запроса представляет собой последовательность лексем(токенов), в которой
+       игнорируются пробельные символы, кроме тех, что находятся между двойными кавычками.
+       Лексемы, которые начинаются с символа <literal>@</literal> являются операторами, иначе
+       они воспринимаются как поисковый термин.
+      </para>
+      <table>
+       <title>Операторы RPN</title>
+       <tgroup cols="2">
+        <colspec colwidth="1*" colname="construct"/>
+        <colspec colwidth="2*" colname="description"/>
+        <thead>
+         <row>
+          <entry>Конструкция</entry>
+          <entry>Описание</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry><literal>@and</literal> query1 query2</entry>
+          <entry>пересечение query1 и query2</entry>
+         </row>
+         <row>
+          <entry><literal>@or</literal> query1 query2</entry>
+          <entry>объединение query1 и query2</entry>
+         </row>
+         <row>
+          <entry><literal>@not</literal> query1 query2</entry>
+          <entry>query1 и не query2</entry>
+         </row>
+         <row>
+          <entry><literal>@set</literal> name</entry>
+          <entry>ссылка на набор возвращаемых значений</entry>
+         </row>
+         <row>
+          <entry><literal>@attrset</literal> set query</entry>
+          <entry>
+           определяет набор артибутов <literal>set</literal> для 
+           запроса <literal>query</literal>. Эта конструкция доступна 
+           только один раз - в самом начале запроса.
+          </entry>
+         </row>
+         <row>
+          <entry><literal>@attr</literal> [set] type=value query</entry>
+          <entry>
+           устанавливает атрибуты запроса. Значения <literal>type</literal> и
+           <literal>value</literal> - целочисленные и определяют тип атрибута и 
+           тип значения соответственно.
+           Значение <literal>set</literal>, если оно задано, определяет настройку атрибутов.
+          </entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </table>     
+      <para>
+       Всю информацию о доступных атрибутах вы можете найти на сайте
+       <link xlink:href="&url.yaz-loc-bib1;">Z39.50 Maintenance Agency</link>
+      </para>
+      <note>
+       <para>
+        Если вы хотите использовать более дружественную нотацию, используйте
+        CCL парсер - функции <function>yaz_ccl_conf</function> и 
+        <function>yaz_ccl_parse</function>.
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Примеры запросов</title>
+   <para>
+    Вы можете использовать простую лексему, например:
+    <screen>
+<![CDATA[
+computer
+]]>
+    </screen>
+    которая находит совпадения слова "computer" в документах. Атрибуты 
+    не определены. 
+   </para>
+   <para>
+    запрос 
+    <screen>
+<![CDATA[
+"knuth donald"
+]]>
+    </screen>
+    находит документы, где встречается фраза "knuth donald" (предполагается,
+    что сервер поддерживает поиск по фразам).
+   </para>
+   <para>
+    Запрос содержит два атрибута для одной фразы.
+    <screen>@attr 1=1003 @attr 4=1 "knuth donald"</screen>
+    Первый атрибут имеет тип 1 (используется Bib-1), значение которого равно 
+    1003(Автор).
+    Второй атрибут имеет тип 4 (структура), со значением 1 (фраза). Таким
+    образом данный запрос будет искать документы автор которых Donald Knuth.
+   </para>
+   <para>
+    запрос
+    <screen>
+<![CDATA[
+@and @or a b @not @or c d e
+]]>
+    </screen>
+    в инфиксной нотации представляется как <literal>(a or b) and ((c or d) not 
+    e)</literal>.
+   </para>
+   <para>
+    ещё один более сложный запрос: 
+    <screen>
+<![CDATA[
+@attrset gils @and @attr 1=4 art @attr 1=2000 company
+]]>
+    </screen>
+    Весь запрос будет использовать набор атрибутов GILS. Запрос ищет 
+    документы, где <literal>art</literal> встречается в заглавии (GILS,BIB-1)
+    и <literal>company</literal> в поставщиках.
+   </para>
+  </example>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

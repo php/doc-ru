@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.yaz-scan" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>yaz_scan</refname>
+  <refpurpose>Подготовка сканирования</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>void</type><methodname>yaz_scan</methodname>
+   <methodparam><type>resource</type><parameter>id</parameter></methodparam>
+   <methodparam><type>string</type><parameter>type</parameter></methodparam>
+   <methodparam><type>string</type><parameter>startterm</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>flags</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция подготавливает запрос сканирования для установленного соединения по
+   протоколу Z39.50.
+  </para>
+  <para>
+   Чтобы передать запрос сканирования на сервер и получить ответ нужно вызвать
+   функцию <function>yaz_wait</function>. По заверению <function>yaz_wait</function>
+   вызовите <function>yaz_error</function> для получения ошибки и <function>yaz_scan_result</function>
+   для получения результата.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>id</parameter></term>
+     <listitem>
+      <para>
+       Дескриптор соединения, возвращенный <function>yaz_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       В настоящее время поддерживается только <literal>rpn</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>startterm</parameter></term>
+     <listitem>
+      <para>
+       Начальная элемент для сканирования
+      </para>
+      <para>
+       Форма в которой представлен начальный элемент сканирования задается
+       параметром <parameter>type</parameter>.
+      </para>
+      <para>
+       Синтаксис этого параметра схож с запросом RPN, который описан для 
+       <function>yaz_search</function>. 
+       Он состоит из нуля или более операторных настроек 
+       <literal>@attr</literal>, за которыми следует единственная лексема.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>flags</parameter></term>
+     <listitem>
+      <para>
+       Этот необязательный параметр определяет дополнительную информацию для
+       управления поведением запроса сканирования. Из массива флагов доступны
+       три индекса:
+       <literal>number</literal> (количество запрашиваемых термов),
+       <literal>position</literal> (позиция терма) и
+       <literal>stepSize</literal> (размер шага).
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.void;
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Функция PHP которая сканирует заглавия</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function scan_titles($id, $startterm) 
+{
+  yaz_scan($id, "rpn", "@attr 1=4 " . $startterm);
+  yaz_wait();
+  $errno = yaz_errno($id);
+  if ($errno == 0) {
+    $ar = yaz_scan_result($id, $options);
+    echo 'Scan ok; ';
+    foreach ($options as $key => $val) {
+      echo "$key = $val ";
+    }
+    echo '<br /><table>';
+    while (list($key, list($k, $term, $tcount)) = each($ar)) {
+      if (empty($k)) continue;
+      echo "<tr><td>$term</td><td>$tcount</td></tr>";
+    }
+    echo '</table>';
+  } else {
+    echo "Scan failed. Error: " . yaz_error($id) . "<br />";
+  }
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
