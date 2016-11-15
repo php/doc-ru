@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 2de9c1a37be1c0cba843cd4880ad1b27d25a8fcd Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<sect1 xml:id="migration70.new-features" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Новый функционал</title>
+ 
+ <sect2 xml:id="migration70.new-features.scalar-type-declarations">
+  <title>Декларация скалярных типов</title>
+  
+  <para>
+   <link linkend="functions.arguments.type-declaration">Декларация скалярных типов</link>
+   введена в двух вариантах: принуждающая (по умолчанию) и строгая.
+   Следующие типы могут использоваться для декларации параметров (в обоих вариантах):
+   строки (<type>string</type>), целые (<literal>int</literal>), рациональные числа
+   (<type>float</type>) и логические значения (<literal>bool</literal>). Они дополняют
+   аргументы других типов, введенных в PHP 5: имена классов, интерфейсов,
+   <type>array</type> и <type>callable</type>.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Принуждающий режим
+function sumOfInts(int ...$ints)
+{
+    return array_sum($ints);
+}
+
+var_dump(sumOfInts(2, '3', 4.1));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+int(9)
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Для установки строгого режима, в самом начале файла необходимо поместить одну 
+   директиву &declare;. Это означает, что строгость декларации работает на уровне файла и
+   не затрагивает весь остальной код. Эта директива затрагивает не только декларацию
+   параметров, но и возвращаемые значения функций (смотри
+   <link linkend="functions.returning-values.type-declaration">декларация возвращаемого типа</link>),
+   встроенные функции PHP и функции загруженных расширений.
+  </para>
+  
+  <para>
+   Подробную документацию и примеры использования читайте в разделе
+   <link linkend="functions.arguments.type-declaration">декларация типов</link>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.return-type-declarations">
+  <title>Декларация возвращаемых значений</title>
+  
+  <para>
+   В PHP 7 добавлена поддержка <link linkend="functions.returning-values.type-declaration">
+   декларация возвращаемого типа</link>. Аналогично как и 
+   <link linkend="functions.arguments.type-declaration">декларация типов аргументов</link>,
+   декларация типа возвращаемого значения указывает, значение какого типа должна вернуть 
+   функция. Для декларации типа возвращаемого значения доступны все те же 
+   <link linkend="functions.arguments.type-declaration.types">типы</link>, что и для
+   декларации типов аргументов.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+function arraysSum(array ...$arrays): array
+{
+    return array_map(function(array $array): int {
+        return array_sum($array);
+    }, $arrays);
+}
+
+print_r(arraysSum([1,2,3], [4,5,6], [7,8,9]));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Array
+(
+    [0] => 6
+    [1] => 15
+    [2] => 24
+)
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Подробную документацию и примеры использования читайте в разделе
+   <link linkend="functions.returning-values.type-declaration">декларация возвращаемого типа</link>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.null-coalesce-op">
+  <title>Оператор объединения с null</title>
+  
+  <para>
+   Был добавлен оператор объединения с nul (<literal>??</literal>), являющийся 
+   синтаксическим сахаром для достаточно распространенного действия, когда совместно 
+   используются тернарный оператор и функция <function>isset</function>. Он возвращает
+   первый операнд, если он задан и не равен &null;, а в обратном случае возвращает второй
+   операнд.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Извлекаем значение $_GET['user'], а если оно не задано,
+// то возвращаем 'nobody'
+$username = $_GET['user'] ?? 'nobody';
+// Это идентично следующему коду:
+$username = isset($_GET['user']) ? $_GET['user'] : 'nobody';
+
+// Данный оператор можно использовать в цепочке.
+// В этом примере мы сперва проверяем, задан ли $_GET['user'], если нет,
+// то проверяем $_POST['user'], и если он тоже не задан, то присваеваем 'nobody'.
+$username = $_GET['user'] ?? $_POST['user'] ?? 'nobody';
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  
+  <!-- TODO: we don't need further details here, but this still has to be
+       added to the operator precedence table -->
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.spaceship-op">
+  <title>Оператор saceship (космический корабль)</title>
+  <para>
+   Этот оператор предназначен для сравнения двух выражений. Он возвращает -1, 0 или 1
+   если <varname>$a</varname>, соответственно, меньше, равно или больше чем
+   <varname>$b</varname>. Сравнение производится в соответствии со 
+   <link linkend="types.comparisons">правилами сравнения типов</link> PHP.
+  </para>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Целые
+echo 1 <=> 1; // 0
+echo 1 <=> 2; // -1
+echo 2 <=> 1; // 1
+
+// Рациональные
+echo 1.5 <=> 1.5; // 0
+echo 1.5 <=> 2.5; // -1
+echo 2.5 <=> 1.5; // 1
+ 
+// Строки
+echo "a" <=> "a"; // 0
+echo "a" <=> "b"; // -1
+echo "b" <=> "a"; // 1
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  
+  <!-- TODO: we don't need further details here, but this still has to be
+       added to the operator precedence table -->
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.define-array">
+  <title>Задание констант массивов с помощью <function>define</function></title>
+  
+  <para>
+   Можно задать константу типа <type>array</type> с помощью функции
+   <function>define</function>. В PHP 5.6, такие константы можно было задавать только с
+   помощью &const;.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+define('ANIMALS', [
+    'dog',
+    'cat',
+    'bird'
+]);
+
+echo ANIMALS[1]; // выводит "cat"
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.anonymous-classes">
+  <title>Анонимные классы</title>
+  
+  <para>
+   Была добавлена поддержка анонимных классов с помощью <literal>new class</literal>.
+   Их можно использовать тогда, когда нужен одноразовый класс и создавать полноценный
+   класс, а потом его объект не имеет смысла:
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+interface Logger {
+    public function log(string $msg);
+}
+
+class Application {
+    private $logger;
+
+    public function getLogger(): Logger {
+         return $this->logger;
+    }
+
+    public function setLogger(Logger $logger) {
+         $this->logger = $logger;
+    }
+}
+
+$app = new Application;
+$app->setLogger(new class implements Logger {
+    public function log(string $msg) {
+        echo $msg;
+    }
+});
+
+var_dump($app->getLogger());
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+object(class@anonymous)#2 (0) {
+}
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Подробную документацию и примеры использования читайте в разделе
+   <link linkend="language.oop5.anonymous">анонимные классы</link>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.unicode-codepoint-escape-syntax">
+  <title>Синтаксис кодирования Unicode</title>
+  
+  <para>
+   Берем шестнадцатеричный код Unicode и записываем его в формате UTF-8 в
+   двойных кавычках или формате heredoc. Любой корректный код будет принят.
+   Лидирующие нули по желанию.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+echo "\u{aa}";
+echo "\u{0000aa}";
+echo "\u{9999}";
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+ª
+ª (То же самое, что и первый вариант, но с лидирующими нулями)
+香
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.closure-call-method">
+  <title><methodname>Closure::call</methodname></title>
+  
+  <para>
+   <methodname>Closure::call</methodname> является более производительным и
+   коротким способом временного связывания области действия объекта с замыканием и
+   его вызовом.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class A {private $x = 1;}
+
+// До PHP 7
+$getXCB = function() {return $this->x;};
+$getX = $getXCB->bindTo(new A, 'A'); // промежуточное замыкание
+echo $getX();
+
+// PHP 7+
+$getX = function() {return $this->x;};
+echo $getX->call(new A);
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1
+1
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+ <sect2 xml:id="migration70.new-features.filtered-unserialize">
+  <title><function>unserialize</function> с фильтрацией</title>
+  
+  <para>
+   Этот функционал обеспечивает более высокий уровень безопасности при десериализации
+   объектов с непроверенными данными. Это позволяет предотвратить возможную инъекцию
+   кода, позволяя разработчику использовать белый список классов для десериализации.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+// Преобразование всех объектов в into __PHP_Incomplete_Class
+$data = unserialize($foo, ["allowed_classes" => false]);
+
+// Преобразование всех объектов кроме MyClass и MyClass2 в __PHP_Incomplete_Class
+$data = unserialize($foo, ["allowed_classes" => ["MyClass", "MyClass2"]]);
+
+// Поведение по умолчанию принимает все классы (можно просто не задавать второй аргумент)
+$data = unserialize($foo, ["allowed_classes" => true]);
+]]>
+   </programlisting>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.intlchar">
+  <title><classname>IntlChar</classname></title>
+  
+  <para>
+   Новый класс <classname>IntlChar</classname> добавляет новую функциональность в
+   ICU. Класс определяет несколько статических методов и констант для манипулирования
+   символами Unicode.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+printf('%x', IntlChar::CODEPOINT_MAX);
+echo IntlChar::charName('@');
+var_dump(IntlChar::ispunct('!'));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+10ffff
+COMMERCIAL AT
+bool(true)
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Для использования это класса необходимо установить расширение 
+   <link linkend="book.intl">Intl</link>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.expectations">
+  <title>Ожидания</title>
+  
+  <para>
+   <link linkend="function.assert.expectations">Ожидания</link> являются улучшенной,
+   обратно совместимой версией старой функции <function>assert</function>.
+   Они позволяют делать предположения с нулевой стоимостью в промышленном коде и
+   предоставляют возвожность выбрасывать пользовательские исключения в случае 
+   провала ожидания.
+  </para>
+  
+  <para>
+   Вместе тем, что старое API поддерживается, <function>assert</function> теперь является
+   языковой конструкцией, принимающей первым аргументом выражения, а не только
+   строки для оценки или логические значения для проверки.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+ini_set('assert.exception', 1);
+
+class CustomError extends AssertionError {}
+
+assert(false, new CustomError('Some error message'));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Fatal error: Uncaught CustomError: Some error message
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Подробное описание этого функционала, а так же инструкции для его конфигурирования
+   для тестовых и промышленных сред, ситайте в секции
+   <link linkend="function.assert.expectations">Ожидания</link> раздела посвященному
+   <function>assert</function>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.group-use-declarations">
+  <title>Групповые декларации <literal>use</literal></title>
+  
+  <para>
+   Классы, функции и константы импортируемые из одного и того же &namespace;,
+   теперь можно группировать в одном операторе &use.namespace;.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// До PHP 7
+use some\namespace\ClassA;
+use some\namespace\ClassB;
+use some\namespace\ClassC as C;
+
+use function some\namespace\fn_a;
+use function some\namespace\fn_b;
+use function some\namespace\fn_c;
+
+use const some\namespace\ConstA;
+use const some\namespace\ConstB;
+use const some\namespace\ConstC;
+
+// PHP 7+
+use some\namespace\{ClassA, ClassB, ClassC as C};
+use function some\namespace\{fn_a, fn_b, fn_c};
+use const some\namespace\{ConstA, ConstB, ConstC};
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.generator-return-expressions">
+  <title>Выражение return в генераторах</title>
+  
+  <para>
+   Эта функциональность добавлена к генераторам, введенным в PHP 5.5.
+   Она позволяет использовать оператор <literal>return</literal> в генераторах в качестве
+   финального возвращаемого значение (возврат по ссылке не допустим). Это значение можно
+   извлечь с помощью нового метода <literal>Generator::getReturn()</literal>, которые можно 
+   использовать только после того, как генератор вернул все сгенерированные значение.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$gen = (function() {
+    yield 1;
+    yield 2;
+
+    return 3;
+})();
+
+foreach ($gen as $val) {
+    echo $val, PHP_EOL;
+}
+
+echo $gen->getReturn(), PHP_EOL;
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1
+2
+3
+]]>
+   </screen>
+  </informalexample>
+  
+  <para>
+   Возможность явно получать финальное значение генератора является очень полезной,
+   так как позволяет клиентскому коду, использующему генератор, получать и обработать
+   самое последнее значение генератора, после которого точно ничего больше не будет.
+   Это сильно проще, чем вынуждать разработчика проверять, последнее ли значение 
+   вернулось и как-то по особенному его обрабатывать.
+  </para>
+ </sect2>
+ <sect2 xml:id="migration70.new-features.generator-delegation">
+  <title>Делегация генератора</title>
+  
+  <para>
+   Теперь генератор может автоматически делегировать другому генератору, объекту класса
+   <classname>Traversable</classname> или массиву без необходимости писать в нем 
+   дополнительную обработку полученных значений. Достигается это с помощью
+   конструкции &yield.from;.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+function gen()
+{
+    yield 1;
+    yield 2;
+    yield from gen2();
+}
+
+function gen2()
+{
+    yield 3;
+    yield 4;
+}
+
+foreach (gen() as $val)
+{
+    echo $val, PHP_EOL;
+}
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1
+2
+3
+4
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.intdiv">
+  <title>Функция целочисленного деления <function>intdiv</function></title>
+  
+  <para>
+   Новая функция <function>intdiv</function> производит целочисленное деление
+   операндов и возвращает его результат.
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+var_dump(intdiv(10, 3));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+int(3)
+]]>
+   </screen>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.session-options">
+  <title>Опции сессий</title>
+  
+  <para>
+   Теперь <function>session_start</function> принимает массив опций, которые переопределят
+   <link linkend="session.configuration">конфигурационные директивы сессии</link>
+   установленные в php.ini.
+  </para>
+  
+  <para>
+   Также, опции были расширены включенной по умолчанию опцией
+   <link linkend="ini.session.lazy-write">session.lazy_write</link>, которая говорит PHP
+   о том, что файл сессии надо перезаписывать, только если изменились даные сессии, и
+   и опцией <literal>read_and_close</literal>, которую можно задать только через
+   <function>session_start</function> для того, чтобы PHP закрывал сессию сразу же как
+   прочитает ее данные и не вносил в нее каких либо изменений.
+  </para>
+  
+  <para>
+   К примеру, для задания
+   <link linkend="ini.session.cache-limiter">session.cache_limiter</link> равным
+   <literal>private</literal> и немедленному закрытию сессии после чтения ее данных:
+  </para>
+  
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+session_start([
+    'cache_limiter' => 'private',
+    'read_and_close' => true,
+]);
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.preg-repace-callback-array-function">
+  <title><function>preg_replace_callback_array</function></title>
+  
+  <para>
+   Новая функция <function>preg_replace_callback_array</function> позволяет писать более
+   чистый код, когда требуется использовать функцию
+   <function>preg_replace_callback</function>. До PHP 7, при необходимости обработать
+   разные регулярные выражения разными функциями, приходилось для каждой такой 
+   обработки писать отдельный вызов функции.
+  </para>
+  
+  <para>
+   Теперь же можно использовать одну функцию, передавая в нее ассоциативный массив,\ключами которого являются регулярные выражения, а значениями - функции
+   обратного вызова.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.csprng-functions">
+  <title>Функции <link linkend="book.csprng">CSPRNG</link></title>
+  
+  <para>
+   Были добавлены две новые кроссплатформенные  функции для генерации криптографически
+   безопасных строк и целых чисел: <function>random_bytes</function> и
+   <function>random_int</function>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.list-arrayaccess">
+  <title>
+   Теперь функция <function>list</function> всегда может раскрывать объекты 
+   реализующие <classname>ArrayAccess</classname>
+  </title>
+  
+  <para>
+   Ранее, функция <function>list</function> не гарантировала корректную обработку
+   объектов реализующих <classname>ArrayAccess</classname>.
+   Теперь это исправлено..
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration70.new-features.others">
+  <title>Прочие изменения</title>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Добавлена возможность обращения к методам и свойствам класса при клонировании,
+     т.е. <literal>(clone $foo)-&gt;bar()</literal>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
