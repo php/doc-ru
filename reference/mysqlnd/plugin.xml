@@ -1,0 +1,1464 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: cd09fab47b40563cb8b2316d817efc973d991713 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<chapter xml:id="mysqlnd.plugin" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>API для плагинов к встроенному драйверу MySQL</title>
+ <para>
+  API для плагинов к встроенному драйверу MySQL является особенностью встроенного
+  драйвера MySQL (<literal>mysqlnd</literal>). Плагины <literal>mysqlnd</literal>
+  работают на уровне между PHP-приложениями и сервером MySQL. Это похоже на работу
+  MySQL Proxy. Плагины <literal>mysqlnd</literal> могут реализовывать стандартные
+  задачи MySQL Proxy, такие как балансирование нагрузки, мониторинг и оптимизация
+  быстродействия. При этом, вследствие другой архитектуры и месторасположения,
+  плагины <literal>mysqlnd</literal>  не имеют некоторых недочетов MySQL Proxy. Например,
+  нет единой точки точки отказа, не требуется установка отдельного proxy-сервера и нет
+  необходимости в изучении нового языка программирования Lua.
+ </para>
+ <para>
+  Плагин <literal>mysqlnd</literal> можно рассматривать как расширение
+  <literal>mysqlnd</literal>. Плагины могут перехватывать большую часть функций
+  <literal>mysqlnd</literal>. Эти функции вызываются расширениями PHP, такими как
+  <literal>ext/mysql</literal>, <literal>ext/mysqli</literal> и <literal>PDO_MYSQL</literal>. 
+  В конечном счете, плагины <literal>mysqlnd</literal> могут перехватывать все запросы,
+  сделанные этими расширениями из клиентского приложения.
+ </para>
+ <para>
+  Внутренние вызовы функций <literal>mysqlnd</literal> также могут быть перехвачены или
+  заменены. Ограничения по работе с внутренней таблицей функций <literal>mysqlnd</literal>
+  отсутствуют. Возможно настроить все таким образом, что при вызове определенных функций
+  <literal>mysqlnd</literal> из расширений, использующих <literal>mysqlnd</literal>, этот
+  вызов будет перенаправляться в соответствующую функцию плагина
+  <literal>mysqlnd</literal>. Возможность манипулировать внутренней таблицей функций
+  <literal>mysqlnd</literal> дает плагинам максимум гибкости.
+ </para>
+ <para>
+  Плагины <literal>mysqlnd</literal> фактически являются расширениями PHP, написанными
+  на C и использующими API для плагинов <literal>mysqlnd</literal> (встроенном в драйвер
+  <literal>mysqlnd</literal>). Плагины могут быть полностью прозрачными для 
+  PHP-приложений. Изменять приложение не потребуется, поскольку плагины работают на
+  другом уровне. Плагины <literal>mysqlnd</literal> можно рассматривать
+  как работающие на уровень ниже <literal>mysqlnd</literal>.
+ </para>
+ <para>
+  Нижеуказанный список показывает несколько возможных
+  вариантов плагинов <literal>mysqlnd</literal>.
+ </para>
+ <itemizedlist>
+  <listitem>
+   <para>
+    Балансировка нагрузки
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Разделение чтения и записи. Примером является расширение
+      PECL/mysqlnd_ms (Master Slave). Это расширение разделяет
+      запросы на чтение и запись для настройки репликации.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Отказоустойчивость
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Равномерная загрузка, запросы на наименее загруженный сервер
+     </para>
+    </listitem>
+   </itemizedlist>
+  </listitem>
+  <listitem>
+   <para>
+    Мониторинг
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Логирование запросов
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Анализ запросов
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Аудит запросов. Примером является расширение
+      PECL/mysqlnd_sip (SQL Injection Protection, защита от 
+      SQL-инъекций). Это расширение анализирует запросы и
+      выполняет только подходящие под набор правил.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </listitem>
+  <listitem>
+   <para>
+    Производительность.
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Кеширование. Примером является расширение
+      PECL/mysqlnd_qc (Query Cache, кеширование запросов).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Ограничение ресурсов выделяемых запросу
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Шардинг. Примером является расширение PECL/mysqlnd_mc
+      (Multi Connect). Это расширение пытается разбить запрос
+      SELECT на n частей, используя SELECT ... LIMIT part_1,
+      SELECT LIMIT part_n. Оно отправляет запросы на
+      отдельные MySQL-сервера и собирает результат на клиенте.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </listitem>
+ </itemizedlist>
+ <para>
+  <emphasis role="bold">Доступные плагины к встроенному драйверу MySQL</emphasis>
+ </para>
+ <para>
+  Существует несколько уже доступных плагинов mysqlnd. Список включает:
+ </para>
+ <itemizedlist>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_mc</emphasis> - Multi
+    Connect plugin.
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_ms</emphasis> - Master 
+    Slave plugin.
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_qc</emphasis> - Query
+    Cache (кеширование запросов) plugin.
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_pscache</emphasis> -
+    Prepared Statement Handle Cache plugin (обработка
+    кеширования подготовленных запросов)
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_sip</emphasis> - SQL
+    Injection Protection plugin (защита от SQL-инъекций)
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    <emphasis role="bold">PECL/mysqlnd_uh</emphasis> - User 
+    Handler plugin (обработка пользователей)
+   </para>
+  </listitem>
+ </itemizedlist>
+ <section xml:id="mysqlnd.plugin.mysql-proxy">
+  <title>Сравнение плагинов mysqlnd с MySQL Proxy</title>
+  <para>
+   Плагины <literal>mysqlnd</literal> и MySQL Proxy - это разные
+   технологии, использующие разные подходы. Оба варианта
+   являются подходящими инструментами для решения
+   разнообразных стандартных задач, таких как балансировка
+   нагрузки, мониторинг и улучшение производительности.
+   Важным отличием является то, что MySQL Proxy работает со
+   всеми клиентами MySQL, тогда как плагины
+   <literal>mysqlnd</literal> - только для PHP-приложений.
+  </para>
+  <para>
+   Как расширение PHP, плагин <literal>mysqlnd</literal>
+   устанавливается на сервере приложений PHP вместе с
+   остальным PHP. MySQL Proxy может быть запущен на сервере
+   приложений PHP или же быть установлен на отдельной машине
+   для поддержки множественных серверов приложений PHP.
+  </para>
+  <para>
+   Установка MySQL Proxy на сервере приложений имеет два преимущества:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     Отсутствие единой точки отказа
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Легкость в масштабировании (горизонтальном или же клиентском)
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   MySQL Proxy (а также плагины <literal>mysqlnd</literal>)
+   могут легко решать проблемы, ради решения которых иначе
+   понадобились бы изменения в существующих приложениях.
+  </para>
+  <para>
+   Тем не менее, у MySQL Proxy есть некоторые недостатки:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     MySQL Proxy - это новый элемент и технология, которую потребуется изучить и установить
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     MySQL Proxy требует знания скриптового языка Lua
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   MySQL Proxy может быть изменен с помощью C и Lua. Lua 
+   является предпочтительным скриптовым языком для MySQL 
+   Proxy. Для большинства экспертов PHP, Lua является новым 
+   языком, который надо изучать. Плагин
+   <literal>mysqlnd</literal> может быть написан на C. Также
+   можно написать плагин на PHP, используя <link xlink:href="http://pecl.php.net/package/mysqlnd_uh">PECL/mysqlnd_uh</link>.
+  </para>
+  <para>
+   MySQL Proxy работает как демон - фоновый процесс. MySQL Proxy может вспомнить ранее
+   принятые решения, так как все состояние может быть сохранено. Однако плагины
+   <literal>mysqlnd</literal> привязаны к жизненному циклу PHP, базирующемуся на
+   запросах. Также MySQL Proxy может разделять единожды полученный результат между
+   разными серверами приложений. Плагины <literal>mysqlnd</literal> для решения этой
+   задачи должны использовать какое нибудь постоянное хранилище, для сохранения
+   результатов между запросами. Например для этого может быть использован другой демон,
+   такой как Memcache. Так что в этом случае MySQL Proxy работает явно лучше.
+  </para>
+  <para>
+   MySQL Proxy работает поверх сетевых протоколов. С помощью
+   MySQL Proxy вы можете разобрать и подвергнуть инженерному 
+   анализу протокол MySQL Client Server. Что либо поменять 
+   можно только манипулируя протоколом обмена. Если протокол
+   вдруг поменяется (что случается крайне редко), скрипты
+   MySQL Proxy будет необходимо переписывать.
+  </para>
+  <para>
+   Плагины <literal>Mysqlnd</literal> работают поверх C API,
+   который дублирует клиент <literal>libmysqlclient</literal> и
+   Connector/C API. Это C API по сути обычная обертка вокруг
+   протокола MySQL Client Server. Вы можете перехватывать все
+   вызовы C API. PHP использует C API, фактически вы можете
+   перехватывать вообще все вызовы PHP, без необходимости
+   програмировать на уровне протокола обмена.
+  </para>
+  <para>
+   <literal>Mysqlnd</literal> реализует протокол обмена. 
+   Плагины, таким образом, перехватывать, исследовать, менять
+   и даже целиком заменять коммуникационный протокол. Хотя
+   обычно ничего этого не требуется.
+  </para>
+  <para>
+   Плагины позволяют вам использовать два уровня (C API и 
+   протокол обмена), в этом они гораздо гибче, чем MySQL
+   Proxy. Если плагин <literal>mysqlnd</literal> реализован с
+   использованием C API, изменения протокола обмена не
+   потребуют изменения плагина.
+  </para>
+ </section>
+ <section xml:id="mysqlnd.plugin.obtaining">
+  <title>Получение API плагинов mysqlnd</title>
+  <para>
+   API плагинов <literal>mysqlnd</literal> является частью 
+   стандартного расширения <literal>ext/mysqlnd</literal>.
+   API плагинов <literal>mysqlnd</literal> начали разрабатывать 
+   в декабре 2009 года. Он разрабатывался как часть 
+   репозитороия исходных кодов PHP и, соответственно, 
+   доступен через публичный репозиторий Git либо через
+   загрузку снапшота исходных кодов.
+  </para>
+  <para>
+   В следующей таблице указаны соответствия версий PHP и
+   входящего в него <literal>mysqlnd</literal>.
+  </para>
+  <table>
+   <title>Версии mysqlnd, поставляющиеся с PHP</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Версия PHP</entry>
+      <entry>Версия MySQL Native Driver</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>5.3.0</entry>
+      <entry>5.0.5</entry>
+     </row>
+     <row>
+      <entry>5.3.1</entry>
+      <entry>5.0.5</entry>
+     </row>
+     <row>
+      <entry>5.3.2</entry>
+      <entry>5.0.7</entry>
+     </row>
+     <row>
+      <entry>5.3.3</entry>
+      <entry>5.0.7</entry>
+     </row>
+     <row>
+      <entry>5.3.4</entry>
+      <entry>5.0.7</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Разработчики плагинов могут узнать версию <literal>mysqlnd</literal> путем доступа к
+   <literal>MYSQLND_VERSION</literal>, являющейся строкой
+   формата <quote>mysqlnd 5.0.7-dev - 091210 - $Revision: 300535</quote>, или через
+   <literal>MYSQLND_VERSION_ID</literal>, являющейся числовым представлением версии,
+   например 50007. Расчитать версию из этого числа можно так:
+  </para>
+  <table>
+   <title>Таблица расчета MYSQLND_VERSION_ID </title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Версия (часть)</entry>
+      <entry>Пример</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>Major*10000</entry>
+      <entry>5*10000 = 50000</entry>
+     </row>
+     <row>
+      <entry>Minor*100</entry>
+      <entry>0*100 = 0</entry>
+     </row>
+     <row>
+      <entry>Patch</entry>
+      <entry>7 = 7</entry>
+     </row>
+     <row>
+      <entry>MYSQLND_VERSION_ID</entry>
+      <entry>50007</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   В процессе разработки, разработчики должны отслеживать версию
+   <literal>mysqlnd</literal> на предмет совместимости и версионного тестирования, так как
+   версии <literal>mysqlnd</literal>имеют свойство меняться и это
+   может случиться в процессе работы над плагином.
+  </para>
+ </section>
+ <section xml:id="mysqlnd.plugin.architecture">
+  <title>Архитектура плагинов MySQL Native Driver </title>
+  <para>
+   В этой секции рассмотрена архитектура плагинов
+   <literal>mysqlnd</literal>.
+  </para>
+  <para>
+   <emphasis role="bold">Поверхностный обзор MySQL Native Driver </emphasis>
+  </para>
+  <para>
+   Перед началом разработки плагинов
+   <literal>mysqlnd</literal>, полезно ознакомиться, как сам по
+   себе организован <literal>mysqlnd</literal>.
+   <literal>Mysqlnd</literal> состоит из следующих модулей:
+  </para>
+  <table>
+   <title>Организационная схема mysqlnd, помодульно</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry>Модули статистики</entry>
+      <entry>mysqlnd_statistics.c</entry>
+     </row>
+     <row>
+      <entry>СОединение</entry>
+      <entry>mysqlnd.c</entry>
+     </row>
+     <row>
+      <entry>Результирующий набор</entry>
+      <entry>mysqlnd_result.c</entry>
+     </row>
+     <row>
+      <entry>Метаданные результирующего набора</entry>
+      <entry>mysqlnd_result_meta.c</entry>
+     </row>
+     <row>
+      <entry>Оператор</entry>
+      <entry>mysqlnd_ps.c</entry>
+     </row>
+     <row>
+      <entry>Сеть</entry>
+      <entry>mysqlnd_net.c</entry>
+     </row>
+     <row>
+      <entry>Протокол обмена</entry>
+      <entry>mysqlnd_wireprotocol.c</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   <emphasis role="bold">Объектно ориентированная парадигма C</emphasis>
+  </para>
+  <para>
+   На уровне кода, <literal>mysqlnd</literal> использует
+   паттерн C для реализации объектно ориентированного подхода.
+  </para>
+  <para>
+   В C объекты описывают используя <literal>struct</literal>. 
+   Члены структуры являются свойствами объекта.
+   Члены структуры, указывающие на функции, являются 
+   методами.
+  </para>
+  <para>
+   В отличии от таких языков как C++ или Java, в C нет фиксированных правил наследования.
+   Однако существуют некоторые договоренности, которым необходимо следовать,
+   но это мы обсудим позже.
+  </para>
+  <para>
+   <emphasis role="bold">Жизненный цикл PHP</emphasis>
+  </para>
+  <para>
+   При рассмотрении жизненного цикла PHP существует два основных цикла:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Цикл старта и остановки движка PHP
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Цикл обработки запроса
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   При старте движка PHP, первым делом вызывается функция 
+   инициализации модулей (MINIT) для каждого зарегистрированного расширения. Это
+   позволяет каждому расширению установить переменные и выделить ресурсы,
+   которые будут задействованы все время жизни процесса
+   движка PHP. Когда движек PHP выключается, он вызывает
+   функцию остановки модулей (MSHUTDOWN) для каждого расширения.
+  </para>
+  <para>
+   На протяжении жизненного цикла движка PHP, он принимает некоторое количество
+   запросов. Каждый запрос порождает новый жизненный цикл. На каждый запрос, движек PHP 
+   вызывает функцию инициализации для каждого расширения. Расширение может предпринять
+   выставление переменных и выделение ресурсов, требуемых для обслуживания запроса.
+   По окончанию жизни запроса, движек вызывает функцию остановки запроса (RSHUTDOWN)
+   для каждого расштрения, что позволяет им произвести необходимые чистки.
+  </para>
+  <para>
+   <emphasis role="bold">Как работает плагин</emphasis>
+  </para>
+  <para>
+   Плагин <literal>mysqlnd</literal> работает перехватывая 
+   вызовы расширений, использующих <literal>mysqlnd</literal>,
+   к <literal>mysqlnd</literal>. Это достигается подменой 
+   таблицы функций <literal>mysqlnd</literal> на созданную 
+   плагином.
+  </para>
+  <para>
+   Следующий код демонстрирует замену таблицы функций
+   <literal>mysqlnd</literal>:
+  </para>
+  <programlisting>
+<![CDATA[
+/* хранилище оригинальной таблицы */
+struct st_mysqlnd_conn_methods org_methods;
+
+void minit_register_hooks(TSRMLS_D) {
+  /* активная таблица функций */
+  struct st_mysqlnd_conn_methods * current_methods
+    = mysqlnd_conn_get_methods();
+
+  /* бэкап оригинальной таблицы */
+  memcpy(&org_methods, current_methods,
+    sizeof(struct st_mysqlnd_conn_methods);
+
+  /* установка новых методов */
+  current_methods->query = MYSQLND_METHOD(my_conn_class, query);
+}
+]]>
+  </programlisting>
+  <para>
+   Манипуляция таблицей функций соединения необходимо 
+   заниматься на этапе инициализации модуля (MINIT). Таблица 
+   функций - это глобальный разделяемый ресурс. В 
+   многопоточном окружении, со сборкой TSRM,  манипуляция 
+   глобальным разделяемым ресурсом на этапе обработки
+   запроса приведет к конфликтам.
+  </para>
+  <note>
+   <para>
+    Не используйте какую либо логику связанную с 
+    фиксированным размером при манипуляции с таблицей
+    функций <literal>mysqlnd</literal>. Всегда добавляйте 
+    новые методы в конец таблицы, так как сама таблица может
+    в будущем в любой момент измениться.
+   </para>
+  </note>
+  <para>
+   <emphasis role="bold">Вызов родительских методов</emphasis>
+  </para>
+  <para>
+   Если записи оригинальной таблицы функций были сохранены,
+   то всегда остается возможность вызвать оригинальный метод 
+   - родительский.
+  </para>
+  <para>
+   В некоторых случаях, например для <literal>Connection::stmt_init()</literal>, жизненно
+   важно сначала вызвать родительский метод, и только потом делать
+   что либо в новом методе.
+  </para>
+  <programlisting>
+<![CDATA[
+MYSQLND_METHOD(my_conn_class, query)(MYSQLND *conn,
+  const char *query, unsigned int query_len TSRMLS_DC) {
+
+  php_printf("my_conn_class::query(query = %s)\n", query);
+
+  query = "SELECT 'query rewritten' FROM DUAL";
+  query_len = strlen(query);
+
+  return org_methods.query(conn, query, query_len); /* возврат с вызовом родителя */
+}
+]]>
+  </programlisting>
+  <para>
+   <emphasis role="bold">Расширение свойств</emphasis>
+  </para>
+  <para>
+   Объекты <literal>mysqlnd</literal> представлены как C struct.
+   Невозможно добавить члена в C struct во время исполнения.
+   Пользователи объектов <literal>mysqlnd</literal> не могут
+   просто добавить свойства объекту.
+  </para>
+  <para>
+   Произвольные данные (свойства) могут быть добавлены к
+   объекту <literal>mysqlnd</literal> с использованием 
+   соответствующей функции из семейства
+   <literal>mysqlnd_plugin_get_plugin_&lt;object&gt;_data()</literal>.
+   При размещении объекта <literal>mysqlnd</literal> 
+   резервируется место в конце объекта для удержания
+   <literal>void *</literal> указателя на произвольные данные.
+   <literal>mysqlnd</literal> резервирует место для одного
+   <literal>void *</literal> указателя на плагин.
+  </para>
+  <para>
+   В следующей таблице показано, как вычислить положение указателя для конкретного плагина:
+  </para>
+  <table>
+   <title>Расчет указателя для mysqlnd</title>
+   <tgroup cols="2">
+    <tbody>
+     <row>
+      <entry>Адрес памяти</entry>
+      <entry>Содержимое</entry>
+     </row>
+     <row>
+      <entry>0</entry>
+      <entry>Начало объекта mysqlnd (C struct)</entry>
+     </row>
+     <row>
+      <entry>n</entry>
+      <entry>Конец объекта mysqlnd (C struct)</entry>
+     </row>
+     <row>
+      <entry>n + (m x sizeof(void*))</entry>
+      <entry>void* для данных объекта плагина номер m</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Если вы планируете делать подкласс от одного из конструкторов объекта
+   <literal>mysqlnd</literal>, которые разрешены, имейте это в виду!
+  </para>
+  <para>
+   Следующий код демонстрирует расширение свойств:
+  </para>
+  <programlisting>
+<![CDATA[
+/* Любые данные, которые мы хотим добавить */
+typedef struct my_conn_properties {
+  unsigned long query_counter;
+} MY_CONN_PROPERTIES;
+
+/* идентификатор плагина */
+unsigned int my_plugin_id;
+
+void minit_register_hooks(TSRMLS_D) {
+  /* получаем уникальный идентификатор плагина */
+  my_plugin_id = mysqlnd_plugin_register();
+  /* snip - see Extending Connection: methods */
+}
+
+static MY_CONN_PROPERTIES** get_conn_properties(const MYSQLND *conn TSRMLS_DC) {
+  MY_CONN_PROPERTIES** props;
+  props = (MY_CONN_PROPERTIES**)mysqlnd_plugin_get_plugin_connection_data(
+    conn, my_plugin_id);
+  if (!props || !(*props)) {
+    *props = mnd_pecalloc(1, sizeof(MY_CONN_PROPERTIES), conn->persistent);
+    (*props)->query_counter = 0;
+  }
+  return props;
+}
+]]>
+  </programlisting>
+  <para>
+   Разработчик плагин отвечает за управление памятью данных плагина.
+  </para>
+  <para>
+   Рекомендуется использовать управление памятью <literal>mysqlnd</literal> для данных
+   плагина. Эти функции именуются используя такие соглашения: 
+   <literal>mnd_*loc()</literal>. Управление памятью <literal>mysqlnd</literal> имеет
+   ряд полезных свойств, таких как использование отладочного
+   модуля управления памятью в неотладочных сборках.
+  </para>
+  <table>
+   <title>Когда и как создавать подкласс</title>
+   <tgroup cols="4">
+    <tbody>
+     <row>
+      <entry></entry>
+      <entry>Когда создавать подкласс?</entry>
+      <entry>Каждый экземпляр имеет свою собственную таблицу функций?</entry>
+      <entry>Как создавать подкласс?</entry>
+     </row>
+     <row>
+      <entry>Срединение (MYSQLND)</entry>
+      <entry>MINIT</entry>
+      <entry>Нет</entry>
+      <entry>mysqlnd_conn_get_methods()</entry>
+     </row>
+     <row>
+      <entry>Результирующий набор (MYSQLND_RES)</entry>
+      <entry>MINIT or later</entry>
+      <entry>Да</entry>
+      <entry>mysqlnd_result_get_methods() или меодом объекта, 
+       манипулирующим таблицей функций</entry>
+     </row>
+     <row>
+      <entry>Результирующий набор (MYSQLND_RES_METADATA)</entry>
+      <entry>MINIT</entry>
+      <entry>Нет</entry>
+      <entry>mysqlnd_result_metadata_get_methods()</entry>
+     </row>
+     <row>
+      <entry>Оператор (MYSQLND_STMT)</entry>
+      <entry>MINIT</entry>
+      <entry>Нет</entry>
+      <entry>mysqlnd_stmt_get_methods()</entry>
+     </row>
+     <row>
+      <entry>Сеть (MYSQLND_NET)</entry>
+      <entry>MINIT или позже</entry>
+      <entry>Да</entry>
+      <entry>mysqlnd_net_get_methods() или меодом объекта, 
+       манипулирующим таблицей функций</entry>
+     </row>
+     <row>
+      <entry>Протокол обмена (MYSQLND_PROTOCOL)</entry>
+      <entry>MINIT или позже</entry>
+      <entry>Да</entry>
+      <entry>mysqlnd_protocol_get_methods() или меодом
+       объекта, манипулирующим таблицей функций</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Вы не должны манипулировать таблицей функций после 
+   MINIT, если это прямо не разрешено в таблице выше.
+  </para>
+  <para>
+   Некоторые классы содержат указатель на таблицу функций методов. Все экземпляры
+   подобных классов должны делить одну и ту же таблицу функций. Для того, что бы избежать 
+   хаоса, особенно в многопоточном окружении, управлять такими таблицами функций стоит
+   только во время MINIT.
+  </para>
+  <para>
+   Прочие классы используют копии глобально разделенных таблиц функций. Таблица функций
+   создается одновременно с объектом. Каждый объект использует свою таблицу. Это дает вам
+   две возможности: вы можете управлять  таблицей функций по умолчанию для объекта во
+   время MINIT, а также вы можете изменять методы объекта не затрагивая другие
+   экземпляры этого же класса.
+  </para>
+  <para>
+   Преимущество разделяемой таблицы функций в производительности, так как нет нужды
+   копировать таблицу функций отдельно для каждого объекта.
+  </para>
+  <table>
+   <title>Статус конструктора</title>
+   <tgroup cols="4">
+    <tbody>
+     <row>
+      <entry></entry>
+      <entry>Размещение, создание, сброс</entry>
+      <entry>Может быть изменено?</entry>
+      <entry>Вызывающий</entry>
+     </row>
+     <row>
+      <entry>Connection (MYSQLND)</entry>
+      <entry>mysqlnd_init()</entry>
+      <entry>Нет</entry>
+      <entry>mysqlnd_connect()</entry>
+     </row>
+     <row>
+      <entry>Результирующий набор (MYSQLND_RES)</entry>
+      <entry><para>
+       Размещение:
+       </para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          Connection::result_init()
+         </para>
+        </listitem>
+       </itemizedlist>
+       <para>
+        Сброс и повторная инициализация во время:
+       </para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          Result::use_result()
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Result::store_result
+         </para>
+        </listitem>
+       </itemizedlist></entry>
+      <entry>Да, но вызовите родителя!</entry>
+      <entry><itemizedlist>
+       <listitem>
+        <para>
+         Connection::list_fields()
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Statement::get_result()
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Statement::prepare() (Только метаданные)
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         Statement::resultMetaData()
+        </para>
+       </listitem>
+       </itemizedlist></entry>
+     </row>
+     <row>
+      <entry>Метаданные результирующего набора (MYSQLND_RES_METADATA)</entry>
+      <entry>Connection::result_meta_init()</entry>
+      <entry>Да, но вызовите родителя!</entry>
+      <entry>Result::read_result_metadata()</entry>
+     </row>
+     <row>
+      <entry>Оператор (MYSQLND_STMT)</entry>
+      <entry>Connection::stmt_init()</entry>
+      <entry>Да, но вызовите родителя!!</entry>
+      <entry>Connection::stmt_init()</entry>
+     </row>
+     <row>
+      <entry>Сеть (MYSQLND_NET)</entry>
+      <entry>mysqlnd_net_init()</entry>
+      <entry>Нет</entry>
+      <entry>Connection::init()</entry>
+     </row>
+     <row>
+      <entry>Протокол обмена (MYSQLND_PROTOCOL)</entry>
+      <entry>mysqlnd_protocol_init()</entry>
+      <entry>Нет</entry>
+      <entry>Connection::init()</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Настоятельно рекомендуется не заменять конструктор 
+   целиком Конструкторы производят выделение памяти.
+   Выделение памяти жизненно необходимо для API плагинов
+   <literal>mysqlnd</literal> и для логики объекта
+   <literal>mysqlnd</literal>. Если вам не страшны 
+   предупреждения и хотите сильно поменять конструктор, то
+   хотя бы вызовите родительский конструктор прежде, чем что либо делать.
+  </para>
+  <para>
+   Несмотря на все предупреждения, это может быть полезным для конструктора подкласса.
+   Конструкторы - отличное место для изменения таблицы функций для объектов, не 
+   использующих разделенную таблицу, таких как 
+   результирующий набор, сеть, протокол обмена.
+  </para>
+  <table>
+   <title>Статус уничтожения</title>
+   <tgroup cols="3">
+    <tbody>
+     <row>
+      <entry></entry>
+      <entry>Производный метод должен вызвать родительский?</entry>
+      <entry>Деструктор</entry>
+     </row>
+     <row>
+      <entry>Соединение</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>free_contents(), end_psession()</entry>
+     </row>
+     <row>
+      <entry>Результирующий набор</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>free_result()</entry>
+     </row>
+     <row>
+      <entry>Метаданные результирующего набора</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>free()</entry>
+     </row>
+     <row>
+      <entry>Оператор</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>dtor(), free_stmt_content()</entry>
+     </row>
+     <row>
+      <entry>Сеть</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>free()</entry>
+     </row>
+     <row>
+      <entry>Протокол обмена</entry>
+      <entry>да, после выполнения метода</entry>
+      <entry>free()</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Деструкторы являются подходящим местом, чтобы освободить ресуры занимаемые 
+   свойствами,
+   <literal>mysqlnd_plugin_get_plugin_<replaceable>&lt;object&gt;</replaceable>_data()</literal>.
+  </para>
+  <para>
+   Перечисленные деструкторы могут быть не совпадать с актуальными методами
+   <literal>mysqlnd</literal> для очистки самого объекта. Однако они являются самым лучшим
+   местом, куда вы можете вклиниться для очистки данных своего плагина. Так же как и
+   с конструкторами, вы можете полностью переопределить эти методы, но делать это не 
+   рекомендуется. Если вам необходимо вставить в каждый из перечисленных методов 
+   очистку данных своего плагина, то необходимо обеспечить запуск родительских
+   методов <literal>mysqlnd</literal>.
+  </para>
+  <para>
+   Рекомендованный метод для плагинов - выполнить код очистки данных плагина и
+   сразу же после этого вызывать родительский метод.
+  </para>
+  <caution>
+   <para>
+    В связи с ошибкой в PHP с 5.3.0 по 5.3.3, плагины не ассоциировали свои данные
+    с постоянными соединениями. Это происходило потому, что
+    <literal>ext/mysql</literal> и <literal>ext/mysqli</literal> не вызывали все
+    необходимые методы <literal>mysqlnd</literal> <literal>end_psession()</literal> и,
+    теоретически, это могло приводить к утечкам памяти в плагинах.
+    Эта ошибка исправлена в PHP 5.3.4.
+   </para>
+  </caution>
+ </section>
+ <section xml:id="mysqlnd.plugin.api">
+  <title>API плагинов mysqlnd</title>
+  <para>
+   API плагинов <literal>mysqlnd</literal> предоставляет следующие функции:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     mysqlnd_plugin_register()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_count()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_get_plugin_connection_data()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_get_plugin_result_data()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_get_plugin_stmt_data()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_get_plugin_net_data()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_plugin_get_plugin_protocol_data()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_conn_get_methods()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_result_get_methods()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_result_meta_get_methods()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_stmt_get_methods()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_net_get_methods()
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     mysqlnd_protocol_get_methods()
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Нет стандартных определений того, что такое плагин и как он работает.
+  </para>
+  <para>
+   Часто встречающиеся в плагинах компоненты:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Менеджер плагина
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     API плагина
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Сервисы приложения (или модули)
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     API сервисов приложения (или API модулей)
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Концепция плагина <literal>mysqlnd</literal> эксплуатирует эту функциональность и,
+   кроме того, радует нас открытой архитектурой.
+  </para>
+  <para>
+   <emphasis role="bold"> Нет запретов </emphasis>
+  </para>
+  <para>
+   Плагин имеет полный доступ ко всем внутренностям <literal>mysqlnd</literal>. 
+   Нет ограничений или запретов, связанных с безопасностью. Все что угодно можно
+   переписать для реализации дружественных или враждебных алгоритмов, так что 
+   рекомендуется ставить плагины только из доверенных источников.
+  </para>
+  <para>
+   Как обсуждалось выше, плагины могут свободно использовать указатели. Эти указатели
+   ничем не ограничены и могут указывать на данные другого плагина. Простейшая 
+   арифметическая операция позволит получить доступ к данным другого плагина.
+  </para>
+  <para>
+   Рекомендуется писать сотрудничающие плагины, которые могут работать сообща с другими
+   плагинами и всегда вызывать родительские методы. Плагины никогда не должны вести себя
+   враждебно к самому <literal>mysqlnd</literal>.
+  </para>
+  <table>
+   <title>Проблемы: пример сотрудничества и построения цепочки</title>
+   <tgroup cols="3">
+    <tbody>
+     <row>
+      <entry>Расширение</entry>
+      <entry>Указатель mysqlnd.query()</entry>
+      <entry>Стек вызова, если вызывается родитель</entry>
+     </row>
+     <row>
+      <entry>ext/mysqlnd</entry>
+      <entry>mysqlnd.query()</entry>
+      <entry>mysqlnd.query</entry>
+     </row>
+     <row>
+      <entry>ext/mysqlnd_cache</entry>
+      <entry>mysqlnd_cache.query()</entry>
+      <entry><orderedlist>
+       <listitem>
+        <para>
+         mysqlnd_cache.query()
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         mysqlnd.query
+        </para>
+       </listitem>
+       </orderedlist></entry>
+     </row>
+     <row>
+      <entry>ext/mysqlnd_monitor</entry>
+      <entry>mysqlnd_monitor.query()</entry>
+      <entry><orderedlist>
+       <listitem>
+        <para>
+         mysqlnd_monitor.query()
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         mysqlnd_cache.query()
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         mysqlnd.query
+        </para>
+       </listitem>
+       </orderedlist></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   В этом сценарии загружены плагины кеша(<literal>ext/mysqlnd_cache</literal>) и
+   мониторинга (<literal>ext/mysqlnd_monitor</literal>).
+   Оба наследуют класс <literal>Connection::query()</literal>. регистрация плагинов
+   происходит на этапе <literal>MINIT</literal> в соответствии с описанной
+   выше логикой. PHP, по умолчанию, вызывает расширения в алфавитном порядке.
+   Плагины не знают друг о друге и не накладывают каких либо зависимостей.
+  </para>
+  <para>
+   По умолчанию, плагины вызывают родительский метод query из своей, переопределенной,
+   версии этого метода.
+  </para>
+  <para>
+   <emphasis role="bold">Резюме по расширению PHP</emphasis>
+  </para>
+  <para>
+   Повторение пройденного материала на примере поведения плагина
+   <literal>ext/mysqlnd_plugin</literal>, использующего API плагинов
+   <literal>mysqlnd</literal> для PHP:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Любое приложение PHP, использующее MySQL пытается установить соединение по 
+     адресу 192.168.2.29
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Приложение использует одно из следующих расширений <literal>ext/mysql</literal>,
+     <literal>ext/mysqli</literal> или <literal>PDO_MYSQL</literal>. Все
+     три расширения используют <literal>mysqlnd</literal> для соединения с 192.168.2.29.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>Mysqlnd</literal> вызывает метод соединения, который наследуется
+     плагином <literal>ext/mysqlnd_plugin</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ext/mysqlnd_plugin</literal> вызывает зарегистрированный 
+     пользователем метод <literal>proxy::connect()</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Этот метод подменяет IP адрес соединения с 192.168.2.29
+     на 127.0.0.1 и возвращает установленное <literal>parent::connect()</literal> соединение.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ext/mysqlnd_plugin</literal> делает то же самое, что и
+     <literal>parent::connect(127.0.0.1)</literal> вызывая оригинальный метод
+     <literal>mysqlnd</literal> для соединения.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>ext/mysqlnd</literal> устанавливает соединение и возвращает его
+     <literal>ext/mysqlnd_plugin</literal>.
+     <literal>ext/mysqlnd_plugin</literal>, в свою очередь, передает его дальше.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Без разницы, какое расширение было использовано, оно все равно получит
+     соединение к 127.0.0.1. После этого, расширение возвращает это соединение
+     приложению. Круг замкнулся.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </section>
+ <section xml:id="mysqlnd.plugin.developing">
+  <title>Начинаем разработку плагина mysqlnd</title>
+  <para>
+   Важно помнить, что плагин <literal>mysqlnd</literal> сам по себе
+   является расширением PHP.
+  </para>
+  <para>
+   Следующий пример показывает базовую структуру функции MINIT,
+   использующуюся в типичном плагине <literal>mysqlnd</literal>:
+  </para>
+  <programlisting>
+<![CDATA[
+/* my_php_mysqlnd_plugin.c */
+
+ static PHP_MINIT_FUNCTION(mysqlnd_plugin) {
+  /* глобальные переменные, ini-настройки, ресурсы, классы */
+
+  /* регистрируем плагин mysqlnd */
+  mysqlnd_plugin_id = mysqlnd_plugin_register();
+
+  conn_m = mysqlnd_get_conn_methods();
+  memcpy(org_conn_m, conn_m,
+    sizeof(struct st_mysqlnd_conn_methods));
+
+  conn_m->query = MYSQLND_METHOD(mysqlnd_plugin_conn, query);
+  conn_m->connect = MYSQLND_METHOD(mysqlnd_plugin_conn, connect);
+}
+]]>
+  </programlisting>
+  <programlisting>
+<![CDATA[
+/* my_mysqlnd_plugin.c */
+
+ enum_func_status MYSQLND_METHOD(mysqlnd_plugin_conn, query)(/* ... */) {
+  /* ... */
+}
+enum_func_status MYSQLND_METHOD(mysqlnd_plugin_conn, connect)(/* ... */) {
+  /* ... */
+}
+]]>
+  </programlisting>
+  <para>
+   <emphasis role="bold">Анализ задачи: от C до пользовательского пространства</emphasis>
+  </para>
+  <programlisting>
+<![CDATA[
+ class proxy extends mysqlnd_plugin_connection {
+  public function connect($host, ...) { .. }
+}
+mysqlnd_plugin_set_conn_proxy(new proxy());
+]]>
+  </programlisting>
+  <para>
+   Процесс:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     PHP: пользователь регистрирует функцию обратного вызова плагина
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     PHP: пользователь вызывает PHP MySQL API для соединения с MySQL
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     C: ext/*mysql* вызывает метод mysqlnd
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     C: mysqlnd обрывается в ext/mysqlnd_plugin
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     C: ext/mysqlnd_plugin
+     <orderedlist>
+      <listitem>
+       <para>
+        Вызывает пользовательскую функцию обратного вызова
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Или оригинальный метьод <literal>mysqlnd</literal>, если она не задана
+       </para>
+      </listitem>
+     </orderedlist>
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   Вам необходимо выполнить следующие действия:
+  </para>
+  <orderedlist>
+   <listitem>
+    <para>
+     Создайте в С класс "mysqlnd_plugin_connection"
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Примите и зарегистрируйте прокси объект через
+     "mysqlnd_plugin_set_conn_proxy()"
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Вызовите прокси методы пространства пользователя из C (оптимизация -
+     zend_interfaces.h)
+    </para>
+   </listitem>
+  </orderedlist>
+  <para>
+   Методы объекта пространства пользователя должны быть вызваны с помощью
+   <literal>call_user_function()</literal> или на уровень ниже, через
+   <literal>zend_call_method()</literal>.
+  </para>
+  <para>
+   <emphasis role="bold"> Оптимизация: вызывайте методы из С с помощью
+    zend_call_method </emphasis>
+  </para>
+  <para>
+   Следующий кусок кода демонстрирует прототип функции
+   <literal>zend_call_method</literal>, взятый из
+   <filename>zend_interfaces.h</filename>.
+  </para>
+  <programlisting>
+<![CDATA[
+ ZEND_API zval* zend_call_method(
+  zval **object_pp, zend_class_entry *obj_ce,
+  zend_function **fn_proxy, char *function_name,
+  int function_name_len, zval **retval_ptr_ptr,
+  int param_count, zval* arg1, zval* arg2 TSRMLS_DC
+);
+]]>
+  </programlisting>
+  <para>
+   Zend API поддерживает только два аргумента. Вам может понадобиться больше. К примеру:
+  </para>
+  <programlisting>
+<![CDATA[
+ enum_func_status (*func_mysqlnd_conn__connect)(
+  MYSQLND *conn, const char *host,
+  const char * user, const char * passwd,
+  unsigned int passwd_len, const char * db,
+  unsigned int db_len, unsigned int port,
+  const char * socket, unsigned int mysql_flags TSRMLS_DC
+);
+]]>
+  </programlisting>
+  <para>
+   Для обхода этой проблемы вам необходимо сделать копию
+   <literal>zend_call_method()</literal> и добавить необходимые параметры.
+   Вы можете сделать это создав набор макросов
+   <literal>MY_ZEND_CALL_METHOD_WRAPPER</literal>.
+  </para>
+  <para>
+   <emphasis role="bold">Обращение к пространству пользователя  PHP</emphasis>
+  </para>
+  <para>
+   Этот кусок кода демонстрирует оптимизированный метод вызова функций пространства
+   пользователя из С:
+  </para>
+  <programlisting>
+<![CDATA[ 
+/* my_mysqlnd_plugin.c */
+
+MYSQLND_METHOD(my_conn_class,connect)(
+  MYSQLND *conn, const char *host /* ... */ TSRMLS_DC) {
+  enum_func_status ret = FAIL;
+  zval * global_user_conn_proxy = fetch_userspace_proxy();
+  if (global_user_conn_proxy) {
+    /* вызов прокси пространства пользователя */
+    ret = MY_ZEND_CALL_METHOD_WRAPPER(global_user_conn_proxy, host, /*...*/);
+  } else {
+    /* или оригинальный метод mysqlnd = ничего не делать, быть прозрачным */
+    ret = org_methods.connect(conn, host, user, passwd,
+          passwd_len, db, db_len, port,
+          socket, mysql_flags TSRMLS_CC);
+  }
+  return ret;
+}
+]]>
+  </programlisting>
+  <para>
+   <emphasis role="bold"> Обращение к пространству пользователя: простые аргументы
+   </emphasis>
+  </para>
+  <programlisting>
+<![CDATA[
+/* my_mysqlnd_plugin.c */
+
+ MYSQLND_METHOD(my_conn_class,connect)(
+  /* ... */, const char *host, /* ...*/) {
+  /* ... */
+  if (global_user_conn_proxy) {
+    /* ... */
+    zval* zv_host;
+    MAKE_STD_ZVAL(zv_host);
+    ZVAL_STRING(zv_host, host, 1);
+    MY_ZEND_CALL_METHOD_WRAPPER(global_user_conn_proxy, zv_retval, zv_host /*, ...*/);
+    zval_ptr_dtor(&zv_host);
+    /* ... */
+  }
+  /* ... */
+}
+]]>
+  </programlisting>
+  <para>
+   <emphasis role="bold"> Обращение к пространству пользователя: структуры как аргументы
+   </emphasis>
+  </para>
+  <programlisting>
+<![CDATA[
+/* my_mysqlnd_plugin.c */
+
+MYSQLND_METHOD(my_conn_class, connect)(
+  MYSQLND *conn, /* ...*/) {
+  /* ... */
+  if (global_user_conn_proxy) {
+    /* ... */
+    zval* zv_conn;
+    ZEND_REGISTER_RESOURCE(zv_conn, (void *)conn, le_mysqlnd_plugin_conn);
+    MY_ZEND_CALL_METHOD_WRAPPER(global_user_conn_proxy, zv_retval, zv_conn, zv_host /*, ...*/);
+    zval_ptr_dtor(&zv_conn);
+    /* ... */
+  }
+  /* ... */
+}
+]]>
+  </programlisting>
+  <para>
+   первый аргумент многих методов <literal>mysqlnd</literal> - это "объекты" С. 
+   К примеру, первый аргумент метода connect() является указателем на 
+   <literal>MYSQLND</literal>. Структура MYSQLND представляет собой
+   объект соединения <literal>mysqlnd</literal>.
+  </para>
+  <para>
+   Указатель на объект соединения <literal>mysqlnd</literal> можно сравнить со стандартным
+   обработчиком файлового ввода/вывода. Так же как и он, объект соединения
+   <literal>mysqlnd</literal> должен быть связан с пространством пользователя с
+   использованием PHP типом "resource".
+  </para>
+  <para>
+   <emphasis role="bold"> Из C в пространство пользователя и обратно</emphasis>
+  </para>
+  <programlisting>
+<![CDATA[
+ class proxy extends mysqlnd_plugin_connection {
+  public function connect($conn, $host, ...) {
+    /* до внедрения */
+    printf("Connecting to host = '%s'\n", $host);
+    debug_print_backtrace();
+    return parent::connect($conn);
+  }
+
+  public function query($conn, $query) {
+    /* после внедрения */
+    $ret = parent::query($conn, $query);
+    printf("Query = '%s'\n", $query);
+    return $ret;
+  }
+}
+mysqlnd_plugin_set_conn_proxy(new proxy());
+]]>
+  </programlisting>
+  <para>
+   Пользователи PHP должны иметь возможность вызывать родительские
+   реализации переопределенных методов.
+  </para>
+  <para>
+   В результате наследования возможно "уточнить" только выбранные
+   методы и вы можете выбрать, когда выполнять ваш код, до или после родительского.
+  </para>
+  <para>
+   <emphasis role="bold"> Встроенный класс:
+    mysqlnd_plugin_connection::connect() </emphasis>
+  </para>
+  <programlisting>
+<![CDATA[
+/*  my_mysqlnd_plugin_classes.c */
+
+ PHP_METHOD("mysqlnd_plugin_connection", connect) {
+  /* ... упрощенный! ... */
+  zval* mysqlnd_rsrc;
+  MYSQLND* conn;
+  char* host; int host_len;
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs",
+    &mysqlnd_rsrc, &host, &host_len) == FAILURE) {
+    RETURN_NULL();
+  }
+  ZEND_FETCH_RESOURCE(conn, MYSQLND* conn, &mysqlnd_rsrc, -1,
+    "Mysqlnd Connection", le_mysqlnd_plugin_conn);
+  if (PASS == org_methods.connect(conn, host, /* simplified! */ TSRMLS_CC))
+    RETVAL_TRUE;
+  else
+    RETVAL_FALSE;
+}
+]]>
+  </programlisting>
+ </section>
+</chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
