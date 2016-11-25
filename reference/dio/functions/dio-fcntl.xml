@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 59971c18eadd8bfd2d3eda4fc37ed870876dd354 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="function.dio-fcntl" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>dio_fcntl</refname>
+  <refpurpose>Вызывает функцию библиотеки C fcntl для файлового дескриптора</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>mixed</type><methodname>dio_fcntl</methodname>
+   <methodparam><type>resource</type><parameter>fd</parameter></methodparam>
+   <methodparam><type>int</type><parameter>cmd</parameter></methodparam>
+   <methodparam choice="opt"><type>mixed</type><parameter>args</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция <function>dio_fcntl</function> вызывает указанную в
+   <parameter>cmd</parameter> команду для <parameter>fd</parameter>. 
+   Если команда требует дополнительных аргументов, то они задаются в
+   <parameter>args</parameter>.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>fd</parameter></term>
+     <listitem>
+      <para>
+       Файловый дескриптор, полученный из <function>dio_open</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>cmd</parameter></term>
+     <listitem>
+      <para>
+       Может быть одной из следующих операций:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <constant>F_SETLK</constant> - Установка или сброс блокировки. Если
+          блокировка кем либо удерживается, <function>dio_fcntl</function> вернет -1.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>F_SETLKW</constant> - похожа на <constant>F_SETLK</constant>,
+          но если блокировка кем либо удерживается, 
+          <function>dio_fcntl</function> будет ждать ее освобождения.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>F_GETLK</constant> - <function>dio_fcntl</function> 
+          вернет ассоциативный массив (как описано ниже) если кто либо мешает
+          получить блокировку. Если никто не мешает, то ключ "type" будет содержать
+          <constant>F_UNLCK</constant>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>F_DUPFD</constant> - ищет наименьший доступный файловый
+          дескриптор, больше или равный <parameter>args</parameter> и возвращает его.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>F_SETFL</constant> - устанавливает файловому дескриптору флаги
+          заданные в <parameter>args</parameter>, такие как
+          <constant>O_APPEND</constant>, <constant>O_NONBLOCK</constant> или 
+          <constant>O_ASYNC</constant>. Для использования <constant>O_ASYNC</constant> 
+          вам необходимо воспользоваться расширением <link linkend="ref.pcntl">PCNTL</link>.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>args</parameter></term>
+     <listitem>
+      <para>
+       <parameter>args</parameter> - это ассоциативный массив , если 
+       <parameter>cmd</parameter> установлен в <constant>F_SETLK</constant> или
+       <constant>F_SETLLW</constant>, со следующими ключами:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>start</literal> - смещение на начало блокировки
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>length</literal> - размер заблокированной зоны. 0 означает конец файла
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>whence</literal> - зависит от l_start: может быть
+          <constant>SEEK_SET</constant>,
+          <constant>SEEK_END</constant> и <constant>SEEK_CUR</constant>
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>type</literal> - тип блокировки: может быть
+          <constant>F_RDLCK</constant> (чтение),
+          <constant>F_WRLCK</constant> (запись) или
+          <constant>F_UNLCK</constant> (блокировки нет)
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает результат вызова C-функции.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Установка и снятие блокировки</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$fd = dio_open('/dev/ttyS0', O_RDWR);
+
+if (dio_fcntl($fd, F_SETLK, Array("type"=>F_WRLCK)) == -1) {
+   // дескриптор файла заблокирован
+   echo "Нельзя снять блокировку, она удерживается другим процессом.";
+} else {
+   echo "Блокировка успешно установлена/снята";
+}
+
+dio_close($fd);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  &note.no-windows;
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
