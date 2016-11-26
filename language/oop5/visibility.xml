@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: bf5cfd002c8254cd62183a2f609e0aecccbdc860 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 7de45151c2d8777bf1b99863f36666a7d23cc5b0 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
  <sect1 xml:id="language.oop5.visibility" xmlns="http://docbook.org/ns/docbook">
   <title>Область видимости</title>
   <para>
-   Область видимости свойства или метода может быть определена путем
+   Область видимости свойства, метода или константы (начиная c PHP 7.1.0) может быть определена путем
    использования следующих ключевых слов в объявлении: <emphasis>public</emphasis>,
    <emphasis>protected</emphasis> или <emphasis>private</emphasis>. Доступ к свойствам 
    и методам класса, объявленным как public (общедоступный), разрешен отовсюду.
@@ -191,10 +191,76 @@ $myFoo->test(); // Bar::testPrivate
    </para>
   </sect2>
   
+  <sect2 xml:id="language.oop5.visiblity-constants">
+   <title>Область видимости констант</title>
+   <para>
+    Начиная с PHP 7.1.0, константы класса могут быть объявлены как public, private или
+    protected. Константы, объявленные без указания области видимости,
+    определяются как public.
+   </para>
+   <para>
+    <example>
+     <title>Объявление констант, начиная с PHP 7.1.0</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+/**
+ * Объявление класса MyClass
+ */
+class MyClass
+{
+    // Объявление публичной (public) константы
+    public const MY_PUBLIC = 'public';
+
+    // Объявление защищенной (protected) константы
+    protected const MY_PROTECTED = 'protected';
+
+    // Объявление приватной (private) константы
+    private const MY_PRIVATE = 'private';
+
+    public function foo()
+    {
+        echo self::MY_PUBLIC;
+        echo self::MY_PROTECTED;
+        echo self::MY_PRIVATE;
+    }
+}
+
+$myclass = new MyClass();
+MyClass::MY_PUBLIC; // Работает
+MyClass::MY_PROTECTED; // Fatal Error
+MyClass::MY_PRIVATE; // Fatal Error
+$myclass->foo(); // Выводятся public, protected и private константы
+
+
+/**
+ * Объявление класса MyClass2
+ */
+class MyClass2 extends MyClass
+{
+    // Публичный метод
+    function foo2()
+    {
+        echo self::MY_PUBLIC;
+        echo self::MY_PROTECTED;
+        echo self::MY_PRIVATE; // Fatal Error
+    }
+}
+
+$myclass2 = new MyClass2;
+echo MyClass2::MY_PUBLIC; // Работает
+$myclass2->foo2(); // Выводятся public и protected константы, private в наследуемом классе недоступны
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </sect2>
+
   <sect2 xml:id="language.oop5.visibility-other-objects">
    <title>Видимость из других объектов</title>
    <para>
-    Объекты, которые имеют общий тип(наследуются от одного класса), имеют доступ к элементам с модификаторами
+    Объекты, которые имеют общий тип (наследуются от одного класса), имеют доступ к элементам с модификаторами
     private и protected друг друга, даже если не являются одним и тем же экземпляром.
     Это объясняется тем, что реализация видимости элементов известна внутри этих объектов.
    </para>
