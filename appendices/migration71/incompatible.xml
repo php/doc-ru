@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e198cc321ab5628f017e568e8edd3fc8bfb7a3cc Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 0e434ad322089805462e5ff6fbfac00cb16dfc0b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <sect1 xml:id="migration71.incompatible">
@@ -192,8 +192,8 @@ Warning: Cannot call func_num_args() dynamically in %s on line %d
   
   <para>
    Теперь деструкторы никогда не вызываются, если было вызвано исключение в
-   конструкторе объекта. Раньше, это поведение зависило от того, была ли ссылка на
-   объект вне конструктора (например в бэктрейсе исключения).
+   конструкторе объекта. Раньше это поведение зависело от того, была ли ссылка на
+   объект вне конструктора (например, в бэктрейсе исключения).
   </para>
  </sect2>
  
@@ -205,7 +205,7 @@ Warning: Cannot call func_num_args() dynamically in %s on line %d
   <para>
    Теперь, <function>call_user_func</function> всегда вызывает предупреждение,
    если вызывается функция, ожидающая ссылки в качестве параметров. 
-   Ранее это зависило от того, был ли вызов полностью определенным.
+   Ранее это зависело от того, был ли вызов полностью определенным.
   </para>
   <para>
    Дополнительно, <function>call_user_func</function> и
@@ -474,6 +474,58 @@ new DateTime() == new DateTime();
   </para>
  </sect2>
  
+ <sect2 xml:id="migration71.incompatible.json">
+  <title>Кодирование и декодирование JSON</title>
+  <para>
+   INI-настройка  <parameter>serialize_precision</parameter> определяет точность сериализации
+   при кодировании значений типа <type>float</type>.
+  </para>
+  <para>
+   Теперь декодирование пустого ключа приводит к появлению свойства с пустым именем,
+   раньше имя свойства приводилось к значению <literal>_empty_</literal>.
+   
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+var_dump(json_decode(json_encode(['' => 1])));
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+object(stdClass)#1 (1) {
+  [""]=>
+  int(1)
+}
+]]>
+    </screen>
+   </informalexample>
+  </para>
+  <para>
+   При передаче флага <constant>JSON_UNESCAPED_UNICODE</constant> в функцию
+   <function>json_encode</function>, последовательности U+2028 и U+2029 будут экранированы.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration71.incompatible.mbstring">
+  <title>
+   Изменение в семантике параметров <function>mb_ereg</function> и <function>mb_eregi</function>
+  </title>
+  <para>
+   Третий параметр функций <function>mb_ereg</function> и
+   <function>mb_eregi</function>  (<parameter>regs</parameter>) теперь устанавливается
+   равным пустому массиву, если небыло найдено совпадений. Ранее, в таких случаях,
+   он оставался неизменным.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration71.incompatible.openssl">
+  <title>Удалена поддержка потока sslv2</title>
+  <para>
+   Поддержка потока sslv2 в OpenSSL удалена.
+  </para>
+ </sect2>
 </sect1>
 
 <!-- Keep this comment at the end of the file
