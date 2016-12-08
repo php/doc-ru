@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: b27f1ae1bf9b77b4140b5b8d0c993f91835ef535 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id="memcache.addserver" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>Memcache::addServer</refname>
+  <refpurpose>Добавляет сервер memcached в пул соединений</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>Memcache::addServer</methodname>
+   <methodparam><type>string</type><parameter>host</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>port</parameter><initializer>11211</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>persistent</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>weight</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>timeout</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>retry_interval</parameter></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>status</parameter></methodparam>
+   <methodparam choice="opt"><type>callable</type><parameter>failure_callback</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>timeoutms</parameter></methodparam>
+  </methodsynopsis>
+  
+  <para>
+   <function>Memcache::addServer</function> добваляет сервер в пул соединений. 
+   Вы также можеет использовать функцию <function>memcache_add_server</function>.
+  </para> 
+  
+  <para>
+   При использовании этого метода (в отличии от <function>Memcache::connect</function> и 
+   <function>Memcache::pconnect</function>) сетевое соединение не будет установлено
+   пока в нем не возникнет необходимость. В связи с этим можно не опосаться просадки
+   производительности при добавлении большого количества серверов в пул, так
+   как, возможно, они никогда не будут использованы.
+  </para>
+  
+  <para>
+   Потребность в обеспечении отказоустойчивости может возникнуть на любом этапе в любом методе и 
+   если при этом будут доступен хотя бы один сервер из пула - пользователь не получит какого либо
+   оповещения. Любой тип ошибки сокета или сервера Memcached (за исключением ошибки переполнения 
+   памяти) может включить протокол обеспечения отказоустойчивости. Обычные клиентские ошибки,
+   такие как добавление существующего ключа, не вызовут подобного поведения.
+  </para>
+  
+  <note>
+   <para>
+    Эта функция была добавлена в Memcache version 2.0.0.
+   </para>
+  </note>
+  
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>host</parameter></term>
+     <listitem>
+      <para>
+       Указывает на хост с запущеным сервисом memcached. Этот параметр можно задать в
+       виде <literal>unix:///path/to/memcached.sock</literal> для использования сокетов Unix, но
+       в таком случае будет необходимо установить параметр <parameter>port</parameter> равным
+       <literal>0</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>port</parameter></term>
+     <listitem>
+      <para>
+       Указывает порт, по которому доступен сервис memcached. Необходимо установить равным
+       <literal>0</literal> если используются сокеты Unix.
+      </para>
+      <para>
+       Пожалуйста обратите внимание: <parameter>port</parameter> по умолчанию равен
+       <link linkend="ini.memcache.default-port">memcache.default_port</link>.
+       Поэтому рекомендуется всегда указывать номер порта при использовании этого метода.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>persistent</parameter></term>
+     <listitem>
+      <para>
+       Использовать ли постоянное соединение. По умолчанию &true;.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>weight</parameter></term>
+     <listitem>
+      <para>
+       "Вес" сервера. Необходимое количество созданных пакетов данных для этого сервера, что,
+       в свою очередь, определяет вероятность его выбора. Вероятность
+       расчитывается относительно общего веса всех серверов.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>timeout</parameter></term>
+     <listitem>
+      <para>
+       Таймаут в секундах для установления соединения с сервером.
+       Дважды подумайте предже чем устанавливать это значение больше чем 1.
+       Это может нивелировать всю пользу от использования memcached.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>retry_interval</parameter></term>
+     <listitem>
+      <para>
+       Управляет частотой проверки доступности отказавшего сервера. По умолчанию 15 секунд.
+       Если задать значение "-1", то попыток проверить джоступность сервера предприниматься не будет.
+       Ни этот параметр, ни <parameter>persistent</parameter> не оказывают никакого влияния
+       если расшерение загружено динамически функцией <function>dl</function>.
+      </para>
+      <para>
+       Каждая провалившаяся структура соединения имеет собственное значение таймаута
+       и, пока он не пройдет, структура будет пропущена, после чего попробует
+       выбрать другой сервер для обслуживания запроса. После того
+       как время соединения истекло, оно либо удачно пересоединится, либо будет
+       помечено провалившимся и будет ждать еще <parameter>retry_interval</parameter> секунд.
+       Обычно эффект заключается в том, что каждый процесс веб-сервера будет
+       ожидать <parameter>retry_interval</parameter> секунд при обслуживании запроса.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>status</parameter></term>
+     <listitem>
+      <para>
+       Определяет, должен ли сервер помечен флагом "активный". Установка этого
+       параметра в &false; и <parameter>retry_interval</parameter> в -1 позволит
+       сохранить сервер в пуле, но не использовать его в алгоритме распределения ключей.
+       Запрос к этому серверу либо запустит механизм обеспечения отказоустойчивости, либо
+       сразу же прервется с ошибкой, в зависимости от настройки
+       <parameter>memcache.allow_failover</parameter>. По умолчанию равно &true;, 
+       что означает, что сервер активен и готов принимать запросы.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>failure_callback</parameter></term>
+     <listitem>
+      <para>
+       Позволяет пользователю задать функцию обратного вызова, которая запустится
+       в случае какой либо ошибки. Эта функция будет вызвана раньше, чем будет запущен
+       механизм обеспечения отказоустойчивости. Функция принимает два параметра, имя
+       хоста и порт отказавшего сервера.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>timeoutms</parameter></term>
+     <listitem>
+      <para>
+       
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <warning>
+   <para>
+    Когда значение <parameter>port</parameter> не указано, этот метод использует значение, указанное в директиве PHP ini
+    <link linkend="ini.memcache.default-port">memcache.default_port</link>
+    Если это значение было изменено где-нибудь еще в Вашем приложении, то это может дать непредсказуемые результаты. По этой причине лучше всегда явно указывать порт при вызове метода.
+   </para>
+  </warning>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+ <para>
+  <example>
+   <title>Пример использования <function>Memcache::addServer</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+/* OO API */
+
+$memcache = new Memcache;
+$memcache->addServer('memcache_host', 11211);
+$memcache->addServer('memcache_host2', 11211);
+
+/* процедурный API */
+
+$memcache_obj = memcache_connect('memcache_host', 11211);
+memcache_add_server($memcache_obj, 'memcache_host2', 11211);
+
+?>
+]]>
+    </programlisting>
+   </example>
+ </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>Memcache::connect</function></member>
+    <member><function>Memcache::pconnect</function></member>
+    <member><function>Memcache::close</function></member>
+    <member><function>Memcache::setServerParams</function></member>
+    <member><function>Memcache::getServerStatus</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
