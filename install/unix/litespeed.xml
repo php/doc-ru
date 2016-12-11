@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 445962cfde047efd759cfc37006a5c5864864ef5 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<sect1 xml:id="install.unix.litespeed" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Веб-сервер LiteSpeed/OpenLiteSpeed на системах Unix</title>
+ 
+ <para>
+  LiteSpeed PHP - это оптимизированная сборка PHP для работы с продуктами LiteSpeed
+  через LiteSpeed SAPI. LSPHP запускается как самостоятельный процесс и имеет отдельный
+  исполняемый файл, который используется как обычный исполняемый файл командной
+  строки для запуска скриптов PHP.
+ </para>
+ 
+ <para>
+  LSAPI - это очень сильно оптимизированное API, позволяющее LiteSpeed взаимодействовать 
+  с веб-движками других производителей. Он имеет тот же протокол, что и FCGI, но гораздо
+  более эффективный.
+ </para>
+ 
+ <para>
+  Эта документация содержит инструкции по установке и конфигурированию
+  PHP с LSAPI для веб-серверов LiteSpeed (LSWS) )и OpenLiteSpeed (OLS).
+ </para>
+ 
+ <para>
+  Это руководство предполагает, что LSWS или OLS установлены по стандартным путям
+  и со стандартными флагами. Директория установки по умолчанию для обоих
+  веб-серверов - /usr/local/lsws, и оба они запускаются из ее подкаталога bin.
+ </para>
+ 
+ <para>
+  Обратите внимание, что во всей документации номера версий заменены на
+  <literal>x</literal>, что говорит о том, что эта документация останется актуальной
+  и в будущем. Так что смело можете заменить эти символы на номер вашей версии.
+ </para>
+ 
+ <orderedlist>
+  <listitem>
+   <para>
+    Для получения и установки LSWS и OLS посетите сайт LiteSpeed Web Server wiki -
+    <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:installation">инструкции по установке</link>
+    или OpenLiteSpeed wiki  - 
+    <link xlink:href="http://open.litespeedtech.com/mediawiki/index.php/Help:Install">инструкции по установке</link>.
+   </para>
+  </listitem>
+  
+  <listitem>
+   <para>
+    Загрузите и распакуйте исходные коды PHP:
+   </para>
+   
+   <informalexample xml:id="install.unix.litespeed.extract.php">
+    <screen>
+<![CDATA[
+mkdir /home/php
+cd /home/php
+wget http://us1.php.net/get/php-x.x.x.tar.gz/from/this/mirror
+tar -zxvf php-x.x.x.tar.gz
+cd php-x.x.x
+]]>
+    </screen>
+   </informalexample>
+  </listitem>
+  
+  <listitem>
+   <para>
+    Сконфигурируйте и соберите PHP. На этом этапе можно воспользоваться дополнительными
+    опциями для более тонкой настройки PHP и добавления необходимых расширений.
+    Запустите ./configure --help для получения списка возможных опций.
+    В нижеследующем примере используются стандартные рекомендованные настройки
+    для LSWS:
+   </para>
+   
+   <informalexample xml:id="install.unix.litespeed.build.php">
+    <screen>
+<![CDATA[
+./configure ... '--with-litespeed'
+make
+sudo make install
+]]>
+    </screen>
+   </informalexample>
+  </listitem>
+  
+  <listitem>
+   <para>
+    Проверьте установку LSPHP
+   </para>
+   
+   <para>
+    Один из самых простых путей для проверки корректности установки PHP - это 
+    запустить следующие команды:
+   </para>
+   
+   <informalexample>
+    <screen>
+<![CDATA[
+cd /usr/local/lsws/fcgi-bin/
+./lsphp5 -v
+]]>
+    </screen>
+   </informalexample>
+   
+   <para>
+    Должна появиться информация о сборке PHP:
+   </para>
+   
+   <informalexample>
+    <screen>
+<![CDATA[
+PHP 5.6.17 (litespeed) (built: Mar 22 2016 11:34:19)
+Copyright (c) 1997-2014 The PHP Group
+Zend Engine v2.6.0, Copyright (c) 1998-2015 Zend Technologies
+]]>
+    </screen>
+   </informalexample>
+   
+   <para>
+    Обратите внимание на слово <literal>litespeed</literal>. Это означает, что PHP собран
+    с поддержкой LSAPI.
+   </para>
+  </listitem>
+ </orderedlist>
+ 
+ <para>
+  После выполненения описанных выше шагов, LSWS/OLS должны запускаться с 
+  поддержкой PHP как расширения SAPI. Существует достаточно много дополнительных
+  опций конфигурации для настройки работы LSWS / OLS c PHP. Более подробно почитать
+  о них можно на сайте LiteSpeed wiki в разделе
+  <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:php">PHP</link>.
+ </para>
+ 
+ <para>
+  Использование LSPHP из командной строки:
+ </para>
+ 
+ <para>
+  Режим командной строки LSPHP(LSAPI + PHP) используется для обработки скриптов PHP
+  запущенных на удаленном сервере без необходимости держать на нем веб-сервер.
+  Это используется для обработки скриптов PHP на локальном веб-сервере (раздельно).
+  Такая установка удобна для удобства масштабирования, так как нагрузка по
+  обработке скриптов ложится на удаленный сервер.
+ </para>
+ 
+ <para>
+  Запустите lsphp из командной строки на удаленном сервере:
+  LSPHP - является исполняемым файлом, может быть запущен вручную и привязан
+  к IPv4, IPv6 или сокету Unix с помощью опции -b socket_address.
+ </para>
+ 
+ <para>
+  Пример:
+ </para>
+ 
+ <para>
+  Привязка LSPHP к порту 3000 на всех интерфейсах IPv4 и IPv6:
+ </para>
+ 
+ <informalexample>
+  <screen>
+<![CDATA[
+/path/to/lsphp -b [::]:3000
+]]>
+  </screen>
+ </informalexample>
+ 
+ <para>
+  Привязка LSPHP к 3000 всех интерфейсов IPv4:
+ </para>
+ 
+ <informalexample>
+  <screen>
+<![CDATA[
+/path/to/lsphp -b *:3000
+]]>
+  </screen>
+ </informalexample>
+ 
+ <para>
+  Привязка LSPHP к 192.168.0.2:3000:
+ </para>
+ 
+ <informalexample>
+  <screen>
+<![CDATA[
+/path/to/lsphp -b 192.168.0.2:3000
+]]>
+  </screen>
+ </informalexample>
+ 
+ <para>
+  Привязка LSPHP к сокету Unix <literal>/tmp/lsphp_manual.sock</literal> с
+  возможностью получать из него запросы:
+ </para>
+ 
+ <informalexample>
+  <screen>
+<![CDATA[
+/path/to/lsphp -b /tmp/lsphp_manual.sock
+]]>
+  </screen>
+ </informalexample>
+ 
+ <para>
+  Перед запуском LSPHP можно выставить переменные окружения:
+ </para>
+ 
+ <informalexample>
+  <screen>
+<![CDATA[
+PHP_LSAPI_MAX_REQUESTS=500 PHP_LSAPI_CHILDREN=35 /path/to/lsphp -b IP_address:port
+]]>
+  </screen>
+ </informalexample>
+ 
+ <para>
+  На данный момент LiteSpeed PHP можно использовать с веб-серверами LiteSpeed, 
+  OpenLiteSpeed и Apache mod_lsapi. Подробности о конфигурации сервера читайте на 
+  страницах
+  <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:php:configuring-lsws-for-php">LiteSpeed Web Server</link> 
+  и <link xlink:href="http://open.litespeedtech.com/mediawiki/index.php/Help:Default_PHP_Settings">OpenLiteSpeed</link>.
+ </para>
+ 
+ <para>
+  LSPHP можно установить различными способами.
+ </para>
+ 
+ <para>
+  CentOS:
+  На CentOS, LSPHP может быть установлен из репозиториев LiteSpeed или Remi, используя
+  <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:php:rpm">RPM</link>.
+ </para>
+ 
+ <para>
+  Debian:
+  На Debian, LSPHP можно поставить из репозитория LiteSpeed, исполльзуя
+  <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:php:apt">apt</link>.
+ </para>
+ 
+ <para>
+  cPanel:
+  Для установки с cPanel и LSWS/OLS используя EasyApache 4, читайте соответствующую <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:cpanel:easyapache4-config">страницу wiki</link>.
+ </para>
+ 
+ <para>
+  Plesk:
+  Plesk можно использовать с LSPHP на CentOS, CloudLinux, Debian и Ubuntu.
+  Более подробно описано в <link xlink:href="https://www.litespeedtech.com/support/wiki/doku.php/litespeed_wiki:plesk:php_guide">wiki</link>
+ </para>
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
