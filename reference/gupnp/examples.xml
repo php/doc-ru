@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 8b6d169424ff189bb563ef4c3f35f8adff3f42c5 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<chapter xml:id="gupnp.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <section xml:id="gupnp.browsing">
+  <title>Просмотр устройств и сервисов</title>
+  <para>
+   Этот пример демонстрирует как получить информацию обо всех устройствах
+   и сервисах. В нем мы запускаем бесконечный цикл (используя CLI) и, если
+   будут найдены устройства или сервисы, будем вызывать функцию обратного
+   вызова.
+  </para>
+  <para>
+   <example>
+    <title>Поиск всех устройств и сервисов UPnP.</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* Callback-функция для устройств */
+function device_proxy_available_cb($proxy, $arg)
+{
+    $info = gupnp_device_info_get($proxy);
+
+    $type = $info['device_type'];
+    $location = $info['location'];
+
+    printf("Device available:\n");
+    printf("\ttype:     %s\n", $type);
+    printf("\tlocation: %s\n", $location);
+}
+
+/* Callback-функция для  сервисов */
+function service_proxy_available_cb($proxy, $arg)
+{
+    $info = gupnp_service_info_get($proxy);
+
+    $type = $info['service_type'];
+    $location = $info['location'];
+
+    printf("Service available:\n");
+    printf("\ttype:     %s\n", $type);
+    printf("\tlocation: %s\n", $location);
+}
+
+/* Создаем контекст UPnP */
+$context = gupnp_context_new();
+if (!$context) {
+    printf("Error creating the GUPnP context\n");
+    exit(-1);
+}
+
+/* Нам интересно ВСЁ!!! */
+$cp = gupnp_control_point_new($context, "ssdp:all");
+
+/* Устанавливаем callback-функции */
+gupnp_control_point_callback_set($cp, 
+    GUPNP_SIGNAL_DEVICE_PROXY_AVAILABLE, 'device_proxy_available_cb');
+gupnp_control_point_callback_set($cp, 
+    GUPNP_SIGNAL_SERVICE_PROXY_AVAILABLE, 'service_proxy_available_cb');
+
+/* Запускаем поиск (бесконечный цикл, нажмите Ctrl-C для выхода) */
+gupnp_control_point_browse_start($cp);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </section>  <!-- xml:id=gupnp.browsing -->
+ 
+ <section xml:id="gupnp.binary-light">
+  <title>Реализация устройства BinaryLight</title>
+  <para>
+   Это пример устройства/сервиса UPnP, реализующего устройство BinaryLight 
+   и сервис SwitchPower для эмуляции выключателя света.
+  </para>
+  <para>
+   Пользовательский интерфейс сделан максимально простым для демонстрации
+   базовых концепций и методов.
+  </para>
+  <para>
+   <example>
+    <title>реализация сервера управления освещением</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/* SetTarget */
+function set_target_cb($service, $action, $arg)
+{
+    /* Получаем новое целевое значение */
+    $target = gupnp_service_action_get($action, 'NewTargetValue', GUPNP_TYPE_BOOLEAN);
+
+    /* Если новая цель не соответствует текущему состоянию, изменить состояние и послать 
+        уведомление о том, что статус изменился. */
+    if ($target != $GLOBALS['status']) {
+        $GLOBALS['status'] = $target;
+        gupnp_service_notify($service, 'Status', GUPNP_TYPE_BOOLEAN, $GLOBALS['status']);
+        printf("The light is now %s.\n", $GLOBALS['status'] ? "on" : "off");
+    }
+
+    /* Вернуть коиенту статус успеха */
+    gupnp_service_action_return($action);
+}
+
+/* GetTarget */
+function get_target_cb($service, $action, $arg)
+{
+    gupnp_service_action_set($action, 'RetTargetValue', GUPNP_TYPE_BOOLEAN, $GLOBALS['status']);
+    gupnp_service_action_return($action);
+}
+
+/* GetStatus */
+function get_status_cb($service, $action, $arg)
+{
+    gupnp_service_action_set($action, 'ResultStatus', GUPNP_TYPE_BOOLEAN, $GLOBALS['status']);
+    gupnp_service_action_return($action);
+}
+
+/* По умолчанию свет выключен */
+$GLOBALS['status'] = false;
+printf("The light is now %s.\n", $GLOBALS['status'] ? "on" : "off");
+
+/* Создаем контекст UPnP */
+$context = gupnp_context_new();
+if (!$context) {
+    printf("Error creating the GUPnP context\n");
+    exit(-1);
+}
+
+/* Директория, содержащая файлы описания устройства и сервиса */
+gupnp_context_host_path($context, "./web", "");
+
+/* Создаем корневое устройство */
+$location = "/BinaryLight.xml";
+$dev = gupnp_root_device_new($context, $location);
+gupnp_root_device_set_available($dev, true);
+
+/* Получение сервиса переключения из корневого устройства */
+$service_type = "urn:schemas-upnp-org:service:SwitchPower:1";
+$service = gupnp_device_info_get_service($dev, $service_type);
+if (!$service) {
+    die("Cannot get SwitchPower1 service\n");
+}
+
+/* Устанавливаем callback для GetStatus */
+gupnp_device_action_callback_set($service, GUPNP_SIGNAL_ACTION_INVOKED, "GetStatus", 
+    "get_status_cb", "action data, GetStatus");
+
+/* Устанавливаем callback для GetTarget */
+gupnp_device_action_callback_set($service, GUPNP_SIGNAL_ACTION_INVOKED, "GetTarget", 
+    "get_target_cb", "action data, GetTarget");
+
+/* Устанавливаем callback для SetTarget */
+gupnp_device_action_callback_set($service, GUPNP_SIGNAL_ACTION_INVOKED, "SetTarget", 
+    "set_target_cb", "action data, SetTarget");
+
+/* Запускаем главный цикл */
+gupnp_root_device_start($dev);
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>Реализация клиента управления освещением</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+function service_proxy_available_cb($proxy, $arg)
+{
+    $mode = $arg['mode'];
+
+    printf("Set subscribed\n");
+    gupnp_service_proxy_set_subscribed($proxy, true);
+
+    /* Добавляем оповещение при изменении статуса */
+    if (!gupnp_service_proxy_add_notify($proxy, "Status", 
+            GUPNP_TYPE_BOOLEAN, "status_changed_cb", NULL)) {
+        printf("Failed to add notify\n");
+    }
+    
+    if ($mode == 'TOGGLE') {
+        /* При переключении для начала выясняем текущий статус */
+        $target = gupnp_service_proxy_action_get($proxy, 'GetStatus', 'ResultStatus', GUPNP_TYPE_BOOLEAN);
+
+        /* А потом меняем его */
+        $target = ! $target;
+    } else {
+        /* Режим - это логическое значение */
+        $target = ($mode == 'ON') ? true : false;
+    }
+
+    /* Устанавливаем цель */
+    if (!gupnp_service_proxy_action_set($proxy, 'SetTarget', 'NewTargetValue', $target, GUPNP_TYPE_BOOLEAN)) {
+        printf("Cannot set switch\n");
+    } else {
+        printf("Set switch to %s.\n", $target ? "on" : "off");
+    }
+    
+    /* Останавливаем просмотр */
+    gupnp_control_point_browse_stop($arg['cp']);
+}
+
+function status_changed_cb($variable, $value, $arg)
+{
+    printf("Status has been changed\n");
+    printf("\tvariable name: %s\n", $variable);
+    printf("\tvalue: %s\n", (int)$value);
+    printf("\n");
+}
+
+/* Разбираем аргументы командной строки */
+if (count($argv) != 2) {
+    printf("Usage: light-client.php [on|off|toggle]\n");
+    exit(-1);
+}
+
+if ($argv[1] == "on") {
+    $mode = 'ON';
+} elseif ($argv[1] == "off") {
+    $mode = 'OFF';
+} elseif ($argv[1] == "toggle") {
+    $mode = 'TOGGLE';
+} else {
+    usage ();
+    exit(-1);
+}
+
+/* Создаем контекст UPnP */
+$context = gupnp_context_new();
+if (!$context) {
+    printf("Error creating the GUPnP context\n");
+    exit(-1);
+}
+
+/* Создаем контрольную точку, ищем сервис SwitchPower */
+$cp = gupnp_control_point_new ($context,
+        "urn:schemas-upnp-org:service:SwitchPower:1");
+
+/* Соединяемся с callback-функцией поиска сервиса */
+$cb = "service_proxy_available_cb";
+$arg = array('mode' => $mode, 'cp' => $cp);
+gupnp_control_point_callback_set($cp, GUPNP_SIGNAL_SERVICE_PROXY_AVAILABLE, $cb, $arg);
+
+/* Начинаем просмотр */
+gupnp_control_point_browse_start($cp);
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </section>  <!-- xml:id=gupnp.browsing -->
+ 
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
