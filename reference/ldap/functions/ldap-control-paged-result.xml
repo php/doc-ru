@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 2033dd681b752d9861fe2dbc9e1a8cf412b4f358 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<refentry xml:id='function.ldap-control-paged-result'
+xmlns="http://docbook.org/ns/docbook"
+xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>ldap_control_paged_result</refname>
+  <refpurpose>Послать серверу LDAP данные для использования постраничного извлечения результата</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>ldap_control_paged_result</methodname>
+   <methodparam><type>resource</type><parameter>link</parameter></methodparam>
+   <methodparam><type>int</type><parameter>pagesize</parameter></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>iscritical</parameter><initializer>false</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>cookie</parameter><initializer>""</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Разрешает работу с LDAP в постраничном режиме, путем отправки желаемых 
+   настроек (размер страницы, куки и т.д.)
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>link</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор соединения LDAP, возвращенный <function>ldap_connect</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>pagesize</parameter></term>
+     <listitem>
+      <para>
+       Количество записей на страницу.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>iscritical</parameter></term>
+     <listitem>
+      <para>
+       Определяет, является ли постраничный режим критичным или нет.
+       Если &true; и если сервер не поддерживает постраничную работу, 
+       поиск вернет пустой результат.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>cookie</parameter></term>
+     <listitem>
+      <para>
+       непрозрачная структура, посылаемая сервером
+       (<function>ldap_control_paged_result_response</function>).
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   Пример ниже демонстрирует извлечение первой страницы результата поиска
+   с использованием размера страницы равного одной записи.
+   <example>
+    <title>Постраничная работа с LDAP</title>
+    <programlisting role="php">
+<![CDATA[
+     <?php
+     // $ds - идентификатор соединения (смотри ldap_connect)
+     ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3);
+
+     $dn        = 'ou=example,dc=org';
+     $filter    = '(|(sn=Doe*)(givenname=John*))';
+     $justthese = array('ou', 'sn', 'givenname', 'mail');
+
+     // разрешаем постраничную работу с размером страницы равному одной записи.
+     ldap_control_paged_result($ds, 1);
+
+     $sr = ldap_search($ds, $dn, $filter, $justthese);
+
+     $info = ldap_get_entries($ds, $sr);
+
+     echo $info['count'] . ' записей возвращено' . PHP_EOL;
+     ]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Пример ниже демонстрирует извлечение первой страницы результата поиска
+   с использованием размера страницы равного ста записям.
+   <example>
+    <title>Постраничная работа с LDAP</title>
+    <programlisting role="php">
+<![CDATA[
+     <?php
+     // $ds - идентификатор соединения (смотри ldap_connect)
+     ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3);
+
+     $dn        = 'ou=example,dc=org';
+     $filter    = '(|(sn=Doe*)(givenname=John*))';
+     $justthese = array('ou', 'sn', 'givenname', 'mail');
+
+     // разрешаем постраничную работу с размером страницы равному ста записям.
+     $pageSize = 100;
+
+     $cookie = '';
+     do {
+         ldap_control_paged_result($ds, $pageSize, true, $cookie);
+
+         $result  = ldap_search($ds, $dn, $filter, $justthese);
+         $entries = ldap_get_entries($ds, $result);
+             
+         foreach ($entries as $e) {
+             echo $e['dn'] . PHP_EOL;
+         }
+
+         ldap_control_paged_result_response($ds, $result, $cookie);
+       
+     } while($cookie !== null && $cookie != '');
+     ]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Постраничный режим появился в версии протокола LDAPv3.
+   </para>
+  </note>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>ldap_control_paged_result_response</function></member>
+    <member><link xlink:href="&url.rfc;2696">RFC2696 : Управляющее расширение LDAP для простых 
+     манипуляций постранично возвращаемым результатом</link></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
