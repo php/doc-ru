@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0e434ad322089805462e5ff6fbfac00cb16dfc0b Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e9f72c4399dc23a74f080645a860ca5ca39881fd Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <sect1 xml:id="migration71.incompatible">
@@ -326,6 +326,16 @@ array(2) {
   </para>
  </sect2>
  
+ <sect2 xml:id="migration71.incompatible.unserialize">
+  <title>Параметр $options функции unserialize()</title>
+   <para>
+    Теперь элемент <literal>allowed_classes</literal> параметра $options функции
+    <function>unserialize</function> строго типизирован, т.е если передать
+    значение с типом отличным от <type>array</type> и <type>boolean</type>,
+    то unserialize() вернет &false; и вызовет ошибку уровня <constant>E_WARNING</constant>.
+   </para>
+ </sect2>
+ 
  <sect2 xml:id="migration71.incompatible.datetime-microseconds">
   <title>Конструктор DateTime использует микросекунды</title>
   <para>
@@ -471,6 +481,27 @@ new DateTime() == new DateTime();
    зацикленные ссылки при сериализации будет выбрасывать исключение 
    <classname>Error</classname> вместо вызова фатальной ошибки если отсутствует
    поддержка glob.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration71.incompatible.lexical-names">
+  <title>Лексически связанные переменные не могут переиспользовать имена</title>
+  
+  <para>
+   Переменные привязанные к <link linkend="functions.anonymous">замыканию</link>
+   через конструкцию <literal>use</literal>, не могут использовать те же имена, что и
+   любые &link.superglobals;, <varname>$this</varname> или параметры. К примеру,
+   все приведенные функции вызовут фатальную ошибку:
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$f = function () use ($_SERVER) {};
+$f = function () use ($this) {};
+$f = function ($param) use ($param) {};
+]]>
+    </programlisting>
+   </informalexample>
   </para>
  </sect2>
  
