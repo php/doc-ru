@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 4d81bf20250c93fdfb7b114c5d8abe13f311fba4 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="function.imap-createmailbox" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>imap_createmailbox</refname>
+  <refpurpose>Создать новый почтовый ящик</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>imap_createmailbox</methodname>
+   <methodparam><type>resource</type><parameter>imap_stream</parameter></methodparam>
+   <methodparam><type>string</type><parameter>mailbox</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Создает новый почтовый ящик, указанный в <parameter>mailbox</parameter>. 
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    &imap.imap-stream.description;
+    <varlistentry>
+     <term><parameter>mailbox</parameter></term>
+     <listitem>
+      <para>
+       Имя почтового ящика. Более подробно смотри <function>imap_open</function>.
+       Имена почтовых ящиков, содержащих интернациональные символы должны быть
+       закодированы с помощью <function>imap_utf7_encode</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>imap_createmailbox</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mbox = imap_open("{imap.example.org}", "username", "password", OP_HALFOPEN)
+     or die("can't connect: " . imap_last_error());
+
+$name1 = "phpnewbox";
+$name2 = imap_utf7_encode("phpnewböx"); // phpnewb&w7Y-x
+
+$newname = $name1;
+
+echo "Newname will be '$name1'<br />\n";
+
+// теперь создадим новый ящик "phptestbox" в вашем входящем каталоге,
+// проверим его статус и удалим, чтобы вернуть ваш каталог к первоначальному
+// состоянию
+
+if (@imap_createmailbox($mbox, imap_utf7_encode("{imap.example.org}INBOX.$newname"))) {
+    $status = @imap_status($mbox, "{imap.example.org}INBOX.$newname", SA_ALL);
+    if ($status) {
+        echo "ваш новый почтовый ящик называется '$name1' и имеет следующий статус:<br />\n";
+        echo "Сообщений:           " . $status->messages    . "<br />\n";
+        echo "Новых:                 " . $status->recent      . "<br />\n";
+        echo "Непрочитанных:     " . $status->unseen      . "<br />\n";
+        echo "Следующий UID:    " . $status->uidnext     . "<br />\n";
+        echo "Корректность UID:" . $status->uidvalidity . "<br />\n";
+
+        if (imap_renamemailbox($mbox, "{imap.example.org}INBOX.$newname", "{imap.example.org}INBOX.$name2")) {
+            echo "переименуем новый ящик из '$name1' в '$name2'<br />\n";
+            $newname = $name2;
+        } else {
+            echo "вызов imap_renamemailbox для нового ящика закончился ошибкой: " . imap_last_error() . "<br />\n";
+        }
+    } else {
+        echo "вызов imap_status для нового ящика закончился ошибкой: " . imap_last_error() . "<br />\n";
+    }
+
+    if (@imap_deletemailbox($mbox, "{imap.example.org}INBOX.$newname")) {
+        echo "new mailbox removed to restore initial state<br />\n";
+    } else {
+        echo "imap_deletemailbox on new mailbox failed: " . implode("<br />\n", imap_errors()) . "<br />\n";
+    }
+
+} else {
+    echo "невозможно создать новый почтовый ящик: " . implode("<br />\n", imap_errors()) . "<br />\n";
+}
+
+imap_close($mbox);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>imap_renamemailbox</function></member>
+    <member><function>imap_deletemailbox</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

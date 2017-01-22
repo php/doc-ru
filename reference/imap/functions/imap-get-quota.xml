@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="function.imap-get-quota" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>imap_get_quota</refname>
+  <refpurpose>Получить настройку уровня квоты и статистику использования почтовых ящиков</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>imap_get_quota</methodname>
+   <methodparam><type>resource</type><parameter>imap_stream</parameter></methodparam>
+   <methodparam><type>string</type><parameter>quota_root</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает настройку уровня квоты и статистику использования почтовых ящиков.
+  </para>
+  <para>
+   Версия данной функции для использования обычными пользователями,
+   не администраторами - <function>imap_get_quotaroot</function>.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    &imap.imap-stream.description;
+    <varlistentry>
+     <term><parameter>quota_root</parameter></term>
+     <listitem>
+      <para>
+       <parameter>quota_root</parameter> должно соответствовать формату
+       <literal>user.name</literal>, где name - имя ящика, информация по которому нужна.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Ворвзращает ассоативный массив целых чисел с ключами "limit" и "usage".
+   Число с ключем "limit" определяет максимальный допустимый размер ящика.
+   Число с ключем "usage" определяет текущий уровень использования.
+   В случае ошибки вернет &false;.
+  </para>
+  <para>
+   Начиная с PHP 4.3 и выше, функция более точно соответствует стандарту,
+   описанному в <link xlink:href="&url.rfc;2087">RFC2087</link>.
+   Массив возвращаемых значение изменен для поддержки неограниценного
+   количества возвращаемых ресурсов (т.е. сообщений или подпапок), где каждый
+   именованный ресурс будет представлен индивидуальным массивом. Каждый элемент
+   массива будет содержать другой массив к ключами "limit" и "usage".
+  </para>
+  <para>
+   Для обеспечения обратной совместимости, оригинальный метод доступа все еще
+   доступен, хотя предполагается это поправить.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>imap_get_quota</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mbox = imap_open("{imap.example.org}", "mailadmin", "password", OP_HALFOPEN)
+      or die("can't connect: " . imap_last_error());
+
+$quota_value = imap_get_quota($mbox, "user.kalowsky");
+if (is_array($quota_value)) {
+    echo "Usage level is: " . $quota_value['usage'];
+    echo "Limit level is: " . $quota_value['limit'];
+}
+
+imap_close($mbox);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования <function>imap_get_quota</function> в PHP 4.3 и выше</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mbox = imap_open("{imap.example.org}", "mailadmin", "password", OP_HALFOPEN)
+      or die("can't connect: " . imap_last_error());
+
+$quota_values = imap_get_quota($mbox, "user.kalowsky");
+if (is_array($quota_values)) {
+   $storage = $quota_values['STORAGE'];
+   echo "STORAGE usage level is: " .  $storage['usage'];
+   echo "STORAGE limit level is: " .  $storage['limit'];
+
+   $message = $quota_values['MESSAGE'];
+   echo "MESSAGE usage level is: " .  $message['usage'];
+   echo "MESSAGE limit is: " .  $message['limit'];
+
+   /* ...  */
+}
+
+imap_close($mbox);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <para>
+   Эта функция доступна только при успользовании библиотеки c-client2000
+   или новее.
+  </para>
+  <para>
+   Заданный поток <parameter>imap_stream</parameter> должен быть открыт
+   под административным пользователем.
+  </para>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>imap_open</function></member>
+    <member><function>imap_set_quota</function></member>
+    <member><function>imap_get_quotaroot</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
