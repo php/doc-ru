@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="function.pcntl-waitpid" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>pcntl_waitpid</refname>
+  <refpurpose>Ожидает или возвращает статус порожденного дочернего процесса</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>int</type><methodname>pcntl_waitpid</methodname>
+   <methodparam><type>int</type><parameter>pid</parameter></methodparam>
+   <methodparam><type>int</type><parameter role="reference">status</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>options</parameter><initializer>0</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция ожидания приостанавливает выполнение текущего процесса до тех пор,
+   пока дочерний процесс, указанный в аргументе <parameter>pid</parameter>,
+   не завершится или пока не будет получен сигнал
+   который завершает текущий процесс или вызывает функцию обработки сигнала.
+  </para>
+  <para>
+   Если дочений процесс, указанный в аргументе <parameter>pid</parameter>,
+   уже завершился ко времени вызова
+   (так называемые "зомби" процессы), функция незамедлительно вернёт управление.
+   Любые системные ресурсы используемые дочерним процессом будут освобождены.
+   Обратитесь к вашей системному рукодводству (man) waitpid(2) для уточнения
+   специфики работы waitpid в вашей системе.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>pid</parameter></term>
+     <listitem>
+      <para>
+       Аргумент <parameter>pid</parameter> может принимать одно из следующих
+       значений:
+       <table>
+        <title>возможные значения аргумента <parameter>pid</parameter></title>
+        <tgroup cols="2">
+         <tbody>
+          <row>
+           <entry><literal>&lt; -1</literal></entry>
+           <entry>
+            ожидать любой родительский процесс, у которого значение
+            идентификатор группы процессов (group ID)
+            равно модулую значения аргумента |<parameter>pid</parameter>|.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>-1</literal></entry>
+           <entry>
+            ожидать любой дочерний процесс; это такое же поведение, что и
+            у функции wait.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>0</literal></entry>
+           <entry>
+            ожидать любой дочерний процесс, идентификатор группы процессов (group ID)
+            которого равен идентификатору текущего процесса.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>&gt; 0</literal></entry>
+           <entry>
+            ожидать дочерний процесс ID которого равен <parameter>pid</parameter>.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
+      </para>
+      <note>
+       <para>
+        Указание <literal>-1</literal> в качестве <parameter>pid</parameter> -
+        это аналог функции <function>pcntl_wait</function>
+        (минус <parameter>options</parameter>).
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>status</parameter></term>
+     <listitem>
+      <para>
+       <function>pcntl_waitpid</function> разместит информацию о статусе
+       по ссылке в аргументе <parameter>status</parameter>, который может
+       быть передан в слудующие функции:
+       <function>pcntl_wifexited</function>,
+       <function>pcntl_wifstopped</function>,
+       <function>pcntl_wifsignaled</function>,
+       <function>pcntl_wexitstatus</function>,
+       <function>pcntl_wtermsig</function> и
+       <function>pcntl_wstopsig</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>options</parameter></term>
+     <listitem>
+      <para>
+       Значение аргумента <parameter>options</parameter> - это битовая маска,
+       которая может принимать значение ноль или более путем логического объединения следующих констант:
+       <table>
+        <title>Возможные значения для <parameter>options</parameter></title>
+        <tgroup cols="2">
+         <tbody>
+          <row>
+           <entry><literal>WNOHANG</literal></entry>
+           <entry>
+            Незамедлительно вернуть управление, если ни один из дочерних процессов не завершен
+           </entry>
+          </row>
+          <row>
+           <entry><literal>WUNTRACED</literal></entry>
+           <entry>
+            Вернуть управление для остановленных дочерних процессов, о статусе которых ещё не сообщено
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   <function>pcntl_wait</function> возвращает ID завершенного дочернего процесса,
+   -1 при ошибке или ноль, если <literal>WNOHANG</literal> был передан в аргумент
+   <parameter>options</parameter> и не было доступных дочерних процессов.
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>pcntl_fork</function></member>
+    <member><function>pcntl_signal</function></member>
+    <member><function>pcntl_wifexited</function></member>
+    <member><function>pcntl_wifstopped</function></member>
+    <member><function>pcntl_wifsignaled</function></member>
+    <member><function>pcntl_wexitstatus</function></member>
+    <member><function>pcntl_wtermsig</function></member>
+    <member><function>pcntl_wstopsig</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
