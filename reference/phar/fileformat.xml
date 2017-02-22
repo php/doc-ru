@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: yes Maintainer: rjhdby -->
+
+<chapter xml:id="phar.fileformat" xmlns="http://docbook.org/ns/docbook">
+ <title>Что делает phar phar'ом, а не tar'ом или zip'ом?</title>
+ <section xml:id="phar.fileformat.ingredients" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Ингредиенты всех Phar-архивов вне зависимости от формата файла</title>
+  <para>
+   Все Phar-архивы содержат от трех до четырех секций:
+   <orderedlist>
+    <listitem>
+     <para>заглушка</para>
+    </listitem>
+    <listitem>
+     <para>манифест, описывающий содержимое</para>
+    </listitem>
+    <listitem>
+     <para>содержимое файла</para>
+    </listitem>
+    <listitem>
+     <para>[необязательный] подпись для проверки целостности Phar (только с форматом файла phar)</para>
+    </listitem>
+   </orderedlist>
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.stub" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Заглушка Phar-файла</title>
+  <para>
+   Заглушкой Phar'а является простой PHP-файл. Минимально возможная заглушка выглядит следующим образом:
+  </para>
+  <para>
+   <programlisting role="php">
+<![CDATA[<?php __HALT_COMPILER();]]>
+   </programlisting>
+  </para>
+  <para>
+   Заглушка должна содержать по меньшей мере лексему <literal>__HALT_COMPILER();</literal> в конце файла.
+   Как правило, заглушка содержит функционал загрузчика, подобно тому, как показано ниже:
+  </para>
+  <para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+Phar::mapPhar();
+include 'phar://myphar.phar/index.php';
+__HALT_COMPILER();
+   ]]>
+  </programlisting>
+ </para>
+ <para>
+  На содержимое заглушки Phar'а не налагаются ограничения, за исключением того,
+  что она должна завершаться лексемой <literal>__HALT_COMPILER();</literal>.
+Закрывающий тег PHP <literal><![CDATA[?>]]></literal> может быть включен или опущен,
+  но должно быть не более одного пробела между <literal>;</literal> и закрывающим тегом
+<literal><![CDATA[?>]]></literal>, иначе модуль phar не сможет обработать манифест Phar-архива.
+ </para>
+ <para>
+  В phar-архиве, основанном на tar или zip, заглушка хранится в
+  файле <literal>.phar/stub.php</literal>. Заглушка по умолчанию для Phar-архива,
+  основанного на phar, содержит приблизительно 7 килобайт кода для извлечения содержимого
+  Phar-архива и его выполнения. Смотрите <function>Phar::createDefaultStub</function>
+  для более детальной информации.
+ </para>
+ <para>
+  В phar-архиве, основанном на tar или zip, псевдоним phar'а хранится в
+  файле <literal>.phar/alias.txt</literal> в виде простого текста.
+ </para>
+ </section>
+ <section xml:id="phar.fileformat.comparison" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Сравнение Phar, Tar и Zip</title>
+  <para>
+   Что хорошего и плохого в трех поддерживаемых форматах файла в модуле phar?
+   В этой таблице предпринята попытка решить этот вопрос.
+   <table>
+    <title>Матрица функционала: Phar против Tar против Zip</title>
+    <tgroup cols="4">
+     <thead>
+      <row>
+       <entry>Функционал</entry>
+       <entry>Phar</entry>
+       <entry>Tar</entry>
+       <entry>Zip</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>Стандартный формат файла</entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Возможно выполнение без модуля Phar
+        <link linkend="phar.fileformat.phartip">[1]</link>
+       </entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Пофайловое сжатие</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Сжатие всего архива</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Нет</entry>
+      </row>
+      <row>
+       <entry>Проверка подписи всего архива</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да (PHP 5.3.1+)</entry>
+      </row>
+      <row>
+       <entry>Поддержка веб-приложений</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Пофайловые метаданные</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Метаданные всего архива</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Создание/изменение архива
+        <link linkend="phar.fileformat.phartip2">[2]</link>
+       </entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Полная поддержка всех функций - оберток потока</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+      <row>
+       <entry>Может быть создан/изменен, даже если phar.readonly=1
+        <link linkend="phar.fileformat.phartip3">[3]</link>
+       </entry>
+       <entry>Нет</entry>
+       <entry>Да</entry>
+       <entry>Да</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para xml:id="phar.fileformat.phartip">
+   <tip>
+    <para>
+     [1] Без модуля Phar PHP может получить прямой доступ к содержимому
+     Phar-архива только в том случае, если в нём используется <literal>заглушка</literal>,
+     которая извлекает содержимое phar-архива. Заглушка,
+     созданная при помощи <function>Phar::createDefaultStub</function>, распаковывает
+     phar-архив и запускает его содержимое из временного каталога в том случае,
+     если не был найден модуль phar.
+    </para>
+   </tip>
+  </para>
+  <para xml:id="phar.fileformat.phartip2">
+   <tip>
+    <para>
+     [2] Для доступа на запись требуется, чтобы был отключён параметр <literal>phar.readonly</literal>
+     в php.ini или непосредственно в консоли.
+    </para>
+   </tip>
+  </para>
+  <para xml:id="phar.fileformat.phartip3">
+   <tip>
+    <para>
+     [3] Только tar и zip архивы без <literal>.phar</literal> в
+     имени файла и без исполняемой заглушки <literal>.phar/stub.php</literal>
+     могут быть созданы, если phar.readonly=1.
+    </para>
+   </tip>
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.tar" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Phar-архивы, основанные на tar</title>
+  <para>
+   Архивы, основанные на формате файла tar, следуют более современному формату файла USTAR.
+   Конструкция заголовка tar-файла делает их более эффективными для доступа чем формат файла zip,
+   и почти настолько же эффективными, как файлы формата phar. Имена файлов ограничены 255 байтами,
+   включая полный путь к phar-архиву. Ограничений на количество файлов, содержащихся в phar-архиве,
+   основанном на tar, нет. Эти архивы могут быть полностью сжаты в gzip или bzip2 формате и по-прежнему
+   выполняться модулем Phar.
+  </para>
+  <para>
+   Для сжатия всего архива используйте <function>Phar::compress</function>.
+   Для распаковки всего массива используйте <function>Phar::decompress</function>.
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.zip" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Phar-архивы, основанные на zip</title>
+  <para>
+   Архивы, основанные на формате файла zip, поддерживают некоторые возможности,
+   встроенные в формат файла zip. Пофайловые и относящиеся ко всему архиву метаданные
+   хранятся в файловых комментариях zip и в комментарии всего zip-архива в виде сериализованных строк.
+   Уже существующие zip-комментарии будут успешно считаны в виде строки. Пофайловое
+   сжатие при чтении/записи поддерживается в случае использования zlib-сжатия,
+   а в случае использования bzip2-сжатия поддерживается доступ на чтение.
+   Ограничений на количество файлов, содержащихся в phar-архиве, основанном на zip, нет.
+   Пустые каталоги хранятся в zip-архиве в виде файлов с конечным слешем как <literal>my/directory/</literal>.
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.phar" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Формат файла phar</title>
+  <para>
+   Формат файла phar буквально представляет из себя заглушку/манифест/содержимое/подпись и
+   хранит ключевую информацию о том, что включено в phar-архив, в его <literal>манифесте</literal>.
+  </para>
+  <para>
+   Манифест Phar — это высокооптимизированный формат, который позволяет пофайловую
+   спецификацию сжатия файлов, доступа к файлам и даже определяемые пользователем метаданные,
+   такие как владелец или группа файла. Все значения, превышающие 1 байт,
+   хранятся в порядке байтов от младшего к старшему, за исключением версии API,
+   которая по историческим причинам хранится в виде 3 полубайт в порядке от старшего к младшему.
+  </para>
+  <para>
+   Все неиспользованные флаги зарезервированы для использования в будущем
+   и не должны быть использованы для хранения пользовательской информации.
+   Используйте возможности пофайловых метаданных для хранения индивидуальной
+   информации об отдельных файлах.
+  </para>
+  <para>
+   Базовый формат файла манифеста Phar-архива выглядит следующим образом:
+  </para>
+  <para>
+   <table>
+    <title>Формат глобального манифеста Phar</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Размер в байтах</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Длина манифеста в байтах (предел 1 МБ)</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Количество файлов в Phar-архиве</entry>
+      </row>
+      <row>
+       <entry>2 байта</entry>
+       <entry>Версия API манифеста Phar (текущая 1.0.0)</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Флаги глобальной битовой карты Phar</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Длина псевдонима Phar</entry>
+      </row>
+      <row>
+       <entry>??</entry>
+       <entry>Псевдоним Phar (длина основана на предыдущем значении)</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Длина метаданных Phar (<literal>0</literal> в случае отсутствия)</entry>
+      </row>
+      <row>
+       <entry>??</entry>
+       <entry>Сериализованные метаданные Phar, хранящиеся в формате <function>serialize</function></entry>
+      </row>
+      <row>
+       <entry>по меньшей мере (24 * количество записей) байт</entry>
+       <entry>записи для каждого файла</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.flags" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Флаги глобальной битовой карты Phar</title>
+  <para>
+   Здесь представлены битовые флаги, на настоящий момент распознаваемые модулем Phar
+   для глобальной битовой карты Phar:
+  </para>
+  <para>
+   <table>
+    <title>Распознаваемые значения битовой карты</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Значение</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal>0x00010000</literal></entry>
+       <entry>Если задано, значит этот Phar содержит проверочную подпись</entry>
+      </row>
+      <row>
+       <entry><literal>0x00001000</literal></entry>
+       <entry>
+        Если задано, значит этот Phar содержит по меньшей мере один файл,
+        сжатый при помощи zlib-сжатия.
+       </entry>
+      </row>
+      <row>
+       <entry><literal>0x00002000</literal></entry>
+       <entry>
+        Если задано, значит этот Phar содержит по меньшей мере один файл,
+        сжатый при помощи bzip-сжатия.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.manifestfile" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title> Описание записи файла в манифесте Phar</title>
+  <para>
+   Каждый файл в манифесте содержит следующую информацию:
+  </para>
+  <para>
+   <table>
+    <title>Запись файла в манифесте Phar</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Размер в байтах</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Длина имени файла в байтах</entry>
+      </row>
+      <row>
+       <entry>??</entry>
+       <entry>Имя файла (длина указана в предыдущем поле)</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Размер распакованного файла в байтах</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Метка времени Unix файла</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Размер сжатого файла в байтах</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Контрольная сумма CRC32 содержимого распакованного файла</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Флаги битовой карты файла</entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>Длина сериализованных метаданных файла (<literal>0</literal> в случае отсутствия)</entry>
+      </row>
+      <row>
+       <entry>??</entry>
+       <entry>Сериализованные метаданные файла, хранящиеся в формате <function>serialize</function></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Обратите внимание, что начиная с версии API 1.1.1 пустые каталоги хранятся
+   в виде файлов с конечным слешем в их имени, как <literal>my/directory/</literal>
+  </para>
+  <para>
+   К распознаваемым значениям битовой карты файла относятся:
+  </para>
+  <para>
+   <table>
+    <title>Распознаваемые значения битовой карты</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Значение</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry><literal>0x000001FF</literal></entry>
+       <entry>
+        Эти биты зарезервированы для определения конкретных прав доступа файла.
+        Права доступа используются для <function>fstat</function>
+        и могут быть использованы для воссоздания требуемых прав доступа при извлечении.
+       </entry>
+      </row>
+      <row>
+       <entry><literal>0x00001000</literal></entry>
+       <entry>
+        Если задано, то этот файл сжат при помощи zlib-сжатия.
+       </entry>
+      </row>
+      <row>
+       <entry><literal>0x00002000</literal></entry>
+       <entry>
+        Если задано, то этот файл сжат при помощи bzip-сжатия.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="phar.fileformat.signature" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Формат подписи Phar</title>
+  <para>
+   В содержащих подпись phar-архивах подпись всегда присоединена
+   к концу Phar-архива после загрузчика, манифеста и содержимого файлов.
+   В настоящее время поддерживаются два формата подписи: MD5 и SHA1.
+  </para>
+  <para>
+   <table>
+    <title>Формат подписи</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Длина в байтах</entry>
+       <entry>Описании</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>16 или 20 байт</entry>
+       <entry>
+        Собственно подпись. 20 байт в случае использования подписи SHA1,
+        16 байт в случае использования подписи MD5,
+        32 байта в случае использования подписи SHA256,
+        64 байта в случае использования подписи SHA512.
+       </entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>
+        Флаги подписи. <literal>0x0001</literal> используется для определения подписи MD5,
+        <literal>0x0002</literal> используется для определения подписи SHA1,
+        <literal>0x0004</literal> используется для определения подписи SHA256 и
+        <literal>0x0008</literal>  используется для определения подписи SHA512.
+        Поддержка подписей SHA256 и SHA512 была введена начиная с версии API 1.1.0.
+       </entry>
+      </row>
+      <row>
+       <entry>4 байта</entry>
+       <entry>
+        "Магическое" <literal>GBMB</literal> используется для определения наличия подписи.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

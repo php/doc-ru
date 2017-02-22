@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 11c9ca2b19737bb4cc3ba388a95605c28c6c51e5 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: yes Maintainer: rjhdby -->
+
+<chapter xml:id="phar.using" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Использование Phar-архивов</title>
+ 
+ <section xml:id="phar.using.intro" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Использование Phar-архивов: Введение</title>
+  <para>
+   Концептуально Phar-архивы аналогичны JAR-архивам Java, но учитывают
+   нужды и гибкость PHP-приложений. Phar-архив используется для распространения
+   законченного PHP-приложения или библиотеки в виде одного файла. Приложение,
+   имеющее вид Phar-архива, используется в точности так же как и любое другое PHP-приложение:
+  </para>
+  <screen>
+<![CDATA[
+php coolapplication.phar
+  ]]>
+  </screen>
+  <para>
+   Использование библиотеки, имеющей вид Phar-архива, идентично использованию любой другой PHP-библиотеки:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+include 'coollibrary.phar';
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  </para>
+  <para>
+   Обертка потока <literal>phar</literal> представляет собой основу модуля phar,
+   о ее использовании детально написано <link linkend="phar.using.stream">здесь</link>.
+   Обертка потока <literal>phar</literal> предоставляет доступ к файлам внутри phar-архива
+   с использованием стандартных файловых функции PHP: <function>fopen</function>, <function>opendir</function>
+   и других, которые работают с обычными файлами.
+   Обертка потока <literal>phar</literal> поддерживает все операции чтения/записи
+   как над файлами, так и над каталогами.
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+include 'phar://coollibrary.phar/internal/file.php';
+header('Content-type: image/jpeg');
+// доступ к phar-архивам может осуществляться по полному пути или с помощью псевдонима
+echo file_get_contents('phar:///полный/путь/к/coollibrary.phar/images/wow.jpg');
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  </para>
+  <para>
+   Класс <classname>Phar</classname> реализует расширенные возможности по доступу к файлам
+   и по созданию phar-архивов. Использование класса Phar детально описано <link linkend="phar.using.object">здесь</link>.
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+try {
+    // открыть существующий phar-архив
+    $p = new Phar('coollibrary.phar', 0);
+    // Phar наследует SPL-класс DirectoryIterator
+    foreach (new RecursiveIteratorIterator($p) as $file) {
+        // $file является объектом класса PharFileInfo, который наследует SplFileInfo
+        echo $file->getFileName() . "\n";
+        echo file_get_contents($file->getPathName()) . "\n"; // отображает содержимое;
+    }
+    if (isset($p['internal/file.php'])) {
+        var_dump($p['internal/file.php']->getMetadata());
+    }
+
+    // создать новый phar-архив - параметр phar.readonly в php.ini должен быть 0
+    // phar.readonly включен по умолчанию из соображений безопасности.
+    // На работающих серверах phar-архивы никогда не должны создаваться,
+    // а только выполняться.
+    if (Phar::canWrite()) {
+        $p = new Phar('newphar.tar.phar', 0, 'newphar.tar.phar');
+        // создать phar-архив, основанный на tar, сжатый gzip-сжатием (.tar.gz)
+        $p = $p->convertToExecutable(Phar::TAR, Phar::GZ);
+
+        // создать транзакцию - в newphar.phar ничего не будет записано
+        // до тех пор, пока не будет вызван stopBuffering(), однако для этого требуется временное хранилище
+        $p->startBuffering();
+        // добавить все файлы в каталоге /путь/к/проекту/project, сохранение в phar-архив с префиксом "project"
+        $p->buildFromIterator(new RecursiveIteratorIterator(new DirectoryIterator('/путь/к/проекту/project')), '/путь/к/проекту/');
+
+        // добавить новый файл используя ArrayAccess
+        $p['file1.txt'] = 'Информация';
+        $fp = fopen('hugefile.dat', 'rb');
+        // скопировать все данные из потока
+        $p['data/hugefile.dat'] = $fp;
+
+        if (Phar::canCompress(Phar::GZ)) {
+            $p['data/hugefile.dat']->compress(Phar::GZ);
+        }
+
+        $p['images/wow.jpg'] = file_get_contents('images/wow.jpg');
+        // любое значение может быть сохранено в качестве метаданных файла
+        $p['images/wow.jpg']->setMetadata(array('mime-type' => 'image/jpeg'));
+        $p['index.php'] = file_get_contents('index.php');
+        $p->setMetadata(array('bootstrap' => 'index.php'));
+
+        // сохранить phar-архив на диск
+        $p->stopBuffering();
+    }
+} catch (Exception $e) {
+    echo 'Невозможно открыть Phar: ', $e;
+}
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  </para>
+  <para>
+   Кроме того, проверка содержимого phar-файла может быть осуществлена с помощью любого
+   из поддерживаемых симметричных алгоритмов хэширования (MD5, SHA1, SHA256 и SHA512, если ext/hash включен),
+   а также с помощью подписывания асимметричными открытым/закрытым ключами, используя OpenSSL (добавлено в Phar 2.0.0).
+   Для того чтобы использовать подписывание OpenSSL, вам необходимо сгенерировать пару из открытого и закрытого ключей
+   и установить закрытый ключ для подписывания используя <function>Phar::setSignatureAlgorithm</function>.
+   Кроме того, открытый ключ, извлеченный при помощи этого кода:
+   <programlisting role="php">
+<![CDATA[
+<?php
+$public = openssl_get_publickey(file_get_contents('private.pem'));
+$pkey = '';
+openssl_pkey_export($public, $pkey);
+?>
+   ]]>
+  </programlisting>
+  должен быть сохранен рядом с phar-архивом, для проверки которого он используется.
+  Если phar-архив сохранен как <literal>/путь/к/моему/архиву/my.phar</literal>,
+  то открытый ключ должен быть сохранен как <literal>/путь/к/моему/архиву/my.phar.pubkey</literal>,
+  иначе phar не сможет проверить подлинность подписи OpenSSL.
+  </para>
+  <para>
+   Начиная с версии 2.0.0 класс <classname>Phar</classname> также предоставляет 3 статических метода:
+   <function>Phar::webPhar</function>, <function>Phar::mungServer</function> и <function>Phar::interceptFileFuncs</function>,
+   которые имеют решающее значение для упаковки PHP приложений, предназначенных для использования на обычных файловых системах
+   и для веб-приложений. <function>Phar::webPhar</function> реализует фронтальный контроллер,
+   который направляет HTTP-вызовы в правильное место внутри phar-архива.
+   <function>Phar::mungServer</function> используется для изменения значений массива <varname>$_SERVER</varname>,
+   что позволяет обмануть приложения, обрабатывающие эти значения.
+   <function>Phar::interceptFileFuncs</function> инструктирует Phar о необходимости перехвата вызовов
+   <function>fopen</function>, <function>file_get_contents</function>, <function>opendir</function> и прочих функций,
+   основанных на stat (<function>file_exists</function>, <function>is_readable</function> и так далее)
+   и перенаправления всех относительных путей внутрь phar-архива.
+  </para>
+  <para>
+   Например, для упаковки выпуска популярного приложения phpMyAdmin
+   для его использования в качестве phar-архива, требуется только этот простой скрипт,
+   а <literal>phpMyAdmin.phar.tar.php</literal> будет доступен как обычный файл
+   на вашем веб-сервере после изменения значений user/password:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+@unlink('phpMyAdmin.phar.tar.php');
+copy('phpMyAdmin-2.11.3-english.tar.gz', 'phpMyAdmin.phar.tar.php');
+$a = new Phar('phpMyAdmin.phar.tar.php');
+$a->startBuffering();
+$a["phpMyAdmin-2.11.3-english/config.inc.php"] = '<?php
+/* Конфигурация сервера */
+$i = 0;
+
+/* Сервер localhost (config:root) [1] */
+$i++;
+$cfg[\'Servers\'][$i][\'host\'] = \'localhost\';
+$cfg[\'Servers\'][$i][\'extension\'] = \'mysqli\';
+$cfg[\'Servers\'][$i][\'connect_type\'] = \'tcp\';
+$cfg[\'Servers\'][$i][\'compress\'] = false;
+$cfg[\'Servers\'][$i][\'auth_type\'] = \'config\';
+$cfg[\'Servers\'][$i][\'user\'] = \'root\';
+$cfg[\'Servers\'][$i][\'password\'] = \'\';
+
+
+/* Конец конфигурации сервера */
+if (strpos(PHP_OS, \'WIN\') !== false) {
+    $cfg[\'UploadDir\'] = getcwd();
+} else {
+    $cfg[\'UploadDir\'] = \'/tmp/pharphpmyadmin\';
+    @mkdir(\'/tmp/pharphpmyadmin\');
+    @chmod(\'/tmp/pharphpmyadmin\', 0777);
+}';
+$a->setStub('<?php
+Phar::interceptFileFuncs();
+Phar::webPhar("phpMyAdmin.phar", "phpMyAdmin-2.11.3-english/index.php");
+echo "phpMyAdmin предназначен для выполнения в веб-браузере\n";
+exit -1;
+__HALT_COMPILER();
+');
+$a->stopBuffering();
+?>
+    ]]>
+   </programlisting>
+  </informalexample>
+  </para>
+ </section>
+ <section xml:id="phar.using.stream" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Использование Phar-архивов: обертка потока phar</title>
+  <para>
+   Обертка потока Phar полностью поддерживает <function>fopen</function> для
+   чтения и записи (не для добавления), <function>unlink</function>, <function>stat</function>,
+   <function>fstat</function>, <function>fseek</function>, <function>rename</function>
+   и потоковые операции каталогов, такие как <function>opendir</function>, а начиная с версии 2.0.0 
+   <function>rmdir</function> и <function>mkdir</function>.
+  </para>
+  <para>
+   Также при помощи контекстов потока можно влиять на сжатие отдельных файлов
+   и пофайловые метаданные в Phar-архиве:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$context = stream_context_create(array('phar' =>
+                                    array('compress' => Phar::GZ)),
+                                    array('metadata' => array('user' => 'cellog')));
+file_put_contents('phar://my.phar/somefile.php', 0, $context);
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <para>
+  Обертка потока <literal>phar</literal> не работает с файлами, расположенными удаленно,
+  и не может с ними работать, так что ее использование возможно даже когда параметры INI
+  <link linkend="ini.allow-url-fopen">allow_url_fopen</link> и
+  <link linkend="ini.allow-url-include">allow_url_include</link> отключены.
+ </para>
+ <para>
+  Несмотря на наличие возможности создавать phar-архивы с нуля просто используя
+  потоковые операции, лучшим решением будет использование функционала,
+  встроенного в класс Phar. Обертку потока лучше всего использовать только для чтения.
+ </para>
+ </section>
+ <section xml:id="phar.using.object" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Использование Phar-архивов: классы Phar и PharData</title>
+  <para>
+   Класс <classname>Phar</classname> поддерживает чтение и обработку
+   Phar-архивов, а также итерацию через унаследованную функциональность
+   класса <classname>RecursiveDirectoryIterator</classname>.
+   Благодаря поддержке интерфейса <classname>ArrayAccess</classname>,
+   доступ к файлам внутри Phar-архива может быть получен, как если бы
+   они были частью ассоциативного массива.
+  </para>
+  <para>
+   Класс <classname>PharData</classname> расширяет класс <classname>Phar</classname> и
+   позволяет создавать и изменять неисполняемые tar- и zip-архивы данных даже в том случае,
+   если параметр <literal>phar.readonly</literal>=1 в php.ini. Фактически функции 
+   <function>PharData::setAlias</function> и <function>PharData::setStub</function>
+   отключены, поскольку концепция псевдонима и заглушки является уникальной для
+   исполняемых phar-архивов.
+  </para>
+  <para>
+   Важно отметить, что при создании Phar-архива в конструктор объекта <classname>Phar</classname>
+   должен быть передан полный путь. Попытки инициализации объекта Phar с относительными путями потерпят неудачу.
+  </para>
+  <para>
+   Предположим, что <literal>$p</literal> — объект Phar, инициализированный, как показано ниже:
+  </para>
+  <para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$p = new Phar('/путь/к/myphar.phar', 0, 'myphar.phar');
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <para>
+  Пустой Phar-архив будет создан в <literal>/путь/к/myphar.phar</literal>, или,
+  если файл <literal>/path/to/myphar.phar</literal> уже существует, он будет открыт повторно.
+  Использование <literal>myphar.phar</literal> показывает концепцию псевдонима,
+  который может быть использован для указания на <literal>/путь/к/myphar.phar</literal>
+  в URL'ах, подобно тому, как показано ниже:
+ </para>
+ <para>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// эти два вызова file_get_contents() равнозначны в том случае, если
+// /путь/к/myphar.phar имеет явно заданный псевдоним "myphar.phar"
+// в своем манифесте, или если phar был инициализирован созданием объекта Phar,
+// как показано в предыдущем примере
+$f = file_get_contents('phar:///путь/к/myphar.phar/whatever.txt');
+$f = file_get_contents('phar://myphar.phar/whatever.txt');
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <para>
+  С только что созданным объектом <literal>$p</literal> класса <classname>Phar</classname>
+  возможно следующее:
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <literal>$a = $p['file.php']</literal> создаст объект класса <classname>PharFileInfo</classname>,
+     который будет ссылаться на содержимое <literal>phar://myphar.phar/file.php</literal>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <literal>$p['file.php'] = $v</literal> создаст новый файл
+     (<literal>phar://myphar.phar/file.php</literal>) или перезапишет существующий
+     внутри <literal>myphar.phar</literal>. <literal>$v</literal> может быть строкой
+     или указателем на открытый файл. В последнем случае для создания нового файла
+     будет использовано всё содержимое открытого файла. Обратите внимание, что
+     функционально эквивалентным этому будет вызов <literal>$p-&gt;addFromString('file.php', $v)</literal>.
+     Также имеется возможность добавления содержимого файла при помощи
+     <literal>$p-&gt;addFile('/path/to/file.php', 'file.php')</literal>.
+     Наконец, пустой каталог может быть создан при помощи <literal>$p-&gt;addEmptyDir('empty')</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <literal>isset($p['file.php'])</literal> может быть использовано для определения
+     существования файла <literal>phar://myphar.phar/file.php</literal> внутри <literal>myphar.phar</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     <literal>unset($p['file.php'])</literal> удаляет файл
+     <literal>phar://myphar.phar/file.php</literal> из <literal>myphar.phar</literal>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </para>
+ <para>
+  Кроме того, использование объекта <classname>Phar</classname> является единственным способом
+  получить доступ к метаданным архива (через <function>Phar::getMetadata</function>)
+  и единственным способом установить или получить заглушку Phar-архива через
+  <function>Phar::getStub</function> и <function>Phar::setStub</function>.
+  К тому же, работать со сжатием целого Phar-архива можно только используя
+  класс <classname>Phar</classname>.
+ </para>
+ <para>
+  Полный перечень функционала объекта <classname>Phar</classname> задокументирован ниже.
+ </para>
+ <para>
+  Класс <classname>PharFileInfo</classname> расширяет класс <classname>SplFileInfo</classname>
+  и добавляет несколько методов для работы с деталями, присущими файлам, которые содержатся в Phar-архиве,
+  такими как работа со сжатием и метаданными.
+ </para>
+ </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
