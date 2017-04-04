@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 656d1610af1a960d87c8b7056e54d0d4c75fb123 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="phar.converttodata" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>Phar::convertToData</refname>
+  <refpurpose>Конвертирует phar-архив в неисполняемый tar- или zip-файл</refpurpose>
+ </refnamediv>
+ 
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>PharData</type><methodname>Phar::convertToData</methodname>
+   <methodparam choice="opt"><type>int</type><parameter>format</parameter><initializer>9021976</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>compression</parameter><initializer>9021976</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>extension</parameter></methodparam>
+  </methodsynopsis>
+  
+  <para>
+   Этот метод используется для конвертирования phar-архив в tar- или zip-файл.
+   Чтобы создать сделать tar или zip неисполняемым, из создаваемого в результате
+   конвертации архива удаляются загрушка и псевдоним phar-архива.
+  </para>
+  <para>
+   Если не были указаны никакие изменения, то данный метод бросит исключение <classname>BadMethodCallException</classname>,
+   если форматом файла архива является phar. В случае использования с архивами в формате tar или zip,
+   данный метод конвертирует архив в неисполняемый архив.
+  </para>
+  <para>
+   В случае успеха данный метод создает на диске новый архив и возвращает объект <classname>PharData</classname>.
+   Старый архив не удаляется с диска, это должно быть сделано вручную после завершения процесса.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>format</parameter></term>
+     <listitem>
+      <para>
+       Значением этого параметра должна быть одна из констант: <literal>Phar::TAR</literal>
+       или <literal>Phar::ZIP</literal>. Если значение установлено в &null;, то существующий
+       формат файла будет сохранен.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>compression</parameter></term>
+     <listitem>
+      <para>
+       Значением этого параметра должна быть одна из констант: <literal>Phar::NONE</literal>
+       для отсутствия сжатия всего архива, <literal>Phar::GZ</literal> для сжатия, основанного
+       на zlib, или <literal>Phar::BZ2</literal> для bzip-сжатия.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>extension</parameter></term>
+     <listitem>
+      <para>
+       Этот параметр используется для переопределения расширение файла по умолчанию для
+       сконвертированного архива. Обратите внимание, что <literal>.phar</literal>
+       не может быть использовано где-либо в имени файла неисполняемого tar- или
+       zip-архива.
+      </para>
+      <para>
+       В случае конвертации phar-архива, основанного на tar, расширениями по умолчанию
+       являются: <literal>.tar</literal>, <literal>.tar.gz</literal> и <literal>.tar.bz2</literal>,
+       в зависимости от указанного сжатия. Для архивов, основанных на zip, расширением по умолчанию
+       является <literal>.zip</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Данный метод возвращает объект <classname>PharData</classname> в случае успеха и
+   бросает исключение в случае неудачи.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Данный метод бросает исключение <classname>BadMethodCallException</classname>
+   в следующих случаях: при невозможности сжатия; если был передан неизвестный
+   алгоритм сжатия; в запрошенном архиве была включена буферизация с помощью
+   <function>Phar::startBuffering</function> и не была завершена с помощью
+   <function>Phar::stopBuffering</function>. В случае возникновения каких-либо
+   проблем в процессе создания phar будет брошено исключение <classname>PharException</classname>.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>Phar::convertToData</function></title>
+    <para>
+     Использование Phar::convertToData():
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+try {
+    $tarphar = new Phar('myphar.phar.tar');
+    // обратите внимание, что myphar.phar.tar *не* будет удален
+    // конверировать архив в неисполняемый tar-формат
+    // будет создан myphar.tar
+    $tar = $tarphar->convertToData();
+    //  конверировать архив в неисполняемый zip-формат файла, будет создан myphar.zip
+    $zip = $tarphar->convertToData(Phar::ZIP);
+    // будет создан myphar.tbz
+    $tgz = $tarphar->convertToData(Phar::TAR, Phar::BZ2, '.tbz');
+    // будет создан myphar.phar.tgz
+    $phar = $tarphar->convertToData(Phar::PHAR); // будет брошено исключение
+} catch (Exception $e) {
+    // здесь обработка ошибок
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>Phar::convertToExecutable</function></member>
+    <member><function>PharData::convertToExecutable</function></member>
+    <member><function>PharData::convertToData</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

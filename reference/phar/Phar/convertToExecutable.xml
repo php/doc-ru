@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 656d1610af1a960d87c8b7056e54d0d4c75fb123 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="phar.converttoexecutable" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>Phar::convertToExecutable</refname>
+  <refpurpose>Конвертирует phar-архив в другой исполняемый формат файла</refpurpose>
+ </refnamediv>
+ 
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>Phar</type><methodname>Phar::convertToExecutable</methodname>
+   <methodparam choice="opt"><type>int</type><parameter>format</parameter><initializer>9021976</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>compression</parameter><initializer>9021976</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>extension</parameter></methodparam>
+  </methodsynopsis>
+  &phar.write;
+  <para>
+   Этот метод используется для конвертирования phar-архива в другой формат файла. Например,
+   он может быть использован для создания исполняемого phar-архива, основанного на tar,
+   из исполняемого phar-архива, основанного на zip, или из исполняемого phar-архива с форматом
+   файла phar. Кроме того, данный метод может быть использован для сжатия целого архива,
+   основанного на tar или phar.
+  </para>
+  <para>
+   Если не были указаны никакие изменения, то данный метод бросит исключение <classname>BadMethodCallException</classname>.
+  </para>
+  <para>
+   В случае успеха данный метод создает на диске новый архив и возвращает объект <classname>Phar</classname>.
+   Старый архив не удаляется с диска, это должно быть сделано вручную после завершения процесса.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>format</parameter></term>
+     <listitem>
+      <para>
+       Значением этого параметра должна быть одна из констант: <literal>Phar::PHAR</literal>,
+       <literal>Phar::TAR</literal> или <literal>Phar::ZIP</literal>. Если значение установлено
+       в &null;, то существующий формат файла будет сохранен.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>compression</parameter></term>
+     <listitem>
+      <para>
+       Значением этого параметра должна быть одна из констант: <literal>Phar::NONE</literal>
+       для отсутствия сжатия всего архива, <literal>Phar::GZ</literal> для сжатия, основанного
+       на zlib, или <literal>Phar::BZ2</literal> для bzip-сжатия.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>extension</parameter></term>
+     <listitem>
+      <para>
+       Этот параметр используется для переопределения расширение файла по умолчанию для
+       сконвертированного архива. Обратите внимание, что все phar-архивы, основанные
+       на tar или zip, должны содержать <literal>.phar</literal> в расширении файла
+       чтобы они могли быть обработаны в качестве phar-архива.
+      </para>
+      <para>
+       В случае конвертации архива, основанного на phar, расширениями по умолчанию
+       являются <literal>.phar</literal>, <literal>.phar.gz</literal> и <literal>.phar.bz2</literal>,
+       в зависимости от указанного сжатия. В случае конвертации phar-архива,
+       основанного на tar, расширениями по умолчанию являются <literal>.phar.tar</literal>,
+       <literal>.phar.tar.gz</literal> и <literal>.phar.tar.bz2</literal>. Для архивов,
+       основанных на zip, расширением по умолчанию является <literal>.zip</literal>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Данный метод возвращает объект <classname>Phar</classname> в случае успеха и
+   бросает исключение в случае неудачи.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Данный метод бросает исключение <classname>BadMethodCallException</classname>
+   в следующих случаях: при невозможности сжатия; если был передан неизвестный
+   алгоритм сжатия; в запрошенном архиве была включена буферизация с помощью
+   <function>Phar::startBuffering</function> и не была завершена с помощью
+   <function>Phar::stopBuffering</function>. Если поддержка записи отключена,
+   то будет брошено исключение <classname>UnexpectedValueException</classname>.
+   В случае возникновения каких-либо проблем в процессе создания phar будет
+   брошено исключение <classname>PharException</classname>.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>Phar::convertToExecutable</function></title>
+    <para>
+     Использование Phar::convertToExecutable():
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+try {
+    $tarphar = new Phar('myphar.phar.tar');
+    // конвертировать архив в формат phar
+    // обратите внимание, что myphar.phar.tar *не* будет удален
+    $phar = $tarphar->convertToExecutable(Phar::PHAR); // будет создан myphar.phar
+    $phar->setStub($phar->createDefaultStub('cli.php', 'web/index.php'));
+    // будет создан myphar.phar.tgz
+    $compressed = $phar->convertToExecutable(Phar::TAR, Phar::GZ, '.phar.tgz');
+} catch (Exception $e) {
+    // здесь обработка ошибок
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>Phar::convertToData</function></member>
+    <member><function>PharData::convertToExecutable</function></member>
+    <member><function>PharData::convertToData</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
