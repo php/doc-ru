@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: dc706816c30f61d28686b4bf43f5b09e6d2de8e0 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="pdo.sqlitecreateaggregate" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>PDO::sqliteCreateAggregate</refname>
+  <refpurpose>
+   Регистрация аггрегирующей пользовательской функции для использования в SQL-запросах
+  </refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>bool</type><methodname>PDO::sqliteCreateAggregate</methodname>
+   <methodparam><type>string</type><parameter>function_name</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>step_func</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>finalize_func</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>num_args</parameter></methodparam>
+  </methodsynopsis>
+  &warn.experimental.func;
+  <para>
+   Этот метод аналогичен <xref linkend="pdo.sqlitecreatefunction"
+   /> за исключением того, что он регистрирует функцию, которую можно использовать
+   для вычисления аггрегированного результата по всем строкам в запросе.
+  </para>
+  <para>
+   Ключевое отличие этого метода от <xref
+   linkend="pdo.sqlitecreatefunction" /> в том, что для управление аггрегированием требует
+   использование двух функций.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>function_name</parameter></term>
+     <listitem>
+      <para>
+       Имя функции для использовании в запросах.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>step_func</parameter></term>
+     <listitem>
+      <para>
+       Функция обратного вызова для каждой строки в результирующем наборе.
+       Ваша PHP-функция должна акумулировать результат и сохранять его в 
+       контексте аггрегации.
+      </para>
+      <para>
+       Эта функция должна быть определена следующим образом:
+       <methodsynopsis>
+        <type>mixed</type><methodname><replaceable>step</replaceable></methodname>
+        <methodparam><type>mixed</type><parameter>context</parameter></methodparam>
+        <methodparam><type>int</type><parameter>rownumber</parameter></methodparam>
+        <methodparam><type>mixed</type><parameter>value1</parameter></methodparam>
+        <methodparam choice="opt"><type>mixed</type><parameter>value2</parameter></methodparam>
+        <methodparam choice="opt"><type>mixed</type><parameter>..</parameter></methodparam>
+       </methodsynopsis>
+      </para>
+      <para>
+       Для первой строки <varname>context</varname> должен равняться &null;;
+       Для всех последующих строк его значение должно быть равно значению, 
+       возвращенному на предыдущем шаге; вы должны использовать его для сохранения
+       состояния аггрегации.
+      </para>
+      <para>
+       Параметр <varname>rownumber</varname> должен быть равен номеру текущей строки.
+      </para>
+      <para>
+       Возвращаемое значение функции будет использовано как параметр
+       <parameter>context</parameter> при следующем запуске функции, либо как
+       значение передаваемое финализирующей функции.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>finalize_func</parameter></term>
+     <listitem>
+      <para>
+       Функция обратного вызова для вычисление итогового аггрегированного
+       значения. Она будет вызвана как только все строки результирующего набора 
+       будут обработаны, ей будет передан аггрегирующий контекст и она вернет 
+       финальное значение. Данная функция должна вернуть значение типа понятного
+       SQLite (т.е. <link 
+       linkend="language.types.intro">скалярный тип</link>).
+      </para>
+      <para>
+       Эта функция должна быть определена следующим образом:
+       <methodsynopsis>
+        <type>mixed</type><methodname><replaceable>fini</replaceable></methodname>
+        <methodparam><type>mixed</type><parameter>context</parameter></methodparam>
+        <methodparam><type>int</type><parameter>rownumber</parameter></methodparam>
+       </methodsynopsis>
+      </para>
+      <para>
+       <varname>context</varname> - значение, возвращанное самым последним
+       вызовом аггрегирующей функции step_func.
+      </para>
+      <para>
+       <varname>rownumber</varname> - количество строк, к которым применялась 
+       аггрегирующая функция.
+      </para>
+      <para>
+       Возвращаемое значение этой функции будет использовано как
+       результат аггрегации.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>num_args</parameter></term>
+     <listitem>
+      <para>
+       Подсказка для парсера SQLite, если функция обратного вызова получает
+       заданное количество аргументов.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример аггрегирующей функции max_length</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$data = array(
+   'one',
+   'two',
+   'three',
+   'four',
+   'five',
+   'six',
+   'seven',
+   'eight',
+   'nine',
+   'ten',
+   );
+$db = new PDO('sqlite::memory:');
+$db->exec("CREATE TABLE strings(a)");
+$insert = $db->prepare('INSERT INTO strings VALUES (?)');
+foreach ($data as $str) {
+    $insert->execute(array($str));
+}
+$insert = null;
+
+function max_len_step(&$context, $rownumber, $string) 
+{
+    if (strlen($string) > $context) {
+        $context = strlen($string);
+    }
+    return $context;
+}
+
+function max_len_finalize(&$context, $rownumber) 
+{
+    return $context === null ? 0 : $context;
+}
+
+$db->sqliteCreateAggregate('max_len', 'max_len_step', 'max_len_finalize');
+
+var_dump($db->query('SELECT max_len(a) from strings')->fetchAll());
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   В этом примере мы создали аггрегирующую функцию, которая
+   вычисляет длину самой большой строки в одном из столбцов таблицы.
+   Для каждой строки, вызывается функция <literal>max_len_step</literal> и ей
+   передается параметр <parameter>context</parameter>. Этот параметр,
+   как и любая другая переменная PHP может содержать и массив и объект.
+   В данном примере она используется для хранения максимальной длины строки;
+   Если <parameter>string</parameter> имеет длину большую, чем содержится в
+   контексте, мы обновляем контекст новым значением.
+  </para>
+  <para>
+   После того, как будут обработаны все строки, SQLite вызовет функцию
+   <literal>max_len_finalize</literal> для вычисления результата аггрегации.
+   В ней мы производим вычисления, основываясь на данных из
+   <parameter>context</parameter>.  В нашем простом примере мы просто
+   возвращаем его значение, так как никакие дополнительные вычисления не требуются.
+  </para>
+  <tip>
+   <para>
+    КРАЙНЕ НЕ рекомендуется сохранять в контексте копии значений для обработки их
+    в финализирующей функции, так как это повлечет за собой большой перерасход памяти
+    SQLite для обработки запроса. Просто представьте, сколько памяти вам понадобится, если 
+    вам потребуется аггрегировать, например, миллион значений по 32 байта.
+   </para>
+  </tip>
+  <tip>
+   <para>
+    Вы можете использовать <xref linkend="pdo.sqlitecreatefunction" /> и
+    <xref linkend="pdo.sqlitecreateaggregate" /> для переопределения 
+    стандартных аггрегирующих функций SQLite.
+   </para>
+  </tip>
+  <note>
+   <para>
+    Этот метод недоступен с драйвером SQLite2.
+    В этом случае используйте старое sqlite API.
+   </para>
+  </note>
+  
+ </refsect1>
+ 
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><xref linkend="pdo.sqlitecreatefunction" /></member>
+    <member><function>sqlite_create_function</function></member>
+    <member><function>sqlite_create_aggregate</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
