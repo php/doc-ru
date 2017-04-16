@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: cb2e7b70b1354e5468e538720d59c37e273bc98e Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="oci8.dtrace" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>OCI8 и динамическая трассировка DTrace</title>
+ <section>
+  <para>
+   OCI8 2.0 содержит статические зонды DTrace, которые можно использовать
+   в операционных системах, поддерживающих DTrace.
+   Более подробно взаимоотношения PHP и DTrace описаны в разделе 
+   <link linkend="features.dtrace">Динамическая трассировка DTrace</link>.
+  </para>
+ </section>
+ 
+ <section>
+  <title>Установка OCI8 с поддержкой DTrace</title>
+  <para>
+   для включения поддержки DTrace в PHP OCI8, соберите OCI8 как разделяемое
+   расширение после установки переменной окружения <literal>PHP_DTRACE</literal>.
+ </para>
+ <para>
+  <informalexample>
+   <screen>
+<![CDATA[
+$ export PHP_DTRACE=yes
+$ pecl install oci8
+]]>
+    </screen>
+   </informalexample>
+ </para>
+ <para>
+  Отредактируйте php.ini задав
+  <link linkend="ini.extension-dir">extension_dir</link> равным
+  директории, в которой создался <filename>oci8.so</filename> и, также, 
+  разрешите расширение следующим образом:
+ </para>
+ <para>
+  <informalexample>
+   <screen>
+<![CDATA[
+extension=oci8.so
+]]>
+    </screen>
+   </informalexample>
+ </para>
+ <para>
+  Если вы установили PHP OCI8 2.0 из PECL с использованием <filename>phpize</filename>
+  и <filename>configure</filename> (вместо <filename>pecl</filename>), вам все
+  еще будет необходимо установить <literal>PHP_DTRACE=yes</literal>. Это потому, что
+  опция <literal>--enable-dtrace</literal> будет проигнорирована ограниченным
+  скриптом <filename>configure</filename> модуля PECL.
+ </para>
+ 
+ <para>
+  Более подробно об установке PECL модулей читайте в разделе 
+  <link linkend="install.pecl">Установка расширений PECL</link>.
+ </para>
+ </section>
+ 
+ <section>
+  <title>Статические зонды DTrace в PHP OCI8</title>
+  <table>
+   <title>Следующие статические зонды доступны в PHP OCI8</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Имя зонда</entry>
+      <entry>Описание зонда</entry>
+      <entry>Аргументы зонда</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>oci8-connect-entry</literal></entry>
+      <entry>Инициируется oci_connect(), oci_pconnect() и oci_new_connect(). Срабатывает до того, как соединение было установлено.</entry>
+      <entry>char *<varname>username</varname>, char *<varname>dbname</varname>, char *<varname>charset</varname>, long <varname>session_mode</varname>, int <varname>persistent</varname>, int <varname>exclusive</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connect-return</literal></entry>
+      <entry>Срабатывает после установки соединения.</entry>
+      <entry>void *<varname>connection</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-check-connection</literal></entry>
+      <entry>Срабатывает, если ошибка Oracleможет привести к порче соединения.</entry>
+      <entry>void *<varname>connection</varname>, char *<varname>client_id</varname>, int <varname>is_open</varname>, long <varname>errcode</varname>, unsigned long <varname>server_status</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-sqltext</literal></entry>
+      <entry>Срабатывает при запуске oci_parse().</entry>
+      <entry>void *<varname>connection</varname>, char *<varname>client_id</varname>, void *<varname>statement</varname>, char *<varname>sql</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connection-close</literal></entry>
+      <entry>Срабатывает, когда соединение окончательно уничтожено.</entry>
+      <entry>void *<varname>connection</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-error</literal></entry>
+      <entry>Срабатывает, если произошла ошибка Oracle.</entry>
+      <entry>int <varname>status</varname>, long <varname>errcode</varname></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-execute-mode</literal></entry>
+      <entry>Срабатывает при <function>oci_execute</function> для выявления режима запуска.</entry>
+      <entry>void *<varname>connection</varname>, char *<varname>client_id</varname>, void *<varname>statement</varname>, unsigned int <varname>mode</varname></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Эти зонды полезны при отладке скриптов OCI8.
+  </para>
+  
+  <para>
+   Параметры <varname>connection</varname> и <varname>statement</varname>
+   являются указателями на внутренние структуры, используемые для
+   отслеживания соединений и запущенных запросов.
+  </para>
+  
+  <para>
+   Параметр <varname>client_id</varname> устанавливается функцией
+   <function>oci_set_client_identifier</function>.
+  </para>
+  
+  <para>
+  </para>
+  
+  <para>
+  </para>
+  
+  <para>
+  </para>
+  
+  
+  <para>
+   Ядро PHP также содержит статические зонды.
+   Смотрите раздел <link linkend="features.dtrace.static-probes">Статические зонды
+   DTrace в ядре PHP</link>.
+  </para>
+  
+  <table>
+   <title>Внутренние отладочные зонды DTrace в OCI8</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Имя зонда</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>oci8-connect-expiry</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connect-lookup</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connect-p-dtor-close</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connect-p-dtor-release</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-connect-type</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-sesspool-create</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-sesspool-stats</literal></entry>
+     </row>
+     <row>
+      <entry><literal>oci8-sesspool-type</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <para>
+   Эти зонды полезны для разработчиков расширения OCI8. Для более детальной 
+   информации изуйчайте исходные коды OCI8.
+  </para>
+ </section>
+ 
+ <section>
+  <title>Получение списка статиченских зондов DTrace в PHP OCI8</title>
+  <para>
+   Для получения списка доступных зондов, запустите процесс PHP и, затем, запустите:
+   <informalexample>
+    <programlisting>
+<![CDATA[
+# dtrace -l
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  
+  <para>
+   Вывод будет примерно следующим:
+   <informalexample>
+    <programlisting>
+<![CDATA[
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+   [ . . . ]
+   17 phpoci22116           oci8.so   php_oci_dtrace_check_connection oci8-check-connection
+   18 phpoci22116           oci8.so                php_oci_do_connect oci8-connect-entry
+   19 phpoci22116           oci8.so         php_oci_persistent_helper oci8-connect-expiry
+   20 phpoci22116           oci8.so             php_oci_do_connect_ex oci8-connect-lookup
+   21 phpoci22116           oci8.so  php_oci_pconnection_list_np_dtor oci8-connect-p-dtor-close
+   22 phpoci22116           oci8.so  php_oci_pconnection_list_np_dtor oci8-connect-p-dtor-release
+   23 phpoci22116           oci8.so                php_oci_do_connect oci8-connect-return
+   24 phpoci22116           oci8.so             php_oci_do_connect_ex oci8-connect-type
+   25 phpoci22116           oci8.so          php_oci_connection_close oci8-connection-close
+   26 phpoci22116           oci8.so                     php_oci_error oci8-error
+   27 phpoci22116           oci8.so         php_oci_statement_execute oci8-execute-mode
+   28 phpoci22116           oci8.so              php_oci_create_spool oci8-sesspool-create
+   29 phpoci22116           oci8.so            php_oci_create_session oci8-sesspool-stats
+   30 phpoci22116           oci8.so            php_oci_create_session oci8-sesspool-type
+   31 phpoci22116           oci8.so          php_oci_statement_create oci8-sqltext
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  
+  <para>
+   Столбец "Provider" состоит из <literal>phpoci</literal> и идентификатора
+   запущенного процесса PHP.
+  </para>
+  
+  <para>
+   Столбец "Function" содержит имена внутренних, написанных на C, функций PHP,
+   в которых содержатся соответствующие провайдеры (Provider).
+  </para>
+  
+  <para>
+   Если процесс PHP не запущен, то никаких зондов PHP показано не будет.
+  </para>
+ </section>
+ 
+ <section>
+  <title>Пример использования DTrace с PHP OCI8</title>
+  <para>
+   В этом примере продемонстрированы основы скриптового языка DTrace D.
+   <example>
+    <title><filename>user_oci8_probes.d</filename> для трассировки всех статических 
+     зондов PHP OCI8 с помощью DTrace на пользовательском уровне</title>
+    <programlisting>
+<![CDATA[
+#!/usr/sbin/dtrace -Zs
+
+#pragma D option quiet
+
+php*:::oci8-connect-entry
+{
+    printf("%lld: PHP connect-entry\n", walltimestamp);
+    printf("  credentials=\"%s@%s\"\n", arg0 ? copyinstr(arg0) : "", arg1 ? copyinstr(arg1) : "");
+    printf("  charset=\"%s\"\n", arg2 ? copyinstr(arg2) : "");
+    printf("  session_mode=%ld\n", (long)arg3);
+    printf("  persistent=%d\n", (int)arg4);
+    printf("  exclusive=%d\n", (int)arg5);
+}
+
+php*:::oci8-connect-return
+{
+    printf("%lld: PHP oci8-connect-return\n", walltimestamp);
+    printf("  connection=0x%p\n", (void *)arg0);
+}
+
+php*:::oci8-connection-close
+{
+    printf("%lld: PHP oci8-connect-close\n", walltimestamp);
+    printf("  connection=0x%p\n", (void *)arg0);
+}
+
+php*:::oci8-error
+{
+    printf("%lld: PHP oci8-error\n", walltimestamp);
+    printf("  status=%d\n", (int)arg0);
+    printf("  errcode=%ld\n", (long)arg1);
+}
+
+php*:::oci8-check-connection
+{
+    printf("%lld: PHP oci8-check-connection\n", walltimestamp);
+    printf("  connection=0x%p\n", (void *)arg0);
+    printf("  client_id=\"%s\"\n", arg1 ? copyinstr(arg1) : "");
+    printf("  is_open=%d\n", arg2);
+    printf("  errcode=%ld\n", (long)arg3);
+    printf("  server_status=%lu\n", (unsigned long)arg4);
+}
+
+php*:::oci8-sqltext
+{
+    printf("%lld: PHP oci8-sqltext\n", walltimestamp);
+    printf("  connection=0x%p\n", (void *)arg0);
+    printf("  client_id=\"%s\"\n", arg1 ? copyinstr(arg1) : "");
+    printf("  statement=0x%p\n", (void *)arg2);
+    printf("  sql=\"%s\"\n", arg3 ? copyinstr(arg3) : "");
+}
+
+php*:::oci8-execute-mode
+{
+    printf("%lld: PHP oci8-execute-mode\n", walltimestamp);
+    printf("  connection=0x%p\n", (void *)arg0);
+    printf("  client_id=\"%s\"\n", arg1 ? copyinstr(arg1) : "");
+    printf("  statement=0x%p\n", (void *)arg2);
+    printf("  mode=0x%x\n", arg3);
+}
+]]>
+    </programlisting>
+   </example>
+  </para>
+  
+  <para>
+   В этом скрипте с <filename>dtrace</filename> используется опция 
+   <literal>-Z</literal>, позволяющая ему запускаться даже если никаких 
+   процессов PHP не запущено. Если не задать данную опцию, то скрипт
+   сразу же прекратит свою работу, так как отсутствуют зонды для
+   отслеживания.
+  </para>
+  
+  <para>
+   На многопроцессорных машинах порядок зондов может быть не
+   последовательным. Это зависит от того, на каких ядрах работают
+   зонды и каким образом потоки мегрируют между ядрами.
+   В такой ситуации имеет смысл ориентироваться на временные метки
+   зондов.
+  </para>
+  
+  <para>
+   Скрипт отслеживает все сообщения статических зондов
+   PHP OCI8 уровня пользователя на протяжении работы скрипта PHP. 
+   Запускаем скрипт D:
+   <informalexample>
+    <programlisting>
+<![CDATA[
+# ./user_oci8_probes.d
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  
+  <para>
+   Запускаем скрипт PHP или свое приложение. D-скрипт будет выводить
+   все аргументы зондов при их срабатывании. К примеру, простой
+   скрипт PHP, выполняющий запрос к базе данных может создавать следующие
+   сообщения:
+   <informalexample>
+    <programlisting>
+<![CDATA[
+1381794982092854582: PHP connect-entry
+  credentials="hr@localhost/pdborcl"
+  charset=""
+  session_mode=0
+  persistent=0
+  exclusive=0
+1381794982183158766: PHP oci8-connect-return
+  connection=0x7f4a7907bfb8
+1381794982183594576: PHP oci8-sqltext
+  connection=0x7f4a7907bfb8
+  client_id="Chris"
+  statement=0x7f4a7907c2a0
+  sql="select * from employees"
+1381794982183783706: PHP oci8-execute-mode
+  connection=0x7f4a7907bfb8
+  client_id="Chris"
+  statement=0x7f4a7907c2a0
+  mode=0x20
+1381794982444344390: PHP oci8-connect-close
+  connection=0x7f4a7907bfb8
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  
+  <para>
+   После завершения диагностики D-скрипт можно прервать с помощью
+   нажатия <literal>^C</literal>.
+  </para>
+  
+ </section>
+ 
+ <section>
+  <title>&Seealso;</title>
+  <simplelist>
+   <member><link linkend="features.dtrace">Динамическая трассировка DTrace</link></member>
+  </simplelist>
+ </section>
+ 
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
