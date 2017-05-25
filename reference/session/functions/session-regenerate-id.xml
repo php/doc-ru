@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: f42f55617a2096a46697a9bd603cac0b24aeea5b Maintainer: Ilya Rooc Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.session-regenerate-id">
+ <refnamediv>
+  <refname>session_regenerate_id</refname>
+  <refpurpose>
+   Генерирует и обновляет идентификатор текущей сессии
+  </refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>session_regenerate_id</methodname>
+   <methodparam choice="opt"><type>bool</type><parameter>delete_old_session</parameter><initializer>false</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   <function>session_regenerate_id</function> заменяет идентификатор текущей сессии вновь
+   сгенерированным, при этом сохраняет информацию о текущей сессии.
+  </para>
+  <para>
+   При включённой опции <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>,
+   вывод должен осуществляться после вызова <function>session_regenerate_id</function>.
+   В противном случае будет использоваться старый идентификатор сессии.
+  </para>
+  <warning>
+   <para>
+    Текущая реализация <function>session_regenerate_id</function> не работает хорошо
+    с сетями с нестабильным соединением, такими как мобильные и WiFi сети. Таким образом,
+    есть вероятность потерять сессиию из-за вызова <function>session_regenerate_id</function>.
+   </para>
+   <para>
+    Вы не должны уничтожать данные старой сессии немедленно, а должны
+    использовать временные метки удаления и контролировать доступ к старой сессии.
+    В противном случае конкурирующий доступ к странице может привести к
+    несогласованному состоянию, потере сессии или к состоянию гонки на стороне
+    клиента (браузера), что, в свою очередь, приведёт к созданию множества идентификаторов
+    сессии без необходимости. Немедленное удаление сессии также делает невозможным
+    обнаружение и предотвращение атак при перехвате сессии.
+   </para>
+  </warning>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>delete_old_session</parameter></term>
+      <listitem>
+       <para>
+        Определяет удалять ли старый ассоциированный файл с сессией или нет.
+        Не следует удалять старую сессию, если требуется избегать состояния гонки
+        из-за удаления или обнаруживать/избегать атак при перехвате сессии.
+       </para>
+      </listitem>
+     </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        <function>session_regenerate_id</function> перед закрытием сохраняет
+        данные старой сессии.
+       </entry>
+      </row>
+      <row>
+       <entry>5.1.0</entry>
+       <entry>
+        Добавлен параметр <parameter>delete_old_session</parameter>.
+       </entry>
+      </row>
+      <row>
+       <entry>4.3.3</entry>
+       <entry>
+        Начиная с этой версии, при включённых сессионных cookie,
+        использование <function>session_regenerate_id</function> также
+        создаст новые сессионные cookie с новым идентификатором сессии.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>session_regenerate_id</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// ЗАМЕЧАНИЕ: Это не полностью работающий код, а только пример!
+
+session_start();
+
+// Проверяем временную метку удаления
+if (isset($_SESSION['destroyed'])
+    && $_SESSION['destroyed'] < time() - 300) {
+    // Обычно это не должно происходить. Это может быть атакой или результатом нестабильной сети.
+    // Удаляем все статусы аутентификации пользователей этой сессии.
+    remove_all_authentication_flag_from_active_sessions($_SESSION['userid']);
+    throw(new DestroyedSessionAccessException);
+}
+
+$old_sessionid = session_id();
+
+// Устанавливаем временную метку удаления
+$_SESSION['destroyed'] = time(); // Начиная с PHP 7.0.0 и выше, session_regenerate_id() сохраняет данные старой сессии
+
+// Просто вызов session_regenerate_id() может привести к потере сессии и т.д.
+// Смотрите следующий пример.
+session_regenerate_id();
+
+// Новой сессии не требуется временная метка удаления.
+unset($_SESSION['destroyed']);
+
+$new_sessionid = session_id();
+
+echo "Старая сессия: $old_sessionid<br />";
+echo "Новая сессия: $new_sessionid<br />";
+
+print_r($_SESSION);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   Текущий модуль сессии не работает хорошо с сетями с нестабильным соединением.
+   Вы должны управлять идентификатором сессии, чтобы избежать потери сессии в
+   результате вызова <function>session_regenerate_id</function>.
+  </para>
+
+  <para>
+   <example>
+    <title>Как избежать потери сессии при использовании <function>session_regenerate_id</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// ЗАМЕЧАНИЕ: Это не полностью работающий код, а только пример!
+// my_session_start() и my_session_regenerate_id() избегают потери
+// сессии из-за нестабильной сети. В дополнение, данный код может предотвращать
+// использование украденных сессий злоумышленниками.
+
+function my_session_start() {
+    session_start();
+    if (isset($_SESSION['destroyed'])) {
+       if ($_SESSION['destroyed'] < time()-300) {
+           // Обычно это не должно происходить. Это может быть атакой или результатом нестабильной сети.
+           // Удаляем все статусы аутентификации пользователей этой сессии.
+           remove_all_authentication_flag_from_active_sessions($_SESSION['userid']);
+           throw(new DestroyedSessionAccessException);
+       }
+       if (isset($_SESSION['new_session_id'])) {
+           // Срок действия ещё не полностью истёк. Cookie могли быть потеряны из-за нестабильной сети.
+           // Заново пытаемся установить правильный cookie идентификатора сессиии.
+           // ЗАМЕЧАНИЕ: Не пытайтесь заново установить идентификатор сессии если, вы предпочитаете
+           // удалить флаг аутентификации.
+           session_commit();
+           session_id($_SESSION['new_session_id']);
+           // Новый идентификатор сессии должен существовать.
+           session_start();
+           return;
+       }
+   }
+}
+
+function my_session_regenerate_id() {
+    // Новый идентификатор сессии необходим для установки правильного идентификатора сессии,
+    // когда идентификатор сессии не был установлен из-за нестабильной сети.
+    $new_session_id = session_create_id();
+    $_SESSION['new_session_id'] = $new_session_id;
+    
+    // Устанавливаем временную метку удаления.
+    $_SESSION['destroyed'] = time();
+    
+    // Записываем и закрываем текущую сессию.
+    session_commit();
+
+    // Стартуем сессию с новым идентификатором.
+    session_id($new_session_id);
+    ini_set('session.use_strict_mode', 0);
+    session_start();
+    ini_set('session.use_strict_mode', 1);
+    
+    // Новой сессии не нужно это.
+    unset($_SESSION['destroyed']);
+    unset($_SESSION['new_session_id']);
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>session_id</function></member>
+    <member><function>session_create_id</function></member>
+    <member><function>session_start</function></member>
+    <member><function>session_destroy</function></member>
+    <member><function>session_reset</function></member>
+    <member><function>session_name</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 894b3c74d9a9e4c6100139cabaa7c97eb2e294c0 Maintainer: Ilya Rooc Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.session-destroy">
+ <refnamediv>
+  <refname>session_destroy</refname>
+  <refpurpose>Уничтожает все данные, ассоциированные с сессией</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>session_destroy</methodname>
+   <void/>
+  </methodsynopsis>
+  <simpara>
+   <function>session_destroy</function> уничтожает все данные, ассоциированные
+   с текущей сессией. Данная функция не удаляет какие-либо глобальные переменные,
+   ассоциированные с сессией и не удаляет сессионные cookie.
+   Чтобы вновь использовать переменные сессии, следует вызвать
+   <function>session_start</function>.
+  </simpara>
+  <note>
+   <simpara>
+    Нет необходимости вызывать <function>session_destroy</function> в обычном коде.
+    Очищайте массив <varname>$_SESSION</varname> вместо удаления данных сессии.
+   </simpara>
+  </note>
+  <para>
+   Чтобы полностью удалить сессию, также необходимо удалить и
+   её идентификатор. Если для передачи идентификатора сессии используются
+   cookie (поведение по умолчанию), то сессионные cookie также должны быть удалены.
+   Для этого можно использовать <function>setcookie</function>.
+  </para>
+  <para>
+   При включённой опции <link linkend="ini.session.use-strict-mode">session.use_strict_mode</link>,
+   вам не нужно удалять устаревшие cookie идентификатора сессии. В этом нет необходимости, потому что
+   модуль сессии не примет cookie идентификатора сессии, если с этим идентификатором сессии нет
+   ассоциированных данных, и модуль сессии установит новый cookie идентификатора сессии.
+   Рекомендуется включать опцию <link linkend="ini.session.use-strict-mode">session.use_strict_mode</link>
+   для всех сайтов.
+  </para>
+  <warning>
+   <para>
+    Немедленное удаление сессии может привести к нежелательным последствиям.
+    При наличии конкурирующих запросов, другие соединения могут столкнуться с
+    внезапной потерей данных сессии, например это могут быть запросы от JavaScript
+    и/или запросы из ссылок URL.
+   </para>
+   <para>
+    Даже если текущий модуль сессии не поддерживает пустые cookie идентификатора сессии,
+    немедленное удаление сессии может привести к пустым cookie идентификатора сессии
+    из-за состояния гонки на стороне клиента (браузера). Это приведёт к тому, что клиент создаст
+    множество идентификаторов сессии без необходимости.
+   </para>
+   <para>
+    Чтобы этого избежать, необходимо установить в $_SESSION временную метку удаления
+    и убрать доступ позже. Или удостовериться, что ваше приложение не имеет
+    конкурирующих запросов. Это также относится к <function>session_regenerate_id</function>.
+   </para>
+  </warning>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Уничтожение сессии с помощью <varname>$_SESSION</varname></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Инициализируем сессию.
+// Если вы используете session_name("something"), не забудьте добавить это перед session_start()!
+session_start();
+
+// Удаляем все переменные сессии.
+$_SESSION = array();
+
+// Если требуется уничтожить сессию, также необходимо удалить сессионные cookie.
+// Замечание: Это уничтожит сессию, а не только данные сессии!
+if (ini_get("session.use_cookies")) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params["path"], $params["domain"],
+        $params["secure"], $params["httponly"]
+    );
+}
+
+// Наконец, уничтожаем сессию.
+session_destroy();
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Используйте <function>session_unset</function> только для устаревшего
+    кода, где не используется <varname>$_SESSION</varname>.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><link linkend="ini.session.use-strict-mode">session.use_strict_mode</link></member>
+    <member><function>session_reset</function></member>
+    <member><function>session_regenerate_id</function></member>
+    <member><function>unset</function></member>
+    <member><function>setcookie</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
