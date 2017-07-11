@@ -1,46 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d23298a70c0a1a48402844e0a6b818de27feb146 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 7e2f7b05e2fcb759e22e98bd5033a4baf5fb6789 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
-<!-- $Revision: $ -->
+<!-- $Revision$ -->
 
 <refentry xml:id="memcached.getmulti" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Memcached::getMulti</refname>
   <refpurpose>Получает несколько записей</refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <modifier>public</modifier> <type>mixed</type><methodname>Memcached::getMulti</methodname>
    <methodparam><type>array</type><parameter>keys</parameter></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter role="reference">cas_tokens</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter></methodparam>
   </methodsynopsis>
   <para>
    <function>Memcached::getMulti</function> работает аналогично методу
    <methodname>Memcached::get</methodname>, но вместо одной записи
    получает несколько, ключи которых были переданы в массиве
-   <parameter>keys</parameter>. Если передана переменная <parameter>cas_tokens</parameter>,
-   то она будет заполнена CAS токенами найденных записей.
+   <parameter>keys</parameter>.
    <note>
     <para>
-     В отличие от <methodname>Memcached::get</methodname> нельзя указать
-     callback-функцию с чтением из кеша для метода
-     <function>Memcached::getMulti</function>, потому что memcache протокол
-     не дает информацию о том, какие ключи небыли найдены в множественном запросе.
+     До версии 3.0 использовался второй аргумент <parameter role="reference">cas_tokens</parameter>. 
+     Он заполнялся значениями токена CAS для найденых записей.
+     Параметр <parameter role="reference">cas_tokens</parameter> был удален в версии 3.0.
+     Он был заменен новым флагом <constant>Memcached::GET_EXTENDED</constant>, который
+     указывается в параметре <parameter>flags</parameter>.
     </para>
    </note>
   </para>
   <para>
    Параметр <parameter>flags</parameter> может использоваться для указания дополнительных
-   настроек для метода <function>Memcached::getMulti</function>. На данный момент поддерживаются,
-   только следующие настройки:
-   <constant>Memcached::GET_PRESERVE_ORDER</constant> гарантирует что записи будут возвращены
-   в том же порядке, что и были запрошены.
+   настроек для метода <function>Memcached::getMulti</function>. На данный момент
+   поддерживаются,  только следующие настройки:
+   <constant>Memcached::GET_PRESERVE_ORDER</constant> гарантирует что записи будут 
+   возвращены в том же порядке, что и были запрошены.
+   <constant>Memcached::GET_EXTENDED</constant> ведет к тому, что также будут
+   извлечены токены CAS.
   </para>
  </refsect1>
-
+ 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
@@ -50,14 +51,6 @@
      <listitem>
       <para>
        Массив ключей для запроса.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>cas_tokens</parameter></term>
-     <listitem>
-      <para>
-       Переменная в которую будут записаны CAS токены найденных записей.
       </para>
      </listitem>
     </varlistentry>
@@ -72,7 +65,7 @@
    </variablelist>
   </para>
  </refsect1>
-
+ 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
@@ -80,15 +73,52 @@
    &memcached.result.getresultcode;
   </para>
  </refsect1>
-
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Memcached::getMulti</function></title>
+    <title>Пример использования <function>Memcached::getMulti</function> версии 3</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+// Работает с версией расширения 3
+
+$m = new Memcached();
+$m->addServer('localhost', 11211);
+
+$items = array(
+    'key1' => 'value1',
+    'key2' => 'value2',
+    'key3' => 'value3'
+);
+$m->setMulti($items);
+$result = $m->getMulti(array('key1', 'key3', 'badkey'));
+var_dump($result);
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+array(2) {
+  ["key1"]=>
+  string(6) "value1"
+  ["key3"]=>
+  string(6) "value3"
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования <function>Memcached::getMulti</function> версий 1 и 2</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Работает с версиями расширения 1 и 2
+
 $m = new Memcached();
 $m->addServer('localhost', 11211);
 
@@ -124,10 +154,57 @@ array(2) {
   </para>
   <para>
    <example>
-    <title>Пример использования <constant>Memcached::GET_PRESERVE_ORDER</constant></title>
+    <title>Пример использования <constant>Memcached::GET_PRESERVE_ORDER</constant> с версией 3</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+// Работает с версией расширения 3
+
+$m = new Memcached();
+$m->addServer('localhost', 11211);
+
+$data = array(
+    'foo' => 'foo-data',
+    'bar' => 'bar-data',
+    'baz' => 'baz-data',
+    'lol' => 'lol-data',
+    'kek' => 'kek-data',
+);
+
+$m->setMulti($data, 3600);
+
+$keys = array_keys($data);
+$keys[] = 'zoo';
+$got = $m->getMulti($keys, Memcached::GET_PRESERVE_ORDER);
+
+foreach ($got as $k => $v) {
+    echo "$k $v\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+foo foo-data
+bar bar-data
+baz baz-data
+lol lol-data
+kek kek-data
+zoo 
+]]>
+    </screen>
+   </example>
+  </para>
+  
+  <para>
+   <example>
+    <title>Пример использования <constant>Memcached::GET_PRESERVE_ORDER</constant> с версией 1 и 2</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Работает с версиями расширения 1 и 2
+
 $m = new Memcached();
 $m->addServer('localhost', 11211);
 
@@ -166,7 +243,31 @@ zoo
    </example>
   </para>
  </refsect1>
-
+ 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>3.0.0</entry>
+      <entry>
+       Удален параметр <parameter role="reference">cas_tokens</parameter>.
+       Добавлена константа <constant>Memcached::GET_EXTENDED</constant> для 
+       возврата токенов CAS.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+ 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
@@ -177,7 +278,7 @@ zoo
    </simplelist>
   </para>
  </refsect1>
-
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file
