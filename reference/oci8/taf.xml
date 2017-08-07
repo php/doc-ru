@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: cb2e7b70b1354e5468e538720d59c37e273bc98e Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="oci8.taf" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Поддержка прозрачного для приложений восстановления после отказа (Transparent Application Failover или TAF) для OCI8</title>
+ <section>
+  <para>
+   TAF - это механизм базы данных Oracle обеспечивающий высокую доступность.
+   Он позволяет приложениям PHP использующим OCI8 автоматически переподключаться
+   к резервной базе данных в случае сбоя на основной или при сетевых проблемах..
+  </para>
+  <para>
+   В сконфигурированной системе базы данных Oracle, TAF происходит когда
+   приложение PHP определяет, что инстанс базы данных недоступен.
+   В этом случае происходит соединение с другим узлом в
+   Oracle <link xlink:href="&url.oracle.taf.rac;">RAC</link>. Это может быть горячий
+   резерв или тот же самый инстанс базы данных. Более подробно о OCI TAF
+   читайте в <link xlink:href="&url.oracle.taf.ociguide;">Oracle
+   Call Interface Programmer's Guide</link>.
+  </para>
+  <para>
+   Функцию обратного вызова для приложения можно зарегистрировать с помощью
+   <function>oci_register_taf_callback</function>. В процессе восстановления после
+   отказа исполнение приложения будет приостановлено и будет вызвана зарегистрированная
+   функция обратного вызова. Эта функция будет оповещать приложение о событиях
+   процесса восстановления. Если восстановление завершилось успешно, управление будет
+   возвращено приложению. Если восстановление завершилось неудачно, то все последующие
+   обращения к базе данных будут завершаться с ошибкой, так как отсутствует подключение.
+  </para>
+  <para>
+   Когда соединение переходит к другой базе данных, обратный вызов может сбросить 
+   любое необходимое состояние соединения, к примеру перевыполнить любую
+   необходимую команду ALTER SESSION если для сервиса базы данных не включен
+   -failover_restore.
+  </para>
+  <para>
+   Регистрацию функции обратного вызова можно удалить с помощью <function>oci_unregister_taf_callback</function>.
+  </para>
+ </section>
+ <section>
+  <title>настройка TAF</title>
+  <para>
+   TAF можно настроить на стороне PHP OCI8 или в конфигурации базы данных. 
+   Если настроено и там и там, то предпочтение отдается настройкам на стороне базы данных.
+  </para>
+  <para>
+   Настроить TAF в PHP OCI8 (на стороне клиента) можно добавив параметр
+   FAILOVER_MODE в часть CONNECT_DATA дескриптора соединения.
+   Более подробно о настройке TAF на стороне клиента читайте в
+   <link xlink:href="&url.oracle.taf.clientconfig;">
+    Oracle Database Net Services Administrator's Guide</link>.
+  </para>
+  <para>
+   Пример настройки TAF в tnsnames.ora для переподключения к той же самой БД:
+  </para>
+  <para>
+   <informalexample>
+    <screen>
+<![CDATA[
+    ORCL =
+      (DESCRIPTION =
+        (ADDRESS = (PROTOCOL = TCP)(HOST = 127.0.0.1)(PORT = 1521))
+        (CONNECT_DATA =
+          (SERVICE_NAME = orcl)
+          (FAILOVER_MODE =
+            (TYPE = SELECT)
+            (METHOD = BASIC)
+            (RETRIES = 20)
+            (DELAY = 15))))
+ ]]>
+    </screen>
+   </informalexample>
+  </para>
+  <para>
+   Также можно настроить TAF на стороне базы данных путем модификации сервиса 
+   с помощью <link xlink:href="&url.oracle.taf.srvctl;">srvctl</link>
+   (для RAC) или с помощью пакетной процедуры
+   <link xlink:href="&url.oracle.taf.dbmsservice;">
+    DBMS_SERVICE.MODIFY_SERVICE</link> 
+   (для одиночных инстансов баз данных).
+  </para>
+ </section>
+ <section>
+  <title>Использование функций обратного вызова TAF в OCI8</title>
+  <para>
+   Функция обратного вызова TAF являются функцией зарегистрированной из приложения
+   для запуска в процессе восстановления после сбоя. При восстановлении соединения она
+   вызывается несколько раз.
+  </para>
+  <para>
+   Первый раз она запускается в момент обнаружения проблем с соединением.
+   Это позволяет приложению корректно подготориться к задержке выполнения
+   на время восстановления после сбоя. Если восстановление завершилось удачно, 
+   функция будет вызвана сразу после восстановления подключения. Этот запуск
+   приложение может использовать для пересинхронизации настроек сессии и оповещения
+   пользователя о том, что произошло восстановление после сбоя. Если восстановление 
+   завершилось неудачно, функция запускается еще раз для оповещения приложения о 
+   том, что восстановление завершилось с ошибкой и соединение с БД недоступно.
+  </para>
+  <para>
+   Интерфейс функции обратного вызова TAF:
+  </para>
+  <methodsynopsis>
+   <type>int</type><methodname>userCallbackFn</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam><type>int</type><parameter>event</parameter></methodparam>
+   <methodparam><type>int</type><parameter>type</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>connection</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор соединения Oracle для которого эта функция
+       была зарегистрирована с помощью <function>oci_register_taf_callback</function>.
+       Соединение недоступно во время аварийного восстановления.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>event</parameter></term>
+     <listitem>
+      <para>
+       Событие восстановления означает текущий статус восстановления.
+      </para>
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <constant>OCI_FO_BEGIN</constant> означает, что произошла потеря
+          соединения и процесс восстановления начат.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_END</constant> означает удачное восстановление соединения.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_ABORT</constant> означает, что восстановление завершилось
+          неудачно и попыток восстановления больше не будет.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_ERROR</constant> также означает, что восстановление
+          завершилось с ошибкой, но приложению дается возможность обарботать
+          ошибку и вернуть OCI_FO_RETRY для еще одной попытки восстановления.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_REAUTH</constant> означает, что пользователь
+          Oracle был повторно аутентифицирован..
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>type</parameter></term>
+     <listitem>
+      <para>
+       Тип восстановления после отказа. Это позволяет функции понять, 
+       какой тип восстановления запрошен приложением. Допустимы такие значения:
+      </para>
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <constant>OCI_FO_SESSION</constant> означает, что пользователь
+          запросил только восстановление сессии. К примеру, если соединение пропало,
+          то будет создана новая сессия на резервном сервере. Этот тип восстановления
+          не будет пытаться восстановить запросы типа SELECT.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_SELECT</constant> означает, что запрошено восстановление
+          запросов SELECT. Это позволит использовать открытый курсор для
+          извлечения значений после восстановления.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>return value</parameter></term>
+     <listitem>
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <constant>0</constant> означает, что шаги восстановления после отказа должны 
+          продолжаться нормально.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <constant>OCI_FO_RETRY</constant> означает, что необходимо попробвать
+          восстановиться еще раз. В случае ошибки при переходе на новое соединение TAF 
+          может повторить переход на другой ресурс. Обычно перед возвращением кода
+          OCI_FO_RETRY рекомендуется некоторое время подождать.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  <example>
+   <para>
+    Пример регистрации функции обартного вызова TAF
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+// Определяем функцию обратного вызова в пространстве пользователя
+class MyClass {
+    public static $retry_count;
+    public static function TAFCallback($conn, $event, $type)
+    {
+        switch ($event) {
+            case OCI_FO_BEGIN:
+                printf(" Failing Over ... Please stand by");
+                printf(" Failover type was found to be %s \n",
+                       (($type==OCI_FO_SESSION) ? "SESSION"
+                        :($type==OCI_FO_SELECT) ? "SELECT"
+                        : "UNKNOWN!"));
+                self::$retry_count = 0;
+                break;
+            case OCI_FO_ABORT:
+                // Приложение больше не может использовать базу данных
+                printf(" Восстановление невозможно.\n");
+                break;
+            case OCI_FO_END:
+                // Восстановление завершилось успешно. Оповестим пользователей, что была проблема.
+                printf(" Восстановление завершено ... восстанавливаю работу\n");
+                break;
+            case OCI_FO_REAUTH:
+                printf(" Пользователь переавторизован ... восстанавливаю работу\n");
+                // Заново выполняем все необходимые ALTER SESSION
+                // т.е. oci_parse($conn, ‘ALTER SESSION …’) ;
+                break;
+            case OCI_FO_ERROR:
+                // Прекращаем попытки соединения, если их было более 20.
+                if (self::$retry_count >= 20)
+                    return 0;
+                printf(" Ошибка восстановления. Повторная попытка через 10 секунд...\n");
+                sleep(10);
+                self::$retry_count++;
+                return OCI_FO_RETRY; // retry failover
+                break;
+            default:
+                printf("Неизвестное событие восстановления: %d.\n", $event);
+                break;
+        }
+        return 0;
+    }
+}
+
+$conn = oci_connect('hr', 'welcome', 'localhost/XE');
+$fn_name = 'MyClass::TAFCallback';
+
+oci_register_taf_callback($conn, $fn_name); // Регистрируем TAFCallback для Oracle TAF 
+
+$sql = "SELECT col1 FROM mytab";
+$stmt = oci_parse($conn, $sql);
+oci_define_by_name($stmt, 'COL1', $col1);
+
+// К примеру, если соединение было потеряно на этом шаге, oci_execute()
+// определит это и запустит процедуру восстановления. В процессе восстановления
+// oci_execute() будет вызовать зарегистрированную функцию обратного вызова
+// несколько раз. Если восстановление пройдет успешно, то будет создано новое соединение 
+// и выполнение oci_execute() будет продолжено в нормальном режиме.
+// Настройки сессии могут быть сброшены в функции обратного вызова.
+// Если восстановление завершится неудачно, oci_execute() вернет ошибку, так как
+// будет отсутствовать соединение.
+
+$e = oci_execute($stmt);
+if ($e == false)
+{
+    // обрабатываем ошибку. Если oci_execute() завершается с ошибкой то
+    // var_dump(oci_error($stmt));
+}
+while (oci_fetch($stmt))
+{
+    echo "COL1 value is $col1<br>\n";
+}
+
+// выполняем другие SQL-запросы на новом подключении
+// $stmt = oci_parse($conn,  . . .); 
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </section>
+ 
+ <section>
+  <title>Также смотрите</title>
+  <simplelist>
+   <member><function>oci_register_taf_callback</function></member>
+   <member><function>oci_unregister_taf_callback</function></member>
+  </simplelist>
+ </section>
+ 
+ 
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
