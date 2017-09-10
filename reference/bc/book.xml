@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a3c18bfa37d1ccefec6f7f485cb2c77d30d59d09 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: d0f5b88a939b4060cd026bc5a07cc59fd1f68ab7 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
- 
+
 <book xml:id="book.bc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <?phpdoc extension-membership="bundled" ?>
  <title>Вычисления с произвольной точностью BCMath</title>
@@ -14,15 +14,41 @@
   <para>
    Для вычислений с произвольной точностью PHP предоставляет Двоичный
    калькулятор, который поддерживает числа любого размера и точности, вплоть до
-   2147483647-1 (или 0x7FFFFFFF-1) десятичных знаков, представленные в виде строк.
+   <literal>2147483647</literal> (или <literal>0x7FFFFFFF</literal>) десятичных знаков,
+   если хватит памяти, представленных в виде строк.
   </para>
+  <caution>
+   <para>
+    Передача в функции BCMath аргументов типа <type>float</type>, в то время как
+    они ожидают строки могут привести к неожиданным результатам, из-за используемого
+    PHP алгоритма преобразования <type>float</type> в <type>string</type>, например
+    можно получить строку содержащую число в экспоненциальной нотации (что не
+    поддерживается BCMath), или, в зависимости от локали, десятичный разделитель
+    в виде запятоц (тогда как BCMath работает только с десятичной точкой).
+   </para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$num1 = 0; // (string) 0 => '0'
+$num2 = -0.000005; // (string) -0.000005 => '-5.05E-6'
+echo bcadd($num1, $num2, 6); // => '0.000000'
+
+setlocale(LC_NUMERIC, 'de_DE'); // десятичная запятая вместо точки
+$num2 = 1.2; // (string) 1.2 => '1,2'
+echo bcsub($num1, $num2, 1); // => '0.0'
+?>
+]]>
+    </programlisting>
+   </informalexample>
+  </caution>
  </preface>
  <!-- }}} -->
  
  &reference.bc.setup;
  &reference.bc.constants;
  &reference.bc.reference;
-
+ 
 </book>
 
 <!-- Keep this comment at the end of the file
