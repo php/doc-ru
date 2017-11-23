@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 86e7ec71b120ff3da9b5b5df69ef68fea6e2df5a Maintainer: shein Status: ready -->
+<!-- EN-Revision: 30f67e7cb94d6c7f8f49834570dfee9212e632fb Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <appendix xml:id="filters" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -437,9 +437,13 @@ echo "Сжатый файл размером " . filesize('LICENSE.compressed') 
  
  <section xml:id="filters.encryption">
   <title>Шифрующие фильтры</title>
+  
   <para>
-   Потоковое и базирующееся на фильтрах шифрование очень хорошо подходит для
-   шифрования больших файлов.
+   &warn.deprecated.feature-7-1-0;
+  </para>
+  
+  <para>
+   Шифрующие фильтры очень хорошо подходят для шифрования файлов и потоков.
   </para>
   <simpara>
    <literal>mcrypt.*</literal> и <literal>mdecrypt.*</literal>
@@ -510,14 +514,16 @@ $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_CBC);
 $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM);
 $fp = fopen('encrypted-file.enc', 'wb');
 fwrite($fp, $iv);
-stream_filter_append($fp, 'mcrypt.blowfish', STREAM_FILTER_WRITE, $opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key));
+$opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key);
+stream_filter_append($fp, 'mcrypt.blowfish', STREAM_FILTER_WRITE, $opts);
 fwrite($fp, 'message to encrypt');
 fclose($fp);
 
 //расшифровка...
 $fp = fopen('encrypted-file.enc', 'rb');
 $iv = fread($fp, $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_CBC));
-stream_filter_append($fp, 'mdecrypt.blowfish', STREAM_FILTER_READ, $opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key));
+$opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key)
+stream_filter_append($fp, 'mdecrypt.blowfish', STREAM_FILTER_READ, $opts);
 $data = rtrim(stream_get_contents($fp));//trims off null padding
 fclose($fp);
 echo $data;
@@ -527,25 +533,29 @@ echo $data;
   </example>
   
   <example>
-   <title>Шифрование файла с помощью AES с SHA256 HMAC</title>
+   <title>Шифрование файла с помощью AES-128 CBC с SHA256 HMAC в PHP 5.5+</title>
    <programlisting role="php">
 <![CDATA[
 <?php
-// размер $key в 16 байт означает AES-128, а 24 байт=>AES-192, 32=>AES-256
-AES_CBC::encryptFile($key, "plaintext.txt", "encrypted.enc");
-AES_CBC::decryptFile($key, "encrypted.enc", "decrypted.txt");
+AES_CBC::encryptFile($password, "plaintext.txt", "encrypted.enc");
+AES_CBC::decryptFile($password, "encrypted.enc", "decrypted.txt");
 
 class AES_CBC
 {
-    public static function encryptFile($key, $input_stream, $aes_filename){
+    protected static $KEY_SIZES = array('AES-128'=>16,'AES-192'=>24,'AES-256'=>32);
+    protected static function key_size() { return self::$KEY_SIZES['AES-128']; } //default AES-128
+    public static function encryptFile($password, $input_stream, $aes_filename){
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
         $fin = fopen($input_stream, "rb");
         $fc = fopen($aes_filename, "wb+");
-        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-        $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM);
         if (!empty($fin) && !empty($fc)) {
-            fwrite($fc, str_repeat("_", 32) );//временная заглушка, позже тут будет SHA256 HMAC
-            fwrite($fc, $iv);
-            stream_filter_append($fc, 'mcrypt.rijndael-128', STREAM_FILTER_WRITE, ['mode'=>'cbc', 'iv'=>$iv, 'key'=>$key]);
+            fwrite($fc, str_repeat("_", 32) );//placeholder, SHA256 HMAC will go here later
+            fwrite($fc, $hmac_salt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            fwrite($fc, $esalt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            fwrite($fc, $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            $ekey = hash_pbkdf2("sha256", $password, $esalt, $it=1000, self::key_size(), $raw=true);
+            $opts = array('mode'=>'cbc', 'iv'=>$iv, 'key'=>$ekey);
+            stream_filter_append($fc, 'mcrypt.rijndael-128', STREAM_FILTER_WRITE, $opts);
             $infilesize = 0;
             while (!feof($fin)) {
                 $block = fread($fin, 8192);
@@ -553,39 +563,43 @@ class AES_CBC
                 fwrite($fc, $block);
             }
             $block_size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-            $padding = $block_size - ($infilesize % $block_size);//$padding - число от 1 до 16
-            fwrite($fc, str_repeat(chr($padding), $padding) );//производим дополнение PKCS7
+            $padding = $block_size - ($infilesize % $block_size);//$padding is a number from 1-16
+            fwrite($fc, str_repeat(chr($padding), $padding) );//perform PKCS7 padding
             fclose($fin);
             fclose($fc);
-            $hmac_raw = self::calculate_hmac_after_32bytes($key, $aes_filename);
+            $hmac_raw = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
             $fc = fopen($aes_filename, "rb+");
-            fwrite($fc, $hmac_raw);//перезаписываем заглушку
+            fwrite($fc, $hmac_raw);//overwrite placeholder
             fclose($fc);
         }
     }
-    public static function decryptFile($key, $aes_filename, $out_stream) {
-        $hmac_calc = self::calculate_hmac_after_32bytes($key, $aes_filename);
+    public static function decryptFile($password, $aes_filename, $out_stream) {
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+        $hmac_raw = file_get_contents($aes_filename, false, NULL,  0, 32);
+        $hmac_salt = file_get_contents($aes_filename, false, NULL, 32, $iv_size);
+        $hmac_calc = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
         $fc = fopen($aes_filename, "rb");
         $fout = fopen($out_stream, 'wb');
-        if (!empty($fout) && !empty($fc)) {
-            $hmac_raw = fread($fc, 32);
-            if (self::hash_equals($hmac_raw,$hmac_calc)) {
-                $iv = fread($fc, $iv_size=mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC));
-                stream_filter_append($fc, 'mdecrypt.rijndael-128', STREAM_FILTER_READ,['mode'=>'cbc','iv'=>$iv,'key'=>$key]);
-                while (!feof($fc)) {
-                    $block = fread($fc, 8192);
-                    if (feof($fc)) {
-                        $padding = ord($block[strlen($block) - 1]);//предполагаем дополнение PKCS7
-                        $block = substr($block, 0, 0-$padding);
-                    }
-                    fwrite($fout, $block);
+        if (!empty($fout) && !empty($fc) && self::hash_equals($hmac_raw,$hmac_calc)) {
+            fread($fc, 32+$iv_size);//skip sha256 hmac and salt
+            $esalt = fread($fc, $iv_size);
+            $iv    = fread($fc, $iv_size);
+            $ekey = hash_pbkdf2("sha256", $password, $esalt, $it=1000, self::key_size(), $raw=true);
+            $opts = array('mode'=>'cbc', 'iv'=>$iv, 'key'=>$ekey);
+            stream_filter_append($fc, 'mdecrypt.rijndael-128', STREAM_FILTER_READ, $opts);
+            while (!feof($fc)) {
+                $block = fread($fc, 8192);
+                if (feof($fc)) {
+                    $padding = ord($block[strlen($block) - 1]);//assume PKCS7 padding
+                    $block = substr($block, 0, 0-$padding);
                 }
+                fwrite($fout, $block);
             }
             fclose($fout);
             fclose($fc);
         }
     }
-    public static function hash_equals($str1, $str2) {
+    private static function hash_equals($str1, $str2) {
         if(strlen($str1) == strlen($str2)) {
             $res = $str1 ^ $str2;
             for($ret=0,$i = strlen($res) - 1; $i >= 0; $i--) $ret |= ord($res[$i]);
@@ -593,14 +607,15 @@ class AES_CBC
         }
         return false;
     }
-    public static function calculate_hmac_after_32bytes($key,$filename) {
+    private static function calculate_hmac_after_32bytes($password, $hsalt, $filename) {
         static $init=0;
-        $init or $init = stream_filter_register("user-filter.ignorefirst32bytes", "ReadFile_Skip32Bytes");
-        $stream = 'php://filter/read=user-filter.ignorefirst32bytes/resource=' . $filename;
-        return hash_hmac_file('sha256', $stream, $key, $raw=true);
+        $init or $init = stream_filter_register("user-filter.skipfirst32bytes", "FileSkip32Bytes");
+        $stream = 'php://filter/read=user-filter.skipfirst32bytes/resource=' . $filename;
+        $hkey = hash_pbkdf2("sha256", $password, $hsalt, $iterations=1000, 24, $raw=true);
+        return hash_hmac_file('sha256', $stream, $hkey, $raw=true);
     }
 }
-class ReadFile_Skip32Bytes extends php_user_filter
+class FileSkip32Bytes extends php_user_filter
 {
     private $skipped=0;
     function filter($in, $out, &$consumed, $closing)  {
@@ -617,6 +632,15 @@ class ReadFile_Skip32Bytes extends php_user_filter
         }
         return PSFS_PASS_ON;
     }
+}
+class AES_128_CBC extends AES_CBC {
+    protected static function key_size() { return self::$KEY_SIZES['AES-128']; }
+}
+class AES_192_CBC extends AES_CBC {
+    protected static function key_size() { return self::$KEY_SIZES['AES-192']; }
+}
+class AES_256_CBC extends AES_CBC {
+    protected static function key_size() { return self::$KEY_SIZES['AES-256']; }
 }
 ]]>
    </programlisting>
