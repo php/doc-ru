@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.udm-set-agent-param">
+ <refnamediv>
+  <refname>udm_set_agent_param</refname>
+  <refpurpose>Установить параметры сессии mnoGoSearch</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>bool</type><methodname>udm_set_agent_param</methodname>
+   <methodparam><type>resource</type><parameter>agent</parameter></methodparam>
+   <methodparam><type>int</type><parameter>var</parameter></methodparam>
+   <methodparam><type>string</type><parameter>val</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Устанавливает параметры сессии mnoGoSearch.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>agent</parameter></term>
+     <listitem>
+      <para>
+       Идентификатор ресурса агента, полученный из
+       <function>udm_alloc_agent</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>var</parameter></term>
+     <listitem>
+      <para>
+       Доступные параметры и их значения:
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_PAGE_NUM</constant> - используется для выбора номера
+          страницы в результатах поиска (результат возвращается начиная с индекса
+          0 с <constant>UDM_PARAM_PAGE_SIZE</constant> результатами на страницу).
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_PAGE_SIZE</constant> - количество результатов на одной странице.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_SEARCH_MODE</constant> - режим поиска. Допустимы такие значения: <constant>UDM_MODE_ALL</constant> -
+          поиск всех слов; <constant>UDM_MODE_ANY</constant> - поиск любого слова; <constant>UDM_MODE_PHRASE</constant> -
+          поиск фразы; <constant>UDM_MODE_BOOL</constant> - поиск по логическому выражению. Более подробно читайте в описани <function>udm_find</function>.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_CACHE_MODE</constant> - включает или отключает кеширование результатов поиска.
+          Если включено, то поисковая машина будет сохранять результаты поиска на диск и,
+          если поступит аналогичный запрос, то будет возвращен кешированный результат.
+          Допустимые значения: <constant>UDM_CACHE_ENABLED</constant>,
+          <constant>UDM_CACHE_DISABLED</constant>.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_TRACK_MODE</constant> - включает или выключает поддержку trackquery. 
+          С версии 3.1.2 mnoGoSearch имеет поддержку отслеживания запроса.
+          Обратите внимание, что отслеживание реализовано только в версии для SQL, но
+          не для встроенной базы данных.
+          Для использования отслеживания вам понадобится создать дополнительные таблицы.
+          Для MySQL используйте <filename>create/mysql/track.txt</filename>.
+          Во время поиска фронтенд будет использовать эти таблицы для хранения
+          слов запроса, количество найденых документов и текущий временную метку Unix.
+          Допустимые значения: <constant>UDM_TRACK_ENABLED</constant>,
+          <constant>UDM_TRACK_DISABLED</constant>.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_PHRASE_MODE</constant> - определяет, использовать ли фразы для индексирования
+          (параметр "phrase" в indexer.conf).
+          Допустимые значения: <constant>UDM_PHRASE_ENABLED</constant> и <constant>UDM_PHRASE_DISABLED</constant>.
+          Обратите внимание, что если разрешен поиск по фразам (<constant>UDM_PHRASE_ENABLED</constant>),
+          то поиск в любом режиме остается доступен (<literal>ANY</literal>, <literal>ALL</literal>,
+          <literal>BOOL</literal> или <literal>PHRASE</literal>).
+          В версии 3.1.10 поиск по фразам доступен только для SQL и встроенной базы данных.
+          Начиная с версии 3.1.11 фразы доступны и в режиме кеширования.
+         </simpara>
+         <simpara>
+          Пример поиска фраз:
+         </simpara>
+         <simpara>
+          <literal>"Arizona desert"</literal> - этот запрос вернет все документы, содержащие
+          "Arizona desert" в виде точной фразы. Обратите внимание, что фразу нужно
+          обрамить двойными кавычками.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_CHARSET</constant> - определяет локальную кодировку. Допустимые значения: набор кодировок, поддерживаемых mnoGoSearch, например koi8-r, cp1251, ...
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_STOPFILE</constant> - определяет путь до файла
+          со стоп-словами.  (Есть небольшой нюанс. В mnoGoSearch, если задан относительный путь, или путь вообще не задан, то 
+          поиск файла будет идти от <constant>UDM_CONF_DIR</constant>, но в модуле будет
+          использован путь относительно текущей директории, т.е. той, где запущен скрипт PHP.)
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_STOPTABLE</constant> - Загружать стоп-слова из заданной таблицы в БД. Вы можете использовать несколько команд StopwordTable.
+          Эта команда не будет работать, если mnoGoSearch собран без поддержки SQL.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_WEIGHT_FACTOR</constant> - представляет весовые факторы для определенных частей документа.
+          Сейчас поддерживаются такие части: body, title, keywords, description, url.
+          Для активации этого функционала используйте степени числа 2 в командах
+          *Weight файла <filename>indexer.conf</filename>. Представим, что у нас есть такие веса:
+         </simpara>
+         <literallayout>
+          URLWeight     1
+          BodyWeight    2
+          TitleWeight   4
+          KeywordWeight 8
+          DescWeight    16
+         </literallayout>
+         
+         <simpara>
+          Так как индексатор использует побитовое ИЛИ для развесовки когда
+          слово присутствует в разных частях документа, то становится возможным
+          отследить наличие этого слова в разных частях документа. Слово, присутствующее
+          только в теле будет иметь вес 00000010, слово, присутствующее во всех
+          частях документа - 00011111.
+         </simpara>
+         
+         <simpara>
+          Значение этого параметра является строкой шестнадцатеричных цифр
+          <literal>ABCDE</literal>. Каждая цифра - фактор для соответствующего бита
+          в весах слов. Для заданной выше конфигурации весов:
+         </simpara>
+         <literallayout>
+          E фактор для веса 1  (URLWeight bit)
+          D фактор для веса 2  (BodyWeight bit)
+          C фактор для веса 4  (TitleWeight bit)
+          B фактор для веса 8  (KeywordWeight bit)
+          A фактор для веса 16 (DescWeight bit)
+         </literallayout>
+         <simpara>
+          Примеры:
+         </simpara>
+         <simpara>
+          <constant>UDM_PARAM_WEIGHT_FACTOR</constant>=00001 будет искать только в URL.
+         </simpara>
+         <simpara>
+          <constant>UDM_PARAM_WEIGHT_FACTOR</constant>=00100 будет искать только в  Titles.
+         </simpara>
+         <simpara>
+          <constant>UDM_PARAM_WEIGHT_FACTOR</constant>=11100 будет искать в  Title, Keywords и Description, но не в URL и Body.
+         </simpara>
+         <simpara>
+          <constant>UDM_PARAM_WEIGHT_FACTOR</constant>=F9421 будет искать:
+         </simpara>
+         <literallayout>
+          Description с фактором 15  (F hex)
+          Keywords с фактором 9
+          Title с фактором  4
+          Body с фактором 2
+          URL с фактором 1
+         </literallayout>
+         <simpara>
+          Если переменная <constant>UDM_PARAM_WEIGHT_FACTOR</constant> опущена, 
+          то будут взяты оригинальные веса. Для примера выше это значит, что
+          наибольший вес будет у description с весом 16.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_WORD_MATCH</constant> - совпадение слов. Вы можете
+          использовать этот параметр для выбора типа сравнения слов.
+          Этот функционал работает только для режимов "single" и "multi" при использовании
+          SQL и встроенной баз данных. Не работает в режиме кеширования и прочих режимах,
+          так как в них используются контрольные суммы слов и не работает поиск
+          по подстроке. Допустимые значения:
+         </simpara>
+         <simpara><constant>UDM_MATCH_BEGIN</constant> - сравнение слов по их началу;</simpara>
+         <simpara><constant>UDM_MATCH_END</constant> - сравнение слов по их окончанию;</simpara>
+         <simpara><constant>UDM_MATCH_WORD</constant> - полное совпадение;</simpara>
+         <simpara><constant>UDM_MATCH_SUBSTR</constant> - сравнение как с подстрокой.</simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_MIN_WORD_LEN</constant> - задает минимальную длину слов.
+          Любое слово, короче заданного размера, будет считаться стоп-словом.
+          Обратите внимание, что стоп-словами будут считаться слова строго меньше 
+          заданного значения. Например при <constant>UDM_PARAM_MIN_WORD_LEN</constant>=3,
+          слова из трех букв не будут считаться стоп-словами. Значение по умолчанию 1.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_ISPELL_PREFIXES</constant> - Допустимые значения: <constant>UDM_PREFIXES_ENABLED</constant> и
+          <constant>UDM_PREFIXES_DISABLED</constant>, что, соответственно, разрешает
+          или запрещает использование префиксов.
+          Т.е. если в поисковом запросе присутствует слово "tested", то также будут найдены 
+          "test", "testing" и т.д. По умолчанию поддерживаются только суффиксы. Префиксы же
+          обычно меняют значение слов. К примеру если кто-то ищет слово "tested" и, при этом,
+          очень хочет, чтобы также было найдено и "untested". Поддержка префиксов может
+          быть полезна проверки орфографии. Для включения поддержки
+          ispell вам придется загрузить его данные с помощью  <function>udm_load_ispell_data</function>.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_CROSS_WORDS</constant> - включение или отключение поддержки функционала вставки слов.
+          Допустимые значения: <constant>UDM_CROSS_WORDS_ENABLED</constant> и <constant>UDM_CROSS_WORDS_DISABLED</constant>.
+         </simpara>
+         <simpara>
+          Данный функционал позволяет вставлять слова между &lt;a href="xxx"&gt; и &lt;/a&gt;
+          в ссылках на документ. Работает в режиме SQL, но не в режимах
+          внутренней БД или кеширования.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          <constant>UDM_PARAM_VARDIR</constant> - задает путь к директории, где
+          индексатор будет хранить данные с использованием встроенной БД или
+          в режиме кеширования.
+          По умолчанию используется директория <literal>/var</literal> сервера
+          установки <application>mnoGoSearch</application>.
+         </simpara>
+        </listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>val</parameter></term>
+     <listitem>
+      <para>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>4.1.0</entry>
+       <entry>
+        Добавлена константа <constant>UDM_PARAM_VARDIR</constant>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <simpara>
+    Вставка слов поддерживается в <application>mnoGoSearch</application> 3.1.11 или выше.
+   </simpara>
+  </note>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
