@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 710b0415e93e3db3ec9e6b11ecacff6adbc35aca Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="phardata.buildfromiterator" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>PharData::buildFromIterator</refname>
+  <refpurpose>Создание tar/zip-архива с помощью итератора</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>PharData::buildFromIterator</methodname>
+   <methodparam><type>Iterator</type><parameter>iter</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>base_directory</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Наполнение архив tar или zip с помощью итератора. Поддерживаются два типа
+   итераторов: итератор, связывающий файл на диске с файлом внутри архива и 
+   итератор в стиле DirectoryIterator, который возвращает объекты SplFileInfo.
+   Для итераторов, возвращающих объекты SplFileInfo, второй параметр является
+   обязательным.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>PharData::buildFromIterator</function> с SplFileInfo</title>
+   <para>
+    Для большинства tar/zip-архивов, структура отражает имеющееся дерево директорий 
+    на файловой системе. К примеру, для создания tar/zip-архива, содержащего
+    следующую структуру директорий и файлов:
+   </para>
+   <para>
+    <screen>
+<![CDATA[
+/path/to/project/
+                 config/
+                        dist.xml
+                        debug.xml
+                 lib/
+                     file1.php
+                     file2.php
+                 src/
+                     processthing.php
+                 www/
+                     index.php
+                 cli/
+                     index.php
+    ]]>
+   </screen>
+    </para>
+    <para>
+     Нужно использовать такой код, для создания архива &quot;project.tar&quot;:
+    </para>
+    <para>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$phar = new PharData('project.tar');
+$phar->buildFromIterator(
+    new RecursiveIteratorIterator(
+     new RecursiveDirectoryIterator('/path/to/project')),
+    '/path/to/project');
+?>
+    ]]>
+   </programlisting>
+    </para>
+    <para>
+     Файл <literal>project.tar</literal> можно использовать сразу же после его создания.
+     <function>PharData::buildFromIterator</function> не производит настройки
+     сжатия или добавления мета-данных. Эти действия необходимо произвести 
+     самостоятельно, после создания архива.
+    </para>
+    <para>
+     Интересное замечание, <function>PharData::buildFromIterator</function> также можно
+     использовать для копирования контента уже существующего phar, tar или zip-архива,
+     так как объект PharData наследует от <classname>DirectoryIterator</classname>:
+    </para>
+    <para>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$phar = new PharData('project.tar');
+$phar->buildFromIterator(
+    new RecursiveIteratorIterator(
+     new Phar('/path/to/anotherphar.phar')),
+    'phar:///path/to/anotherphar.phar/path/to/project');
+$phar->setStub($phar->createDefaultStub('cli/index.php', 'www/index.php'));
+?>
+    ]]>
+   </programlisting>
+    </para>
+  </example>
+  <example>
+   <title>Пример использования <function>PharData::buildFromIterator</function> с другим итератором</title>
+   <para>
+    Можно использовать итераторы, возвращающие связку "ключ"=>"значение",
+    например <classname>ArrayIterator</classname>:
+   </para>
+   <para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$phar = new PharData('project.tar');
+$phar->buildFromIterator(
+    new ArrayIterator(
+     array(
+        'internal/file.php' => dirname(__FILE__) . '/somefile.php',
+        'another/file.jpg' => fopen('/path/to/bigfile.jpg', 'rb'),
+     )));
+?>
+    ]]>
+   </programlisting>
+   </para>
+  </example>
+ </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>iter</parameter></term>
+     <listitem>
+      <para>
+       Итератор, предоставляющий связки ключ=>значение, либо
+       объекты SplFileInfo
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>base_directory</parameter></term>
+     <listitem>
+      <para>
+       Для итераторов, возвращающих объекты SplFileInfo, часть полного пути
+       добавляемых файлов, которая будет удаляться из полного пути внутри
+       архива.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+  
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   <function>PharData::buildFromIterator</function> возвращает ассоциативный массив,
+   связывающий путь к файлу внутри архива с полным путем к файлу на диске.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Метод бросает исклоючение <classname>UnexpectedValueException</classname> если
+   итератор вернул некорректное значение, например целочисленный ключ вместо строки.
+   Исключение <classname>BadMethodCallException</classname> выбрасывается когда
+   задан итератор возвращающий объекты SplFileInfo без задания параметра
+   <parameter>base_directory</parameter>. В случае проблем с записью на диск бросается 
+   исключение <classname>PharException</classname>.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>Phar::buildFromIterator</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
