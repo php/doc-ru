@@ -1,0 +1,3719 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: b2640f8900175a34675e303ac3f8878aff8d4a54 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mysqlnd-ms.setup" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.setup;
+ 
+ <section xml:id="mysqlnd-ms.requirements">
+  &reftitle.required;
+  <para>
+   <literal>PHP 5.3.6</literal> или новее.
+   Некоторый продвинутый функционал требует <literal>PHP 5.4.0</literal> или новее.
+  </para>
+  <para>
+   Плагин репликации и распределения нагрузки <literal>mysqlnd_ms</literal> 
+   поддерживается всеми приложениями PHP и всеми доступными расширениями PHP MySQL
+   (<link linkend="ref.mysqli">mysqli</link>,
+   <link linkend="ref.mysql">mysql</link>,
+   <link linkend="ref.pdo-mysql">PDO_MYSQL</link>).
+   Расширения PHP MySQL должны быть сконфигурированы с поддержкой
+   <link linkend="book.mysqlnd">mysqlnd</link>, чтобы можно было использовать
+   плагин <literal>mysqlnd_ms</literal> для
+   <link linkend="book.mysqlnd">mysqlnd</link>.
+  </para>
+ </section>
+ 
+ &reference.mysqlnd-ms.configure;
+ &reference.mysqlnd-ms.ini;
+ 
+ <section xml:id="mysqlnd-ms.plugin-ini-json">
+  <title xmlns="http://docbook.org/ns/docbook">Файл настроек плагина (&gt;=1.1.x)</title>
+  
+  <para>
+   Следующая документация применима к PECL/mysqlnd_ms &gt;= 1.1.0-beta.
+   Она не подходит для более ранних версий. Документация для более ранних
+   версий содержится в разделе
+   <link linkend="mysqlnd-ms.plugin-ini-v1">mysqlnd_ms 1.0.x и ниже</link>.
+  </para>
+  
+  <section xml:id="mysqlnd-ms.plugin-ini-json-introduction">
+   <title>Введение</title>
+   
+   
+   <note>
+    <title>Список изменений: Функционал добавленный в PECL/mysqlnd_ms 1.1.0-beta</title>
+    <para>
+     Следующая документация применима к PECL/mysqlnd_ms &gt;= 1.1.0-beta.
+     Она не подходит для более ранних версий.
+    </para>
+   </note>
+   
+   <para>
+    Плагин использует собственный файл конфигурации.
+    Файл конфигурации содержит информацию о главном сервере репликации MySQL, 
+    подчиненных серверах репликации MySQL, политике выбора сервера 
+    (балансировка нагрузки), стратегии обработки отказов и использовании
+    ленивых соединений.
+   </para>
+   <para>
+    Плагин загружает свой файл конфигурации в начале веб-запроса. Затем он кэшируется 
+    в памяти и используется в течение всей обработки запроса. Таким образом, нет
+    необходимости перезапускать PHP после изменения файла конфигурации. 
+    Изменения в конфигурационном файле станут активными почти мгновенно.
+   </para>
+   <para>
+    Для определения конфигурационного файла используется директива конфигурации PHP
+    <link linkend="ini.mysqlnd-ms.config-file"><literal>mysqlnd_ms.config_file</literal></link>.
+    Обратите внимание, что эта директива не будет перепрочитана для обработки каждого
+    нового веб-запроса. Таким образом, при изменении имени или местоположения
+    файла конфигурации придется перезапускать PHP. Однако, если имя и путь
+    файла остались прежними, то все изменения в нем будут применены.
+   </para>
+   <para>
+    Использование и разбор <acronym>JSON</acronym> достаточно эффективно.
+    использование <acronym>JSON</acronym> позволяет строить более структуры
+    данных более наглядно и просто, нежели при использовании формата
+    <filename>php.ini</filename>.
+   </para>
+   <para>
+    <example>
+     <title>Конвертация массива PHP в формат JSON</title>
+     <para>
+      Или же, если есть желание, можно использовать синтаксис массивов PHP.
+      В этом примере показан процесс конвертации массива в формат
+      <acronym>JSON</acronym>.
+     </para>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$config = array(
+  "myapp" => array(
+    "master" => array(
+      "master_0" => array(
+        "host"   => "localhost",
+        "socket" => "/tmp/mysql.sock",
+      ),
+    ),
+    "slave" => array(),
+  ),
+);
+
+file_put_contents("mysqlnd_ms.ini", json_encode($config, JSON_PRETTY_PRINT));
+printf("mysqlnd_ms.ini file created...\n");
+printf("Dumping file contents...\n");
+printf("%s\n", str_repeat("-", 80));
+echo file_get_contents("mysqlnd_ms.ini");
+printf("\n%s\n", str_repeat("-", 80));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+mysqlnd_ms.ini file created...
+Dumping file contents...
+--------------------------------------------------------------------------------
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost",
+                "socket": "\/tmp\/mysql.sock"
+            }
+        },
+        "slave": [
+
+        ]
+    }
+}
+--------------------------------------------------------------------------------
+]]>
+    </screen>
+   </example>
+   </para>
+   <para>
+    Конфигурационный файл плагина состоит из одной или более секций.
+    Секции представлены свойством самого верхнего уровня в дереве
+    <acronym>JSON</acronym>. Секции также можно назвать
+    <emphasis>названиями конфигураций</emphasis>.
+   </para>
+   <para>
+    Приложения ссылаются на секции по их имени. Приложения используют имена
+    секций в качестве параметра хоста (сервера) в методах создания соединения
+    расширений <link linkend="ref.mysqli">mysqli</link>,
+    <link linkend="ref.mysql">mysql</link> и
+    <link linkend="ref.pdo-mysql">PDO_MYSQL</link>. В процессе соединения,
+    плагин <link linkend="book.mysqlnd">mysqlnd</link> сравнивает имя хоста со
+    всеми именами секций из файла конфигурации. Если совпадение найдено, то
+    будут загружены соответствующие настройки.
+   </para>
+   <para xml:id="mysqlnd-ms.plugin-ini-json.using-section">
+    <example>
+     <title>Пример использования имен секций</title>
+     <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.2.27"
+            },
+            "slave_1": {
+                "host": "192.168.2.27",
+                "port": 3306
+            }
+        }
+    },
+    "localhost": {
+        "master": [
+            {
+                "host": "localhost",
+                "socket": "\/path\/to\/mysql.sock"
+            }
+        ],
+        "slave": [
+            {
+                "host": "192.168.3.24",
+                "port": "3305"
+            },
+            {
+                "host": "192.168.3.65",
+                "port": "3309"
+            }
+        ]
+    }
+}
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Все эти соединения будут использовать распределение нагрузки */
+$mysqli = new mysqli("myapp", "username", "password", "database");
+$pdo = new PDO('mysql:host=myapp;dbname=database', 'username', 'password');
+$mysql = mysql_connect("myapp", "username", "password");
+
+$mysqli = new mysqli("localhost", "username", "password", "database");
+?>
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para>
+    Имена секций являются строками. Допустимо использовать такие значения:
+    <literal>192.168.2.1</literal>, <literal>127.0.0.1</literal> или
+    <literal>localhost</literal>. Если, к примеру, приложение соединяется
+    к <literal>localhost</literal> и присутствует секция
+    <literal>localhost</literal>, то семантика операции соединения будет изменена.
+    Приложение будет использовать не только сервер MySQL расположенный на
+    <literal>localhost</literal>, но, с помощью плагина, нагрузка будет распределяться
+    согласно правилам из секции <literal>localhost</literal>. Таким образом вы можете
+    настроить балансировку нагрузки не изменяя кода приложения.
+    Имейте в виду, что такая конфигурация может не способствовать общей 
+    читаемости исходного кода вашего приложения. Использование имен разделов
+    совпадающих с реальными именами хостов, следует рассматривать как последнее средство.
+   </para>
+   <para xml:id="mysqlnd-ms.plugin-ini-json.server-list-syntax">
+    Каждая секция конфигурации, как минимум, должна содержать список
+    мастер-серверов (master) и список подчиненных серверов (slave).
+    Список мастер-серверов содержится в разделе <literal>master</literal>, а
+    список подчиненных в разделе <literal>slave</literal>. Если не задать список
+    подчиненных серверов, то будет выдана фатальная ошибка уровня
+    <constant>E_ERROR</constant>, так что просто оставляйте ее пустой.
+    Допустимо не использовать подчиненные сервера, но рекомендуется это делать
+    только в случае синхронных кластеров. Более подробно читайте в разделе
+    <link linkend="mysqlnd-ms.supportedclusters">поддерживаемые кластеры</link>.
+    Основная часть документации фокусируется на использовании асинхронных
+    кластеров репликации MySQL.
+   </para>
+   <para>
+    Списки подчиненных и мастер-серверов могут быть индексированы символьными 
+    именами. Либо же можно использовать массив анонимных записей.
+   </para>
+   <para>
+    <example>
+     <title>Список анонимных подчиненных серверов</title>
+     <programlisting role="ini">
+<![CDATA[
+"slave": [
+    {
+        "host": "192.168.3.24",
+        "port": "3305"
+    },
+    {
+        "host": "192.168.3.65",
+        "port": "3309"
+    }
+]
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para>
+    Список анонимных серверов задается массивом <literal>JSON</literal>.
+    Список индексированных серверов задается объектом <literal>JSON object</literal>.
+   </para>
+   <para>
+    <example>
+     <title>Список мастер-серверов с символьными именами</title>
+     <programlisting role="ini">
+<![CDATA[
+"master": {
+    "master_0": {
+        "host": "localhost"
+    }
+}
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para>
+    Рекомендуется все же использовать имена для серверов, так как они будут 
+    показаны в сообщениях об ошибках.
+   </para>
+   <para>
+    Порядок серверов сохраняется и учитывается mysqlnd_ms.
+    Если, например, вы сконфигурируете стратегию балансировки round robin, то
+    первый запрос <literal>SELECT</literal> будет запущен на первом из списка сервере.
+   </para>
+   <para>
+    Сервер описывается с помощью полей <literal>host</literal>,
+    <literal>port</literal>, <literal>socket</literal>, <literal>db</literal>,
+    <literal>user</literal>, <literal>password</literal> и <literal>connect_flags</literal>.
+    Обязательным из них является только <literal>host</literal>, а остальные опциональны.
+   </para>
+   <para>
+    <example>
+     <title>Конфигурация сервера</title>
+     <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "db_server_host",
+                "port": "db_server_port",
+                "socket": "db_server_socket",
+                "db": "database_resp_schema",
+                "user": "user",
+                "password": "password",
+                "connect_flags": 0
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "db_server_host",
+                "port": "db_server_port",
+                "socket": "db_server_socket"
+            }
+        }
+    }
+}
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para>
+    Если какие либо параметры не заданы, то плагин будет использовать заданные
+    пользователем значения в функции соединения.
+    Смотрите раздел
+    <link linkend="mysqlnd-ms.plugin-ini-json.using-section">пример использования имен секций</link>.
+   </para>
+   <para>
+    Формат конфигурационного файла был изменен в версии 1.1.0-beta для 
+    возможности задания связанных фильтров. Фильтры нужны для фильтрации
+    списка серверов для выбора того, на котором будет выполняться запрос.
+    Фильтры настраиваются в разделе <literal>filter</literal>. Фильтры запускаются
+    mysqlnd_ms в том порядке, как они описаны в конфигурационном файле.
+    Определение фильтров не является обязательным, так что, если они вам не
+    нужны, то можете не указывать секцию <literal>filters</literal>.
+   </para>
+   <para>
+    Фильтры заменяют использовавшуюся в более ранних версиях настройку
+    <link linkend="ini.mysqlnd-ms-plugin-config.pick"><literal>pick[]</literal></link>
+    Новые <literal>random</literal> и
+    <literal>roundrobin</literal> предоставляют ту-же функциональность.
+   </para>
+   <para>
+    <example>
+     <title>Новый фильтр <literal>roundrobin</literal>, старая функциональность</title>
+     <programlisting role="ini">
+<![CDATA[
+   {
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            },
+            "slave_1": {
+                "host": "192.168.78.137",
+                "port": "3306"
+            }
+        },
+        "filters": {
+            "roundrobin": [
+
+            ]
+        }
+    }
+}
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para>
+    Функция
+    <function>mysqlnd_ms_set_user_pick_server</function>
+    была удалена. Определение функции обратного вызова теперь происходит
+    с помощью фильтра <literal>user</literal>. Фильтр <literal>user</literal> принимает
+    обязательный параметр <literal>callback</literal> для установки обработчика, 
+    ранее устанавливавшегося с помощью функции
+    <function>mysqlnd_ms_set_user_pick_server</function>.
+    <example>
+     <title>Фильтр <literal>user</literal> заменяет <function>mysqlnd_ms_set_user_pick_server</function></title>
+     <programlisting role="ini">
+<![CDATA[
+"filters": {
+    "user": {
+        "callback": "pick_server"
+    }
+}
+]]>
+    </programlisting>
+   </example>
+   </para>
+   <para xml:id="mysqlnd-ms.plugin-ini-json.debug_config">
+    Корректность конфигурационного файла проверяется на двух этапах,
+    при его первоначальном чтении и при создании соединения. Чтение
+    конфигурационного файла происходит при старте обработки веб-запроса PHP.
+    На ранних стадиях загрузки расширения, ошибки могут отображаться некорректно.
+    В самом худшем случае ошибки вообще не будут показаны и соединения
+    не будут устанавливаться, возвращая неадекватные сообщения. Эта проблема
+    была решена вверсии 1.5.0.
+   </para>
+   <para>
+    <example>
+     <title>Обычные сообщения об ошибках в случае некорректности конфигурационного файла (до версии 1.5.0)</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("myapp", "username", "password", "database");
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Warning: mysqli::mysqli(): (mysqlnd_ms) (mysqlnd_ms) Failed to parse config file [s1.json]. Please, verify the JSON in Command line code
+
+Warning: mysqli::mysqli(): (HY000/2002): php_network_getaddresses: getaddrinfo failed: Name or service not known in Command line code on line 1
+
+Warning: mysqli::query(): Couldn't fetch mysqli in Command line code on line 1
+
+Fatal error: Call to a member function fetch_assoc() on a non-object in Command line code on line 1
+]]>
+    </screen>
+   </example>
+   </para>
+   <para>
+    Начиная с версии 1.5.0, ошибки этапа чтения конфигурационного файла
+    сохраняются в буфере и выводятся при попытке установки соединения.
+    Для установки уровня ошибок, который будет использоваться для вывода
+    забуферизованных ошибок, используйте директиву
+    <link linkend="ini.mysqlnd-ms.force-config-usage"><literal>mysqlnd_ms.force_config_usage</literal></link>. По умолчанию будет
+    использоваться уровень <literal>E_WARNING</literal>.
+   </para>
+   <para>
+    <example>
+     <title>Улучшеная проверка конфигурационного файла, начиная с версии 1.5.0</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("myapp", "username", "password", "database");
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Warning: mysqli::mysqli(): (mysqlnd_ms) (mysqlnd_ms) Failed to parse config file [s1.json]. Please, verify the JSON in Command line code on line 1
+]]>
+    </screen>
+   </example>
+   </para>
+   <para>
+    Для отладки потенциальных ошибок конфигурационного файла может быть
+    полезным установить <link linkend="ini.mysqlnd-ms.force-config-usage"><literal>mysqlnd_ms.force_config_usage = 1</literal></link>.
+    Это не только переключит уровень ошибок на <literal>E_RECOVERABLE_ERROR</literal>,
+    но и позволит отловить опечатки в именах секций.
+   </para>
+   <para>
+    <example>
+     <title>Возможно, более точная ошибка из-за <literal>mysqlnd_ms.force_config_usage=1</literal></title>
+     <programlisting role="ini">
+<![CDATA[
+mysqlnd_ms.force_config_usage=1
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("invalid_section", "username", "password", "database");
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Warning: mysqli::mysqli(): (mysqlnd_ms) Exclusive usage of configuration enforced but did not find the correct INI file section (invalid_section) in Command line code on line 1 line 1
+]]>
+    </screen>
+    
+   </example>
+   </para>
+  </section>
+  
+  <section xml:id="mysqlnd-ms.plugin-ini-json-reference">
+   <title>Конфигурационные директивы</title>
+   
+   <para>
+    Ниже приведено краткое описание доступных директив конфигурации.
+   </para>
+   <para>
+    <variablelist>
+     <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.master">
+      <term>
+       <parameter>master</parameter>
+       <type>массив или объект</type>
+      </term>
+      <listitem>
+       <para>
+        Списков мастер-серверов MySQL. Список может быть как типа
+        <literal>массив JSON</literal>, для задания списка анонимных серверов,
+        так и типа <literal>объект JSON</literal>. Примеры смотрите
+        <link linkend="mysqlnd-ms.plugin-ini-json.server-list-syntax">выше</link>.
+       </para>
+       <para>
+        Обязательно должен быть определен хотя бы один мастер-сервер.
+        Если в конфигурационном файле будет отсутствовать эта директива, то
+        плагин вызовет ошибку уровня <literal>E_ERROR</literal>.
+        Фатальная ошибка может выглядить так
+        <literal>(mysqlnd_ms) Section [master] doesn't exist for host
+         [name_of_a_config_section] in %s on line %d</literal>.
+       </para>
+       <para>
+        Сервер описывается с моиощью
+        <literal>host</literal>, <literal>port</literal>,
+        <literal>socket</literal>, <literal>db</literal>,
+        <literal>user</literal>, <literal>password</literal> и
+        <literal>connect_flags</literal>. Обязательно должно присутствовать
+        значение <literal>host</literal>. Остальные настройки по желанию. Если
+        их не задавать, то плагин возьмет их из параметров, указанных
+        пользователем в функции соединения с БД. Также см.:
+        <link linkend="mysqlnd-ms.plugin-ini-json.using-section">пример использование имен секций</link>.
+       </para>
+       <para xml:id="mysqlnd-ms.plugin-ini-json.server-config-keywords">
+        Таблица параметров настройки сервера.
+       </para>
+       <informaltable>
+        <tgroup cols="3">
+         <colspec colwidth="1*"/>
+         <colspec colwidth="7*"/>
+         <colspec colwidth="2*"/>
+         <thead>
+          <row>
+           <entry>Ключ</entry>
+           <entry>Описание</entry>
+           <entry>Версия</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry>
+            <literal>host</literal>
+          </entry>
+          <entry>
+           <para>
+            Хост, на котором развернута база данных. Это обязательный параметр.
+            В случае его отсутствия, при попытке соединения будет выдана ошибка
+            уровня <literal>E_RECOVERABLE_ERROR</literal>.
+            Ошибка будет примерно такая <literal>(mysqlnd_ms) Cannot find [host] in
+            [%s] section in config in %s on line %d</literal>.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>port</literal>
+          </entry>
+          <entry>
+           <para>
+            TCP/IP порт, на котором слушает БД.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>socket</literal>
+          </entry>
+          <entry>
+           <para>
+            Unix сокет сервера баз данных.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>db</literal>
+          </entry>
+          <entry>
+           <para>
+            База данных (схема).
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>user</literal>
+          </entry>
+          <entry>
+           <para>
+            Пользователь.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>password</literal>
+          </entry>
+          <entry>
+           <para>
+            Пароль.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>connect_flags</literal>
+          </entry>
+          <entry>
+           <para>
+            Флаги соединения.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+      <para>
+       Плагин поддерживает только один мастер-сервер. Существует экспериментальная
+       настройка, позволяющая использовать несколько мастеров. Подробности не
+       задокументированы. Настройка предназначена только для разработки.
+      </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.slave">
+    <term>
+     <parameter>slave</parameter>
+     <type>массив или объект</type>
+     </term>
+     <listitem>
+      <para>
+       Список подчиненных серверов репликации MySQL. Синтаксис аналогичен
+       списку мастер-серверов. См.
+       <link linkend="ini.mysqlnd-ms-plugin-config-v2.master"><literal>master</literal></link>.
+      </para>
+      <para>
+       Плагин поддерживает работу с одним или более подчиненными серверами.
+      </para>
+      <para>
+       Список подчиненных серверов должен присутствовать в обязательном
+       порядке. Плагин вызовет ошибку уровня <literal>E_ERROR</literal>, если в конфигурационном файле будет отсутствовать директива <literal>slave</literal>.
+       Сообщение об ошибке будет примерно таким
+       <literal>(mysqlnd_ms) Section [slave] doesn't exist for host [%s] in %s on line %d</literal>.
+       Обратите внимание, что допустимо указывать пустой список.
+       Ошибка была введена только для контроля, что секция
+       <literal>slave</literal> в принципе присутствует.
+       Если у вас используются только мастер-сервера, то допустимо оставлять
+       этот список пустым.
+      </para>
+      <para>
+       При пустом списке, если будет предпринята попытка запустить запрос на
+       подчиненном сервере, плагин может выдать предупреждение типа
+       <literal>mysqlnd_ms) Couldn't find the appropriate slave connection.
+        0 slaves to choose from.</literal>.
+       Также возможно у другое предупреждение, такое как
+       <literal>(mysqlnd_ms) No connection selected by the last filter</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.gtid">
+    <term>
+     <parameter>global_transaction_id_injection</parameter>
+     <type>массив или объект</type>
+    </term>
+    <listitem>
+     <para>
+      Настройка глобального идентификатора транзакции относится как
+       к встроеному серверному механизму глобальных идентификаторов
+       транзакций, так и к эмуляции на стороне клиента.
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>fetch_last_gtid</literal>
+          </entry>
+          <entry>
+           <para>
+            SQL-запрос для извлечения последнего глобального идентификатора транзакций.
+            Этот запрос нужен тогда, когда плагину необходимо узнать самый свежий
+            идентификатор глобальной транзакции. Это нужно, например, при проверке
+            статуса подчиненного сервера. Также используется функцией
+            <function>mysqlnd_ms_get_last_gtid</function>.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>check_for_gtid</literal>
+          </entry>
+          <entry>
+           <para>
+            SQL-запрос для проверки того, что на реплике применились все транзакции вплоть
+            до искомой, включая ее. Этот запрос нужен для поиска реплики с
+            наилучшей согласованностью, покрывающей необходимую.
+            Этот запрос может содержать шаблон <literal>#GTID</literal>, который
+            будет заменен необходимым плагину глобальным идентификатором транзакции.
+            Примеры смотрите в разделе <link linkend="mysqlnd-ms.quickstart.gtid">быстрай старт</link>.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>report_errors</literal>
+          </entry>
+          <entry>
+           <para>
+            Выдавать ли предупреждение в случае, если выполнение какого либо из этих
+            запросов завершилось ошибкой.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>on_commit</literal>
+          </entry>
+          <entry>
+           <para>
+            Только для эмуляции глобального идентификатора транзакции на стороне клиента.
+            SQl-запрос, который будет запущен по окончанию транзакции для обновления
+            глобального идентификатора транзакции на мастер-сервере.
+            Примеры смотрите в разделе <link linkend="mysqlnd-ms.quickstart.gtid">быстрай старт</link>.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>wait_for_gtid_timeout</literal>
+          </entry>
+          <entry>
+           <para>
+            Заставляет плагин ждать <literal>wait_for_gtid_timeout</literal> секунд, 
+            пока подчиненный сервер не придет в согласованное состояние, при 
+            поиске подчиненного сервера. Эта настройка ограничивает время 
+            выделяемое на опрос статуса подчиненного сервера. Если опрос занимает
+            слишком много времени, то общее затраченное время может привысить
+            <literal>wait_for_gtid_timeout</literal>.
+            Плагин вызывает <literal>sleep(1)</literal> для паузы в одну секунду
+            между двумя опросами.
+           </para>
+           <para>
+            Эта настройка может использоваться как с функионалом MySQL 5.6., так и
+            с эмуляцией глобального идентификатора транзакций на стороне клиента.
+           </para>
+           <para>
+            Ожидание, пока подчиненный сервер среплицирует необходимый GTID,
+            необходимо для поддержание согласованности сессии и позволяет
+            притормозить клиента. Притормаживание клиента неявно сказывается
+            на уменьшении нагрузки по записи на мастер-сервер. Системы репликации,
+            базирующиеся на копировании с мастер-серверов на подчиненные, такие
+            как репликация MySQL, требуют больше времени для достижения 
+            согласованности. Это может быть полезно для увеличения количества
+            копий данных для обеспечения высокой доступности, или для снижения
+            нагрузки на мастера.
+           </para>
+          </entry>
+          <entry>Начиная с 1.4.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.fabric">
+    <term>
+     <parameter>fabric</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Настройки, относящиеся к MySQL Fabric. Если плагин используется вместе с
+      MySQL Fabric, то файл конфигурации плагина не содержит секций со списками 
+      серверов. Вместо этого плагин запрашивает эти списки у MySQL Fabric.
+     </para>
+     <para>
+      Минимальная конфигурация для использования плагина с MySQL Fabric должна
+       содержать список из одного или более хостов MySQL Fabric, к которым он будет 
+       обращаться. Если задано более одного хоста, то плагин будет использовать
+       стратегию roundrobin для выбора одного из них. Другие стратегии пока недоступны.
+      </para>
+      <para>
+       <example>
+        <title>Минимальная конфигурация плагина для использования с MySQL Fabric</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "fabric": {
+            "hosts": [
+                {
+                    "host" : "127.0.0.1",
+                    "port" : 8080
+                }
+            ]
+        }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Каждый хост MySQL Fabric описывается объектом JSON со следующими параметрами.
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>host</literal>
+          </entry>
+          <entry>
+           <para>
+            Хост MySQL Fabric.
+           </para>
+          </entry>
+          <entry>Начиная с 1.6.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>port</literal>
+          </entry>
+          <entry>
+           <para>
+            TCP/IP порт, на котором MySQL Fabric принимает запросы от
+            удаленных клиентов, типа нашего плагина.
+           </para>
+          </entry>
+          <entry>Начиная с 1.6.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+      <para>
+       Плагин использует потоки PHP для общения с MySQL Fabric через
+       XML RPC поверх HTTP. По умолчанию дл сеттевого взаимодействия
+       не заданы какие либо таймауты. Таким образом, по умолчанию, 
+       используются таймауты потоков PHP, которые не контролируются плагином.
+      </para>
+      <para>
+       Можно задать собственные таймауты. Настройка таймаутов в
+       конфигурационном файле плагина будет иметь тот же эффект, что
+       и настройка таймаутов для HTTP-соединения через потоки PHP.
+      </para>
+      <para>
+       Таймаут задается в секундах. Допустимые значения лежат в диапазоне
+       от 0 до 65535. Эта настройка доступна с версии 1.6.
+      </para>
+      <para>
+       <example>
+        <title>Таймаут соединения с Fabric</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "fabric": {
+            "hosts": [
+                {
+                    "host" : "127.0.0.1",
+                    "port" : 8080
+                }
+            ],
+            "timeout": 2
+        }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       <link linkend="ini.mysqlnd-ms-plugin-config-v2.trx-stickiness">Закрепление транзакции за сервером (Transaction stickiness)</link>
+       и логика MySQL Fabric могут противоречить друг другу. Закрепление транзакции
+       запрещает переключение между серверами на протяжении выполнения транзакции.
+       При использовании Fabric и шардинга, пользователь ошибочно может  запустить
+       локальную транзакцию на одном сервере и, затем, попытаться переключиться на
+       другой, используя функции <function>mysqlnd_ms_fabric_select_shard</function> или
+       <function>mysqlnd_ms_fabric_select_global</function>. В этом случае плагин не
+       отвергнет запрос на переключение посреди транзакции, а позволит пользователю
+       переключиться независимо от того, включено ли закрепление. Это будет исключительно
+       ошибкой пользователя, написавшего такой код.
+      </para>
+      <para>
+       Если закрепление транзакции включено и вы хотите получать предупреждения
+       используя функции <function>mysqlnd_ms_fabric_select_shard</function> или
+       <function>mysqlnd_ms_fabric_select_global</function>, то установите
+       логический флаг <literal>trx_warn_server_list_changes</literal>.
+      </para>
+      <para>
+       <example>
+        <title>Предупреждение о нарушении границ транзакции</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "fabric": {
+            "hosts": [
+                {
+                    "host" : "127.0.0.1",
+                    "port" : 8080
+                }
+            ],
+            "trx_warn_serverlist_changes": 1
+        },
+        "trx_stickiness": "on"
+    }
+}
+]]>
+        </programlisting>
+        <programlisting role="php">
+<![CDATA[
+<?php
+$link = new mysqli("myapp", "root", "", "test");
+/*
+  Этот запрос скорее всего завершится с ошибкой.
+  Но в любом случае мы перейдем в режим
+  необходимый для демонстрации.
+*/
+@mysqlnd_ms_fabric_select_global($link, 1);
+$link->begin_transaction();
+@$link->query("DROP TABLE IF EXISTS test");
+/*
+  Переключение серверов/шардов является ошибкой
+  при открытии локальной транзакции!
+*/
+mysqlnd_ms_select_global($link, 1);
+?>
+]]>
+        </programlisting>
+        &example.outputs;
+        <screen>
+<![CDATA[
+PHP Warning: mysqlnd_ms_fabric_select_global(): (mysqlnd_ms) Fabric server exchange in the middle of a transaction in %s on line %d
+]]>
+        </screen>
+       </example>
+      </para>
+      <para>
+       Обратите внимание, что эта особенность эксперементальная и, в будущем, синтаксис и семантика могут поменяться.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filters">
+    <term>
+     <parameter>filters</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Список фильтров. Фильтры нужны для фильтрации списка серверов доступных
+       для выполнения заданного запроса. Фильтры можно выстраивать цепочкой.
+       Фильтры <literal>random</literal> и <literal>roundrobin</literal> заменяют директиву
+       <link linkend="ini.mysqlnd-ms-plugin-config.pick"><literal>pick[]</literal></link>,
+       ранее использовавшуюся для политик балансировки.
+       Фильтр <literal>user</literal> заменяет функцию
+       <function>mysqlnd_ms_set_user_pick_server</function>.
+      </para>
+      <para>
+       Фильтры могут принимать параметры для уточнения своих действий.
+      </para>
+      <para>
+       Если политики балансировки нагрузки не заданы, то плагин будет использовать
+       <literal>random_once</literal>. Политика <literal>random_once</literal>
+       берет случайный подчиненный сервер в момент запуска первого запроса на чтение.
+       Для любых запросов, производящих только чтение, будет использоваться
+       подчиненный сервер до момента завершения обработки PHP-скрипта.
+       В случае, если в этой секции не заданы <literal>random</literal> или
+       <literal>roundrobin</literal>, то балансировка нагрузки не будет использоваться.
+      </para>
+      <para>
+       Если цепочка фильтров настроена таким образом, что фильтр возвращающий не более
+       одного сервера является входом фильтра, которому необходимо получить более одного
+       сервера, то плагин может выдать предупреждение при создании подключения.
+       Предупреждение будет примерно такое: <literal>(mysqlnd_ms) Error while creating
+       filter '%s' . Non-multi filter '%s' already created.</literal> Более того, для 
+       соединения может быть установлена ошибка с номером <literal>2000</literal>, 
+       SQL-состоянием <literal>HY000</literal> и сообщением, аналогичным предупреждению.
+      </para>
+      <para>
+       <example>
+        <title>Некорректная последовательность фильтров</title>
+        <programlisting role="ini">
+<![CDATA[
+       {
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "filters": [
+            "roundrobin",
+            "random"
+        ]
+    }
+}
+]]>
+        </programlisting>
+        <programlisting role="php">
+<![CDATA[
+<?php
+$link = new mysqli("myapp", "root", "", "test");
+printf("[%d] %s\n", mysqli_connect_errno(), mysqli_connect_error());
+$link->query("SELECT 1 FROM DUAL");
+?>
+]]>
+        </programlisting>
+        &example.outputs;
+        <screen>
+<![CDATA[
+PHP Warning:  mysqli::mysqli(): (HY000/2000): (mysqlnd_ms) Error while creating filter 'random' . Non-multi filter 'roundrobin' already created. Stopping in filter_warning.php on line 1
+[2000] (mysqlnd_ms) Error while creating filter 'random' . Non-multi filter 'roundrobin' already created. Stopping
+PHP Warning:  mysqli::query(): Couldn't fetch mysqli in filter_warning.php on line 3
+]]>
+        </screen>
+       </example>
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-random">
+    <term>
+     Фильтр: <parameter>random</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Фильтр <literal>random</literal> работает как политики балансировки нагрузки, 
+      как random и random once, устанавливаемые ранее с помощью
+      <link linkend="ini.mysqlnd-ms-plugin-config.pick"><literal>pick[]</literal></link>.
+     </para>
+     <para>
+      Политика random берет случайный сервер всякий раз, когда надо выполнить
+       запрос на чтение. Политика random once выбирает один подчиненный сервер
+       и использует его для запросов на чтение на протяжении выполнения PHP-скрипта.
+       Если политики балансировки нагрузки не определены, то, по умолчанию,
+       будет использоваться random once.
+      </para>
+      <para>
+       Если фильтру <literal>random</literal> не передать ни одного аргумента, то
+       будет выбрана политика балансировки random.
+      </para>
+      <para>
+       <example>
+        <title>Стратегия random с помощью фильтра <literal>random</literal></title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            },
+            "slave_1": {
+                "host": "192.168.78.137",
+                "port": "3306"
+            }
+        },
+        "filters": [
+            "random"
+        ]
+    }
+}
+
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Фильтру можно передать необязательный аргумент <literal>sticky</literal>.
+       Если параметр <literal>sticky</literal> будет иметь значение 
+       <literal>1</literal> (типа строка), то фильтр будет определять стратегию
+       random once.
+      </para>
+      <para>
+       <example>
+        <title>Стратегия random once с помощью фильтра <literal>random</literal></title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "filters": {
+        "random": {
+            "sticky": "1"
+        }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Оба фильтра, <literal>random</literal> и <literal>roundrobin</literal>,
+       поддерживают установку приоритета, веса сервера, начиная с
+       PECL/mysqlnd_ms 1.4.0. Если в фильтре определен аргумент <literal>weight</literal>,
+       он должен определять вес для всех серверов. При этом список подчиненных
+       серверов в секции <literal>slave</literal> должен быть не анонимным, а именованным,
+       как и в секции <literal>master</literal>. Имена должны использоваться 
+       для определения весов конкретных серверов с помощью <literal>weight</literal>.
+      </para>
+      <para>
+       <example>
+        <title>Ошибка ссылки</title>
+        <screen>
+<![CDATA[
+[E_RECOVERABLE_ERROR] mysqli_real_connect(): (mysqlnd_ms) Unknown server 'slave3' in 'random' filter configuration. Stopping in %s on line %d
+]]>
+        </screen>
+       </example>
+      </para>
+      <para>
+       Использование ошибочного имени в секции <literal>weight</literal> может привести к
+       ошибке, показанной выше.
+      </para>
+      <para>
+       Если секция <literal>weight</literal> отсутствует, то вес всех серверов
+       считается за единицу.
+      </para>
+      <para>
+       <example>
+        <title>Задание <literal>весов</literal> для балансировки нагрузки</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+   "myapp": {
+       "master": {
+           "master1":{
+               "host":"localhost",
+               "socket":"\/var\/run\/mysql\/mysql.sock"
+           }
+       },
+       "slave": {
+           "slave1": {
+               "host":"192.168.2.28",
+               "port":3306
+           },
+           "slave2": {
+               "host":"192.168.2.29",
+               "port":3306
+           },
+           "slave3": {
+               "host":"192.0.43.10",
+               "port":3306
+           },
+       },
+       "filters": {
+           "random": {
+               "weights": {
+                   "slave1":8,
+                   "slave2":4,
+                   "slave3":1,
+                   "master1":1
+               }
+           }
+       }
+   }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       В среднем, сервер с весом два будет выбираться в два раза чаще, чем сервер
+       с весом один. Различные веса могут отражать производительность разных серверов,
+       для задания предпочтения серверам с меньшими сетевыми задержками, или для
+       настройки резервного сервера, который будет использоваться в случае отказа основного.
+       В последнем случае имеет смысл задать резервному серверу очень маленький вес
+       относительно остальных. К примеру, в приведенной выше конфигурации,
+       сервер <literal>slave3</literal> будет принимать только 8 процентов 
+       всех запросов, и если <literal>slave1</literal> и <literal>slave2</literal> 
+       работают, он будет выбираться крайне редко. В случае отказа <literal>slave1</literal>
+       и <literal>slave2</literal>, использование <literal>slave3</literal> возрастет.
+       Пожалуйста, перед тем как начать использовать веса таким образом,
+       почитайте об обеспечении отказоустойчивости.
+      </para>
+      <para>
+       Корректные значения весов лежат в диапазоне от 1 до 65535.
+      </para>
+      <para>
+       Неизвестные аргументы будут тихо проигнорированы.
+      </para>
+      <para>
+       The filter expects one or more servers as input. Outputs one server.
+       A filter sequence such as
+       <literal>random</literal>, <literal>roundrobin</literal> may
+       cause a warning and an error message to be set on the connection
+       handle when executing a statement.
+      </para>
+      <para>
+       Список аргументов фильтра.
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>sticky</literal>
+          </entry>
+          <entry>
+           <para>
+            Включает или отключает стратегию балансировки random once. См. выше.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>weight</literal>
+          </entry>
+          <entry>
+           <para>
+            Назначение весов/приоритетов серверам
+            при балансировке нагрузки. Описание см. выше.
+           </para>
+          </entry>
+          <entry>Начиная с 1.4.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-roundrobin">
+    <term>
+     Фильтр: <parameter>roundrobin</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      При использовании фильтра <literal>roundrobin</literal>, плагин
+      последовательно перебирает список подчиненных серверов для выбора
+      сервера, на котором будет выполнен запрос. Если плагин доходит до 
+      конца списка, то перебор начинается с его начала.
+     </para>
+     <para>
+      <example>
+       <title><literal>roundrobin</literal> filter</title>
+       <programlisting role="ini">
+<![CDATA[
+       {
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "filters": [
+            "roundrobin"
+        ]
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Ожидает один или более серверов на вход. Возвращает один сервер.
+       Последовательность фильтров, такая как 
+       <literal>roundrobin</literal>, <literal>random</literal> может
+       установить ошибку для обработчика подключения во время
+       выполнения запроса.
+      </para>
+      <para>
+       Список аргументов фильтра.
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>weight</literal>
+          </entry>
+          <entry>
+           <para>
+            Назначение весов/приоритетов серверам
+            при балансировке нагрузки. Описание см.
+            <link linkend="ini.mysqlnd-ms-plugin-config-v2.filter-random">выше</link>.
+           </para>
+          </entry>
+          <entry>Начиная с 1.4.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-user">
+    <term>
+     Фильтр: <parameter>user</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Фильтр <literal>user</literal> заменяет функцию
+      <function>mysqlnd_ms_set_user_pick_server</function>,
+      которая была удалена в версии 1.1.0-beta. Фильтр устанавливает
+      функцию обратного вызова, которая будет использоваться для
+      выбора серверов и разделения операций записи/чтения.
+     </para>
+     <para>
+      Встроенный в плагин механизм разделения чтения/записи может быть
+       переопределен двумя способами. Самый простой способ - добавить в начало
+       строки запроса SQL-хинт <constant>MYSQLND_MS_MASTER_SWITCH</constant>,
+       <constant>MYSQLND_MS_SLAVE_SWITCH</constant> или
+       <constant>MYSQLND_MS_LAST_USED_SWITCH</constant>. Использованием SQL-хинтов
+       можно контролировать, например, будет ли запрос выполняться на мастер-сервере
+       или на одном из подчиненных. С помощью SQL-хинтов невозможно однозначно
+       указать конкретный подчиненный сервер для выполнения запроса.
+      </para>
+      <para>
+       Полный контроль над процедурой выбора сервера дает использование функции
+       обратного вызова. Использование такой функции рекомендовано продвинутым
+       пользователям, так как эта функция должна покрывать все возможные ситуации,
+       в ином случае обрабатываемых плагином.
+      </para>
+      <para>
+       Плагин вызывает функцию для выбора сервера из списков подчиненных и мастер-серверов.
+       Функция должна проанализировать запрос и вернуть URI наиболее подходящего
+       сервера для его выполнения.
+      </para>
+      <para>
+       Если разрешены ленивые соединения и функция выберет подчиненный сервер, к 
+       которому еще не было установлено соединение и новое соединение завершится 
+       с ошибкой, плагин вернет ошибку до того, как с произойдет следующая операция
+       с этим соединением, например запуск запроса. Это накладывает на разработчика
+       задачу обработки таких ошибок. К примеру, приложение может перезапустить
+       запрос в надежде, что в этот раз функция обратного вызова вернет другой сервер.
+       Функция обратного вызова должна убедиться, что не вернет сервер, соединение с 
+       которым ранее завершилось ошибкой, или же изначально проверять доступность сервера,
+       перед тем как вернуть его плагину, чтобы не свалиться в бесконечный цикл.
+      </para>
+      <para>
+       <example>
+        <title>Setting a callback</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "filters": {
+            "user": {
+                "callback": "pick_server"
+            }
+        }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Функция обратного вызова должны вернуть хост для выполнения запроса.
+       URI хоста должно браться из списков подчиненных и мастер-серверов,
+       переданных функции. Если функция вернет значение, отсутствующее в этих
+       списках, то плагин вызовет ошибку уровня <literal>E_RECOVERABLE_ERROR</literal>.
+       Ошибка будет примерно такая
+       <literal>  (mysqlnd_ms) User filter callback has returned an unknown server.
+        The server 'server that is not in master or slave list' can neither be found
+        in the master list nor in the slave list</literal>.
+       Если приложение перехватит и проигнорирует эту ошибку, то для соединения 
+       будет ошибка, например такая:
+       <literal>(mysqlnd_ms) No connection selected by the last filter</literal> with
+       the error code <literal>2000</literal> and the sqlstate <literal>HY000</literal>.
+       Также может быть показано предупреждение.
+      </para>
+      <para>
+       Задание в качестве функции обратного вызова несуществующей функции приведет
+       к ошибке уровня <literal>E_RECOVERABLE_ERROR</literal> при попытке ее вызвать.
+       Сообщение об ошибке будет примерно такое:
+       <literal>(mysqlnd_ms) Specified callback (pick_server) is
+        not a valid callback</literal>. Если приложение перехватит и проигнорирует эту 
+       ошибку, то для соединения будет ошибка, например такая:
+       <literal>(mysqlnd_ms) Specified callback (pick_server) is
+        not a valid callback</literal> with the error code <literal>2000</literal>
+       and the sqlstate <literal>HY000</literal>. 
+       Также может быть показано предупреждение.
+      </para>
+      <para>
+       Следующие параметры плагин передает функции обратного вызова.
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Параметр</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>connected_host</literal>
+          </entry>
+          <entry>
+           <para>
+            URI текущего соединения.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>query</literal>
+          </entry>
+          <entry>
+           <para>
+            Строка с SQL-запросом, который необходимо выполнить.
+            </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>masters</literal>
+          </entry>
+          <entry>
+           <para>
+            Список мастер-серверов. Обратите внимание, что если настроена цепочка 
+             фильтров, и этот фильтр не первый в списке, то этот список может 
+             отличаться от списка в конфигурационном файле, так как предыдущие
+             фильтры могли этот список уменьшить.
+            </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>slaves</literal>
+          </entry>
+          <entry>
+           <para>
+            Список подчиненных серверов. Обратите внимание, что если настроена цепочка 
+            фильтров, и этот фильтр не первый в списке, то этот список может 
+             отличаться от списка в конфигурационном файле, так как предыдущие
+             фильтры могли этот список уменьшить.
+            </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>last_used_connection</literal>
+          </entry>
+          <entry>
+           <para>
+            URI сервера, на котором исполнялся последний запрос.
+           </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>in_transaction</literal>
+          </entry>
+          <entry>
+           <para>
+            Логический флаг, определяющий, является ли запрос
+             частью открытой транзакции. Если включен режим autocommit, то
+             этот флаг будет &false;, иначе &true;.
+            </para>
+            <para>
+             Определение транзакции базируется на мониторинге библиотеки mysqlnd
+             на предмет вызовов <literal>set_autocommit</literal>.
+             Более подробно читайте в разделе 
+             <link linkend="mysqlnd-ms.pooling">пулы соединений и переключение</link>.
+            </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+      <para>
+       <example>
+        <title>Использование функции обратного вызова</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.2.27",
+                "port": "3306"
+            },
+            "slave_1": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "filters": {
+            "user": {
+                "callback": "pick_server"
+            }
+        }
+    }
+}
+]]>
+        </programlisting>
+        <programlisting role="php">
+<![CDATA[
+<?php
+function pick_server($connected, $query, $masters, $slaves, $last_used_connection, $in_transaction)
+{
+ static $slave_idx = 0;
+ static $num_slaves = NULL;
+ if (is_null($num_slaves))
+  $num_slaves = count($slaves);
+
+ /* по умолчанию: откат в встроеной в плагин логике */
+ $ret = NULL;
+
+ printf("Пользователь соединен с '%s'...\n", $connected);
+ printf("... решаем где выполнять '%s'\n", $query);
+
+ $where = mysqlnd_ms_query_is_select($query);
+ switch ($where)
+ {
+  case MYSQLND_MS_QUERY_USE_MASTER:
+   printf("... используем мастер-сервер\n");
+   $ret = $masters[0];
+   break;
+  case MYSQLND_MS_QUERY_USE_SLAVE:
+   /* SELECT или SQL-хинт для использования подчиненного */
+   if (stristr($query, "FROM table_on_slave_a_only"))
+   {
+    /* таблица, которая находится только на первом подчиненном сервере */
+    printf("... доступ к таблице возможен только на подчиненном сервере A\n");
+    $ret = $slaves[0];
+   }
+   else
+   {
+    /* round robin */
+    printf("... выполняем запрос на чтение на подчиненном сервере\n");
+    $ret = $slaves[$slave_idx++ % $num_slaves];
+   }
+   break;
+  case MYSQLND_MS_QUERY_LAST_USED:
+   printf("... испольщзуем тот же сервер, что и для предыдущего запроса\n");
+   $ret = $last_used_connection;
+   break;
+ }
+
+ printf("... ret = '%s'\n", $ret);
+ return $ret;
+}
+
+$mysqli = new mysqli("myapp", "root", "", "test");
+
+if (!($res = $mysqli->query("SELECT 1 FROM DUAL")))
+ printf("[%d] %s\n", $mysqli->errno, $mysqli->error);
+else
+ $res->close();
+
+if (!($res = $mysqli->query("SELECT 2 FROM DUAL")))
+ printf("[%d] %s\n", $mysqli->errno, $mysqli->error);
+else
+ $res->close();
+
+
+if (!($res = $mysqli->query("SELECT * FROM table_on_slave_a_only")))
+ printf("[%d] %s\n", $mysqli->errno, $mysqli->error);
+else
+ $res->close();
+
+$mysqli->close();
+?>
+]]>
+        </programlisting>
+        &example.outputs;
+        <screen>
+<![CDATA[
+Пользователь соединен с 'myapp'...
+... решаем где выполнять 'SELECT 1 FROM DUAL'
+... выполняем запрос на чтение на подчиненном сервере
+... ret = 'tcp://192.168.2.27:3306'
+Пользователь соединен с 'myapp'...
+... решаем где выполнять 'SELECT 2 FROM DUAL'
+... some read-only query for a slave
+... ret = 'tcp://192.168.78.136:3306'
+Пользователь соединен с 'myapp'...
+... решаем где выполнять 'SELECT * FROM table_on_slave_a_only'
+... доступ к таблице возможен только на подчиненном сервере A
+... ret = 'tcp://192.168.2.27:3306'
+]]>
+        </screen>
+       </example>
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-user-multi">
+    <term>
+     Фильтр: <parameter>user_multi</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Фильтр <literal>user_multi</literal> отличается от <literal>user</literal>
+      только в одном аспекте. Весь остальной синтаксис аналогичен.
+      Фильтр <literal>user</literal> может выбрать и вернуть только один
+      сервер. Цепочка фильтров на этом обычно заканчивается, так как 
+      она должна сократить список серверов ровно до одного. Соответственно,
+      после <literal>user</literal> остается ровно один сервер, на котором и запускается запрос.
+     </para>
+     <para>
+      Фильтр <literal>user_multi</literal>, напротив, возвращает список подчиненных
+      и мастер-серверов, который передается следующему фильтру в цепочке.
+      Такой фильтр обычно ставится в начале цепочки фильтров. Другой фильтр, 
+      возвращающий более одного сервера - это <literal>quality_of_service</literal>.
+     </para>
+     <para>
+      Функция обратного вызова, заданая в <literal>user_multi</literal> должна
+       вернуть массив с двумя элементами. В первом список выбранных мастер-серверов,
+       а во втором - подчиненных серверов. Список должен содержать ключи подчиненных
+       и мастер-серверов, присутствующие в переданных ему ранее списках. Следующий
+       пример демонстрирует получения случайного списка подчиненных и мастер-серверов.
+      </para>
+      <para>
+       <example>
+        <title>Получение случайных подчиненных и мастер-серверов</title>
+       <programlisting role="php">
+<![CDATA[
+<?php
+function pick_server($connected, $query, $masters, $slaves, $last_used_connection, $in_transaction)
+{
+  $picked_masters = array()
+  foreach ($masters as $key => $value) {
+    if (mt_rand(0, 2) > 1)
+      $picked_masters[] = $key;
+  }
+  $picked_slaves = array()
+  foreach ($slaves as $key => $value) {
+    if (mt_rand(0, 2) > 1)
+      $picked_slaves[] = $key;
+  }
+  return array($picked_masters, $picked_slaves);
+}
+?>
+]]>
+       </programlisting>
+       </example>
+      </para>
+      <para>
+       В случае, если функция не вернет списка серверов, плагин выдаст ошибку
+       уровня <literal>E_RECOVERABLE</literal>. Ошибка будет примерно такая:
+       <literal>(mysqlnd_ms) User multi
+        filter callback has not returned a list of servers to use.
+        The callback must return an array in %s on line %d</literal>. 
+       В случае, если списки будут не пустыми, но будут содержать некорретные
+       ключи серверов, то будет выдана ошибка уровня <literal>E_RECOVERABLE</literal>
+       с примерно таким текстом: <literal>(mysqlnd_ms) User multi filter callback
+       has returned an invalid list of servers to use.
+       Server id is negative in %s on line %d</literal>, или похожая.
+      </para>
+      <para>
+       Будет ли выдаваться ошибка в случае возврата пустых списков подчиненных или
+       мастер-серверов, зависит от настроек. Если возвращен пустой список 
+       мастер-серверов для запроса на запись, то плагин, скорее всего, вызовет
+       ошибку типа <literal>(mysqlnd_ms) Couldn't find the appropriate
+       master connection. 0 masters to choose from. Something is wrong in %s on line %d</literal>.
+       Обычно именно такая ошибка уровня <literal>E_ERROR</literal> и произойдет.
+       В случае операции чтения и пустого списка подчиненных серверов, поведение
+       будет определяться конфигурацией механизма защиты от отказов. Если допустим
+       откат к мастер-серверу, то ошибок не будет. Если же откат к мастеру запрещен, то
+       будет ошибка типа <literal>(mysqlnd_ms) Couldn't find the appropriate
+       slave connection. 0 slaves to choose from. Something is wrong in %s on line %d</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-node-groups">
+    <term>
+     Фильтр: <parameter>node_groups</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Фильтр <literal>node_groups</literal> позволяет группировать узлы кластера
+      и отправлять запрос на эти группы, например для поддержки партиционирования.
+      Партиционирование данных может потребоваться в случае ручного шардирования,
+      в кластерах типа primary copy с несколькими мастер-серверами или для 
+      обхода узких мест в кластерах типа update everywhere не имеющих
+      собственных механизмов партиционирования. Соответственно, после этого фильтра
+      необходимо применить другой фильтр, который выберет один сервер из возвращенного
+      списка.
+     </para>
+     <informaltable>
+      <tgroup cols="3">
+       <colspec colwidth="1*"/>
+       <colspec colwidth="7*"/>
+       <colspec colwidth="2*"/>
+       <thead>
+        <row>
+         <entry>Ключ</entry>
+         <entry>Описание</entry>
+         <entry>Версия</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>
+          <literal>пользовательские имена групп узлов</literal>
+         </entry>
+         <entry>
+          <para>
+           Можно определить одну или более групп узлов кластера. Каждая такая
+           группа должна иметь свое имя. Это имя используется в SQL-хинтах
+           для принудительного задания группы серверов, на которых должен 
+           выполняться запрос. Для запуска запроса на одном из серверов
+           конкретной группы, SQL-зхапрос должен предворяться хинтом
+           <literal>/*имя группы узлов*/</literal>.
+           Обратите внимание, что вокруг <literal>имя группы узлов</literal>
+           не должно быть пробелов. Поскольку
+           <literal>имя группы узлов</literal> будет использоваться как есть вам
+           качестве части SQl-хинта, вы должны избегать имен некорректных
+           с точки зрения SQL.
+          </para>
+          <para>
+           Каждое определение группы серверов должно содержать список
+           <literal>мастер</literal>-серверов.
+           Также можно задавать список <literal>подчиненных</literal> серверов.
+           В случае отсутствия <literal>мастер</literal>-сервера в группе
+           <literal>name_of_group</literal> может привести к ошибке уровня
+           <constant>E_RECOVERABLE_ERROR</constant> с текстом
+           <literal>(mysqlnd_ms) No masters configured in node group 'name_of_group' for 'node_groups' filter</literal>.
+          </para>
+          <para>
+           Список подчиненных и мастер-серверов должен содержать сервера, которые
+           присутствуют в 
+           <link linkend="ini.mysqlnd-ms-plugin-config-v2.master">глобальном списке мастер-серверов</link>
+           и <link linkend="ini.mysqlnd-ms-plugin-config-v2.slave">глобальном списке подчиненных серверов</link> соответственно. В случае если будет указан 
+           неизвестный сервер, то будет выдана ошибка уровня 
+           <constant>E_RECOVERABLE_ERROR</constant> с текстом
+           <literal>(mysqlnd_ms) Unknown master 'server_alias_name' (section 'name_of_group') in 'node_groups' filter configuration</literal>.
+          </para>
+          <para>
+           <example>
+            <title>Ручное партиционирование</title>
+            <programlisting role="ini">
+<![CDATA[
+ {
+  "myapp": {
+       "master": {
+            "master_0": {
+                "host": "localhost",
+                "socket": "\/tmp\/mysql.sock"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.2.28",
+                "port": 3306
+            },
+            "slave_1": {
+                "host": "127.0.0.1",
+                "port": 3311
+            }
+        },
+        "filters": {
+            "node_groups": {
+                "Partition_A" : {
+                    "master": ["master_0"],
+                    "slave": ["slave_0"]
+                }
+            },
+           "roundrobin": []
+        }
+    }
+}
+]]>
+              </programlisting>
+             </example>
+           </para>
+           <para>
+            Обратите внимание, что если цепочка фильтров вернула пустой список 
+             подчиненных серверов и использована конфигурационная директива
+             <literal>mysqlnd_ms.multi_master=0</literal>, плагин может
+             выдать предупреждение.
+           </para>
+          </entry>
+          <entry>Начиная с 1.5.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.filter-qos">
+    <term>
+     Фильтр: <parameter>quality_of_service</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Фильтр <literal>quality_of_service</literal> идентифицирует узлы кластера
+      способные предоставить необходимый уровень сервиса. Это фильтр, который
+      может вернуть ноль, один или несколько серверов. За ним обязательно 
+      должен следовать фильтр, гарантированно возвращающий ровно один сервер.
+     </para>
+     <para>
+      Фильтр <literal>quality_of_service</literal> появился в версии 1.2.0-alpha.
+      В версиях 1.2, этот фильтр фокусируется на таком аспекте качества, как
+      согласованность данных. Разные типы кластеров предоставляют разный уровень
+      согласованности данных. К примеру, асинхронная репликация MySQL предоставляет
+      не гарантированную согласованность. Подчиненный сервер может не отдать запрашиваемые 
+      данные, либо данные на нем будут устаревшиви, поскольку они на него еще 
+      не среплицировались. Обычно это допустимо. В других случаях, для корректной
+      работы приложения, требуется более высокий уровень согласованности. Для
+      таких случаев <literal>quality_of_service</literal> может отбросить сервера, 
+      которые этого не гарантируют.
+     </para>
+     <para>
+      Фильтр <literal>quality_of_service</literal> может быть удален или 
+      создан во время исполнения.Успешный вызов <function>mysqlnd_ms_set_qos</function>
+      удаляет все существующие <literal>qos</literal> фильтры из списка фильтров и
+      добавляет новый в самое начало. Все настройки, какие можно сделать с помощью
+      <function>mysqlnd_ms_set_qos</function>, также можно сделать и в конфигурационном
+      файле. Однако использование функции, безусловно, является наиболее распространенным 
+      вариантом использования. Вместо установки уровней session_consistency и 
+      strong_consistency, рекомендуется просто не указывать подчиненные сервера, а 
+      только мастер-сервера. Использование пустого списка подчиненных серверов 
+      короче и более читаемо. Единственный уровень сервиса, который имеет смысл 
+      указывать в конфигурационном файле, это комбинация eventual_consistency
+      и контроль максимальной задержки репликации подчиненного сервера.
+     </para>
+     <informaltable>
+      <tgroup cols="3">
+       <colspec colwidth="1*"/>
+       <colspec colwidth="7*"/>
+       <colspec colwidth="2*"/>
+       <thead>
+        <row>
+         <entry>Ключ</entry>
+         <entry>Описание</entry>
+         <entry>Версия</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>
+          <literal>eventual_consistency</literal>
+         </entry>
+         <entry>
+          <para>
+           Не гарантированная согласованность. Позволяет использовать
+           любые подчиненные и мастер-сервера. данные могут быть устаревшими.
+          </para>
+          <para>
+           Данный фильтр может принимать опциональный параметр <literal>age</literal>.
+           Если параметр <literal>age</literal> задан, то плагин будет рассматривать
+           достойными чтения только те подчиненные сервера, для которых репликация
+           возвращает задержку подчиненного сервера меньшую или равную <literal>age</literal>.
+           Задержка репликации измеряется с использованием <literal>SHOW SLAVE STATUS</literal>.
+           Если плагин не может получить значение задержки репликации, то сервер
+           будет исключен. Детали реализации и использования описаны в секции
+           <link linkend="mysqlnd-ms.qos-consistency">концепции качества сервиса</link>.
+          </para>
+          <para>
+           Обратите внимание, что если цепочка фильтров вернула пустой список 
+           подчиненных серверов и использована конфигурационная директива
+           <literal>mysqlnd_ms.multi_master=0</literal>, плагин может
+           выдать предупреждение.
+          </para>
+          <para>
+           <example>
+            <title>Global limit on slave lag</title>
+            <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.2.27",
+                "port": "3306"
+            },
+            "slave_1": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "filters": {
+            "quality_of_service": {
+                "eventual_consistency": {
+                    "age":123
+                }
+            }
+        }
+    }
+}
+]]>
+              </programlisting>
+             </example>
+            </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>session_consistency</literal>
+          </entry>
+          <entry>
+           <para>
+            Согласованность на уровне сессии (гарантия чтения значений, которые вы 
+            записали). Позволяет использовать все мастер-сервера и подчиненные
+            сервера синхронизованные с мастером. Если не задано никаких 
+            дополнительных параметров, то все подчиненные серверы будут
+            исключены, так как надежно определить то, что подчиненные сервера
+            полностью синхронизированы с мастером - невозможно.
+            Обратите внимание, что если цепочка фильтров вернула пустой список 
+            подчиненных серверов и использована конфигурационная директива
+             <literal>mysqlnd_ms.multi_master=0</literal>, плагин может
+             выдать предупреждение.
+            </para>
+            <para>
+             Временно согласованность на уровне сессии можно с помощью функции
+             <function>mysqlnd_ms_set_qos</function>, что является альтернативой
+             использованию <literal>master_on_write</literal>.
+             <literal>master_on_write</literal> скорее всего, отправит больше запросов мастеру, чем необходимо. Приложение сможет продолжить работу с более
+             низким уровнем согласованности после выполнения критичных запросов.
+            </para>
+          </entry>
+          <entry>Начиная с 1.1.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>strong_consistency</literal>
+          </entry>
+          <entry>
+           <para>
+            Сильная согласованность. Будут использованы только мастер-сервера.
+           </para>
+          </entry>
+          <entry>Начиная с 1.2.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.failover">
+    <term>
+     <parameter>failover</parameter>
+     До версии (включая) 1.3.x: <type>строка</type>.
+     Начиная с 1.4.0: <type>объект</type>.
+    </term>
+    <listitem>
+     <para>
+      Политика обработки отказов. Поддерживаемые политики:
+       <literal>disabled</literal> (по умолчанию), <literal>master</literal>,
+       <literal>loop_before_master</literal> (Начиная с 1.4.0).
+      </para>
+      <para>
+       Если политики обработки отказов не настроены, то, по умолчанию, 
+       никакой автоматической обработки отказов производиться не будет
+       (<literal>failover=disabled</literal>). Всякий раз, когда
+       плагин не может установить соединение с сервером, он выдает
+       предупреждение и устанавливает для этого соединения код и сообщение
+       об ошибке. После этого он возвращает ошибку приложению на обработку и,
+       например, перепосылает последний запрос в надежде, что будет выбран 
+       другой сервер.
+      </para>
+      <para>
+       Обратите внимание, что логика обработки отказов по умолчанию применяется
+       только при создании нового соединения. Если соединение было открыто, то 
+       никаких попыток переподключения, в случае ошибки, производиться не будет.
+       Если, к примеру, сервер, с которым установлено соединение, отключится, то,
+       при попытке выполнить на нем запрос, никаких попыток восстановления 
+       предпринято не будет. Вместо этого вернется ошибка.
+      </para>
+      <para>
+       Если используется <literal>failover=master</literal>, то плагин будет
+       неявно переключаться на мастер-сервер, если он доступен. Пожалуйста
+       внимательно почитайте документацию, где описаны все риски и подводные 
+       камни использования <literal>failover=master</literal>.
+      </para>
+      <para>
+       <example>
+        <title>Откат к мастеру в случае невозможности соединиться с подчиненным сервером (PECL/mysqlnd_ms &lt; 1.4.0)</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "failover": "master"
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Начиная с PECL/mysqlnd_ms 1.4.0 ключ конфигурации failover должен содержать объект.
+      </para>
+      <para>
+       <example>
+        <title>Новый синтаксис, начиная с версии 1.4.0</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "failover": {"strategy": "master" }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>strategy</literal>
+          </entry>
+          <entry>
+           <para>
+            Политика обработки отказов. Допустимые значения:
+            <literal>disabled</literal> (default), <literal>master</literal>,
+            <literal>loop_before_master</literal>
+           </para>
+           <para>
+            Значение <literal>disabled</literal> запрещает автоматическую обработку отказов.
+           </para>
+           <para>
+            Значение <literal>master</literal> говорит плагину, что, в случае 
+            недоступности подчиненного сервера, необходимо переключиться на мастера.
+            Если соединение с мастер-сервером вернуло ошибку, то плагин завершит
+            цикл обработки ошибок и вернет ошибку пользователю.
+           </para>
+           <para>
+            Если используется <literal>loop_before_master</literal> и сделан запрос
+            к подчиненному серверу, плагин попытается соединиться с другими 
+            подчиненными серверами и только в самом конце переключется на мастера.
+            Если указано несколько мастер-серверов и разрешена конфигурация с
+            несколькими мастерами, то плагин будет пытаться соединиться со всеми ними
+            по очереди и только потом вернет ошибку.
+           </para>
+          </entry>
+          <entry>Начиная с 1.4.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>remember_failed</literal>
+          </entry>
+          <entry>
+           <para>
+            Запоминать ошибки в течении всего времени исполнения PHP-скрипта.
+            По умолчанию: <literal>false</literal>.
+           </para>
+           <para>
+            Если установить как <literal>true</literal>, то плагин запомнит
+            хосты, к которым не удалось подключиться, и в течении исполнения
+            текущего скрипта больше не будет пытаться их использовать для 
+            балансировки нагрузки.
+           </para>
+          </entry>
+          <entry>
+           Начиная с версии 1.4.0. Этот функционал доступен только в сочетании с
+           фильтрами балансировки нагрузки <literal>random</literal> и
+           <literal>roundrobin</literal>. Рекомендуется использовать эту опцию.
+          </entry>
+         </row>
+         <row>
+          <entry>
+           <literal>max_retries</literal>
+          </entry>
+          <entry>
+           <para>
+            Максимальное количество попыток коннекта перед тем, как отклонить хост.
+             По умолчанию: <literal>0</literal> (нет ограничений).
+            </para>
+            <para>
+             Эта настройка предназначена для предотвращения исключения хостов из
+             списка используемых после первой ошибки соединения. Если установить
+             <literal>n > 0</literal>, то плагин не будет убирать сервер из списка
+             пока для него не будет предпринято заданное количество неудачных 
+             соединений.
+            </para>
+          </entry>
+          <entry>
+           Начиная с 1.4.0. Этот функционал доступен только в сочетании с
+           фильтрами балансировки нагрузки <literal>random</literal> и
+           <literal>roundrobin</literal>.
+          </entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+      <para>
+       Установка <literal>failover</literal> любым значением отличным от
+       <literal>disabled</literal>, <literal>master</literal> или
+       <literal>loop_before_master</literal>, не вызовет ошибок или
+       предупреждений.
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.lazy-connections">
+    <term>
+     <parameter>lazy_connections</parameter>
+     <type>логическое</type>
+    </term>
+    <listitem>
+     <para>
+      Контролирует использование ленивых подключений. Ленивые подключения -
+       это такие подключения, которые не устанавливаются пока клиент не пошлет
+       первый запрос. Включены по умолчанию.
+      </para>
+      <para>
+       Ленивые подключения крайне рекомендованы к использованию, поскольку
+       позволяют сильно сократить количество открытых соединений.
+       Если вы запретите ленивые соединения, то, например, настроив кластер из
+       одного мастера и двух подчиненных серверов, вы получите три одновременно
+       открытых соединения при первом же подключении к базе, хотя в вашем скрипте
+       используется только подключение к мастер-серверу.
+      </para>
+      <para>
+       Леничные подключения не представляют опасности, если вы часто меняете 
+       состояние подключения. Плагин не отправляет все изменения состояния во 
+       все соединения из пула соединений. Небольшое количество изменений посылаются 
+       только в открытые соединения. Ленивые соединения, открытые позже, не будут
+       затронуты. Только небольшое количество настроек будут &quot;запоминаться&quot;
+       и применяться к новым открытым ленивым соединениям.
+      </para>
+      <para>
+       <example>
+        <title>Запрещение ленивых соединений</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "lazy_connections": 0
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Пожалуйста внимательно изучите документацию по <literal>server_charset</literal>,
+       для того, чтобы избежать проблем с экранированием строк и с серверами,
+       использующими другие настройки локали по умолчанию.
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.server-charset">
+    <term>
+     <parameter>server_charset</parameter>
+     <type>строка</type>
+    </term>
+    <listitem>
+     <para>
+      Эта настройка появилась в версии 1.4.0. Крайне рекомендуется ее использовать
+      при включенных ленивых подключениях.
+     </para>
+     <para>
+      Настройка <literal>server_charset</literal> служит двум целям. Она используется
+      как кодировка по умолчанию при экранировании строк до установления 
+      соединения и помогает избежать подводных камней в гетерогенном, 
+      окружении когда разные сервера используют разные кодировки по умолчанию.
+     </para>
+     <para>
+      При выполнении экранирования строк учитывается кодировка соединений.
+       Выключение экранирования строк невозможно до того, как соединение 
+       будет открыто, и не станет известна кодировка соединения. Использование
+       ленивых подключений задерживает реальное открытие соединение до
+       момента отправки первого запроса.
+      </para>
+      <para>
+       Приложения использующие ленивые подключения могут попытаться экранировать
+       строки перед отправкой запроса. Фактически это обычное дело, когда
+       строка запроса нуждается в экранировании. Однако, так как ленивое
+       соединение еще не открыто, то такое экранирование завершится с ошибкой.
+       Плагин выдаст ошибку уровня <literal>E_WARNING</literal> с текстом 
+       <literal>(mysqlnd_ms)
+        string escaping doesn't work without established connection.
+        Possible solution is to add server_charset to your configuration</literal>.
+      </para>
+      <para>
+       Установка <literal>server_charset</literal> позволит плагину использовать
+       заданную кодировку для экранирования строк до того, как ленивое соединение 
+       будет реально установлено. Мало того, плагин будет принудительно использовать 
+       эту кодировку когда соединение установлено.
+      </para>
+      <para>
+       Принудительное использование настроенной кодировки для экранирования 
+       позволит избежать подводных камней при использовании другой кодировки позже,
+       после установки соединения. Это дополнительное преимущество, позволяющее
+       не выравнивать настройки кодировки на всех используемых серверах. Не важно,
+       какая кодировка настроена на серверах, плагин, по умолчанию, будет 
+       использовать свою.
+      </para>
+      <para>
+       Плагин не запрещает пользователю в любой момент поменять кодировку с
+       помощью функции <function>set_charset</function> или соответствующего 
+       SQL-запроса. Обратите внимание, что использование SQL не рекомендуется, 
+       поскольку плагин не сможет его отследить. пользователь может, к примеру, 
+       изменить кодировку для ленивого соединения после экранирования, но до
+       установления соединения. Кодировка, установленная пользователем, может быть
+       использована для любого вложенного экранирования, до установления реального
+       соединения. Соединение будет установлено с использованием заданной в 
+       конфигурационном файле кодировки не взирая на кодировку сервера и предшествующие 
+       действия пользователя. Единожды соединение было установлено, 
+       <literal>set_charset</literal> больше не имеет смысла.
+      </para>
+      <para>
+       <example>
+        <title>Экранирование строк для ленивых подключений</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "lazy_connections": 1,
+        "server_charset" : "utf8"
+    }
+}
+]]>
+        </programlisting>
+        <programlisting role="php">
+<![CDATA[
+<?php
+$mysqli = new mysqli("myapp", "username", "password", "database");
+$mysqli->real_escape("это будет экранироваться с помощью настройки server_charset - utf8");
+$mysqli->set_charset("latin1");
+$mysqli->real_escape("это будет экранироваться с помощью latin1");
+/* server_charset implicitly set - utf8 connection */
+$mysqli->query("SELECT 'это соединение будет использовать server_charset' AS _msg FROM DUAL");
+/* теперь используется latin1*/
+$mysqli->set_charset("latin1");
+?>
+]]>
+        </programlisting>
+       </example>
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.master-on-write">
+    <term>
+     <parameter>master_on_write</parameter>
+     <type>логическое значение</type>
+    </term>
+    <listitem>
+     <para>
+	  Если установлено, то плагин начнет использовать мастер-сервер
+       только после того, как на нем будет выполнен первый запрос.
+       Приложение также сможет использовать подчиненные сервера
+       используя SQL-хинты.
+      </para>
+      <para>
+       Эта настройка может помочь победить задержку репликации. Если, например, 
+       будет запущен запрос <literal>INSERT</literal>, то, после него, все
+       последующие запросы плагин будет отправлять на мастер-сервер,
+       включая запросы типа <literal>SELECT</literal>. Это может
+       помочь в случае, когда подчиненные сервера не успеют среплицировать
+       результаты запроса <literal>INSERT</literal>.
+      </para>
+      <para>
+       <example>
+        <title>Обеспечение консистентного чтения</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "master_on_write": 1
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Обратите внимание, что фильтр <literal>quality_of_service</literal>
+       появился в версии 1.2.0-alpha. Он дает возможность более тонко
+	   упровлять <link linkend="mysqlnd-ms.qos-consistency">уровнем сервиса</link>,
+	   который вам нужен.
+      </para>
+      <para>
+       Все настройки <link linkend="ini.mysqlnd-ms-plugin-config-v2.trx-stickiness">привязки транзакции к серверу</link>,
+       включая <literal>trx_stickiness=on</literal>, перебиваются  <literal>master_on_write=1</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.trx-stickiness">
+    <term>
+     <parameter>trx_stickiness</parameter>
+     <type>строка</type>
+    </term>
+    <listitem>
+     <para>
+	  Политики привязки транзакции к серверу. Поддерживаемые политики:
+       <literal>disabled</literal> (по умолчанию), <literal>master</literal>.
+      </para>
+      <para>
+       Эта настройка требует версии PHP 5.4.0 или выше. Если использовать с более ранними
+       версиями PHP, то плагин выдаст предупреждение вида
+       <literal>(mysqlnd_ms) trx_stickiness strategy is not supported before PHP 5.3.99</literal>.
+      </para>
+      <para>
+       Если политика не определена, либо установлена как
+       <literal>trx_stickiness=disabled</literal>, то плагин может
+	   балансировать нагрузку и переключаться между серверами в течении
+	   транзакции. Плагин не транзакционно-безопасен. Для предотвращения
+	   переключения соединения в ходе транзакции можно использовать SQL-хинты.
+      </para>
+      <para>
+       Начиная с PHP 5.4.0, библиотека mysqlnd позволяет отслеживать изменение 
+	   состояния режима <literal>autocommit</literal>, путем перехвата
+       вызовов функции <literal>set_autocommit()</literal>.
+       Если задано <literal>set_stickiness=master</literal> и
+       <literal>autocommit</literal> отключен расширением PHP MySQL путем
+       вызова <literal>mysqlnd</literal> внутренней функции
+       <literal>set_autocommit()</literal>, плагин понимает, что начата транзакция,
+	   и все последующие запросы будут выполняться на мастер-сервере, 
+	   пока не будет включен <literal>autocommit</literal>. Соответственно
+	   можно не использовать SQL-хинты.
+      </para>
+      <para>
+       Например, для вызова внутренней функции библиотеки <literal>mysqlnd</literal>
+       <literal>set_autocommit()</literal>, можно использовать
+       <function>mysqli_autocommit</function>.
+      </para>
+      <para>
+       Следует учесть, что даже с установкой <literal>trx_stickiness=master</literal>, 
+	   плагин не сможет перехватывать изменение режима <literal>autocommit</literal>,
+	   вызваное SQL-запросами, такими как <literal>SET AUTOCOMMIT=0</literal>
+	   или <literal>BEGIN</literal>.
+      </para>
+      <para>
+       Начиная с PHP 5.5.0, библиотека mysqlnd содержит дополнительные вызовы C API для
+       контроля транзакций. Уровень контроля совпадает с заданным SQL-запросом.
+       <literal>mysqli</literal> API был изменен для использования этих вызовов.
+       Начиная с версии 1.5.0, PECL/mysqlnd_ms может отслеживать не только
+       <function>mysqli_autocommit</function>, но также <function>mysqli_begin</function>,
+       <function>mysqli_commit</function> и <function>mysqli_rollback</function>. Это
+       позволяет отслеживать границы транзакций и останавливать для них балансировку.
+      </para>
+      <para>
+       <example>
+        <title>Использование мастер-сервера для запуска транзакции</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+        },
+        "trx_stickiness": "master"
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Начиная с версии 1.5.0, в рамках транзакции запрещен автоматическая обработка
+       отказов. Если границы транзакции определены верно, разрешена привязка транзакции к 
+       серверу	и, в этот момент, сервер перестает отвечать, то плагин не будет
+       пытаться переключиться на другой сервер, если явно не настроены политики
+       обработки отказов. Пользователь должен обработать такие ошибки самостоятельно. 
+       В зависимости от настроек, плагин может выдать ошибку уровня
+       <literal>E_WARNING</literal> с текстом вроде такого:
+       <literal>(mysqlnd_ms) Automatic failover is not permitted in the middle of a transaction</literal>.
+	   Эта ошибка может быть перебита другими ошибками, выданными
+	   функциями, исполняющими запрос, например
+       <literal>(mysqlnd_ms) No connection selected by the last filter</literal>.
+      </para>
+      <para>
+       <example>
+        <title>Нет автоматического переключения при сбое, обработка ошибок</title>
+        <programlisting role="php">
+<![CDATA[
+<?php
+/* предположение: настроена автоматическая обработка ошибок */
+$mysqli = new mysqli("myapp", "username", "password", "database");
+
+/* переключаем внутреннее состояние плагина в in_trx = 1 */
+$mysqli->autocommit(false);
+
+/* предположение: сервер перестал отвечать */
+if (!($res = $mysqli->query("SELECT 'Этот запрос не выполнился' AS _msg FROM DUAL"))) {
+ /* обрабатываем ошибку транзакции, внутреннее состояние плагина все еще in_trx = 1 */
+ printf("[%d] %s", $mysqli->errno, $mysqli->error);
+ /*
+  Если используется механизм определения транзакции на базе autocommit(),
+  то НЕОБХОДИМО вызвать autocommit(true). В противном случае плагин
+  будет думать, что продолжается текущая транзакция и переключиться на
+  другой сервер не получится.
+ */
+ $mysqli->autocommit(true);
+ /* Ну и теперь вы хотите начать новую транзакцию */
+ $mysqli->autocommit(false);
+}
+/* с этого момента используем latin1 */
+$mysqli->set_charset("latin1");
+?>
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <para>
+       Если сервер отказывает в середине транзакции, плагин будет
+       игнорировать все попытки переключиться на другой сервер, пока
+       транзакция не будет завершена. Напомним, что плагин контролирует 
+       вызовы API для обнаружения границ транзакций. Таким образом,
+       вам нужно, например, включить режим автокоммита для завершения 
+       текущей транзакции для того, чтобы плагин включит балансировку
+       нагрузки. Собственно вы можете сразу же начать новую транзакцию,
+       снова отключив режим автоматического подтверждения.
+      </para>
+      <para>
+       Если вы не будете обрабатывать ошибки и завершать некорректную транзакцию,
+       то дальнейшие вызовы API могут привести к ошибкам, таким как
+       <literal>Commands out of sync; you can't run this command now</literal>.
+	   Запомните - это очень важно, обрабатывать все ошибки.
+      </para>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.transient_error">
+    <term>
+     <parameter>transient_error</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Настройка появилась в версии 1.6.0.
+     </para>
+     <para>
+	  Узел кластера базы данных может вернуть ошибку, вызванную кратковременным сбоем.
+       Клиент может повторить запрос на том же узле, переключиться на другой, или вообще
+       отменить запрос. Для подобных ошибок вполне безпасно использовать для
+       повторного запроса тот же сервер.
+      </para>
+      <para>
+       <literal>PECL/mysqlnd_ms</literal> может выполнить повтор запроса
+	   от имени приложения.
+       С помощью <literal>transient_error</literal> можно настроить плагин
+	   для повтора запроса, завершившегося с конкретными ошибками определенное 
+	   количество раз с паузой между попытками. Если в процессе повтора ошибка 
+	   пропадет, то приложение этого даже не заметит. Если все попытки 
+	   завершились неудачей, то приложению будет возвращена ошибка.
+      </para>
+      <para>
+       <example>
+        <title>Цикл повторов исправляемых ошибок</title>
+        <programlisting role="ini">
+<![CDATA[
+{
+    "myapp": {
+        "master": {
+            "master_0": {
+                "host": "localhost"
+            }
+        },
+        "slave": {
+            "slave_0": {
+                "host": "192.168.78.136",
+                "port": "3306"
+            }
+       },
+       "transient_error": {
+          "mysql_error_codes": [
+            1297
+          ],
+          "max_retries": 2,
+          "usleep_retry": 100
+       }
+    }
+}
+]]>
+        </programlisting>
+       </example>
+      </para>
+      <informaltable>
+       <tgroup cols="3">
+        <colspec colwidth="1*"/>
+        <colspec colwidth="7*"/>
+        <colspec colwidth="2*"/>
+        <thead>
+         <row>
+          <entry>Ключ</entry>
+          <entry>Описание</entry>
+          <entry>Версия</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>
+           <literal>mysql_error_codes</literal>
+          </entry>
+          <entry>
+           <para>
+            Список исправляемых ошибок. Вы можете добавить любые коды ошибок
+            в этот список. Допустимо считать исправляемой любую ошибку, а не
+            только <literal>1297</literal>
+            (<literal>HY000 (ER_GET_TEMPORARY_ERRMSG),
+            Message: Got temporary error %d '%s' from %s</literal>).
+			Перед добавлением других кодов, кроме <literal>1297</literal>, в список,
+			убедитесь, что кластер поддержитвает повтор такого запроса без
+			нарушения состояния вашего приложения.
+           </para>
+          </entry>
+          <entry>Начиная с 1.6.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>max_retries</literal>
+          </entry>
+          <entry>
+           <para>
+            Максимальное количество повторов перед отправкой ошибки пользователю.
+           </para>
+           <para>
+            По умолчанию: <literal>1</literal>
+           </para>
+          </entry>
+          <entry>Начиная с 1.6.0.</entry>
+         </row>
+         <row>
+          <entry>
+           <literal>usleep_retry</literal>
+          </entry>
+          <entry>
+           <para>
+            Задержка в миллисекундах между повторами.
+            Это значение будет передано C-функции <function>usleep</function>.
+           </para>
+           <para>
+            По умолчанию: <literal>100</literal>
+           </para>
+          </entry>
+          <entry>Начиная с 1.6.0.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
+     </listitem>
+   </varlistentry>
+   
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.xa">
+    <term>
+     <parameter>xa</parameter>
+     <type>объект</type>
+    </term>
+    <listitem>
+     <para>
+      Настройка появилась в версии 1.6.0.
+     </para>
+     <para>
+      <note>
+       <title>Эксперементальный функционал</title>
+       <para>
+		Эта функциональность в данный момент находится в разработке, так что
+         при ее использовании могут возникать проблемы и ограничения.
+         Не используйте в промышленном окружении.
+        </para>
+       </note>
+      </para>
+      <variablelist>
+       <varlistentry>
+        <term>state_store</term>
+        <listitem>
+         <variablelist xml:id="ini.mysqlnd-ms-plugin-config-v2.xa.state-store">
+          <varlistentry>
+           <term>record_participant_credentials</term>
+           <listitem>
+            <para>
+             Сохранять ли имя пользователя и пароль участника глобальной транзакции 
+             в таблице участников. Если отключено, сборщик мусора, при подключении 
+             к серверам будет использовать имя и пароль по умолчанию. Если вы 
+             не используете разных пользователей для разных серверов MySQL, то
+             спокойно можно использовать значения по умолчанию и не сохранять
+             эту информацию в хранилище состояния.
+            </para>
+            <para>
+             Обратите внимание, что при использовании этого функционала, имя и пароль
+             пользователя в хранилище состояния MySQL будут храниться в текстовом виде.
+             Вся отвественность за обеспечение безопасности этой информации лежит на вас.
+            </para>
+            <para>
+             По умолчанию: <literal>false</literal>
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>participant_localhost_ip</term>
+           <listitem>
+            <para>
+             Во время сбора мусора XA, плагин может найти сервер участник, для
+             которого был был записан хост <literal>localhost</literal>. Если
+             сбор мусора запустился на другом хосте, но хост сделал запись
+             участника в хранилище состояния, то <literal>localhost</literal> 
+             будет разрешаться как другой хост. Поэтому при записи имени
+             хоста участника в хранилище состояния следует использовать
+             не <literal>localhost</literal>, а актуальный IP-адрес 
+             <literal>localhost</literal>.
+            </para>
+            <para>
+             Установка <literal>participant_localhost_ip</literal> должна использоваться
+             только если нельзя избежать использования <literal>localhost</literal>.
+             Если смотреть только с точки зрения сбора мусора, желательно не
+             настраивать соединения с сокетом, а использовать IP-адрес и порт.
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>mysql</term>
+           <listitem>
+            <para>
+             В качестве хранилища состояния доступно только хранилище состояния MySQL.
+            </para>
+            <variablelist>
+             <varlistentry>
+              <term>global_trx_table</term>
+              <listitem>
+               <para>
+                Имя таблицы MySQL, используемой для хранения состояния текущей или
+                оборванной глобальной транзакции. Для создания таблицы используйте
+                приведенный ниже SQL-запрос. Не забудьте заменить имя таблицы на то,
+                которое будете использовать в настройках.
+               </para>
+               <para>
+                По умолчанию: <literal>mysqlnd_ms_xa_trx</literal>
+               </para>
+               <para>
+                <example>
+                 <title>SQL-запрос для создания таблицы хранилища состояния транзакции</title>
+                 <programlisting role="sql">
+<![CDATA[
+CREATE TABLE mysqlnd_ms_xa_trx (
+  store_trx_id int(11) NOT NULL AUTO_INCREMENT,
+  gtrid int(11) NOT NULL,
+  format_id int(10) unsigned NOT NULL DEFAULT '1',
+  state enum('XA_NON_EXISTING','XA_ACTIVE','XA_IDLE','XA_PREPARED','XA_COMMIT','XA_ROLLBACK') NOT NULL DEFAULT 'XA_NON_EXISTING',
+  intend enum('XA_NON_EXISTING','XA_ACTIVE','XA_IDLE','XA_PREPARED','XA_COMMIT','XA_ROLLBACK') DEFAULT 'XA_NON_EXISTING',
+  finished enum('NO','SUCCESS','FAILURE') NOT NULL DEFAULT 'NO',
+  modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  started datetime DEFAULT NULL,
+  timeout datetime DEFAULT NULL,
+  PRIMARY KEY (store_trx_id),
+  KEY idx_xa_id (gtrid,format_id,finished),
+  KEY idx_state (state)
+) ENGINE=InnoDB
+]]>
+                   </programlisting>
+                  </example>
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>participant_table</term>
+                <listitem>
+                 <para>
+                  Имя таблицы MySQL, используемой для хранения информации об участниках
+                  текущей или оборванной глобальной транзакции. Для создания таблицы используйте
+				  приведенный ниже SQL-запрос. Не забудьте заменить имя таблицы на то,
+                    которое будете использовать в настройках.
+                   </para>
+                   <para>
+                    Хранение имени и пароля пользователя контролируется настройкой
+                    <literal>record_participant_credentials</literal>
+                   </para>
+                   <para>
+                    По умолчанию: <literal>mysqlnd_ms_xa_participants</literal>
+                   </para>
+                   <example>
+                    <title>SQL-запрос для создания таблицы хранилища участников транзакции</title>
+                    <programlisting role="sql">
+<![CDATA[
+CREATE TABLE mysqlnd_ms_xa_participants (
+  fk_store_trx_id int(11) NOT NULL,
+  bqual varbinary(64) NOT NULL DEFAULT '',
+  participant_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  server_uuid varchar(127) DEFAULT NULL,
+  scheme varchar(1024) NOT NULL,
+  host varchar(127) DEFAULT NULL,
+  port smallint(5) unsigned DEFAULT NULL,
+  socket varchar(127) DEFAULT NULL,
+  user varchar(127) DEFAULT NULL,
+  password varchar(127) DEFAULT NULL,
+  state enum('XA_NON_EXISTING','XA_ACTIVE','XA_IDLE','XA_PREPARED','XA_COMMIT','XA_ROLLBACK')
+   NOT NULL DEFAULT 'XA_NON_EXISTING',
+  health enum('OK','GC_DONE','CLIENT ERROR','SERVER ERROR') NOT NULL DEFAULT 'OK',
+  connection_id int(10) unsigned DEFAULT NULL,
+  client_errno smallint(5) unsigned DEFAULT NULL,
+  client_error varchar(1024) DEFAULT NULL,
+  modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (participant_id),
+  KEY idx_xa_bqual (bqual),
+  KEY idx_store_trx (fk_store_trx_id),
+  CONSTRAINT mysqlnd_ms_xa_participants_ibfk_1 FOREIGN KEY (fk_store_trx_id)
+    REFERENCES mysqlnd_ms_xa_trx (store_trx_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB
+]]>
+                    </programlisting>
+                   </example>
+                  </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>garbage_collection_table</term>
+                <listitem>
+                 <para>
+                  Имя таблицы MySQL используемой для отслеживания и синхронизации запуска
+                  сбора мусора. Для создания таблицы используйте
+				  приведенный ниже SQL-запрос. Не забудьте заменить имя таблицы на то,
+                   которое будете использовать в настройках.
+                  </para>
+                  <para>
+                   По умолчанию: <literal>mysqlnd_ms_xa_gc</literal>
+                  </para>
+                  <example>
+                   <title>SQL-запрос для создания таблицы хранилища тнформации о сборе мусора</title>
+                   <programlisting role="sql">
+<![CDATA[
+CREATE TABLE mysqlnd_ms_xa_gc (
+  gc_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+  gtrid int(11) NOT NULL,
+  format_id int(10) unsigned NOT NULL DEFAULT '1',
+  fk_store_trx_id int(11) DEFAULT NULL,
+  modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  attempts smallint(5) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (gc_id),
+  KEY idx_store_trx (gtrid,format_id,fk_store_trx_id)
+) ENGINE=InnoDB
+]]>
+                   </programlisting>
+                  </example>
+                 </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>host</term>
+                <listitem>
+                 <para>
+                  Имя хоста сервера MySQL.
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>user</term>
+                <listitem>
+                 <para>
+                  Имя пользователя.
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>password</term>
+                <listitem>
+                 <para>
+                  Пароль.
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>db</term>
+                <listitem>
+                 <para>
+                  База данных, в которой располагаются таблицы сборщика мусора.
+                  Обратите внимание, что таблицы сборщика мусора необходимо
+                  создать до использования плагина. Таблицы не создаются
+                  во время исполнения и сборщик мусора не сможет без них работать.
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>port</term>
+                <listitem>
+                 <para>
+                  Порт сервера MySQL.
+                 </para>
+                </listitem>
+               </varlistentry>
+               <varlistentry>
+                <term>socket</term>
+                <listitem>
+                 <para>
+                  Доменный сокет unix для сервера MySQL. Обратите внимание,
+                  что если вы используете несколько серверов PHP, то любой
+                  из них может попытаться выполнить сборку мусора и должен
+                  иметь доступ к хранилищу состояния. В этом случае вы можете
+                  настроить IP-адрес и порт для сервера MySQL, хранящего
+                  состояние, чтобы все серверы PHP могли к нему обратиться.
+                 </para>
+                </listitem>
+               </varlistentry>
+              </variablelist>
+             </listitem>
+            </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>rollback_on_close</term>
+        <listitem>
+         <para>
+          Производить ли автоматический откат открытой глобальной транзакции
+          при закрытии соединения. Если включено, то поведение будет аналогично
+          поведению с локальными транзакциями. Как только клиент потерял
+          соединение, сервер откатит все открытые и не завершенные транзакции.
+         </para>
+         <para>
+          По умолчанию: <literal>true</literal>
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry xml:id="ini.mysqlnd-ms-plugin-config-v2.xa.gc">
+        <term>garbage_collection</term>
+        <listitem>
+         <variablelist>
+          <varlistentry>
+           <term>max_retries</term>
+           <listitem>
+            <para>
+             Максимальное количество попыток запуска сборки мусора. 
+             Допустимы значения в диапазоне от <literal>0</literal> до <literal>100</literal>.
+             <literal>0</literal> означает отсутствие ограничений, только если
+             ограничения не настроены в хранилище состояния. Ограничения 
+             хранилища состояния, предположительно, значительно выше, чем <literal>100</literal>.
+             Доступно с версии 1.6.0.
+            </para>
+            <para>
+             Обратите внимание, что крайне важно завершить ошибочные
+             XA-транзакции за разумное время, чтобы сервера участники 
+             могли высвободить занятые ими ресурсы. Встроенный сборщик мусора
+             не ожидает, что будет завершаться с ошибкой длительное время, пока
+             сбойные сервера приходят в себя. Все еще возможны ситуации, когда
+             может потребоваться вмешательство человека для решения проблем
+             сборщика мусора. В этом случае сперва надо убедиться, что
+             ситуацию нельзя разрешить принудительным запуском 
+             <function>mysqlnd_ms_xa_gc</function>, а только потом принимать
+             более серьезные меры.
+            </para>
+            <para>
+             По умолчанию: <literal>5</literal>
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>probability</term>
+           <listitem>
+            <para>
+             Вероятность сбора мусора.
+             Допустимы значения от <literal>0</literal> до <literal>1000</literal>.
+             Установка <literal>0</literal> запрещает автоматический фоновый
+             сбор мусора. Помните, что даже установив <literal>0</literal>, вы сможете
+             запускать сборку мусора самостоятельно с помощью
+             <function>mysqlnd_ms_gc</function>.
+             Доступно с версии 1.6.0.
+            </para>
+            <para>
+             Автоматический сбор мусора для зависшей XA-транзакции возможен только
+             если настроено хранение состояния. Хранилище состояния отвечает за
+             отслеживание XA-транзакции. Основываясь на записях в хранилище состояния
+             можно определить участников транзакции и выполнить на них откат.
+            </para>
+            <para>
+             Сбор мусора запускается в качестве в процессе завершения обработки
+             веб-запроса PHP, как только ваш скрипт завершил работу. Надо ли
+             запускать сборщик мусора, определяется вычислением случайного
+             числа между <literal>0</literal> и <literal>1000</literal>. Если число выше
+             или равно настроеной вероятности, то сборка будет запущена.
+            </para>
+            <para>
+             По умолчанию: <literal>5</literal>
+            </para>
+           </listitem>
+          </varlistentry>
+          <varlistentry>
+           <term>max_transactions_per_run</term>
+           <listitem>
+            <para>
+             Максимальное количество XA-транзакций, которые будут обработаны за
+             один запуск сборки мусора.
+             Допустимы значения от <literal>1</literal> до <literal>32768</literal>.
+             Доступно с версии 1.6.0.
+            </para>
+            <para>
+             Зачистка незавершенный XA-транзакций требует значительных затрат
+             времени и ресурсов. Сборщик мусора должен соединиться с несколькими
+             участниками незавершенной транзакции и выполнить определенные
+             SQL-запросы для ее отката.
+            </para>
+            <para>
+             По умолчанию: <literal>100</literal>
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </listitem>
+   </varlistentry>
+   </variablelist>
+   </para>
+  </section>
+  
+  <section xml:id="mysqlnd-ms.plugin-ini-v1">
+   <title xmlns="http://docbook.org/ns/docbook">Plugin configuration file (&lt;= 1.0.x)</title>
+   <note>
+    <para>
+     Все дальнейшие описания относятся к PECL/mysqlnd_ms &lt; 1.1.0-beta.
+     Они не используются в более ранних версиях.
+    </para>
+   </note>
+   <para>
+    Плагин использует собственный файл конфигурации.
+    Файл конфигурации содержит информацию о главном сервере репликации MySQL, 
+    подчиненных серверах репликации MySQL, политике выбора сервера 
+    (балансировка нагрузки), стратегии обработки отказов и использовании
+    ленивых соединений.
+   </para>
+   <para>
+    Для определения конфигурационного файла используется директива конфигурации PHP
+    <link linkend="ini.mysqlnd-ms.ini-file"><literal>mysqlnd_ms.ini_file</literal></link>.
+   </para>
+   <para>
+    Конфигурационный файл используйет стандартный формат <literal>php.ini</literal>.
+    Он содержит одну или несколько секций. Каждая секция содержит свою порцию
+    настроек. Глобальной секции с настройками по умолчанию нет.
+   </para>
+   <para>
+    Приложения обращаются к секциям по их именам. Имена секций сравниваются с именем
+    хоста (сервера) при использовании функций соединения с MySQL расширений
+    <link linkend="ref.mysqli">mysqli</link>,
+    <link linkend="ref.mysql">mysql</link> и
+    <link linkend="ref.pdo-mysql">PDO_MYSQL</link>. В момент соединения
+    плагин <link linkend="book.mysqlnd">mysqlnd</link> сравнивает имя хоста с
+    именами секций конфигурационного файла. Если они совпадают, то используются
+    настройки соответствующей секции.
+   </para>
+   <para>
+    <example>
+     <title>Пример использования имен секций</title>
+     <programlisting role="ini">
+<![CDATA[
+[myapp]
+master[] = localhost
+slave[] = 192.168.2.27
+slave[] = 192.168.2.28:3306
+[localhost]
+master[] = localhost:/tmp/mysql/mysql.sock
+slave[] = 192.168.3.24:3305
+slave[] = 192.168.3.65:3309
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Все соединения будут сбалансированы по нагрузке */
+$mysqli = new mysqli("myapp", "username", "password", "database");
+$pdo = new PDO('mysql:host=myapp;dbname=database', 'username', 'password');
+$mysql = mysql_connect("myapp", "username", "password");
+
+$mysqli = new mysqli("localhost", "username", "password", "database");
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Имена секций являются строками. Вполне допустимо использовать имена
+   <literal>192.168.2.1</literal>, <literal>127.0.0.1</literal> или
+   <literal>localhost</literal>. Если, к примеру, приложение соединяется 
+   с <literal>localhost</literal> и в файле конфигурации есть секция
+   <literal>[localhost]</literal>, то семантика операции соединения изменится.
+   Приложение больше не будет использовать БД запущенную только на сервере
+   <literal>localhost</literal>, так как плагин запустит процесс балансировки
+   нагрузки в соответствии с настройкой секции <literal>[localhost]</literal>.
+   Это позволит включить балансировку нагрузки для приложения без 
+   переписывания его кода.
+  </para>
+  <para>
+   Директивы <literal>master[]</literal>, <literal>slave[]</literal>
+   и <literal>pick[]</literal> используют спископодобный синтаксис.
+   Директивы с таким синтаксисом могут встречаться в
+   конфигурационном файле множество раз в одной секции. Плагин использует
+   опции в том порядке, как они определены в файле конфигурации. Рассмотрим
+   пример ниже. В нем заданы две директивы <literal>slave[]</literal> в
+   секции <literal>[myapp]</literal>. И если для операций чтения настроена политика
+   балансировки round-robin, то первый такой запрос будет отправлен серверу
+   <literal>mysql_slave_1</literal>, потому что он первый в списке.
+   Второй запрос будет направлен серверу <literal>mysql_slave_2</literal>, так
+   как он второй в списке. И т.д. Таким образом, спископодобные директивы
+   читаются в том порядке, как они определены в файле конфигурации.
+  </para>
+  <para>
+   <example>
+    <title>Спископодобный синтакцис</title>
+    <programlisting role="ini">
+<![CDATA[
+[myapp]
+master[] = mysql_master_server
+slave[] = mysql_slave_1
+slave[] = mysql_slave_2
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Ниже приведено краткое описание директив конфигурации, которые можно использовать.
+  </para>
+  <para>
+   <variablelist>
+    <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.master">
+     <term>
+      <parameter>master[]</parameter>
+      <type>строка</type>
+    </term>
+    <listitem>
+     <para>
+      URI мастер-сервера репликации MySQL. URI имеет следующий синтаксис
+      <literal>hostname[:port|unix_domain_socket]</literal>.
+     </para>
+     <para>
+      Плагин может работать только с одним мастер-сервером.
+     </para>
+     <para>
+      Определение мастер-сервера является обязательным. Если его не указать, то
+      плагин выдаст предупреждение такого вида
+      <literal>(mysqlnd_ms) Cannot find master section in config</literal>.
+      Furthermore the plugin may set an error code for the connection handle such as
+      <literal>HY000/2000 (CR_UNKNOWN_ERROR)</literal>. Текст ошибки может отличаться
+      в зависимости от ваших языковых настроек.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.slave">
+    <term>
+     <parameter>slave[]</parameter>
+     <type>строка</type>
+     </term>
+     <listitem>
+      <para>
+       URI одного или нескольких додчиненных серверов. URI имеет следующий синтаксис
+       <literal>hostname[:port|unix_domain_socket]</literal>.
+      </para>
+      <para>
+       Плагин может работать с одним и более подчиненными серверами.
+      </para>
+      <para>
+       Определение хотя бы одного подчиненного сервера является обязательным.
+	   Если его не указать, то плагин выдаст предупреждение такого вида
+       <literal>(mysqlnd_ms) Cannot find slaves section in config</literal>.
+       Furthermore the plugin may set an error code for the connection handle such as
+       <literal>HY000/2000 (CR_UNKNOWN_ERROR)</literal>. Текст ошибки может отличаться
+	   в зависимости от ваших языковых настроек.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.pick">
+    <term>
+     <parameter>pick[]</parameter>
+     <type>строка</type>
+    </term>
+    <listitem>
+     <para>
+      Политики балансировки нагрузки (выбора сервера). Поддерживаемые политики:
+      <literal>random</literal>, <literal>random_once</literal> (по умолчанию),
+      <literal>roundrobin</literal>, <literal>user</literal>.
+     </para>
+     <para>
+      Если политики не определены, то будет использоваться
+      <literal>random_once</literal>. Политика <literal>random_once</literal>
+      выбирает один подчиненный сервер при первом запросе на чтение и использует
+      его для таких запросов до конца работы скрипта.
+     </para>
+     <para>
+      Политика <literal>random</literal> выбирает случайный подчиненный сервер
+      для каждого нового запроса на чтение.
+      </para>
+      <para>
+       Если настроена политика <literal>roundrobin</literal>, плагин
+      перебирает подчиненные сервера по очереди, начиная с первого в списке и,
+      когда доходит до конца списка, переходит в его начало.
+      </para>
+      <para>
+       Установка более одной политики балансировки будет работать только
+       для политики <literal>user</literal> и функции
+       <function>mysqlnd_ms_set_user_pick_server</function>. Если определенная
+       пользователем функция обратного вызова не смогла выбрать сервер, то
+       плагин перейдет к использованию второй сконфигурированной политики
+       балансировки.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.failover">
+    <term>
+     <parameter>failover</parameter>
+     <type>строка</type>
+    </term>
+    <listitem>
+     <para>
+      Политика обработки отказов. Допустимые политики:
+      <literal>disabled</literal> (по умолчанию), <literal>master</literal>.
+     </para>
+     <para>
+	  Если политика обработки отказов не определена, то никакой
+       автоматической обработки отказов происходить не будет
+       (<literal>failover=disabled</literal>). 
+       Всякий раз, когда плагин не может подключиться к серверу, он будет выдавать
+       предупреждение и устанавливать код ошибки и сообщение для соединения.
+       Соответственно обработка ошибки, к примеру перезапуск последнего запроса
+       на другом сервере, ложится на плечи приложения.
+      </para>
+      <para>
+       Если используется <literal>failover=master</literal>, плагин будет неявно
+	   откатываться к подчиненному, если он есть. Пожалуйста изучите
+	   документацию для понимания всех потенциальных рисков использования 
+	   <literal>failover=master</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.lazy-connections">
+    <term>
+     <parameter>lazy_connections</parameter>
+     <type>логическое</type>
+    </term>
+    <listitem>
+     <para>
+      Контролирует использование ленивых подключений. Ленивые подключения -
+            это такие подключения, которые не устанавливаются пока клиент не пошлет
+            первый запрос. Включены по умолчанию.
+      </para>
+      <para>
+       Ленивые подключения крайне рекомендованы к использованию, поскольку
+       позволяют сильно сократить количество открытых соединений.
+       Если вы запретите ленивые соединения, то, например, настроив кластер из
+       одного мастера и двух подчиненных серверов, вы получите три одновременно
+       открытых соединения при первом же подключении к базе, хотя в вашем скрипте
+       используется только подключение к мастер-серверу.
+      </para>
+      <para>
+       Леничные подключения не представляют опасности, если вы часто меняете 
+       состояние подключения. Плагин не отправляет все изменения состояния во 
+       все соединения из пула соединений. Небольшое количество изменений посылаются 
+       только в открытые соединения. Ленивые соединения, открытые позже, не будут
+       затронуты. Только небольшое количество настроек будут &quot;запоминаться&quot;
+       и применяться к новым открытым ленивым соединениям.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.master-on-write">
+    <term>
+     <parameter>master_on_write</parameter>
+     <type>логическое</type>
+    </term>
+    <listitem>
+     <para>
+	  Если установлено, то плагин начнет использовать мастер-сервер
+            только после того, как на нем будет выполнен первый запрос.
+            Приложение также сможет использовать подчиненные сервера
+            используя SQL-хинты.
+      </para>
+      <para>
+       Эта настройка может помочь победить задержку репликации. Если, например, 
+       будет запущен запрос <literal>INSERT</literal>, то, после него, все
+       последующие запросы плагин будет отправлять на мастер-сервер,
+       включая запросы типа <literal>SELECT</literal>. Это может
+       помочь в случае, когда подчиненные сервера не успеют среплицировать
+       результаты запроса <literal>INSERT</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.mysqlnd-ms-plugin-config.trx-stickiness">
+    <term>
+     <parameter>trx_stickiness</parameter>
+     <type>строка</type>
+    </term>
+    <listitem>
+	 
+      <para>
+       Политики привязки транзакции к серверу. Поддерживаемые политики:
+       <literal>disabled</literal> (по умолчанию), <literal>master</literal>.
+      </para>
+	  <para>
+       Эксперементальная функциональность.
+      </para>
+      <para>
+       Эта настройка требует версии PHP 5.4.0 или выше. Если использовать с более ранними
+       версиями PHP, то плагин выдаст предупреждение вида
+       <literal>(mysqlnd_ms) trx_stickiness strategy is not supported before PHP 5.3.99</literal>.
+      </para>
+      <para>
+       Если политика не определена, либо установлена как
+       <literal>trx_stickiness=disabled</literal>, то плагин может
+	   балансировать нагрузку и переключаться между серверами в течении
+	   транзакции. Плагин не транзакционно-безопасен. Для предотвращения
+	   переключения соединения в ходе транзакции можно использовать SQL-хинты.
+      </para>
+      <para>
+       Начиная с PHP 5.4.0, библиотека mysqlnd позволяет отслеживать изменение 
+	   состояния режима <literal>autocommit</literal>, путем перехвата
+       вызовов функции <literal>trx_autocommit()</literal>.
+       Если задано <literal>set_stickiness=master</literal> и
+       <literal>autocommit</literal> отключен расширением PHP MySQL путем
+       вызова <literal>mysqlnd</literal> внутренней функции
+       <literal>trx_autocommit()</literal>, плагин понимает, что начата транзакция,
+	   и все последующие запросы будут выполняться на мастер-сервере, 
+	   пока не будет включен <literal>autocommit</literal>. Соответственно
+	   можно не использовать SQL-хинты.
+      </para>
+      <para>
+       Например, для вызова внутренней функции библиотеки <literal>mysqlnd</literal>
+       <literal>trx_autocommit()</literal>, можно использовать
+       <function>mysqli_autocommit</function>.
+      </para>
+      <para>
+       Следует учесть, что даже с установкой <literal>trx_stickiness=master</literal>, 
+	   плагин не сможет перехватывать изменение режима <literal>autocommit</literal>,
+	   вызваное SQL-запросами, такими как <literal>SET AUTOCOMMIT=0</literal>.
+      </para>
+     </listitem>
+   </varlistentry>
+   </variablelist>
+  </para>
+  </section>
+  
+  <section xml:id="mysqlnd-ms.testing">
+   <title xmlns="http://docbook.org/ns/docbook">Тестирование</title>
+   <note>
+    <para>
+     Секция применима к mysqlnd_ms 1.1.0 или выше, не не к 1.0.
+    </para>
+   </note>
+   <para>
+    Набор тестов PECL/mysqlnd_ms содержится в директории <filename>tests/</filename>
+    в исходных кодах расширения. Там содержатся стандартные тесты phpt,
+    которые описаны на сайте PHP Quality Assurance Teams.
+   </para>
+   <para>
+    Запуск тестов требует наличия от одного до четырех серверов MySQL. Некоторые тесты
+    вообще не соединяются с MySQL. Другим нужен один сервер. Некоторым два. В определенных
+    случаях два сервера используются для эмуляции репликации. В других случаях
+    требуются настроенные подчиненный и мастер-сервер репликации. Тесты попытаются
+    определить, сколько всего и каким образом настроено серверов. Если конфигурация
+    не подходящаяя, то соответствующие тесты будут автоматически пропущены.
+   </para>
+   <para>
+    Перед запуском тестов отредактируйте <filename>tests/config.inc</filename> для
+    настройки тестовых серверов MySQL.
+   </para>
+   <para>
+    Наиболее простая конфигурация.
+    <programlisting>
+<![CDATA[
+ putenv("MYSQL_TEST_HOST=localhost");
+ putenv("MYSQL_TEST_PORT=3306");
+ putenv("MYSQL_TEST_USER=root");
+ putenv("MYSQL_TEST_PASSWD=");
+ putenv("MYSQL_TEST_DB=test");
+ putenv("MYSQL_TEST_ENGINE=MyISAM");
+ putenv("MYSQL_TEST_SOCKET=");
+
+ putenv("MYSQL_TEST_SKIP_CONNECT_FAILURE=1");
+ putenv("MYSQL_TEST_CONNECT_FLAGS=0");
+ putenv("MYSQL_TEST_EXPERIMENTAL=0");
+
+ /* эмуляция кластера репликации */
+ putenv("MYSQL_TEST_EMULATED_MASTER_HOST=". getenv("MYSQL_TEST_HOST"));
+ putenv("MYSQL_TEST_EMULATED_SLAVE_HOST=". getenv("MYSQL_TEST_HOST"));
+
+ /* реальный кластер репликации */
+ putenv("MYSQL_TEST_MASTER_HOST=". getenv("MYSQL_TEST_EMULATED_MASTER_HOST"));
+ putenv("MYSQL_TEST_SLAVE_HOST=". getenv("MYSQL_TEST_EMULATED_SLAVE_HOST"));
+]]>
+   </programlisting>
+  </para>
+  <para>
+   <literal>MYSQL_TEST_HOST</literal>, <literal>MYSQL_TEST_PORT</literal> и
+   <literal>MYSQL_TEST_SOCKET</literal> определяют имя хоста,
+   TCP/IP порт и сокет Unix для тестового сервера по умолчанию.
+   <literal>MYSQL_TEST_USER</literal> и <literal>MYSQL_TEST_PASSWD</literal>
+   содержат имя пользователя и пароль для подключения к
+   <literal>MYSQL_TEST_DB</literal>. Все настроенные сервера должны иметь 
+   одинаковых пользователя и его пароль.
+  </para>
+  <para>
+   Можно использовать любой синтаксис <literal>host</literal>, <literal>host:port</literal> или <literal>host:/path/to/socket</literal>.
+   <programlisting>
+<![CDATA[
+putenv("MYSQL_TEST_SLAVE_HOST=192.168.78.136:3307"));
+putenv("MYSQL_TEST_MASTER_HOST=myserver_hostname:/path/to/socket"));
+]]>
+    </programlisting>
+  </para>
+  </section>
+  
+  <section xml:id="mysqlnd-ms.debugging">
+   <title xmlns="http://docbook.org/ns/docbook">Отладка и диагностика</title>
+   <para>
+    Для отладки PECL/mysqlnd_ms можно использовать лог отладки mysqlnd.
+    О том, как mysqlnd PECL/mysqlnd_ms добавляет записи в лог библиотеки
+    mysqlnd, читайте тут
+    <link linkend="ini.mysqlnd.debug"><literal>mysqlnd.debug</literal></link>.
+   </para>
+   <para>
+    Пример настроек для активации записи в лог отладки:
+    <programlisting>
+<![CDATA[
+mysqlnd.debug=d:t:x:O,/tmp/mysqlnd.trace
+]]>
+   </programlisting>
+   <note>
+    <para>
+     Эта возможность доступна только совместно с отладочной сборкой PHP. 
+     Работает в Microsoft Windows если используется отладочная сборка PHP,
+	 собранная в Microsoft Visual C версии 9 и выше.
+   </para>
+   </note>
+  </para>
+  <para>
+   Лог отладки показывает вызовы функций библиотеки mysqlnd и плагина
+   PECL/mysqlnd_ms одинаково. Вызовы библиотеки mysqlnd обычно идут с префиксами
+   <literal>mysqlnd_</literal>. Вызовы PECL/mysqlnd начинаются с
+   <literal>mysqlnd_ms</literal>.
+  </para>
+  <para>
+   Пример записи в отладочный лог (соединение):
+   <programlisting>
+<![CDATA[
+[...]
+>mysqlnd_connect
+| info : host=myapp user=root db=test port=3306 flags=131072
+| >mysqlnd_ms::connect
+| | >mysqlnd_ms_config_json_section_exists
+| | | info : section=[myapp] len=[5]
+| | | >mysqlnd_ms_config_json_sub_section_exists
+| | | | info : section=[myapp] len=[5]
+| | | | info : ret=1
+| | | <mysqlnd_ms_config_json_sub_section_exists
+| | | info : ret=1
+| | <mysqlnd_ms_config_json_section_exists
+[...]
+]]>
+   </programlisting>
+  </para>
+  <para>
+   Отладочный лог полезен не только разработчикам плагина, но и обычным
+   пользователям для поиска ошибок. Например если приложение некорректно
+   обрабатывает ошибки или не может самостоятельно их логировать, то
+   разбор этого лога может помочь. Но помните, что использование этого
+   лога для отладки ошибок приложения - это самое крайнее средство. Запись
+   отладочного лога на диск - это медленная операция, которая может негативно
+   сказаться на скорости работы приложения.
+  </para>
+  <para>
+   Пример лога с ошибкой соединения:
+   <programlisting>
+<![CDATA[
+[...]
+| | | | | | | info : adding error [Access denied for user 'root'@'localhost' (using password: YES)] to the list
+| | | | | | | info : PACKET_FREE(0)
+| | | | | | | info : PACKET_FREE(0x7f3ef6323f50)
+| | | | | | | info : PACKET_FREE(0x7f3ef6324080)
+| | | | | | <mysqlnd_auth_handshake
+| | | | | | info : switch_to_auth_protocol=n/a
+| | | | | | info : conn->error_info.error_no = 1045
+| | | | | <mysqlnd_connect_run_authentication
+| | | | | info : PACKET_FREE(0x7f3ef63236d8)
+| | | | | >mysqlnd_conn::free_contents
+| | | | | | >mysqlnd_net::free_contents
+| | | | | | <mysqlnd_net::free_contents
+| | | | | | info : Freeing memory of members
+| | | | | | info : scheme=unix:///tmp/mysql.sock
+| | | | | | >mysqlnd_error_list_pdtor
+| | | | | | <mysqlnd_error_list_pdtor
+| | | | | <mysqlnd_conn::free_contents
+| | | | <mysqlnd_conn::connect
+[...]
+]]>
+   </programlisting>
+  </para>
+  <para>
+   Лог трассировки также может быть полезен для проверки корректности
+   поведения самого PECL/mysqlnd_ms. К примеру для проверки, какой сервер
+   был выбран для выполнения запроса, и почему.
+  </para>
+  <para>
+   Пример лога трассировки (выбор сервера):
+   <programlisting>
+<![CDATA[
+[...]
+>mysqlnd_ms::query
+| info : query=DROP TABLE IF EXISTS test
+| >_mysqlnd_plugin_get_plugin_connection_data
+| | info : plugin_id=5
+| <_mysqlnd_plugin_get_plugin_connection_data
+| >mysqlnd_ms_pick_server_ex
+| | info : conn_data=0x7fb6a7d3e5a0 *conn_data=0x7fb6a7d410d0
+| | >mysqlnd_ms_select_servers_all
+| | <mysqlnd_ms_select_servers_all
+| | >mysqlnd_ms_choose_connection_rr
+| | | >mysqlnd_ms_query_is_select
+[...]
+| | | <mysqlnd_ms_query_is_select
+[...]
+| | | info : Init the master context
+| | | info : list(0x7fb6a7d3f598) has 1
+| | | info : Using master connection
+| | | >mysqlnd_ms_advanced_connect
+| | | | >mysqlnd_conn::connect
+| | | | | info : host=localhost user=root db=test port=3306 flags=131072 persistent=0 state=0
+]]>
+   </programlisting>
+  </para>
+  <para>
+   В этом примере был выполнен запрос <literal>DROP TABLE IF EXISTS test</literal>.
+   Обратите внимание, что SQL-запрос был записан в лог. Возможно вам придется
+   озаботится ограничением доступа к этому логу для сокрытия векретной информации.
+  </para>
+  <para>
+   Для запроса использовалась политика балансировки round robin, как видно
+   из имени функции <literal>>mysqlnd_ms_choose_connection_rr</literal>.
+   Он был послан на мастер-сервер
+   <literal>host=localhost user=root db=test port=3306 flags=131072 persistent=0 state=0</literal>.
+  </para>
+  </section>
+  
+  <section xml:id="mysqlnd-ms.monitoring">
+   <title xmlns="http://docbook.org/ns/docbook">Мониторинг</title>
+   <para>
+    Работу плагина можно мониторить с помощью лога трассировки mysqlnd,
+    статистики mysqlnd, статистики плагина mysqlnd_ms plugin и прочих внешних 
+    инструментов. Использование лога трассировки рекомендуется использовать только 
+    в целях отладки. Для стандартного мониторинга рекомендуется использовать
+    статистику плагина.
+   </para>
+   <para>
+    Запись лога трассировки - это медленная операция. При использовании внешних инструментов
+    не забудьте прочитать документацию по ним для понимания возможного воздействия
+    на производительность и списка собираемых метрик. Довольно часто внешние
+    инструменты позволяют увидеть стек вызовов. Обычно стек вызовов и лог
+    трассировки более трудны для восприятия, чем статистика предоставляемая плагином.
+   </para>
+   <para>
+    Статистика позволяет увидеть, как часто используются определенные типы серверов
+    кластера (подчиненный или мастер), почему используется тот или иной сервер,
+    использовались ли ленивые подключения и производились ли инъекции идентификатора
+    глобальной транзакции. Предоставляемая информация позволяет пользователю
+    проанализировать действия плагина по выбору серверов и запланировать использование
+    кластерных ресурсов. Статистику можно получить с помощью функции
+    <function>mysqlnd_ms_get_stats</function>. Список доступных метрик смотрите на
+    странице посвященной описанию этой функции.
+   </para>
+   <para>
+    Статистика собирается для каждого процесса PHP. В зависимости от модели
+    развертывания, один процесс PHP может обслуживать как один, так и несколько
+    пользовательских запросов. Если используется модель CGI, то один процесс PHP
+	обслуживает ровно один пользовательский запрос. Для FastCGI или для модуля
+   веб-сервера, один процесс PHP, обычно, обслуживает несколько запросов.
+   Аналогично и для веб-серверов использующих потоки. Обратите внимание, что
+   работающие параллельно потоки могут параллельно обновлять статистику. Таким 
+   образом, при использовании многопоточной модели развертывания PHP, статистику
+   могут одновременно обновлять несколько пользовательских запросов, и это
+   следует помнить при ее анализе.
+  </para>
+  <para>
+   <example>
+    <title>Проверка активности плагина в однопоточной модели развертывания</title>
+    <programlisting role="ini">
+<![CDATA[
+mysqlnd_ms.enable=1
+mysqlnd_ms.collect_statistics=1
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+/* Балансировка нагрузки происходит согластно настройкам для секции "myapp" (не показаны) */
+$mysqli = new mysqli("myapp", "username", "password", "database");
+if (mysqli_connect_errno())
+  /* Тут бы, конечно, ошибку обработать... Ну да ладно. */
+  die(sprintf("[%d] %s\n", mysqli_connect_errno(), mysqli_connect_error()));
+
+$stats_before = mysqlnd_ms_get_stats();
+if ($res = $mysqli->query("SELECT 'Read request' FROM DUAL")) {
+  var_dump($res->fetch_all());
+}
+$stats_after = mysqlnd_ms_get_stats();
+if ($stats_after['use_slave'] <= $stats_before['use_slave']) {
+  echo "Согласно статистике, запрос на чтение выполнялся не на подчиненном сервере!";
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   Статистика агрегируется для всех действий плагина и всех подключений, обрабатываемых 
+   плагином. Определить, сколько конкретно было обарботано подключений невозможно.
+  </para>
+  <para>
+   С помощью функции <function>register_shutdown_function</function> или натройки PHP
+   <literal>auto_append_file</literal> можно легко настроить запись статистической
+   информации в, например, файл, по завершению работы скрипта. Ну или не писать в файл, а
+   посылать во внешнюю систему мониторинга.
+  </para>
+  <para>
+   <example>
+    <title>Запись статистики в процессе остановки</title>
+    <programlisting role="ini">
+<![CDATA[
+mysqlnd_ms.enable=1
+mysqlnd_ms.collect_statistics=1
+error_log=/tmp/php_errors.log
+]]>
+    </programlisting>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function check_stats() {
+  $msg = str_repeat("-", 80) . "\n";
+  $msg .= var_export(mysqlnd_ms_get_stats(), true) . "\n";
+  $msg .= str_repeat("-", 80) . "\n";
+  error_log($msg);
+}
+register_shutdown_function("check_stats");
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  </section>
+ </section>
+ 
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
