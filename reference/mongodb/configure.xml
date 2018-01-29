@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 45ece29b4ac78b34ffec6ecae522f5dc42a9c0a8 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: fd4b1601e4e90f75f6b869f2337ae102cbd7ba20 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 
@@ -15,28 +15,48 @@
   </para>
   
   <para>
-   Пользователи Linux, Unix и OS X могут использовать следующую команду для установки драйвера:
+   Пользователи Linux, Unix и macOS могут использовать следующую команду для установки драйвера:
    <programlisting role="shell">
 <![CDATA[
 $ sudo pecl install mongodb
 ]]>
    </programlisting>
   </para>
+  <note>
+   <simpara>
+    Пользователям macOS Homebrew рекомендуется использовать процедуру
+    <link linkend="mongodb.installation.homebrew">установки Homebrew</link>,
+    вместо ручной установки с помощью PECL.
+     </simpara>
+  </note>
+  
+  <para>
+   Если на вашей системе установлено несколько версий PHP (например для macOS 
+   установка по умолчанию <emphasis>И</emphasis> 
+   <link xlink:href="&url.xampp;">XAMPP</link>), обратите внимание, что
+   каждая из них имеет собственную команду <link linkend="install.pecl">pecl</link>
+   и файл &php.ini;.
+  </para>
+  
+  <para>
+   Установка драйвера с помощью PECL использует встгоенные библиотеки
+   <link xlink:href="&url.mongodb.libbson;">libbson</link> и
+   <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link> и попытается
+   сконфигурировать их автоматически.
+  </para>
   
   <note>
    <simpara>
-    Установка драйвера с помощью PECL будет использовать встроенную версию
-    <link xlink:href="&url.mongodb.libbson;">libbson</link> и
-    <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link> и полагаться на PHP 
-    при поиске OpenSSL (<literal>PHP_SETUP_OPENSSL</literal>). Если в процессе
-    сборки не удастся найти OpenSSL, проверьте, установлены ли разработческий пакет OpenSSL
-    (т.е. <literal>libssl-dev</literal>) и
-    <link xlink:href="&url.mongodb.wiki.pkg-config;">pkg-config</link>.
+    Если процесс установки не сможет найти библиотеку SSL, убедитесь, что
+    установлены разработческие пакеты (такие как <literal>libssl-dev</literal>) и
+    пакет <link xlink:href="&url.mongodb.wiki.pkg-config;">pkg-config</link>.
+    Если это не поможет, то произведите
+    <link linkend="mongodb.installation.manual">ручную установку</link>.
    </simpara>
   </note>
   
   <para>
-   Добавьте следующую строку в &php.ini;:
+   И, в конце концов, добавьте следующую строку в &php.ini;:
    <programlisting role="ini">
 <![CDATA[
 extension=mongodb.so
@@ -46,24 +66,18 @@ extension=mongodb.so
  </section>
  
  <section xml:id="mongodb.installation.homebrew">
-  <title>Установка драйвера MongoDB PHP на OSX с помощью Homebrew</title>
+  <title>Установка драйвера MongoDB PHP на macOS помощью Homebrew</title>
   
   <para>
    Если вы используете <link xlink:href="&url.mac.homebrew;">Homebrew</link>, существует 
    несколько пакетов для установки на различные версии PHP.
   </para>
   
-  <simplelist>
-   <member>php54-mongodb</member>
-   <member>php55-mongodb</member>
-   <member>php56-mongodb</member>
-   <member>php70-mongodb</member>
-  </simplelist>
-  
   <para>
    Например, для PHP 7 используйте следующую команду:
    <programlisting role="shell">
 <![CDATA[
+$ brew tap homebrew/homebrew-php
 $ brew install php70-mongodb
 ]]>
    </programlisting>
@@ -103,30 +117,70 @@ extension=php_mongo.dll
 <![CDATA[
 $ git clone https://github.com/mongodb/mongo-php-driver.git
 $ cd mongo-php-driver
-$ git submodule sync && git submodule update --init
+$ git submodule update --init
 $ phpize
 $ ./configure
-$ make all -j 5
+$ make all
 $ sudo make install
 ]]>
    </programlisting>
   </para>
+  <para>
+   Если на вашей системе установлено несколько версий PHP (например для macOS 
+   установка по умолчанию <emphasis>И</emphasis> 
+   <link xlink:href="&url.xampp;">XAMPP</link>), обратите внимание, что
+   каждая из них имеет собственную команду 
+   <link linkend="install.pecl.phpize">phpize</link> и файл &php.ini;.
+  </para>
+  
+  
+  <para>
+   По умолчанию драйвер будет использовать встроенную версию
+   <link xlink:href="&url.mongodb.libbson;">libbson</link> и
+   <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link> и попытается
+   настроить их самостоятельно. Если libbson и libmongoc уже установлены в
+   системе, вы можете сообщить драйверу об этом с помощью аргумента
+   <literal>--with-libbson=yes --with--libmongoc=yes</literal> команды 
+   <literal>configure</literal>.
+  </para>
+  <para>
+   Полный список опций команды <literal>configure</literal> можно получить с 
+   помощью <command>configure --help</command>.
+  </para>
+  
+  <para>
+   При использовании встроенных версий libbson и libmongoc, драйвер также
+   попытается выбрать библиотеку SSL в соответствии с опцией
+   <literal>--with-mongodb-ssl</literal> команды
+   <literal>configure</literal>. По умолчанию это
+   <literal>--with-mongodb-ssl=auto</literal>, что приведет к поиску в таком 
+   порядке: OpenSSL, LibreSSL и Secure Transport (только macOS). 
+   Также вы можете явно указать <literal>openssl</literal>, 
+   <literal>libressl</literal> или <literal>darwin</literal>.
+  </para>
   
   <note>
-   <simpara>
-    По умолчанию драйвер будет использовать встроенную версию
-    <link xlink:href="&url.mongodb.libbson;">libbson</link> и
-    <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link> и полагаться на PHP 
-    при поиске OpenSSL (<literal>PHP_SETUP_OPENSSL</literal>). Если в процессе
-    сборки не удастся найти OpenSSL, проверьте, установлены ли разработческий пакет OpenSSL
-    (т.е. <literal>libssl-dev</literal>) и
-    <link xlink:href="&url.mongodb.wiki.pkg-config;">pkg-config</link>.
-   </simpara>
+   <para>
+    Если процесс установки не сможет найти библиотеку SSL, убедитесь, что
+    установлены разработческие пакеты (такие как <literal>libssl-dev</literal>) и
+    пакет <link xlink:href="&url.mongodb.wiki.pkg-config;">pkg-config</link>.
+   </para>
+   
+   <para>
+    При использовании Homebrew для macOS, обычна ситуация, когда
+    установлено несколько разных версий OpenSSL. Для использования именно той
+    версии, которая вам нужна, соответствующим образом установите переменную
+    окружения <literal>PKG_CONFIG_PATH</literal>. Она будет использоваться 
+    <literal>pkg-config</literal> для определения пути поиска . Если не используется
+    <literal>pkg-config</literal>, то можно использовать <literal>configure</literal> 
+    с ключем <literal>--with-openssl-dir=DIR</literal> (только для OpenSSL).
+   </para>
   </note>
   
   <para>
-   На последнем шаге будет выведен путь, по которому располагается
-   скомпилированный модуль <filename>mongodb.so</filename>. Например так:
+   На последнем, финальном шаге, <command>make install</command>
+   выведет путь, по которому была собран модуль
+   <filename>mongodb.so</filename>. Например так:
    <programlisting role="txt">
 <![CDATA[
 Installing shared extensions:     /usr/lib/php/extensions/debug-non-zts-20151012/
