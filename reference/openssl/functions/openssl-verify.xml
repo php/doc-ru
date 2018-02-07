@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 <!-- EN-Revision: 2d4b995d680332b66a53f8278439ba1d6454a9eb Maintainer: rjhdby Status: ready -->
-<!-- Reviewed: no -->
+<!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.openssl-verify">
  <refnamediv>
@@ -19,11 +19,11 @@
    <methodparam choice="opt"><type>mixed</type><parameter>signature_alg</parameter><initializer>OPENSSL_ALGO_SHA1</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>openssl_verify</function> проверяет, что сигнатура
+   <function>openssl_verify</function> проверяет, что подпись
    <parameter>signature</parameter> корректна для данных
    <parameter>data</parameter> и открытого ключа
    <parameter>pub_key_id</parameter>. Открытый ключ должен соответствовать
-   секретному ключу, с помощью которого генерировалась сигнатура.
+   закрытому ключу, с помощью которого генерировалась подпись.
   </para>
  </refsect1>
  
@@ -43,7 +43,7 @@
      <term><parameter>signature</parameter></term>
      <listitem>
       <para>
-       Сырая бинарная строка, созданая функцией <function>openssl_sign</function>, или
+       Необработанная бинарная строка, созданая функцией <function>openssl_sign</function> или
        ее аналогом
       </para>
      </listitem>
@@ -64,10 +64,10 @@
      <term><parameter>signature_alg</parameter></term>
      <listitem>
       <para>
-       Целове число, соответствующее одному из <link linkend="openssl.signature-algos">Алгоритмов Подписи</link>.
+       Целове число, соответствующее одному из <link linkend="openssl.signature-algos">алгоритмов подписи</link>.
       </para>
       <para>
-       Строка возвращенная <function>openssl_get_md_methods</function>, например "sha1WithRSAEncryption" или "sha512".
+       Строка, возвращенная <function>openssl_get_md_methods</function>, например "sha1WithRSAEncryption" или "sha512".
       </para>
      </listitem>
     </varlistentry>
@@ -78,7 +78,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает 1, если сигнатура корректна, 0 если нет и -1 в случае ошибки.
+   Возвращает 1, если подпись корректная, 0, если нет и -1 в случае ошибки.
   </para>
  </refsect1>
  
@@ -114,19 +114,19 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-// $data и $signature содержат данные и сигнатуру соответственно
+// $data и $signature содержат данные и подпись соответственно
 
 // Извлекает открытый ключ из сертификата и подготавливаем его
 $pubkeyid = openssl_pkey_get_public("file://src/openssl-0.9.6/demos/sign/cert.pem");
 
-// Проверяем, корректна ли сигнатура
+// Проверяем, корректна ли подпись
 $ok = openssl_verify($data, $signature, $pubkeyid);
 if ($ok == 1) {
-    echo "Сигнатура корректна";
+    echo "Подпись корректная";
 } elseif ($ok == 0) {
-    echo "Сигнатура некорректна";
+    echo "Подпись некорректная";
 } else {
-    echo Произошла какая то ошибка, печаль :(";
+    echo Произошла какая-то ошибка, печаль :(";
 }
 // Удаляем ключ из памяти
 openssl_free_key($pubkeyid);
@@ -139,10 +139,10 @@ openssl_free_key($pubkeyid);
     <programlisting role="php">
 <![CDATA[
 <?php
-//Данные для генерации сигнатуры
+//Данные для генерации подписи
 $data = 'my data';
 
-//Создаем новую пару открытый/секретный ключ
+//Создаем новую пару открытый/закрытый ключ
 $private_key_res = openssl_pkey_new(array(
     "private_key_bits" => 2048,
     "private_key_type" => OPENSSL_KEYTYPE_RSA,
@@ -150,17 +150,17 @@ $private_key_res = openssl_pkey_new(array(
 $details = openssl_pkey_get_details($private_key_res);
 $public_key_res = openssl_pkey_get_public($details['key']);
 
-//Вычисляем сигнатуру
+//Вычисляем подпись
 openssl_sign($data, $signature, $private_key_res, "sha1WithRSAEncryption");
 
-//Сверяем сигнатуру
+//Сверяем подпись
 $ok = openssl_verify($data, $signature, $public_key_res, OPENSSL_ALGO_SHA1);
 if ($ok == 1) {
-    echo "valid";
+    echo "корректна";
 } elseif ($ok == 0) {
-    echo "invalid";
+    echo "некорректна";
 } else {
-    echo "error: ".openssl_error_string();
+    echo "ошибка: ".openssl_error_string();
 }
 ?>
 ]]>
