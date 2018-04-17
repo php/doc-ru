@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: fc6daf9d77d6a87def632e5b6039eafba5acdf8b Maintainer: aur Status: ready -->
-<!-- Reviewed: no -->
+<!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 
 <refentry xml:id="gearmanclient.do" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -18,7 +18,7 @@
    <methodparam choice="opt"><type>string</type><parameter>unique</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Метод <methodname>GearmanClient::do</methodname> устарел начиная с
+   Метод <methodname>GearmanClient::do</methodname> устарел, начиная с
    pecl/gearman 1.0.0. Используйте <methodname>GearmanClient::doNormal</methodname>.
   </para>
  </refsect1>
@@ -73,7 +73,7 @@
 
 # Код клиента
 
-echo "Starting\n";
+echo "Начало\n";
 
 # Создание клиента
 $gmclient= new GearmanClient();
@@ -81,11 +81,11 @@ $gmclient= new GearmanClient();
 # Указание сервера по умолчанию (localhost).
 $gmclient->addServer();
 
-echo "Sending job\n";
+echo "Отправка задания\n";
 
 $result = $gmclient->doNormal("reverse", "Hello!");
 
-echo "Success: $result\n";
+echo "Успешно: $result\n";
 
 ?>
 ]]>
@@ -94,7 +94,7 @@ echo "Success: $result\n";
 <![CDATA[
 <?php
 
-echo "Starting\n";
+echo "Начало\n";
 
 # Создание экземпляра обработчика
 $gmworker= new GearmanWorker();
@@ -106,7 +106,7 @@ $gmworker->addServer();
 # "reverse_fn_fast" для более быстрой обработки без вывода.
 $gmworker->addFunction("reverse", "reverse_fn");
 
-print "Waiting for job...\n";
+print "Ожидание задания...\n";
 while($gmworker->work())
 {
   if ($gmworker->returnCode() != GEARMAN_SUCCESS)
@@ -127,16 +127,16 @@ function reverse_fn($job)
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Starting
-Sending job
-Success: !olleH
+Начало
+Отправка задания
+Успешно: !olleH
 ]]>
     </screen>
    </example>
    <example>
     <title>Передача задания и получение инкрементного состояния</title>
     <para>
-     Дается задание и задается цикл для получения информации об изменении статуса.
+     Отправляется задание и устанавливается цикл для получения информации об изменении статуса.
      У обработчика указана искусственная задержка для моделирования длительного выполнения
      задания и задана отправка состояния и данных во время обработки.
      Каждый последующий вызов <methodname>GearmanClient::do</methodname> выводит информацию 
@@ -154,9 +154,9 @@ $gmclient= new GearmanClient();
 # Указание сервера по умолчанию (localhost).
 $gmclient->addServer();
 
-echo "Sending job\n";
+echo "Отправка задания\n";
 
-# Отправка задания
+# Отправка задания reverse
 do
 {
   $result = $gmclient->doNormal("reverse", "Hello!");
@@ -165,14 +165,14 @@ do
   switch($gmclient->returnCode())
   {
     case GEARMAN_WORK_DATA:
-      echo "Data: $result\n";
+      echo "Данные: $result\n";
       break;
     case GEARMAN_WORK_STATUS:
       list($numerator, $denominator)= $gmclient->doStatus();
-      echo "Status: $numerator/$denominator complete\n";
+      echo "Статус: $numerator/$denominator выполнено\n";
       break;
     case GEARMAN_WORK_FAIL:
-      echo "Failed\n";
+      echo "Ошибка\n";
       exit;
     case GEARMAN_SUCCESS:
       break;
@@ -185,7 +185,7 @@ do
 }
 while($gmclient->returnCode() != GEARMAN_SUCCESS);
 
-echo "Success: $result\n";
+echo "Успешно: $result\n";
 
 ?>
 ]]>
@@ -196,7 +196,7 @@ echo "Success: $result\n";
 
 # Код обработчика
 
-echo "Starting\n";
+echo "Начало\n";
 
 # Создание экземпляра обработчика.
 $gmworker= new GearmanWorker();
@@ -207,7 +207,7 @@ $gmworker->addServer();
 # Регистрация функции "reverse" на сервере.
 $gmworker->addFunction("reverse", "reverse_fn");
 
-print "Waiting for job...\n";
+print "Ожидание задания...\n";
 while($gmworker->work())
 {
   if ($gmworker->returnCode() != GEARMAN_SUCCESS)
@@ -219,24 +219,24 @@ while($gmworker->work())
 
 function reverse_fn($job)
 {
-  echo "Received job: " . $job->handle() . "\n";
+  echo "Полученное задание: " . $job->handle() . "\n";
 
   $workload = $job->workload();
   $workload_size = $job->workloadSize();
 
-  echo "Workload: $workload ($workload_size)\n";
+  echo "Рабочая нагрузка: $workload ($workload_size)\n";
 
   # Данный цикл не является необходимым, только иллюстрирует процесс
   for ($x= 0; $x < $workload_size; $x++)
   {
-    echo "Sending status: " + $x + 1 . "/$workload_size complete\n";
+    echo "Отправка статуса: " + $x + 1 . "/$workload_size выполнено\n";
     $job->sendStatus($x+1, $workload_size);
     $job->sendData(substr($workload, $x, 1));
     sleep(1);
   }
 
   $result= strrev($workload);
-  echo "Result: $result\n";
+  echo "Результат: $result\n";
 
   # Возврат результата, отправляемого клиенту
   return $result;
@@ -251,17 +251,17 @@ function reverse_fn($job)
     </para>
     <screen>
 <![CDATA[
-Starting
-Waiting for job...
-Received job: H:foo.local:106
-Workload: Hello! (6)
-1/6 complete
-2/6 complete
-3/6 complete
-4/6 complete
-5/6 complete
-6/6 complete
-Result: !olleH
+Начало
+Ожидание задания...
+Полученное задание: H:foo.local:106
+Рабочая нагрузка: Hello! (6)
+1/6 выполнено
+2/6 выполнено
+3/6 выполнено
+4/6 выполнено
+5/6 выполнено
+6/6 выполнено
+Результат: !olleH
 ]]>
     </screen>
     <para>
@@ -269,21 +269,21 @@ Result: !olleH
     </para>
     <screen>
 <![CDATA[
-Starting
-Sending job
-Status: 1/6 complete
-Data: H
-Status: 2/6 complete
-Data: e
-Status: 3/6 complete
-Data: l
-Status: 4/6 complete
-Data: l
-Status: 5/6 complete
-Data: o
-Status: 6/6 complete
-Data: !
-Success: !olleH
+Начало
+Отправка задания
+Статус: 1/6 выполнено
+Данные: H
+Статус: 2/6 выполнено
+Данные: e
+Статус: 3/6 выполнено
+Данные: l
+Статус: 4/6 выполнено
+Данные: l
+Статус: 5/6 выполнено
+Данные: o
+Статус: 6/6 выполнено
+Данные: !
+Успешно: !olleH
 ]]>
     </screen>
    </example>

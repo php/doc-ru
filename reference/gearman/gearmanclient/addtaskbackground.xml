@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: e6679b54244f0f7028de377387708b2674b85516 Maintainer: mch Status: ready -->
-<!-- Reviewed: no -->
+<!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 
 <refentry xml:id="gearmanclient.addtaskbackground" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -76,14 +76,13 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Две задачи, одна в фоновом режиме другая нет</title>
+    <title>Две задачи, одна в фоновом режиме, а другая нет</title>
     <para>
      Этот пример иллюстрирует различие между выполнением фоновой задачи и
-  нормальной задачей. Клиент добавляет две задачи для выполнения одних и тех же функций,
-  но одна добавлена с помощью <methodname>addTaskBackground</methodname>. Обратный вызов
-  установлен так, чтобы выполнение задания можно было проследить. Простой рабочий с
-  искусственной задержкой сообщает статус выполнения задания, и клиент понимает это
-  посредством обратного вызова. Два рабочих запущены для этого примера. Обратите внимание,
+  обычной задачей. Клиент добавляет две задачи для выполнения одних и тех же функций,
+  но одна добавлена с помощью <methodname>addTaskBackground</methodname>. Callback-функция
+  установлена так, чтобы выполнение задания можно было проследить. Простой обработчик с искусственной задержкой сообщает статус выполнения задания, и клиент понимает это
+  посредством вызова callback-функции. Два обработчика запущены для этого примера. Обратите внимание,
   что фоновая задача не показывается в клиентском выводе.     
     </para>
     <programlisting role="php">
@@ -98,14 +97,14 @@ $gmc= new GearmanClient();
 # Добавление сервера задач по умолчанию
 $gmc->addServer();
 
-# Установка нескольких обратных вызовов. Таким образом, мы сможем отслеживать выполнение
+# Установка нескольких callback-функций. Таким образом, мы сможем отслеживать выполнение
 $gmc->setCompleteCallback("reverse_complete");
 $gmc->setStatusCallback("reverse_status");
 
 # Добавление задачи для функции reverse
 $task= $gmc->addTask("reverse", "Hello World!", null, "1");
 
-# Добавление другой задачи, но она предназначена для запуска в фоне
+# Добавление другой задачи, но она предназначена для запуска в фоновом режиме
 $task= $gmc->addTaskBackground("reverse", "!dlroW olleH", null, "2");
 
 if (! $gmc->runTasks())
@@ -134,11 +133,11 @@ function reverse_complete($task)
 <![CDATA[
 <?php
 
-# Скрипт работника
+# Скрипт обработчика
 
-echo "Начинаем\n";
+echo "Начало\n";
 
-# Создаем наш объект работника
+# Создаем наш объект обработчика
 $gmworker= new GearmanWorker();
 
 # Добавление сервера задач по умолчанию (localhost).
@@ -152,21 +151,21 @@ while($gmworker->work())
 {
   if ($gmworker->returnCode() != GEARMAN_SUCCESS)
   {
-    echo "возвратный код: " . $gmworker->returnCode() . "\n";
+    echo "код возврата: " . $gmworker->returnCode() . "\n";
     break;
   }
 }
 
 function reverse_fn($job)
 {
-  echo "Получена задача: " . $job->handle() . "\n";
+  echo "Полученная задача: " . $job->handle() . "\n";
 
   $workload = $job->workload();
   $workload_size = $job->workloadSize();
 
   echo "Рабочая нагрузка: $workload ($workload_size)\n";
 
-  # В этом цикле отображения статуса нет необходимости. Просто для демонстрации как это работает
+  # В этом цикле для отображения статуса нет необходимости. Просто для демонстрации, как это работает
   for ($x= 0; $x < $workload_size; $x++)
   {
     echo "Отправка статуса: " . ($x + 1) . "/$workload_size выполнено\n";
@@ -190,10 +189,10 @@ function reverse_fn($job)
     </para>
     <screen>
 <![CDATA[
-Получена задача: H:foo.local:65
+Полученная задача: H:foo.local:65
 Рабочая нагрузка: !dlroW olleH (12)
 1/12 выполнено
-Получена задача: H:foo.local:66
+Полученная задача: H:foo.local:66
 Рабочая нагрузка: Hello World! (12)
 Отправка статуса: 1/12 выполнено
 Отправка статуса: 2/12 выполнено
@@ -218,8 +217,8 @@ function reverse_fn($job)
 Отправка статуса: 11/12 выполнено
 Отправка статуса: 12/12 выполнено
 Отправка статуса: 12/12 выполнено
-Result: !dlroW olleH
-Result: Hello World!
+Результат: !dlroW olleH
+Результат: Hello World!
 ]]>
     </screen>
     <para>
