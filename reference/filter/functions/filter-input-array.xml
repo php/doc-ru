@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b8758b0605e80c4e3610137b7502a6abeea5c69b Maintainer: shein Status: ready -->
+<!-- EN-Revision: dc157b93cd761ecf77ad414ca4296b08bb22a26b Maintainer: shein Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="function.filter-input-array" xmlns="http://docbook.org/ns/docbook">
@@ -70,10 +70,21 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Массив, содержащий значения запрошенных переменных в случае успеха или &false; 
-   в случае возникновения ошибки. Значение массива будет &false;, если фильтрация завершилась неудачей, или &null;, 
+   Массив, содержащий значения запрошенных переменных в случае успешного выполнения. 
+   Если входной массив, определяемый параметром
+   <parameter>type</parameter>, не заполнен, то
+   функция вернет &null;, если флаг 
+   <constant>FILTER_NULL_ON_FAILURE</constant>
+   не задан, &false; в противном случае.
+   Для других неудачных выполнений, возвращается &false;
+  </para>
+  <para>
+   Значение массива будет &false;, если фильтрация завершилась неудачей, или &null;, 
    если переменная не определена. Либо, если установлен флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
-   возвращается &false;, если переменная не определена и &null;, если фильтрация завершилась неудачей.
+   возвращается &false;, если переменная не определена и &null;, если фильтрация завершилась неудачей. Если параметр
+   <parameter>add_empty</parameter> равен 
+   &false;, элемент массива не будет добавлен
+   для удаленных переменных.
   </para>
  </refsect1>
 
@@ -89,10 +100,10 @@ error_reporting(E_ALL | E_STRICT);
 /* данные, полученные методом POST
 $_POST = array(
     'product_id'    => 'libgd<script>',
-    'component'     => '10',
-    'versions'      => '2.0.33',
-    'testscalar'    => array('2', '23', '10', '12'),
-    'testarray'     => '2',
+    'component'     => array('10'),
+    'version'      => '2.0.33',
+    'testarray'    => array('2', '23', '10', '12'),
+    'testscalar'     => '2',
 );
 */
 
@@ -102,7 +113,7 @@ $args = array(
                             'flags'     => FILTER_REQUIRE_ARRAY, 
                             'options'   => array('min_range' => 1, 'max_range' => 10)
                            ),
-    'versions'     => FILTER_SANITIZE_ENCODED,
+    'version'     => FILTER_SANITIZE_ENCODED,
     'doesnotexist' => FILTER_VALIDATE_INT,
     'testscalar'   => array(
                             'filter' => FILTER_VALIDATE_INT,
@@ -133,16 +144,22 @@ array(6) {
     [0]=>
     int(10)
   }
-  ["versions"]=>
+  ["version"]=>
     string(6) "2.0.33"
   ["doesnotexist"]=>
   NULL
   ["testscalar"]=>
-  bool(false)
+  int(2)
   ["testarray"]=>
-  array(1) {
+  array(4) {
     [0]=>
     int(2)
+    [1]=>
+    int(23)
+    [2]=>
+    int(10)
+    [3]=>
+    int(12)
   }
 }
 ]]>
