@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 0dad2268d5adb19f77270aa2a9515a4bfbca9b22 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e269f38067e73466dd58c34392d7291409557be4 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xml:id="function.zookeeper-dispatch" xmlns="http://docbook.org/ns/docbook">
@@ -24,9 +24,15 @@
   
   <caution>
    <para>
-    С версии 0.4.0 эта функция должна вызываться для асинхронных операций.
+    С версии 0.4.0 эта функция должна вызываться вручную для асинхронных операций.
+    Если вы хотите, чтобы это было сделано автоматически, вы можете объявить тики
+    в самом начале скрипта, используя директиву declare.
    </para>
   </caution>
+  
+  <para>
+   После PHP 7.1 вы можете игнорировать эту функцию. Это расширение использует EG (vm_interrupt) для реализации асинхронного вызова callback-функций.
+  </para>
   
  </refsect1>
  
@@ -35,6 +41,57 @@
   <para>
    Эта функция вызывает предупреждение PHP, если callback-функция не может быть вызвана.
   </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="function.zookeeper-dispatch.example.1">
+   <title><methodname>zookeeper_dispatch</methodname> example #1</title>
+   <para>
+    Вызов callback-функций вручную.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$client = new Zookeeper();
+$client->connect('localhost:2181');
+$client->get('/zookeeper', function() {
+    echo "Была вызвана callback-функция".PHP_EOL;
+});
+while(true) {
+    sleep(1);
+    zookeeper_dispatch();
+}
+?>
+]]>
+   </programlisting>
+  </example>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="function.zookeeper-dispatch.example.2">
+   <title>Пример использования <methodname>zookeeper_dispatch</methodname> #2</title>
+   <para>
+    Обявление тиков.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+declare(ticks=1);
+
+$client = new Zookeeper();
+$client->connect('localhost:2181');
+$client->get('/zookeeper', function() {
+    echo "Была вызвана callback-функция".PHP_EOL;
+});
+while(true) {
+    sleep(1);
+}
+?>
+]]>
+   </programlisting>
+  </example>
  </refsect1>
  
  <refsect1 role="seealso">
