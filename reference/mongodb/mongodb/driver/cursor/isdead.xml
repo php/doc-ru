@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 239c44318fb5486ec867e138b6318038a554a69d Maintainer: lex Status: ready -->
+<!-- EN-Revision: 14f834fa0328e3c9651abd1d0b9b023cb21106fa Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="mongodb-driver-cursor.isdead" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>MongoDB\Driver\Cursor::isDead</refname>
-  <refpurpose>Проверяет, открыт ли еще курсор на сервере</refpurpose>
+  <refpurpose>Проверяет, может ли курсор содержать дополнительные результаты</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>final</modifier> <modifier>public</modifier> <type>boolean</type><methodname>MongoDB\Driver\Cursor::isDead</methodname>
+ <modifier>final</modifier> <modifier>public</modifier> <type>bool</type><methodname>MongoDB\Driver\Cursor::isDead</methodname>
    <void />
   </methodsynopsis>
   <para>
-   Определяет, является ли открытым курсором на сервере (т.е. на сервере есть
-   результаты, которые еще не отправлены клиенту).
-  </para>
-  <para>
-   "Мертвый" курсор не означает, что он не может быть больше итерируемым. База
-   данных отправляет ответы порциями документов (до 4 МБ за ответ).
-   Курсор клиента может по-прежнему иметь результаты для итерации,
-   даже если на сервере нет больше порций для отправки.
-  </para>
+  Проверяет, есть ли у курсора дополнительные результаты для чтения. 
+   Курсор изначально «живой», но может стать «мертвым» по любой из следующих причин:
+ <simplelist>
+  <member>Продвижение курсора, не имеющего хвоста не вернуло документ</member>
+  <member>Курсор обнаружил ошибку</member>
+  <member>Курсор читает его последнюю массовую операцию до завершения</member>
+  <member>Курсор достиг установленного предела</member>
+ </simplelist>
+ Это в первую очередь полезно с помощью хвостовых курсоров.
+</para>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -35,8 +36,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если еще есть результаты, которые не были отправлены
-   клиенту, или &false; в противном случае.
+   Возвращает &true;, если дополнительные результаты не доступны, и &false; в противном случае.
   </para>
  </refsect1>
 
@@ -56,11 +56,8 @@
 <![CDATA[
 <?php
 
-/* В этом примере мы добавляем несколько результаты в коллекцию и указываем
- * меньший batchSize, чтобы гарантировать, что первая порция содержит только подмножество
- * результатов и курсор является открытым на сервере. */
 $manager = new MongoDB\Driver\Manager("mongodb://localhost:27017");
-$query = new MongoDB\Driver\Query([], ['batchSize' => 2]);
+$query = new MongoDB\Driver\Query([]);
 
 $bulk = new MongoDB\Driver\BulkWrite;
 $bulk->insert(['x' => 1]);
@@ -70,8 +67,18 @@ $manager->executeBulkWrite('db.collection', $bulk);
 
 $cursor = $manager->executeQuery('db.collection', $query);
 
+$iterator = new IteratorIterator($cursor);
+
+$iterator->rewind();
 var_dump($cursor->isDead());
-$cursor->toArray();
+
+$iterator->next();
+var_dump($cursor->isDead());
+
+$iterator->next();
+var_dump($cursor->isDead());
+
+$iterator->next();
 var_dump($cursor->isDead());
 
 ?>
@@ -80,6 +87,8 @@ var_dump($cursor->isDead());
    &example.outputs;
    <screen>
 <![CDATA[
+bool(false)
+bool(false)
 bool(false)
 bool(true)
 ]]>
