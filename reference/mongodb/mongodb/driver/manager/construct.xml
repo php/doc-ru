@@ -8,14 +8,14 @@
   <refname>MongoDB\Driver\Manager::__construct</refname>
   <refpurpose>Создает новый Manager MongoDB</refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <modifier>final</modifier> <modifier>public</modifier> <methodname>MongoDB\Driver\Manager::__construct</methodname>
    <methodparam choice="opt"><type>string</type><parameter>uri</parameter><initializer>"mongodb://127.0.0.1/</initializer></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter>uriOptions</parameter><initializer>[]</initializer></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter>driverOptions</parameter><initializer>[]</initializer></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>uriOptions</parameter><initializer>array()</initializer></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>driverOptions</parameter><initializer>array()</initializer></methodparam>
   </methodsynopsis>
   <para>
    Создает новый объект <classname>MongoDB\Driver\Manager</classname> с переданными параметрами.
@@ -29,7 +29,7 @@
   </note>
   &mongodb.note.forking;
  </refsect1>
-
+ 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <variablelist>
@@ -64,7 +64,7 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
      </para>
     </listitem>
    </varlistentry>
-   <varlistentry xml:id="mongodb-driver-manager.construct-options">
+   <varlistentry xml:id="mongodb-driver-manager.construct-urioptions">
     <term><parameter>uriOptions</parameter></term>
     <listitem>
      <para>
@@ -165,6 +165,21 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
           </entry>
          </row>
          <row>
+          <entry>compressors</entry>
+          <entry><type>string</type></entry>
+          <entry>
+           <para>
+            Имеющий приоритет, список разделенных запятыми компрессоров, 
+            которые клиент хочет использовать. Сообщения сжаты только в том случае,
+            если клиент и сервер совместно используют любые компрессоры,
+            а компрессор, используемый в каждом направлении, 
+            будет зависеть от индивидуальной конфигурации сервера или драйвера.
+            Смотрите <link xlink:href="&url.mongodb.specs;/blob/master/source/compression/OP_COMPRESSED.rst#compressors">Спецификация компресии драйвера</link>
+            для получения дополнительной информации.
+           </para>
+          </entry>
+         </row>
+         <row xml:id="mongodb-driver-manager.construct-urioptions.connecttimeoutms">
           <entry>connectTimeoutMS</entry>
           <entry><type>integer</type></entry>
           <entry>
@@ -311,12 +326,30 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
           </entry>
          </row>
          <row>
+          <entry>retryWrites</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Если &true; драйвер автоматически повторить определенные операции записи,
+            которые не выполнились из-за временных ошибок сети или выбора реплик.
+            По умолчанию &false;.
+           </para>
+           <para>
+            См.
+            <link xlink:href="&url.mongodb.docs;core/distributed-queries/#retryable-writes">Retryable Writes</link>
+            в руководстве MongoDB для получения дополнительной информации.
+           </para>
+          </entry>
+         </row>
+         <row>
           <entry>safe</entry>
           <entry><type>boolean</type></entry>
           <entry>
            <para>
-            Задает <literal>1</literal> для гарантии записи, если &true;, или
-            <literal>0</literal>, если &false; Подробнее см.
+            Если &true;, указывает <literal>1</literal> для
+            параметра <parameter>w</parameter>
+            гарантии записи по умолчанию. Если &false;, указывается 
+            <literal>0</literal>. Подробнее см.
             <classname>MongoDB\Driver\WriteConcern</classname>.
            </para>
            <para>
@@ -324,7 +357,7 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
            </para>
           </entry>
          </row>
-         <row>
+         <row xml:id="mongodb-driver-manager.construct-urioptions.serverselectiontimeoutms">
           <entry>serverSelectionTimeoutMS</entry>
           <entry><type>integer</type></entry>
           <entry>
@@ -421,6 +454,23 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
             Соответствует параметру гарантий записи <parameter>wtimeout</parameter>.
             Указывает срок в миллисекундах для гарантии записи. Подробнее см.
             <classname>MongoDB\Driver\WriteConcern</classname>.
+           </para>
+           <para>
+            Если указан, <literal>wTimeoutMS</literal> должен быть
+            32-битным целым числом со знаком, большим или равным нулю.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>zlibCompressionLevel</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <para>
+            Указывает уровень сжатия для использования zlib. Эта
+            опция ничего не делает, если <literal>zlib</literal> не включен в URL опции
+            <literal>"compressors"</literal>. Смотрите 
+            <link xlink:href="&url.mongodb.specs;/blob/master/source/compression/OP_COMPRESSED.rst#zlibcompressionlevel">Спецификация компрессии драйвера</link>
+            для получения дополнительной информации.
            </para>
           </entry>
          </row>
@@ -554,7 +604,7 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
    </varlistentry>
   </variablelist>
  </refsect1>
-
+ 
  <refsect1 role="errors">
   &reftitle.errors;
   <simplelist>
@@ -562,7 +612,7 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
    <member>При неверном формате <parameter>uri</parameter> выбрасывает исключение <classname>MongoDB\Driver\Exception\RuntimeException</classname>.</member>
   </simplelist>
  </refsect1>
-
+ 
  <refsect1 role="changelog">
   &reftitle.changelog;
   <para>
@@ -575,6 +625,27 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>1.5.0</entry>
+       <entry>
+        <para>
+         <literal>"wtimeoutMS"</literal> теперь всегда проверяется и применяется к
+         гарантии записи. Ранее эта опция игнорировалась, если
+         <literal>"w"</literal> был &lt;= 1, поскольку тайм-аут применяется только к
+         репликации.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.4.0</entry>
+       <entry>
+        <para>
+         Добавлены опции URI <literal>"compressors"</literal>,
+         <literal>"retryWrites"</literal> и
+         <literal>"zlibCompressionLevel"</literal>.
+        </para>
+       </entry>
+      </row>
       <row>
        <entry>1.3.0</entry>
        <entry>
@@ -629,7 +700,7 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
    </informaltable>
   </para>
  </refsect1>
-
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
@@ -643,13 +714,13 @@ $manager = new MongoDB\Driver\Manager("mongodb://example.com:27017");
 
 ?>
 ]]>
-   </programlisting>
-   <para>
-    Подключение к автономному узлу MongoDB через доменный сокет Unix. Путь сокета
-    может содержать специальные символы, например слеши, которые должны закодированы
-    с помощью <function>rawurlencode</function>.
-   </para>
-   <programlisting role="php">
+    </programlisting>
+    <para>
+     Подключение к автономному узлу MongoDB через доменный сокет Unix. Путь сокета
+     может содержать специальные символы, например слеши, которые должны закодированы
+     с помощью <function>rawurlencode</function>.
+    </para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -657,9 +728,9 @@ $manager = new MongoDB\Driver\Manager("mongodb://" . rawurlencode("/tmp/mongodb-
 
 ?>
 ]]>
-   </programlisting>
-   <para>Подключение к набору реплик:</para>
-   <programlisting role="php">
+    </programlisting>
+    <para>Подключение к набору реплик:</para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -667,9 +738,9 @@ $manager = new MongoDB\Driver\Manager("mongodb://rs1.example.com,rs2.example.com
 
 ?>
 ]]>
-   </programlisting>
-   <para>Подключение к сегментированному кластеру (т.е. одну или нескольким экземплярам mongos):</para>
-   <programlisting role="php">
+    </programlisting>
+    <para>Подключение к сегментированному кластеру (т.е. одну или нескольким экземплярам mongos):</para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -677,9 +748,9 @@ $manager = new MongoDB\Driver\Manager("mongodb://mongos1.example.com,mongos2.exa
 
 ?>
 ]]>
-   </programlisting>
-   <para>Подключение к MongoDB с учетными данными аутентификации для конкретного пользователя и базы данных:</para>
-   <programlisting role="php">
+    </programlisting>
+    <para>Подключение к MongoDB с учетными данными аутентификации для конкретного пользователя и базы данных:</para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -687,18 +758,18 @@ $manager = new MongoDB\Driver\Manager("mongodb://myusername:mypassword@example.c
 
 ?>
 ]]>
-   </programlisting>
-
-   <para>
-    Подключение к MongoDB с учетными данными аутентификации для конкретного пользователя и базы данных,
-    где имя пользователя или пароль содержат специальные
-    символы (e.g. <literal>@</literal>, <literal>:</literal>,
-    <literal>%</literal>). В следующем примере, строка с паролем
-    <literal>myp@ss:w%rd</literal> была вручную экранирована; однако
-    <function>rawurlencode</function> может использоваться для экранирования URI-компонетов,
-    которые могут содержать специальные символы.
-   </para>
-   <programlisting role="php">
+    </programlisting>
+    
+    <para>
+     Подключение к MongoDB с учетными данными аутентификации для конкретного пользователя и базы данных,
+     где имя пользователя или пароль содержат специальные
+     символы (e.g. <literal>@</literal>, <literal>:</literal>,
+     <literal>%</literal>). В следующем примере, строка с паролем
+     <literal>myp@ss:w%rd</literal> была вручную экранирована; однако
+     <function>rawurlencode</function> может использоваться для экранирования URI-компонетов,
+     которые могут содержать специальные символы.
+    </para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -706,10 +777,10 @@ $manager = new MongoDB\Driver\Manager("mongodb://myusername:myp%40ss%3Aw%25rd@ex
 
 ?>
 ]]>
-   </programlisting>
-
-   <para>Подключение к MongoDB с аутентификацией X509:</para>
-   <programlisting role="php">
+    </programlisting>
+    
+    <para>Подключение к MongoDB с аутентификацией X509:</para>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -722,10 +793,10 @@ $manager = new MongoDB\Driver\Manager(
 );
 ?>
 ]]>
-   </programlisting>
-  </example>
+    </programlisting>
+   </example>
  </refsect1>
-
+ 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <simplelist>
@@ -733,7 +804,7 @@ $manager = new MongoDB\Driver\Manager(
    <member><link xlink:href="&url.mongodb.docs;reference/connection-string/">Формат строки соединения MongoDB</link></member>
   </simplelist>
  </refsect1>
-
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file
