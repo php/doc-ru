@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3cf9b6bdca098c3ecd1f85c6298beae60cd837f3 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 65fe2493a38670a11240a7522733bcde8bb4b784 Maintainer: aur Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <!-- splitted from ./en/functions/pgsql.xml, last change in rev 1.80 -->
@@ -10,7 +10,7 @@
    Выбирает записи из базы данных
   </refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
@@ -32,8 +32,20 @@
    <function>pg_convert</function> с параметрами, заданными в 
    качестве аргумента.
   </para>
+  <para>
+   По умолчанию <function>pg_insert</function> передает необработаные значения.
+   Значения должны быть экранированы или опция PGSQL_DML_ESCAPE должна быть
+   указана. PGSQL_DML_ESCAPE заключает в кавычки и экранирует 
+   параметры/идентификаторы. Поэтому имена таблиц/столбцов становятся
+   чувствительными к регистру.
+  </para>
+  <para>
+   Обратите внимание, что ни экранирование, ни подготовленный запрос не защитят запрос LIKE,
+   JSON, массив, регулярные выражения и т.д.. Эти параметры должны обрабатываться
+   в соответствии с их контекстами, т.е. следует экранировать/проверять значения.
+  </para>
  </refsect1>
-
+ 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
@@ -83,7 +95,7 @@
    </variablelist>
   </para>
  </refsect1>
-
+ 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
@@ -91,7 +103,7 @@
    содержит <constant>PGSQL_DML_STRING</constant>.
   </para>
  </refsect1>
-
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -101,7 +113,9 @@
 <![CDATA[
 <?php 
   $db = pg_connect('dbname=foo');
-  // Это безопасно с тех пор как $_POST преобразуется автоматически
+  // Это безопасно в некоторой степени, поскольку все значения экранируются.
+  // Однако PostgreSQL поддерживает JSON/массив. Для этих значений это не безопасно
+  // ни с через экранирование, ни с помощью подготовленного запроса.
   $rec = pg_select($db, 'post_log', $_POST);
   if ($rec) {
       echo "Records selected\n";
@@ -115,7 +129,7 @@
    </example>
   </para>
  </refsect1>
-
+ 
  <refsect1 role="changelog">
   &reftitle.changelog;
   <para>
@@ -153,7 +167,7 @@
    </informaltable>
   </para>
  </refsect1>
-
+ 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
