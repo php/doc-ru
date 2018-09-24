@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: dc706816c30f61d28686b4bf43f5b09e6d2de8e0 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 599a6e381eac09aabbd08ce7317d6ef8c71f19f4 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xml:id="pdo.sqlitecreateaggregate" xmlns="http://docbook.org/ns/docbook">
@@ -60,20 +60,45 @@
         <methodparam><type>mixed</type><parameter>context</parameter></methodparam>
         <methodparam><type>int</type><parameter>rownumber</parameter></methodparam>
         <methodparam><type>mixed</type><parameter>value1</parameter></methodparam>
-        <methodparam choice="opt"><type>mixed</type><parameter>value2</parameter></methodparam>
-        <methodparam choice="opt"><type>mixed</type><parameter>..</parameter></methodparam>
+        <methodparam choice="opt"><type>mixed</type><parameter>...</parameter></methodparam>
        </methodsynopsis>
-      </para>
-      <para>
-       Для первой строки <varname>context</varname> должен равняться &null;;
-       Для всех последующих строк его значение должно быть равно значению, 
-       возвращенному на предыдущем шаге; вы должны использовать его для сохранения
-       состояния агрегации.
-      </para>
-      <para>
-       Параметр <varname>rownumber</varname> должен быть равен номеру текущей строки.
-      </para>
-      <para>
+       <variablelist>
+        <varlistentry>
+         <term><parameter>context</parameter></term>
+         <listitem>
+          <para>
+           Для первой строки должено равняться &null;;
+           Для всех последующих строк его значение должно быть равно значению, 
+           возвращенному на предыдущем шаге; вы должны использовать его для сохранения
+           состояния агрегации.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>rownumber</parameter></term>
+         <listitem>
+          <para>
+           Номер текущей строки.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>value1</parameter></term>
+         <listitem>
+          <para>
+           Первый аргумент переданный агрегатору.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>...</parameter></term>
+         <listitem>
+          <para>
+           Последующие аргументы.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
        Возвращаемое значение функции будет использовано как параметр
        <parameter>context</parameter> при следующем запуске функции, либо как
        значение передаваемое финализирующей функции.
@@ -96,18 +121,27 @@
        <methodsynopsis>
         <type>mixed</type><methodname><replaceable>fini</replaceable></methodname>
         <methodparam><type>mixed</type><parameter>context</parameter></methodparam>
-        <methodparam><type>int</type><parameter>rownumber</parameter></methodparam>
+        <methodparam><type>int</type><parameter>rowcount</parameter></methodparam>
        </methodsynopsis>
-      </para>
-      <para>
-       <varname>context</varname> - значение, возвращанное самым последним
-       вызовом агрегирующей функции step_func.
-      </para>
-      <para>
-       <varname>rownumber</varname> - количество строк, к которым применялась 
-       агрегирующая функция.
-      </para>
-      <para>
+       <variablelist>
+        <varlistentry>
+         <term><parameter>context</parameter></term>
+         <listitem>
+          <para>
+           Содержит значение, возвращанное самым последним
+           вызовом агрегирующей функции step_func.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term><parameter>rowcount</parameter></term>
+         <listitem>
+          <para>
+           Количество строк, к которым применялась агрегирующая функция.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
        Возвращаемое значение этой функции будет использовано как
        результат агрегации.
       </para>
@@ -161,7 +195,7 @@ foreach ($data as $str) {
 }
 $insert = null;
 
-function max_len_step(&$context, $rownumber, $string) 
+function max_len_step($context, $rownumber, $string) 
 {
     if (strlen($string) > $context) {
         $context = strlen($string);
@@ -169,7 +203,7 @@ function max_len_step(&$context, $rownumber, $string)
     return $context;
 }
 
-function max_len_finalize(&$context, $rownumber) 
+function max_len_finalize($context, $rowcount) 
 {
     return $context === null ? 0 : $context;
 }
@@ -187,17 +221,17 @@ var_dump($db->query('SELECT max_len(a) from strings')->fetchAll());
    В этом примере мы создали агрегирующую функцию, которая
    вычисляет длину самой большой строки в одном из столбцов таблицы.
    Для каждой строки, вызывается функция <literal>max_len_step</literal> и ей
-   передается параметр <parameter>context</parameter>. Этот параметр,
+   передается параметр <literal>context</literal>. Этот параметр,
    как и любая другая переменная PHP может содержать и массив и объект.
    В данном примере она используется для хранения максимальной длины строки;
-   Если <parameter>string</parameter> имеет длину большую, чем содержится в
+   Если <literal>string</literal> имеет длину большую, чем содержится в
    контексте, мы обновляем контекст новым значением.
   </para>
   <para>
    После того, как будут обработаны все строки, SQLite вызовет функцию
    <literal>max_len_finalize</literal> для вычисления результата агрегации.
    В ней мы производим вычисления, основываясь на данных из
-   <parameter>context</parameter>.  В нашем простом примере мы просто
+   <literal>context</literal>.  В нашем простом примере мы просто
    возвращаем его значение, так как никакие дополнительные вычисления не требуются.
   </para>
   <tip>
