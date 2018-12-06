@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f2c41f5da14b13f5209ff60958da9c75dc476cdd Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 70d62d6acfe96e43c3c34c62ea100a36d4bdcaa9 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 <refentry xml:id="function.ldap-escape" xmlns="http://docbook.org/ns/docbook">
@@ -13,8 +13,8 @@
   <methodsynopsis>
    <type>string</type><methodname>ldap_escape</methodname>
    <methodparam><type>string</type><parameter>value</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>ignore</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>flags</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>ignore</parameter><initializer>""</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
    Экранирует <parameter>value</parameter> для использования в контексте заданном в
@@ -50,6 +50,7 @@
        <constant>LDAP_ESCAPE_FILTER</constant> для фильтров, используемых в
        <function>ldap_search</function> или
        <constant>LDAP_ESCAPE_DN</constant> для DN.
+       Если не переданы никакие флаги, то все символы будут экранированы.
       </para>
      </listitem>
     </varlistentry>
@@ -63,6 +64,35 @@
    возвращает экранированную строку.
   </para>
  </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   При построении фильтра LDAP, вы должны использовать ldap_escape с флагом LDAP_ESCAPE_FILTER.
+   <example>
+    <title>Поиск по email-адресу</title>
+<programlisting role="php">
+<![CDATA[
+<?php
+// $ds - идентификатор сервера каталогов
+
+// $mail - email-адрей, предоставленный пользователем
+
+$base   = "o=My Company, c=US";
+$filter = "(mail=".ldap_escape($mail, "", LDAP_ESCAPE_FILTER).")";
+
+$sr = ldap_search($ds, $base, $filter, array("sn", "givenname", "mail"));
+
+$info = ldap_get_entries($ds, $sr);
+
+echo $info["count"]." entries returned\n";
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file
