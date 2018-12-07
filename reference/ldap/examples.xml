@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6eb1cef4f2ea20b73ff7bbf5df19fc752849156e Maintainer: aur Status: ready -->
+<!-- EN-Revision: 6a0d8e640aca4c8a8bbdc8777868fe524d31069f Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <!-- $Revision$ -->
 
@@ -11,7 +11,7 @@
    Получить информацию для всех записей, где фамилия начинается с "S" из сервера каталогов, 
    показывая в результате имя и адрес электронной почты.
   </para>
-
+  
   <example>
    <title>Пример LDAP поиска</title>
    <programlisting role="php">
@@ -54,6 +54,153 @@ if ($ds) {
 } else {
     echo "<h4>Невозможно подключиться к серверу LDAP</h4>";
 }
+?>
+]]>
+   </programlisting>
+  </example>
+ </section>
+ 
+ <section xml:id="ldap.examples-controls">
+  <title>LDAP Controls</title>
+  <para>
+   Ниже показаны несколько примеы использования LDAP Controls с использованием PHP &gt;= 7.3.0.
+  </para>
+  
+  <example>
+   <title>Привязка с информацией ppolicy</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$user   = 'cn=admin,dc=example,dc=com';
+$passwd = 'adminpassword';
+
+$ds = ldap_connect('ldap://localhost');
+
+if ($ds) {
+  $r = ldap_bind_ext($ds, $user, $passwd, [['oid' => LDAP_CONTROL_PASSWORDPOLICYREQUEST]]);
+
+  if (ldap_parse_result($ds, $r, $errcode, $matcheddn, $errmsg, $referrals, $ctrls)) {
+    if ($errcode != 0) {
+      die("Ошибки: $errmsg ($errcode)");
+    }
+    if (isset($ctrls[LDAP_CONTROL_PASSWORDPOLICYRESPONSE])) {
+      $value = $ctrls[LDAP_CONTROL_PASSWORDPOLICYRESPONSE]['value'];
+      echo "Истекает: ".$value['expire']." seconds\n";
+      echo "Количество оставшихся аутентификаций: ".$value['grace']."\n";
+      if (isset($value['error'])) {
+        echo "Код ошибки Ppolicy: ".$value['error'];
+      }
+    }
+  }
+} else {
+  die("Невозможно подключиться к серверу LDAP");
+}
+?>
+]]>
+   </programlisting>
+  </example>
+  
+  <example>
+   <title>Изменение описания, только если оно не пустое</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+  // $link - это LDAP-соединение
+
+  $result = ldap_mod_replace_ext(
+    $link,
+    'o=test,dc=example,dc=com',
+    ['description' => 'New description'],
+    [
+      [
+        'oid'         => LDAP_CONTROL_ASSERT,
+        'iscritical'  => TRUE,
+        'value'       => ['filter' => '(!(description=*))']
+      ]
+    ]
+  );
+
+  // Затем используйте ldap_parse_result
+?>
+]]>
+   </programlisting>
+  </example>
+  
+  <example>
+   <title>Чтение определенных значений перед удалением</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+  // $link - это LDAP-соединение
+
+  $result = ldap_delete_ext(
+    $link,
+    'o=test,dc=example,dc=com',
+    [
+      [
+        'oid'         => LDAP_CONTROL_PRE_READ,
+        'iscritical'  => TRUE,
+        'value'       => ['attrs' => ['o', 'description']]
+      ]
+    ]
+  );
+
+  // Затем используйте ldap_parse_result
+?>
+]]>
+   </programlisting>
+  </example>
+  
+  <example>
+   <title>Удаление ссылки</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+  // $link - это LDAP-соединение
+
+  // Без управления он удалит ссылочный узел
+  // Обязательно настройте управление так, чтобы избежать этого.
+  $result = ldap_delete_ext(
+    $link,
+    'cn=reference,dc=example,dc=com',
+    [['oid' => LDAP_CONTROL_MANAGEDSAIT, 'iscritical' => TRUE]]
+  );
+
+  // Затем используйте ldap_parse_result
+?>
+]]>
+   </programlisting>
+  </example>
+  
+  <example>
+   <title>Использование пагинации для поиска</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+  // $link - это LDAP-соединение
+
+  $cookie = '';
+
+  do {
+    $result = ldap_search(
+      $link, 'dc=example,dc=base', '(cn=*)', ['cn'], 0, 0, 0, LDAP_DEREF_NEVER,
+      [['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => 2, 'cookie' => $cookie]]]
+    );
+    ldap_parse_result($link, $result, $errcode , $matcheddn , $errmsg , $referrals, $controls);
+    // Чтобы сохранить пример, короткие ошибки не проверяются
+    $entries = ldap_get_entries($link, $result);
+    foreach ($entries as $entry) {
+      echo "cn: ".$entry['cn'][0]."\n";
+    }
+    if (isset($controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'])) {
+      // Вам необходимо передать cookie с последнего вызова на следующий
+      $cookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'];
+    } else {
+      $cookie = '';
+    }
+    // Пустой cookie означает последнюю страницу
+  } while (!empty($cookie));
 ?>
 ]]>
    </programlisting>
