@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 204f2c1c884b6943f4838e7a3398c03a30035a20 Maintainer: lex Status: ready -->
+<!-- Reviewed: no -->
+
+<sect1 xml:id="migration73.incompatible" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Изменения, ломающие обратную совместимость</title>
+ 
+ <sect2 xml:id="migration73.incompatible.core">
+  <title>Ядро PHP</title>
+  
+  <sect3 xml:id="migration73.incompatible.core.heredoc-nowdoc">
+   <title>Интерпретация закрывающего идентификатора Heredoc/Nowdoc</title>
+   
+   <para>
+    Благодаря введению <link linkend="migration73.new-features.core.heredoc">гибкого синтаксиса heredoc/nowdoc</link>,
+    doc-строки, содержащие закрывающие идентификаторы внутри своего тела,
+    могут вызвать синтаксические ошибки или изменения в интерпретации. Пример:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$str = <<<FOO
+abcdefg
+   FOO
+FOO;
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    С отступом <literal>FOO</literal> ранее не имел особого значения.
+    Теперь он будет интерпретироваться как конец heredoc-строки
+    и следующий <literal>FOO;</literal> приведет к синтаксической ошибке.
+    Эта проблема всегда может быть решена путем выбора закрывающего идентификатора,
+    который не используется в содержимом строки.
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.continue-targeting-switch">
+   <title>Генерирование предупреждения в continue, используемом в switch</title>
+   
+   <para>
+    Выражения <literal>continue</literal>, используемые в структурах управления потока <literal>switch</literal>
+    теперь будет выдавать предупреждение. В PHP такие выражения
+    <literal>continue</literal> эквиваленты
+    <literal>break</literal>, в то время, как в других языках они ведут себя как <literal>continue 2</literal>.
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+while ($foo) {
+    switch ($bar) {
+      case "baz":
+         continue;
+         // Warning: "continue" в switch is equivalent to
+                     "break". Did you mean to use "continue 2"?
+   }
+}
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.arrayaccess">
+   <title>Строгая интепретация целых строковых ключей на ArrayAccess</title>
+   
+   <para>
+    Доступ к массиву типа <literal>$obj["123"]</literal>,
+    где <literal>$obj</literal> реализует <classname>ArrayAccess</classname>,
+    а <literal>"123"</literal>  - это целочисленный строковый литерал,
+    больше не приведет к неявному преобразованию в целое число,
+    т.е. <literal>$obj->offsetGet("123")</literal> вместо <literal>$obj->offsetGet(123)</literal>.
+    Это соответствует существующему поведению для нелитеральных значений.
+    Поведение массивов никоим образом не затрагивается, они продолжают неявно преобразовывать целые строковые ключи в целые числа.
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.static-properties">
+   <title>Статические свойства больше не разделяются присвоением по ссылке</title>
+   
+   <para>
+    В PHP статические свойства совместно используются наследующими классами,
+    если статическое свойство явно не переопределено в дочернем классе.
+    Однако из-за ошибки реализации можно было отделить статические свойства, назначив ссылку.
+    Эта лазейка была исправлена.
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class Test {
+    public static $x = 0;
+}
+class Test2 extends Test { }
+
+Test2::$x = &$x;
+$x = 1;
+
+var_dump(Test::$x, Test2::$x);
+// Ранее:  int(0), int(1)
+// Теперь: int(1), int(1)
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.reference-unwrapping">
+   <title>Ссылки, возвращаемые при доступе к массиву или свойству немедленно распаковываются</title>
+   
+   <para>
+    Ссылки, возвращаемые доступом к массиву и свойству, теперь распаковываются как часть доступа.
+    Это означает, что больше невозможно изменить ссылку между доступом и использованием доступного значения:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$arr = [1];
+$ref =& $arr[0];
+var_dump($arr[0] + ($arr[0] = 2));
+// Ранее: int(4), Now: int(3)
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    Это делает поведение ссылок и без ссылок согласованным.
+    Обратите внимание, что чтение и запись значения внутри одного выражения остается неопределенным поведением и может измениться в будущем.
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.traversable-unpacking">
+   <title>Распаковка аргумента со значением Traversable с нечисловыми ключами больше не поддерживается</title>
+   
+   <para>
+    Распаковка аргументов перестала работать со значением <classname>Traversable</classname>
+    с нечисловыми ключами. Следующий код работает в PHP 7.0-7.2 по ошибке.
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+function foo(...$args) {
+    var_dump($args);
+}
+function gen() {
+    yield 1.23 => 123;
+}
+foo(...gen());
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </sect3>
+  
+  <sect3 xml:id="migration73.incompatible.core.misc">
+   <title>Разное</title>
+   
+   <para>
+    Утилита <filename>ext_skel</filename> была полностью переработана с новыми опциями, а некоторые старые опции удалены.
+    Теперь он написан на PHP и не имеет внешних зависимостей.
+   </para>
+   
+   <para>
+    Поддержка BeOS была прекращена.
+   </para>
+   
+   <para>
+    Исключения, выброшенные из-за автоматического преобразования предупреждений
+    в исключения в режиме <literal>EH_THROW</literal>
+    (например, некоторые исключения <classname>DateTime</classname>),
+    больше не заполняют состояние <function>error_get_last</function>.
+    Таким образом, они теперь работают так же, как вручную выброшенные исключения.
+   </para>
+   
+   <para>
+    <classname>TypeError</classname> теперь сообщает неправильные
+    <literal>int</literal> и <literal>bool</literal> вместо
+    <literal>integer</literal> и <literal>boolean</literal>, соответственно.
+   </para>
+   
+   <para>
+    Неопределенные переменные, переданные в <function>compact</function>
+    теперь будут сообщены в виде уведомления.
+   </para>
+   
+   <para>
+    Функция <function>getimagesize</function> и связанные с ним функции теперь сообщают
+    mime-типы изображений BMP как <literal>image/bmp</literal> вместо
+    <literal>image/x-ms-bmp</literal>, поскольку первый зарегистрирован 
+    в IANA (см. <link xlink:href="&url.rfc;7903">RFC 7903</link>).
+   </para>
+   
+   <para>
+    Функция <function>stream_socket_get_name</function> теперь возвращает адреса IPv6,
+    заключенные в квадратные скобки. Например, будет возвращена строка <literal>"[::1]:1337"</literal>
+    вместо <literal>"::1:1337"</literal>.
+   </para>
+  </sect3>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.bc">
+  <title>Произвольной точности математика BCMath</title>
+  
+  <para>
+   Все предупреждения, выброшенные <link linkend="ref.bc">функциями BCMath</link>, теперь используют обработку ошибок PHP.
+   Раньше некоторые предупреждения были непосредственно написаны в stderr.
+  </para>
+  
+  <para>
+   <function>bcmul</function> и <function>bcpow</function>  теперь возвращают числа с запрошенным масштабом.
+   Раньше возвращаемые числа могли опускать завершающие десятичные нули.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.imap">
+  <title>IMAP, POP3 и NNTP</title>
+  
+  <para>
+   Логины <command>rsh</command>/<command>ssh</command> по умолчанию отключены.
+   Используйте <link
+   linkend="ini.imap.enable-insecure-rsh">imap.enable_insecure_rsh</link>, если вы хотите включить их.
+   Обратите внимание, что библиотека IMAP не фильтрует имена почтовых ящиков
+   перед передачей их команде <command>rsh</command>/<command>ssh</command>,
+   таким образом, передача ненадежных данных этой функции с включенным <command>rsh</command>/<command>ssh</command> небезопасна.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.mbstring">
+  <title>Мультибайтовые строки</title>
+  
+  <para>
+   Из-за дополнительной поддержки именованных фрагментов,
+   паттерны <literal>mb_ereg_*()</literal> с использованием именованных фрагментов будут вести себя по-разному.
+   В частности, именованные фрагменты будут частью совпадений, а <function>mb_ereg_replace</function>
+   будет интерпретировать дополнительный синтаксис. См. <link
+   linkend="migration73.new-features.mbstring.named-captures">Именованные
+   фрагменты</link> для получения дополнительной информации.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.mysqli">
+  <title>MySQL Improved Extension</title>
+  
+  <para>
+   Подготовленные запросы теперь правильно сообщают дробные секунды для столбцов
+   <literal>DATETIME</literal>, <literal>TIME</literal> и
+   <literal>TIMESTAMP</literal> с указателем десятичных знаков
+   (например, <literal>TIMESTAMP(6)</literal>  при использовании микросекунд).
+   Раньше часть дробных секунд была просто опущена из возвращаемых значений.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.pdo-mysql">
+  <title>Функции MySQL (PDO_MYSQL)</title>
+  
+  <para>
+   
+   Подготовленные запросы теперь правильно сообщают дробные секунды для столбцов
+   <literal>DATETIME</literal>, <literal>TIME</literal> и
+   <literal>TIMESTAMP</literal> со спецификатором десятичных знаков
+   (например, <literal>TIMESTAMP(6)</literal> при использовании микросекунд).
+   Ранее, дробная часть секунд была просто опущена из возвращаемых значений.
+   Обратите внимание, что это влияет только на использование <link
+   linkend="ref.pdo-mysql">PDO_MYSQL</link> с отключенной эмуляцией подготовленных запросов
+   (например, с использованием нативной функциональности подготовки).
+   Запросы, использующие соединения, у которых задан параметр <constant>PDO::ATTR_EMULATE_PREPARES</constant>=&true;
+   (значение по умолчанию), не были затронуты данным исправлением ошибки и уже получали корректные значения долей секунды от движка.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.reflection">
+  <title>Reflection</title>
+  
+  <para>   
+   <link linkend="book.reflection">Reflection</link> экспортирует в строку теперь использует
+   <literal>int</literal>) и <literal>bool</literal>) вместо
+   <literal>integer</literal> and <literal>boolean</literal>, соответственно.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.spl">
+  <title>Standard PHP Library (SPL)</title>
+  
+  <para>
+   Если автозагрузчик <link linkend="book.spl">SPL</link> выбрасывает исключение,
+   следующие автозагрузчики не будут выполняться.
+   Раньше все автозагрузчики выполнялись, а исключения объединялись в цепочку вызовов.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration73.incompatible.simplexml">
+  <title>SimpleXML</title>
+  
+  <para>
+   Математические операции, включающие объекты
+   <link kend="book.simplexml">SimpleXML</link>, теперь будут обрабатывать текст
+   как целое число (<type>integer</type>) или число с плавающей точкой (<type>float</type>),
+   в зависимости от того, что является более подходящим.
+   Ранее значения обрабатывались как целые числа (<type>integer</type>) без каких-либо условий.
+  </para>
+ </sect2>
+ 
+ 
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
