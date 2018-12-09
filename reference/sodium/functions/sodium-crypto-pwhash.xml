@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+
+<refentry xml:id="function.sodium-crypto-pwhash" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>sodium_crypto_pwhash</refname>
+  <refpurpose>Получить ключ с пароля</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>string</type><methodname>sodium_crypto_pwhash</methodname>
+   <methodparam><type>int</type><parameter>length</parameter></methodparam>
+   <methodparam><type>string</type><parameter>password</parameter></methodparam>
+   <methodparam><type>string</type><parameter>salt</parameter></methodparam>
+   <methodparam><type>int</type><parameter>opslimit</parameter></methodparam>
+   <methodparam><type>int</type><parameter>memlimit</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>alg</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Эта функция обеспечивает низкоуровневый доступ к функции извлечения ключей libsodium crypto_pwhash.
+    Если у вас нет особых причин использовать эту функцию, вам следует использовать функции <function>sodium_crypto_pwhash_str </function> или <function>password_hash</function>.
+
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>length</parameter></term>
+    <listitem>
+     <para>
+      <type>integer</type>; Длина создаваемого хеша пароля в байтах.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>password</parameter></term>
+    <listitem>
+     <para>
+      <type>string</type>; Пароль для которого создается хеш.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>salt</parameter></term>
+    <listitem>
+     <para>
+      <type>string</type> Соль, которую нужно добавить к паролю перед хешированием. Соль должна быть непредсказуемой, в идеале генерируемой из хорошего источника случайных чисел, такого как <function>random_bytes</function>, а также быть длиной не меньше байт, указанных в константе <constant>SODIUM_CRYPTO_PWHASH_SALTBYTES</constant>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>opslimit</parameter></term>
+    <listitem>
+     <para>
+       Представляет максимальное количество вычислений для выполнения
+      Увеличение этого числа приведет к тому, что функции потребуется больше циклов ЦП для вычисления ключа.
+      Существуют константы, доступные для установки предела операций для соответствующих значений в зависимости от предполагаемого использования,
+      в порядке убывания: <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE</constant>, <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE</constant> and <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_SENSITIVE</constant>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>memlimit</parameter></term>
+    <listitem>
+     <para>
+      Максимальный объем ОЗУ в байтах, который будет использовать функция.
+      Существуют константы, которые помогут вам выбрать подходящее значение в порядке размера:
+      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>,
+      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
+      Как правило, они должны сочетаться с соответствующими значениями opslimit.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>alg</parameter></term>
+    <listitem>
+     <para>
+      <type>integer</type> Число, указывающее используемый алгоритм хеширования. По умолчанию задана <constant>SODIUM_CRYPTO_PWHASH_ALG_DEFAULT</constant> (рекомендуемый в настоящее время алгоритм, который может быть изменен с при смене версии libsodium на другую), или явно используя константу <constant>SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13</constant>, представляющую версию алгоритма Argon2id 1.3.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает производный ключ &return.falseforfailure;.
+   Возвращаемое значение представляет собой двоичную строку хеша, а не представление в кодировке ASCII,
+   и не содержит дополнительной информации о параметрах, используемых для создания хеша, поэтому вам потребуется сохранить эту информацию,
+   если вы когда-нибудь собираетесь проверить пароль в будущем. Используйте <function >sodium_crypto_pwhash_str </function>, чтобы избежать необходимости делать все это.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>password_hash</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Нужно сохранить соль, если мы когда-нибудь собираемся проверить этот пароль
+$salt = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
+//Using bin2hex to keep output readable
+echo bin2hex(
+    sodium_crypto_pwhash(
+        16, // == 128 бит
+        'password',
+        $salt,
+        SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
+        SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE,
+        SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
+    )
+);
+?>]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+a18f346ba57992eb7e4ae6abf3fd30ee
+]]>
+    </screen>
+   </example>
+  </para> 
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
