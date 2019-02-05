@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: b3d6114baa471ae553780bea8a07fa50d37b0e62 Maintainer: lex Status: ready -->
+<!-- EN-Revision: d28b54ffdec351037fef2fd608f5ee7d166ca5f9 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="function.uopz-set-mock" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -21,6 +21,14 @@
    будет создан вместо <parameter>class</parameter>. <parameter>mock</parameter>
    также может быть объектом.
   </para>
+  <note>
+   <para>
+    Только динамический доступ к свойствам и методам будет использовать 
+    объект <parameter>mock</parameter>.
+    Статический доступ будет использовать оригинальный <parameter>class</parameter>.
+    Смотри <link linkend="uopz_set_mock.example.static">пример</link> ниже.
+   </para>
+  </note>
  </refsect1>
  
  <refsect1 role="parameters">
@@ -47,6 +55,31 @@
   </variablelist>
  </refsect1>
  
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>uopz 6.0.0</entry>
+      <entry>
+       Имитирование статических функций более не поддерживаются этой функцией.
+       Вместо это го следует использовать <function>uopz_redefine</function> и
+       <function>uopz_set_return</function>, или 
+       <link linkend="book.componere">Componere</link>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
@@ -55,19 +88,19 @@
 <![CDATA[
 <?php
 class A {
-    public static function who() {
+    public function who() {
         echo "A";
     }
 }
 
 class mockA {
-    public static function who() {
+    public function who() {
         echo "mockA";
     }
 }
 
 uopz_set_mock(A::class, mockA::class);
-A::who();
+(new A)->who();
 ?>
 ]]>
    </programlisting>
@@ -84,22 +117,64 @@ mockA
 <![CDATA[
 <?php
 class A {
+    public function who() {
+        echo "A";
+    }
+}
+
+uopz_set_mock(A::class, new class {
+                            public function who() {
+                                echo "mockA";
+                            }
+                        });
+(new A)->who();
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+mockA
+]]>
+   </screen>
+  </example>
+  <example xml:id="uopz_set_mock.example.static">
+   <title><function>uopz_set_mock</function> и статические члены класса</title>
+   <para>
+    Начиная с uopz 6.0.0, имитация статических членов класса не поддерживается.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class A {
     public static function who() {
         echo "A";
     }
 }
 
 uopz_set_mock(A::class, new class {
+                            const CON = 'mockA';
                             public static function who() {
                                 echo "mockA";
                             }
                         });
+echo A::CON, PHP_EOL;
 A::who();
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
+A
+A
+]]>
+   </screen>
+   <para>
+    Вывод примера в uopz 5:
+   </para>
+   <screen>
+<![CDATA[
+mockA
 mockA
 ]]>
    </screen>
