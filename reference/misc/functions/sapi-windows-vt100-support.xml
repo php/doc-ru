@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: e531763926b2d5c02cfbf1a0598845c2c5786131 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: a90eb9efd5ef2a34a5c9c67e4d411b2add54cdaa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="function.sapi-windows-vt100-support" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -30,6 +30,12 @@
    При старте, PHP пытается включить VT100 для потоков
    <constant>STDOUT</constant> и <constant>STDERR</constant>. Но если, например,
    эти потоки перенаправлены в файл, то поддержка VT100 может не включиться.
+  </para>
+  <para>
+   Если включена поддержка VT100, то можно использовать управляющие последовательности, так
+   как они известны терминалу.
+   Они позволяют изменять вывод терминала. В Windows эти последовательности известны как
+   "Console Virtual Terminal Sequences".
   </para>
   <warning>
    <simpara>
@@ -86,7 +92,9 @@
    </programlisting>
    &example.outputs.similar;
    <screen>
-    true true
+<![CDATA[
+true true
+]]>
    </screen>
    <para>
     Если поток перенаправлен, то поддержка VT100 будет отключена:
@@ -109,7 +117,31 @@
    </programlisting>
    &example.outputs.similar;
    <screen>
-    true false
+<![CDATA[
+true false
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример использования с поддержкой VT100</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$out = fopen('php://stdout','w');
+fwrite($out, 'Just forgot a lettr.');
+// Переместить курсор на две позиции назад
+fwrite($out, "\033[2D");
+// Вставляет один пробел, сдвигая существующий текст вправо -> Просто забыли букву.
+fwrite($out, "\033[1@");
+fwrite($out, 'e');
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Just forgot a letter.
+]]>
    </screen>
   </example>
  </refsect1>
