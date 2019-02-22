@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e961c859a75a952622cc47504a55e34b10b46549 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 880fafc676dde44a490daee3ac6f7aeed8cebca9 Maintainer: lex Status: ready -->
 <!-- $Revision$ -->
 <!-- Reviewed: no -->
 
@@ -18,13 +18,14 @@
    <methodparam><type>int</type><parameter>memlimit</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   
   </para>
-
-  &warn.undocumented.func;
-
+  Использует ресурсоемкий по ЦПУ и памяти алгоритм хеширования. Соль генерируется случайно.
+  Можно задать ограничения по использованию памяти и ЦПУ. Можно использовать для генерации
+  ASCII-хешей, подходящих для хранения паролей.
+  
  </refsect1>
-
+ 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <variablelist>
@@ -32,7 +33,7 @@
     <term><parameter>password</parameter></term>
     <listitem>
      <para>
-      
+      <type>string</type>; Пароль, для которого будет генерироваться хеш.
      </para>
     </listitem>
    </varlistentry>
@@ -40,7 +41,10 @@
     <term><parameter>opslimit</parameter></term>
     <listitem>
      <para>
-      
+      Задает ограничение на использование процессорного времени. Чем больше число - тем
+      больше будет нагрузка на процессор при генерации ключа. Также можно использовать
+      пердопределенные константы для этого параметра (перечислены в порядке усиления 
+      защищенности и потребления ЦПУ): <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE</constant>, <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_SENSITIVE</constant>.
      </para>
     </listitem>
    </varlistentry>
@@ -48,21 +52,83 @@
     <term><parameter>memlimit</parameter></term>
     <listitem>
      <para>
-      
+      Задает ограничение на использование памяти в байтах.  можно использовать
+      пердопределенные константы для этого параметра (перечислены в порядке усиления 
+      защищенности и потребления памяти): <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>, <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>. 
+      Имеет смысл использовать одинаковые уровни защищенности в
+      memlimit и opslimit.
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
  </refsect1>
-
+ 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   
+   Возвращает хеш пароля, &return.falseforfailure;.
+  </para>
+  <para>
+   Для того, чтобы для одного и того-же пароля всегда генерировался один и тот-же хеш, 
+   необходимо использовать одинаковые значения <parameter>opslimit</parameter> и
+   <parameter>memlimit</parameter>. Так как эти параметры включены в сгенерированный 
+   хеш, функция <function>sodium_crypto_pwhash_str_verify</function> может проверять его
+   корректность без необходимости хранить эти параметры отдельно.
   </para>
  </refsect1>
-
-
+ 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Хеши вычисляются с помощью алгоритма Argon2ID, устойчивого для атак стороннего канала 
+    и GPU. В отличии от функции <function>password_hash</function>, у этой функции нет
+    параметра salt (он генерируется автоматически), а параметры
+    <parameter>opslimit</parameter> и <parameter>memlimit</parameter> являются 
+    обязательными.
+   </para>
+  </note>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>password_hash</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$password = 'password';
+echo sodium_crypto_pwhash_str(
+    $password,
+    SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
+    SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
+);
+]]>
+     </programlisting>
+     &example.outputs.similar;
+     <screen>
+<![CDATA[
+$argon2id$v=19$m=65536,t=2,p=1$oWIfdaXwWwhVmovOBc2NAQ$EbsZ+JnZyyavkafS0hoc4HdaOB0ILWZESAZ7kVGa+Iw
+]]>
+    </screen>
+   </example>
+   </para> 
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>sodium_crypto_pwhash_str_verify</function></member>
+    <member><function>sodium_crypto_pwhash</function></member>
+    <member><function>password_hash</function></member>
+    <member><function>password_verify</function></member>
+    <member><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://download.libsodium.org/doc/password_hashing/the_argon2i_function.html">Документация на Libsodium Argon2</link></member>
+   </simplelist>
+  </para>
+ </refsect1>
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file

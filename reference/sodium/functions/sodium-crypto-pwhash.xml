@@ -21,10 +21,11 @@
    <methodparam choice="opt"><type>int</type><parameter>alg</parameter></methodparam>
   </methodsynopsis>
   <para>
-   
+   Эта функция предоставляет нижнеуровневый доступ к функции crypto_pwhash 
+   библиотеки libsodium. Если у вас нет принципиальной необходимости в этой
+   функции, то лучше использовать <function>sodium_crypto_pwhash_str</function> или
+   <function>password_hash</function>.
   </para>
-  
-  &warn.undocumented.func;
   
  </refsect1>
  
@@ -74,7 +75,7 @@
       Существуют константы, которые помогут вам выбрать подходящее значение в порядке размера:
       <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>,
       <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
-      Как правило, они должны сочетаться с соответствующими значениями opslimit.
+      Как правило, они должны сочетаться с соответствующими значениями <parameter>opslimit</parameter>.
      </para>
     </listitem>
    </varlistentry>
@@ -92,31 +93,45 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-    Возвращает захешированный пароль,&return.falseforfailure;.
-  </para>
-   <para>
-    Используемый алгоритм, opslimit, memlimit и salt встроен в хеш, поэтому
-    вся информация, необходимая для проверки хеша, включена. Это позволяет
-    функции <function>password_verify</function> проверять хеш,
-    без необходимости отдельного хранения для соли или информации алгоритма.
+   Возвращает захешированный пароль, &return.falseforfailure;. Возвращаемое значение 
+   является бинарной строкой, а не ASCII-представлением и не содержит никакой 
+   дополнительной информации о параметрах, с которыми генерировался хеш. Таким образом
+   вам необходимо самим сохранять значения использованных параметров для
+   проверки корректности хеша в будущем. Чтобы всем этим не заниматься - используйте
+   функцию <function>sodium_crypto_pwhash_str</function>.
   </para>
  </refsect1>
- 
- 
- <refsect1 role="notes">
-  &reftitle.notes;
-  <note>
-   <para>
-    Рекомендуется протестировать эту функцию на своих серверах и настроить параметры <parameter>opslimit</parameter> и <parameter>memlimit</parameter>
-    так что выполнение функции в интерактивных системах занимает менее 100 миллисекунд, а также убедитесь, что она соответствует вашему параметру PHP memory_limit.
-    Константы помогут вам выбрать хорошие пределы для вашего оборудования.
-   </para>
-   <para>
-    Для того, чтобы создать тот же хеш пароля из того же пароля,
-    должны использоваться один и тот же алгоритм, та же соль и те же значения для <parameter>opslimit</parameter> и <parameter>memlimit</parameter>.
-    Следовательно, эти параметры должны храниться для каждого пользователя или использоваться последовательно для всего вашего приложения.
-   </para>
-  </note>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>password_hash</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+//Для дальнейшенй проверки необходимо сохранить соль
+$salt = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
+//Используем bin2hex для удобочитаемости
+echo bin2hex(
+    sodium_crypto_pwhash(
+        16, // == 128 bits
+        'password',
+        $salt,
+        SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
+        SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE,
+        SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
+    )
+);
+?>]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+a18f346ba57992eb7e4ae6abf3fd30ee
+]]>
+    </screen>
+   </example>
+  </para> 
  </refsect1>
  
 </refentry>
