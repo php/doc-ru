@@ -1,128 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 1de9b77d0306d3589e8fe27e4fa587718eb691c2 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <!-- splitted from ./index.xml, last change in rev 1.66 -->
-  <chapter xml:id="security.cgi-bin" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
-   <title>Если PHP установлен как CGI</title>
-
-   <sect1 xml:id="security.cgi-bin.attacks">
-    <title>Возможные атаки</title>
+<chapter xml:id="security.cgi-bin" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Если PHP установлен как CGI</title>
+ 
+ <sect1 xml:id="security.cgi-bin.attacks">
+  <title>Возможные атаки</title>
+  <simpara>
+   Использование PHP как бинарного <acronym>CGI</acronym>-приложения 
+   является одним из вариантов, когда по каким-либо причинам нежелательно
+   интегрировать PHP в веб-сервер (например, Apache) в качестве модуля,
+   либо предполагается использование различных <acronym>CGI</acronym>-оберток
+   и таких утилит, как chroot и setuid для организации безопасного
+   окружения работы скриптов.
+   Такая установка обычно сопровождается копированием исполняемого 
+   файла PHP в директорию cgi-bin веб-сервера.  CERT (организация,
+   следящая за угрозами безопасности)
+   <link xlink:href="&url.cert;">CA-96.11</link>  рекомендует не помещать
+   какие-либо интерпретаторы в каталог cgi-bin. Даже если PHP используется
+   как самостоятельный интерпретатор, он спроектирован так, чтобы предотвратить
+   возможность следующих атак:
+  </simpara>
+  <itemizedlist>
+   <listitem>
     <simpara>
-     Использование PHP как бинарного <acronym>CGI</acronym>-приложения 
-     является одним из вариантов, когда по каким-либо причинам нежелательно
-     интегрировать PHP в веб-сервер (например, Apache) в качестве модуля,
-     либо предполагается использование различных <acronym>CGI</acronym>-оберток
-     и таких утилит, как chroot и setuid для организации безопасного
-     окружения работы скриптов.
-     Такая установка обычно сопровождается копированием исполняемого 
-     файла PHP в директорию cgi-bin веб-сервера.  CERT (организация,
-     следящая за угрозами безопасности)
-     <link xlink:href="&url.cert;">CA-96.11</link>  рекомендует не помещать
-     какие-либо интерпретаторы в каталог cgi-bin. Даже если PHP используется
-     как самостоятельный интерпретатор, он спроектирован так, чтобы предотвратить
-     возможность следующих атак:
-    </simpara>
-    <itemizedlist>
-     <listitem>
-      <simpara>
-       Доступ к системным файлам: <filename
-       role="url">http://my.host/cgi-bin/php?/etc/passwd</filename>
-      </simpara>
-      <simpara>
-       Данные, введенные в строке запроса (URL) после вопросительного знака,
-       передаются интерпретатору как аргументы командной строки с помощью
-       интерфейса CGI. Обычно интерпретаторы открывают
-       и исполняют файл, указанный в качестве первого аргумента.
-      </simpara>
-      <simpara>
-       В случае использования PHP в качестве CGI-приложения он не
-       станет интерпретировать аргументы командной строки.
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       Доступ к произвольному документу на сервере:
-       <filename
-       role="url">http://my.host/cgi-bin/php/secret/doc.html</filename>
-      </simpara>
-      <simpara>
-       Согласно общепринятому соглашению, часть пути в запрошенной
-       странице, которая расположена после имени выполняемого модуля
-       PHP, <filename role="uri">/secret/doc.html</filename>,
-       используется для указания файла, который будет интерпретирован
-       <acronym>CGI</acronym>-программой. Обычно, некоторые конфигурационные
-       опции веб-сервера (например, Action для сервера Apache) используются
-       для перенаправления документа, к примеру, для перенаправления запросов 
-       вида <filename
-       role="url">http://my.host/secret/script.php</filename> интерпретатору PHP.
-       В таком случае веб-сервер сначала проверяет права доступа к
-       директории <filename role="uri">/secret</filename>, и после этого
-       создает перенаправленный запрос <filename
-       role="url">http://my.host/cgi-bin/php/secret/script.php</filename>.
-       К сожалению, если запрос изначально задан в полном виде,
-       проверка на наличие прав для файла <filename
-       role="uri">/secret/script.php</filename> не выполняется, она
-       происходит только для файла <filename role="uri">/cgi-bin/php</filename>.
-       Таким образом, пользователь имеет возможность обратиться к
-       <filename role="uri">/cgi-bin/php</filename>,
-       и, как следствие, к любому защищенному документу на сервере.
-      </simpara>
-      <simpara>
-       Если в PHP указать во время исполнения скрипта опции <link
-     linkend="ini.cgi.force-redirect">cgi.force_redirect</link>, <link
-       linkend="ini.doc-root">doc_root</link> и <link
-       linkend="ini.user-dir">user_dir</link>, то можно предотвратить
-       подобные атаки для директорий с ограниченным доступом.
-       Более детально приведенные опции, а также их комбинации будут рассмотрены ниже.
-      </simpara>
-     </listitem>
-    </itemizedlist>
-   </sect1>
-
-   <sect1 xml:id="security.cgi-bin.default">
-    <title>Вариант 1: обслуживаются только общедоступные файлы</title>
-
-    <simpara>
-     В случае, если на вашем сервере отсутствуют файлы, доступ к
-     которым ограничен паролем либо фильтром по IP-адресам, нет
-     никакой необходимости использовать данные опции.
-     Если ваш веб-сервер не разрешает выполнять перенаправления,
-     либо не имеет возможности взаимодействовать с исполняемым
-     PHP-модулем на необходимом уровне безопасности, вы можете
-     использовать опцию  <link
-     linkend="configure.enable-force-cgi-redirect">--enable-force-cgi-redirect</link>
-     во время сборки PHP. Но при этом вы все еще должны убедиться, что
-     альтернативные способы вызова скрипта, такие как непосредственный
-     вызов <filename
-     role="php">http://my.host/cgi-bin/php/dir/script.php</filename>
-     либо с переадресацией <filename
-     role="php">http://my.host/dir/script.php</filename>, недоступны.
+     Доступ к системным файлам: <filename
+     role="url">http://my.host/cgi-bin/php?/etc/passwd</filename>
     </simpara>
     <simpara>
-     В веб-сервере Apache перенаправление может быть сконфигурировано
-     при помощи директив AddHandler и Action (описано ниже).
+     Данные, введенные в строке запроса (URL) после вопросительного знака,
+     передаются интерпретатору как аргументы командной строки с помощью
+     интерфейса CGI. Обычно интерпретаторы открывают
+     и исполняют файл, указанный в качестве первого аргумента.
     </simpara>
-   </sect1>
-
-   <sect1 xml:id="security.cgi-bin.force-redirect">
-    <title>Вариант 2: использование <literal>cgi.force_redirect</literal></title>
     <simpara>
-     Конфигурационная директива <link
-     linkend="ini.cgi.force-redirect">cgi.force_redirect</link>
-     предотвращает попытки непосредственного вызова PHP по адресу
+     В случае использования PHP в качестве CGI-приложения он не
+     станет интерпретировать аргументы командной строки.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Доступ к произвольному документу на сервере:
+     <filename
+     role="url">http://my.host/cgi-bin/php/secret/doc.html</filename>
+    </simpara>
+    <simpara>
+     Согласно общепринятому соглашению, часть пути в запрошенной
+     странице, которая расположена после имени выполняемого модуля
+     PHP, <filename role="uri">/secret/doc.html</filename>,
+     используется для указания файла, который будет интерпретирован
+     <acronym>CGI</acronym>-программой. Обычно, некоторые конфигурационные
+     опции веб-сервера (например, Action для сервера Apache) используются
+     для перенаправления документа, к примеру, для перенаправления запросов 
      вида <filename
-     role="php">http://my.host/cgi-bin/php/secretdir/script.php</filename>.
-     Вместо этого PHP будет обрабатывать пришедший запрос только в том случае,
-     если он был перенаправлен веб-сервером.
-     В версиях PHP до 4.2.0 для этой цели использовалась опция компиляции
-     <literal>--enable-force-cgi-redirect</literal>.
+     role="url">http://my.host/secret/script.php</filename> интерпретатору PHP.
+     В таком случае веб-сервер сначала проверяет права доступа к
+     директории <filename role="uri">/secret</filename>, и после этого
+     создает перенаправленный запрос <filename
+     role="url">http://my.host/cgi-bin/php/secret/script.php</filename>.
+     К сожалению, если запрос изначально задан в полном виде,
+     проверка на наличие прав для файла <filename
+     role="uri">/secret/script.php</filename> не выполняется, она
+     происходит только для файла <filename role="uri">/cgi-bin/php</filename>.
+     Таким образом, пользователь имеет возможность обратиться к
+     <filename role="uri">/cgi-bin/php</filename>,
+     и, как следствие, к любому защищенному документу на сервере.
     </simpara>
     <simpara>
-     Обычно перенаправление в конфигурации Apache настраивается при помощи
-     следующих опций:
+     Если в PHP указать во время исполнения скрипта опции <link
+     linkend="ini.cgi.force-redirect">cgi.force_redirect</link>, <link
+     linkend="ini.doc-root">doc_root</link> и <link
+     linkend="ini.user-dir">user_dir</link>, то можно предотвратить
+     подобные атаки для директорий с ограниченным доступом.
+     Более детально приведенные опции, а также их комбинации будут рассмотрены ниже.
     </simpara>
-    <programlisting role="apache-conf">
+   </listitem>
+  </itemizedlist>
+ </sect1>
+ 
+ <sect1 xml:id="security.cgi-bin.default">
+  <title>Вариант 1: обслуживаются только общедоступные файлы</title>
+  
+  <simpara>
+   В случае, если на вашем сервере отсутствуют файлы, доступ к
+   которым ограничен паролем либо фильтром по IP-адресам, нет
+   никакой необходимости использовать данные опции.
+   Если ваш веб-сервер не разрешает выполнять перенаправления,
+   либо не имеет возможности взаимодействовать с исполняемым
+   PHP-модулем на необходимом уровне безопасности, вы можете
+   использовать опцию  <link
+   linkend="configure.enable-force-cgi-redirect">--enable-force-cgi-redirect</link>
+   во время сборки PHP. Но при этом вы все еще должны убедиться, что
+   альтернативные способы вызова скрипта, такие как непосредственный
+   вызов <filename
+   role="php">http://my.host/cgi-bin/php/dir/script.php</filename>
+   либо с переадресацией <filename
+   role="php">http://my.host/dir/script.php</filename>, недоступны.
+  </simpara>
+  <simpara>
+   В веб-сервере Apache перенаправление может быть сконфигурировано
+   при помощи директив AddHandler и Action (описано ниже).
+  </simpara>
+ </sect1>
+ 
+ <sect1 xml:id="security.cgi-bin.force-redirect">
+  <title>Вариант 2: использование <literal>cgi.force_redirect</literal></title>
+  <simpara>
+   Конфигурационная директива <link
+   linkend="ini.cgi.force-redirect">cgi.force_redirect</link>
+   предотвращает попытки непосредственного вызова PHP по адресу
+   вида <filename
+   role="php">http://my.host/cgi-bin/php/secretdir/script.php</filename>.
+   Вместо этого PHP будет обрабатывать пришедший запрос только в том случае,
+   если он был перенаправлен веб-сервером.
+  </simpara>
+  <simpara>
+   Обычно перенаправление в конфигурации Apache настраивается при помощи
+   следующих опций:
+  </simpara>
+  <programlisting role="apache-conf">
 <![CDATA[
 Action php-script /cgi-bin/php
 AddHandler php-script .php
@@ -139,7 +137,7 @@ AddHandler php-script .php
      методом работы с CGI-приложениями.
     </simpara>
    </sect1>
-
+   
    <sect1 xml:id="security.cgi-bin.doc-root">
     <title>Вариант 3: использование опций doc_root или user_dir</title>
     <simpara>
@@ -198,7 +196,7 @@ AddHandler php-script .php
      и пользовательские директории независимо друг от друга.
     </simpara>
    </sect1>
-
+   
    <sect1 xml:id="security.cgi-bin.shell">
     <title>Вариант 4: PHP вне дерева веб-документов</title>
     <para>
@@ -220,13 +218,13 @@ AddHandler php-script .php
     </para>
     <para>
      Для корректной обработки PHP переменных
-      <envar>PATH_INFO</envar> и <envar>PATH_TRANSLATED</envar>,
+     <envar>PATH_INFO</envar> и <envar>PATH_TRANSLATED</envar>,
      он должен быть сконфигурирован с опцией <link
      linkend="configure.enable-discard-path">--enable-discard-path</link>.
     </para>
    </sect1>
-
-  </chapter>
+   
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
