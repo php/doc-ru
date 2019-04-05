@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 962214a5ccef8b5be8d20b80a621ad4f27b4f883 Maintainer: Sergey Panteleev Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ibase-set-event-handler">
+ <refnamediv>
+  <refname>ibase_set_event_handler</refname>
+  <refpurpose>Регистрирует callback-функцию, которая будет вызываться при публикации событий</refpurpose>
+ </refnamediv>
+ 
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>resource</type><methodname>ibase_set_event_handler</methodname>
+   <methodparam><type>callable</type><parameter>event_handler</parameter></methodparam>
+   <methodparam><type>string</type><parameter>event_name1</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>...</parameter></methodparam>
+  </methodsynopsis>
+  <methodsynopsis>
+   <type>resource</type><methodname>ibase_set_event_handler</methodname>
+   <methodparam><type>resource</type><parameter>connection</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>event_handler</parameter></methodparam>
+   <methodparam><type>string</type><parameter>event_name1</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>...</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция регистрирует пользовательскую функцию PHP 
+   в качестве обработчика событий для указанных событий.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>event_handler</parameter></term>
+     <listitem>
+      <para>
+       Callback-фукнция вызывается с именем события и ресурсом ссылки в качестве аргументов всякий раз, 
+       когда одно из указанных событий публикуется базой данных.
+      </para>
+      <para>
+       Callback-фукнция должна возвращать &false;, 
+       если обработчик события должен быть отменен. 
+       Любое другое возвращаемое значение игнорируется. 
+       Функция принимает до 15 аргументов события.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>event_name1</parameter></term>
+     <listitem>
+      <para>
+       Наименование события.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>...</parameter></term>
+     <listitem>
+      <para>
+       Разрешено максимум 15 событий.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращаемое значение является ресурсом события. 
+   Этот ресурс можно использовать для освобождения обработчика событий 
+   с помощью <function>ibase_free_event_handler</function>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title><function>ibase_set_event_handler</function> example</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+function event_handler($event_name, $link)
+{
+    if ($event_name == "NEW ORDER") {
+        // обрабатываем новый заказ
+        ibase_query($link, "UPDATE orders SET status='handled'");
+    } else if ($event_name == "DB_SHUTDOWN") {
+        // отменяем обработчик событий
+        return false;
+    }
+}
+
+ibase_set_event_handler($link, "event_handler", "NEW_ORDER", "DB_SHUTDOWN");
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>ibase_free_event_handler</function></member>
+    <member><function>ibase_wait_event</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
