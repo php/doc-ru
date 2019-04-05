@@ -1,0 +1,748 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 62e1af618396686e364039f054124ed04f3ae530 Maintainer: Sergey Panteleev Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mongo.connecting" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Подключения</title>
+
+ <para>
+  Подключение к MongoDB может быть выполнено просто с помощью <literal>new MongoClient</literal>,
+  но существует множество дополнительных параметров. 
+  Документация к <function>MongoClient::__construct</function> охватывает все параметры API, 
+  в этом разделе будет рассмотрено более детально подключение, а также советы для практического использования.
+ </para>
+
+ <section xml:id="mongo.connecting.ssl">
+  <title>Подключение по SSL</title>
+  <para>
+   Драйвер поддерживает подключение <link xlink:href="&url.mongodb.docs.configure-ssl;">MongoDB по SSL</link>
+   и может дополнительно использовать параметры <link linkend="context.ssl">контекста потока SSL</link> для предоставления
+   подробной информации, такой как проверка сертификатов по определенной цепочке или проверка подлинности
+   <link xlink:href="&url.mongodb.docs.configure-x509;">MongoDB с использованием сертификатов X.509</link>.
+  </para>
+
+  <example xml:id="mongo.connecting.context.ssl">
+   <title>Подключение к MongoDB по SSL</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$mc = new MongoClient("mongodb://server1", array("ssl" => true));
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <example xml:id="mongo.connecting.context.ssl.verify">
+    <title>Подключение к MongoDB по SSL, проверяя подлинность сертификата:</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$SSL_DIR = "/vagrant/certs";
+$SSL_FILE = "CA_Root_Certificate.pem";
+
+$ctx = stream_context_create(array(
+    "ssl" => array(
+        /* Удостоверяющий Центр, которым должен быть удостоверен сертификат */
+        "cafile"            => $SSL_DIR . "/" . $SSL_FILE,
+
+        /* Отключаем самоподписанные сертификаты */
+        "allow_self_signed" => false,
+
+        /* Проверяем сертификат по корневому сертификату Удостоверяющего Центра. */
+        "verify_peer"       => true, /* По-умолчанию false до PHP 5.6 */
+
+        /* Проверяем имя партнера (например, проверка имени хоста) */
+        /* Будет использовать имя хоста, используемое для подключения к узлу */
+        "verify_peer_name"  => true,
+
+        /* Проверяем, что срок действия сертификата сервера не истек */
+        "verify_expiry"     => true, /* Доступно только в PHP-драйвере MongoDB */
+    ),
+);
+
+$mc = new MongoClient(
+    "mongodb://server1", 
+    array("ssl" => true), 
+    array("context" => $ctx)
+);
+?>
+]]>
+   </programlisting>
+   <note>
+    <para>
+     Параметр <literal>"verify_peer_name"</literal> был добавлен в PHP 5.6.0. 
+     В версии 1.6.5, функция была добавлена в драйвер, поэтому он работает также с PHP 5.3 и 5.4.
+    </para>
+   </note>
+  </example>
+
+
+  <example xml:id="mongo.connecting.context.ssl.certificate">
+   <title>Подключение к MongoDB, с клиентским сертификатом</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$SSL_DIR  = "/vagrant/certs";
+$SSL_FILE = "CA_Root_Certificate.pem";
+
+$MYCERT   = "/vagrant/certs/ca-signed-client.pem";
+
+$ctx = stream_context_create(array(
+    "ssl" => array(
+        "local_cert"        => $MYCERT,
+        /* Если сертификат, был закодирован паролем, необходимо указать его здесь */
+        "passphrase"        => "My Passphrase for the local_cert",
+
+        /* При желании дополнительно проверьте */
+        "cafile"            => $SSL_DIR . "/" . $SSL_FILE,
+        "allow_self_signed" => false,
+        "verify_peer"       => true,
+        "verify_peer_name"  => true,
+        "verify_expiry"     => true,
+    ),
+));
+
+$mc = new MongoClient(
+    "mongodb://server1/?ssl=true", 
+    array(), 
+    array("context" => $ctx)
+);
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <example xml:id="mongo.connecting.authenticate.ssl.x509">
+   <title>Аутентификация по сертификатам X.509</title>
+   <para>
+    Имя пользователя – <literal>certificate subject</literal> из X.509, можно получить следующим образом:
+   </para>
+   <programlisting role="shell">
+<![CDATA[
+openssl x509 -in /vagrant/certs/ca-signed-client.pem -inform PEM -subject -nameopt RFC2253
+]]>
+   </programlisting>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$ctx = stream_context_create( array(
+    "ssl" => array(
+        "local_cert" => "/vagrant/certs/ca-signed-client.pem",
+    )
+) );
+
+$mc = new MongoClient(
+    'mongodb://username@server1/?authSource=$external&authMechanism=MONGODB-X509&ssl=true', 
+    array(), 
+    array("context" => $ctx)
+);
+?>
+]]>
+   </programlisting>
+   <para>
+    Где <literal>username</literal> – это атрибут subject сертификата.
+   </para>
+  </example>
+
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>1.5.0</entry>
+       <entry>
+        Добавлена поддержка аутентификации X.509.
+       </entry>
+      </row>
+      <row>
+       <entry>1.4.0</entry>
+       <entry>
+        Добавлена поддержка подключения к MongoDB с поддержкой SSL.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </simplesect>
+
+ </section>
+
+ <section xml:id="mongo.connecting.auth">
+  <title>Аутентификация</title>
+  <para>
+   Если MongoDB запускается с опциями <literal>--auth</literal> или
+   <literal>--keyFile</literal>, необходимо пройти аутентификацию, 
+   прежде чем выполнять какие-либо операции с драйвером. Можно аутентифицировать соединение, 
+   указав имя пользователя и пароль в URI или указать параметры
+   <literal>"username"</literal> и <literal>"password"</literal> в
+   <function>MongoClient::__construct</function>.
+  </para>
+  <example xml:id="mongo.connecting.auth-example">
+   <title>Аутентификация в базе данных "admin"</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Указание имени пользователя и пароля в URI соединения (предпочтительно)
+$m = new MongoClient("mongodb://${username}:${password}@localhost");
+
+// Указание имени пользователя и пароля через массив параметров (альтернатива)
+$m = new MongoClient("mongodb://localhost", array("username" => $username, "password" => $password));
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   По-умолчанию драйвер будет проходить аутентификацию в базе данных <literal>admin</literal>.
+   Можно аутентифицироваться в другой базе данных, указав ее либо в URI соединения, 
+   либо в параметре <literal>"db"</literal> для <function>MongoClient::__construct</function>.
+  </para>
+  <example xml:id="mongo.connecting.auth-db-example">
+   <title>Аутентификация в прочих базах данных</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Указание базы данных в URI соединения (предпочтительно)
+$m = new MongoClient("mongodb://${username}:${password}@localhost/myDatabase");
+
+// Указание базы данных через массив параметров (альтернатива)
+$m = new MongoClient("mongodb://${username}:${password}@localhost", array("db" => "myDatabase"));
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Если подключение разорвано, драйвер автоматически попытается 
+   его восстановить и подтвердить вашу подлинность.
+  </para>
+ </section>
+
+ <section xml:id="mongo.connecting.rs">
+  <title>Наборы реплик</title>
+  <para>
+   Чтобы подключиться к набору реплик, укажите один или несколько серверов 
+   и используйте параметр <literal>"replicaSet"</literal>. Несколько серверов могут быть разделены запятой.
+  </para>
+  <example xml:id="mongo.connecting.rs-example">
+   <title>Списки ReplicaSet</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Использование нескольких серверов (предпочтительно)
+$m = new MongoClient("mongodb://rs1.example.com:27017,rs2.example.com:27017/?replicaSet=myReplSetName");
+
+// Использование одного сервера
+$m = new MongoClient("mongodb://rs1.example.com:27017", array("replicaSet" => "myReplSetName"));
+
+// Использование нескольких серверов
+$m = new MongoClient("mongodb://rs1.example.com:27017,rs2.example.com:27017", array("replicaSet" => "myReplSetName"));
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Драйвер PHP запросит перечисленные серверы базы данных, чтобы определить основной. 
+   До тех пор, пока он может подключиться хотя бы к одному серверу из списка и найти основной, подключение будет успешным. 
+   Если он не может установить соединение ни с одним из перечисленных серверов или не может найти основной, 
+   возникнет исключение <classname>MongoConnectionException</classname>.
+  </para>
+  <tip>
+   <para>
+    Необходимо всегда предоставлять список более чем одному члену ReplicaSet. 
+    Для обеспечения максимальной доступности необходимо использовать хотя бы один сервер
+    из каждого вашего центра обработки данных.
+   </para>
+  </tip>
+  <warning>
+   <para>
+    Имена хостов, которые указываются в списке подключения, <emphasis>должны</emphasis> совпадать 
+    с именами хостов в конфигурации набора реплик. 
+    Это связано с тем, что драйвер использует имена хостов только в конфигурации набора реплик
+    для создания хэша для своих постоянных соединений.
+   </para>
+   <para>
+    Например, если в списке используется IP-адрес, а для набора реплик заданы имена хостов, 
+    драйвер откажется от подключений из списка, которые отличаются от канонических имен хостов, 
+    указанных в наборе реплик. 
+    По сути, эти неканонические соединения в списке будут воссозданы при каждом запросе, 
+    что значительно уменьшит выгоду от использования постоянных соединений.
+   </para>
+  </warning>
+  <warning>
+   <para>
+    Драйвер <emphasis>не</emphasis> поддерживает подключение к различным наборам реплик с одинаковым именем.
+    Это выходит за рамки сценария, поэтому убедитесь, что у вас есть отдельные имена для каждого из ваших наборов реплик. 
+    Это также означает, что вы <emphasis>не</emphasis> можете сделать это:
+   </para>
+   <example xml:id="mongo.connecting.rs-example-wrong-replset">
+    <title>Неправильное дублирование имени набора реплик</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb://devserver1,devserver2,devserver3/?replicaSet=repset");
+$m = new MongoClient("mongodb://prodserver1,prodserver2,prodserver3/?replicaSet=repset");
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    Вместо этого вам нужно задать два разных имени для ваших наборов реплик:
+   </para>
+   <example xml:id="mongo.connecting.rs-example-correct-replset">
+    <title>Правильное использование двух имен набора реплик</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb://devserver1,devserver2,devserver3/?replicaSet=devset");
+$m = new MongoClient("mongodb://prodserver1,prodserver2,prodserver3/?replicaSet=prodset");
+?>
+]]>
+    </programlisting>
+   </example>
+  </warning>
+  <para>
+   Если основной сервер становится недоступным, будут проведены выборы, и вторичный будет назначен на роль основного 
+   (если не может быть установлено большинство голосов). 
+   В течение этого времени (<link xlink:href="&url.mongodb.replica.failover;">20-60 секунд</link>) 
+   соединение не сможет выполнять какие-либо операции записи, и попытки сделать это приведут к исключению. 
+   Запросы к вторичным серверам все еще смогут выполнять чтение.
+  </para>
+  <note>
+   <para>
+    По-умолчанию, в <link linkend="mongo.readpreferences">предпочтениях чтения</link> установлено чтение только с основного сервера. 
+    Во время процесса выборов, основной сервер отсутствует, поэтому чтение не удастся.
+   </para>
+   <para>
+    Рекомендуется использовать предпочтения чтения <constant>MongoClient::RP_PRIMARY_PREFERRED</constant> для приложений, 
+    которым требуется высокая доступность для чтения, тогда чтение будет выполняться на вторичных серверах, 
+    когда основной будет недоступен.
+   </para>
+  </note>
+  <para>
+   После выбора основного сервера попытка выполнить чтение или запись позволит драйверу обнаружить его.
+   Драйвер назначит его своим основным подключением к базе данных и продолжит нормальную работу.
+  </para>
+  <para>
+   Состояние вторичного сервера проверяется каждые 5 секунд 
+   (настраивается с помощью <link linkend="ini.mongo.ping-interval">mongo.ping_interval</link>) 
+   или когда следующая операция происходит через 5 секунд. 
+   Он также перепроверит конфигурацию, когда у драйвера возникнут проблемы с подключением к серверу.
+  </para>
+  <para>
+   Отказы набора реплик проверяются каждые 60 секунд 
+   (настраивается с помощью <link linkend="ini.mongo.is-master-interval">mongo.is_master_interval</link>) 
+   и каждый раз, когда происходит сбой операции записи при использовании подтвержденных записей.
+  </para>
+
+  <caution>
+   <para>
+    Вторичные сервера могут отставать от основного в операциях, поэтому ваше приложение должно иметь возможность
+    обрабатывать устаревшие данные при использовании предпочтений чтения, отличных от <constant>MongoClient::RP_PRIMARY</constant>.
+   </para>
+  </caution>
+
+  <para>
+   Для получения дополнительной информации о наборах реплик 
+   смотрите <link xlink:href="&url.mongodb.replica;">документацию</link>.
+  </para>
+
+  <simplesect role="seealso">
+   &reftitle.seealso;
+   <simplelist>
+    <member><xref linkend="mongo.readpreferences" /></member>
+    <member><xref linkend="mongo.writeconcerns" /></member>
+   </simplelist>
+  </simplesect>
+
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>1.0.9</entry>
+       <entry>
+        Добавлена поддержка подключения к ReplicaSet и автоматического перехода на другой ресурс.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </simplesect>
+
+ </section>
+
+ <section xml:id="mongo.connecting.mongos">
+  <title>Шардинг</title>
+  <para>
+   Чтобы подключиться к кластеру сегментов, укажите адрес 
+   одного или нескольких экземпляров <literal>mongos</literal> в строке подключения. 
+   Несколько серверов могут быть разделены запятой.
+  </para>
+  <example xml:id="mongo.connecting.mongos-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Использование одного сервера
+$m = new MongoClient("mongodb://mongos1.example.com:27017");
+
+// Использование нескольних серверов
+$m = new MongoClient("mongodb://mongos1.example.com:27017,mongos2.example.com:27017");
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Независимо от того, является ли каждый шард автономным сервером <literal>mongod</literal>
+   или полным набором реплик, процесс подключения драйвера одинаков. 
+   Вся связь с базой данных будет проходить через <literal>mongos</literal>.
+  </para>
+  <para>
+   Для получения дополнительной информации о шардинге в MongoDB 
+   смотрите <link xlink:href="&url.mongodb.docs.sharding;">документацию</link>.
+  </para>
+ </section>
+
+ <section xml:id="mongo.connecting.uds">
+  <title>Поддержка доменных сокетов</title>
+
+  <para>
+   MongoDB имеет встроенную поддержку для подключения через Unix Domain Sockets
+   и открывает сокет при запуске. 
+   По-умолчанию сокет находится в <filename>/tmp/mongodb-&lt;port&gt;.sock</filename>.
+  </para>
+
+  <para>
+   Чтобы подключиться к файлу сокета, укажите путь в строке подключения MongoDB:
+  </para>
+
+  <example xml:id="mongo.connecting.uds-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb:///tmp/mongo-27017.sock");
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <para>
+   Для аутентификации в базе данных (как описано выше) с помощью файла сокета, 
+   необходимо указать порт <literal>0</literal>, чтобы анализатор строки соединения мог определить конец пути сокета. 
+   Кроме того, вы можете использовать параметры в конструкторе.
+  </para>
+
+   <example xml:id="mongo.connecting.uds-auth-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb://username:password@/tmp/mongo-27017.sock:0/foo");
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <simplesect role="changelog">
+   &reftitle.changelog;
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>1.0.9</entry>
+       <entry>
+        Добавлена поддержка доменных сокетов Unix.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </simplesect>
+
+ </section>
+
+ <section xml:id="mongo.connecting.persistent">
+  <title>Постоянные соединения (версия 1.3.0+)</title>
+
+  <para>
+   Все версии драйвера, начиная с 1.3.0, используют постоянные соединения, 
+   чтобы минимизировать количество подключений к каждому серверу базы данных. 
+   Эти соединения сохраняются рабочим процессом PHP и могут использоваться повторно между несколькими запросами.
+  </para>
+
+  <para>
+   Перед подключением к серверу базы данных, драйвер создаст хеш для соединения на основе своего хоста, 
+   порта, имени набора реплик (если есть), любых учетных данных аутентификации 
+   (например, имени пользователя, пароля, базы данных) и идентификатора процесса. 
+   Если для этого хеша уже существует соединение, оно будет использоваться вместо создания нового соединения, связанного с этим хешем. 
+   <function>MongoClient::getConnections</function> может использоваться для получения информации о каждом постоянном соединении. 
+   Рассмотрим следующий пример:
+  </para>
+
+  <example xml:id="mongo.connecting.persistent-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$m1 = new MongoClient('mongodb://localhost');
+$m2 = new MongoClient('mongodb://localhost');
+$m3 = new MongoClient('mongodb://user:pw@localhost');
+$m4 = new MongoClient('mongodb://127.0.0.1');
+$m5 = new MongoClient('mongodb://rs1.local:30017,rs2.local:30018/?replicaSet=rs');
+$m6 = new MongoClient('mongodb://sharding.local:40017');
+
+foreach (MongoClient::getConnections() as $conn) {
+    echo $conn['hash'], "\n";
+}
+
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+localhost:27017;-;X;15487
+localhost:27017;-;admin/user/c56c…8bbc;15487
+127.0.0.1:27017;-;X;15487
+rs1.local:30017;rs;X;15487
+rs2.local:30018;rs;X;15487
+sharding.local:40017;-;X;15487
+]]>
+   </screen>
+  </example>
+
+  <para>
+   В этом примере <literal>$m1</literal> и <literal>$m2</literal> имеют одинаковый хэш 
+   и имеют постоянное соединение. Соединения друг с другом экземпляра MongoClient для хеширования 
+   уникальных значений и использования их собственных сокетов. 
+   Обратите внимание, что у "localhost" и "127.0.0.1" разный хэш; 
+   Разрешение DNS не учитывается.
+  </para>
+ </section>
+
+ <section xml:id="mongo.connecting.pools">
+  <title>Пул соединений (*только* версии 1.2.0-1.2.12)</title>
+  <note>
+   <para>
+    Этот раздел больше не относится к версии 1.3.0 драйвера и служит только исторической справкой о том, как пулы работали.
+   </para>
+   <para>
+    В последних версиях драйвера больше нет концепции объединения в пул, 
+    и для каждого типа подключения (ReplicaSet / standalone / mongos) 
+    для каждой комбинации учетных данных будет поддерживаться только одно подключение.
+    </para>
+   </note>
+  <para>
+   Создание соединений - одна из самых тяжелых вещей, которую делает драйвер. 
+   Для правильной настройки соединения может потребоваться сотни миллисекунд, даже в быстрой сети. 
+   Таким образом, драйвер пытается минимизировать количество новых соединений, 
+   созданных путем повторного использования соединений из пула.
+  </para>
+  <para>
+   Когда пользователь создает новый экземпляр <classname>MongoClient</classname>, 
+   все необходимые соединения будут взяты из их пулов 
+   (для наборов реплик может потребоваться несколько соединений, по одному для каждого члена набора). 
+   Когда экземпляр <classname>MongoClient</classname> выходит из области видимости, 
+   соединения будут возвращены в пул. 
+   Когда процесс PHP завершится, все соединения в пулах будут закрыты.
+  </para>
+  <section>
+   <title>"Почему у меня так много открытых соединений?"</title>
+   <para>
+    Пулы соединений могут генерировать большое количество соединений. 
+    Это ожидается, и, используя небольшую арифметику, вы можете выяснить, сколько соединений будет создано. 
+    Существует три фактора, определяющих общее количество соединений:
+   </para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>
+       connections_per_pool
+      </literal>
+     </para>
+     <para>
+      Каждый пул соединений создает по-умолчанию неограниченное количество соединений. 
+      Можно предположить, что это проблема: если он может создавать неограниченное количество соединений, 
+      не может ли он создать тысячи, и на сервере не хватит файловых дескрипторов? 
+      На практике это маловероятно, поскольку неиспользуемые соединения возвращаются в пул для последующего использования, 
+      поэтому будущие соединения будут использовать то же соединение, а не создавать новое. 
+      Если вы не создадите тысячи соединений одновременно, не выходя за рамки, 
+      количество открытых соединений должно оставаться на разумном количестве.
+     </para>
+     <para>
+      Вы можете увидеть, сколько подключений у вас в пуле, 
+      используя функцию <function>MongoPool::info</function>. 
+      Добавьте поля "in use" и "in pool" для данного сервера. 
+      Это общее количество соединений для этого пула.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>
+       pools_per_process
+      </literal>
+     </para>
+     <para>
+      Каждый адрес сервера MongoDB, к которому вы подключаетесь, 
+      получает свой пул подключений. 
+      Например, если вашим локальным именем хоста является "example.net", 
+      при подключении к "example.net:27017", "localhost: 27017" 
+      и "/tmp/mongodb-27017.sock" будут созданы три пула соединений. 
+      Вы можете увидеть, сколько пулов соединений вы открыли, используя <function>MongoPool::info</function>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>
+       processes
+      </literal>
+     </para>
+     <para>
+      Каждый процесс PHP имеет отдельный набор пулов. 
+      PHP-FPM и Apache обычно создают от 6 до пары десятков рабочих PHP-процессов. 
+      Проверьте свои настройки, чтобы увидеть, какое максимальное количество PHP-процессов может быть запущено.
+     </para>
+     <para>
+      Если вы используете PHP-FPM, подсчет количества соединений может быть сложным, 
+      потому что это вызовет больше процессов PHP-FPM под большой нагрузкой. 
+      Чтобы быть в безопасности, посмотрите на параметр <literal>max_children</literal>
+      или добавьте <literal>spare_servers</literal> + <literal>start_servers</literal>
+      (выберите любое большее число).
+      Это будет указывать, сколько PHP-процессов (т.е. наборов пулов) необходимо планировать.
+     </para>
+    </listitem>
+   </itemizedlist>
+   <para>
+    Три вышеупомянутые переменные можно перемножить, 
+    чтобы получить максимальное число ожидаемых соединений: 
+    <literal>connections_per_pool</literal> * <literal>pools_per_process</literal> * <literal>processes</literal>. 
+    Обратите внимание, что <literal>connections_per_pool</literal> может быть разным для разных пулов, 
+    так что <literal>connections_per_pool</literal> должен быть максимальным.
+   </para>
+   <para>
+    Например, предположим, что мы получаем 30 подключений на пул, 
+    10 пулов на процесс PHP и 128 процессов PHP. Тогда мы можем ожидать 38400 подключений с этой машины. 
+    Таким образом, мы должны установить лимит файловых дескрипторов этой машины достаточно высоким, 
+    чтобы обрабатывать все эти соединения, или он может исчерпать файловые дескрипторы.
+   </para>
+   <para>
+    Для получения дополнительной информации о пуле соединений 
+    смотрите <classname>MongoPool</classname>.
+   </para>
+  </section>
+ </section>
+
+ <section xml:id="mongo.connecting.persistent.manual">
+  <title>Постоянные соединения вручную (*только* версии до 1.1.4)</title>
+  <note>
+   <para>
+    Этот раздел не актуален для 1.2.0+. 
+    В 1.2.0+ соединения всегда постоянны и управляются автоматически драйвером. 
+    Если вы используете версию 1.2.x (а не 1.3.x или более позднюю), 
+    смотрите <classname>MongoPool</classname> для получения дополнительной информации о пуле.
+   </para>
+  </note>
+
+  <para>
+   Создание нового соединения к базе данных происходит очень медленно. 
+   Чтобы свести к минимуму количество соединений, которые вам нужно установить, 
+   вы можете использовать постоянные соединения. 
+   Постоянное соединение сохраняется в PHP, поэтому вы можете использовать одно и то же соединение для нескольких запросов.
+  </para>
+
+  <para>
+   Например, эта простая программа подключается к базе данных 1000 раз:
+  </para>
+
+  <example xml:id="mongo.connecting.no-manual-persist-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+for ($i=0; $i<1000; $i++) {
+  $m = new MongoClient();
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <para>
+   Выполнение займет приблизительно 18 секунд. Если мы изменим его, чтобы использовать постоянное соединение,
+  </para>
+
+  <example xml:id="mongo.connecting.manual-persist-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+for ($i=0; $i<1000; $i++) {
+  $m = new MongoClient("localhost:27017", array("persist" => "x"));
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <para>
+   ... то, для выполнения требуется менее 0,02 секунды, 
+   поскольку выполняется только одно соединение с базой данных.
+  </para>
+
+  <para>
+   Постоянные соединения нуждаются в строке идентификатора 
+   (в приведенном выше примере это "x"), чтобы однозначно идентифицировать их. 
+   Для использования постоянного соединения имя хоста, порт, постоянная строка 
+   и учетные данные для аутентификации (имя пользователя, пароль и база данных, если они указаны) 
+   должны соответствовать существующему постоянному соединению. 
+   В противном случае будет создано новое соединение с этой идентифицирующей информацией.
+  </para>
+  <para>
+   Постоянные соединения <emphasis>настоятельно рекомендуются</emphasis> 
+   и должны всегда использоваться, если нет веских причин не делать этого. 
+   Большинство причин, по которым они не рекомендуются для реляционных баз данных, не имеют отношения к MongoDB.
+  </para>
+ </section>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
