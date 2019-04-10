@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: b84e55620e97b453cc50143db08a37894f7050e9 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mongo.readpreferences" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Предпочтения чтения</title>
+ <para>
+  В MongoDB 2.2 и версии 1.3.0 драйвера добавлена поддержка 
+  <link xlink:href="&url.mongodb.docs.readpreferences;">предпочтений чтения</link>, 
+  которые позволяют контролировать направление запросов к экземплярам mongod в среде с набором реплик. 
+  Предпочтения чтения могут быть указаны для каждого соединения базы данных или коллекции. 
+  Предпочтения, определенные на более высоком уровне, будут наследоваться по умолчанию 
+  (например, <classname>MongoCollection</classname> будет наследовать предпочтения чтения, 
+  определенные в соответствующем экземпляре <classname>MongoDB</classname>).
+ </para>
+ <para>
+  Предпочтения чтения задаются с помощью комбинации режимов и наборов тегов. 
+  Режимы определяют приоритетность экземпляров mongod, 
+  а <link xlink:href="&url.mongodb.docs.tagsets;">наборы тегов</link> 
+  определяют критерии для приемлемых экземпляров mongod. 
+  Экземпляры Mongod имеют право, только если они находятся в пределах 15 мс 
+  времени пинга от ближайшего экземпляра Mongod.
+ </para>
+ <simplesect xml:id="mongo.readpreferences.modes">
+  <title>Режимы предпочтений чтения</title>
+  <warning>
+   <para>
+    Все режимы предпочтений чтения, кроме <literal>MongoClient::RP_PRIMARY</literal>, 
+    могут возвращать устаревшие данные, поскольку вторичные сервера реплицируют операции 
+    с основного с некоторой задержкой. 
+    Убедитесь, что ваше приложение может переносить устаревшие данные, 
+    если вы решите использовать режим, отличный от <literal>MongoClient::RP_PRIMARY</literal>.
+   </para>
+  </warning>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_PRIMARY</literal>
+    </para>
+    <para>
+     Все операции чтения используют только набор реплик с основного сервера.
+     Работает по умолчанию. Если основной сервер недоступен, операции чтения приведут к исключению.
+    </para>
+    <para>
+     Этот режим несовместим с использованием наборов тегов. 
+     Указание набора тегов с помощью <literal>MongoClient::RP_PRIMARY</literal> приведет к исключению.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_PRIMARY_PREFERRED</literal>
+    </para>
+    <para>
+     В большинстве ситуаций операции читаются с основного сервера. 
+     Однако, если он недоступен, как в случае аварийного переключения, 
+     операции читаются с вторичных серверов.
+    </para>
+    <para>
+     Когда предпочтения чтения включает в себя набор тегов, 
+     клиент читает сначала с основного сервера, если он доступен, 
+     а затем с вторичных, которые соответствуют указанным тэгам. 
+     Если ни у одного вторичного сервероа нет совпадающих тегов, операция чтения выдаст исключение.
+    </para>
+    <warning>
+     <para>
+      Версия 2.2 mongos добавила полную поддержку предпочтений чтения. 
+      При подключении к более старым экземплярам 
+      mongos <literal>MongoClient::RP_PRIMARY_PREFERRED</literal> 
+      будет отправлять запросы к вторичным серверам.
+     </para>
+    </warning>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_SECONDARY</literal>
+    </para>
+    <para>
+     Операции только для чтения с вторичных серверов. 
+     Если вторичные серверы недоступны, операции чтения приведут к исключению.
+    </para>
+    <para>
+     Большинство наборов имеют по крайней мере один вторичный объект, 
+     но в некоторых ситуациях доступного вторичного устройства может не быть. 
+     Например, набор с первичным, вторичным и арбитром может не иметь никаких вторичных серверов, 
+     если участник находится в состоянии восстановления или недоступен.
+    </para>
+    <para>
+     Когда предпочтение чтения включает в себя набор тегов, 
+     клиент пытается найти вторичные элементы, которые соответствуют указанному набору тегов, 
+     и направляет чтения случайному вторичному элементу из ближайшей группы. 
+     Если ни у каких вторичных серверов нет совпадающих тегов, операция чтения выдаст исключение.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_SECONDARY_PREFERRED</literal>
+    </para>
+    <para>
+     В большинстве ситуаций операции читаются со вторичных серверов, 
+     но в ситуациях, когда набор состоит из одного основного сервера без других членов, 
+     операция чтения будет использовать основной сервер.
+    </para>
+    <para>
+     Когда предпочтения чтения включает в себя набор тегов, 
+     клиент пытается найти вторичный сервер, который соответствует указанному набору тегов, 
+     и направляет чтения случайному вторичному серверу из ближайшей группы. 
+     Если ни у каких вторичных серверов нет совпадающих тегов, операция чтения выдаст исключение.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_NEAREST</literal>
+    </para>
+    <para>
+     Драйвер считывает данные со <emphasis>случайного</emphasis> члена набора, 
+     время проверки которого менее чем на 15 мс медленнее, 
+     чем у участника с самым низким временем проверки связи. 
+     Чтения в режиме <literal>MongoClient::RP_NEAREST</literal> 
+     не учитывают тип элемента и могут считываться как с основного, так и с вторичных.
+    </para>
+    <para>
+     Установите этот режим, чтобы минимизировать влияние задержки сети 
+     на операции чтения без предпочтения текущих или устаревших данных.
+    </para>
+    <para>
+     Если вы укажете набор тегов, клиент попытается найти элемент, 
+     который соответствует указанному набору тегов 
+     и направит операции чтения на случайный узел из ближайшей группы.
+    </para>
+    <note>
+     <para>
+      Все операции чтения из ближайшего члена набора реплик, 
+      которые соответствуют указанному режиму предпочтений чтения. 
+      Режим <literal>MongoClient::RP_NEAREST</literal> предпочитает чтение 
+      с низкой задержкой по сравнению с основным или дополнительным статусом члена.
+     </para>
+    </note>
+   </listitem>
+  </itemizedlist>
+ </simplesect>
+ <simplesect xml:id="mongo.readpreferences.tagsets">
+  <title>Наборы тегов</title>
+  <para>
+   <link xlink:href="&url.mongodb.docs.tagsets;">Наборы тегов</link> позволяют 
+   указывать критерии, чтобы приложение могло ориентировать операции чтения на конкретные элементы 
+   на основе пользовательских параметров. Наборы тегов позволяют гарантировать, 
+   что операции чтения предназначены для членов в конкретном центре обработки данных 
+   или для целевых экземпляров Mongod, предназначенных для определенного класса операций, 
+   таких как отчеты или аналитика.
+  </para>
+  <para>
+   Вы можете указать наборы тегов в следующих режимах предпочтений чтения:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_PRIMARY_PREFERRED</literal>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_SECONDARY</literal>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_SECONDARY_PREFERRED</literal>
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <literal>MongoClient::RP_NEAREST</literal>
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Вы не можете указывать наборы тегов в режиме предпочтений 
+   чтения <literal>MongoClient::RP_PRIMARY</literal>. 
+   Теги применяются только при выборе дополнительного члена набора, 
+   за исключением режима, с выбором ближайшего члена набора.
+  </para>
+ </simplesect>
+ <simplesect xml:id="mongo.readpreference.usage">
+  <title>Указаение предпочтений чтения</title>
+  <para>
+   Предпочтения чтения могут быть указаны либо в URI соединения, 
+   предоставленном <function>MongoClient::__construct</function>, 
+   который использует синтаксис строки запроса, либо с помощью методов установки 
+   в основных классах, которые используют синтаксис массива для наборов тегов.
+  </para>
+  <para>
+   При указании режимов предпочтения чтения в строке запроса наборы тегов для 
+   значения <literal>readPreferenceTags</literal> должны быть 
+   последовательностью пар ключ/значение, разделенных запятыми.
+  </para>
+  <note>
+   <para>
+    Каждый набор тегов, определенный в строке запроса, будет использовать 
+    имя <literal>readPreferenceTags</literal>. 
+    В отличие от того, как PHP может обрабатывать строки запроса URL, 
+    последовательные значения для <literal>readPreferenceTags</literal> 
+    не будут перезаписывать друг друга. 
+    Драйвер будет собирать наборы тегов в порядке их появления в строке запроса.
+   </para>
+  </note>
+  <warning>
+   <para>
+    Если драйвер не может найти соответствующий набор тегов, чтение не удастся! 
+    Вы несете ответственность за предоставление подходящего запасного варианта, 
+    такого как пустое значение <literal>readPreferenceTags</literal> 
+    для возврата к "предпочтению без набора тегов".
+   </para>
+  </warning>
+  <para>
+   <example>
+    <title>Предпочтения чтения в URI подключения с синтаксисом строки запроса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Предпочитаем ближайший сервер без тегов
+$uri  = 'mongodb://rs1.example.com,rs2.example.com/';
+$uri .= '?readPreference=nearest';
+$m = new MongoClient($uri, array('replicaSet' => 'rs'));
+
+// Выбираем ближайший сервер в "восточном" дата-центре
+$uri  = 'mongodb://rs1.example.com,rs2.example.com/';
+$uri .= '?readPreference=nearest';
+$uri .= '&readPreferenceTags=dc:east';
+$m = new MongoClient($uri, array('replicaSet' => 'rs'));
+
+// Предпочитаем ближайший сервер в "восточном" центре обработки данных, также используемый для отчетности,
+// но используем сервер в "западном" центре обработки данных
+$uri  = 'mongodb://rs1.example.com,rs2.example.com/';
+$uri .= '?readPreference=nearest';
+$uri .= '&readPreferenceTags=dc:east,use:reporting';
+$uri .= '&readPreferenceTags=dc:west';
+$m = new MongoClient($uri, array('replicaSet' => 'rs'));
+
+// Предпочитаем ближайший сервер в "восточном" центре обработки данных, 
+// затем сервер в "западном" центре обработки данных, и, наконец, 
+// возвращаемся к предпочтению без набора тегов
+$uri  = 'mongodb://rs1.example.com,rs2.example.com/';
+$uri .= '?readPreference=nearest';
+$uri .= '&readPreferenceTags=dc:east';
+$uri .= '&readPreferenceTags=dc:west';
+$uri .= '&readPreferenceTags=';
+$m = new MongoClient($uri, array('replicaSet' => 'rs'));
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Устанавливаем предпочтения чтения с синтаксисом массива для наборов тегов</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$m = new MongoClient('mongodb://rs1.example.com,rs2.example.com', array(
+    'replicaSet' => 'rs',
+));
+
+// Предпочитаем ближайший сервер без тегов
+$m->setReadPreference(MongoClient::RP_NEAREST, array());
+
+// Выбираем ближайший сервер в "восточном" дата-центре
+$m->setReadPreference(MongoClient::RP_NEAREST, array(
+    array('dc' => 'east'),
+));
+
+// Предпочитаем ближайший сервер в "восточном" центре обработки данных, также используемый для отчетности,
+// но используем сервер в "западном" центре обработки данных
+$m->setReadPreference(MongoClient::RP_NEAREST, array(
+    array('dc' => 'east', 'use' => 'reporting'),
+    array('dc' => 'west'),
+));
+
+// Предпочитаем ближайший сервер в "восточном" центре обработки данных, 
+// затем сервер в "западном" центре обработки данных, и, наконец, 
+// возвращаемся к предпочтению без набора тегов
+$m->setReadPreference(MongoClient::RP_NEAREST, array(
+    array('dc' => 'east'),
+    array('dc' => 'west'),
+    array(),
+));
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </simplesect>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
