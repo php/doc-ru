@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 69154b06c1b8ec621d10a7f21ad7eb0db797eb60 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mongo.writeconcerns" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Гарантии записи</title>
+
+ <para>
+  MongoDB предоставляет несколько различных способов выбора, как будет проходить запись в базу данных. 
+  Эти способы называются <literal>гарантии записи</literal> и охватывают все: 
+  от полного игнорирования всех ошибок до определения того, 
+  какие серверы должны подтвердить запись перед возвратом операции.
+ </para>
+ <para>
+  Когда для записи (например, с помощью <methodname>MongoCollection::insert</methodname>, 
+  <methodname>MongoCollection::update</methodname> и <methodname>MongoCollection::remove</methodname>) 
+  задается параметр гарантий записи (<literal>"w"</literal>), 
+  драйвер отправляет запрос в MongoDB и piggy возвращает команду <literal>getLastError</literal> 
+  (<acronym>GLE</acronym>) одновременно с опцией гарантии записи. 
+  Сервер возвращает только в том случае, если условие гарантий записи прошло проверку, 
+  как выполненное или время ожидания запроса истекло (с параметром <literal>"wtimeout"</literal> 
+  по умолчанию установлено значение 10000 миллисекунд).
+ </para>
+
+ <warning>
+  <para>
+   Несмотря на то, что время ожидания команды <literal>getLastError</literal> истекло, 
+   данные, скорее всего, будут записаны на основной сервер и реплицированы на все вторичные серверы, 
+   как только они его догонят.
+  </para>
+  <para>
+   Типичные причины возникновения превышения времени ожидания - указание записи о проблеме, 
+   которая требует подтверждения с большего количества серверов, чем доступно в данный момент.
+  </para>
+ </warning>
+
+ <para>
+  При использовании подтвержденных записей и сбоя набора реплик, 
+  драйвер автоматически отключается от основного сервера, выдает исключение и пытается найти 
+  новый основной на следующей операции (ваше приложение должно решить, 
+  следует ли повторить операцию на новый основной сервер).
+ </para>
+ <para>
+  При использовании неподтвержденных записей (w=0) и при сбое набора реплик, 
+  драйвер не сможет узнать об изменении, поэтому он продолжит работу и молча прекратит запись.
+ </para>
+ <para>
+  Гарантии записи по умолчанию для <classname>MongoClient</classname> – <literal>1</literal>: 
+  подтверждение операций записи.
+ </para>
+
+
+ <para>
+  <table xml:id="mongo.writeconcerns.options">
+   <title>Доступные гарантии записи</title>
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Гарантии записи</entry>
+      <entry>Значение</entry>
+      <entry>Описание</entry>
+     </row>
+    </thead>
+    <tbody>
+<!--
+     <row>
+      <entry>w=-1</entry>
+      <entry>Errors ignored</entry>
+      <entry>No errors, including network errors, will be checked at all</entry>
+     </row>
+-->
+     <row>
+      <entry>w=0</entry>
+      <entry>Не подтвержден</entry>
+      <entry>
+       За записью не последует вызов <acronym>GLE</acronym>, 
+       поэтому она не проверяется ("выстрели и забудь")
+      </entry>
+     </row>
+     <row>
+      <entry>w=1</entry>
+      <entry>Подтвержден</entry>
+      <entry>Запись будет подтверждена сервером (основной в конфигурации набора реплик)</entry>
+     </row>
+     <row>
+      <entry>w=N</entry>
+      <entry>Набор реплик подтвержден</entry>
+      <entry>
+       Запись будет подтверждена основным сервером и реплицирована 
+       на <literal>N-1</literal> вторичных серверов.
+      </entry>
+     </row>
+     <row>
+      <entry>w=majority</entry>
+      <entry>Подтвержден большинством</entry>
+      <entry>
+       Запись будет подтверждена большинством наборов реплик (включая основной). 
+       Это специальная зарезервированная строка.
+      </entry>
+     </row>
+     <row>
+      <entry>w=&lt;tag set&gt;</entry>
+      <entry>Набор меток для набора реплик подтвержден</entry>
+      <entry>Запись будет подтверждена всеми членами набора меток.</entry>
+     </row>
+     <row>
+      <entry>j=true</entry>
+      <entry>Журналируемый</entry>
+      <entry>Запись будет подтверждена первичным сервером и журнал будет записан на диск</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </para>
+ 
+ <simplesect xml:id="mongo.writeconcerns.setting">
+  <title>Использование гарантий записи</title>
+  <para>
+   Каждый из методов, вызывающих запись 
+   (<methodname>MongoCollection::insert</methodname>, 
+   <methodname>MongoCollection::update</methodname>, 
+   <methodname>MongoCollection::remove</methodname> и 
+   <methodname>MongoCollection::batchInsert</methodname>), 
+   позволяет использовать необязательный аргумент для отправки набора параметров в MongoDB сервер. 
+   С этим массивом опций вы можете установить гарантии записи, как показано в следующем примере:
+  </para>
+  <example>
+   <title>Передача гарантий записи в запись</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Устанавливаем w=0 для insert:
+$collection->insert($someDoc, array("w" => 0));
+
+// Устанавливаем w=majority для update:
+$collection->update($someDoc, $someUpdates, array("w" => "majority"));
+
+// Устанавливаем w=5 и j=true для remove:
+$collection->remove($someDoc, array("w" => 5, "j" => true));
+
+// Устанавливаем w="AllDCs" для batchInsert:
+$collection->batchInsert(array($someDoc1, $someDoc2), array("w" => "AllDCs"));
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Помимо установки гарантий записи для каждой операции в качестве аргумента опции, 
+   также можно установить гарантии записи по умолчанию различными способами.
+  </para>
+  <para>
+   Первый способ - через <link linkend="mongo.mongoclient.construct.parameters">строку подключения</link>. 
+   Строка подключения принимает параметры <literal>journal</literal>, <literal>w</literal> 
+   и <literal>wTimeoutMS</literal>:
+  </para>
+  <example>
+   <title>Гарантии записи в строке подключения</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb://localhost/?journal=true&w=majority&wTimeoutMS=20000");
+?>
+]]>
+   </programlisting>
+  </example>
+
+  <para>
+   Начиная с версии 1.5 драйвера также можно вызывать 
+   <methodname>MongoDB::setWriteConcern</methodname> и 
+   <methodname>MongoCollection::setWriteConcern</methodname>, 
+   чтобы установить гарантии записи по умолчанию для всех операций, 
+   созданных из этого конкретного объекта <classname>MongoDB</classname> 
+   или <classname>MongoCollection</classname>:
+  </para>
+  <example>
+   <title>MongoDB::setWriteConcern и MongoCollection::setWriteConcern</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$m = new MongoClient("mongodb://localhost/");
+$d = $m->demoDb;
+$c = $d->demoCollection;
+
+// Устанавливаем w=3 на объекте базы данных с таймаутом 25000 мс
+$d->setWriteConcern(3, 25000);
+
+// Устанавливаем w=majority на объекте коллекции без изменения времени ожидания
+$c->setWriteConcern("majority");
+?>
+]]>
+   </programlisting>
+  </example>
+ </simplesect>
+
+ <simplesect xml:id="mongo.writeconcerns.unacknowledged">
+  <title>Неподтвержденные записи</title>
+  <para>
+   Не требуя от сервера подтверждения записи, запись может быть выполнена очень быстро, 
+   но вы не будете знаеть, действительно ли запись удалась. 
+   Запись может завершиться неудачей по ряду причин: если есть проблемы с сетью, 
+   если сервер базы данных вышел из строя, или если запись была просто недействительной 
+   (например, запись в системную коллекцию или ошибки дублированного ключа).
+  </para>
+  <para>
+   При разработке всегда следует использовать подтвержденные записи (для защиты 
+   от непреднамеренных ошибок, таких как синтаксические ошибки, недопустимые операторы, 
+   ошибки дублирующихся ключей и т.д.). 
+   В производстве неподтвержденные записи могут использоваться для "незначительных" данных. 
+   Незначительные данные различаются в зависимости от приложения, но, как правило, 
+   это автоматические (вместо сгенерированных пользователем) данные, 
+   таких как отслеживание кликов или местоположения GPS, где вы можете получать тысячи записей в секунду.
+  </para>
+  <para>
+   Настоятельно рекомендуется выполнять подтвержденную запись в конце серии неподтвержденных записей. 
+   Это не приведет к слишком большим потерям производительности, 
+   но все же позволит вам отследить любые ошибки, которые могли произойти.
+  </para>
+  <example xml:id="mongo.writeconcerns.unacknowledged-example">
+   <title>Неподтвержденные гарантии записи, сопровождаемые подтверждением записи</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$collection->insert($someDoc, array("w" => 0));
+$collection->update($criteria, $newObj, array("w" => 0));
+$collection->insert($somethingElse, array("w" => 0));
+try {
+    $collection->remove($something, array("w" => 1));
+} catch(MongoCursorException $e) {
+    /* Обрабатываем исключение.. */
+    /* Здесь мы должны выполнить запросы find() по идентификаторам, 
+    сгенерированным для $thingElse и $someDoc, чтобы убедиться, 
+    что они записаны в базу данных, и попытаться выяснить, где в цепочке что-то произошло */
+}
+?>
+]]>
+   </programlisting>
+   <para>
+    Если последняя запись выдает исключение, вы будете знать, что есть проблема с вашей базой данных.
+   </para>
+  </example>
+ </simplesect>
+
+ <simplesect xml:id="mongo.writeconcerns.acknowledged">
+  <title>Подтвержденные записи</title>
+  <para>
+   Этот тип операций записи гарантирует, что база данных приняла операцию записи, 
+   прежде чем вернуть успешное выполнение. Если запись не удалась, 
+   она выдаст исключение <classname>MongoCursorException</classname> с объяснением ошибки. 
+   Поведение <classname>MongoClient</classname> по умолчанию - подтверждение записи (w=1).
+  </para>
+  <para>
+   Можно указать, сколько членов набора реплик должно подтвердить запись 
+   (т.е. реплицировать ли ее) до того, как запись будет признана подтвержденной 
+   и операция вернет успешное выполнение.
+   <example xml:id="mongo.writeconcerns.acknowledged-example">
+    <title>Подтвержденные записи</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Принудительное подтверждение только от основного сервера
+$collection->insert($doc, array("w" => 1));
+
+// Принудительное подтверждение от основного и еще одного 
+// члена набора реплик
+$collection->insert($doc, array("w" => 2));
+
+// Принудительное подтверждение от основного и шести других 
+// членов набора реплик (вы, вероятно, никогда не должны делать так):
+$collection->insert($doc, array("w" => 7));
+?>
+]]>
+    </programlisting>
+    <para>
+     Имейте в виду, необходимо тщательно выбирать ваши гарантии записи. 
+     Если у вас есть набор реплик с 5 участниками, и вы выбираете гарантии записи <literal>4</literal>, 
+     вы рискуете заблокировать запись навсегда, когда один из членов набора реплик выйдет 
+     из строя на техническое обслуживание или произойдет временное отключение сети.
+    </para>
+   </example>
+  </para>
+  <warning>
+   <para>
+    Передача строкового значения для гарантий записи имеет особое значение (Набор меток для набора реплик подтвержден). 
+    Пожалуйста, будьте осторожны, <emphasis>НЕ</emphasis> используйте строковые значения 
+    для чисел (т.е. <literal>array("w" => "1")</literal>), так как он будет 
+    рассматриваться, как имя набора тегов.
+   </para>
+  </warning>
+ </simplesect>
+
+ <simplesect xml:id="mongo.writeconcerns.majority.acknowledged">
+  <title>Записи, подтвержденные большинством</title>
+  <para>
+   Использование особой опции <literal>majority</literal> гарантий записи - это 
+   рекомендуемый способ записи, необходимый для выживания после апокалипсиса, 
+   поскольку он гарантирует, что большая часть вашего набора реплик будет иметь запись и, 
+   следовательно, будет гарантированно выдерживать все обычные сценарии подозрительных сбоев.
+  </para>
+  <example xml:id="mongo.writeconcerns.majority.acknowledged-example">
+   <title>Записи, подтвержденные большинством</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$collection->insert($someDoc, array("w" => "majority"));
+?>
+]]>
+   </programlisting>
+  </example>
+ </simplesect>
+
+ <!-- FIXME
+ <simplesect xml:id="mongo.writeconcerns.tagset">
+  <title>ReplicaSet TagSet Acknowledged</title>
+ </simplesect>
+ -->
+
+ <simplesect xml:id="mongo.writeconcerns.journal">
+  <title>Журналируемые записи</title>
+  <para>
+   При подключении к реплике задайте гарантии записи по умолчанию только для того, 
+   чтобы основной сервер подтвердил запись. Однако существует окно 100 мс, 
+   пока запись не будет занесена в журнал и записана на диск. 
+   Можно принудительно записать запись в журнал перед подтверждением записи, установив 
+   опцию <literal>j</literal>:
+   <example xml:id="mongo.writeconcerns.journalled">
+    <title>Подтвержденные и журналируемые записи</title>
+    <para>Принудительное заполнение журнала</para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$options = array(
+    "w" => 1,
+    "j" => true,
+);
+try {
+    $collection->insert($document, $options);
+} catch(MongoCursorException $e) {
+    /* обрабатываем исключение */
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </simplesect>
+
+ <simplesect role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member>
+    <link xlink:href="&url.mongodb.docs;applications/replication/#replica-set-write-concern">Документация по гарантиям записи MongoDB</link>
+   </member>
+  </simplelist>
+ </simplesect>
+
+ <simplesect role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>1.3.0</entry>
+      <entry>
+       В <classname>MongoClient</classname> были введены по умолчанию 
+       <link linkend="mongo.writeconcerns.acknowledged">подтвержденные</link> записи. 
+       Устаревшим значением по умолчанию в <classname>Mongo</classname> были неподтвержденные записи.
+      </entry>
+     </row>
+     <row>
+      <entry>1.3.0</entry>
+      <entry>
+       Опция <literal>"safe"</literal> записи устарела и недоступна 
+       для нового класса <classname>MongoClient</classname>. 
+       Вместо этого используйте опцию <literal>"w"</literal>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </simplesect>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
+
