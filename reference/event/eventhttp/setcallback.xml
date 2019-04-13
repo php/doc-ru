@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 59a1bbcb6f7a1e74a640d7ec2890cc6a12f19b52 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="eventhttp.setcallback" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>EventHttp::setCallback</refname>
+  <refpurpose>Устанавливает callback-функцию для указанного URI</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier>
+   <type>void</type>
+   <methodname>EventHttp::setCallback</methodname>
+   <methodparam>
+    <type>string</type>
+    <parameter>path</parameter>
+   </methodparam>
+   <methodparam>
+    <type>string</type>
+    <parameter>cb</parameter>
+   </methodparam>
+   <methodparam choice="opt">
+    <type>string</type>
+    <parameter>arg</parameter>
+   </methodparam>
+  </methodsynopsis>
+  <para>
+   Устанавливает callback-функцию для указанного URI.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term>
+     <parameter>path</parameter>
+    </term>
+    <listitem>
+     <para>
+      Путь для вызова callback-функции.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>
+     <parameter>cb</parameter>
+    </term>
+    <listitem>
+     <para>
+      Callback-функция <type>callable</type>, 
+      которая вызывается по запрошенному <parameter>path</parameter>. 
+      Должна соответствовать следующему прототипу:
+     </para>
+     <methodsynopsis>
+      <type>void</type>
+      <methodname>callback</methodname>
+      <methodparam
+        choice="opt">
+       <type>EventHttpRequest</type>
+       <parameter>req</parameter>
+       <initializer>NULL</initializer>
+      </methodparam>
+      <methodparam
+        choice="opt">
+       <type>mixed</type>
+       <parameter>arg</parameter>
+       <initializer>NULL</initializer>
+      </methodparam>
+     </methodsynopsis>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term>
+         <parameter>req</parameter>
+        </term>
+        <listitem>
+         <para>
+          Объект <classname>EventHttpRequest</classname>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term>
+         <parameter>arg</parameter>
+        </term>
+        <listitem>
+         <para>
+          Пользовательские данные.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>
+     <parameter>arg</parameter>
+    </term>
+    <listitem>
+     <para>
+      Пользовательские данные.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает &true; в случае успешного выполнения, &false; в противном случае.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>EventHttp::setCallback</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+/*
+ * Простой HTTP-сервер.
+ *
+ * Чтобы проверить:
+ * 1) Запустите его на выбранном вами порту, например:
+ * $ php examples/http.php 8010
+ * 2) В другом терминале подключитесь к какому-либо адресу на этом порту
+ * и сделайте запрос GET или POST (другие здесь отключены), например:
+ * $ nc -t 127.0.0.1 8010
+ * POST /about HTTP/1.0
+ * Content-Type: text/plain
+ * Content-Length: 4
+ * Connection: close
+ * (press Enter)
+ *
+ * Будет выводено
+ * a=12
+ * HTTP/1.0 200 OK
+ * Content-Type: text/html; charset=ISO-8859-1
+ * Connection: close
+ *
+ * 3) Посмотрите, что сервер выводит в предыдущем окне терминала.
+ */
+
+function _http_dump($req, $data) {
+    static $counter      = 0;
+    static $max_requests = 2;
+
+    if (++$counter >= $max_requests)  {
+        echo "Счетчик достиг максимальных запросов $max_requests. Выходим\n";
+        exit();
+    }
+
+    echo __METHOD__, " called\n";
+    echo "запрос:"; var_dump($req);
+    echo "данные:"; var_dump($data);
+
+    echo "\n===== DUMP =====\n";
+    echo "команда:", $req->getCommand(), PHP_EOL;
+    echo "URI:", $req->getUri(), PHP_EOL;
+    echo "Заголовки ввода:"; var_dump($req->getInputHeaders());
+    echo "Выходные заголовки:"; var_dump($req->getOutputHeaders());
+
+    echo "\n >> Отправка ответа ...";
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+
+    echo "\n >> Чтение входного буфера ...\n";
+    $buf = $req->getInputBuffer();
+    while ($s = $buf->readLine(EventBuffer::EOL_ANY)) {
+        echo $s, PHP_EOL;
+    }
+    echo "Нет больше данных в буфере\n";
+}
+
+function _http_about($req) {
+    echo __METHOD__, PHP_EOL;
+    echo "URI: ", $req->getUri(), PHP_EOL;
+    echo "\n >> Отправка ответа ...";
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+}
+
+function _http_default($req, $data) {
+    echo __METHOD__, PHP_EOL;
+    echo "URI: ", $req->getUri(), PHP_EOL;
+    echo "\n >> Отправка ответа ...";
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+}
+
+$port = 8010;
+if ($argc > 1) {
+    $port = (int) $argv[1];
+}
+if ($port <= 0 || $port > 65535) {
+    exit("Неверный порт");
+}
+
+$base = new EventBase();
+$http = new EventHttp($base);
+$http->setAllowedMethods(EventHttpRequest::CMD_GET | EventHttpRequest::CMD_POST);
+
+$http->setCallback("/dump", "_http_dump", array(4, 8));
+$http->setCallback("/about", "_http_about");
+$http->setDefaultCallback("_http_default", "пользовательские данные");
+
+$http->bind("0.0.0.0", 8010);
+$base->loop();
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+a=12
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=ISO-8859-1
+Connection: close
+]]>
+   </screen>
+  </example>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member>
+    <methodname>EventHttp::setDefaultCallback</methodname>
+   </member>
+  </simplelist>
+ </refsect1>
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

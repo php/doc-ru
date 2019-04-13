@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 59a1bbcb6f7a1e74a640d7ec2890cc6a12f19b52 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="eventhttp.bind" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>EventHttp::bind</refname>
+  <refpurpose>Привязывает HTTP-сервер к указанному адресу и порту</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier>
+   <type>void</type>
+   <methodname>EventHttp::bind</methodname>
+   <methodparam>
+    <type>string</type>
+    <parameter>address</parameter>
+   </methodparam>
+   <methodparam>
+    <type>int</type>
+    <parameter>port</parameter>
+   </methodparam>
+  </methodsynopsis>
+  <para>
+   Привязывает HTTP-сервер к указанному адресу и порту.
+  </para>
+  <para>
+   Может вызываться несколько раз для привязки одного и того же 
+   HTTP-сервера к нескольким разным портам.
+  </para>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term>
+     <parameter>address</parameter>
+    </term>
+    <listitem>
+     <para>
+      Строка, содержащая IP-адрес 
+      для <literal>прослушивания(2)</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term>
+     <parameter>port</parameter>
+    </term>
+    <listitem>
+     <para>
+      Номер порта для прослушивания.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает &true; в случае успешного выполнения, &false; в противном случае.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>EventHttp::bind</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$base = new EventBase();
+$http = new EventHttp($base);
+
+$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+
+if (!$http->bind("127.0.0.1", 8088)) {
+    exit("связать(1) не удалось\n");
+};
+if (!$http->bind("127.0.0.1", 8089)) {
+    exit("связать(2) не удалось\n");
+};
+
+$http->setCallback("/about", function($req) {
+    echo "URI: ", $req->getUri(), PHP_EOL;
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+});
+
+$base->dispatch();
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Client:
+
+$ nc 127.0.0.1 8088
+GET /about HTTP/1.0
+Connection: close
+
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=ISO-8859-1
+Connection: close
+
+$ nc 127.0.0.1 8089
+GET /unknown HTTP/1.0
+Connection: close
+
+HTTP/1.1 404 Not Found
+Content-Type: text/html
+Date: Wed, 13 Mar 2013 04:14:41 GMT
+Content-Length: 149
+Connection: close
+
+<html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL /unknown was not found on this server.</p></body></html>
+
+Server:
+URI: /about
+OK
+]]>
+   </screen>
+  </example>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member>
+    <methodname>EventHttp::accept</methodname>
+   </member>
+  </simplelist>
+ </refsect1>
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->

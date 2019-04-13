@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 59a1bbcb6f7a1e74a640d7ec2890cc6a12f19b52 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="eventhttp.accept" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>EventHttp::accept</refname>
+  <refpurpose>Заставляет HTTP-сервер принимать соединения с указанным потоком сокета или ресурсом</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier>
+   <type>bool</type>
+   <methodname>EventHttp::accept</methodname>
+   <methodparam>
+    <type>mixed</type>
+    <parameter>socket</parameter>
+   </methodparam>
+  </methodsynopsis>
+  <para>
+   Заставляет HTTP-сервер принимать соединения с указанным потоком сокета или ресурсом. 
+   Сокет должен быть готов к приему соединений.
+  </para>
+  <para>
+   Может вызываться несколько раз, чтобы принимать соединения на разных сокетах.
+  </para>
+  <note>
+   <para>
+    Чтобы связать сокет, <literal>прослушать</literal> и <literal>принять</literal> 
+    соединения на сокете в одном вызове, используйте <methodname>EventHttp::bind</methodname>. 
+    <methodname>EventHttp::accept</methodname> требуется только в том случае, 
+    если у одного вызова уже есть сокет, готовый для принятия соединений.
+   </para>
+  </note>
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term>
+     <parameter>socket</parameter>
+    </term>
+    <listitem>
+     <para>
+      Ресурс сокета, потоковый или числовой дескриптор файла, 
+      представляющий сокет, готовый принимать соединения.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает &true; в случае успешного выполнения, &false; в противном случае.
+  </para>
+ </refsect1>
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>EventHttp::accept</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$base = new EventBase();
+$http = new EventHttp($base);
+
+$addresses = array (
+     8091 => "127.0.0.1",
+     8092 => "127.0.0.2",
+);
+$i = 0;
+
+$socket = array();
+
+foreach ($addresses as $port => $ip) {
+    echo $ip, " ", $port, PHP_EOL;
+    $socket[$i] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+    if (!socket_bind($socket[$i], $ip, $port)) {
+        exit("ошибка socket_bind\n");
+    }
+    socket_listen($socket[$i], 0);
+    socket_set_nonblock($socket[$i]);
+
+    if (!$http->accept($socket[$i])) {
+        echo "Принять не удалось\n";
+        exit(1);
+    }
+
+    ++$i;
+}
+
+$http->setCallback("/some-page", function() {
+ echo "(some-page)\n";
+    echo "URI: ", $req->getUri(), PHP_EOL;
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+});
+
+$http->setDefaultCallback(function($req) {
+    echo "URI: ", $req->getUri(), PHP_EOL;
+    $req->sendReply(200, "OK");
+    echo "OK\n";
+});
+
+$signal = Event::signal($base, SIGINT, function () use ($base) {
+    echo "Пойман SIGINT. Останавливаем...\n";
+    $base->stop();
+});
+$signal->add();
+
+$base->dispatch();
+echo "конец\n";
+// Мы не закрывали сокеты, так как Libevent 
+// уже установил флаги CLOSE_ON_FREE и CLOSE_ON_EXEC 
+// в дескрипторе файла, связанном с сокетами.
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Client:
+$ nc 127.0.0.1 8091
+GET /about HTTP/1.0
+Connection: close
+
+HTTP/1.0 200 OK
+Content-Type: text/html; charset=ISO-8859-1
+Connection: close
+
+Server:
+127.0.0.1 8091
+127.0.0.2 8092
+URI: /about
+OK
+]]>
+   </screen>
+  </example>
+ </refsect1>
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member>
+    <methodname>EventHttp::bind</methodname>
+   </member>
+  </simplelist>
+ </refsect1>
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
