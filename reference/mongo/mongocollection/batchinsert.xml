@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 4daa8ece2f2d57e8c0be8b343bd072d7f81889c9 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="mongocollection.batchinsert" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>MongoCollection::batchInsert</refname>
+  <refpurpose>Вставляет несколько документов в коллекцию</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>mixed</type><methodname>MongoCollection::batchInsert</methodname>
+   <methodparam><type>array</type><parameter>a</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>options</parameter><initializer>array()</initializer></methodparam>
+  </methodsynopsis>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;    
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <parameter>a</parameter>
+     </term>
+     <listitem>
+      <para>
+       Массив массивов или объектов. Если какие-либо объекты используются, 
+       они могут не иметь защищенных или частных свойств.
+      </para>
+      <note>
+       <para>
+        Если документы для вставки не имеют ключа или свойства <literal>_id</literal>, 
+        будет создан новый экземпляр <classname>MongoId</classname> и назначен ему. 
+        Посмотрите <function>MongoCollection::insert</function> для 
+        получения дополнительной информации об этом поведении.
+       </para>
+      </note>
+     </listitem>
+    </varlistentry>   
+    <varlistentry>
+     <term>
+      <parameter>options</parameter>
+     </term>
+     <listitem>
+      <para>
+       Массив опций для пакета операций вставки. 
+       В настоящее время доступны следующие варианты:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>"continueOnError"</literal>
+         </para>
+         <para>
+          Булево, по умолчанию &false;. 
+          Если установлено, база данных не будет останавливать обработку 
+          массовой вставки в случае сбоя (например, из-за дублирования идентификаторов). 
+          Это приведет к тому, что массовая вставка ведет себя аналогично серии одиночных вставок, 
+          за исключением того, что при вызове <function>MongoDB::lastError</function> 
+          будет установлена ошибка в случае сбоя любой вставки, а не только последней. 
+          Если происходит несколько ошибок, <function>MongoDB::lastError</function>
+          сообщает о самых последних ошибках.
+         </para>
+         <note>
+          <para>
+           Обратите внимание, что <literal>continueOnError</literal> влияет 
+           на ошибки только на стороне базы данных. Если вы попытаетесь вставить документ 
+           с ошибками (например, он содержит ключ с пустым именем), то этот документ даже 
+           не будет перенесен в базу данных, так как драйвер обнаружит эту ошибку и выгрузится. 
+           <literal>continueOnError</literal> не влияет на ошибки, 
+           обнаруженные в документах драйвером.
+          </para>
+         </note>
+        </listitem>
+        &mongo.writes.parameters.fsync;
+        &mongo.writes.parameters.journal;
+        &mongo.writes.parameters.sockettimeoutms;
+        &mongo.writes.parameters.writeconcern;
+        &mongo.writes.parameters.writeconcerntimeoutms;
+       </itemizedlist>
+      </para>
+      <para>
+       Следующие параметры устарели и больше не должны использоваться:
+       <itemizedlist>
+        &mongo.writes.parameters.safe;
+        &mongo.writes.parameters.timeout;
+        &mongo.writes.parameters.writeconcerntimeout;
+       </itemizedlist>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;  
+  <para>
+   Если параметр <literal>w</literal> установлен для подтверждения записи, 
+   возвращает ассоциативный массив со статусом вставок ("ok") и любой ошибкой, 
+   которая могла произойти ("err"). 
+   В противном случае возвращает &true;, если пакетная вставка была успешно 
+   отправлена, иначе &false;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Выдает исключение <classname>MongoException</classname>, 
+   если какие-либо вставленные документы пусты или содержат ключи нулевой длины. 
+   Попытка вставить объект с защищенными и закрытыми свойствами 
+   приведет к ошибке ключа нулевой длины.
+  </para>
+  &mongo.errors.exceptions.writeconcern;
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>1.5.0</entry>
+       <entry>
+        <para>
+         Добавлена опция <literal>"wTimeoutMS"</literal>, 
+         которая заменяет <literal>"wtimeout"</literal>. 
+         Выдает <constant>E_DEPRECATED</constant>, когда 
+         используется <literal>"wtimeout"</literal>.
+        </para>
+        <para>
+         Добавлена опция <literal>"socketTimeoutMS"</literal>, 
+         которая заменяет <literal>"timeout"</literal>. 
+         Выдает <constant>E_DEPRECATED</constant>, 
+         когда используется <literal>"timeout"</literal>.
+        </para>
+        <para>
+         Выдает <constant>E_DEPRECATED</constant>, 
+         когда используется <literal>"safe"</literal>.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.3.4</entry>
+       <entry>Добавлена опция <literal>"wtimeout"</literal>.</entry>
+      </row>
+      <row>
+       <entry>1.3.0</entry>
+       <entry>Добавлена опция <literal>"w"</literal>.</entry>
+      </row>
+      <row>
+       <entry>1.2.7</entry>
+       <entry>Добавлена опция <literal>"continueOnError"</literal>.</entry>
+      </row>
+      <row>
+       <entry>1.0.9</entry>
+       <entry>
+        <para>
+         Добавлена возможность передавать целые числа в опцию <literal>"safe"</literal>, 
+         которая ранее принимала только логические значения.
+        </para>
+        <para>
+         Добавлена опция <literal>"fsync"</literal>.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.0.5</entry>
+       <entry>Добавлен параметр <parameter>options</parameter>.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>MongoCollection::batchInsert</function></title>
+   <para>
+    Пакетная вставка - это быстрый способ добавить сразу несколько элементов в базу данных.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$users = array();
+for ($i = 0; $i<100; $i++) {
+  $users[] = array('username' => 'user'.$i, 'i' => $i);
+}
+
+$mongo = new MongoClient();
+$collection = $mongo->my_db->users;
+$collection->drop();
+
+$collection->batchInsert($users);
+
+foreach ($users as $user) {
+  echo $user['_id']."\n"; // населенный экземпляром MongoId
+}
+
+$users = $collection->find()->sort(array('i' => 1));
+foreach ($users as $user) {
+    var_dump($user['username']);
+}
+
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+4bf43ac68ead0e1971000000
+4bf43ac68ead0e1971010000
+4bf43ac68ead0e1971020000
+...
+string(5) "user1"
+string(5) "user2"
+string(5) "user3"
+...
+]]>
+   </screen>
+  </example>
+
+  <example>
+   <title>Пример использования <function>MongoCollection::batchInsert</function> 
+    с игнорированием ошибок</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$con = new Mongo;
+$db = $con->demo;
+
+$doc1 = array(
+        '_id' => new MongoId('4cb4ab6d7addf98506010001'),
+        'id' => 1,
+        'desc' => "ONE",
+);
+$doc2 = array(
+        '_id' => new MongoId('4cb4ab6d7addf98506010002'),
+        'id' => 2,
+        'desc' => "TWO",
+);
+$doc3 = array(
+        '_id' => new MongoId('4cb4ab6d7addf98506010002'), // тот же _id, что и выше
+        'id' => 3,
+        'desc' => "THREE",
+);
+$doc4 = array(
+        '_id' => new MongoId('4cb4ab6d7addf98506010004'),
+        'id' => 4,
+        'desc' => "FOUR",
+);
+
+$c = $db->selectCollection('c');
+$c->batchInsert(
+    array($doc1, $doc2, $doc3, $doc4),
+    array('continueOnError' => true)
+);
+
+$docs = $c->find();
+foreach ($docs as $doc) {
+    var_dump($doc['desc']);
+}
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+string(3) "ONE"
+string(3) "TWO"
+string(4) "FOUR"
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><function>MongoCollection::insert</function></member>
+   <member><function>MongoCollection::update</function></member>
+   <member><function>MongoCollection::find</function></member>
+   <member><function>MongoCollection::remove</function></member>
+   <member>Основная документация
+    <link xlink:href="&url.mongodb.dochub.insert;">по вставке</link> MongoDB.
+   </member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+--> 
