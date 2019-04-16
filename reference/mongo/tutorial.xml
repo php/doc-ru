@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: b2357fc62a4d09fa67bb7f4f022ddb68091d61c0 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mongo.tutorial" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Руководство</title>
+ <warning>
+  &mongo.deprecated.note;
+ </warning>
+ <para>
+  Это официальный драйвер MongoDB для PHP.
+ </para>
+ <para>
+  Вот быстрый пример кода, который соединяется с MongoDB, вставляет и запрашивает документы, 
+  выполняет итерацию результатов запроса и отключается. 
+  Подробнее о каждом шаге в руководстве ниже.
+ </para>
+ <example xml:id="mongo.tutorial.basics">
+  <programlisting role="php">
+<![CDATA[
+<?php
+
+// соединяемся
+$m = new MongoClient();
+
+// выбираем базу данных
+$db = $m->comedy;
+
+// выбираем коллекцию (аналог таблицы реляционной базы данных)
+$collection = $db->cartoons;
+
+// добавляем запись
+$document = array( "title" => "Calvin and Hobbes", "author" => "Bill Watterson" );
+$collection->insert($document);
+
+// добавляем еще одну запись, с другой "формой"
+$document = array( "title" => "XKCD", "online" => true );
+$collection->insert($document);
+
+// находим все в коллекции
+$cursor = $collection->find();
+
+// перебираем результаты
+foreach ($cursor as $document) {
+    echo $document["title"] . "\n";
+}
+
+?>
+]]>
+  </programlisting>
+  &example.outputs;
+  <screen>
+<![CDATA[
+Calvin and Hobbes
+XKCD
+]]>
+  </screen>
+ </example>
+
+
+ <section xml:id="mongo.tutorial.connecting">
+  <title>Создание соединения</title>
+  <para>
+   Чтобы подключиться к серверу базы данных, используйте одну из следующих конструкций:
+  </para>
+
+  <example xml:id="mongo.tutorial.connecting-example">
+   <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient(); // подключаемся к localhost:27017
+$connection = new MongoClient( "mongodb://example.com" ); // подключиться к удаленному хосту (порт по умолчанию: 27017)
+$connection = new MongoClient( "mongodb://example.com:65432" ); // подключиться к удаленному хосту по заданному порту
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Вам не нужно явно отключаться от базы данных. 
+   Драйвер использует постоянные соединения и будет повторно использовать уже установленные соединения.
+  </para>
+  <section xml:id="mongo.tutorial.connecting.seealso">
+   <title>Смотрите также</title>
+   <para>
+    Глава о <link linkend="mongo.connecting">подключении</link>, 
+    охватывающая различные типы соединений.
+   </para>
+   <para>
+    Документация по API для класса <classname>MongoClient</classname> 
+    и <function>MongoClient::__construct</function> дает исчерпывающий 
+    обзор всех возможных вариантов с несколькими примерами.
+   </para>
+  </section>
+ </section>
+
+  <section xml:id="mongo.tutorial.selectdb">
+   <title>Получение базы данных</title>
+   <para>
+    Чтобы выбрать базу данных, используйте:
+   </para>
+   <example xml:id="mongo.tutorial.selectdb-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$db = $connection->dbname;
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    База данных не обязательно должна быть создана заранее, 
+    вы можете создать новые базы данных, просто выбрав их.
+   </para>
+   <para>
+    Будьте осторожны с опечатками! 
+    Вы можете непреднамеренно создать новую базу данных, 
+    что может привести к сбивающим с толку ошибкам 
+    (ниже приведен код, когда используется <literal>name</literal> 
+    и неправильно введенное <literal>anme</literal> во втором случае:
+
+    <example xml:id="mongo.tutorial.selectdb.typo">
+     <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+
+$db = $connection->mybiglongdbname;
+// делаем что-нибудь
+
+$db = $connection->mybiglongdbanme;
+// сейчас мы подключены к другой базе данных!
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <section xml:id="mongo.tutorial.selectdb.seealso">
+    <title>Смотрите также</title>
+    <para>
+     Документация по API для класса <classname>MongoDB</classname> 
+     содержит больше информации об объектах базы данных.
+    </para>
+   </section>
+  </section>
+
+  <section xml:id="mongo.tutorial.collection">
+   <title>Получение коллекции</title>
+   <para>
+    Получение коллекции имеет тот же синтаксис, что и получение базы данных:
+   </para>
+   <example xml:id="mongo.tutorial.collection-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$db = $connection->baz;
+
+// выбираем коллекцию:
+$collection = $db->foobar;
+
+// или, непосредственно выбирем базу данных и коллекцию:
+$collection = $connection->baz->foobar;
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    Коллекция аналогична таблице (если вы знакомы с реляционными базами данных).
+   </para>
+   <section xml:id="mongo.tutorial.collection.seealso">
+    <title>Смотрите также</title>
+    <para>
+     Документация по API для класса <classname>MongoCollection</classname> 
+     содержит больше информации об объектах коллекции.
+    </para>
+   </section>
+  </section>
+
+  <section xml:id="mongo.tutorial.insert">
+   <title>Вставка документа</title>
+   <para>
+    Ассоциативные массивы - это базовый объект, 
+    который можно сохранить в коллекции в базе данных. 
+    Например, "документ" может быть:
+   </para>
+   <example xml:id="mongo.tutorial.insert-data-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$doc = array(
+    "name" => "MongoDB",
+    "type" => "database",
+    "count" => 1,
+    "info" => (object)array( "x" => 203, "y" => 102),
+    "versions" => array("0.9.7", "0.9.8", "0.9.9")
+);
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    Обратите внимание, что вы можете иметь вложенные массивы и объекты. 
+    Драйвер всегда будет хранить ассоциативный массив как объект в базе данных. 
+    Численно индексированный массив сохраняется как массив в случае, 
+    если ключи начинаются с 0 и не прерываются, и как объект, 
+    если ключи массива не начинаются с 0 
+    или имеют пробелы (то есть: <literal>0, 1, 4, 5</literal>).
+   </para>
+   <para>
+    Чтобы вставить этот документ, используйте <function>MongoCollection::insert</function>:
+   </para>
+   <example xml:id="mongo.tutorial.insert-example-2">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$collection->insert( $doc );
+?>
+]]>
+    </programlisting>
+   </example>
+   <section xml:id="mongo.tutorial.insert.seealso">
+    <title>Смотрите также</title>
+    <para>
+     Документация API к <function>MongoCollection::insert</function> 
+     содержит больше информации о вставке данных.
+    </para>
+   </section>
+  </section>
+
+  <section xml:id="mongo.tutorial.findone">
+   <title>
+    Поиск документов с помощью <function>MongoCollection::findOne</function>
+   </title>
+   <para>
+    Чтобы показать, что документ, который мы вставили на предыдущем шаге, 
+    хранится в базе данных, мы можем выполнить простую 
+    операцию <function>MongoCollection::findOne</function>, 
+    чтобы получить один документ из коллекции. 
+    Этот метод полезен, когда существует только один документ, 
+    соответствующий запросу, или вас интересует только один результат.
+   </para>
+   <example xml:id="mongo.tutorial.findone-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$document = $collection->findOne();
+var_dump( $document );
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(6) {
+  ["_id"]=>
+  object(MongoId)#8 (1) {
+    ["$id"]=>
+    string(24) "4e2995576803fab768000000"
+  }
+  ["name"]=>
+  string(7) "MongoDB"
+  ["type"]=>
+  string(8) "database"
+  ["count"]=>
+  int(1)
+  ["info"]=>
+  array(2) {
+    ["x"]=>
+    int(203)
+    ["y"]=>
+    int(102)
+  }
+  ["versions"]=>
+  array(3) {
+    [0]=>
+    string(5) "0.9.7"
+    [1]=>
+    string(5) "0.9.8"
+    [2]=>
+    string(5) "0.9.9"
+  }
+}
+]]>
+    </screen>
+   </example>
+   <para>
+    Обратите внимание, что есть поле <literal>_id</literal>, 
+    которое было автоматически добавлено в ваш документ. <literal>_id</literal> - это поле 
+    "первичный ключ". Если в вашем документе он не указан, драйвер добавит его автоматически.
+   </para>
+   <para>
+    Если вы укажете свое собственное поле <literal>_id</literal>, 
+    оно должно быть уникальным для коллекции. Смотрите пример здесь:
+   </para>
+   <example xml:id="mongo.tutorial.findone-example-2">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$db = $connection->database;
+
+$db->foo->insert(array("_id" => 1));
+// это выдаст исключение
+$db->foo->insert(array("_id" => 1));
+
+// здесь все хорошо, так как это другая коллекция
+$db->bar->insert(array("_id" => 1));
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    По умолчанию драйвер гарантирует, что сервер подтвердил запись перед возвратом. 
+    Вы можете при желании отключить это поведение, 
+    передав <literal>array("w" => 0)</literal> в качестве второго аргумента. 
+    Это означает, что драйвер не должен ждать, 
+    пока база данных подтвердит запись, 
+    и не вызовет исключение дубликата <literal>_id</literal>.
+   </para>
+   <section xml:id="mongo.tutorial.findone.seealso">
+    <title>Смотрите также</title>
+    <para>
+     <function>MongoCollection::findOne</function> 
+     для получения дополнительной информации о поиске данных.
+    </para>
+    <para>
+     <classname>MongoId</classname> более подробно 
+     описывает уникальные идентификаторы.
+    </para>
+    <para>
+     Раздел <link linkend="mongo.writes">записи</link> описывает 
+     более детальную запись, а в главе <xref linkend="mongo.writeconcerns" /> 
+     подробно рассматриваются различные параметры записи.
+    </para>
+   </section>
+  </section>
+
+  <section xml:id="mongo.tutorial.insert.multiple">
+   <title>Добавление нескольких документов</title>
+   <para>
+    Чтобы сделать более интересные вещи с запросами, давайте добавим в коллекцию 
+    несколько простых документов. Эти документы будут иметь 
+    форму <literal>array( "i" => <replaceable>value</replaceable> );</literal>; 
+    и мы можем сделать это довольно эффективно в цикле:
+   </para>
+   <example xml:id="mongo.tutorial.insert.multiple-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+for ( $i = 0; $i < 100; $i++ )
+{
+    $collection->insert( array( 'i' => $i, "field{$i}" => $i * 2 ) );
+}
+?>
+]]>
+    </programlisting>
+   </example>
+
+   <para>
+    Обратите внимание, что мы можем вставить массивы с разными ключами в одну коллекцию. 
+    Именно этот аспект мы имеем в виду, когда говорим, что MongoDB "без схемы". 
+    В приведенном выше примере каждый документ имеет поле <literal>i</literal>, 
+    а также имя поля в виде <literal>field</literal> + <literal>$i</literal>.
+   </para>
+  </section>
+
+  <section xml:id="mongo.tutorial.counting">
+   <title>Подсчет документов в коллекции</title>
+   <para>
+    Теперь, когда мы вставили 101 документ (100, которые мы сделали в цикле, плюс первый), 
+    мы можем проверить, добавлены ли они все, используя метод <function>MongoCollection::count</function>.
+    <example xml:id="mongo.tutorial.counting-example">
+     <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+echo $collection->count();
+?>
+]]>
+     </programlisting>
+    </example>
+    и это должно вывести 101.
+   </para>
+  </section>
+
+  <section xml:id="mongo.tutorial.cursor">
+   <title>Использование курсора для получения всех документов</title>
+   <para>
+    Чтобы получить все документы в коллекции, мы будем 
+    использовать <function>MongoCollection::find</function>. 
+    Метод find() возвращает объект <classname>MongoCursor</classname>, 
+    который позволяет перебирать набор документов, соответствующих нашему запросу. 
+    Итак, чтобы запросить все документы и распечатать их:
+
+    <example xml:id="mongo.tutorial.cursor-example">
+     <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$cursor = $collection->find();
+foreach ( $cursor as $id => $value )
+{
+    echo "$id: ";
+    var_dump( $value );
+}
+?>
+]]>
+     </programlisting>
+    </example>
+
+    и это должно вывести все 101 документов в коллекции.
+    <literal>$id</literal> - это поле <literal>_id</literal> документа (приведенное к строке), 
+    а <literal>$value</literal> - сам документ.
+   </para>
+   <section xml:id="mongo.tutorial.cursor.seealso">
+    <title>Смотрите также</title>
+    <para>
+     Документация API по <function>MongoCollection::find</function> 
+     содержит больше информации о поиске данных.
+    </para>
+   </section>
+  </section>
+
+  <section xml:id="mongo.tutorial.criteria">
+   <title>Установка критериев для запроса</title>
+   <para>
+    Мы можем создать запрос для передачи в метод <function>MongoCollection::find</function>, 
+    чтобы получить подмножество документов в нашей коллекции. 
+    Например, если мы хотим найти документ, для которого значение 
+    поля <literal>"i"</literal> равно <literal>71</literal>, мы бы сделали следующее:
+   </para>
+   <example xml:id="mongo.tutorial.criteria-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$query = array( 'i' => 71 );
+$cursor = $collection->find( $query );
+
+while ( $cursor->hasNext() )
+{
+    var_dump( $cursor->getNext() );
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(2) {
+  ["_id"]=>
+  object(MongoId)#6 (0) {
+  }
+  ["i"]=>
+  int(71)
+  ["_ns"]=>
+  "testCollection"
+}
+]]>
+    </screen>
+   </example>
+  </section>
+
+  <section xml:id="mongo.tutorial.multi.query">
+   <title>Получение набора документов с запросом</title>
+   <para>
+    Мы можем использовать запрос, чтобы получить набор документов из нашей коллекции. 
+    Например, если мы хотим получить все документы, где <literal>"i"</literal>
+    &gt; <literal>50</literal>, мы могли бы написать:
+   </para>
+   <example xml:id="mongo.tutorial.multi.query-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$query = array( "i" => array( '$gt' => 50 ) ); //обратите внимание на одинарные кавычки вокруг '$gt'
+$cursor = $collection->find( $query );
+
+while ( $cursor->hasNext() )
+{
+    var_dump( $cursor->getNext() );
+}
+?>
+]]>
+    </programlisting>
+    <para>
+     который должен напечатать документы, где <literal>"i"</literal> &gt;
+     <literal>50</literal>. 
+     Мы также можем получить диапазон, скажем, <literal>20 &lt; i &lt;= 30</literal>:
+    </para>
+    <screen>
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$query = array( 'i' => array( '$gt' => 20, "\$lte" => 30 ) );
+$cursor = $collection->find( $query );
+
+while ( $cursor->hasNext() )
+{
+    var_dump( $cursor->getNext() );
+}
+?>
+]]>
+    </screen>
+   </example>
+   <para>
+    Не забывайте всегда избегать символа $ или использовать 
+    одинарные кавычки. В противном случае PHP будет интерпретировать его, 
+    как переменную <varname>$gt</varname>.
+   </para>
+  </section>
+
+  <section xml:id="mongo.tutorial.indexes">
+   <title>Создание индекса</title>
+   <para>
+    MongoDB поддерживает индексы, и их очень легко добавить в коллекцию. 
+    Для создания индекса вы указываете имя поля и направление: 
+    по возрастанию (1) или по убыванию (-1). 
+    Следующее создает восходящий индекс в поле "i":
+   </para>
+   <example xml:id="mongo.tutorial.indexes-example">
+    <programlisting role="php">
+<![CDATA[
+<?php
+$connection = new MongoClient();
+$collection = $connection->database->collectionName;
+
+$collection->ensureIndex( array( "i" => 1 ) );  // создаем индекс на "i"
+$collection->ensureIndex( array( "i" => -1, "j" => 1 ) );  // индекс на "i" по убыванию, "j" по возрастанию
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>
+    Индексирование имеет решающее значение для хорошей производительности чтения 
+    по мере роста ваших данных. Если вы не знакомы с индексированием, 
+    ознакомьтесь с документацией <function>MongoCollection::ensureIndex</function> 
+    и базовой документацией по <link xlink:href="&url.mongodb.dochub.indexes;">индексированию MongoDB</link>.
+   </para>
+  </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
