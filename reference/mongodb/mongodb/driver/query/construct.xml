@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 89fd9d4157350fd7f7e04f600aee0ded9482275f Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="mongodb-driver-query.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>MongoDB\Driver\Query::__construct</refname>
+  <refpurpose>Создает новый запрос</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>final</modifier> <modifier>public</modifier> <methodname>MongoDB\Driver\Query::__construct</methodname>
+   <methodparam><type>array|object</type><parameter>filter</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>queryOptions</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Создает новый <classname>MongoDB\Driver\Query</classname>, который является 
+   объектом неизменяемого значения, представляющим запрос к базе данных. Затем запрос может 
+   быть выполнен с помощью 
+   <methodname>MongoDB\Driver\Manager::executeQuery</methodname>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   &mongodb.parameter.filter;
+   <varlistentry>
+    <term><parameter>queryOptions</parameter></term>
+    <listitem>
+     <para>
+      <table xml:id="mongodb-driver-query.construct-queryOptions">
+       <title>queryOptions</title>
+       <tgroup cols="3">
+        <thead>
+         <row>
+          <entry>Опция</entry>
+          <entry>Тип</entry>
+          <entry>Описание</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>allowPartialResults</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Для запросов к изолированной коллекции возвращает частичные результаты 
+            из mongos, если некоторые шарды недоступны, вместо выдачи 
+            ошибки.
+           </para>
+           <para>
+            Возврат к устаревшей <literal>"partial"</literal> опции, 
+            если она не указана.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>awaitData</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           Используйте совместно с опцией <literal>"tailable"</literal>, 
+           чтобы временно заблокировать операцию getMore для курсора, если в конце 
+           данных, а не возвращать никаких данных. После истечения времени ожидания запрос 
+           возвращается, как обычно.
+          </entry>
+         </row>
+         <row>
+          <entry>batchSize</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <para>
+            Количество документов для возврата в первом пакете. По умолчанию - 101. 
+            Размер пакета 0 означает, что курсор будет установлен, 
+            но никакие документы не будут возвращены в первом пакете.
+           </para>
+           <para>
+            В версиях MongoDB до 3.2, где запросы используют устаревший проводной 
+            протокол OP_QUERY, размер пакета, равный 1, будет закрывать курсор 
+            независимо от количества совпадающих документов.
+           </para>
+          </entry>
+         </row>
+         &mongodb.option.collation;
+         <row>
+          <entry>comment</entry>
+          <entry><type>string</type></entry>
+          <entry>
+           <para>
+            Комментарий для прикрепления к запросу, помогающий интерпретировать и отслеживать 
+            данные профиля запроса.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$comment"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>exhaust</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Потоковая передача данных на полную мощность в нескольких "дополнительных" пакетах при условии, 
+            что клиент полностью прочитает все запрашиваемые данные. Быстрее, 
+            когда вы извлекаете много данных и знаете, что хотите все это 
+            перенести. Примечание: клиент не имеет права не читать все данные, 
+            если он не закрывает соединение.
+           </para>
+           <para>
+            Эта опция не поддерживается командой find в MongoDB 3.2+ и 
+            заставит драйвер использовать устаревшую версию проводного протокола (то есть 
+            OP_QUERY).
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>explain</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Если &true;, возвращенный <classname>MongoDB\Driver\Cursor</classname> 
+            будет содержать один документ, который описывает процесс и 
+            индексы, используемые для возврата запроса.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$explain"</literal>, 
+            если он не указан.
+           </para>
+           <para>
+            Эта опция не поддерживается командой find в MongoDB 3.2+ и 
+            будет учитываться только при использовании устаревшей версии проводного протокола 
+            (т.е. OP_QUERY). Команда 
+            <link xlink:href="&url.mongodb.docs;reference/command/explain/">explain</link> 
+            должна использоваться на MongoDB 3.0+.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>hint</entry>
+          <entry><type>string|array|object</type></entry>
+          <entry>
+           <para>
+            Индекс спецификации. Укажите либо имя индекса в виде строки, либо 
+            шаблон ключа индекса. Если указано, то система запросов будет рассматривать планы только 
+            с использованием хинтованного индекса.
+           </para>
+           <para>
+            Откат к устаревшей опции <literal>"hint"</literal>, если она не 
+            указана.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>limit</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <para>
+            Максимальное количество документов для возврата. Если не указано, то 
+            по умолчанию используется без ограничений. Значение 0 эквивалентно установке 
+            без ограничения.
+           </para>
+           <para>
+            Отрицательное значение будет интерпретироваться как положительное значение 
+            с параметром <literal>"singleBatch"</literal>, установленным в значение &true;. 
+            Это поведение поддерживается для обратной совместимости, 
+            но его следует считать устаревшим.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>max</entry>
+          <entry><type>array|object</type></entry>
+          <entry>
+           <para>
+            <emphasis>Эксклюзивная</emphasis> верхняя граница для определенного индекса.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$max"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>maxAwaitTimeMS</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <para>
+            Положительное целое число, обозначающее ограничение времени в миллисекундах для 
+            сервера, чтобы заблокировать операцию getMore, если данные недоступны. Эта 
+            опция должна использоваться только в сочетании с опциями 
+            <literal>"tailable"</literal> и <literal>"awaitData"</literal>.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>maxScan</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <warning>
+            <simpara>
+             Эта опция устарела и не должна использоваться.
+            </simpara>
+           </warning>
+           <para>
+            Целое положительное число, обозначающее максимальное количество документов 
+            или индексных ключей для сканирования при выполнении запроса.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$maxScan"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>maxTimeMS</entry>
+          <entry><type>integer</type></entry>
+          <entry>
+           <para>
+            Накопленный лимит времени в миллисекундах для операций 
+            обработки на курсоре. MongoDB прерывает операцию в ближайшей 
+            следующей точке прерывания.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$maxTimeMS"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>min</entry>
+          <entry><type>array|object</type></entry>
+          <entry>
+           <para>
+            <emphasis>Включающая</emphasis> нижняя граница для определенного индекса.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$min"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>modifiers</entry>
+          <entry><type>array</type></entry>
+          <entry>
+           <link xlink:href="&url.mongodb.docs;reference/operator/query-modifier/">Метаоператоры</link>, 
+           изменяющие вывод или поведение запроса. Использование этих операторов 
+           не рекомендуется в пользу именованных опций.
+          </entry>
+         </row>
+         <row>
+          <entry>noCursorTimeout</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           Запрещает серверу синхронизировать незанятые курсоры после периода 
+           бездействия (10 минут).
+          </entry>
+         </row>
+         <row>
+          <entry>oplogReplay</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Внутреннее использование для наборов реплик. Чтобы использовать oplogReplay, 
+            вы должны включить в фильтр следующее условие:
+           </para>
+           <para>
+            <programlisting role="text">
+<![CDATA[
+[ 'ts' => [ '$gte' => <timestamp> ] ]
+]]>
+            </programlisting>
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>projection</entry>
+          <entry><type>array|object</type></entry>
+          <entry>
+           <para>
+            <link xlink:href="&url.mongodb.docs;tutorial/project-fields-from-query-results/">Спецификация проекции</link> 
+            для определения полей, которые необходимо включить в возвращаемые документы.
+           </para>
+           <para>
+            Если вы используете <link linkend="mongodb.persistence.deserialization">функцию ODM</link> 
+            для десериализации документов в качестве их исходного 
+            класса PHP, убедитесь, что вы включили поле <property>__pclass</property> в проекцию. Это 
+            необходимо для работы десериализации, и без нее драйвер вернет (по умолчанию) 
+            объект <classname>stdClass</classname>.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>readConcern</entry>
+          <entry><classname>MongoDB\Driver\ReadConcern</classname></entry>
+          <entry>
+           <para>
+            Гарантии чтения, чтобы применить к операции. По умолчанию будут использоваться 
+            гарантии чтения из 
+            <link linkend="mongodb-driver-manager.construct-uri">URI подключения MongoDB</link>.
+           </para>
+           <para>
+            Эта опция доступна в MongoDB 3.2+ и приведет к 
+            исключению во время выполнения, если указано для более старой 
+            версии сервера.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>returnKey</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Если &true;, возвращает только индексные ключи в результирующих документах. 
+            Значением по умолчанию является &false;. Если &true; и команда find не 
+            используют индекс, возвращенные документы будут пустыми.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$returnKey"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>showRecordId</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <para>
+            Определяет, возвращать ли идентификатор записи для каждого 
+            документа. Если &true;, добавляет поле <literal>"$recordId"</literal> 
+            верхнего уровня к возвращенным документам.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$showDiskLoc"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>singleBatch</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           Определяет, закрывать ли курсор после первого пакета. 
+           По умолчанию &false;.
+          </entry>
+         </row>
+         <row>
+          <entry>skip</entry>
+          <entry><type>integer</type></entry>
+          <entry>Количество документов для пропуска. По умолчанию 0.</entry>
+         </row>
+         <row>
+          <entry>slaveOk</entry>
+          <entry><type>boolean</type></entry>
+          <entry>Разрешить запрос вторичных наборов реплик</entry>
+         </row>
+         <row>
+          <entry>snapshot</entry>
+          <entry><type>boolean</type></entry>
+          <entry>
+           <warning>
+            <simpara>
+             Эта опция устарела и не должна использоваться.
+            </simpara>
+           </warning>
+           <para>
+            Запрещает курсору возвращать документ более одного раза из-за 
+            промежуточной операции записи.
+           </para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$snapshot"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>sort</entry>
+          <entry><type>array|object</type></entry>
+          <entry>
+           <para>Спецификация сортировки для упорядочения результатов.</para>
+           <para>
+            Возврат к устаревшему модификатору <literal>"$orderby"</literal>, 
+            если он не указан.
+           </para>
+          </entry>
+         </row>
+         <row>
+          <entry>tailable</entry>
+          <entry><type>boolean</type></entry>
+          <entry>Возвращает настраиваемый курсор для ограниченной коллекции.</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </table>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simplelist>
+   &mongodb.throws.argumentparsing;
+  </simplelist>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>1.5.0</entry>
+       <entry>
+        <para>
+         Параметры <literal>"maxScan"</literal> и <literal>"snapshot"</literal> 
+         устарели.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.3.0</entry>
+       <entry>
+        <para>
+         Добавлен параметр <literal>"maxAwaitTimeMS"</literal>.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.2.0</entry>
+       <entry>
+        <para>
+         Добавлен параметр <literal>"allowPartialResults"</literal>,
+         <literal>"collation"</literal>, <literal>"comment"</literal>,
+         <literal>"hint"</literal>, <literal>"max"</literal>,
+         <literal>"maxScan"</literal>, <literal>"maxTimeMS"</literal>,
+         <literal>"min"</literal>, <literal>"returnKey"</literal>,
+         <literal>"showRecordId"</literal>, и <literal>"snapshot"</literal>.
+        </para>
+        <para>
+         Переименован параметр <literal>"partial"</literal> в
+         <literal>"allowPartialResults"</literal>. Для обратной совместимости,
+         <literal>"partial"</literal> все равно будет прочитан, если
+         <literal>"allowPartialResults"</literal> не указан.
+        </para>
+        <para>
+         Удален параметр <literal>"slaveOk"</literal>, который устарел. 
+         Для запросов, использующих устаревший проводной протокол OP_QUERY, драйвер 
+         устанавливает бит <literal>slaveOk</literal> по мере необходимости в соответствии с 
+         <link xlink:href="&url.mongodb.serverselection;">Спецификацией выбора сервера</link>.
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry>1.1.0</entry>
+       <entry>Добавлен параметр <literal>"readConcern"</literal>.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>MongoDB\Driver\Query::__construct</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+/* Выберите только документы, автором которых является "bjori" с не менее 100 просмотров */
+$filter = [
+    'author' => 'bjori',
+    'views' => [
+        '$gte' => 100,
+    ],
+];
+
+$options = [
+    /* Вернуть только следующие поля в соответствующих документах */
+    'projection' => [
+        'title' => 1,
+        'article' => 1,
+    ],
+    /* Вернуть документы в порядке убывания просмотров */
+    'sort' => [
+        'views' => -1
+    ],
+];
+
+$query = new MongoDB\Driver\Query($filter, $options);
+
+$manager = new MongoDB\Driver\Manager('mongodb://localhost:27017');
+$readPreference = new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::RP_PRIMARY);
+$cursor = $manager->executeQuery('databaseName.collectionName', $query, $readPreference);
+
+foreach($cursor as $document) {
+    var_dump($document);
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><methodname>MongoDB\Driver\Manager::executeQuery</methodname></member>
+   <member><classname>MongoDB\Driver\Cursor</classname></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
