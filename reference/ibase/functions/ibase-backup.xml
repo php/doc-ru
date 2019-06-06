@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: b8758b0605e80c4e3610137b7502a6abeea5c69b Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 4d8da419011b34623bc91aab8d5ef7f5b6bfb128 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ibase-backup">
@@ -19,9 +19,138 @@
    <methodparam choice="opt"><type>int</type><parameter>options</parameter><initializer>0</initializer></methodparam>
    <methodparam choice="opt"><type>bool</type><parameter>verbose</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
+  <para>
+   Эта функция передает аргументы на (удаленный) сервер базы 
+   данных. Там начинается новый процесс резервного копирования. Поэтому вы не получите никаких ответов.
+  </para>
+  </refsect1>
+ 
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>service_handle</parameter></term>
+     <listitem>
+      <para>
+       Ранее открытое соединение с сервером базы данных.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>source_db</parameter></term>
+     <listitem>
+      <para>
+       Абсолютный путь к файлу базы данных на сервере базы данных. Вы также можете использовать псевдоним базы данных.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>dest_file</parameter></term>
+     <listitem>
+      <para>
+       Путь к файлу резервной копии на сервере базы данных.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>options</parameter></term>
+     <listitem>
+      <para>
+       Дополнительные опции для передачи на сервер базы данных для резервного копирования.
+       Параметр <parameter>options</parameter> может быть комбинацией
+        из следующих констант:
+       <constant>IBASE_BKP_IGNORE_CHECKSUMS</constant>,
+       <constant>IBASE_BKP_IGNORE_LIMBO</constant>, 
+       <constant>IBASE_BKP_METADATA_ONLY</constant>,
+       <constant>IBASE_BKP_NO_GARBAGE_COLLECT</constant>,
+       <constant>IBASE_BKP_OLD_DESCRIPTIONS</constant>,
+       <constant>IBASE_BKP_NON_TRANSPORTABLE</constant> или
+       <constant>IBASE_BKP_CONVERT</constant>.
+       Прочтите раздел о <xref linkend="ibase.constants" /> для получения дополнительной информации.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>verbose</parameter></term>
+     <listitem>
+      <para>
+       Поскольку процесс резервного копирования выполняется на сервере базы данных, у вас нет шансов 
+       получить его вывод. Этот аргумент бесполезен.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
 
-   &warn.undocumented.func;
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+  <para>
+   Поскольку процесс резервного копирования выполняется на (удаленном) сервере, эта функция просто передает ему аргументы.
+    Пока аргументы корректны, вы не получите &false;.
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>ibase_backup</function> </title>
+    <programlisting role="php">
+<![CDATA[
+<?php
 
+// Соединение к серверу базы данных по IP-адресу и порту
+$service = ibase_service_attach ('10.1.11.200/3050', 'sysdba', 'masterkey');
+
+// Запуск процесса резервного копирования на сервере базы данных
+// Резервное копирование базы данных сотрудников, используя полный путь к /srv/backup/employees.fbk
+// Не используйте никаких специальных аргументов
+ibase_backup($service, '/srv/firebird/employees.fdb', '/srv/backup/employees.fbk');
+
+// Освобождение подключенного соединения
+ibase_service_detach ($service);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  
+  <para>
+   <example>
+    <title>Пример использования <function>ibase_backup</function> с аргументами</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Подключиться к серверу базы данных по имени и порту по умолчанию
+$service = ibase_service_attach ('fb-server.contoso.local', 'sysdba', 'masterkey');
+
+// Запуск процесс резервного копирования на сервере базы данных
+// Резервное копирование базы данных сотрудников с использованием псевдонима в /srv/backup/employees.fbk.
+// Резервное копирование только метаданных. Не создавайте переносную резервную копию.
+ibase_backup($service, 'employees.fdb', '/srv/backup/employees.fbk', IBASE_BKP_METADATA_ONLY | IBASE_BKP_NON_TRANSPORTABLE);
+
+// Освобождение подключенного соединения
+ibase_service_detach ($service);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>ibase_restore</function></member>
+   </simplelist>
+  </para>
  </refsect1>
 
 </refentry>
