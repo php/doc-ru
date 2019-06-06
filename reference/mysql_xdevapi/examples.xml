@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: dd11e151f182a2a512a62cc828af500bad8cb4a8 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="mysql-xdevapi.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <para>
+  Центральной точкой входа в X DevAPI является функция <function>mysql_xdevapi\getSession</function>, 
+  которая получает URI на сервер MySQL 8.0 и возвращает 
+  объект <classname>mysql_xdevap\Session</classname>.
+ </para>
+ <example>
+  <title>Подключение к серверу MySQL</title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+try {
+    $session = mysql_xdevapi\getSession("mysqlx://user:password@host");
+} catch(Exception $e) {
+    die("Не удалось установить соединение: " . $e->getMessage());
+}
+ 
+// ... используйте $session
+?>
+]]>
+  </programlisting>
+ </example>
+ <para>
+  Сессия обеспечивает полный доступ к API. Для новой установки сервера MySQL
+  первым шагом является создание схемы базы данных с коллекцией для 
+  хранения данных:
+ </para>
+ <example>
+  <title>Создание схемы и коллекции на сервере MySQL</title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+$schema = $session->createSchema("test");
+$collection = $schema->createCollection("example");
+?>
+]]>
+  </programlisting>
+ </example>
+ <para>
+  При хранении данных, как правило, <function>json_encode</function> используется для кодирования 
+  данных в JSON, который затем может храниться в коллекции.
+ </para>
+ <para>
+  В следующем примере данные сохраняются в коллекции, которую мы создали ранее, 
+  а затем снова извлекаем их части.
+ </para>
+ <example>
+  <title>Хранение и получение данных</title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+$marco = [
+  "name" => "Marco",
+  "age"  => 19,
+  "job"  => "Programmer"
+];
+$mike = [
+  "name" => "Mike",
+  "age"  => 39,
+  "job"  => "Manager"
+];
+
+$schema = $session->getSchema("test");
+$collection = $schema->getCollection("example");
+
+$collection->add($marco, $mike)->execute();
+
+var_dump($collection->find("name = 'Mike'")->execute()->fetchOne());
+?>
+]]>
+  </programlisting>
+  &example.outputs.similar;
+  <screen>
+   <![CDATA[
+array(4) {
+  ["_id"]=>
+  string(28) "00005ad66aaf0000000000000003"
+  ["age"]=>
+  int(39)
+  ["job"]=>
+  string(7) "Manager"
+  ["name"]=>
+  string(4) "Mike"
+}
+]]>
+  </screen>
+ </example>
+ <para>
+  Пример демонстрирует, что сервер MySQL добавляет дополнительное поле с именем 
+  <code>_id</code>, которое служит первичным ключом к документу.
+ </para>
+ <para>
+  В примере также показано, что извлеченные данные сортируются в алфавитном порядке. 
+  Этот конкретный порядок исходит из эффективного двоичного хранилища внутри сервера MySQL, но 
+  на него не следует полагаться. За подробностями обращайтесь к документации по типу данных MySQL JSON.
+ </para>
+ <para>
+  При желании можно использовать итераторы PHP для извлечения нескольких документов:
+ </para>
+ <example>
+  <title>Извлечение и итерация нескольких документов</title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+$result = $collection->find()->execute();
+foreach ($result as $doc) {
+  echo "${doc["name"]} is a ${doc["job"]}.\n";
+}
+?>
+]]>
+  </programlisting>
+  &example.outputs.similar;
+  <screen>
+   <![CDATA[
+Marco is a Programmer.
+Mike is a Manager.
+]]>
+  </screen>
+ </example>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
