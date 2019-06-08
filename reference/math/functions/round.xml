@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 03c4f516b367ffd97e1921d9d88b3f01f9217331 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 1ef2fdddacc294b73c467162d8430e4590291530 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.round" xmlns="http://docbook.org/ns/docbook">
@@ -53,7 +53,7 @@
      <term><parameter>val</parameter></term>
      <listitem>
       <para>
-       Значение для округления
+       Значение для округления.
       </para>
      </listitem>
     </varlistentry>
@@ -61,7 +61,17 @@
      <term><parameter>precision</parameter></term>
      <listitem>
       <para>
-       Количество десятичных знаков, до которых округлять
+       Количество десятичных знаков, до которых производится округление
+      </para>
+      <para>
+       Если <parameter>precision</parameter> положительный,
+       округление будет производиться справа от запятой.
+      </para>
+      <para>
+       Если <parameter>precision</parameter> отрицателен,
+       округление будет производиться слева от запятой.
+       Если абсолютное значение <parameter>precision</parameter>
+       больше или равно количеству цифр, результат округления будет равен <literal>0</literal>
       </para>
      </listitem>
     </varlistentry>
@@ -74,7 +84,7 @@
         <tgroup cols="2">
          <thead>
           <row>
-           <entry>Константа</entry>
+           <entry>&Constants;</entry>
            <entry>&Description;</entry>
           </row>
          </thead>
@@ -119,7 +129,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Округленное значение
+   Значение округляется до заданного значения <parameter>precision</parameter> как &float;.
   </para>
  </refsect1>
  <refsect1 role="examples">
@@ -130,17 +140,62 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-echo round(3.4);         // 3
-echo round(3.5);         // 4
-echo round(3.6);         // 4
-echo round(3.6, 0);      // 4
-echo round(1.95583, 2);  // 1.96
-echo round(1241757, -3); // 1242000
-echo round(5.045, 2);    // 5.05
-echo round(5.055, 2);    // 5.06
+var_dump round(3.4);         // 3
+var_dump round(3.5);         // 4
+var_dump round(3.6);         // 4
+var_dump round(3.6, 0);      // 4
+var_dump round(1.95583, 2);  // 1.96
+var_dump round(1241757, -3); // 1242000
+var_dump round(5.045, 2);    // 5.05
+var_dump round(5.055, 2);    // 5.06
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+float(3)
+float(4)
+float(4)
+float(4)
+float(1.96)
+float(1242000)
+float(5.05)
+float(5.06)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Как параметр <parameter>precision</parameter> влияет на числа с плавющей запятой</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$number = 1346.21;
+
+var_dump(round($number, 2));
+var_dump(round($number, 1));
+var_dump(round($number, 0));
+var_dump(round($number, -1));
+var_dump(round($number, -2));
+var_dump(round($number, -3));
+var_dump(round($number, -4));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+float(1346.21)
+float(1346.2)
+float(1346)
+float(1350)
+float(1300)
+float(1000)
+float(0)
+]]>
+    </screen>
    </example>
   </para>
   <para>
@@ -149,50 +204,100 @@ echo round(5.055, 2);    // 5.06
     <programlisting role="php">
 <![CDATA[
 <?php
-echo round(9.5, 0, PHP_ROUND_HALF_UP);   // 10
-echo round(9.5, 0, PHP_ROUND_HALF_DOWN); // 9
-echo round(9.5, 0, PHP_ROUND_HALF_EVEN); // 10
-echo round(9.5, 0, PHP_ROUND_HALF_ODD);  // 9
+echo 'Rounding modes with 9.5' . PHP_EOL;
+var_dump(round(9.5, 0, PHP_ROUND_HALF_UP));
+var_dump(round(9.5, 0, PHP_ROUND_HALF_DOWN));
+var_dump(round(9.5, 0, PHP_ROUND_HALF_EVEN));
+var_dump(round(9.5, 0, PHP_ROUND_HALF_ODD));
 
-echo round(8.5, 0, PHP_ROUND_HALF_UP);   // 9
-echo round(8.5, 0, PHP_ROUND_HALF_DOWN); // 8
-echo round(8.5, 0, PHP_ROUND_HALF_EVEN); // 8
-echo round(8.5, 0, PHP_ROUND_HALF_ODD);  // 9
+echo 'Rounding modes with 8.5' . PHP_EOL;
+var_dump(round(8.5, 0, PHP_ROUND_HALF_UP));
+var_dump(round(8.5, 0, PHP_ROUND_HALF_DOWN));
+var_dump(round(8.5, 0, PHP_ROUND_HALF_EVEN));
+var_dump(round(8.5, 0, PHP_ROUND_HALF_ODD));
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Rounding modes with 9.5
+float(10)
+float(9)
+float(10)
+float(9)
+Rounding modes with 8.5
+float(9)
+float(8)
+float(8)
+float(9)
+]]>
+    </screen>
    </example>
+  </para>
+  <para>
    <example>
     <title>Примеры использования параметра <parameter>mode</parameter> с указанием точности <parameter>precision</parameter></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-/* Использование PHP_ROUND_HALF_UP с точностью до 1 знака */
-echo round( 1.55, 1, PHP_ROUND_HALF_UP);   //  1.6
-echo round( 1.54, 1, PHP_ROUND_HALF_UP);   //  1.5
-echo round(-1.55, 1, PHP_ROUND_HALF_UP);   // -1.6
-echo round(-1.54, 1, PHP_ROUND_HALF_UP);   // -1.5
+echo 'Использование PHP_ROUND_HALF_UP с точностью до 1 знака' . PHP_EOL;
+var_dump(round( 1.55, 1, PHP_ROUND_HALF_UP));
+var_dump(round( 1.54, 1, PHP_ROUND_HALF_UP));
+var_dump(round(-1.55, 1, PHP_ROUND_HALF_UP));
+var_dump(round(-1.54, 1, PHP_ROUND_HALF_UP));
 
-/* Использование PHP_ROUND_HALF_DOWN с точностью до 1 знака */
-echo round( 1.55, 1, PHP_ROUND_HALF_DOWN); //  1.5
-echo round( 1.54, 1, PHP_ROUND_HALF_DOWN); //  1.5
-echo round(-1.55, 1, PHP_ROUND_HALF_DOWN); // -1.5
-echo round(-1.54, 1, PHP_ROUND_HALF_DOWN); // -1.5
+echo PHP_EOL;
+echo 'Использование PHP_ROUND_HALF_DOWN с точностью до 1 знака' . PHP_EOL;
+var_dump(round( 1.55, 1, PHP_ROUND_HALF_DOWN));
+var_dump(round( 1.54, 1, PHP_ROUND_HALF_DOWN));
+var_dump(round(-1.55, 1, PHP_ROUND_HALF_DOWN));
+var_dump(round(-1.54, 1, PHP_ROUND_HALF_DOWN));
 
-/* Использование PHP_ROUND_HALF_EVEN с точностью до 1 знака */
-echo round( 1.55, 1, PHP_ROUND_HALF_EVEN); //  1.6
-echo round( 1.54, 1, PHP_ROUND_HALF_EVEN); //  1.5
-echo round(-1.55, 1, PHP_ROUND_HALF_EVEN); // -1.6
-echo round(-1.54, 1, PHP_ROUND_HALF_EVEN); // -1.5
+echo PHP_EOL;
+echo 'Использование PHP_ROUND_HALF_EVEN с точностью до 1 знака' . PHP_EOL;
+var_dump(round( 1.55, 1, PHP_ROUND_HALF_EVEN));
+var_dump(round( 1.54, 1, PHP_ROUND_HALF_EVEN));
+var_dump(round(-1.55, 1, PHP_ROUND_HALF_EVEN));
+var_dump(round(-1.54, 1, PHP_ROUND_HALF_EVEN));
 
-/* Использование PHP_ROUND_HALF_ODD с точностью до 1 знака */
-echo round( 1.55, 1, PHP_ROUND_HALF_ODD);  //  1.5
-echo round( 1.54, 1, PHP_ROUND_HALF_ODD);  //  1.5
-echo round(-1.55, 1, PHP_ROUND_HALF_ODD);  // -1.5
-echo round(-1.54, 1, PHP_ROUND_HALF_ODD);  // -1.5
+echo PHP_EOL;
+echo 'Использование PHP_ROUND_HALF_ODD с точностью до 1 знака' . PHP_EOL;
+var_dump(round( 1.55, 1, PHP_ROUND_HALF_ODD));
+var_dump(round( 1.54, 1, PHP_ROUND_HALF_ODD));
+var_dump(round(-1.55, 1, PHP_ROUND_HALF_ODD));
+var_dump(round(-1.54, 1, PHP_ROUND_HALF_ODD));
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+Использование PHP_ROUND_HALF_UP с точностью до 1 знака
+float(1.6)
+float(1.5)
+float(-1.6)
+float(-1.5)
+
+Использование PHP_ROUND_HALF_DOWN с точностью до 1 знака
+float(1.5)
+float(1.5)
+float(-1.5)
+float(-1.5)
+
+Использование PHP_ROUND_HALF_EVEN с точностью до 1 знака
+float(1.6)
+float(1.5)
+float(-1.6)
+float(-1.5)
+
+Использование PHP_ROUND_HALF_ODD с точностью до 1 знака
+float(1.5)
+float(1.5)
+float(-1.5)
+float(-1.5)
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
