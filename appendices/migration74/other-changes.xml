@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: cd0727de733cbc3d49e9ee7a097020eebf6ff8b8 Maintainer: lex Status: ready -->
+<!-- Reviewed: no -->
+
+<sect1 xml:id="migration74.other-changes" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Другие изменения</title>
+
+ <sect2 xml:id="migration74.other-changes.performance">
+  <title>Улучшения производительности</title>
+
+  <sect3 xml:id="migration74.other-changes.performance.core">
+   <title>Ядро PHP</title>
+   <para>
+    Долавлен специальный опкод виртуальной машины для функции <function>array_key_exists</function>,
+    который улучшает производительность этой функции,
+    если значение параметра может быть статически разрешено. В коде, использующем пространства имен,
+    возможно потребуется использование абсолютного имени (<literal>\array_key_exists()</literal>)
+    либо же явного импорта функции.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration74.other-changes.performance.pcre">
+   <title>Регулярные выражения (совместимые с Perl)</title>
+   <para>
+    Когда функция <function>preg_match</function> в режиме UTF-8 (модификатор <literal>"u"</literal>)
+    неоднократно вызывается для одной и той же строки (возможно, на различных позициях),
+    проверка на UTF-8 будет проведена только один раз.
+   </para>
+  </sect3>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.ini">
+  <title>Изменения обработки INI-файлов</title>
+  <para>
+   <literal>zend.exception_ignore_args</literal> - новая INI-директива
+   для включения или исключения аргументов из трассировок стека, полученных в исключениях.
+  </para>
+  <para>
+   <literal>opcache.preload_user</literal> - новая INI-директива для установки пользователя,
+   из-под которого должен выполняться код предварительной загрузки,
+   иначе это будет root (не допускается по соображениям безопасности).
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.pkg-config">
+  <title>Миграция на pkg-config</title>
+  <para>
+   Множество расширений теперь используют исключительно pkg-config, чтобы определять зависимости библиотек.
+   Как правило, это означает, что вместо
+   <literal>--with-foo-dir=DIR</literal> используется только <literal>--with-foo</literal>.
+   Пользовательские пути к библиотекам могут быть указаны либо путем добавления дополнительных каталогов
+   в <literal>PKG_CONFIG_PATH</literal>, либо путем явного указания параметров компиляции
+   через <literal>FOO_CFLAGS</literal> и <literal>FOO_LIBS</literal>.
+  </para>
+  <para>
+   Следующие расширения и SAPI были затронуты этим изменением:
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <simpara>CURL:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-curl больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Enchant:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-enchant больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>FPM:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-fpm-systemd теперь использует только pkg-config для проверок libsystem.
+       Минимальная обязательная версия libsystemd - 209.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>GD:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-gd переименована в --enable-gd
+       (должно ли включено расширение или нет), а
+       опция --with-external-gd исползует внешнюю библиотеку libgd,
+       вместой той, которая идет в комплекте сборки.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-png-dir удалена. Наличие libpng теперь обязателено.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-zlib-dir удалена. Наличие zlib теперь обязателено.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-freetype-dir переименована в --with-freetype
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-jpeg-dir переименована в --with-jpeg
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-webp-dir переименована в --with-webp
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-xpm-dir переименована в --with-xpm
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>IMAP:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-kerberos-systemd больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Intl:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-icu-dir удалена. Если передан --enable-intl,
+       тогда всегда требуется наличие libicu.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>LDAP:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-ldap-sasl больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Libxml:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-libxml-dir удалена.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --enable-libxml переименована в --with-libxml.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-libexpat-dir переименована в --with-expat и
+       больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Litespeed:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-litespeed переименована в --enable-litespeed.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Mbstring:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-onig удалена. Если --disable-mbregex
+       не укзаан, требуется libonig.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>ODBC:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-iodbc больше не принимает каталог.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --with-unixODBC без каталога теперь использует pkg-config (предпочтительно).
+       Каталог по-прежнему можно указать для старых версий без libodbc.pc.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>OpenSSL:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-openssl больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>PCRE:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-pcre-regex удалена. Вместо этого --with-external-pcre
+       позволяет использовать внешнюю PCRE-библиотеку, вместо
+       встроенной.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>PDO_SQLite:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-pdo-sqlite больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Readline:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-libedit больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Sodium:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-sodium больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>SQLite3:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-sqlite3 больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>XSL:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-xsl больше не принимает каталог.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+   <listitem>
+    <simpara>Zip:</simpara>
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Опция --with-libzip удалена.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Опция --enable-zip переименована в --with-zip.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+   </listitem>
+
+  </itemizedlist>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.csv">
+  <title>Экранирование CSV</title>
+  <para>
+   <function>fputcsv</function>,
+   <function>fgetcsv</function>,
+   <methodname>SplFileObject::fputcsv</methodname>, 
+   <methodname>SplFileObject::fgetcsv</methodname>, and
+   <methodname>SplFileObject::setCsvControl</methodname>
+   теперь принимаем пустую строку в аргументе <literal>$escape</literal>.
+   Это отключит проприетарный механизм экранирования PHP.
+  </para>
+  <para>
+   Поведение функции <function>str_getcsv</function>
+   было соответствующим образом скорректировано (ранее пустая строка была идентична
+   использованию значению по умолчанию).
+  </para>
+  <para>
+   Метод <methodname>SplFileObject::getCsvControl</methodname>
+   теперь также может возвращать пустую строку для третьего элемента массива, соответственно.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.filter">
+  <title>Фильтрация данных</title>
+  <para>
+   Расширение <link linkend="book.filter">filter</link> больше не поддерживает
+   <literal>--with-pcre-dir</literal> для Unix-сборок и поэтому может быть спокойно
+   собрано для общего пользования с помощью <literal>./configure</literal>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.gd">
+  <title>GD</title>
+  <para>
+   Поведение функции <function>imagecropauto</function> в встроенной
+   библиотеке libgd было синхронизировано с системной библиотекой libgd:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     <constant>IMG_CROP_DEFAULT</constant> в случае неудачного выполнения
+     не заменяется на <constant>IMG_CROP_SIDES</constant>
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Пороговое значение кадрирования теперь рассчитывается из алгоритма в системной библиотеке libgd
+    </simpara>
+   </listitem>
+  </itemizedlist>
+  <para>
+   Значение по умолчанию <literal>$mode</literal> 
+   <function>imagecropauto</function> было изменено на
+   <constant>IMG_CROP_DEFAULT</constant>; передача <literal>-1</literal>
+   теперь объявна устаревшей.
+  </para>
+  <para>
+   <function>imagescale</function> теперь поддерживает масштабирование
+   с сохранением соотношения сторон до фиксированной высоты,
+   при передача <literal>-1</literal>
+   в качестве <literal>$new_width</literal>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.hash">
+  <title>Фреймворк хеш-кодов HASH</title>
+  <para>
+   Расширение <link linkend="book.hash">hash</link> больше нельзя отключить,
+   теперь оно неотъемлемой частью любой PHP-сборки, подобно расширению <link linkend="book.datetime">date</link>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.intl">
+  <title>Intl</title>
+  <para>
+   Расширение <link linkend="book.intl">intl</link>
+   теперь требует как минимум ICU 50.1.
+  </para>
+  <para>
+   Класс <classname>ResourceBundle</classname> теперь реализует
+   <interfacename>Countable</interfacename>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.ldap">
+  <title>Lightweight Directory Access Protocol</title>
+  <para>
+   Поддержка nsldap and umich_ldap  была удалена.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.libxml">
+  <title>Libxml</title>
+  <para>
+   Все расширения на основе libxml теперь требуют libxml версии 2.7.6 или новее.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.mbstring">
+  <title>Многобайтовые строки</title>
+  <para>
+   Библиотека oniguruma больше не идет в комплекте с PHP,
+   вместо нее в системе должна быть libonig. В качестве альтернативы
+   можно указать <literal>--disable-mbregex</literal>, чтобы отключить компонент mbregex.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.opcache">
+  <title>OPcache</title>
+  <para>
+   Конфигурационные опции <literal>--disable-opcache-file</literal> и
+   <literal>--enable-opcache-file</literal> удалены для использования INI-директивы
+   <link linkend="ini.opcache.file-cache">opcache.file_cache</link>
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.password">
+  <title>Хеширование паролей</title>
+  <para>
+   Функции <function>password_hash</function> and <function></function> functions
+   теперь принимают обнуляемую строку (&string;) и целое число (&integer;) в аргумент <literal>$algo</literal>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.pear">
+  <title>PEAR</title>
+  <para>
+   Установка PEAR (вместе с PECL) больше не включена по умолчанию.
+   Ее можно явно включить, используя <literal>--with-pear</literal>.
+   Эта опция объявлена устаревшей и может быть удалена в будущем.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.reflection">
+  <title>Reflection</title>
+  <para>
+   Изменены числовые значения констант-модификаторов
+   (<literal>IS_ABSTRACT</literal>,
+   <literal>IS_DEPRECATED</literal>,
+   <literal>IS_EXPLICIT_ABSTRACT</literal>,
+   <literal>IS_FINAL</literal>,
+   <literal>IS_IMPLICIT_ABSTRACT</literal>,
+   <literal>IS_PRIVATE</literal>,
+   <literal>IS_PROTECTED</literal>,
+   <literal>IS_PUBLIC</literal>, и
+   <literal>IS_STATIC</literal>) в классах
+   <classname>ReflectionClass</classname>,
+   <classname>ReflectionFunction</classname>,
+   <classname>ReflectionMethod</classname>,
+   <classname>ReflectionObject</classname> и
+   <classname>ReflectionProperty</classname>.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.simplexml">
+  <title>SimpleXML</title>
+  <para>
+   Класс <classname>SimpleXMLElement</classname> теперь реализует
+   <interfacename>Countable</interfacename>.
+  </para>
+ </sect2>
+ 
+ <sect2 xml:id="migration74.other-changes.sqlite3">
+  <title>SQLite3</title>
+  <para>
+   Встроенная в сборке библиотека libsqlite удалена. Для сборки расширения
+   <link linkend="book.sqlite3">SQLite3</link>
+   теперь требуется libsqlite3 ≥ 3.7.4. Чтобы собрать расширение
+   <link linkend="ref.pdo-sqlite">PDO_SQLite</link>
+   обязательно требуется libsqlite3 ≥ 3.5.0.
+  </para>
+  <para>
+   Сериализация и десериализация <classname>SQLite3</classname>,
+   <classname>SQLite3Stmt</classname> и <classname>SQLite3Result</classname>
+   теперь явно запрещены. Раньше сериализация экземпляров этих экземпляров была возможна,
+   но десериализация делала объекты неиспользуемыми.
+  </para>
+  <para>
+   Нотацию <literal>@param</literal> теперь также можно использовать для обозначения параметров SQL-запроса.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration74.other-changes.zip">
+  <title>Zip</title>
+  <para>
+   Встроенная библиотека libzip удалена.
+   Существующая в системе библиотека libzip >= 0.11 теперь обязательна, чтобы
+   собрать расширение <link linkend="book.zip">zip</link>.
+  </para>
+ </sect2>
+
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
