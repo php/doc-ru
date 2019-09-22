@@ -45,10 +45,10 @@
     Использование <literal>&lt;?php</literal> в конце файла (без завершающей новой строки)
     теперь будет интерпретироваться как открывающий тег PHP.
     Ранее он обрабатывался либо как короткий открывающий тег
-    с последующей строкой (??) <literal>php</literal>
-    и приводил к синтаксической ошибке (с <literal>short_open_tag=1</literal>),
-    либо воспринимался как строковый литерал (=строока?) <literal>&lt;?php</literal>
-    (с <literal>short_open_tag=0</literal>).
+    с последующим литералом <literal>php</literal>
+    и приводил к синтаксической ошибке (при <literal>short_open_tag=1</literal>),
+    либо воспринимался как строковый литерал <literal>&lt;?php</literal>
+    (в случае <literal>short_open_tag=0</literal>).
    </para>
   </sect3>
   
@@ -106,8 +106,8 @@
    
    <para>
     Приложения, правильно использующие константы PASSWORD_DEFAULT,
-    PASSWORD_BCRYPT, PASSWORD_ARGON2I и PASSWORD_ARGON2ID, будут по-прежнему
-    работать корректно.
+    PASSWORD_BCRYPT, PASSWORD_ARGON2I и PASSWORD_ARGON2ID, будут
+    работать как и раньше.
    </para>
   </sect3>
   
@@ -116,7 +116,7 @@
    
    <para>
     Функция <function>htmlentities</function> теперь будет выдавать уведомление
-    (вместо предупреждения standards warning - ???), если она используется
+    (вместо предупреждения уровня E_STRICT), если она используется
     с кодировкой, для которой поддерживается только преобразование основных символов.
     В этом случае она эквивалентна использованию <function>htmlspecialchars</function>.
    </para>
@@ -144,7 +144,7 @@
   
   <para>
    Теперь функции BCMath теперь будут выдавать предупреждения,
-   если передано число с ошибкам, такое как <literal>"32foo"</literal>.
+   если передано число с ошибкой, например, <literal>"32foo"</literal>.
    Подобный аргумент, как и раньше, будет интерпретирован как ноль.
   </para>
  </sect2>
@@ -198,7 +198,7 @@
   <title>MySQLi</title>
   
   <para>
-   Функциональность встроенного сервера была удалена. Это было сломано, начиная, по меньшей мере, с PHP 7.0.
+   Функциональность встроенного сервера была удалена. Она была сломана как минимум с PHP 7.0.
   </para>
   <para>
    Недокументированное свойство <literal>mysqli::$stat</literal> было удалено
@@ -211,12 +211,12 @@
   
   <para>
    Функция <function>openssl_random_pseudo_bytes</function> теперь будет
-   выбрасывать исключение в ситуациях, по аналогии с <function>random_bytes</function>.
+   выбрасывать исключение в ситуациях, что и функция <function>random_bytes</function>.
    В частности, выбрасывается <classname>Error</classname>, если количество запрошенных байтов
    меньше или равно нулю. Исключение <classname>Exception</classname> выбрасывается,
-   если не может быть получена нужная случайность.
-   Аргумент <literal>$crypto_strong</literal> гарантированно всегда будет &true;,
-   если функция ничего не выбрасывает, поэтому явно проверять ее не нужно.
+   если не получена достаточная случайность.
+   Аргумент <literal>$crypto_strong</literal> гарантированно всегда будет равен  &true;,
+   если функция ничего не выбрасывает, поэтому явно проверять его не нужно.
   </para>
  </sect2>
  
@@ -246,9 +246,9 @@
   <title>Reflection</title>
   
   <para>
-   Объекты Reflection теперь будут генерировать исключение, если попробовать
+   Объекты Reflection теперь генерируют исключение, если попробовать
    их сериализовать. Сериализация объектов Reflection никогда не поддерживалась
-   и приводила к порче объектов Reflection. Сейчас это было явно запрещено.
+   и приводила к повреждению объектов Reflection. Сейчас это было явно запрещено.
   </para>
  </sect2>
  
@@ -283,7 +283,7 @@
    </listitem>
   </itemizedlist>
   <para>
-   На приведение типа <literal>(array)</literal> эти изменения не влияют.
+   На приведение типа <literal>(array)</literal> эти изменения не повлияют.
    Они по-прежнему возвращают либо упакованный массив, либо свойства <classname>ArrayObject</classname>,
    в зависимости от того, используется ли флаг <constant>ArrayObject::STD_PROP_LIST</constant>.
   </para>
@@ -294,12 +294,12 @@
   </para>
   <para>
    <classname>ArrayObject</classname>, <classname>ArrayIterator</classname>,
-   <classname>SplDoublyLinkedList</classname> and <classname>SplObjectStorage</classname>
-   теперь поддерживают <literal>__serialize()</literal> and <literal>__unserialize()</literal>
+   <classname>SplDoublyLinkedList</classname> и <classname>SplObjectStorage</classname>
+   теперь поддерживают <literal>__serialize()</literal> и  <literal>__unserialize()</literal>
    в дополнение к интерфейсу <interfacename>Serializable</interfacename>.
-   Поэтому отные созданные в более старых версиях PHP данные сериализации,
-   все еще могут быть не сериализованными. Однако новые созданные данные в PHP 7.4,
-   не будут обрабатываться в более старых версиях.
+   Поэтому теперь созданные в более старых версиях PHP сериализованные данные,
+   все еще могут быть неверно обработаны. Однако новые созданные сериализованные данные в PHP 7.4,
+   не будут воспринматься в более старых версиях.
   </para>
  </sect2>
  
@@ -307,9 +307,8 @@
   <title>Лексер (Tokenizer)</title>
   
   <para>
-   Функция <function>token_get_all</function> теперь приведет к метке
-   <constant>T_BAD_CHARACTER</constant> в случае непредвиденных символов
-   instead of leaving behind holes in the token stream.
+   Функция <function>token_get_all</function> теперь отобразит метку
+   <constant>T_BAD_CHARACTER</constant> в случае обнаружения непредвиденных символов в потоке меток.
   </para>
  </sect2>
  
