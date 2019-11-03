@@ -1,53 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 14f834fa0328e3c9651abd1d0b9b023cb21106fa Maintainer: lex Status: ready -->
+<!-- EN-Revision: 1e327d12051bfc071aea2910c285dd9385565609 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="mongodb-driver-cursor.isdead" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>MongoDB\Driver\Cursor::isDead</refname>
-  <refpurpose>Проверяет, может ли курсор содержать дополнительные результаты</refpurpose>
+  <refpurpose>Проверяет, исчерпан ли курсор или может содержать дополнительные результаты</refpurpose>
  </refnamediv>
-
+ 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
- <modifier>final</modifier> <modifier>public</modifier> <type>bool</type><methodname>MongoDB\Driver\Cursor::isDead</methodname>
+   <modifier>final</modifier> <modifier>public</modifier> <type>bool</type><methodname>MongoDB\Driver\Cursor::isDead</methodname>
    <void />
   </methodsynopsis>
   <para>
-  Проверяет, есть ли у курсора дополнительные результаты для чтения. 
-   Курсор изначально «живой», но может стать «мертвым» по любой из следующих причин:
- <simplelist>
-  <member>Продвижение курсора, не имеющего хвоста не вернуло документ</member>
-  <member>Курсор обнаружил ошибку</member>
-  <member>Курсор читает его последнюю массовую операцию до завершения</member>
-  <member>Курсор достиг установленного предела</member>
- </simplelist>
- Это в первую очередь полезно с помощью хвостовых курсоров.
-</para>
+   Проверяет, нет ли у курсора дополнительных результатов. 
+   Этот метод аналогичен методу <link xlink:href="&url.mongodb.docs;reference/method/cursor.isExhausted/">cursor.isExhausted()</link> 
+   в оболочке MongoDB и в первую очередь полезен при выполнении итерации 
+   <link xlink:href="&url.mongodb.docs;core/tailable-cursors/">хвостовых курсоров</link>.
+  </para>
+  <para>
+   Курсор не имеет дополнительных результатов и считается "мертвым", если выполняется 
+   одно из следующих условий:
+   <simplelist>
+    <member>Текущий пакет был полностью повторен <emphasis>и</emphasis> 
+     идентификатор курсора равен нулю (то есть <link xlink:href="&url.mongodb.docs;reference/command/getMore/">getMore</link> не может быть выполнен).</member>
+    <member>Произошла ошибка при итерации курсора.</member>
+    <member>Курсор достиг своего установленного предела.</member>
+   </simplelist>
+  </para>
+  <para>
+   Преднамеренно не всегда возможно определить, имеет ли курсор 
+   дополнительные результаты. Случаи, когда курсор <emphasis>может</emphasis> иметь 
+   больше доступных данных, следующие:
+   <simplelist>
+    <member>
+     В текущем пакете есть дополнительные документы, которые буферизируются 
+     на стороне клиента. Итерация извлечет документ из локального буфера.
+    </member>
+    <member>
+     В текущем пакете нет дополнительных документов (то есть локального буфера), 
+     но идентификатор курсора не равен нулю. Итерация будет запрашивать больше документов 
+     с сервера с помощью операции <link xlink:href="&url.mongodb.docs;reference/command/getMore/">getMore</link>, 
+     которая может возвращать или не возвращать дополнительные результаты и/или указывать, 
+     что курсор был закрыт на сервере, возвращая ноль для его идентификатора.
+    </member>
+   </simplelist>
+  </para>
  </refsect1>
-
+ 
  <refsect1 role="parameters">
   &reftitle.parameters;
   &no.function.parameters;
  </refsect1>
-
+ 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если дополнительные результаты не доступны, и &false; в противном случае.
+   Возвращает &true;, если курсор не содержит никаких дополнительных результатов и &false; в противном случае.
   </para>
  </refsect1>
-
+ 
  <refsect1 role="errors">
   &reftitle.errors;
   <simplelist>
    &mongodb.throws.argumentparsing;
   </simplelist>
  </refsect1>
-
-
+ 
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
@@ -95,7 +118,15 @@ bool(true)
    </screen>
   </example>
  </refsect1>
-
+ 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><link xlink:href="&url.mongodb.docs;core/tailable-cursors/">Хвостовые курсоры</link> в руководстве MongoDB</member>
+   <member><link xlink:href="&url.mongodb.docs;reference/method/cursor.isExhausted/">cursor.isExhausted()</link> в руководстве MongoDB</member>
+  </simplelist>
+ </refsect1>
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file
