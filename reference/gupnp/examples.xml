@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: 8b6d169424ff189bb563ef4c3f35f8adff3f42c5 Maintainer: rjhdby Status: ready -->
-<!-- Reviewed: no -->
+<!-- Reviewed: yes Maintainer: sergey -->
 <!-- $Revision$ -->
 <chapter xml:id="gupnp.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.examples;
  <section xml:id="gupnp.browsing">
   <title>Просмотр устройств и сервисов</title>
   <para>
-   Этот пример демонстрирует как получить информацию обо всех устройствах
+   Пример демонстрирует как получить информацию обо всех устройствах
    и сервисах. В нем мы запускаем бесконечный цикл (используя CLI) и, если
-   будут найдены устройства или сервисы, будем вызывать функцию обратного
-   вызова.
+   будут найдены устройства или сервисы, будем вызывать callback-функцию.
   </para>
   <para>
    <example>
@@ -27,9 +26,9 @@ function device_proxy_available_cb($proxy, $arg)
     $type = $info['device_type'];
     $location = $info['location'];
 
-    printf("Device available:\n");
-    printf("\ttype:     %s\n", $type);
-    printf("\tlocation: %s\n", $location);
+    printf("Устройство доступно:\n");
+    printf("\tтип:     %s\n", $type);
+    printf("\tместоположение: %s\n", $location);
 }
 
 /* Callback-функция для  сервисов */
@@ -40,15 +39,15 @@ function service_proxy_available_cb($proxy, $arg)
     $type = $info['service_type'];
     $location = $info['location'];
 
-    printf("Service available:\n");
-    printf("\ttype:     %s\n", $type);
-    printf("\tlocation: %s\n", $location);
+    printf("Сервис доступен:\n");
+    printf("\tтип:     %s\n", $type);
+    printf("\tместоположение: %s\n", $location);
 }
 
 /* Создаем контекст UPnP */
 $context = gupnp_context_new();
 if (!$context) {
-    printf("Error creating the GUPnP context\n");
+    printf("Ошибка создания контекста GUPnP\n");
     exit(-1);
 }
 
@@ -74,7 +73,7 @@ gupnp_control_point_browse_start($cp);
  <section xml:id="gupnp.binary-light">
   <title>Реализация устройства BinaryLight</title>
   <para>
-   Это пример устройства/сервиса UPnP, реализующего устройство BinaryLight 
+   Пример устройства/сервиса UPnP, реализующего устройство BinaryLight 
    и сервис SwitchPower для эмуляции выключателя света.
   </para>
   <para>
@@ -83,7 +82,7 @@ gupnp_control_point_browse_start($cp);
   </para>
   <para>
    <example>
-    <title>реализация сервера управления освещением</title>
+    <title>Реализация сервера управления освещением</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -99,7 +98,7 @@ function set_target_cb($service, $action, $arg)
     if ($target != $GLOBALS['status']) {
         $GLOBALS['status'] = $target;
         gupnp_service_notify($service, 'Status', GUPNP_TYPE_BOOLEAN, $GLOBALS['status']);
-        printf("The light is now %s.\n", $GLOBALS['status'] ? "on" : "off");
+        printf("Свет сейчас %s.\n", $GLOBALS['status'] ? "включен" : "выключен");
     }
 
     /* Вернуть коиенту статус успеха */
@@ -122,12 +121,12 @@ function get_status_cb($service, $action, $arg)
 
 /* По умолчанию свет выключен */
 $GLOBALS['status'] = false;
-printf("The light is now %s.\n", $GLOBALS['status'] ? "on" : "off");
+printf("Свет сейчас %s.\n", $GLOBALS['status'] ? "включен" : "выключен");
 
 /* Создаем контекст UPnP */
 $context = gupnp_context_new();
 if (!$context) {
-    printf("Error creating the GUPnP context\n");
+    printf("Ошибка создания контекста GUPnP\n");
     exit(-1);
 }
 
@@ -143,7 +142,7 @@ gupnp_root_device_set_available($dev, true);
 $service_type = "urn:schemas-upnp-org:service:SwitchPower:1";
 $service = gupnp_device_info_get_service($dev, $service_type);
 if (!$service) {
-    die("Cannot get SwitchPower1 service\n");
+    die("Не удается получить сервис SwitchPower1\n");
 }
 
 /* Устанавливаем callback для GetStatus */
@@ -175,13 +174,13 @@ function service_proxy_available_cb($proxy, $arg)
 {
     $mode = $arg['mode'];
 
-    printf("Set subscribed\n");
+    printf("Установить подписку\n");
     gupnp_service_proxy_set_subscribed($proxy, true);
 
     /* Добавляем оповещение при изменении статуса */
     if (!gupnp_service_proxy_add_notify($proxy, "Status", 
             GUPNP_TYPE_BOOLEAN, "status_changed_cb", NULL)) {
-        printf("Failed to add notify\n");
+        printf("Не удалось добавить уведомление\n");
     }
     
     if ($mode == 'TOGGLE') {
@@ -197,9 +196,9 @@ function service_proxy_available_cb($proxy, $arg)
 
     /* Устанавливаем цель */
     if (!gupnp_service_proxy_action_set($proxy, 'SetTarget', 'NewTargetValue', $target, GUPNP_TYPE_BOOLEAN)) {
-        printf("Cannot set switch\n");
+        printf("Невозможно установить переключатель\n");
     } else {
-        printf("Set switch to %s.\n", $target ? "on" : "off");
+        printf("Установите переключатель в %s.\n", $target ? "включен" : "выключен");
     }
     
     /* Останавливаем просмотр */
@@ -208,15 +207,15 @@ function service_proxy_available_cb($proxy, $arg)
 
 function status_changed_cb($variable, $value, $arg)
 {
-    printf("Status has been changed\n");
-    printf("\tvariable name: %s\n", $variable);
-    printf("\tvalue: %s\n", (int)$value);
+    printf("Статус был изменен\n");
+    printf("\tимя переменной: %s\n", $variable);
+    printf("\tзначение: %s\n", (int)$value);
     printf("\n");
 }
 
 /* Разбираем аргументы командной строки */
 if (count($argv) != 2) {
-    printf("Usage: light-client.php [on|off|toggle]\n");
+    printf("Использование: light-client.php [on|off|toggle]\n");
     exit(-1);
 }
 
@@ -234,7 +233,7 @@ if ($argv[1] == "on") {
 /* Создаем контекст UPnP */
 $context = gupnp_context_new();
 if (!$context) {
-    printf("Error creating the GUPnP context\n");
+    printf("Ошибка создания контекста GUPnP\n");
     exit(-1);
 }
 
