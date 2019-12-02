@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
 <!-- EN-Revision: cb2e7b70b1354e5468e538720d59c37e273bc98e Maintainer: rjhdby Status: ready -->
-<!-- Reviewed: no -->
+<!-- Reviewed: yes Maintainer: sergey -->
 
 <refentry xml:id="eventlistener.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -61,7 +61,7 @@
     </term>
     <listitem>
      <para>
-      Функция обратного вызова, типа <type>callable</type>,
+      Callback-функция (<type>callable</type>),
       которая будет вызвана при получении соединения.
      </para>
     </listitem>
@@ -85,7 +85,7 @@
     <listitem>
      <para>
       Битовая маска из констант
-      <literal>EventListener::OPT_*</literal>. См.
+      <literal>EventListener::OPT_*</literal>. Смотрите
       <link linkend="eventlistener.constants">константы EventListener</link>
       .
      </para>
@@ -99,7 +99,7 @@
      <para>
       Устанавливает максимальное количество ожидающих соединений, которым,
       сетевым стеком, позволено ожидать в состоянии еще-не-принято. Более
-      подробно смотри в документации по системной функции <literal>listen</literal>.
+      подробно смотрите в документации по системной функции <literal>listen</literal>.
       Если значение <parameter>backlog</parameter> отрицательно,
       Libevent попытается самостоятельно выбрать наилучшее значение для
       <parameter>backlog</parameter>.
@@ -119,10 +119,10 @@
      <para>
       Может быть строкой, ресурсом сокета или потоком, связанным с сокетом.
       Если <parameter>target</parameter> является строкой, то она будет
-      разбираться как сетевой адрес. Она будет интерпритироваться как
+      разбираться как сетевой адрес. Она будет интерпретироваться как
       путь сокета домена UNIX, если будет иметь префикс
       <literal>'unix:'</literal>
-      , например
+      , например,
       <literal>'unix:/tmp/my.sock'</literal>
       .
      </para>
@@ -135,7 +135,7 @@
   <para>
    Возвращает объект
    <classname>EventListener</classname>, представляющий
-   слушитель события соединения.
+   слушатель события соединения.
   </para>
  </refsect1>
  <refsect1 role="changelog">
@@ -170,18 +170,18 @@
 <![CDATA[
 <?php
 /*
- * Simple echo server based on libevent's connection listener.
+ * Простой сервер на основе прослушивателя соединений libevent.
  *
- * Usage:
- * 1) In one terminal window run:
+ * Использование:
+ * 1) В одном окне терминала запустите:
  *
  * $ php listener.php 9881
  *
- * 2) In another terminal window open up connection, e.g.:
+ * 2) В другом окне терминала откройте соединение, например:
  *
  * $ nc 127.0.0.1 9881
  *
- * 3) start typing. The server should repeat the input.
+ * 3) начните печатать. Сервер должен повторить ввод.
  */
 
 class MyListenerConnection {
@@ -200,18 +200,18 @@ class MyListenerConnection {
             array($this, "echoEventCallback"), NULL);
 
         if (!$this->bev->enable(Event::READ)) {
-            echo "Failed to enable READ\n";
+            echo "Не удалось включить READ\n";
             return;
         }
     }
 
     public function echoReadCallback($bev, $ctx) {
-        // Copy all the data from the input buffer to the output buffer
+        // Скопируйте все данные из входного буфера в выходной буфер
         
-        // Variant #1
+        // Вариант #1
         $bev->output->addBuffer($bev->input);
 
-        /* Variant #2 */
+        /* Вариант #2 */
         /*
         $input    = $bev->getInput();
         $output = $bev->getOutput();
@@ -221,7 +221,7 @@ class MyListenerConnection {
 
     public function echoEventCallback($bev, $events, $ctx) {
         if ($events & EventBufferEvent::ERROR) {
-            echo "Error from bufferevent\n";
+            echo "Ошибка bufferevent\n";
         }
 
         if ($events & (EventBufferEvent::EOF | EventBufferEvent::ERROR)) {
@@ -244,15 +244,15 @@ class MyListener {
     public function __construct($port) {
         $this->base = new EventBase();
         if (!$this->base) {
-            echo "Couldn't open event base";
+            echo "Не удалось открыть событийную базу";
             exit(1);
         }
 
-        // Variant #1
+        // Вариант #1
         /*
         $this->socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
         if (!socket_bind($this->socket, '0.0.0.0', $port)) {
-            echo "Unable to bind socket\n";
+            echo "Невозможно связать сокет\n";
             exit(1);
         }
         $this->listener = new EventListener($this->base,
@@ -261,14 +261,14 @@ class MyListener {
             -1, $this->socket);
          */
 
-        // Variant #2
+        // Вариант #2
          $this->listener = new EventListener($this->base,
              array($this, "acceptConnCallback"), $this->base,
              EventListener::OPT_CLOSE_ON_FREE | EventListener::OPT_REUSEABLE, -1,
              "0.0.0.0:$port");
 
         if (!$this->listener) {
-            echo "Couldn't create listener";
+            echo "Не удалось создать слушателя";
             exit(1);
         }
 
@@ -279,9 +279,9 @@ class MyListener {
         $this->base->dispatch();
     }
 
-    // This callback is invoked when there is data to read on $bev
+    // Этот callback вызывается, когда есть данные для чтения на $bev
     public function acceptConnCallback($listener, $fd, $address, $ctx) {
-        // We got a new connection! Set up a bufferevent for it. */
+        // Мы получили новое соединение! Создайте для этого все необходимое. */
         $base = $this->base;
         $this->conn[] = new MyListenerConnection($base, $fd);
     }
@@ -289,8 +289,8 @@ class MyListener {
     public function accept_error_cb($listener, $ctx) {
         $base = $this->base;
 
-        fprintf(STDERR, "Got an error %d (%s) on the listener. "
-            ."Shutting down.\n",
+        fprintf(STDERR, "Получил ошибку %d (%s) на слушателе."
+            ."Выключение.\n",
             EventUtil::getLastSocketErrno(),
             EventUtil::getLastSocketError());
 
