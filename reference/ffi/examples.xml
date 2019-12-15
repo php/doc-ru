@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 55a5eca8af4fb6fe3ddb38d6e4d8fcaba18cff72 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<chapter xml:id="ffi.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ &reftitle.examples;
+ <section xml:id="ffi.examples-basic">
+  <title>Простые примеры использования FFI</title>
+  <para>
+   Перед погружением в детали FFI API, давайте рассмотрим
+   несколько примеров упрощенного использования FFI API
+   в стандартных задачах.
+  </para>
+  <note>
+   <para>
+    Для некоторых из этих примеров понадобится
+    библиотека <filename>libc.so.6</filename>. Они не будут
+    работать в системах, где её нет.
+   </para>
+  </note>
+  <para>
+   <example xml:id="ffi.examples.function">
+    <title>Вызов функции из общей библиотеки</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// создаем объект FFI, загружаем libc и экспортируем функцию printf()
+$ffi = FFI::cdef(
+    "int printf(const char *format, ...);", // это стандартная декларация C
+    "libc.so.6");
+// вызываем printf()
+$ffi->printf("Hello %s!\n", "world");
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Hello world!
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="ffi.examples.structure">
+    <title>Вызов функции и возврат структуры через аргумент</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// создаем привязку gettimeofday()
+$ffi = FFI::cdef("
+    typedef unsigned int time_t;
+    typedef unsigned int suseconds_t;
+ 
+    struct timeval {
+        time_t      tv_sec;
+        suseconds_t tv_usec;
+    };
+ 
+    struct timezone {
+        int tz_minuteswest;
+        int tz_dsttime;
+    };
+ 
+    int gettimeofday(struct timeval *tv, struct timezone *tz);    
+", "libc.so.6");
+// создаем структуры данных C
+$tv = $ffi->new("struct timeval");
+$tz = $ffi->new("struct timezone");
+// вызываем gettimeofday()
+var_dump($ffi->gettimeofday(FFI::addr($tv), FFI::addr($tz)));
+// получаем доступ к полю структуры данных C
+var_dump($tv->tv_sec);
+// печатаем всю структуру данных
+var_dump($tz);
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+int(0)
+int(1555946835)
+object(FFI\CData:struct timezone)#3 (2) {
+  ["tz_minuteswest"]=>
+  int(0)
+  ["tz_dsttime"]=>
+  int(0)
+}
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="ffi.examples.variable-existing">
+    <title>Доступ к существующим переменным C</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// создаем объект FFI, загружаем libc и экспортируем переменную errno
+$ffi = FFI::cdef(
+    "int errno;", // это стандартная декларация C
+    "libc.so.6");
+// печатаем errno
+var_dump($ffi->errno);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+int(0)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="ffi.examples.variable-creating">
+    <title>Создание и модификация переменной C</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// создаем переменную C типа int
+$x = FFI::new("int");
+var_dump($x->cdata);
+
+// простое присваивание
+$x->cdata = 5;
+var_dump($x->cdata);
+
+// не простое присвоение
+$x->cdata += 2;
+var_dump($x->cdata);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+int(0)
+int(5)
+int(7)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="ffi.examples.array">
+    <title>Работа с массивами C</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// создаем структуру данных
+$a = FFI::new("long[1024]");
+// работаем с ней как с обычным массивом PHP
+for ($i = 0; $i < count($a); $i++) {
+    $a[$i] = $i;
+}
+var_dump($a[25]);
+$sum = 0;
+foreach ($a as $n) {
+    $sum += $n;
+}
+var_dump($sum);
+var_dump(count($a));
+var_dump(FFI::sizeof($a));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+int(25)
+int(523776)
+int(1024)
+int(8192)
+]]>
+    </screen>
+   </example>
+  </para>
+ </section>
+ 
+ <section xml:id="ffi.examples-callback">
+  <title>Функции обратного вызова PHP</title>
+  <para>
+   Можно присвоить замыкание PHP переменной типа "указатель"
+   (pointer) либо передать его как аргумент функции:
+   <example>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$zend = FFI::cdef("
+    typedef int (*zend_write_func_t)(const char *str, size_t str_length);
+    extern zend_write_func_t zend_write;
+");
+ 
+echo "Hello World 1!\n";
+ 
+$orig_zend_write = clone $zend->zend_write;
+$zend->zend_write = function($str, $len) {
+    global $orig_zend_write;
+    $orig_zend_write("{\n\t", 3);
+    $ret = $orig_zend_write($str, $len);
+    $orig_zend_write("}\n", 2);
+    return $ret;
+};
+echo "Hello World 2!\n";
+$zend->zend_write = $orig_zend_write;
+echo "Hello World 3!\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Hello World 1!
+{
+        Hello World 2!
+}
+Hello World 3!
+]]>
+    </screen>
+   </example>
+   Хоть это и работает, но данная функциональность 
+   поддерживается не на всех платформах libffi, не эффективна
+   и вызывает утечку ресурсов при завершении запросов.
+   <tip>
+    <simpara>
+     Поэтому рекомендуется минимизировать использование обратных вызовов PHP.
+    </simpara>
+   </tip>
+  </para>
+ </section>
+ 
+ <section xml:id="ffi.examples-complete">
+  <title>Комплексный пример PHP/FFI/preloading</title>
+  <example>
+   <simpara><filename>php.ini</filename></simpara>
+   <programlisting role="ini">
+<![CDATA[
+ffi.enable=preload
+opcache.preload=preload.php
+]]>
+   </programlisting>
+   <simpara><filename>preload.php</filename></simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+FFI::load(__DIR__ . "/dummy.h");
+opcache_compile_file(__DIR__ . "/dummy.php");
+?>
+]]>
+   </programlisting>
+   <simpara><filename>dummy.h</filename></simpara>
+   <programlisting role="c">
+<![CDATA[
+#define FFI_SCOPE "DUMMY"
+#define FFI_LIB "libc.so.6"
+ 
+int printf(const char *format, ...);
+]]>
+   </programlisting>
+   <simpara><filename>dummy.php</filename></simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+final class Dummy {
+    private static $ffi = null;
+    function __construct() {
+        if (is_null(self::$ffi)) {
+            self::$ffi = FFI::scope("DUMMY");
+        }
+    }
+    function printf($format, ...$args) {
+       return (int)self::$ffi->printf($format, ...$args);
+    }
+}
+?>
+]]>
+   </programlisting>
+   <simpara><filename>test.php</filename></simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$d = new Dummy();
+$d->printf("Hello %s!\n", "world");
+?>
+]]>
+   </programlisting>
+  </example>
+ </section>
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
