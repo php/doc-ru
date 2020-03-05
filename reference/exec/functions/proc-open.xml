@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 58f224110635890a9fb1449e00d787439c2d915a Maintainer: tmn Status: ready -->
+<!-- EN-Revision: f811c29cdcb9ae601c51346f139ec75eef2ce334 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <!-- splitted from ./en/functions/exec.xml, last change in rev 1.28 -->
@@ -14,7 +14,7 @@
   &reftitle.description;
   <methodsynopsis>
    <type>resource</type><methodname>proc_open</methodname>
-   <methodparam><type>string</type><parameter>cmd</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter>cmd</parameter></methodparam>
    <methodparam><type>array</type><parameter>descriptorspec</parameter></methodparam>
    <methodparam><type>array</type><parameter role="reference">pipes</parameter></methodparam>
    <methodparam choice="opt"><type>string</type><parameter>cwd</parameter><initializer>&null;</initializer></methodparam>
@@ -49,7 +49,27 @@
      <term><parameter>cmd</parameter></term>
      <listitem>
       <para>
-       Команда для выполнения
+       Командная для выполнения, указанная как строка (&string;).
+       Специальные символы должны быть должным образом экранированы, 
+       и должны применяться правильные кавычки.
+      </para>
+      <note>
+       <simpara>
+        В <emphasis>Windows</emphasis>, если для <literal>bypass_shell</literal> не установлено значение &true; в
+        <parameter>other_options</parameter>, <parameter>cmd</parameter>
+        передается в <command>cmd.exe</command> (точнее, <literal>%ComSpec%</literal>)
+        с флагом <literal>/c</literal> в виде строки  <emphasis>без кавычек</emphasis>
+        (т.е. точно так, как было задано в <function>proc_open</function>).
+        Это может привести к тому, что <command>cmd.exe</command> удалит заключающие из
+        <parameter>cmd</parameter> (подробности смотрите в документации <command>cmd.exe</command>),
+        приводя к неожиданному и потенциально даже опасному поведению, потому что сообщения об ошибках <command>cmd.exe</command> могут содержать (частично) переданный параметр
+        <parameter>cmd</parameter> (смотрите пример ниже).
+       </simpara>
+      </note>
+      <para>
+       Начиная с PHP 7.4.0, <parameter>cmd</parameter> может передаваться как массив (&array;) параметров команды.
+       В этом случае процесс будет открыт напрямую (не проходя через оболочку)
+       и PHP позаботится о экранировании любого необходимого аргумента.
       </para>
      </listitem>
     </varlistentry>
@@ -176,6 +196,13 @@
       <row>
        <entry>7.4.0</entry>
        <entry>
+        <function>proc_open</function> теперь также принимает массив (&array;)
+        в <parameter>cmd</parameter>.
+       </entry>
+      </row>
+      <row>
+       <entry>7.4.0</entry>
+       <entry>
         Добавлена опция <literal>create_process_group</literal> в 
         параметр <parameter>other_options</parameter>.
        </entry>
@@ -253,6 +280,43 @@ Array
 команда вернула 0
 ]]>
     </screen>
+   </example>
+  </para>
+  
+  <para>
+   <example>
+    <title><function>proc_open</function> причуда в Windows</title>
+    <simpara>
+     Хотя можно ожидать, что следующая программа будет искать в файле 
+     <filename>filename.txt</filename> текст <literal>search</literal> 
+     и выводить результаты, она ведет себя несколько иначе.
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$descriptorspec = [STDIN, STDOUT, STDOUT];
+$cmd = '"findstr" "search" "filename.txt"';
+$proc = proc_open($cmd, $descriptorspec, $pipes);
+proc_close($proc);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+'findstr" "search" "filename.txt' не распознается как внутренняя или внешняя команда,
+работающая программа или пакетный файл.
+]]>
+    </screen>
+    <simpara>
+     Чтобы обойти это поведение, обычно достаточно
+     передать <parameter>cmd</parameter> в дополнительных кавычках:
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+$cmd = '""findstr" "search" "filename.txt""';
+]]>
+    </programlisting>
    </example>
   </para>
   
