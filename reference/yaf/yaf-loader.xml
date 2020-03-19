@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 40ec84c3b39ae43075e2f98238907ae72cbd4bf8 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<phpdoc:classref xml:id="class.yaf-loader" xmlns:phpdoc="http://php.net/ns/phpdoc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
+ 
+ <title>Класс Yaf_Loader</title>
+ <titleabbrev>Yaf_Loader</titleabbrev>
+ 
+ <partintro>
+  
+  <!-- {{{ Yaf_Loader intro -->
+  <section xml:id="yaf-loader.intro">
+   &reftitle.intro;
+   <para>
+    <classname>Yaf_Loader</classname> представляет комплексное решение 
+    для автозагрузки для Yaf.
+   </para>
+   <para>
+    При первом извлечении экземпляра <classname>Yaf_Application</classname>, 
+    <classname>Yaf_Loader</classname> создает экземпляр-одиночку и регистрируется с помощью 
+    spl_autoload. Вы извлекаете экземпляр, используя <methodname>Yaf_Loader::getInstance</methodname>
+   </para>
+   <para>
+    <classname>Yaf_Loader</classname> попытается загрузить класс только один раз, в случае 
+    возниккновения ошибки, зависит от <link
+    linkend="ini.yaf.use-spl-autoload">yaf.use_spl_auload</link>, если эта 
+    конфигурация включена <methodname>Yaf_Loader::autoload</methodname> вернет 
+    &false;, таким образом предоставляя возможность другой функции автозагрузки. Если выключена
+    (по умолчанию), <methodname>Yaf_Loader::autoload</methodname> вернет 
+    &true;, а также сработает очень полезное предупреждение 
+    (полезно, чтобы выяснить, почему класс не может быть загружен). 
+    <note>
+     <para>
+      Пожалуйста, оставьте yaf.use_spl_autoload выключенным, если в какой-то библиотеке 
+      нет собственного механизма автозагрузки и его невозможно переписать.
+     </para>
+    </note>
+   </para>
+   <para>
+    По умолчанию <classname>Yaf_Loader</classname> предполагает, что вся библиотека 
+    (сценарий, определенный классом) хранится в <link linkend="ini.yaf.library">каталоге глобальной 
+    библиотеки</link>, который определен в php.ini (yaf.library).
+   </para>
+   
+   <para>
+    Если вы хотите с помощью <classname>Yaf_Loader</classname> выполнить поиск некоторых 
+    классов (библиотек) в <link linkend="yaf-loader.props.library">каталоге локальных 
+    классов</link> (который определен в application.ini, 
+    по умолчанию это <link
+    linkend="configuration.yaf.directory">application.directory</link>. "/library"), 
+    вы должны зарегистрировать префикс класса, используя 
+    <methodname>Yaf_Loader::registerLocalNameSpace</methodname>
+   </para>
+   
+   <para>
+    Давайте посмотрим несколько примеров (при условии, что APPLICATION_PATH <link
+    linkend="configuration.yaf.directory">application.directory</link>):
+    <example>
+     <title>Пример конфигурации</title>
+     <programlisting role="shell">
+<![CDATA[
+// Предполагаются следующие настройки в php.ini:
+yaf.library = "/global_dir"
+
+//Предполагаются следующие настройки в php.ini:
+application.library = APPLICATION_PATH "/library"
+]]>
+     </programlisting>
+    </example>
+    
+    Предполагается, что зарегистрировано следующее локальное пространство имен:
+    <example>
+     <title>Зарегистрировать локальное пространство имен</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class Bootstrap extends Yaf_Bootstrap_Abstract{
+     public function _initLoader($dispatcher) {
+          Yaf_Loader::getInstance()->registerLocalNameSpace(array("Foo", "Bar"));
+     }
+?>
+]]>
+     </programlisting>
+    </example>
+    
+    Тогда пример автозагрузки:
+    <example>
+     <title>Пример загрузки класса</title>
+     <programlisting role="shell">
+<![CDATA[
+class Foo_Bar_Test =>
+  // APPLICATION_PATH/library/Foo/Bar/Test.php
+  
+class GLO_Name  =>
+  // /global_dir/Glo/Name.php
+ 
+class BarNon_Test
+  // /global_dir/Barnon/Test.php
+]]>
+     </programlisting>
+    </example>
+    
+    Начиная с PHP 5.3, вы можете использовать пространство имен:
+    <example>
+     <title>Пример загрузки класса имен</title>
+     <programlisting role="shell">
+<![CDATA[
+class \Foo\Bar\Dummy =>
+   // APPLICATION_PATH/library/Foo/Bar/Dummy.php
+
+class \FooBar\Bar\Dummy =>
+   // /global_dir/FooBar/Bar/Dummy.php
+]]>
+     </programlisting> 
+    </example>
+   </para>
+   
+   <para>
+    Вы можете заметить, что все папки с первой буквой заглавными, вы можете сделать их 
+    строчными, установив <link linkend="ini.yaf.lowcase-path">yaf.lowcase_path</link> = On в php.ini.
+   </para>
+   
+   <para>
+    <classname>Yaf_Loader</classname> также предназначен для загрузки 
+    классов MVC, и правило таково:
+    <example>
+     <title>Пример загрузки класса MVC</title>
+     <programlisting role="shell">
+<![CDATA[
+Controller Classes =>
+// APPLICATION_PATH/controllers/
+
+Model Classes =>
+// APPLICATION_PATH/models/
+
+Plugin Classes =>
+// APPLICATION_PATH/plugins/
+]]>
+     </programlisting>
+    </example>
+    
+    Yaf идентифицирует суффикс класса (это по умолчанию, вы также можете изменить 
+    его на префикс, изменив конфигурацию <link
+    linkend="ini.yaf.name-suffix">yaf.name_suffix</link>), чтобы решить, является ли 
+    он классом MVC:
+    <example>
+     <title>Классовые различия MVC</title>
+     <programlisting role="shell">
+<![CDATA[
+Controller Classes =>
+    // ***Controller
+
+Model Classes =>
+    // ***Model
+
+Plugin Classes =>
+    // ***Plugin
+]]>
+    </programlisting>
+   </example>
+   
+   несколько примеров:
+   <example>
+    <title>Пример загрузки MVC</title>
+    <programlisting role="shell">
+<![CDATA[
+class IndexController
+    // APPLICATION_PATH/controllers/Index.php
+
+class DataModel =>
+   // APPLICATION_PATH/models/Data.php
+
+class DummyPlugin =>
+  // APPLICATION_PATH/plugins/Dummy.php
+
+class A_B_TestModel =>
+  // APPLICATION_PATH/models/A/B/Test.php
+]]>
+    </programlisting>
+   </example>
+   
+   <note>
+    <para>
+     Начиная с 2.1.18, Yaf поддерживает автозагрузку контроллеров для стороны пользовательского скрипта 
+     (что означает автозагрузку, запускаемую пользовательским скриптом php, например: доступ 
+     к статическому свойству контроллера в Bootstrap или плагинах), 
+     но автозагрузчик только пытается найти скрипт класса контроллера в папке модуля по умолчанию, 
+     которая называется "APPLICATION_PATH/controllers/".
+    </para>
+   </note>
+   также на каталог будет влиять <link linkend="ini.yaf.lowcase-path">yaf.lowcase_path</link>.
+   </para>
+  </section>
+  <!-- }}} -->
+  
+  <section xml:id="yaf-loader.synopsis">
+   &reftitle.classsynopsis;
+   
+   <!-- {{{ Synopsis -->
+   <classsynopsis>
+    <ooclass><classname>Yaf_Loader</classname></ooclass>
+    
+    <!-- {{{ Class synopsis -->
+    <classsynopsisinfo>
+     <ooclass>
+      <classname>Yaf_Loader</classname>
+     </ooclass>
+    </classsynopsisinfo>
+    <!-- }}} -->
+    <classsynopsisinfo role="comment">&Properties;</classsynopsisinfo>
+    <fieldsynopsis>
+     <modifier>protected</modifier>
+     <varname linkend="yaf-loader.props.local-ns">_local_ns</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>protected</modifier>
+     <varname linkend="yaf-loader.props.library">_library</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>protected</modifier>
+     <varname linkend="yaf-loader.props.global-library">_global_library</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>static</modifier>
+     <varname linkend="yaf-loader.props.instance">_instance</varname>
+    </fieldsynopsis>
+    
+    
+    <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.yaf-loader')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[1])" />
+   </classsynopsis>
+   <!-- }}} -->
+   
+  </section>
+  
+  
+  <!-- {{{ Yaf_Loader properties -->
+  <section xml:id="yaf-loader.props">
+   &reftitle.properties;
+   <variablelist>
+    <varlistentry xml:id="yaf-loader.props.local-ns">
+     <term><varname>_local_ns</varname></term>
+     <listitem>
+      <para></para>
+     </listitem>
+    </varlistentry>
+    <varlistentry xml:id="yaf-loader.props.library">
+     <term><varname>_library</varname></term>
+     <listitem>
+      <para>
+       По умолчанию это значение равно <link
+       linkend="configuration.yaf.directory">application.directory</link> . "/library", 
+       вы можете изменить это либо в application.ini(application.library), либо вызвать 
+       <methodname>Yaf_Loader::setLibraryPath</methodname>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry xml:id="yaf-loader.props.global-library">
+     <term><varname>_global_library</varname></term>
+     <listitem>
+      <para></para>
+     </listitem>
+    </varlistentry>
+    <varlistentry xml:id="yaf-loader.props.instance">
+     <term><varname>_instance</varname></term>
+     <listitem>
+      <para></para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </section>
+  <!-- }}} -->
+  
+  
+ </partintro>
+ 
+ 
+ &reference.yaf.entities.yaf-loader;
+ 
+</phpdoc:classref>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
