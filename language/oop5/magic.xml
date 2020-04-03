@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8e00768efc67a12ffec14d5dab06962936f27619 Maintainer: irker Status: ready -->
+<!-- EN-Revision: e1438a020bbc755a27f18235a0ea94f3d9d556aa Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <sect1 xml:id="language.oop5.magic" xmlns="http://docbook.org/ns/docbook">
@@ -16,6 +16,8 @@
   <link linkend="object.unset">__unset()</link>,
   <link linkend="object.sleep">__sleep()</link>,
   <link linkend="object.wakeup">__wakeup()</link>,
+  <link linkend="object.serialize">__serialize()</link>,
+  <link linkend="object.unserialize">__unserialize()</link>,
   <link linkend="object.tostring">__toString()</link>,
   <link linkend="object.invoke">__invoke()</link>,
   <link linkend="object.set-state">__set_state()</link>,
@@ -41,62 +43,62 @@
   </simpara>
  </caution>
  
-  <sect2 xml:id="language.oop5.magic.sleep">
-   <title>
-    <link linkend="object.sleep">__sleep()</link> и
-    <link linkend="object.wakeup">__wakeup()</link>
-   </title>
-   
-   <methodsynopsis xml:id="object.sleep">
-    <modifier>public</modifier> <type>array</type><methodname>__sleep</methodname>
-    <void/>
-   </methodsynopsis>
-   <methodsynopsis xml:id="object.wakeup">
-    <type>void</type><methodname>__wakeup</methodname>
-    <void/>
-   </methodsynopsis>
-   
+ <sect2 xml:id="language.oop5.magic.sleep">
+  <title>
+   <link linkend="object.sleep">__sleep()</link> и
+   <link linkend="object.wakeup">__wakeup()</link>
+  </title>
+  
+  <methodsynopsis xml:id="object.sleep">
+   <modifier>public</modifier> <type>array</type><methodname>__sleep</methodname>
+   <void/>
+  </methodsynopsis>
+  <methodsynopsis xml:id="object.wakeup">
+   <modifier>public</modifier> <type>void</type><methodname>__wakeup</methodname>
+   <void/>
+  </methodsynopsis>
+  
+  <para>
+   Функция <function>serialize</function> проверяет, присутствует ли в
+   классе метод с магическим именем <link linkend="object.sleep">__sleep()</link>.
+   Если это так, то этот метод выполняется до любой операции сериализации. Он может
+   очистить объект и должен возвращать массив с именами
+   всех переменных этого объекта, которые должны быть сериализованы.
+   Если метод ничего не возвращает, то сериализуется &null; и
+   выдается предупреждение <constant>E_NOTICE</constant>.
+  </para>
+  <note>
    <para>
-    Функция <function>serialize</function> проверяет, присутствует ли в вашем
-    классе метод с магическим именем <link linkend="object.sleep">__sleep()</link>.
-    Если это так, то этот метод выполняется до любой операции сериализации. Он может
-    очистить объект и должен возвращать массив с именами
-    всех переменных этого объекта, которые должны быть сериализованы.
-    Если метод ничего не возвращает, то сериализуется &null; и
-    выдается предупреждение <constant>E_NOTICE</constant>.
+    Недопустимо возвращать в <link linkend="object.sleep">__sleep()</link>
+    имена закрытых свойств в родительском классе. Это
+    приведет к ошибке уровня <constant>E_NOTICE</constant>.
+    Вместо этого вы можете использовать интерфейс
+    <classname>Serializable</classname>.
    </para>
-   <note>
-    <para>
-     Недопустимо возвращать в <link linkend="object.sleep">__sleep()</link>
-     имена закрытых свойств в родительском классе. Это
-     приведет к ошибке уровня <constant>E_NOTICE</constant>.
-     Вместо этого вы можете использовать интерфейс
-     <classname>Serializable</classname>.
-    </para>
-   </note>
-   <para>
-    Предполагаемое использование <link linkend="object.sleep">__sleep()</link>
-    состоит в завершении работы над данными, ждущими обработки или
-    других подобных задач очистки. Кроме того, этот метод может полезен,
-    когда есть очень большие объекты, которые
-    нет необходимости полностью сохранять.
-   </para>
-   <para>
-    С другой стороны, функция <function>unserialize</function> проверяет
-    наличие метода с магическим именем
-    <link linkend="object.wakeup">__wakeup()</link>.
-    Если она имеется, эта функция может восстанавливать любые ресурсы,
-    которые может иметь объект.
-   </para>
-   <para>
-    Предполагаемое использование <link linkend="object.wakeup">__wakeup()</link>
-    заключается в восстановлении любых соединений с базой данных,
-    которые могли быть потеряны во время операции сериализации и
-    выполнения других операций повторной инициализации.
-   </para>
-   <example>
-    <title>Сериализация и десериализация</title>
-    <programlisting role="php">
+  </note>
+  <para>
+   Предполагаемое использование <link linkend="object.sleep">__sleep()</link>
+   состоит в завершении работы над данными, ждущими обработки или
+   других подобных задач очистки. Кроме того, этот метод может полезен,
+   когда есть очень большие объекты, которые
+   нет необходимости полностью сохранять.
+  </para>
+  <para>
+   С другой стороны, функция <function>unserialize</function> проверяет
+   наличие метода с магическим именем
+   <link linkend="object.wakeup">__wakeup()</link>.
+   Если она имеется, эта функция может восстанавливать любые ресурсы,
+   которые может иметь объект.
+  </para>
+  <para>
+   Предполагаемое использование <link linkend="object.wakeup">__wakeup()</link>
+   заключается в восстановлении любых соединений с базой данных,
+   которые могли быть потеряны во время операции сериализации и
+   выполнения других операций повторной инициализации.
+  </para>
+  <example>
+   <title>Сериализация и десериализация</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 class Connection
@@ -128,31 +130,130 @@ class Connection
     }
 }?>
 ]]>
+   </programlisting>
+  </example>
+ </sect2>
+ 
+ <sect2 xml:id="language.oop5.magic.serialize">
+   <title>
+    <link linkend="object.serialize">__serialize()</link> и
+    <link linkend="object.unserialize">__unserialize()</link>
+   </title>
+
+   <methodsynopsis xml:id="object.serialize">
+    <modifier>public</modifier> <type>array</type><methodname>__serialize</methodname>
+    <void/>
+   </methodsynopsis>
+   <methodsynopsis xml:id="object.unserialize">
+    <modifier>public</modifier> <type>void</type><methodname>__unserialize</methodname>
+    <methodparam><type>array</type><parameter>data</parameter></methodparam>
+   </methodsynopsis>
+
+   <para>
+    <function>serialize</function> проверяет, есть ли в классе функция с 
+    магическим именем <link linkend="object.serialize">__serialize()</link>. Если да, функция 
+    выполняется перед любой сериализацией. Она должна создать и вернуть ассоциативный массив пар ключ/значение, 
+    которые представляют сериализованную форму объекта.
+    Если массив не возвращен, будет выдано <classname>TypeError</classname>.
+   </para>
+   <note>
+    <para>
+     Если и <link linkend="object.serialize">__serialize()</link> и <link linkend="object.sleep">__sleep()</link> о
+     пределены в одном и том же объекте, будет вызван только метод <link linkend="object.serialize">__serialize()</link>.
+     <link linkend="object.sleep">__sleep()</link> будет игнорироваться. Если объект реализует интерфейс <link linkend="class.serializable">Serializable</link>, 
+     метод <literal>serialize()</literal> интерфейса будет игнорироваться, а вместо него будет использован <link linkend="object.serialize">__serialize()</link>.
+    </para>
+   </note>
+   <para>
+    Предполагаемое использование <link linkend="object.serialize">__serialize()</link> для определения удобного для сериализации 
+    произвольного представления объекта. Элементы массива могут соответствовать свойствам объекта, но это не обязательно.
+   </para>
+   <para>
+    И наоборот, <function>unserialize</function> проверяет 
+    наличие магической функции <link linkend="object.unserialize">__unserialize()</link>. 
+    Если функция присутствует, ей будет передан 
+    восстановленный массив, который был возвращен из <link linkend="object.serialize">__serialize()</link>. Затем 
+    он может восстановить свойства объекта из этого массива соответствующим образом.
+   </para>
+   <note>
+    <para>
+     Если и <link linkend="object.unserialize">__unserialize()</link> и <link linkend="object.wakeup">__wakeup()</link> о
+     пределены в одном и том же объекте, только будет вызван только метод <link linkend="object.unserialize">__unserialize()</link>.
+     <link linkend="object.wakeup">__wakeup()</link> будет игнорироваться.
+    </para>
+   </note>
+   <note>
+    <para>
+     Функция доступна с PHP 7.4.0.
+    </para>
+   </note>
+   <example>
+    <title>Сериализация и десериализация</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Connection
+{
+    protected $link;
+    private $dsn, $username, $password;
+
+    public function __construct($dsn, $username, $password)
+    {
+        $this->dsn = $dsn;
+        $this->username = $username;
+        $this->password = $password;
+        $this->connect();
+    }
+
+    private function connect()
+    {
+        $this->link = new PDO($this->dsn, $this->username, $this->password);
+    }
+
+    public function __serialize(): array
+    {
+        return [
+          'dsn' => $this->dsn,
+          'user' => $this->username,
+          'pass' => $this->password,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->dsn = $data['dsn'];
+        $this->username = $data['user'];
+        $this->password = $data['pass'];
+
+        $this->connect();
+    }
+}?>
+]]>
     </programlisting>
    </example>
   </sect2>
-  
-  <sect2 xml:id="language.oop5.magic.tostring">
-   <title><link linkend="object.tostring">__toString()</link></title>
-   <methodsynopsis xml:id="object.tostring">
-    <modifier>public</modifier> <type>string</type><methodname>__toString</methodname>
-    <void/>
-   </methodsynopsis>
-   <para>
-    Метод <link linkend="object.tostring">__toString()</link> позволяет классу решать,
-    как он должен реагировать при преобразовании в
-    строку. Например, что вывести при выполнении <literal>echo $obj;</literal>. Этот метод
-    должен возвращать строку, иначе произойдёт фатальная ошибка уровня
-    <constant>E_RECOVERABLE_ERROR</constant>.
-   </para>
-   <warning>
-    <simpara>
-     Нельзя выбросить исключение из метода <link linkend="object.tostring">__toString()</link> до PHP 7.4.0. Это приведет к фатальной ошибке.
-    </simpara>
-   </warning>
-   <example>
-    <title>Простой пример</title>
-    <programlisting role="php">
+ 
+ <sect2 xml:id="language.oop5.magic.tostring">
+  <title><link linkend="object.tostring">__toString()</link></title>
+  <methodsynopsis xml:id="object.tostring">
+   <modifier>public</modifier> <type>string</type><methodname>__toString</methodname>
+   <void/>
+  </methodsynopsis>
+  <para>
+   Метод <link linkend="object.tostring">__toString()</link> позволяет классу решать,
+   как он должен реагировать при преобразовании в
+   строку. Например, что вывести при выполнении <literal>echo $obj;</literal>. Этот метод
+   должен возвращать строку, иначе произойдёт фатальная ошибка уровня
+   <constant>E_RECOVERABLE_ERROR</constant>.
+  </para>
+  <warning>
+   <simpara>
+    Нельзя выбросить исключение из метода <link linkend="object.tostring">__toString()</link> до PHP 7.4.0. Это приведет к фатальной ошибке.
+   </simpara>
+  </warning>
+  <example>
+   <title>Простой пример</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 // Объявление простого класса
@@ -175,9 +276,9 @@ $class = new TestClass('Привет');
 echo $class;
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 Привет
 ]]>
@@ -195,26 +296,26 @@ echo $class;
     метода <link linkend="object.tostring">__toString()</link>
     вызывает ошибку <constant>E_RECOVERABLE_ERROR</constant>.
    </para>
-  </sect2>
-  
-  <sect2 xml:id="language.oop5.magic.invoke">
-   <title><link linkend="object.invoke">__invoke()</link></title>
-   <methodsynopsis xml:id="object.invoke">
-    <type>mixed</type><methodname>__invoke</methodname>
-    <methodparam choice="opt"><parameter>...</parameter></methodparam>
-   </methodsynopsis>
+ </sect2>
+ 
+ <sect2 xml:id="language.oop5.magic.invoke">
+  <title><link linkend="object.invoke">__invoke()</link></title>
+  <methodsynopsis xml:id="object.invoke">
+   <type>mixed</type><methodname>__invoke</methodname>
+   <methodparam choice="opt"><parameter>...</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Метод <link linkend="object.invoke">__invoke()</link>
+   вызывается, когда скрипт пытается выполнить объект как функцию.
+  </para>
+  <note>
    <para>
-    Метод <link linkend="object.invoke">__invoke()</link>
-    вызывается, когда скрипт пытается выполнить объект как функцию.
+    Данный метод доступен начиная с PHP 5.3.0.
    </para>
-   <note>
-    <para>
-     Данный метод доступен начиная с PHP 5.3.0.
-    </para>
-   </note>
-   <example>
-    <title>Использование <link linkend="object.invoke">__invoke()</link></title>
-    <programlisting role="php">
+  </note>
+  <example>
+   <title>Использование <link linkend="object.invoke">__invoke()</link></title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 class CallableClass
@@ -229,35 +330,35 @@ $obj(5);
 var_dump(is_callable($obj));
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 int(5)
 bool(true)
 ]]>
     </screen>
    </example>
-  </sect2>
-  
-  <sect2 xml:id="language.oop5.magic.set-state">
-   <title><link linkend="object.set-state">__set_state()</link></title>
-   <methodsynopsis xml:id="object.set-state">
-    <modifier>static</modifier> <type>object</type><methodname>__set_state</methodname>
-    <methodparam><type>array</type><parameter>properties</parameter></methodparam>
-   </methodsynopsis>
-   <para>
-    Этот <link linkend="language.oop5.static">статический</link> метод
-    вызывается для тех классов, которые экспортируются функцией
-    <function>var_export</function> начиная с PHP 5.1.0.
-   </para>
-   <para>
-    Единственный параметр этого метода является массив, содержащий экспортируемые
-    свойства в виде <literal>array('property' => value, ...)</literal>.
-   </para>
-   <example>
-    <title>Использование <link linkend="object.set-state">__set_state()</link> (начиная с PHP 5.1.0)</title>
-    <programlisting role="php">
+ </sect2>
+ 
+ <sect2 xml:id="language.oop5.magic.set-state">
+  <title><link linkend="object.set-state">__set_state()</link></title>
+  <methodsynopsis xml:id="object.set-state">
+   <modifier>static</modifier> <type>object</type><methodname>__set_state</methodname>
+   <methodparam><type>array</type><parameter>properties</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Этот <link linkend="language.oop5.static">статический</link> метод
+   вызывается для тех классов, которые экспортируются функцией
+   <function>var_export</function> начиная с PHP 5.1.0.
+  </para>
+  <para>
+   Единственный параметр этого метода является массив, содержащий экспортируемые
+   свойства в виде <literal>array('property' => value, ...)</literal>.
+  </para>
+  <example>
+   <title>Использование <link linkend="object.set-state">__set_state()</link> (начиная с PHP 5.1.0)</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -287,9 +388,9 @@ var_dump($b);
 
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 object(A)#2 (2) {
   ["var1"]=>
@@ -312,25 +413,25 @@ object(A)#2 (2) {
      лежит на разработчике.
     </simpara>
    </note>
-  </sect2>
-  
-  <sect2 xml:id="language.oop5.magic.debuginfo">
-   <title><link linkend="object.debuginfo">__debugInfo()</link></title>
-   <methodsynopsis xml:id="object.debuginfo">
-    <type>array</type><methodname>__debugInfo</methodname>
-    <void/>
-   </methodsynopsis>
-   <para>
-    Этот метод вызывается функцией <function>var_dump</function>, когда
-    необходимо вывести список свойств объекта. Если этот метод не определен,
-    тогда будут выведены все свойства объекта c модификаторами public, protected и private. 
-   </para>
-   <para>
-    Этот метод был добавлен в PHP 5.6.0.
-   </para>
-   <example>
-    <title>Использование <link linkend="object.debuginfo">__debugInfo()</link></title>
-    <programlisting role="php">
+ </sect2>
+ 
+ <sect2 xml:id="language.oop5.magic.debuginfo">
+  <title><link linkend="object.debuginfo">__debugInfo()</link></title>
+  <methodsynopsis xml:id="object.debuginfo">
+   <type>array</type><methodname>__debugInfo</methodname>
+   <void/>
+  </methodsynopsis>
+  <para>
+   Этот метод вызывается функцией <function>var_dump</function>, когда
+   необходимо вывести список свойств объекта. Если этот метод не определен,
+   тогда будут выведены все свойства объекта c модификаторами public, protected и private. 
+  </para>
+  <para>
+   Этот метод был добавлен в PHP 5.6.0.
+  </para>
+  <example>
+   <title>Использование <link linkend="object.debuginfo">__debugInfo()</link></title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 class C {
@@ -350,9 +451,9 @@ class C {
 var_dump(new C(42));
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 object(C)#1 (1) {
   ["propSquared"]=>
@@ -361,7 +462,7 @@ object(C)#1 (1) {
 ]]>
     </screen>
    </example>
-  </sect2>
+ </sect2>
 </sect1>
 
 <!-- Keep this comment at the end of the file
