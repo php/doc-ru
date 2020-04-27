@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 886599435a522e09c98b6a8374f8723c024b92e6 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 9268006bcf989f31baeaa9035e4ef7cfc7690c28 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
@@ -1752,6 +1752,168 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
   </sect2>
   
  </sect1>
+ 
+ <sect1 xml:id="functions.arrow">
+   <title>Стрелочные функции</title>
+
+   <simpara>
+    Стрелочные функции были введены в PHP 7.4, как более лаконичный синтаксис для <link linkend="functions.anonymous">анонимных функций</link>.
+   </simpara>
+   <simpara>
+    И анонимные, и стрелочные функции реализованы с использованием класса <link linkend="class.closure"><classname>Closure</classname></link>.
+   </simpara>
+
+   <simpara>
+    Базовая форма стрелочных функций
+    <code>fn (argument_list) =&gt; expr</code>.
+   </simpara>
+
+   <simpara>
+    Стрелочные функции поддерживают те же функции, что и <link linkend="functions.anonymous">анонимные функции</link>, 
+    за исключением того, что использование переменных из родительской области всегда выполняется автоматически.
+   </simpara>
+
+   <simpara>
+    Когда переменная, используемая в выражении, определена в родительской области, 
+    она будет неявно захвачена по значению.
+    В следующем примере функции <varname>$fn1</varname> и 
+    <varname>$fn2</varname> ведут себя одинаково.
+   </simpara>
+
+   <para>
+    <example>
+     <title>Стрелочные функции захватывают переменные по значению автоматически</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+$y = 1;
+ 
+$fn1 = fn($x) => $x + $y;
+// эквивалентно использованию $y по значению:
+$fn2 = function ($x) use ($y) {
+    return $x + $y;
+};
+
+var_export($fn1(3));
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+4
+]]>
+      </screen>
+    </example>
+   </para>
+   <simpara>
+    Это также работает, если стрелочные функции вложены:
+   </simpara>
+   <para>
+    <example>
+     <title>Стрелочные функции захватывают переменные по значению автоматически, даже когда они вложены</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+$z = 1;
+$fn = fn($x) => fn($y) => $x * $y + $z;
+// Выведет 51
+var_export($fn(5)(10));
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <simpara>
+    Подобно анонимным функциям, 
+    синтаксис стрелочных функций допускает произвольные сигнатуры функций, 
+    включая типы параметров и возвращаемых значений, значения по умолчанию, переменные, 
+    а также передачу и возврат по ссылке.
+    Все перечисленные ниже являются корректными примерами стрелочных функций: 
+   </simpara>
+   <para>
+    <example>
+     <title>Примеры использования стрелочных функций</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+fn(array $x) => $x;
+static fn(): int => $x;
+fn($x = 42) => $x;
+fn(&$x) => $x;
+fn&($x) => $x;
+fn($x, ...$rest) => $rest;
+
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <simpara>
+    Стрелочные функции используют привязку переменных по значению.
+    Это примерно эквивалентно выполнению <code>use($x)</code> для каждой 
+    переменной <varname>$x</varname>, используемой внутри стрелочной функции.
+    Привязка по значению означает, что невозможно изменить какие-либо значения 
+    из внешней области.
+    Вместо этого можно использовать <link linkend="functions.anonymous">анонимные функции</link> 
+    для привязок по ссылкам.
+   </simpara>
+   <para>
+    <example>
+     <title>Значения из внешней области видимости не могут быть изменены стрелочными функциями</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+$x = 1;
+$fn = fn() => $x++; // Никакого эффекта
+$fn();
+var_export($x);  // Выведет 1
+
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   
+   <sect2 role="changelog">
+    &reftitle.changelog;
+    <para>
+     <informaltable>
+      <tgroup cols="2">
+       <thead>
+        <row>
+         <entry>&Version;</entry>
+         <entry>&Description;</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry>7.4.0</entry>
+         <entry>
+          Стрелочные функции стали доступны
+         </entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </informaltable>
+    </para>
+   </sect2>
+
+   <sect2 role="notes">
+    &reftitle.notes;
+    <note>
+     <simpara>
+      Можно использовать <function>func_num_args</function>, 
+      <function>func_get_arg</function> и <function>func_get_args</function> 
+      в стрелочной функции.
+     </simpara>
+    </note>
+   </sect2>
+  </sect1>
  
 </chapter>
 
