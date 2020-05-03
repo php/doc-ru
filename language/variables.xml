@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 6187696fb48916b4585a8a837bf725845f7cf3c7 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 498e7a69fb58ed6d9f58a6f9155e9278117caa94 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 
 <chapter xml:id="language.variables" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -218,7 +218,7 @@ var_dump($unset_obj);
    <para>
     До PHP 5.4, доступен старый способ доступа к информации связанной с
     HTTP-запросом, с помощью переменных <literal>HTTP_*_VARS</literal>.
-    Эта возможность может быьт отключена с помощью директивы
+    Эта возможность может быть отключена с помощью директивы
     <link linkend="ini.register-long-arrays">register_long_arrays</link>
     начиная с PHP 5.0.0.
    </para>
@@ -543,12 +543,14 @@ function foo() {
 <?php
 function test_global_ref() {
     global $obj;
-    $obj = &new stdclass;
+    $new = new stdclass;
+    $obj = &$new;
 }
 
 function test_global_noref() {
     global $obj;
-    $obj = new stdclass;
+    $new = new stdclass;
+    $obj = $new;
 }
 
 test_global_ref();
@@ -563,9 +565,11 @@ var_dump($obj);
    &example.outputs;
    
    <screen>
-    NULL
-    object(stdClass)(0) {
-    }
+<![CDATA[
+NULL
+object(stdClass)#1 (0) {
+}
+]]>
    </screen>
    
    <simpara>
@@ -583,10 +587,15 @@ function &get_instance_ref() {
     echo 'Статический объект: ';
     var_dump($obj);
     if (!isset($obj)) {
+        $new = new stdclass;
         // Присвоить ссылку статической переменной
-        $obj = &new stdclass;
+        $obj = &$new;
     }
-    $obj->property++;
+    if (!isset($obj->property)) {
+        $obj->property = 1;
+    } else {
+        $obj->property++;
+    }
     return $obj;
 }
 
@@ -596,10 +605,15 @@ function &get_instance_noref() {
     echo 'Статический объект: ';
     var_dump($obj);
     if (!isset($obj)) {
+        $new = new stdclass;
         // Присвоить объект статической переменной
-        $obj = new stdclass;
+        $obj = $new;
     }
-    $obj->property++;
+    if (!isset($obj->property)) {
+        $obj->property = 1;
+    } else {
+        $obj->property++;
+    }
     return $obj;
 }
 
@@ -614,14 +628,16 @@ $still_obj2 = get_instance_noref();
    </informalexample>
    &example.outputs;
    <screen>
-    Статический объект: NULL
-    Статический объект: NULL
-    
-    Статический объект: NULL
-    Статический объект: object(stdClass)(1) {
-    ["property"]=>
-    int(1)
-    }
+<![CDATA[
+Статический объект: NULL
+Статический объект: NULL
+
+Статический объект: NULL
+Статический объект: object(stdClass)#3 (1) {
+  ["property"]=>
+  int(1)
+}
+]]>
    </screen>
    
    <simpara>
