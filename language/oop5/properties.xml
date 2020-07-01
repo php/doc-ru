@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a8cc01634c60dc8ae070ad29b1d2804afd21aba7 Maintainer: irker Status: ready -->
+<!-- EN-Revision: a43655118be85f174912b5222eb6ba6902b29f81 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <sect1 xml:id="language.oop5.properties" xmlns="http://docbook.org/ns/docbook">
  <title>Свойства</title>
  
  <para>
-  Переменные, которые являются членами класса, называются "свойства".
+  Переменные, которые являются членами класса, называются <emphasis>свойства</emphasis>.
   Также их называют, используя другие термины,
-  такие как "атрибуты" или "поля", но в рамках этой документации,
-  мы будем называть их свойствами.
+  такие как <emphasis>атрибуты</emphasis> или <emphasis>поля</emphasis>, но в рамках этой документации,
+  мы будем называть их <emphasis>свойствами</emphasis>.
   Они определяются с помощью ключевых слов <literal>public</literal>,
   <literal>protected</literal> 
   или <literal>private</literal>, могут сопровождаться необязательным объявлением типа и 
@@ -105,19 +105,21 @@ EOD;
   </para>
  </note>
  
- <para>
-  Начиная с PHP 5.3.0
-  <link linkend="language.types.string.syntax.heredoc">heredocs</link> и
-  <link linkend="language.types.string.syntax.nowdoc">nowdocs</link>
-  могут быть использованы в любом статическом контексте данных, включая
-  определение свойств.
-  <example>
-   <title>Пример использования nowdoc для инициализации свойств</title>
-   <programlisting role="php">
+  <sect2 xml:id="language.oop5.properties.heredoc-nowdoc">
+   <title>Heredoc и Nowdoc</title>
+   <para>
+     Начиная с PHP 5.3.0
+     <link linkend="language.types.string.syntax.heredoc">heredocs</link> и
+     <link linkend="language.types.string.syntax.nowdoc">nowdocs</link>
+     могут быть использованы в любом статическом контексте данных, включая
+     определение свойств.
+    <example>
+     <title>Пример использования nowdoc для инициализации свойств</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 class foo {
-   // С PHP 5.3.0
+   // Начиная с PHP 5.3.0
    public $bar = <<<'EOT'
 bar
 EOT;
@@ -127,53 +129,212 @@ EOT;
 }
 ?>
 ]]>
-   </programlisting>
-  </example>
- </para>
- <note>
-  <para>
-   Поддержка Nowdoc и Heredoc была добавлена в PHP 5.3.0.
-  </para>
- </note>
- 
- <para>
-  Начиная с PHP 7.4.0, определения свойств могут включать объявление типа, за исключением 
-  типа <literal>callable</literal>
-  <example>
-   <title>Пример использования типизированных свойств</title>
-   <programlisting role="php">
+     </programlisting>
+    </example>
+   </para>
+   <note>
+    <para>
+     Поддержка Nowdoc и Heredoc была добавлена в PHP 5.3.0.
+    </para>
+   </note>
+  </sect2>
+  
+  <sect2 xml:id="language.oop5.properties.typed-properties">
+   <title>Объявления типов</title>
+   <para>
+     Начиная с PHP 7.4.0, в определении свойств могут быть указаны типы.
+    <example>
+     <title>Пример использования типизированных свойств</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 
 class User
 {
     public int $id;
-    public string $name;
+    public ?string $name;
 
-    public function __construct(int $id, string $name)
+    public function __construct(int $id, ?string $name)
     {
         $this->id = $id;
         $this->name = $name;
     }
 }
 
-$user = new User(1234, "php");
-echo "ID: " . $user->id;
-echo "\n";
-echo "Имя: " . $user->name;
+$user = new User(1234, null);
+
+var_dump($user->id);
+var_dump($user->name);
 
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
-ID: 1234
-Имя: php
+int(1234)
+NULL
 ]]>
-    </screen>
-  </example>
- </para>
+     </screen>
+    </example>
+   </para>
+
+   <para>
+    Перед обращением к типизированному свойству у него должно быть задано значение, иначе будет выброшено исключение
+    <classname>Error</classname>.
+    <example>
+     <title>Обращение к свойствам</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+class Shape
+{
+    public int $numberOfSides;
+    public string $name;
+
+    public function setNumberOfSides(int $numberOfSides): void
+    {
+        $this->numberOfSides = $numberOfSides;
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function getNumberOfSides(): int
+    {
+        return $this->numberOfSides;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+}
+
+$triangle = new Shape();
+$triangle->setName("triangle");
+$triangle->setNumberofSides(3);
+var_dump($triangle->getName());
+var_dump($triangle->getNumberOfSides());
+
+$circle = new Shape();
+$circle->setName("circle");
+var_dump($circle->getName());
+var_dump($circle->getNumberOfSides());
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+string(8) "triangle"
+int(3)
+string(6) "circle"
+
+Fatal error: Uncaught Error: Typed property Shape::$numberOfSides must not be accessed before initialization
+]]>
+     </screen>
+    </example>
+   </para>
+
+   <sect3 xml:id="language.oop5.properties.typed-properties.valid-types">
+    <title>Допустимые типы свойств</title>
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Тип</entry>
+        <entry>Описание</entry>
+        <entry>Минимальная версия PHP</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry><type>bool</type></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>boolean</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><type>int</type></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>integer</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><type>float</type></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>float</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><type>string</type></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>string</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><type>array</type></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>array</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><literal>object</literal></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>object</type>.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><literal>iterable</literal></entry>
+        <entry>
+         Свойство должно быть со значением типа <type>array</type> или объектом интерфейса
+         <interfacename>Traversable</interfacename> (используется &instanceof;).
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><literal>self</literal></entry>
+        <entry>
+         Свойство должно иметь тот же самый класс, в котором оно определено (используется &instanceof;).
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry><literal>parent</literal></entry>
+        <entry>
+         Свойство должно иметь родительский класс объекта, в котором оно определено (используется &instanceof;).
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry>Имя класса/интерфейса</entry>
+        <entry>
+         Свойство должно иметь указанный класс или интерфейс (используется &instanceof;).
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+       <row>
+        <entry>?type</entry>
+        <entry>
+         Свойство должно быть со значением указанного типа, либо &null;.
+        </entry>
+        <entry>PHP 7.4.0</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </sect3>
+  </sect2>
 </sect1>
 
 <!-- Keep this comment at the end of the file
