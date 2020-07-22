@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: e9366ee458b2900c53a503b1ad97664e1d9a8859 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 2bbdb795c4fd9cff4156021dc3e8bb4474397c2e Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 
 <chapter xml:id="oci8.taf" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -63,7 +63,7 @@
       (DESCRIPTION =
         (ADDRESS = (PROTOCOL = TCP)(HOST = 127.0.0.1)(PORT = 1521))
         (CONNECT_DATA =
-          (SERVICE_NAME = orcl)
+          (SERVICE_NAME = orclpdb1)
           (FAILOVER_MODE =
             (TYPE = SELECT)
             (METHOD = BASIC)
@@ -230,11 +230,10 @@ class MyClass {
     {
         switch ($event) {
             case OCI_FO_BEGIN:
-                printf(" Failing Over ... Please stand by");
+                printf(" Failing Over ... Please stand by\n");
                 printf(" Failover type was found to be %s \n",
                        (($type==OCI_FO_SESSION) ? "SESSION"
-                        :($type==OCI_FO_SELECT) ? "SELECT"
-                        : "UNKNOWN!"));
+                        :(($type==OCI_FO_SELECT) ? "SELECT" : "UNKNOWN!")));
                 self::$retry_count = 0;
                 break;
             case OCI_FO_ABORT:
@@ -267,14 +266,28 @@ class MyClass {
     }
 }
 
-$conn = oci_connect('hr', 'welcome', 'localhost/XE');
 $fn_name = 'MyClass::TAFCallback';
 
-oci_register_taf_callback($conn, $fn_name); // Регистрируем TAFCallback для Oracle TAF 
+$conn = oci_connect('hr', 'welcome', 'orcl');
+$sysconn = oci_connect('system', 'oracle', 'orcl');
 
-$sql = "SELECT col1 FROM mytab";
+// Используйте привилегированное соединение для создания оператора SQL, который будет инициировать отработку отказа
+$sql = <<< 'END'
+select unique 'alter system disconnect session '''||sid||','||serial#||''''
+from v$session_connect_info
+where sid = sys_context('USERENV', 'SID')
+END;
+
+$s = oci_parse($conn, $sql);
+oci_execute($s);
+$r = oci_fetch_array($s);
+$disconnectssql = $r[0];
+
+oci_register_taf_callback($conn, $fn_name); // Зарегистрируйте TAFCallback для Oracle TAF
+
+print("Разбор пользовательского запроса\n");
+$sql = "select systimestamp from dual";
 $stmt = oci_parse($conn, $sql);
-oci_define_by_name($stmt, 'COL1', $col1);
 
 // К примеру, если соединение было потеряно на этом шаге, oci_execute()
 // определит это и запустит процедуру восстановления. В процессе восстановления
@@ -285,16 +298,19 @@ oci_define_by_name($stmt, 'COL1', $col1);
 // Если восстановление завершится неудачно, oci_execute() вернет ошибку, так как
 // будет отсутствовать соединение.
 
+// Отключите пользователя, который инициирует аварийное переключение
+print("Отключение пользователя\n");
+$discsql = oci_parse($sysconn, $disconnectssql);
+oci_execute($discsql);
+
+print("Выполнение пользовательского запроса\n");
 $e = oci_execute($stmt);
-if ($e == false)
-{
-    // обрабатываем ошибку. Если oci_execute() завершается с ошибкой то
-    // var_dump(oci_error($stmt));
+if (!$e) {
+    $m = oci_error($stmt);
+    trigger_error('Не удалось связать параметр: '. $m['message'], E_USER_ERROR);
 }
-while (oci_fetch($stmt))
-{
-    echo "COL1 value is $col1<br>\n";
-}
+$row = oci_fetch_array($stmt);
+print($row[0] . "\n");
 
 // выполняем другие SQL-запросы на новом подключении
 // $stmt = oci_parse($conn,  . . .); 
