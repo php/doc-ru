@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: ba0a270fbc5b2d8afc879552c7579b76104d48d6 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 6ec0096178dba7d0619c2e421f70b130825743c2 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.session-set-save-handler" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -49,7 +49,7 @@
      <listitem>
       <para>
        Экземпляр класса, реализующий интерфейс
-       <interfacename>SessionHandlerInterface</interfacename>,
+       <interfacename>SessionHandlerInterface</interfacename> и необязательные
        <interfacename>SessionIdInterface</interfacename> и/или
        <interfacename>SessionUpdateTimestampHandlerInterface</interfacename>,
        такой как <classname>SessionHandler</classname>, для регистрации
@@ -72,8 +72,16 @@
    
    <variablelist>
     <varlistentry>
-     <term><parameter>open(string $savePath, string $sessionName)</parameter></term>
+     <term><parameter>open</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>open</replaceable></methodname>
+        <methodparam><type>string</type><parameter>savePath</parameter></methodparam>
+        <methodparam><type>string</type><parameter>sessionName</parameter></methodparam>
+       </methodsynopsis>
+      </para>
       <para>
        Callback-функция <parameter>open</parameter> работает как конструктор в классах и выполняется
        при открытии сессии. Это первая сallback-функция, которая выполняется,
@@ -83,8 +91,15 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>close()</parameter></term>
+     <term><parameter>close</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>close</replaceable></methodname>
+        <void/>
+       </methodsynopsis>
+      </para>
       <para>
        Callback-функция <parameter>close</parameter> работает как деструктор в классах и выполняется
        после того, как была вызвана callback-функция <parameter>write</parameter>. Она также вызывается
@@ -94,8 +109,15 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>read(string $sessionId)</parameter></term>
+     <term><parameter>read</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>read</replaceable></methodname>
+        <methodparam><type>string</type><parameter>sessionId</parameter></methodparam>
+       </methodsynopsis>
+      </para>
       <para>
        Callback-функция <parameter>read</parameter> должна всегда возвращать кодированную (сериализованную)
        строку сессии или пустую строку, если нет данных для чтения.
@@ -115,8 +137,16 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>write(string $sessionId, string $data)</parameter></term>
+     <term><parameter>write</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>write</replaceable></methodname>
+        <methodparam><type>string</type><parameter>sessionId</parameter></methodparam>
+        <methodparam><type>string</type><parameter>data</parameter></methodparam>
+       </methodsynopsis>
+      </para>
       <para>
        Callback-функция <parameter>write</parameter> вызывается, когда сессия должна быть сохранена и закрыта. Данная
        callback-функция принимает идентификатор текущей сессии и сериализованную версию суперглобальной переменной
@@ -143,8 +173,15 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>destroy($sessionId)</parameter></term>
+     <term><parameter>destroy</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>destroy</replaceable></methodname>
+        <methodparam><type>string</type><parameter>sessionId</parameter></methodparam>
+       </methodsynopsis>
+      </para>
       <para>
        Данная callback-функция вызывается, когда сессия уничтожается с помощью <function>session_destroy</function>
        или при вызове <function>session_regenerate_id</function> с параметром destroy, установленным в &true;.
@@ -153,8 +190,15 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>gc($lifetime)</parameter></term>
+     <term><parameter>gc</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>gc</replaceable></methodname>
+        <methodparam><type>int</type><parameter>lifetime</parameter></methodparam>
+       </methodsynopsis>
+      </para>
       <para>
        Callback-функция сборщика мусора периодически вызывается PHP для очистки данных старых сессий.
        Частота контролируется директивами <link linkend="ini.session.gc-probability">session.gc_probability</link>
@@ -165,12 +209,56 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>create_sid()</parameter></term>
+     <term><parameter>create_sid</parameter></term>
      <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>string</type><methodname><replaceable>create_sid</replaceable></methodname>
+        <void/>
+       </methodsynopsis>
+      </para>
       <para>
        Данная callback-функция выполняется, когда требуется новый идентификатор сессии. Не
        предусматривает параметров, а возвращаемое значение должно быть строкой, которая
        является допустимым идентификатором сессии для вашего обработчика.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>validate_sid</parameter></term>
+     <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>bool</type><methodname><replaceable>validate_sid</replaceable></methodname>
+        <methodparam><type>string</type><parameter>key</parameter></methodparam>
+       </methodsynopsis>
+      </para>
+      <para>
+       Callback-функция выполняется, когда должна быть запущена сессия, предоставляется идентификатор сессии 
+       и включается <link linkend="ini.session.use-strict-mode">session.use_strict_mode</link>.
+       <parameter>key</parameter> - это идентификатор сессии для проверки.
+       Идентификатор сессии действителен, если сессия с таким идентификатором уже существует.
+       Возвращаемое значение должно быть &true; в случае успешного выполнения или &false; в случае возникновения ошибки.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>update_timestamp</parameter></term>
+     <listitem>
+      <para>
+       Callback-функция со следующей сигнатурой:
+       <methodsynopsis>
+        <type>string</type><methodname><replaceable>update_timestamp</replaceable></methodname>
+        <methodparam><type>string</type><parameter>key</parameter></methodparam>
+        <methodparam><type>string</type><parameter>val</parameter></methodparam>
+       </methodsynopsis>
+      </para>
+      <para>
+       Callback-функция выполняется при сессии. 
+       <parameter>key</parameter> - это идентификатор сессии, <parameter>val</parameter> - это данные сессии.
+       Возвращаемое значение должно быть &true; в случае успешного выполнения или &false; в случае возникновения ошибки.
       </para>
      </listitem>
     </varlistentry>
