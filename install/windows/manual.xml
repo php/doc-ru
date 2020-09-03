@@ -1,73 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6ccdace91b727bd0f32214d1670a5e765fd28a09 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: cd118fcbd8ac516b4f2bbe20a2eec7bcf7573b08 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <sect1 xml:id="install.windows.manual" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Самостоятельная установка PHP в Windows</title>
  <sect2>
   <title>Выберите веб-сервер</title>
-  <para>
-   <itemizedlist spacing="compact">
-    <listitem>
-     <para>
-      IIS является встроенным в Windows.
-      
-      На сервере Windows используйте Server Manager для добавления роли IIS. Убедитесь, что функция роли CGI включена.
-      
-      На рабочем столе Windows используйте панель "Установка и удаление программ" для добавления IIS. См.: <link xlink:href="https://msdn.microsoft.com/en-us/library/ms181052%28v=vs.80%29.aspx?f=255&amp;MSPPError=-2147217396">https://msdn.microsoft.com/en-us/library/ms181052%28v=vs.80%29.aspx?f=255&amp;MSPPError=-2147217396</link>
-      
-      Для настольных веб-приложений и веб-разработки можно также использовать IIS/Express или рабочий стол PHP 
-      
-      <example>
-       <title>Командная строка для настройки IIS и PHP</title>
-       <programlisting>
+  <sect3>
+   <title>IIS</title>
+   <para>
+    IIS является встроенным в Windows.
+    На сервере Windows используйте Server Manager для добавления роли IIS. Убедитесь, что функция роли CGI включена.
+    На рабочем столе Windows используйте панель "Установка и удаление программ" для добавления IIS.
+    В документации Microsoft есть <link xlink:href="https://docs.microsoft.com/en-us/previous-versions/ms181052(v=vs.80)">подробные инструкции</link>.
+    Для настольных веб-приложений и веб-разработки можно также использовать IIS/Express или рабочий стол PHP.
+    <example>
+     <title>Командная строка для настройки IIS и PHP</title>
+     <programlisting>
 <![CDATA[
-    
-    @echo off
 
-    REM download .ZIP file of PHP build from http://windows.php.net/downloads/
-    REM
-    REM path to directory you decompressed PHP .ZIP file into
-set phpdir=c:\php
-set phppath=php-5.6.19-nts-Win32-VC11-x86
+@echo off
+
+REM download .ZIP file of PHP build from http://windows.php.net/downloads/
+
+REM path to directory you decompressed PHP .ZIP file into (no trailing \)
+set phppath=c:\php
+
 
 REM Clear current PHP handlers
 %windir%\system32\inetsrv\appcmd clear config /section:system.webServer/fastCGI
+REM The following command will generate an error message if PHP is not installed. This can be ignored.
 %windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /-[name='PHP_via_FastCGI']
 
 REM Set up the PHP handler
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/fastCGI /+[fullPath='%phpdir%\%phppath%\php-cgi.exe']
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /+[name='PHP_via_FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='%phpdir%\%phppath%\php-cgi.exe',resourceType='Unspecified']
+%windir%\system32\inetsrv\appcmd set config /section:system.webServer/fastCGI /+[fullPath='%phppath%\php-cgi.exe']
+%windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /+[name='PHP_via_FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='%phppath%\php-cgi.exe',resourceType='Unspecified']
 %windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /accessPolicy:Read,Script
 
 REM Configure FastCGI Variables
-%windir%\system32\inetsrv\appcmd set config -section:system.webServer/fastCgi /[fullPath='%phpdir%\%phppath%\php-cgi.exe'].instanceMaxRequests:10000
-%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phpdir%\%phppath%\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000']"
-%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phpdir%\%phppath%\php-cgi.exe'].environmentVariables.[name='PHPRC',value='%phpdir%\%phppath%\php.ini']"
-
+%windir%\system32\inetsrv\appcmd set config -section:system.webServer/fastCgi /[fullPath='%phppath%\php-cgi.exe'].instanceMaxRequests:10000
+%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phppath%\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000']"
+%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phppath%\php-cgi.exe'].environmentVariables.[name='PHPRC',value='%phppath%\php.ini']"
 ]]>
-       </programlisting>
-      </example>
-      
-      <link linkend="install.windows.legacy.iis7">Как вручную настроить IIS</link>
-     </para>
-    </listitem>
-    <listitem>
-     <para>
-      
-      Существует несколько версий Apache2 для Windows.
-      
-      Мы поддерживаем ApacheLounge, но другие варианты включают XAMPP, WampServer и BitNami, которые предоставляют средства автоматической установки.
-      
-      Вы можете использовать mod_php или mod_fastcgi для загрузки PHP на Apache.
-      
-      Если вы используете mod_php, необходимо использовать TS-build Apache, Visual C той же версии и тот же процессор (x86 или x64).
-      
-      <link linkend="install.windows.legacy.apache2">Как вручную настроить Apache2</link>
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
+     </programlisting>
+    </example>
+    
+    Смотрите также <link linkend="install.windows.legacy.iis7">старые инструкции по установке IIS</link>.
+   </para>
+  </sect3>
+  
+  <sect3>
+   <title>Apache</title>
+   <para>
+    Существует несколько версий Apache2 для Windows.
+    Мы поддерживаем ApacheLounge, но другие варианты включают XAMPP, WampServer и BitNami, которые предоставляют средства автоматической установки.
+    Вы можете использовать mod_php или mod_fastcgi для загрузки PHP на Apache.
+    Если вы используете mod_php, необходимо использовать TS-build Apache, Visual C той же версии и тот же процессор (x86 или x64).
+    Смотрите также <link linkend="install.windows.legacy.apache2">как вручную настроить Apache2</link>.
+   </para>
+  </sect3>
  </sect2>
  
  <sect2>
@@ -75,8 +66,9 @@ REM Configure FastCGI Variables
   <para>
    Скачайте PHP-релизы с <link xlink:href="http://windows.php.net/download/">http://windows.php.net/download/</link>.
    
-   Много испытаний и оптимизаций Qa релизов уже сделано, но вы можете помочь нам сделать больше.
-   
+   Все сборки оптимизированы (<abbrev>PGO</abbrev>), а выпуски QA и GA тщательно протестированы.
+  </para>
+  <para>
    Есть 4 типа сборок PHP:
    <itemizedlist spacing="compact">
     <listitem>

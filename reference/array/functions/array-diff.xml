@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 52ae7dd55e62b1e7b6920499ed7448892e09bb48 Maintainer: shein Status: ready -->
+<!-- EN-Revision: b8990010918c977f62f147cf57a04c7e36f625e5 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.array-diff" xmlns="http://docbook.org/ns/docbook">
@@ -61,6 +61,7 @@
    Возвращает массив (<type>array</type>), содержащий элементы
    <parameter>array1</parameter>, отсутствующие в любом из всех остальных
    массивов.
+   Ключи в массиве <parameter>array1</parameter> сохраняются.
   </para>
  </refsect1>
  
@@ -94,18 +95,54 @@ Array
     </screen>
    </example>
   </para>
+  
+  <para>
+   <example>
+    <title>Пример использования <function>array_diff</function> с несовпадающими типами</title>
+    <para>
+     Два элемента считаются равными тогда и только тогда, когда 
+     <literal>(string) $elem1 === (string) $elem2</literal>. То есть, 
+     когда <link linkend="language.types.string.casting">строковое представление</link> одинаково.
+    </para>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+// Это сгенерирует уведомление о том, что массив не может быть преобразован в строку.
+$source = [1, 2, 3, 4];
+$filter = [3, 4, [5], 6];
+$result = array_diff($source, $filter);
+
+// В то же время это нормально, поскольку объекты могут быть преобразованы в строку.
+class S {
+  private $v;
+
+  public function __construct(string $v) {
+    $this->v = $v;
+  }
+
+  public function __toString() {
+    return $this->v;
+  }
+}
+
+$source = [new S('a'), new S('b'), new S('c')];
+$filter = [new S('b'), new S('c'), new S('d')];
+
+$result = array_diff($source, $filter);
+
+// $result теперь содержит один экземпляр S('a');
+?>
+]]>
+    </programlisting>
+    <para>
+     Чтобы использовать альтернативную функцию сравнения, смотрите <function>array_udiff</function>.
+    </para>
+   </example>
+  </para>
  </refsect1>
  
  <refsect1 role="notes">
   &reftitle.notes;
-  <note>
-   <para>
-    Два элемента считаются одинаковыми тогда и только тогда, если
-    <literal>(string) $elem1 === (string) $elem2</literal>. Другими словами,
-    когда их строковое представление идентично.
-    <!-- TODO: example of it... -->
-   </para>
-  </note>
   <note>
    <para>
     Обратите внимание, что эта функция обрабатывает только одно измерение
@@ -121,6 +158,7 @@ Array
   <para>
    <simplelist>
     <member><function>array_diff_assoc</function></member>
+    <member><function>array_udiff</function></member>
     <member><function>array_intersect</function></member>
     <member><function>array_intersect_assoc</function></member>
    </simplelist>
