@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9af43469f46843451955b8926fe470a9f3d45034 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 513913468bfc339440bab5553e39d8ec74023254 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.parse-ini-file">
@@ -34,7 +34,9 @@
      <term><parameter>filename</parameter></term>
      <listitem>
       <para>
-       Имя обрабатываемого ini-файла.
+       Имя обрабатываемого ini-файла. Если используется относительный путь, 
+       он оценивается относительно текущего рабочего каталога, а затем 
+       <link linkend="ini.include-path">include_path</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -106,10 +108,10 @@ urls[git] = "http://git.php.net"
    <example>
     <title>Пример использования функции <function>parse_ini_file</function></title>
     <para>
-     <link linkend="language.constants">Константы</link> также могут
+     <link linkend="language.constants">Константы</link> (но не "магические константы" вроде <constant>__FILE__</constant>) также могут
      обрабатываться в ini-файлах, так что если вы объявите константу
      в виде значения для ini-файла до вызова <function>parse_ini_file</function>, 
-     то константа будет корректно обработана. Только значения опций будут обрабатываться.
+     то константа будет корректно обработана. Только значения опций будут обрабатываться и значение должно быть просто константой.
      Например:
     </para>
     <programlisting role="php">
@@ -227,6 +229,49 @@ echo '(loaded) magic_quotes_gpc = ' . yesno(get_cfg_var('magic_quotes_gpc')) . P
     </screen>
    </example>
   </para>
+  <para>
+   <example>
+    <title>Интерполяция значений</title>
+    <para>
+     Помимо оценки констант, некоторые символы имеют особое значение в значении ini-файлах.
+     Кроме того, переменные среды и ранее определенные значения могут быть прочитаны с использованием 
+     синтаксиса <code>${}</code>.
+    </para>
+    <programlisting>
+<![CDATA[
+; | используется для побитового ИЛИ
+three = 2|3
+
+; & используется для побитового AND
+four = 6&5
+
+; ^ используется для побитового XOR
+five = 3^6
+
+; ~ используется для побитового отрицания
+negative_two = ~1
+
+; () используется для группировки
+seven = (8|7)&(6|5)
+
+; \ используется для экранирования значения.
+newline_is = "\\n" ; приводит к строке "\ n", а не к символу новой строки.
+with quotes = "Она сказала \"Именно моя точка зрения\"." ; Результатом является строка с кавычками.
+
+path = ${PATH}
+also_five = ${five}
+
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+(parsed) magic_quotes_gpc = Yes
+(loaded) magic_quotes_gpc = Yes
+]]>
+    </screen>
+   </example>
+  </para>
  </refsect1>
  
  <refsect1 role="notes">
@@ -267,6 +312,13 @@ echo '(loaded) magic_quotes_gpc = ' . yesno(get_cfg_var('magic_quotes_gpc')) . P
     игнорируется, тогда как "bar =" обрабатывается и добавляется с пустым значением.
     Например, в MySQL есть опция "no-auto-rehash", устанавливаемая в <filename>my.cnf</filename>,
     которая не имеет значения и игнорируется.
+   </para>
+  </note>
+  <note>
+   <para>
+    ini-файлы обычно обрабатываются веб-серверами как простой текст и, таким образом, по запросу передаются браузерам.
+    Это означает, что в целях безопасности вы должны либо хранить свои ini-файлы вне корневого каталога документов, либо перенастроить 
+    веб-сервер, чтобы они не обслуживались. Невыполнение любого из этих требований может создать угрозу безопасности.
    </para>
   </note>
  </refsect1>

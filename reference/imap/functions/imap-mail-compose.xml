@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: c598ef89271774850c51a33135908662f1dd5912 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 873035efec16397ab54daf7d339e8a82a731edf1 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xml:id="function.imap-mail-compose" xmlns="http://docbook.org/ns/docbook">
@@ -30,8 +30,9 @@
       <para>
        Ассоциативный массив с полями заголовка. Допустимые ключи:
        <literal>"remail"</literal>, <literal>"return_path"</literal>, <literal>"date"</literal>, <literal>"from"</literal>, <literal>"reply_to"</literal>, <literal>"in_reply_to"</literal>, <literal>"subject"</literal>,
-       <literal>"to"</literal>, <literal>"cc"</literal>, <literal>"bcc"</literal>, <literal>"message_id"</literal> и <literal>"custom_headers"</literal> (который содержит
-       ассоциативный массив прочих заголовков, например, <code>["User-Agent: My Mail Client"]</code>).
+       <literal>"to"</literal>, <literal>"cc"</literal>, <literal>"bcc"</literal> и <literal>"message_id"</literal>, которые устанавливают соответствующие заголовки сообщений в заданную строку (&string;). 
+       Для установки дополнительных заголовков поддерживается ключ <literal>"custom_headers"</literal>, который содержит
+       ассоциативный массив прочих заголовков, например, <code>["User-Agent: My Mail Client"]</code>.
       </para>
      </listitem>
     </varlistentry>
@@ -39,13 +40,101 @@
      <term><parameter>body</parameter></term>
      <listitem>
       <para>
-       Индексированный массив тел:
+       Индексированный массив тел. Первое тело - это основная часть сообщения; 
+       дальнейшие тела обрабатываются, только если оно 
+       с типом <constant>TYPEMULTIPART</constant>; эти тела составляют тела частей.
       </para>
       <para>
-       Ассоциативный массив с полями заголовка. Допустимые ключи:
-       <literal>"type"</literal>, <literal>"encoding"</literal>, <literal>"charset"</literal>, <literal>"type.parameters"</literal>, <literal>"subtype"</literal>, <literal>"id"</literal>,
-       <literal>"description"</literal>, <literal>"disposition.type"</literal>, <literal>"disposition"</literal>, <literal>"contents.data"</literal>,
-       <literal>"lines"</literal>, <literal>"bytes"</literal> и <literal>"md5"</literal>.
+       <table>
+        <title>Структура массива тела</title>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Ключ</entry>
+           <entry>Тип</entry>
+           <entry>Описаниее</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry><literal>type</literal></entry>
+           <entry><type>int</type></entry>
+           <entry>
+            Тип MIME.
+            Один из <constant>TYPETEXT</constant> (по умолчанию), <constant>TYPEMULTIPART</constant>,
+            <constant>TYPEMESSAGE</constant>, <constant>TYPEAPPLICATION</constant>,
+            <constant>TYPEAUDIO</constant>, <constant>TYPEIMAGE</constant>,
+            <constant>TYPEMODEL</constant> или <constant>TYPEOTHER</constant>.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>encoding</literal></entry>
+           <entry><type>int</type></entry>
+           <entry>
+            Значение <literal>Content-Transfer-Encoding</literal>.
+            Одно из <constant>ENC7BIT</constant> (default), <constant>ENC8BIT</constant>,
+            <constant>ENCBINARY</constant>, <constant>ENCBASE64</constant>,
+            <constant>ENCQUOTEDPRINTABLE</constant> или <constant>ENCOTHER</constant>.
+           </entry>
+          </row>
+          <row>
+           <entry><literal>charset</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Параметр charset типа MIME.</entry>
+          </row>
+          <row>
+           <entry><literal>type.parameters</literal></entry>
+           <entry><type>array</type></entry>
+           <entry>Ассоциативный массив (&array;) имен параметров <literal>Content-Type</literal> и их значений.</entry>
+          </row>
+          <row>
+           <entry><literal>subtype</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Подтип MIME, например, <literal>'jpeg'</literal> для <constant>TYPEIMAGE</constant>.</entry>
+          </row>
+          <row>
+           <entry><literal>id</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Значение <literal>Content-ID</literal>.</entry>
+          </row>
+          <row>
+           <entry><literal>description</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Значение <literal>Content-Description</literal>.</entry>
+          </row>
+          <row>
+           <entry><literal>disposition.type</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Значение <literal>Content-Disposition</literal>, например, <literal>'attachment'</literal>.</entry>
+          </row>
+          <row>
+           <entry><literal>disposition</literal></entry>
+           <entry><type>array</type></entry>
+           <entry>Ассоциативный массив (&array;) имен параметров <literal>Content-Disposition</literal> и их значений.</entry>
+          </row>
+          <row>
+           <entry><literal>contents.data</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Полезная нагрузка.</entry>
+          </row>
+          <row>
+           <entry><literal>lines</literal></entry>
+           <entry><type>int</type></entry>
+           <entry>Размер полезной нагрузки в строках.</entry>
+          </row>
+          <row>
+           <entry><literal>bytes</literal></entry>
+           <entry><type>int</type></entry>
+           <entry>Размер полезной нагрузки в байтах.</entry>
+          </row>
+          <row>
+           <entry><literal>md5</literal></entry>
+           <entry><type>string</type></entry>
+           <entry>Контрольная сумма MD5 полезной нагрузки.</entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
       </para>
      </listitem>
     </varlistentry>
@@ -55,7 +144,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает MIME-сообщение.
+   Возвращает MIME-сообщение в виде строки (&atring;), &return.falseforfailure;.
   </para>
  </refsect1>
  <refsect1 role="examples">
