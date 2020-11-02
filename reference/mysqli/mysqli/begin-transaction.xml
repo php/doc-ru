@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 144fc4f4d1c5d7d16926fb6a3317131147f0c8ea Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 3742d36be1e1d0d9249ce7e093f4f05ead85b8e8 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes -->
 
 <refentry xml:id="mysqli.begin-transaction" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -86,48 +86,96 @@
   </para>
  </refsect1>
  
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Функция не работает с нетранзакционными типами таблиц (такими как 
+    MyISAM или ISAM).
+   </para>
+  </note>
+ </refsect1>
+ 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <methodname>$mysqli->begin_transaction</methodname></title>
+   <title>Пример использования <methodname>mysqli::begin_transaction</methodname></title>
    <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$mysqli = new mysqli("127.0.0.1", "my_user", "my_password", "sakila");
 
-if ($mysqli->connect_errno) {
-    printf("Connect failed: %s\n", $mysqli->connect_error);
-    exit();
+/* Указать mysqli выбрасывать исключение в случае возникновения ошибки */
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+
+/* Движок таблиц должен поддерживать транзакции */
+$mysqli->query("CREATE TABLE IF NOT EXISTS language (
+    Code text NOT NULL,
+    Speakers int(11) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+/* Начало транзакции */
+$mysqli->begin_transaction();
+
+try {
+    /* Добавление каких-то значений */
+    $mysqli->query("INSERT INTO language(Code, Speakers) VALUES ('DE', 42000123)");
+
+    /* Попытка добавить недопустимые значения */
+    $language_code = 'FR';
+    $native_speakers = 'Unknown';
+    $stmt = $mysqli->prepare('INSERT INTO language(Code, Speakers) VALUES (?,?)');
+    $stmt->bind_param('ss', $language_code, $native_speakers);
+    $stmt->execute();
+
+    /* Если код достигает этой точки без ошибок, фиксируем данные в базе данных. */
+    $mysqli->commit();
+} catch (mysqli_sql_exception $exception) {
+    $mysqli->rollback();
+
+    throw $exception;
 }
-
-$mysqli->begin_transaction(MYSQLI_TRANS_START_READ_ONLY);
-
-$mysqli->query("SELECT first_name, last_name FROM actor");
-$mysqli->commit();
-
-$mysqli->close();
-?>
 ]]>
    </programlisting>
    <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("127.0.0.1", "my_user", "my_password", "sakila");
 
-if (mysqli_connect_errno()) {
-    printf("Connect failed: %s\n", mysqli_connect_error());
-    exit();
+/* Указать mysqli выбрасывать исключение в случае возникновения ошибки */
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+$mysqli = mysqli_connect("localhost", "my_user", "my_password", "world");
+
+/* Движок таблиц должен поддерживать транзакции */
+mysqli_query($mysqli, "CREATE TABLE IF NOT EXISTS language (
+    Code text NOT NULL,
+    Speakers int(11) NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+/* Начало транзакции */
+mysqli_begin_transaction($mysqli);
+
+try {
+    /* Добавление каких-то значений */
+    mysqli_query($mysqli, "INSERT INTO language(Code, Speakers) VALUES ('DE', 42000123)");
+
+    /* Попытка добавить недопустимые значения */
+    $language_code = 'FR';
+    $native_speakers = 'Unknown';
+    $stmt = mysqli_prepare($mysqli, 'INSERT INTO language(Code, Speakers) VALUES (?,?)');
+    mysqli_stmt_bind_param($stmt, 'ss', $language_code, $native_speakers);
+    mysqli_stmt_execute($stmt);
+
+    /* Если код достигает этой точки без ошибок, фиксируем данные в базе данных. */
+    mysqli_commit($mysqli);
+} catch (mysqli_sql_exception $exception) {
+    mysqli_rollback($mysqli);
+
+    throw $exception;
 }
-
-mysqli_begin_transaction($link, MYSQLI_TRANS_START_READ_ONLY);
-
-mysqli_query($link, "SELECT first_name, last_name FROM actor LIMIT 1");
-mysqli_commit($link);
-
-mysqli_close($link);
-?>
 ]]>
    </programlisting>
   </example>
