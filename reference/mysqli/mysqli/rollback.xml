@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 46319b5952750bc2a5e030c0a216023b551b60c1 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 3742d36be1e1d0d9249ce7e093f4f05ead85b8e8 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli.rollback" xmlns="http://docbook.org/ns/docbook">
@@ -61,6 +61,16 @@
   </para>
  </refsect1>
 
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Функция не работает с нетранзакционными типами таблиц (такими как 
+    MyISAM или ISAM).
+   </para>
+  </note>
+ </refsect1>
+ 
  <refsect1 role="changelog">
   &reftitle.changelog;
   <para>
@@ -87,114 +97,9 @@
 
  <refsect1 role="examples">
   &reftitle.examples;
-  <example>
-   <title>Пример использования <methodname>mysqli::rollback</methodname></title>
-   <para>&style.oop;</para>
-   <programlisting role="php">
-<![CDATA[
-<?php
-$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
-
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
-/* выключаем автофиксацию */
-$mysqli->autocommit(FALSE);
-
-$mysqli->query("CREATE TABLE myCity LIKE City");
-$mysqli->query("ALTER TABLE myCity Type=InnoDB");
-$mysqli->query("INSERT INTO myCity SELECT * FROM City LIMIT 50");
-
-/* фиксируем вставленные строки */
-$mysqli->commit();
-
-/* удаляем все строки */
-$mysqli->query("DELETE FROM myCity");
-
-if ($result = $mysqli->query("SELECT COUNT(*) FROM myCity")) {
-    $row = $result->fetch_row();
-    printf("%d строк в таблице myCity.\n", $row[0]);
-    /* очищаем результат */
-    $result->close();
-}
-
-/* откат */
-$mysqli->rollback();
-
-if ($result = $mysqli->query("SELECT COUNT(*) FROM myCity")) {
-    $row = $result->fetch_row();
-    printf("%d строк в таблице myCity (after rollback).\n", $row[0]);
-    /* очищаем результат */
-    $result->close();
-}
-
-/* удаляем таблицу myCity */
-$mysqli->query("DROP TABLE myCity");
-
-$mysqli->close();
-?>
-]]>
-   </programlisting>
-   <para>&style.procedural;</para>
-   <programlisting role="php">
-<![CDATA[
-<?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
-
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
-/* выключаем автофиксацию */
-mysqli_autocommit($link, FALSE);
-
-mysqli_query($link, "CREATE TABLE myCity LIKE City");
-mysqli_query($link, "ALTER TABLE myCity Type=InnoDB");
-mysqli_query($link, "INSERT INTO myCity SELECT * FROM City LIMIT 50");
-
-/* фиксируем вставленные строки */
-mysqli_commit($link);
-
-/* удаляем все строки */
-mysqli_query($link, "DELETE FROM myCity");
-
-if ($result = mysqli_query($link, "SELECT COUNT(*) FROM myCity")) {
-    $row = mysqli_fetch_row($result);
-    printf("%d строк в таблице myCity.\n", $row[0]);
-    /* очищаем результат */
-    mysqli_free_result($result);
-}
-
-/* откат */
-mysqli_rollback($link);
-
-if ($result = mysqli_query($link, "SELECT COUNT(*) FROM myCity")) {
-    $row = mysqli_fetch_row($result);
-    printf("%d строк в таблице myCity (после отката).\n", $row[0]);
-    /* очищаем результат */
-    mysqli_free_result($result);
-}
-
-/* удаляем таблицу myCity */
-mysqli_query($link, "DROP TABLE myCity");
-
-mysqli_close($link);
-?>
-]]>
-   </programlisting>
-   &examples.outputs;
-   <screen>
-<![CDATA[
-0 строк в таблице myCity.
-50 строк в таблице myCity (после отката).
-]]>
-   </screen>
-  </example>
+  <para>
+   Смотрите пример использования в разделе <link linkend="mysqli.begin-transaction.example.basic"><methodname>mysqli::begin_transaction</methodname></link>.
+  </para>
  </refsect1>
 
  <refsect1 role="seealso">
