@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9af43469f46843451955b8926fe470a9f3d45034 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: c410fb889580a55ee09aa728a0ad4770df40e127 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="domdocument.registernodeclass" xmlns="http://docbook.org/ns/docbook">
@@ -186,6 +186,46 @@ var_dump(get_class($child->ownerDocument));
 <![CDATA[
 string(13) "myDOMDocument"
 string(18) "myOtherDOMDocument"
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="domdocument.registernodeclass.example.transient">
+    <title>Пользовательские объекты временны</title>
+    <caution>
+     <simpara>
+      Объекты зарегистрированных классов узлов являются временными, т.е. они 
+      уничтожаются, когда на них больше не ссылаются из кода PHP и воссоздаются 
+      при повторном извлечении. Это означает, что значения настраиваемых свойств будут 
+      потеряны после восстановления.
+     </simpara>
+    </caution>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class MyDOMElement extends DOMElement
+{
+    public $myProp = 'значение по умолчанию';
+}
+
+$doc = new DOMDocument();
+$doc->registerNodeClass('DOMElement', 'MyDOMElement');
+
+$node = $doc->createElement('a');
+$node->myProp = 'измененное значение';
+$doc->appendChild($node);
+
+echo $doc->childNodes[0]->myProp, PHP_EOL;
+unset($node);
+echo $doc->childNodes[0]->myProp, PHP_EOL;
+?>]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="xml">
+<![CDATA[
+измененное значение
+значение по умолчанию
 ]]>
     </screen>
    </example>
