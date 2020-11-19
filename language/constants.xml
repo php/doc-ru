@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 0853ac91680817a11b8e87a9a4beb12dd2bbcaef Maintainer: sergey Status: ready -->
+<!-- EN-Revision: a71742330defbc0edfbc6822b4f947bf437b2f70 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 
 <chapter xml:id="language.constants" xmlns="http://docbook.org/ns/docbook">
@@ -11,9 +11,17 @@
   их значение не может изменится в ходе выполнения скрипта
   (кроме <link linkend="language.constants.predefined">магических констант</link>,
   которые на самом деле не являются константами).
-  Имена констант по умолчанию чувствительны к регистру. По принятому соглашению, имена констант 
+  Константы чувствительны к регистру. По принятому соглашению, имена констант 
   всегда пишутся в верхнем регистре.
  </simpara>
+ 
+ <note>
+   <para>
+    До PHP 8.0.0 константы, определенные с помощью функции <function>define</function>, 
+    могли быть нечувствительными к регистру.
+   </para>
+  </note>
+ 
  <para>
   Имя константы должно соответствовать тем же правилам именования, что
   и другие имена в PHP. Правильное имя начинается с буквы или символа подчеркивания,
@@ -24,12 +32,13 @@
  <para>
   Возможно определить константы с помощью функции
   <function>define</function> зарезервированными или
-  даже некорректными именами, значения которых могут быть (только) получены
-  через функцию
+  даже некорректными именами, значения которых могут быть получены только
+  с помощью
   <function>constant</function>. Однако, делать это не рекомендуется.
  </para>
  &tip.userlandnaming;
  <para>
+  <!-- TODO Move into syntax section? -->
   <example>
    <title>Правильные и неправильные имена констант</title>
    <programlisting role="php">
@@ -63,27 +72,33 @@ define("__FOO__", "что-то");
  
  <simpara>
   Как и &link.superglobals;, константы доступны из любой области видимости.
-  Вы можете использовать константы в любом месте вашего скрипта, не обращая
-  внимания на текущую область видимости.
+  Константы можно использовать из любого места скрипта независимо от области видимости.
   Подробную информацию об областях видимости можно найти 
   <link linkend="language.variables.scope">здесь</link>.
  </simpara>
  
+ <note>
+   <simpara>
+    Начиная с PHP 7.4.0, константе класса можно объявлять видимость защищенная 
+    или закрытая, делая ее доступной только в иерархической области видимости 
+    класса, в котором она определена.
+   </simpara>
+  </note>
+ 
  <sect1 xml:id="language.constants.syntax">
   <title>Синтаксис</title>
   <simpara>
-   Вы можете определить константу с помощью функции <function>define</function>
-   или с помощью ключевого слова <literal>const</literal> вне объявления класса
-   с PHP 5.3.0. В то время как <function>define</function> позволяет
+   Константа может быть определена с помощью ключевого слова <literal>const</literal> 
+   или с помощью функции <function>define</function>.
+   В то время как <function>define</function> позволяет
    задать константу через выражение, конструкция <literal>const</literal> ограничена
    как описано в следующем параграфе. После того, как константа определена, ее значение
    не может быть изменено или аннулировано.
   </simpara>
   <simpara>
-   Если использована конструкция <literal>const</literal>, константы могут содержать только
-   скалярные данные (типы <type>boolean</type>, <type>integer</type>, <type>float</type> и
-   <type>string</type>). С PHP 5.6 возможно определить константу 
-   как скалярное выражение, а также определить константу с типом <type>array</type>.
+   При использовании ключевого слова <literal>const</literal> допускаются 
+   только скалярные выражения (<type>bool</type>, <type>int</type>, <type>float</type> и <type>string</type>) и константы <type>array</type>, 
+   содержащие только скалярные выражения.
    Можно определить константы с типом <type>resource</type>, но не рекомендуется,
    так как это может привести к неожиданным результатам.
   </simpara>
@@ -91,11 +106,12 @@ define("__FOO__", "что-то");
    Получить значение константы можно, указав ее имя. В отличие от переменных,
    вам <emphasis>не нужно</emphasis> предварять имя константы символом
    <literal>$</literal>.
-   Также вы можете использовать функцию <function>constant</function> для
+   Также можно использовать функцию <function>constant</function> для
    получения значения константы, если вы формируете имя константы динамически.
    Используйте функцию <function>get_defined_constants</function> для получения
    списка всех определенных констант.
   </simpara>
+  
   <note>
    <simpara>
     Константы и (глобальные) переменные находятся в разных пространствах имен.
@@ -103,34 +119,32 @@ define("__FOO__", "что-то");
     отличаются.
    </simpara>
   </note>
+  
   <simpara>
-   Если вы используете неопределенную константу, PHP предполагает, что
-   вы имеете ввиду само имя константы, как если бы вы указали литерал типа
-   <type>string</type> (CONSTANT вместо "CONSTANT"). Этот резервный вариант
-   объявлен устаревшим с PHP 7.2.0, при этом будет сгенерирована ошибка
-   уровня <constant>E_WARNING</constant> при его использовании
-   (ранее вместо этого выдавалась ошибка уровня
-   <link linkend="ref.errorfunc">E_NOTICE</link>). Смотрите также главу
-   руководства, которая разъясняет, почему
-   <link linkend="language.types.array.foo-bar">$foo[bar]</link> - это неправильно
-   (конечно, если вы перед этим не объявили <literal>bar</literal> как константу с
-   помощью <function>define</function>). Это не относится к <link
-   linkend="language.namespaces.rules">(полностью) определенным константам</link>,
-   которые вызовут фатальную ошибку, если они не определены.
-   Если вы просто хотите проверить, определена ли константа, используйте функцию <function>defined</function>.
+   Если используется неопределенная константа, выбрасывается <classname>Error</classname>.
+   До PHP 8.0.0 неопределенные константы интерпретировались как простое слово <type>string</type>, то есть (CONSTANT vs "CONSTANT").
+   Этот резервный вариант объявлен устаревшим с PHP 7.2.0, при этом будет 
+   сгенерирована ошибка уровня <constant>E_WARNING</constant>.
+   До PHP 7.2.0 вместо этого выдавалась ошибка уровня <link linkend="ref.errorfunc">E_NOTICE</link>.
+   Смотрите также главу руководства, которая разъясняет, почему 
+   <link linkend="language.types.array.foo-bar">$foo[bar]</link> - это неправильно (если <literal> bar </literal> не является константой).
+   Это не относится к <link
+   linkend="language.namespaces.rules">(полностью) определенным константам</link>, 
+   которые всегда будут выбрасывать <classname>Error</classname>, если они не определены.
   </simpara>
+  
+   <note>
+    <simpara>
+     Чтобы проверить, установлена ли константа, используйте функцию <function>defined</function>.
+    </simpara>
+   </note>
+  
   <para>
    Различия между константами и переменными:
    <itemizedlist>
     <listitem>
      <simpara>
       У констант нет приставки в виде знака доллара (<literal>$</literal>);
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      До PHP 5.3 константы можно определить только с помощью функции
-      <function>define</function>, а не присваиванием значения;
      </simpara>
     </listitem>
     <listitem>
@@ -146,11 +160,7 @@ define("__FOO__", "что-то");
     </listitem>
     <listitem>
      <simpara>
-      Константы могут иметь только скалярные значения. С версии PHP 5.6 возможно задать
-      константу массивом, используя <literal>const</literal>, а с PHP 7 константы с массивом
-      можно определить с помощью <function>define</function>.
-      Вы можете использовать массивы при задании констант, если результат выражения
-      будет допустимого типа. Например, <literal>const FOO = array(1,2,3)[0];</literal>.
+      Константы могут иметь только скалярные значения или массивы.
      </simpara>
     </listitem>
    </itemizedlist>
@@ -164,7 +174,8 @@ define("__FOO__", "что-то");
 <?php
 define("CONSTANT", "Здравствуй, мир.");
 echo CONSTANT; // выводит "Здравствуй, мир."
-echo Constant; // выводит "Constant" и предупреждение.
+echo Constant; // Выбросит ошибку: Неопределенная константа "Constant"
+               // До PHP 8.0.0 выводит "Constant" и выдает предупреждение.
 ?>
 ]]>
     </programlisting>
@@ -177,19 +188,19 @@ echo Constant; // выводит "Constant" и предупреждение.
     <programlisting role="php">
 <![CDATA[
 <?php
-// Работает, начиная с версии PHP 5.3.0
+// Простое скалярное значение
 const CONSTANT = 'Здравствуй, мир.';
 
 echo CONSTANT;
 
-// Работает, начиная с версии PHP 5.6.0
+// Скалярное выражение
 const ANOTHER_CONST = CONSTANT.'; Прощай, мир.';
 echo ANOTHER_CONST;
 
 const ANIMALS = array('dog', 'cat', 'bird');
 echo ANIMALS[1]; // выводит "cat"
 
-// Работает в PHP 7
+// Массивы в константе
 define('ANIMALS', array(
     'dog',
     'cat',
@@ -213,21 +224,18 @@ echo ANIMALS[1]; // выводит "cat"
    </para>
   </note>
   
-  <note>
-   <para>
-    Константы, определенные с помощью ключевого слова <literal>const</literal> 
-    всегда регистрозависимы. Тогда как при использовании <function>define</function>
-    они могут быть нечувствительны к регистру.
-   </para>
-  </note>
-  
-  <simpara>
-   Смотрите также <link linkend="language.oop5.constants">Константы классов</link>.
-  </simpara>
+  <sect2 role="seealso">
+    &reftitle.seealso;
+    <para>
+     <simplelist>
+      <member><link linkend="language.oop5.constants">Константы классов</link></member>
+     </simplelist>
+    </para>
+   </sect2>
  </sect1>
  
  <sect1 xml:id="language.constants.predefined">
-  <title>Волшебные константы</title>
+  <title>Магические константы</title>
   
   <simpara>
    PHP предоставляет большой список <link linkend="reserved.constants">
@@ -248,12 +256,12 @@ echo ANIMALS[1]; // выводит "cat"
   </para>
   <para>
    <table>
-    <title>Некоторые магические константы PHP</title>
+    <title>Магические константы PHP</title>
     <tgroup cols="2">
      <thead>
       <row>
-       <entry>Имя</entry>
-       <entry>Описание</entry>
+        <entry>&Name;</entry>
+        <entry>&Description;</entry>
       </row>
      </thead>
      <tbody>
@@ -290,8 +298,7 @@ echo ANIMALS[1]; // выводит "cat"
        <entry>
         Имя класса. Это имя содержит название пространства имен, в котором класс был объявлен 
         (например, <literal>Foo\Bar</literal>).
-        Обратите внимание, что начиная с PHP 5.4 __CLASS__ также работает в
-        трейтах. При использовании в методах трейтов __CLASS__ является именем
+        При использовании в методах трейтов __CLASS__ является именем
         класса, в котором эти методы используется.
        </entry>
       </row>
@@ -315,61 +322,29 @@ echo ANIMALS[1]; // выводит "cat"
        </entry>
       </row>
       <row xml:id="constant.coloncolonclass">
-       <entry><constant>ClassName::class</constant></entry>
-       <entry>
-        Полное имя класса (с указанием пространства имен). См. также 
-        <link linkend="language.oop5.basic.class.class">::class</link>.
-       </entry>
-      </row>
+        <entry><constant><replaceable>ClassName</replaceable>::class</constant></entry>
+        <entry>
+         Полное имя класса.
+        </entry>
+       </row>
      </tbody>
     </tgroup>
    </table>
   </para>
-  <!-- <link linkend="language.oop5.basic.class.class">::class</link> -->
-  <para>
-   Смотрите также
-   <function>get_class</function>,
-   <function>get_object_vars</function>,
-   <function>file_exists</function>&listendand;
-   <function>function_exists</function>.
-  </para>
   
-  <sect2 xml:id="language.constants.predefined.changelog">
-   &reftitle.changelog;
-   
-   <para>
-    <informaltable>
-     <tgroup cols="2">
-      <thead>
-       <row>
-        <entry>&Version;</entry>
-        <entry>&Description;</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>5.5.0</entry>
-        <entry>
-         Добавлена магическая константа <constant>::class</constant>
-        </entry>
-       </row>
-       <row>
-        <entry>5.4.0</entry>
-        <entry>
-         Добавлена константа <constant>__TRAIT__</constant>
-        </entry>
-       </row>
-       <row>
-        <entry>5.3.0</entry>
-        <entry>
-         Добавлены константы <constant>__DIR__</constant> и <constant>__NAMESPACE__</constant>
-        </entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </informaltable>
-   </para>
-  </sect2>
+  <sect2 role="seealso">
+    &reftitle.seealso;
+    <para>
+     <simplelist>
+      <member><link linkend="language.oop5.basic.class.class">::class</link></member>
+      <member><function>get_class</function></member>
+      <member><function>get_object_vars</function></member>
+      <member><function>file_exists</function></member>
+      <member><function>function_exists</function></member>
+     </simplelist>
+    </para>
+   </sect2>
+
  </sect1>
 </chapter>
 
