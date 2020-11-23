@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3bc212c744fce74a36f3345ccd4a95bb3754ccd8 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: f7e33278a909d7f7bf491f77cb10c93581091736 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
-
-<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.msg-receive">
+<refentry xml:id="function.msg-receive" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>msg_receive</refname>
   <refpurpose>Получение сообщения из очереди сообщений</refpurpose>
@@ -13,18 +12,18 @@
   &reftitle.description;
   <methodsynopsis>
    <type>bool</type><methodname>msg_receive</methodname>
-   <methodparam><type>resource</type><parameter>queue</parameter></methodparam>
-   <methodparam><type>int</type><parameter>desiredmsgtype</parameter></methodparam>
-   <methodparam><type>int</type><parameter role="reference">msgtype</parameter></methodparam>
-   <methodparam><type>int</type><parameter>maxsize</parameter></methodparam>
+   <methodparam><type>SysvMessageQueue</type><parameter>queue</parameter></methodparam>
+   <methodparam><type>int</type><parameter>desired_message_type</parameter></methodparam>
+   <methodparam><type>int</type><parameter role="reference">received_message_type</parameter></methodparam>
+   <methodparam><type>int</type><parameter>max_message_size</parameter></methodparam>
    <methodparam><type>mixed</type><parameter role="reference">message</parameter></methodparam>
    <methodparam choice="opt"><type>bool</type><parameter>unserialize</parameter><initializer>&true;</initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter role="reference">errorcode</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter role="reference">error_code</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
    <function>msg_receive</function> получает первое сообщение из задаваемой параметром
-   <parameter>queue</parameter> очереди сообщений с типом, указанным в <parameter>desiredmsgtype</parameter>.
+   <parameter>queue</parameter> очереди сообщений с типом, указанным в <parameter>desired_message_type</parameter>.
   </para>
  </refsect1>
  
@@ -36,19 +35,19 @@
      <term><parameter>queue</parameter></term>
      <listitem>
       <para>
-       Идентификатор ресурса очереди.
+       Очередь сообщений.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>desiredmsgtype</parameter></term>
+     <term><parameter>desired_message_type</parameter></term>
      <listitem>
       <para>
-       Если в <parameter>desiredmsgtype</parameter> указано 0, возвращается первое
-       сообщение из очереди. Если <parameter>desiredmsgtype</parameter> больше 0, то
-       возвращается первое сообщение с указанным типом. Если <parameter>desiredmsgtype</parameter> 
+       Если в <parameter>desired_message_type</parameter> указано 0, возвращается первое
+       сообщение из очереди. Если <parameter>desired_message_type</parameter> больше 0, то
+       возвращается первое сообщение с указанным типом. Если <parameter>desired_message_type</parameter> 
        меньше 0, то возвращается первое сообщение с типом, меньшим или равным по модулю
-       указанному в <parameter>desiredmsgtype</parameter>. Если нет сообщений,
+       указанному в <parameter>desired_message_type</parameter>. Если нет сообщений,
        соответствующих критериям, ваш скрипт ожидает их появления в очереди.
        Вы можете изменить это поведение, указав <constant>MSG_IPC_NOWAIT</constant> в
        параметре <parameter>flags</parameter>.
@@ -56,7 +55,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>msgtype</parameter></term>
+     <term><parameter>received_message_type</parameter></term>
      <listitem>
       <para>
        В этом параметре сохраняется тип полученного сообщения.
@@ -64,10 +63,10 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>maxsize</parameter></term>
+     <term><parameter>max_message_size</parameter></term>
      <listitem>
       <para>
-       Максимальный размер принимаемого сообщения задаётся в <parameter>maxsize</parameter>;
+       Максимальный размер принимаемого сообщения задаётся в <parameter>max_message_size</parameter>;
        если сообщение в очереди больше этого размера, то функция завершается ошибкой
        (если вы не установите <parameter>flags</parameter> как описано ниже).
       </para>
@@ -113,7 +112,7 @@
           <row>
            <entry><constant>MSG_IPC_NOWAIT</constant></entry>
            <entry>
-            Если нет сообщений, удовлетворяющих условиям <parameter>desiredmsgtype</parameter>,
+            Если нет сообщений, удовлетворяющих условиям <parameter>desired_message_type</parameter>,
             возвращаться немедленно, а не ждать. Функция завершается ошибкой и возвращает
             целочисленное значение <constant>MSG_ENOMSG</constant>.
            </entry>
@@ -122,15 +121,15 @@
            <entry><constant>MSG_EXCEPT</constant></entry>
            <entry>
             Использование этого флага в комбинации с указынным в 
-            <parameter>desiredmsgtype</parameter> положительным значением,
+            <parameter>desired_message_type</parameter> положительным значением,
             позволяет получить первое сообщение, тип которого не равен значению
-            <parameter>desiredmsgtype</parameter>.</entry>
+            <parameter>desired_message_type</parameter>.</entry>
           </row>
           <row>
            <entry><constant>MSG_NOERROR</constant></entry>
            <entry>
-            Если размер сообщения превышает <parameter>maxsize</parameter>,
-            то установка этого флага приводит к усечению сообщения до <parameter>maxsize</parameter>
+            Если размер сообщения превышает <parameter>max_message_size</parameter>,
+            то установка этого флага приводит к усечению сообщения до <parameter>max_message_size</parameter>
             без сигнализирования об ошибке.
            </entry>
           </row>
@@ -141,10 +140,10 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>errorcode</parameter></term>
+     <term><parameter>error_code</parameter></term>
      <listitem>
       <para>
-       Если функция завершается аварийно, необязательный параметр <parameter>errorcode</parameter>
+       Если функция завершается аварийно, необязательный параметр <parameter>error_code</parameter>
        будет содержать значение системной переменной errno.
       </para>
      </listitem>
@@ -166,6 +165,31 @@
   </para>
  </refsect1>
  
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>8.0.0</entry>
+       <entry>
+        Параметр <parameter>queue</parameter> теперь ожидает экземпляр <classname>SysvMessageQueue</classname>; 
+        ранее ожидался русурс (<type>resource</type>).
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+ 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
@@ -179,7 +203,6 @@
  </refsect1>  
  
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
