@@ -14,7 +14,7 @@
    
    <para>
     Нестрогие сравнения чисел и нечисловых строк теперь работают, как преобразование числа 
-    в строку с последующим сравнением строк. Сравнение чисел и числовых строк продолжает работать, 
+    в строку с последующим сравнением строк. Сравнение чисел и числовых строк работает, 
     как и раньше. В частности, это означает, что <code>0 == "not-a-number"</code> теперь 
     выдаст false.
     <informaltable>
@@ -94,13 +94,13 @@
     </listitem>
     <listitem>
      <para>
-      Приведения <code>(real)</code> и <code>(unset)</code> удалены.
+      Приведения типов <code>(real)</code> и <code>(unset)</code> удалены.
      </para>
     </listitem>
     <listitem>
      <para>
       INI-директива <link linkend="ini.track-errors">track_errors</link> удалена. Это означает, 
-      что <varname>php_errormsg</varname> больше не доступен. Вместо него можно использовать функцию 
+      что <varname>php_errormsg</varname> больше не актуален. Вместо него можно использовать функцию 
       <function>error_get_last</function>.
      </para>
     </listitem>
@@ -153,10 +153,10 @@
     </listitem>
     <listitem>
      <para>
-      Поведение <function>array_key_exists</function> относительно типа параметра 
-      <parameter>key</parameter> согласовано с <function>isset</function> и 
-      обычным доступом к массиву. Все типы ключей теперь используют обычное приведение, а ключи массива/объекта 
-      выбрасывают <classname>TypeError</classname>.
+      Работа параметра <parameter>key</parameter> в функции <function>array_key_exists</function> 
+      теперь приведена в соответствиие с <function>isset</function> и 
+      обычным доступом к массиву. Все типы ключей теперь используют обычное приведение типов,
+      массив/объект к ключе приведет к выбрасыванию <classname>TypeError</classname>.
      </para>
     </listitem>
     <listitem>
@@ -191,25 +191,25 @@
       (<constant>E_ERROR</constant>, <constant>E_CORE_ERROR</constant>,
       <constant>E_COMPILE_ERROR</constant>, <constant>E_USER_ERROR</constant>,
       <constant>E_RECOVERABLE_ERROR</constant>, <constant>E_PARSE</constant>). Обработчики ошибок, 
-      которые ожидают, что error_reporting будет <literal>0</literal> при использовании <literal>@</literal>, должны 
-      быть настроены для использования вместо этого проверки маски:
+      которые ожидают, что error_reporting будет иметь значение <literal>0</literal> при использовании оператора <literal>@</literal>,
+      должны делать такие проверки через битовую маску:
      </para>
      <para>
       <programlisting role="php">
 <![CDATA[
 <?php
-// Replace
+// Замените это
 function my_error_handler($err_no, $err_msg, $filename, $linenum) {
     if (error_reporting() == 0) {
-        return; // Подавлено
+        return; // Ошибка проигнорирована
     }
     // ...
 }
 
-// With
+// На это
 function my_error_handler($err_no, $err_msg, $filename, $linenum) {
     if (!(error_reporting() & $err_no)) {
-        return; // Подавлено
+        return; // Ошибка проигнорирована
     }
     // ...
 }
@@ -218,9 +218,9 @@ function my_error_handler($err_no, $err_msg, $filename, $linenum) {
       </programlisting>
      </para>
      <para>
-      Кроме того, следует позаботиться о том, чтобы сообщения об ошибках не отображались в производственной среде, 
-      что может привести к утечке информации. Убедитесь, что <code>display_errors=Off</code> 
-      используется вместе с ведением журнала ошибок.
+      Кроме этого, обязательно следует скрыть отображение сообщений об ошибках в производственной среде, 
+      которые могут привести к утечке информации. Проверьте, что <code>display_errors=Off</code> 
+      используется вместе с включенной записью журнала ошибок.
      </para>
     </listitem>
     <listitem>
@@ -267,11 +267,11 @@ echo "Сумма:" . ($a + $b);
       <programlisting role="php">
 <![CDATA[
 <?php
-// Заменить
+// Замените этот код:
 function test(int $arg = CONST_RESOLVING_TO_NULL) {}
-// На
+// На этот:
 function test(?int $arg = CONST_RESOLVING_TO_NULL) {}
-// Или
+// На этот (альтернативный вариант):
 function test(int $arg = null) {}
 ?>
 ]]>
@@ -285,8 +285,8 @@ function test(int $arg = null) {}
      <para>
       <simplelist>
        <member>
-        Попытка записи в свойство не-объекта. Ранее это 
-        неявно создавало объект stdClass для null, false и пустых строк.
+        Попытка записи в свойство несуществующего объекта. Ранее это 
+        неявно создавало объект stdClass в случае null, false и пустых строк.
        </member>
        <member>
         Попытка добавить элемент в массив, для которого 
@@ -297,7 +297,7 @@ function test(int $arg = null) {}
         смещения строки.
        </member>
        <member>Попытка записать в индекс массива скалярное значение.</member>
-       <member>Попытка распаковать не-массив/Traversable.</member>
+       <member>Попытка распаковать значение, не являющее массивом/Traversable.</member>
        <member>
         Попытка получить доступ к неквалифицированным константам, которые не определены.
         Ранее неквалифицированный доступ к константам приводил к предупреждению и интерпретировался как строка.
@@ -336,21 +336,21 @@ function test(int $arg = null) {}
     </listitem>
     <listitem>
      <para>
-      Неперехваченные исключения теперь проходят "чистое завершение работы", что означает, что после неперехваченного исключения
+      Неперехваченные исключения теперь проходят процедуру "чистого завершения", это означает, что после неперехваченного исключения
       будут вызываться деструкторы.
      </para>
     </listitem>
     <listitem>
      <para>
-      Фатальная ошибка времени компиляции "По ссылке можно передавать только переменные" была отложена 
+      Фатальная ошибка времени компиляции "Only variables can be passed by reference" была отложена 
       до времени выполнения и преобразована в исключение <classname>Error</classname> 
-      "Аргумент не может быть передан по ссылке".
+      "Argument cannot be passed by reference".
      </para>
     </listitem>
     <listitem>
      <para>
-      Некоторые уведомления "По ссылке можно передавать только переменные" преобразованы 
-      в исключение "Аргумент не может быть передан по ссылке".
+      Некоторые уведомления "Only variables can be passed by reference" были преобразованы 
+      в исключение "Argument cannot be passed by reference".
      </para>
     </listitem>
     <listitem>
@@ -373,11 +373,11 @@ new class {};
       </programlisting>
      </para>
      <para>
-      За показанным выше именем по-прежнему следует байт NUL и уникальный суффикс.
+      За новыми именами по-прежнему будет следовать NUL-байт и уникальный суффикс.
      </para>
     </listitem>
     <listitem>
-     <para>    
+     <para>
       Ссылки на неабсолютные трейты методов в адаптациях псевдонимов трейтов теперь должны быть 
       однозначными:
      </para>
@@ -429,7 +429,7 @@ class MyClass {
     <listitem>
      <para>
       Отключенные функции теперь обрабатываются точно так же, как несуществующие функции. Вызов отключенной 
-      функции выдаст, что она неизвестна и теперь возможно переопределение отключенной функции.
+      функции сообщит, что нет такой функции, это дает возможность переопределить отключенную функцию.
      </para>
     </listitem>
     <listitem>
@@ -531,8 +531,8 @@ $array["key"];
     </listitem>
     <listitem>
      <para>
-      Обработка числовых строк была изменена, чтобы сделать ее более интуитивной и менее подверженной ошибкам. Конечные 
-      пробелы теперь разрешены в числовых строках для согласованности с тем, как обрабатываются начальные 
+      Обработка числовых строк была изменена, чтобы сделать ее более понятной и менее подверженной ошибкам. 
+      Завершающие пробелы теперь разрешены в числовых строках для согласованности с тем, как обрабатываются начальные 
       пробелы. В основном это влияет на:
      </para>
      <para>
@@ -545,9 +545,9 @@ $array["key"];
      </para>
      <para>
       Понятие "ведущая числовая строка" в основном было отброшено; случаи, когда это осталось, существуют 
-      для облегчения миграции. Строки, которые выдавали <constant>E_NOTICE</constant> "Обнаружено некорректное 
-      числовое значение", теперь будут выдавать <constant>E_WARNING</constant> "Обнаружено нечисловое значение" 
-      и все строки, которые выдавали <constant>E_WARNING</constant> "Обнаружено нечисловое значение" 
+      для облегчения миграции. Строки, которые выдавали <constant>E_NOTICE</constant> "A non well-formed numeric value encounteredе",
+      теперь будут выдавать <constant>E_WARNING</constant> "A non-numeric value encountered" 
+      и все строки, которые выдавали <constant>E_WARNING</constant> "A non-numeric value encountered" 
       теперь будет выдавать <classname>TypeError</classname>. В основном это влияет на:
      </para>
      <para>
@@ -826,7 +826,7 @@ $array["key"];
  </sect2>
  
  <sect2 xml:id="migration80.incompatible.filter">
-  <title>Filter</title>
+  <title>Фильтрация данных</title>
   
   <itemizedlist>
    <listitem>
@@ -839,9 +839,9 @@ $array["key"];
    </listitem>
    <listitem>
     <para>
-     Источники <constant>INPUT_REQUEST</constant> и <constant>INPUT_SESSION</constant> для 
-     <function>filter_input</function> и подобных были удалены. Они никогда не были реализованы 
-     и их использование всегда выбрасывало предупреждение.
+     <constant>INPUT_REQUEST</constant> и <constant>INPUT_SESSION</constant> для 
+     для параметра типа в <function>filter_input</function> и ей производных были удалены. Они никогда не были реализованы, 
+     а попытка их использования всегда приводила к вызову предупреждения.
     </para> 
    </listitem>
   </itemizedlist>
@@ -1449,15 +1449,15 @@ $array["key"];
    <listitem>
     <para>
      Если массив, возвращаемый <link linkend="object.sleep">__sleep()</link>, содержит несуществующие 
-     свойства, теперь они автоматически игнорируются. Ранее такие свойства были бы 
+     свойства, теперь они автоматически проигнорируются. Ранее такие свойства были бы 
      сериализованы, как если бы они имели значение &null;.
     </para>
    </listitem>
    <listitem>
     <para>
-     Локаль по умолчанию при запуске теперь всегда <literal>"C"</literal>. По умолчанию языковые стандарты 
-     не наследуются от среды. Ранее для <constant>LC_ALL</constant> было задано значение 
-     <literal>"C"</literal>, в то время как <constant>LC_CTYPE</constant> наследовался от среды.
+     Локаль по умолчанию при запуске теперь всегда будет определена как <literal>"C"</literal>. По умолчанию локали 
+     не наследуются из окружения. Ранее для <constant>LC_ALL</constant> было задано значение 
+     <literal>"C"</literal>, в то время как <constant>LC_CTYPE</constant> наследовался от окружения.
      Однако некоторые функции не соблюдали унаследованную локаль без явного вызова <function>setlocale</function>. 
      Явный вызов <function>setlocale</function> теперь всегда требуется, если компонент локали должен 
      быть изменен с значения по умолчанию.
@@ -1575,7 +1575,7 @@ echo file_get_contents('http://example.org', false, $ctx);
     <para>
      В лексемах <literal>T_COMMENT</literal> больше не будет символа новой строки в конце. Вместо этого новая строка будет 
      частью следующей лексемы <literal>T_WHITESPACE</literal>. Следует отметить, что за 
-     <literal>T_COMMENT</literal> не всегда следует пробел, за ним также может следовать 
+     <literal>T_COMMENT</literal> не всегда следует пробел, за ним также может быть 
      <literal>T_CLOSE_TAG</literal> или конец файла.
     </para>
    </listitem>
@@ -1615,7 +1615,7 @@ echo file_get_contents('http://example.org', false, $ctx);
   <title>Zip</title>
   
   <para>
-   <constant>ZipArchive::OPSYS_Z_CPM</constant> была удалена (это имя было опечаткой). Используйте
+   <constant>ZipArchive::OPSYS_Z_CPM</constant> была удалена (в этом имени была опечатка). Используйте
    вместо нее <constant>ZipArchive::OPSYS_CPM</constant>.
   </para>
  </sect2>
