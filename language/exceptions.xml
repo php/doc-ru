@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cdaea0421544885f02ff3d36bd203dc01b78299e  Maintainer: irker Status: ready -->
+<!-- EN-Revision: 1d58f726462a821d3f926fb61247357f49fa1ce5  Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
@@ -192,21 +192,41 @@ echo "\n\n";
    перехватить исключение. Каждый блок &try;
    должен иметь как минимум один соответствующий ему блок &catch; или &finally;.
   </para>
-  
+  <para>
+   В случае, если выброшено исключение, для которого нет блока &catch; в текущей функции,
+   это исключение будет "всплывать" по стеку вызова, пока не будет найден 
+   подходящий блок &catch;. При этом, все встреченные блоки &finally; бдут исполнены.
+   Если стек вызовов раскрутится до глобальной области видимости, не встретив подходящего
+   блока &catch;, программа завершит работу с фатальной ошибкой, если только у вас
+   не настроен глобальный обработчик исключений.
+  </para>
   <para>
    Генерируемый объект должен принадлежать классу <classname>Exception</classname>
    или наследоваться от <classname>Exception</classname>. Попытка сгенерировать
    исключение другого класса приведет к фатальной ошибке PHP.
+  </para>
+  <para>
+   Начиная с PHP 8.0.0, ключевое слово &throw; является выражением и может использоваться
+   в контексте других выражений. В более ранних версиях оно являлось оператором и требовало
+   размещения в отдельной строке.
   </para>
  </simplesect>
  
  <simplesect xml:id="language.exceptions.catch">
   <title><literal>catch</literal></title>
   <para>
+   Блок &catch; определяет то, как следует реагировать на выброшенное исключение.
+   В блоке &catch; указывается один или более типов исключений или ошибок(Error), которые он
+   будет обрабатывать. Также указывается и переменная, которой будет присвоено
+   пойманное исключение (начиная с PHP 8.0.0 задавать эту переменную не обязательно).
+   Выброшенное исключение или ошибка будут обработаны первым подходящим блоком &catch;.
+  </para>
+  <para>
    Можно использовать несколько блоков &catch;, перехватывающих различные классы
    исключений. Нормальное выполнение (когда не генерируются исключения в блоках
    &try;) будет продолжено за последним блоком &catch;. Исключения могут быть
    сгенерированы (или вызваны еще раз) оператором &throw; внутри блока &catch;.
+   Если нет, то исполнение будет продолжено после отработки блока &catch;.
   </para>
   <para>
    При генерации исключения код, следующий после описываемого выражения,
@@ -218,9 +238,14 @@ echo "\n\n";
    функции <function>set_exception_handler</function>.
   </para>
   <para>
-   В PHP 7.1 и выше, блок &catch; может принимать несколько типов исключений с помощью
-   символа (<literal>|</literal>). Это полезно, когда разные исключения из разных иерархий классов
-   обрабатываются одинаково.
+   Начиная с PHP 7.1.0, блок &catch; может принимать несколько типов исключений с помощью
+   символа (<literal>|</literal>). Это полезно, когда разные исключения из разных 
+   иерархий классов обрабатываются одинаково.
+  </para>
+  <para>
+   Начиная с PHP 8.0.0, задание переменной для пойманного исключения опционально.
+   Если она не задана, блок &catch; будет исполняться, но не будет иметь доступа
+   к объекту исключения.
   </para>
  </simplesect>
  
@@ -240,6 +265,18 @@ echo "\n\n";
   </para>
  </simplesect>
  
+ <simplesect xml:id="language.exceptions.exception-handler">
+  <title><literal>Глобальный обработчик исключений</literal></title>
+  <para>
+   Если исключение дошло по стеку вызовов до глобальной области видимости, оно может быть
+   обработано глобальным обработчиком исключений, если он задан.  
+   С помощью функции <function>set_exception_handler</function> можно задать функцию,
+   которая будет выполнена вместо блока &catch;, если не нашлось подходящего. Эффект
+   аналогичен тому, как будто мы всю нашу программу обернули в блок &try;-&catch;, где
+   за реализацию блока &catch; отвечает установленная функция.
+  </para>
+ </simplesect>
+ 
  <simplesect xml:id="language.exceptions.notes">
   &reftitle.notes;
   
@@ -250,7 +287,22 @@ echo "\n\n";
     новые <link linkend="language.oop5">объектно-ориентированные</link>
     расширения используют исключения. Однако, ошибки можно легко преобразовать
     в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
+    Однако это не сработает для фатальных ошибок.
    </para>
+   <example>
+    <title>Преобразование сообщения об ошибках в исключение</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+    throw new ErrorException($message, 0, $severity, $filename, $lineno);
+}
+
+set_error_handler('exceptions_error_handler');
+?>
+]]>
+    </programlisting>
+   </example>
   </note>
   <tip>
    <para>
@@ -328,9 +380,9 @@ try {
 echo "Привет, мир\n";
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 0.2
 Первый блок finally.
@@ -338,11 +390,11 @@ echo "Привет, мир\n";
 Второй блок finally.
 Привет, мир
 ]]>
-    </screen>
+   </screen>
   </example>
   <example>
-    <title>Взаимодействие между блоками &finally; и &return;</title>
-    <programlisting role="php">
+   <title>Взаимодействие между блоками &finally; и &return;</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -359,14 +411,14 @@ function test() {
 echo test();
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 finally
 ]]>
-    </screen>
-   </example>
+   </screen>
+  </example>
   <example>
    <title>Вложенные исключения</title>
    <programlisting role="php">
@@ -395,13 +447,13 @@ $foo->testing();
 
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 string(4) "foo!"
 ]]>
-    </screen>
+   </screen>
   </example>
   <example>
    <title>Обработка нескольких исключений в одном блоке catch</title>
@@ -428,13 +480,57 @@ $foo->testing();
 
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 string(11) "MyException"
 ]]>
-    </screen>
+   </screen>
+  </example>
+  <example>
+   <title>Пример блока &catch; без указания переменной</title>
+   <para>Допустимо начиная с PHP 8.0.0</para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class SpecificException extends Exception {}
+
+function test() {
+    throw new SpecificException('Ой!');
+}
+
+try {
+    test();
+} catch (SpecificException) {
+    print "Было поймано исключение SpecificException, но нам безразлично, что у него внутри.";
+}
+?>
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>Throw как выражение</title>
+   <para>Only permitted in PHP 8.0.0 and later.</para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class SpecificException extends Exception {}
+
+function test() {
+    do_something_risky() or throw new Exception('Всё сломалось');
+}
+
+try {
+    test();
+} catch (Exception $e) {
+    print $e->getMessage();
+}
+?>
+]]>
+   </programlisting>
   </example>
  </simplesect>
  

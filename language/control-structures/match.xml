@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: c05ad6cc803259b220750fddf5cad809b69b70e0 Maintainer: rjhdby Status: ready -->
+<!-- Reviewed: no -->
+
+<sect1 xml:id="control-structures.match" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title><literal>match</literal></title>
+ <?phpdoc print-version-for="match"?>
+ <para>
+  Выражение <literal>match</literal> предназначено для ветвления потока исполнения на
+  основании проверки совпадения значения с заданным условием.
+  Аналогично оператору <literal>switch</literal>, выражение
+  <literal>match</literal> принимает на вход выражение, которое сравнивается 
+  с множеством альтернатив. Но, в отличии от <literal>switch</literal>,
+  оно обрабатывает значение в стиле, больше похожем на тернарный оператор.
+  Также, в отличии от <literal>switch</literal>, используется строгое сравнение
+  (<code>===</code>), а не слабое (<code>==</code>).
+  Выражение match доступно начиная с PHP 8.0.0.
+ </para>
+ 
+ <example>
+  <title>Структура выражения <literal>match</literal></title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+$return_value = match (subject_expression) {
+    single_conditional_expression => return_expression,
+    conditional_expression1, conditional_expression2 => return_expression,
+};
+?>
+]]>
+  </programlisting>
+  
+  <note>
+   <simpara>
+    Результат <literal>match</literal> использовать не обязательно.
+   </simpara>
+  </note>
+  <note>
+   <simpara>
+    Выражение <literal>match</literal> <emphasis>должно</emphasis> завершаться
+    точкой с запятой <literal>;</literal>.
+   </simpara>
+  </note>
+ </example>
+ 
+ <para>
+  Выражение <literal>match</literal> похоже на оператор
+  <literal>switch</literal> за исключением некоторых ключевых отличий:
+  
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     В отличии от switch, в <literal>match</literal> используется строгое сравнение (<code>===</code>).
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Выражение <literal>match</literal> возвращает результат.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     В <literal>Match</literal> исполняется только одна, первая подошедшая, ветвь кода, тогда как 
+     в <literal>switch</literal> происходит сквозное исполнение начиная с подошедшего условия и
+     до первого встретившегося оператора <literal>brake</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Выражение <literal>match</literal> должно быть исчерпывающим.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </para>
+ 
+ <para>
+  Также как и оператор <literal>switch</literal>, <literal>match</literal>
+  последовательно проводит проверки на совпадение с заданными условиями.
+  Выполнения кода условий происходит лениво, т.е. код следующего условия выполняется только
+  если все предыдущие проверки провалились. И выполнено будет только одна ветвь кода,
+  соответствующая подошедшему условию.
+  пример:
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$result = match ($x) {
+    foo() => ...,
+    $this->bar() => ..., // bar() не будет выполнен, если foo() === $x
+    $this->baz => beep(), // beep() будет выполнен только если $x === $this->baz
+    // etc.
+};
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ 
+ <para>
+  Условия в <literal>match</literal> могут быть множественными. В этом случае их следует разделять запятыми.
+  Множественные условия работают по принципу логического ИЛИ и, по сути, являются
+  сокращённой формой для случаев, когда несколько условий должны обрабатываться идентично.
+ </para>
+ <para>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$result = match ($x) {
+    // Множественное условие:
+    $a, $b, $c => 5,
+    // Аналогично трём одиночным:
+    $a => 5,
+    $b => 5,
+    $c => 5,
+};
+?>
+]]>
+   </programlisting>
+  </informalexample>
+ </para>
+ <para>
+  Также можно использовать шаблон <literal>default</literal>.
+  Этот шаблон совпадает с чем угодно, для чего не нашлось совпадений раньше.
+  К примеру:
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$expressionResult = match ($condition) {
+    1, 2 => foo(),
+    3, 4 => bar(),
+    default => baz(),
+};
+?>
+]]>
+   </programlisting>
+  </informalexample>
+  <note>
+   <simpara>
+    Использование нескольких шаблонов default приведет к фатальной ошибке
+    <constant>E_FATAL_ERROR</constant>.
+   </simpara>
+  </note>
+ </para>
+ 
+ <para>
+  Выражение <literal>match</literal> должно быть исчерпывающим. Если
+  проверяемое выражение не совпало ни с одним из условий, то будет
+  выброшено исключение <classname>UnhandledMatchError</classname>.
+ </para>
+ 
+ <example>
+  <title>Пример не обрабтанного выраженияо</title>
+  <programlisting role="php">
+<![CDATA[
+<?php
+$condition = 5;
+
+try {
+    match ($condition) {
+        1, 2 => foo(),
+        3, 4 => bar(),
+    };
+} catch (\UnhandledMatchError $e) {
+    var_dump($e);
+}
+?>
+]]>
+  </programlisting>
+  &example.outputs;
+  <screen>
+<![CDATA[
+object(UnhandledMatchError)#1 (7) {
+  ["message":protected]=>
+  string(33) "Unhandled match value of type int"
+  ["string":"Error":private]=>
+  string(0) ""
+  ["code":protected]=>
+  int(0)
+  ["file":protected]=>
+  string(9) "/in/ICgGK"
+  ["line":protected]=>
+  int(6)
+  ["trace":"Error":private]=>
+  array(0) {
+  }
+  ["previous":"Error":private]=>
+  NULL
+}
+]]>
+  </screen>
+ </example>
+ 
+ <sect2>
+  <title>Использование match для проверки сложных условий</title>
+  <para>
+   Выражение <literal>match</literal> можно использовать не только для проверки идентичности,
+   но и для любых выражений возвращающих логическое значение. В этом случае в качестве входного
+   параметра передаётся выражение <code>true</code>.
+  </para>
+  
+  <example>
+   <title>Использование match для ветвления в зависимости от вхождения в диапазоны целых чисел</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$age = 23;
+
+$result = match (true) {
+    $age >= 65 => 'пожилой',
+    $age >= 25 => 'взрослый',
+    $age >= 18 => 'совершеннолетний',
+    default => 'ребёнок',
+}
+
+var_dump($result);
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+string(11) "совершеннолетний"
+]]>
+   </screen>
+  </example>
+  
+  <example>
+   <title>Использование match для ветвления в зависимости от содержимого строки</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$text = 'Bienvenue chez nous';
+
+$result = match (true) {
+    str_contains($text, 'Welcome') || str_contains($text, 'Hello') => 'en',
+    str_contains($text, 'Bienvenue') || str_contains($text, 'Bonjour') => 'fr',
+    // ...
+};
+
+var_dump($result);
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+string(2) "fr"
+]]>
+   </screen>
+  </example>
+ </sect2>
+</sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
