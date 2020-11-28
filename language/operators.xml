@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a71742330defbc0edfbc6822b4f947bf437b2f70 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 051cc107704e41716190d4b23c2252c0aa730834 Maintainer: shein Status: ready -->
 <!-- $Revision$ -->
 <!-- Reviewed: yes -->
 <chapter xml:id="language.operators" xmlns="http://docbook.org/ns/docbook">
@@ -697,15 +697,15 @@ Parse error: syntax error, unexpected 'new' (T_NEW) in …
   </sect2>
   
   <sect2 role="seealso" xml:id="language.operators.assignment.see-also">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-      <member><link linkend="language.operators.arithmetic">арифметические операторы</link></member>
-      <member><link linkend="language.operators.bitwise">побитовые операторы</link></member>
-      <member><link linkend="language.operators.comparison.coalesce">операторы объединения с null</link></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><link linkend="language.operators.arithmetic">арифметические операторы</link></member>
+     <member><link linkend="language.operators.bitwise">побитовые операторы</link></member>
+     <member><link linkend="language.operators.comparison.coalesce">операторы объединения с null</link></member>
+    </simplelist>
+   </para>
+  </sect2>
  </sect1>
  
  <sect1 xml:id="language.operators.bitwise">
@@ -1358,20 +1358,20 @@ function p($res, $val, $op, $places, $note = '') {
   </warning>
   
   <sect2 role="seealso">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-<!-- <link linkend="language.oop5.basic.class.class">::class</link> -->
-      <member><function>pack</function></member>
-      <member><function>unpack</function></member>
-      <member><function>gmp_and</function></member>
-      <member><function>gmp_or</function></member>
-      <member><function>gmp_xor</function></member>
-      <member><function>gmp_testbit</function></member>
-      <member><function>gmp_clrbit</function></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <!-- <link linkend="language.oop5.basic.class.class">::class</link> -->
+     <member><function>pack</function></member>
+     <member><function>unpack</function></member>
+     <member><function>gmp_and</function></member>
+     <member><function>gmp_or</function></member>
+     <member><function>gmp_xor</function></member>
+     <member><function>gmp_testbit</function></member>
+     <member><function>gmp_clrbit</function></member>
+    </simplelist>
+   </para>
+  </sect2>
  </sect1>
  
  <sect1 xml:id="language.operators.comparison">
@@ -1458,14 +1458,24 @@ function p($res, $val, $op, $places, $note = '') {
    </tgroup>
   </table>
   <para>
-   В случае, если вы сравниваете число со строкой или две строки, содержащие числа,
-   каждая строка будет <link linkend="language.types.string.conversion">преобразована в
-   число</link>, и сравниваться они будут как числа. Эти правила также распространяются на
-   оператор <link linkend="control-structures.switch">switch</link>.
-   Преобразование типов не происходит при использовании === или !==
-   так как в этом случае кроме самих значений сравниваются еще и типы.
-   <informalexample>
-    <programlisting role="php">
+   В случае, если оба операнда являются 
+   <link linkend="language.types.numeric-strings">строками, содержащими числа</link> 
+   или один операнд является числом, а другой - <link linkend="language.types.numeric-strings">строкой, содержащей числа</link>,
+   то сравнение выполняется численно.
+   Эти правила также применяются к оператору <link linkend="control-structures.switch">switch</link>.
+   Преобразование типа не происходит при сравнении 
+   <literal>===</literal> или <literal>!==</literal>, поскольку это включает сравнение 
+   типа, а также значения.
+  </para>
+  
+  <warning>
+   <para>
+    До PHP 8.0.0, если строка (<type>string</type>) сравнивалась с числом 
+    или строкой, содержащей число, то строка (<type>string</type>) преобразовывалось 
+    в число перед выполнением сравнения. Это могло привести к неожиданным 
+    результатам, что можно увидеть на следующем примере:
+    <informalexample>
+     <programlisting role="php">
 <![CDATA[
 <?php
 var_dump(0 == "a"); // 0 == 0 -> true
@@ -1477,22 +1487,28 @@ switch ("a") {
 case 0:
     echo "0";
     break;
-case "a": // Эта ветка никогда не будет достигнута, так как "a" уже сопоставленно с 0
+case "a": // никогда не достигнет, потому что "a" уже совпало с 0
     echo "a";
     break;
 }
 ?>
 ]]>
-    </programlisting>
+     </programlisting>
+    </informalexample>
+   </para>
+  </warning>
+  
+  <para>
+   <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php  
-// Целые
+// Целые числа
 echo 1 <=> 1; // 0
 echo 1 <=> 2; // -1
 echo 2 <=> 1; // 1
  
-// С плавающей точкой
+// Числа с плавающей запятой
 echo 1.5 <=> 1.5; // 0
 echo 1.5 <=> 2.5; // -1
 echo 2.5 <=> 1.5; // 1
@@ -1525,7 +1541,7 @@ $a = (object) ["a" => "c"];
 $b = (object) ["a" => "b"]; 
 echo $a <=> $b; // 1
  
-// сравниваются не только значения; ключи должны соответствовать
+// сравниваются не только значения; ключи также должны совпадать
 $a = (object) ["a" => "b"]; 
 $b = (object) ["b" => "b"]; 
 echo $a <=> $b; // 1
@@ -1536,7 +1552,6 @@ echo $a <=> $b; // 1
     </programlisting>
    </informalexample>
   </para>
-  
   <para>
    Для различных типов сравнение происходит в соответствии со следующей
    таблицей (по порядку).
@@ -1572,7 +1587,7 @@ echo $a <=> $b; // 1
      </row>
      <row>
       <entry><type>string</type>, <type>resource</type>, <type>int</type> или <type>float</type></entry>
-       <entry><type>string</type>, <type>resource</type>, <type>int</type> или <type>float</type></entry>
+      <entry><type>string</type>, <type>resource</type>, <type>int</type> или <type>float</type></entry>
       <entry>Строки и ресурсы переводятся в числа, обычная математика</entry>
      </row>
      <row>
@@ -1660,16 +1675,16 @@ function standard_array_compare($op1, $op2)
   </warning>
   
   <sect2 role="seealso">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-      <member><function>strcasecmp</function></member>
-      <member><function>strcmp</function></member>
-      <member><link linkend="language.operators.array">Операторы, работающие с массивами</link></member>
-      <member><link linkend="language.types">Типы</link></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><function>strcasecmp</function></member>
+     <member><function>strcmp</function></member>
+     <member><link linkend="language.operators.array">Операторы, работающие с массивами</link></member>
+     <member><link linkend="language.types">Типы</link></member>
+    </simplelist>
+   </para>
+  </sect2>
   
   <sect2 xml:id="language.operators.comparison.ternary">
    <title>Тернарный оператор</title>
@@ -1741,10 +1756,10 @@ echo ((true ? 'true' : false) ? 't' : 'f');
 // второго тернарного выражения.
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-   </note>
+       </programlisting>
+      </example>
+     </para>
+    </note>
   </sect2>
   <sect2 xml:id="language.operators.comparison.coalesce">
    <title>Оператор объединения с null</title>
@@ -1803,10 +1818,10 @@ echo $foo ?? $bar ?? $baz ?? $qux; // выведет 1
 
 ?>
 ]]>
-      </programlisting>
-     </example>
-    </para>
-   </note>
+       </programlisting>
+      </example>
+     </para>
+    </note>
   </sect2> 
  </sect1>
  
@@ -1871,14 +1886,14 @@ $value = @$cache[$key];
   </warning>
   
   <sect2 role="seealso">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-      <member><function>error_reporting</function></member>
-      <member><link linkend="ref.errorfunc">Обработка ошибок и функции логирования</link></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><function>error_reporting</function></member>
+     <member><link linkend="ref.errorfunc">Обработка ошибок и функции логирования</link></member>
+    </simplelist>
+   </para>
+  </sect2>
  </sect1>
  
  <sect1 xml:id="language.operators.execution">
@@ -1913,18 +1928,18 @@ echo "<pre>$output</pre>";
     будут работать внутри строк в двойных кавычках.
    </para>
   </note>
-
+  
   <sect2 role="seealso">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-      <member><link linkend="ref.exec">Функции для выполнения программ</link></member>
-      <member><function>popen</function></member>
-      <member><function>proc_open</function></member>
-      <member><link linkend="features.commandline">Использование PHP в командной строке</link></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><link linkend="ref.exec">Функции для выполнения программ</link></member>
+     <member><function>popen</function></member>
+     <member><function>proc_open</function></member>
+     <member><link linkend="features.commandline">Использование PHP в командной строке</link></member>
+    </simplelist>
+   </para>
+  </sect2>
  </sect1>
  
  <sect1 xml:id="language.operators.increment">
@@ -2042,9 +2057,9 @@ for ($n=0; $n<6; $n++) {
 }
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 == Буквы ==
 X
@@ -2067,12 +2082,12 @@ A12
 A13
 A14
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Инкрементирование или декрементирование булевых переменных не приводит ни к какому результату.
-  </para>
+   </screen>
+  </example>
+   </para>
+   <para>
+    Инкрементирование или декрементирование булевых переменных не приводит ни к какому результату.
+   </para>
  </sect1>
  
  <sect1 xml:id="language.operators.logical">
@@ -2177,8 +2192,8 @@ bool(false)
 bool(false)
 bool(true)
 ]]>
-   </screen>
-  </example>
+    </screen>
+   </example>
  </sect1>
  
  <sect1 xml:id="language.operators.string">
@@ -2207,16 +2222,16 @@ $a .= "Мир!";     // $a теперь содержит строку "Прив�
     </programlisting>
    </informalexample>
   </para>
-
+  
   <sect2 role="seealso">
-    &reftitle.seealso;
-    <para>
-     <simplelist>
-      <member><link linkend="language.types.string">Строки</link></member>
-      <member><link linkend="ref.strings">Функции для работы со строками</link></member>
-     </simplelist>
-    </para>
-   </sect2>
+   &reftitle.seealso;
+   <para>
+    <simplelist>
+     <member><link linkend="language.types.string">Строки</link></member>
+     <member><link linkend="ref.strings">Функции для работы со строками</link></member>
+    </simplelist>
+   </para>
+  </sect2>
  </sect1>
  
  <sect1 xml:id="language.operators.array">
@@ -2328,16 +2343,16 @@ array(3) {
   string(6) "cherry"
 }
 ]]>
-   </screen>
-  </para>
-  <para>
-   При сравнении элементы массива считаются идентичными, если совпадает
-   и ключ, и соответствующее ему значение.
-  </para>
-  <para>
-   <example>
-    <title>Сравнение массивов</title>
-    <programlisting role="php">
+    </screen>
+   </para>
+   <para>
+    При сравнении элементы массива считаются идентичными, если совпадает
+    и ключ, и соответствующее ему значение.
+   </para>
+   <para>
+    <example>
+     <title>Сравнение массивов</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 $a = array("apple", "banana");
@@ -2347,11 +2362,11 @@ var_dump($a == $b); // bool(true)
 var_dump($a === $b); // bool(false)
 ?>
 ]]>
-    </programlisting>
-   </example>
-  </para>
-  
-  <sect2 role="seealso">
+     </programlisting>
+    </example>
+   </para>
+   
+   <sect2 role="seealso">
     &reftitle.seealso;
     <para>
      <simplelist>
@@ -2393,15 +2408,15 @@ var_dump($a instanceof NotMyClass);
 bool(true)
 bool(false)
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Оператор <literal>instanceof</literal> также может быть использован
-   для определения, наследует ли определенный объект какому-либо классу:
-   <example>
-    <title>Использование <literal>instanceof</literal> с наследуемыми классами</title>
-    <programlisting role="php">
+     </screen>
+    </example>
+   </para>
+   <para>
+    Оператор <literal>instanceof</literal> также может быть использован
+    для определения, наследует ли определенный объект какому-либо классу:
+    <example>
+     <title>Использование <literal>instanceof</literal> с наследуемыми классами</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 class ParentClass
@@ -2418,24 +2433,24 @@ var_dump($a instanceof MyClass);
 var_dump($a instanceof ParentClass);
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 bool(true)
 bool(true)
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Для проверки <emphasis>непринадлежности</emphasis> объекта некоторому классу,
-   используйте <link linkend="language.operators.logical">логический оператор
-   <literal>not</literal></link>.
-   <example>
-    <title>Использование <literal>instanceof</literal> для проверки того, что объект
-     <emphasis>не</emphasis> является экземпляром класса</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+   </para>
+   <para>
+    Для проверки <emphasis>непринадлежности</emphasis> объекта некоторому классу,
+    используйте <link linkend="language.operators.logical">логический оператор
+    <literal>not</literal></link>.
+    <example>
+     <title>Использование <literal>instanceof</literal> для проверки того, что объект
+      <emphasis>не</emphasis> является экземпляром класса</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 class MyClass
@@ -2446,22 +2461,22 @@ $a = new MyClass;
 var_dump(!($a instanceof stdClass));
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 bool(true)
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Наконец, <literal>instanceof</literal> может быть также использован для проверки
-   реализации объектом некоторого <link
-   linkend="language.oop5.interfaces">интерфейса</link>:
-   <example>
-    <title>Использование <literal>instanceof</literal> с интерфейсами</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+   </para>
+   <para>
+    Наконец, <literal>instanceof</literal> может быть также использован для проверки
+    реализации объектом некоторого <link
+    linkend="language.oop5.interfaces">интерфейса</link>:
+    <example>
+     <title>Использование <literal>instanceof</literal> с интерфейсами</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 interface MyInterface
@@ -2478,22 +2493,22 @@ var_dump($a instanceof MyClass);
 var_dump($a instanceof MyInterface);
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 bool(true)
 bool(true)
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Хотя <literal>instanceof</literal> обычно используется с прямо указанным именем класса,
-   он также может быть использован с другим объектом или строковой переменной:
-   <example>
-    <title>Использование <literal>instanceof</literal> с другими переменными</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+   </para>
+   <para>
+    Хотя <literal>instanceof</literal> обычно используется с прямо указанным именем класса,
+    он также может быть использован с другим объектом или строковой переменной:
+    <example>
+     <title>Использование <literal>instanceof</literal> с другими переменными</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 interface MyInterface
@@ -2514,24 +2529,24 @@ var_dump($a instanceof $c); // $c - строка 'MyClass'
 var_dump($a instanceof $d); // $d - строка 'NotMyClass'
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 bool(true)
 bool(true)
 bool(false)
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Оператор instanceof не генерирует никаких ошибок, если проверяемая переменная не
-   является объектом. В этом случае он просто возвращает &false;. Константы, тем не менее,
-   не допускались до PHP 7.3.0.
-   <example>
-    <title>Пример использования оператора <literal>instanceof</literal> для проверки других переменных</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+   </para>
+   <para>
+    Оператор instanceof не генерирует никаких ошибок, если проверяемая переменная не
+    является объектом. В этом случае он просто возвращает &false;. Константы, тем не менее,
+    не допускались до PHP 7.3.0.
+    <example>
+     <title>Пример использования оператора <literal>instanceof</literal> для проверки других переменных</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 $a = 1;
@@ -2543,23 +2558,23 @@ var_dump($c instanceof stdClass); // $c - значение типа resource
 var_dump(FALSE instanceof stdClass);
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+     </programlisting>
+     &example.outputs;
+     <screen>
 <![CDATA[
 bool(false)
 bool(false)
 bool(false)
 PHP Fatal error:  instanceof expects an object instance, constant given
 ]]>
-    </screen>
-   </example>
-  </para>
-  <para>
-   Начиная с PHP 7.3.0, константы разрешены в левой части оператора <literal>instanceof</literal>.
-   <example>
-    <title>Использование <literal>instanceof</literal> для проверки констант</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+   </para>
+   <para>
+    Начиная с PHP 7.3.0, константы разрешены в левой части оператора <literal>instanceof</literal>.
+    <example>
+     <title>Использование <literal>instanceof</literal> для проверки констант</title>
+     <programlisting role="php">
 <![CDATA[
 <?php
 var_dump(FALSE instanceof stdClass);
@@ -2571,15 +2586,15 @@ var_dump(FALSE instanceof stdClass);
 <![CDATA[
 bool(false)
 ]]>
-     </screen>
-   </example>
-  </para>
-
-  <simpara>
-   Оператор <literal>instanceof</literal> аналогичен функции <function>is_a</function>.
-  </simpara>
-  
-  <sect2 role="seealso">
+   </screen>
+  </example>
+   </para>
+   
+   <simpara>
+    Оператор <literal>instanceof</literal> аналогичен функции <function>is_a</function>.
+   </simpara>
+   
+   <sect2 role="seealso">
     &reftitle.seealso;
     <para>
      <simplelist>
