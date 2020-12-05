@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 574f492ae951e820d36bc6d9273f9da90ba46ef7 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 8500ca3fb8c3ef090f6469422d441f75b109e40c Maintainer: sergey Status: ready -->
 <!-- Reviewed: yes -->
 
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
@@ -230,6 +230,29 @@ function takes_many_args(
 ]]>
     </programlisting>
   </example>
+  <para>
+   Начиная с PHP 8.0.0, передача необязательных аргументов после обязательных аргументов 
+   устарела. Обычно это можно решить, отказавшись от значения по умолчанию.
+   Единственным исключением из этого правила являются аргументы формы 
+   <code>Type $param = null</code>, где &null; по умолчанию делает тип неявно 
+   допускающим значение null. Это использование остается разрешенным, хотя вместо этого рекомендуется использовать явный тип, 
+   допускающий значение null.
+   </para>
+   <example>
+    <title>Передача необязательных аргументов после обязательных аргументов</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function foo($a = [], $b) {} // Раньше
+function foo($a, $b) {}      // Теперь
+
+function bar(A $a = null, $b) {} // Все еще разрешено
+function bar(?A $a, $b) {}       // Рекомендуется
+?>
+]]>
+    </programlisting>
+   </example>
+  
   <sect2 xml:id="functions.arguments.by-reference">
    <title>Передача аргументов по ссылке</title>
    
@@ -566,6 +589,111 @@ echo sum(1, 2, 3, 4);
    </sect3> 
    
   </sect2>
+  
+  <sect2 xml:id="functions.named-arguments">
+    <title>Именованные аргументы</title>
+
+    <para>
+     В PHP 8.0.0 представлены именованные аргументы как расширение существующих 
+     позиционных параметров. Именованные аргументы позволяют передавать аргументы 
+     функции на основе имени параметра, а не позиции параметра.
+     Это делает значение аргумента самодокументированным, делает аргументы независимыми от 
+     порядка и позволяет произвольно пропускать значения по умолчанию.
+    </para>
+
+    <para>
+     Именованные аргументы передаются с помощью префикса значения с именем параметра, 
+     за которым следует двоеточие. Допускается использование зарезервированных ключевых слов в качестве имен параметров.
+     Имя параметра должно быть идентификатором, динамическое указание 
+     не допускается.
+    </para>
+
+    <example>
+     <title>Синтаксис именованного аргумента</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+myFunction(paramName: $value);
+array_foobar(array: $value);
+
+// НЕ поддерживается
+function_name($variableStoringParamName: $value);
+?>
+]]>
+     </programlisting>
+    </example>
+
+    <example>
+     <title>Позиционные аргументы против именованных аргументов</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+// Использование позиционных аргументов:
+array_fill(0, 100, 50);
+
+// Использование именованных аргументов:
+array_fill(start_index: 0, num: 100, value: 50);
+?>
+]]>
+     </programlisting>
+    </example>
+
+    <para>
+     Порядок, в котором передаются названные аргументы, не имеет значения.
+    </para>
+
+    <example>
+     <title>Тот же пример, что и выше, с другим порядком параметров</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+array_fill(value: 50, num: 100, start_index: 0);
+?>
+]]>
+     </programlisting>
+    </example>
+
+    <para>
+     Именованные аргументы можно комбинировать с позиционными аргументами. В этом случае 
+     именованные аргументы должны идти после позиционных аргументов.
+     Также возможно указать только некоторые из необязательных аргументов 
+     функции, независимо от их порядка.
+    </para>
+
+    <example>
+     <title>Объединение именованных аргументов с позиционными аргументами</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+htmlspecialchars($string, double_encode: false);
+// То же самое
+htmlspecialchars($string, ENT_COMPAT | ENT_HTML401, 'UTF-8', false);
+?>
+]]>
+     </programlisting>
+    </example>
+
+    <para>
+     Передача одного и того же параметра несколько раз приводит к выбрасыванию исключения Error.
+    </para>
+
+    <example>
+     <title>Исключение Error при передаче одного и того же параметра несколько раз</title>
+     <programlisting role="php">
+      <![CDATA[
+<?php
+function foo($param) { ... }
+
+foo(param: 1, param: 2);
+// Error: Named parameter $param overwrites previous argument
+foo(1, param: 2);
+// Error: Named parameter $param overwrites previous argument
+?>
+]]>
+     </programlisting>
+    </example>
+
+   </sect2>
  </sect1>
  
  <sect1 xml:id="functions.returning-values">
