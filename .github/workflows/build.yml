@@ -1,0 +1,38 @@
+name: Build Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  spellchecking:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: 'ru' 
+      - name: Install yaspeller
+        run: npm install yaspeller
+      - name: Run spellchecker
+        run: node_modules/.bin/yaspeller --only-errors "**/*.xml"
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: 'ru'
+
+      - name: Run Build Test Script
+        run: |
+          git clone --depth=1 https://github.com/php/doc-base.git doc-base
+          git clone --depth=1 https://github.com/php/doc-en.git en
+          php doc-base/configure.php --enable-xml-details --disable-libxml-check --redirect-stderr-to-stdout --with-lang=ru

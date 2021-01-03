@@ -1,7 +1,7 @@
 # Русский перевод документации PHP
 
 [![Slack Status](https://img.shields.io/badge/slack-@ru.php.doc-green.svg?logo=slack)](https://join.slack.com/t/ruphpdoc/shared_invite/zt-ax1czx68-c3_XSVhsgzYJCOslmwvJkQ)
-![Sync](https://github.com/php/doc-ru/workflows/Check%20Russian%20build/badge.svg)
+![Sync](https://github.com/php/doc-ru/workflows/Build%20Test/badge.svg)
 
 ## Руководство
 
