@@ -2,6 +2,7 @@ module.exports = {
   excludeFiles: [
     ".git",
     "bookinfo.xml",
+    "**/*.{yml,js}",
   ],
   format: "html",
   lang: "ru",
@@ -253,6 +254,5 @@ module.exports = {
     "эквиваленция",
     "эрмитовая",
     "языкозависим.*",
-    
-  ]
+  ],
 }
