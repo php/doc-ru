@@ -11,12 +11,18 @@
 
 - Символ отступа — это пробел (табуляция в файлах `.xml` запрещена)
 
-## Принятие пулл-реквестов
+## Принятие пулреквестов
 
-Для пользователей с кармой `doc/ru` команда для принятия пулл-реквеста:
+Для пользователей с кармой `doc/ru` команда для принятия пулреквеста:
 
 ```shell
+# В качестве origin используется git@git.php.net:/doc/ru.git
+# git remote add origin git@git.php.net:/doc/ru.git
+
+bash scripts/apply_patch.sh %PR_NUM%
+
+# То же самое, но вручную:
 curl http://url_of_github_patch.patch | git am
-git commit --am // Add Closes GH-prnum
+git commit --am # Добавить в конец "Closes GH-%PR_NUM%"
 git push origin
 ```
