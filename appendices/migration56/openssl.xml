@@ -4,16 +4,16 @@
 <!-- $Revision$ -->
 <sect1 xml:id="migration56.openssl" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Изменения OpenSSL в PHP 5.6.x</title>
- 
+
  <sect2 xml:id="migration56.openssl.peer-verification">
   <title>Обёртки потоков теперь по умолчанию проверяют сертификаты узлов и имена хостов при использовании SSL/TLS</title>
-  
+
   &migration56.openssl.peer-verification;
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.fingerprint">
   <title>Сигнатура сертификата</title>
-  
+
   <para>
    Была добавлена поддержка извлечения и проверки сигнатуры сертификата.
    Для извлечения сигнатур сертификатов X.509 добавлена функция
@@ -24,17 +24,17 @@
    заданной сигнатуре.
   </para>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.ciphers">
   <title>Обновлены шифры по умолчанию</title>
-  
+
   <para>
    Список шифров по умолчанию, используемых PHP, был обновлён на более
    безопасный в соответствии с <link xlink:href="&url.openssl.ciphers.mozilla;">
    рекомендациями по шифрам от Mozilla</link>, с двумя дополнительными
    исключениями: анонимные шифры Диффи-Хеллмана и RC4.
   </para>
-  
+
   <para>
    Этот список доступен через новую константу
    <constant>OPENSSL_DEFAULT_STREAM_CIPHERS</constant>, и может быть переопределён
@@ -42,10 +42,10 @@
    <link linkend="context.ssl.ciphers"><parameter>ciphers</parameter></link>.
   </para>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.tls-compression">
   <title>Сжатие запрещено по умолчанию</title>
-  
+
   <para>
    Сжатие SSL/TLS было запрещено по умолчанию для compression уменьшения
    вероятности атаки типа CRIME. В PHP 5.4.13 была добавлена опция контекста
@@ -54,28 +54,28 @@
    как &true; (то есть компрессия запрещена).
   </para>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.honor-cipher-order">
   <title>Разрешение серверу определять свой собственный порядок шифров</title>
-  
+
   <para>
    Была добавлена опция контекста <parameter>honor_cipher_order</parameter>,
    которая позволяет серверу обслуживающему зашифрованный поток самому
-   определять шифры, которыми будет пользоваться клиент. Это позволить снизить 
+   определять шифры, которыми будет пользоваться клиент. Это позволить снизить
    риск атаки типа BEAST.
   </para>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.metadata">
   <title>Доступ к согласованному протоколу и шифру</title>
-  
+
   <para>
    Протокол и шифр, согласованные для шифрованного потока, доступны
    с помощью функций <function>stream_get_meta_data</function> или
    <function>stream_context_get_options</function>, если опция контекста SSL
    <parameter>capture_session_meta</parameter> установлена как &true;.
   </para>
-  
+
   <informalexample>
    <programlisting role="php">
 <![CDATA[
@@ -83,7 +83,7 @@
 $ctx = stream_context_create(['ssl' => [
     'capture_session_meta' => TRUE
 ]]);
- 
+
 $html = file_get_contents('https://google.com/', FALSE, $ctx);
 $meta = stream_context_get_options($ctx)['ssl']['session_meta'];
 var_dump($meta);
@@ -107,20 +107,20 @@ array(4) {
    </screen>
   </informalexample>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.forward-secrecy">
   <title>Новые возможности для совершенной прямой секретности (PFS) для серверов, обслуживающих шифрованные потоки</title>
-  
+
   <para>
    Шифрованные потоки клиента уже поддерживают совершенную прямую
    секретность, поскольку она, как правило, контролируется сервером.
-   Серверы PHP, обслуживающие шифрованные потоки, использующие сертификаты 
+   Серверы PHP, обслуживающие шифрованные потоки, использующие сертификаты
    поддерживающие совершенную прямую секретность не нуждаются в каких
    либо дополнительных действиях для включения PFS; однако, было добавлено
    некоторое количество новых опций контекста SSL для более точного контроля
    над PFS и для решения возможных проблем.
   </para>
-  
+
   <variablelist>
    <varlistentry>
     <term><parameter>ecdh_curve</parameter></term>
@@ -165,18 +165,18 @@ openssl dhparam -out /path/to/my/certs/dh-2048.pem 2048
    </varlistentry>
   </variablelist>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.crypto-method">
   <title>Выбор версии SSL/TLS</title>
-  
+
   <para>
    Теперь возможно выбирать конкретную версию SSL и TLS с помощью опции
-   контекста <parameter>crypto_method</parameter> или указывая конкретный 
+   контекста <parameter>crypto_method</parameter> или указывая конкретный
    транспорт при создании обёртки потока (например с помощью вызова
    <function>stream_socket_client</function> или
    <function>stream_socket_server</function>).
   </para>
-  
+
   <para>
    Опция контекста SSL <parameter>crypto_method</parameter> принимает битовую
    маску, перечисляющую допустимые протоколы, также как это задаётся в
@@ -186,7 +186,7 @@ openssl dhparam -out /path/to/my/certs/dh-2048.pem 2048
               in the crypto_method and stream_socket_enable_crypto()
               documentation. -->
   </para>
-  
+
   <segmentedlist>
    <title>Выбранная версия протокола и соответствующие опции</title>
    <segtitle>Протокол</segtitle>
@@ -230,7 +230,7 @@ openssl dhparam -out /path/to/my/certs/dh-2048.pem 2048
     <seg><literal>sslv3://</literal></seg>
    </seglistitem>
   </segmentedlist>
-  
+
   <informalexample>
    <programlisting role="php">
 <![CDATA[
@@ -261,16 +261,16 @@ $sock = stream_socket_client('tlsv1.2://google.com:443/');
    </programlisting>
   </informalexample>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.default-certificate-paths">
   <title>Добавлена функция <function>openssl_get_cert_locations</function></title>
-  
+
   <para>
-   Была добавлена функция <function>openssl_get_cert_locations</function>: 
+   Была добавлена функция <function>openssl_get_cert_locations</function>:
    она возвращает расположения, в которых PHP будет искать пакеты CA по
    умолчанию.
   </para>
-  
+
   <informalexample>
    <programlisting role="php">
 <![CDATA[
@@ -304,21 +304,21 @@ array(8) {
    </screen>
   </informalexample>
  </sect2>
- 
+
  <sect2 xml:id="migration56.openssl.spki">
   <title>Поддержка SPKI</title>
-  
+
   <para>
    Была добавлена поддержка для создания, извлечения и проверки подписанных
    публичных ключей и опознавательных строк (SPKAC).
    Были добавлены функции <function>openssl_spki_new</function>,
    <function>openssl_spki_verify</function>,
    <function>openssl_spki_export_challenge</function> и
-   <function>openssl_spki_export</function> для создания, проверки экспорта PEM 
+   <function>openssl_spki_export</function> для создания, проверки экспорта PEM
    публичных ключей и соответствующих опознавательных строк из SPKAC,
    созданных из элементов HTML5 <literal>KeyGen</literal>.
   </para>
-  
+
   <variablelist>
    <varlistentry>
     <term><parameter>openssl_spki_new</parameter></term>
@@ -327,7 +327,7 @@ array(8) {
       Генерация нового SPKAC с использованием приватного ключа, опознавательной строки
       и алгоритма хеширования.
      </para>
-     
+
      <informalexample>
       <programlisting role="php">
 <![CDATA[
@@ -348,14 +348,14 @@ SPKAC=MIIBXjCByDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA3L0IfUijj7+A8CPC8EmhcdNoe5
      </informalexample>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term><parameter>openssl_spki_verify</parameter></term>
     <listitem>
      <para>
       Проверка предоставленного SPKAC.
      </para>
-     
+
      <informalexample>
       <programlisting role="php">
 <![CDATA[
@@ -371,14 +371,14 @@ var_dump(openssl_spki_verify($spkac));
      </informalexample>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term><parameter>openssl_spki_export_challenge</parameter></term>
     <listitem>
      <para>
       Экспорт связанной опознавательной строки из предоставленного SPKAC.
      </para>
-     
+
      <informalexample>
       <programlisting role="php">
 <![CDATA[
@@ -401,14 +401,14 @@ challenge string
      </informalexample>
     </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term><parameter>openssl_spki_export</parameter></term>
     <listitem>
      <para>
       Экспорт публичного ключа RSA в формате из SPKAC.
      </para>
-     
+
      <informalexample>
       <programlisting role="php">
 <![CDATA[

@@ -9,40 +9,40 @@
  <article xml:id="mongodb.security.request_injection">
   <title>Атака с помощью инъекций в запросе</title>
   <para>
-   Если вы передаёте параметры <literal>$_GET</literal> (или <literal>$_POST</literal>) 
-   своим запросам, убедитесь, что они сначала приводятся к строкам. 
-   Пользователи могут вставлять ассоциативные массивы в запросы GET и POST, которые затем 
+   Если вы передаёте параметры <literal>$_GET</literal> (или <literal>$_POST</literal>)
+   своим запросам, убедитесь, что они сначала приводятся к строкам.
+   Пользователи могут вставлять ассоциативные массивы в запросы GET и POST, которые затем
    могут стать нежелательными $-запросами.
   </para>
 
   <para>
-   Довольно безобидный пример. Предположим, вы ищете информацию о пользователе 
-   по запросу <emphasis>http://www.example.com?username=bob</emphasis>. 
-   Ваше приложение создаёт запрос 
+   Довольно безобидный пример. Предположим, вы ищете информацию о пользователе
+   по запросу <emphasis>http://www.example.com?username=bob</emphasis>.
+   Ваше приложение создаёт запрос
    <literal>$q = new \MongoDB\Driver\Query( [ 'username' => $_GET['username'] ])</literal>.
   </para>
 
   <para>
-   Кто-то может подорвать это, получив 
-   <emphasis>http://www.example.com?username[$ne]=foo</emphasis>, который PHP 
-   волшебным образом превратит в ассоциативный массив, превратив ваш запрос в 
-   <literal>$q = new \MongoDB\Driver\Query( [ 'username' => [ '$ne' => 'foo' ] ] )</literal>, 
+   Кто-то может подорвать это, получив
+   <emphasis>http://www.example.com?username[$ne]=foo</emphasis>, который PHP
+   волшебным образом превратит в ассоциативный массив, превратив ваш запрос в
+   <literal>$q = new \MongoDB\Driver\Query( [ 'username' => [ '$ne' => 'foo' ] ] )</literal>,
    который вернёт всех пользователей, не имеющих имени "foo" (вероятно, всех ваших пользователей).
   </para>
 
   <para>
-   От этой атаки достаточно легко защититься: убедитесь, что параметры $_GET и $_POST 
-   соответствуют ожидаемому типу, прежде чем отправлять их в базу данных. 
+   От этой атаки достаточно легко защититься: убедитесь, что параметры $_GET и $_POST
+   соответствуют ожидаемому типу, прежде чем отправлять их в базу данных.
    PHP имеет функцию <function>filter_var</function>, чтобы помочь с этим.
   </para>
 
   <para>
-   Обратите внимание, что этот тип атаки может использоваться с любым взаимодействием с базой данных, которое 
+   Обратите внимание, что этот тип атаки может использоваться с любым взаимодействием с базой данных, которое
    находит документ, включая команды update, upserts, delete и findAndModify.
   </para>
 
   <para>
-   Смотрите <link xlink:href="&url.mongodb.dochub.security;">основную документацию</link> 
+   Смотрите <link xlink:href="&url.mongodb.dochub.security;">основную документацию</link>
    для получения дополнительной информации о проблемах SQL инъекций в MongoDB.
   </para>
  </article>
@@ -50,15 +50,15 @@
  <article xml:id="mongodb.security.script_injection">
   <title>Атака с помощью инъекций в скриптах</title>
   <para>
-   Если вы используете JavaScript, убедитесь, что все переменные, которые пересекают границу 
-   PHP-JavaScript, передаются в поле <literal>scope</literal> 
-   <classname>MongoDB\BSON\Javascript</classname>, а не интерполируются в строку 
-   JavaScript. Это может возникнуть при использовании предложений <literal>$where</literal> 
-   в запросах, командах mapReduce и group, а также в любое другое время, когда вы можете 
+   Если вы используете JavaScript, убедитесь, что все переменные, которые пересекают границу
+   PHP-JavaScript, передаются в поле <literal>scope</literal>
+   <classname>MongoDB\BSON\Javascript</classname>, а не интерполируются в строку
+   JavaScript. Это может возникнуть при использовании предложений <literal>$where</literal>
+   в запросах, командах mapReduce и group, а также в любое другое время, когда вы можете
    передать JavaScript в базу данных.
   </para>
   <para>
-   Например, предположим, что у нас есть некоторый JavaScript, чтобы приветствовать пользователя в журналах 
+   Например, предположим, что у нас есть некоторый JavaScript, чтобы приветствовать пользователя в журналах
    базы данных. Мы могли бы сделать:
   </para>
   <programlisting role="php">
@@ -67,7 +67,7 @@
 $m = new MongoDB\Driver\Manager;
 
 // Не делайте так!!!
-$username = $_GET['field']; 
+$username = $_GET['field'];
 
 $cmd = new \MongoDB\Driver\Command( [
     'eval' => "print('Привет, $username!');"
@@ -86,7 +86,7 @@ $r = $m->executeCommand( 'dramio', $cmd );
 $m = new MongoDB\Driver\Manager;
 
 // Не делайте так!!!
-$username = $_GET['field']; 
+$username = $_GET['field'];
 // $username is set to "'); db.users.drop(); print('"
 
 $cmd = new \MongoDB\Driver\Command( [
@@ -98,9 +98,9 @@ $r = $m->executeCommand( 'dramio', $cmd );
 ]]>
   </programlisting>
   <para>
-   Теперь MongoDB выполнит строку JavaScript 
-   <literal>"print('Привет, '); db.users.drop(); print('!');"</literal>. 
-   Эту атаку легко избежать: используйте <literal>args</literal> для передачи 
+   Теперь MongoDB выполнит строку JavaScript
+   <literal>"print('Привет, '); db.users.drop(); print('!');"</literal>.
+   Эту атаку легко избежать: используйте <literal>args</literal> для передачи
    переменных из PHP в JavaScript:
   </para>
   <programlisting role="php">
@@ -121,23 +121,23 @@ $r = $m->executeCommand( 'dramio', $cmd );
 ]]>
   </programlisting>
   <para>
-   Это добавляет аргумент в область JavaScript, которая используется в качестве аргумента 
-   для функции <literal>greet</literal>. Теперь, если 
-   кто-то попытается отправить вредоносный код, MongoDB безвредно напечатает 
+   Это добавляет аргумент в область JavaScript, которая используется в качестве аргумента
+   для функции <literal>greet</literal>. Теперь, если
+   кто-то попытается отправить вредоносный код, MongoDB безвредно напечатает
    <literal>Привет, '); db.dropDatabase(); print('!</literal>.
   </para>
 
   <para>
-   Использование аргументов помогает предотвратить выполнение вредоносного ввода 
-   базой данных. Тем не менее, вы должны убедиться, что ваш код не перевернётся 
-   и всё равно выполнит ввод! Лучше всего избегать выполнения 
+   Использование аргументов помогает предотвратить выполнение вредоносного ввода
+   базой данных. Тем не менее, вы должны убедиться, что ваш код не перевернётся
+   и всё равно выполнит ввод! Лучше всего избегать выполнения
    <emphasis>любого</emphasis> JavaScript на сервере.
   </para>
 
   <para>
    Настоятельно рекомендуется избегать предложения <link
    xlink:href="&url.mongodb.docs;reference/operator/query/where/#considerations">$where
-   clause</link> с запросами, так как это существенно влияет на производительность. 
+   clause</link> с запросами, так как это существенно влияет на производительность.
    По возможности используйте либо обычные операторы запросов, либо <link
    xlink:href="&url.mongodb.docs;core/aggregation-pipeline">Aggregation
    Framework</link>.
@@ -145,17 +145,17 @@ $r = $m->executeCommand( 'dramio', $cmd );
 
   <para>
    В качестве альтернативы <link
-   xlink:href="&url.mongodb.dochub.mapreduce;">MapReduce</link>, использующей 
+   xlink:href="&url.mongodb.dochub.mapreduce;">MapReduce</link>, использующей
    JavaScript, рассмотрите возможность использования <link
    xlink:href="&url.mongodb.docs;core/aggregation-pipeline">Aggregation
-   Framework</link>. В отличие от Map/Reduce, он использует идиоматический язык 
-   для построения запросов, без необходимости писать и использовать более медленный подход JavaScript, 
+   Framework</link>. В отличие от Map/Reduce, он использует идиоматический язык
+   для построения запросов, без необходимости писать и использовать более медленный подход JavaScript,
    который требуется для Map/Reduce.
   </para>
 
   <para>
    Команда <link
-   xlink:href="&url.mongodb.docs;reference/command/eval/">eval</link> 
+   xlink:href="&url.mongodb.docs;reference/command/eval/">eval</link>
    устарела с MongoDB 3.0, и её также следует избегать.
   </para>
  </article>
@@ -181,4 +181,3 @@ vim600: syn=xml fen fdm=syntax fdl=2 si
 vim: et tw=78 syn=sgml
 vi: ts=1 sw=1
 -->
-

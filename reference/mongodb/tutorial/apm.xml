@@ -5,38 +5,38 @@
 
 <chapter xml:id="mongodb.tutorial.apm" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Мониторинг производительности приложения (Application Performance Monitoring или APM)</title>
- 
+
  <para>
-  Начиная с версии 1.3, драйвер MongoDB содержит API для мониторинга производительности. 
+  Начиная с версии 1.3, драйвер MongoDB содержит API для мониторинга производительности.
   Это API позволяет определить, как долго выполняется конкретная операция, путём
   настройки подписчиков. Каждый подписчик должен реализовывать один или
   более интерфейсов из пространства имён <literal>MongoDB\Driver\Monitoring</literal>.
   В данный момент доступен только один интерфейс -
   <classname>MongoDB\Driver\Monitoring\CommandSubscriber</classname>.
  </para>
- 
+
  <para>
   Интерфейс <classname>MongoDB\Driver\Monitoring\CommandSubscriber</classname>
   определяет три метода: <literal>commandStarted</literal>,
   <literal>commandSucceeded</literal> и <literal>commandFailed</literal>.
   Каждый из них принимает один параметр <parameter>event</parameter> класса,
-  соответствующего нужному событию. К примеру, <literal>commandSucceeded</literal> 
+  соответствующего нужному событию. К примеру, <literal>commandSucceeded</literal>
   принимает аргумент <parameter>$event</parameter> класса
   <classname>MongoDB\Driver\Monitoring\CommandSucceededEvent</classname>.
  </para>
- 
+
  <para>
   В данном руководстве вы реализуем подписчика, который создаёт список
   профилировок всех запросов и среднего времени их исполнения.
  </para>
- 
+
  <section>
   <title>Класс подписчик Scaffolding</title>
-  
+
   <para>
    Мы начнём с шаблона для нашего подписчика:
   </para>
-  
+
   <programlisting role="php">
 <![CDATA[
 <?php
@@ -60,16 +60,16 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
 ]]>
   </programlisting>
  </section>
- 
+
  <section>
   <title>Регистрация подписчика</title>
-  
+
   <para>
    Как только объект подписчик создан, необходимо его зарегистрировать
    в драйвере в системе мониторинга. Регистрация производится методом
    <methodname>MongoDB\Driver\Monitoring\addSubscriber</methodname>.
   </para>
-  
+
   <programlisting role="php">
 <![CDATA[
 <?php
@@ -80,20 +80,20 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
 ]]>
   </programlisting>
  </section>
- 
+
  <section>
   <title>Реализуем логику</title>
-  
+
   <para>
    Теперь займёмся реализацией логики класа подписчика.
-   Для сопоставления двух событий, относящихся к успешно выполненной 
+   Для сопоставления двух событий, относящихся к успешно выполненной
    команды (commandStarted and commandSucceeded), каждый объект события
    предоставляет поле <literal>requestId</literal>.
   </para>
   <para>
-   Для записи среднего времени выполнения запроса мы начнём с 
-   отслеживания команды <literal>find</literal> в событии commandStarted. 
-   Мы будем добавлять элемент в массив <literal>pendingCommands</literal> 
+   Для записи среднего времени выполнения запроса мы начнём с
+   отслеживания команды <literal>find</literal> в событии commandStarted.
+   Мы будем добавлять элемент в массив <literal>pendingCommands</literal>
    с индексом соответствующим <literal>requestId</literal> и значением, соответствующим
    запросу.
   </para>
@@ -106,7 +106,7 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
    Если мы получим событие commandFailed, мы просто удалим соответствующую запись из
    <literal>pendingCommands</literal>.
   </para>
-  
+
   <programlisting role="php">
 <![CDATA[
 <?php
@@ -116,7 +116,7 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
     private $pendingCommands = [];
     private $queryShapeStats = [];
 
-    /* Создаёт форму запроса из аргумента фильтра. В данный момент учитываются 
+    /* Создаёт форму запроса из аргумента фильтра. В данный момент учитываются
      * только поля верхнего уровня. */
     private function createQueryShape( array $filter )
     {
@@ -184,7 +184,7 @@ $cursor = $m->executeQuery( 'dramio.whisky', $query );
 ]]>
   </programlisting>
  </section>
- 
+
 </chapter>
 
 <!-- Keep this comment at the end of the file
