@@ -1,17 +1,14 @@
 # Русский перевод документации PHP
 
-[![Slack Status](https://img.shields.io/badge/slack-@ru.php.doc-green.svg?logo=slack)](https://join.slack.com/t/ruphpdoc/shared_invite/zt-ax1czx68-c3_XSVhsgzYJCOslmwvJkQ)
-![Sync](https://github.com/php/doc-ru/workflows/Build%20Test/badge.svg)
+[![Slack Status](https://img.shields.io/badge/slack-@ru.php.doc-brightgreen.svg?logo=slack)](https://join.slack.com/t/ruphpdoc/shared_invite/zt-ax1czx68-c3_XSVhsgzYJCOslmwvJkQ)
+![Build Test](https://github.com/php/doc-ru/workflows/Build%20Test/badge.svg)
+![Spell checking](https://github.com/php/doc-ru/workflows/Spell%20checking/badge.svg)
 
-## Руководство
+## Внести вклад
 
-- [Рекомендации по переводу](translation_standards.xml)
+Пожалуйста, ознакомьтесь с [руководством](CONTRIBUTING.md);
 
-## Оформление
-
-- Символ отступа — это пробел (табуляция в файлах `.xml` запрещена)
-
-## Принятие пулреквестов
+## Принятие пул-реквестов
 
 Для пользователей с кармой `doc/ru` команда для принятия пулреквеста:
 
@@ -22,7 +19,7 @@
 bash scripts/apply_patch.sh %PR_NUM%
 
 # То же самое, но вручную:
-curl http://url_of_github_patch.patch | git am
+curl -L "http://url_of_github_patch.patch" | git am
 git commit --am # Добавить в конец "Closes GH-%PR_NUM%"
 git push origin
 ```
