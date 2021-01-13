@@ -4,9 +4,9 @@
 ![Build Test](https://github.com/php/doc-ru/workflows/Build%20Test/badge.svg)
 ![Spell checking](https://github.com/php/doc-ru/workflows/Spell%20checking/badge.svg)
 
-## Внести вклад
+## Помощь
 
-Пожалуйста, ознакомьтесь с [руководством](CONTRIBUTING.md).
+Если вы хотите поучаствовать в переводе, пожалуйста, ознакомьтесь с [данным руководством](CONTRIBUTING.md).
 
 ## Принятие пулреквестов
 
