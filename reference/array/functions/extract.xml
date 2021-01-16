@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cd943f94a013b74df8765ab8e1a620a916a64a85 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 4a7ddddc27271967b616ad3400cfbe2a9b48212b Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.extract" xmlns="http://docbook.org/ns/docbook">
@@ -231,10 +231,7 @@ blue, large, sphere, medium
     Не используйте функцию <function>extract</function> на
     непроверенных данных, таких как пользовательский ввод
     (<varname>$_GET</varname>, <varname>$_FILES</varname> и т.п.).
-    Если вы сделаете это, например, чтобы временно
-    запустить старый код, использующий
-    <link linkend="security.globals">register_globals</link>,
-    убедитесь, что используете один из флагов <parameter>flags</parameter>,
+    Если вы сделаете это, убедитесь, что используете один из флагов <parameter>flags</parameter>,
     не перезаписывающие переменные, такой как
     <constant>EXTR_SKIP</constant> и имейте в виду,
     что вы должны извлекать их в том порядке, который определён в
@@ -242,90 +239,6 @@ blue, large, sphere, medium
     внутри <link linkend="ini">&php.ini;</link>.
    </para>
   </warning>
-  <note>
-   <para>
-    Если у вас всё ещё включена директива
-    <link linkend="security.globals">register_globals</link>
-    и вы используете <function>extract</function> с массивом
-    <varname>$_FILES</varname> и флагом
-    <constant>EXTR_SKIP</constant>, результат может вас удивить.
-   </para>
-   <warning>
-    <para>
-     Это нерекомендуемая практика и документирована здесь только
-     для полноты картины. Использование
-     <link linkend="security.globals">register_globals</link> считается
-     устаревшим и вызов <function>extract</function> на непроверенных
-     данных, таких как <varname>$_FILES</varname>, как уже было сказано
-     выше, потенциальный риск безопасности. Если вы столкнулись с
-     данным случаем, это означает что вы используете как минимум
-     две плохие практики кодирования.
-    </para>
-   </warning>
-   <programlisting role="php">
-<![CDATA[
-<?php
-
-/* Предположим, что $testfile это имя поля для загрузки файла
-   и что директива register_globals включена. */
-
-var_dump($testfile);
-extract($_FILES, EXTR_SKIP);
-var_dump($testfile);
-var_dump($testfile['tmp_name']);
-
-?>
-]]>
-   </programlisting>
-   <simpara>
-    Вы можете ожидать что-нибудь вроде следующего:
-   </simpara>
-   <screen>
-<![CDATA[
-string(14) "/tmp/phpgCCPX8"
-array(5) {
-  ["name"]=>
-  string(10) "somefile.txt"
-  ["type"]=>
-  string(24) "application/octet-stream"
-  ["tmp_name"]=>
-  string(14) "/tmp/phpgCCPX8"
-  ["error"]=>
-  int(0)
-  ["size"]=>
-  int(4208)
-}
-string(14) "/tmp/phpgCCPX8"
-]]>
-   </screen>
-   <simpara>
-    Однако, вместо этого вы увидите что-нибудь вроде этого:
-   </simpara>
-   <screen>
-<![CDATA[
-string(14) "/tmp/phpgCCPX8"
-string(14) "/tmp/phpgCCPX8"
-string(1) "/"
-]]>
-   </screen>
-   <para>
-    Это происходит потому, что так как включена директива
-    <link linkend="security.globals">register_globals</link>,
-    переменная <varname>$testfile</varname> уже существует
-    в глобальной области видимости в момент вызова
-    <function>extract</function>. А так как указан параметр
-    <constant>EXTR_SKIP</constant>, <varname>$testfile</varname>
-    не будет перезаписана содержимым массива
-    <constant>$_FILES</constant>, поэтому
-    <varname>$testfile</varname> останется строкой.
-    Так как <link linkend="language.types.string.substr">к строкам
-    можно обращаться с помощью синтаксиса массивов</link>
-    и нечисловая строка <literal>tmp_name</literal> интерпретируется
-    как <literal>0</literal>, PHP воспринимает
-    <varname>$testfile['tmp_name']</varname> как
-    <varname>$testfile[0]</varname>.
-   </para>
-  </note>
  </refsect1>
  <refsect1 role="seealso">
   &reftitle.seealso;
