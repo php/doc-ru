@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 14af302c9c0e561fa6f9cdd956268758ba9a89c5 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 2a7c919451f9a536431ba2117f8f90ae814c1c5f Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
-<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.strtr" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="function.strtr" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>strtr</refname>
   <refpurpose>Преобразует заданные символы или заменяет подстроки</refpurpose>
@@ -12,18 +12,19 @@
   &reftitle.description;
   <methodsynopsis>
    <type>string</type><methodname>strtr</methodname>
-   <methodparam><type>string</type><parameter>str</parameter></methodparam>
+   <methodparam><type>string</type><parameter>string</parameter></methodparam>
    <methodparam><type>string</type><parameter>from</parameter></methodparam>
    <methodparam><type>string</type><parameter>to</parameter></methodparam>
   </methodsynopsis>
+  <simpara>Альтернативная сигнатура (не поддерживается с именованными аргументами):</simpara>
   <methodsynopsis>
    <type>string</type><methodname>strtr</methodname>
-   <methodparam><type>string</type><parameter>str</parameter></methodparam>
+   <methodparam><type>string</type><parameter>string</parameter></methodparam>
    <methodparam><type>array</type><parameter>replace_pairs</parameter></methodparam>
   </methodsynopsis>
   <para>
    Если указаны три аргумента, эта функция возвращает копию
-   <parameter>str</parameter>, в которой все вхождения каждого
+   <parameter>string</parameter>, в которой все вхождения каждого
    символа (однобайтного) из <parameter>from</parameter> были заменены
    на соответствующий символ в параметре <parameter>to</parameter>,
    то есть каждое вхождение из <literal>$from[$n]</literal> заменяется
@@ -34,13 +35,13 @@
    Если длины строк <parameter>from</parameter> и
    <parameter>to</parameter> отличаются, "лишние" символы в более
    длинной строке не используются. Длина возвращаемого значения
-   будет такой же, как и длина <parameter>str</parameter>.
+   будет такой же, как и длина <parameter>string</parameter>.
   </para>
   <para>
    <function>strtr</function> может вызываться с двумя аргументами.
    В этом случае <parameter>from</parameter> должен быть массивом
    (<type>array</type>), в форме
-   <literal>array('from' => 'to', ...)</literal>. Функция возвратит
+   <literal>array('from' =&gt; 'to', ...)</literal>. Функция возвратит
    строку, в которой все ключи массива будут заменены их элементами.
    <function>strtr</function> в первую очередь заменяет более
    длинные ключи, причём одна и та же строка поиска используется
@@ -50,7 +51,7 @@
    В этом случае, ключи и значения могут иметь любую длину,
    за исключением того, что ключи не должны быть пустыми. Кроме того,
    длина возвращаемого значения может отличаться от
-   <parameter>str</parameter>.
+   <parameter>string</parameter>.
    Однако, стоит учесть тот факт, что эта функция максимально
    эффективна в том случае, если все ключи имеют одинаковый размер.
   </para>
@@ -61,7 +62,7 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>str</parameter></term>
+     <term><parameter>string</parameter></term>
      <listitem>
       <para>
        Заменяемая строка (<type>string</type>).
@@ -91,7 +92,12 @@
        Параметр <parameter>replace_pairs</parameter> может быть
        использован вместо <parameter>to</parameter> и <parameter>from</parameter>,
        в этом случае он является массивом (<type>array</type>) и имеет
-       форму <literal>array('from' => 'to', ...)</literal>.
+       форму <literal>array('from' =&gt; 'to', ...)</literal>.
+      </para>
+      <para>
+       Если <parameter>replace_pairs</parameter> содержит ключ, который является пустой
+       строкой (<type>string</type>) (<literal>""</literal>), элемент игнорируется;
+       начиная с PHP 8.0.0 в этом случае вызывается <constant>E_WARNING</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -104,13 +110,6 @@
   <para>
    Возвращает строку (<type>string</type>) с произведёнными в
    ней заменами.
-  </para>
-  <para>
-   Если <parameter>replace_pairs</parameter> содержит ключ,
-   являющийся пустой строкой (<literal>""</literal>), то будет
-   возвращено значение &false;. Если <parameter>str</parameter>
-   не является скаляром, то он не преобразуется в строку. Вместо
-   этого выдаётся предупреждение и возвращается &null;.
   </para>
  </refsect1>
 
@@ -139,20 +138,20 @@ $addr = strtr($addr, "äåö", "aao");
   </para>
   <example>
    <title>Пример использования <function>strtr</function> с двумя аргументами</title>
-    <programlisting role="php">
+   <programlisting role="php">
 <![CDATA[
 <?php
 $trans = array("h" => "-", "hello" => "hi", "hi" => "hello");
 echo strtr("hi all, I said hello", $trans);
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 hello all, I said hi
 ]]>
-    </screen>
+   </screen>
   </example>
   <para>
    Эти два режима довольно сильно различаются. При вызове
@@ -162,7 +161,7 @@ hello all, I said hi
   </para>
   <example>
    <title>Сравнение поведения функции <function>strtr</function></title>
-    <programlisting role="php">
+   <programlisting role="php">
 <![CDATA[
 <?php
 echo strtr("baab", "ab", "01"),"\n";
@@ -171,14 +170,14 @@ $trans = array("ab" => "01");
 echo strtr("baab", $trans);
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 1001
 ba01
 ]]>
-    </screen>
+   </screen>
   </example>
  </refsect1>
 
@@ -192,7 +191,6 @@ ba01
   </para>
  </refsect1>
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
