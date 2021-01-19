@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 4528db2d91279a8f120bacfd84e48f7e2281d923 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 4317fec7555dd42621f88162cc5068092e5c5cfb Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
-
 <sect1 xml:id="language.oop5.basic" xmlns="http://docbook.org/ns/docbook">
  <title>Основы</title>
 
@@ -46,25 +45,17 @@ class SimpleClass
   <para>
    Псевдопеременная <varname>$this</varname> доступна в том случае,
    если метод был вызван в контексте объекта. <varname>$this</varname>
-   является ссылкой на вызываемый объект. Обычно это тот объект, которому
-   принадлежит вызванный метод, но может быть и другой объект, если метод был
-   вызван <link linkend="language.oop5.static">статически</link> из контекста
-   другого объекта.
-   Начиная с PHP 7.0.0, вызов нестатического метода статическим способом из
-   неподходящего контекста приведёт к тому, что $this будет не определён внутри метода.
-   Вызов нестатического метода статическим способом из неподходящего контекста было
-   объявлено устаревшим в PHP 5.6.0. Начиная с PHP 7.0.0, подобный вызов объявлен
-   совсем устаревшим (если только вызов не произошёл из подходящего контекста).
-   До PHP 5.6.0, подобные вызовы уже сопровождались строгим уведомлением.
+   является ссылкой на вызываемый объект.
   </para>
-  <para>
+  <warning>
+   <para>
+    Вызов нестатического метода статически вызывает ошибку
+    <classname>Error</classname>.
+    До PHP 8.0.0 это привело бы к уведомлению об устаревании, и
+    <varname>$this</varname> не была бы определена.
+   </para>
    <example xml:id="language.oop5.basic.class.this">
-    <title>Несколько примеров с псевдопеременной <varname>$this</varname></title>
-    <simpara>
-     Мы предполагаем, что error_reporting отключён для этого примера; в противном случае
-     следующий код, в зависимости от версии PHP, вызовет предупреждения уровней
-     "устаревшее" или "строгое".
-    </simpara>
+    <title>Некоторые примеры псевдо-переменной <varname>$this</varname></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -102,26 +93,36 @@ B::bar();
 ?>
 ]]>
      </programlisting>
-     &example.outputs.5;
-     <screen>
-<![CDATA[
-$this определена (A)
-$this не определена.
-$this определена (B)
-$this не определена.
-]]>
-     </screen>
      &example.outputs.7;
      <screen>
 <![CDATA[
 $this определена (A)
+
+Deprecated: Non-static method A::foo() should not be called statically in %s  on line 27
 $this не определена.
+
+Deprecated: Non-static method A::foo() should not be called statically in %s  on line 20
 $this не определена.
+
+Deprecated: Non-static method B::bar() should not be called statically in %s  on line 32
+
+Deprecated: Non-static method A::foo() should not be called statically in %s  on line 20
 $this не определена.
 ]]>
      </screen>
-    </example>
-  </para>
+     &example.outputs.8;
+     <screen>
+<![CDATA[
+$this определена (A)
+
+Fatal error: Uncaught Error: Non-static method A::foo() cannot be called statically in %s :27
+Stack trace:
+#0 {main}
+  thrown in %s  on line 27
+]]>
+     </screen>
+   </example>
+  </warning>
  </sect2>
 
  <sect2 xml:id="language.oop5.basic.new">
@@ -140,12 +141,12 @@ $this не определена.
    имя находится в пространстве имён, то оно должно быть задано полностью.
   </para>
 
-   <note>
-    <para>
-     В случае отсутствия аргументов в конструктор класса,
-     круглые скобки после названия класса можно опустить.
-    </para>
-   </note>
+  <note>
+   <para>
+    В случае отсутствия аргументов в конструктор класса,
+    круглые скобки после названия класса можно опустить.
+   </para>
+  </note>
 
   <example>
    <title>Создание экземпляра класса</title>
@@ -159,22 +160,22 @@ $className = 'SimpleClass';
 $instance = new $className(); // new SimpleClass()
 ?>
 ]]>
-    </programlisting>
-   </example>
-   <para>
-    В контексте класса можно создать новый объект через
-    <literal>new self</literal> и <literal>new parent</literal>.
-   </para>
-   <para>
-    Когда происходит присвоение уже существующего экземпляра класса новой
-    переменной, то эта переменная будет указывать на этот же экземпляр класса.
-    То же самое происходит и при
-    передаче экземпляра класса в функцию. Копию уже созданного объекта
-    можно создать через её <link linkend="language.oop5.cloning">клонирование</link>.
-   </para>
-   <example>
-    <title>Присваивание объекта</title>
-    <programlisting role="php">
+   </programlisting>
+  </example>
+  <para>
+   В контексте класса можно создать новый объект через
+   <literal>new self</literal> и <literal>new parent</literal>.
+  </para>
+  <para>
+   Когда происходит присвоение уже существующего экземпляра класса новой
+   переменной, то эта переменная будет указывать на этот же экземпляр класса.
+   То же самое происходит и при
+   передаче экземпляра класса в функцию. Копию уже созданного объекта
+   можно создать через её <link linkend="language.oop5.cloning">клонирование</link>.
+  </para>
+  <example>
+   <title>Присваивание объекта</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -204,14 +205,13 @@ object(SimpleClass)#1 (1) {
 }
 ]]>
     </screen>
-   </example>
-   <para>
-    В PHP 5.3.0 введены несколько новых методов создания экземпляров
-    объекта:
-   </para>
-   <example>
-    <title>Создание новых объектов</title>
-    <programlisting role="php">
+  </example>
+  <para>
+   Создавать экземпляры объекта можно двумя способами:
+  </para>
+  <example>
+   <title>Создание новых объектов</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 class Test
@@ -245,14 +245,14 @@ bool(true)
 bool(true)
 ]]>
     </screen>
-   </example>
-   <para>
-    В PHP 5.4.0 введена возможность обратиться к свойству или методу только что созданного
-    объекта в одном выражении:
-   </para>
-   <example>
-    <title>Доступ к свойствам/методам только что созданного объекта</title>
-    <programlisting role="php">
+  </example>
+  <para>
+   Обратиться к свойству или методу только что созданного объекта можно
+   с помощью одного выражения:
+  </para>
+  <example>
+   <title>Доступ к свойствам/методам только что созданного объекта</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 echo (new DateTime())->format('Y');
@@ -265,14 +265,14 @@ echo (new DateTime())->format('Y');
 2016
 ]]>
     </screen>
-   </example>
+  </example>
 
   <note>
-    <simpara>
-     До PHP 7.1 аргументы не имели значения, если
-     не определена функция конструктора.
-    </simpara>
-   </note>
+   <simpara>
+    До PHP 7.1 аргументы не имели значения, если
+    не определена функция конструктора.
+   </simpara>
+  </note>
  </sect2>
  <sect2 xml:id="language.oop5.basic.properties-methods">
   <title>Свойства и методы</title>
@@ -300,25 +300,24 @@ class Foo
 $obj = new Foo();
 echo $obj->bar, PHP_EOL, $obj->bar(), PHP_EOL;
 ]]>
-  </programlisting>
-  &example.outputs;
-  <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 свойство
 метод
 ]]>
-  </screen>
-   </example>
-   <para>
-    Это означает, что вызвать <link linkend="functions.anonymous">анонимную
-    функцию</link>, присвоенную переменной, напрямую не получится.
-    Вместо этого свойство должно быть назначено, например, переменной.
-    Начиная с PHP 7.0.0, можно вызвать такое свойство напрямую, заключив его
-    в скобки.
-   </para>
-   <example>
-    <title>Вызов анонимной функции, содержащейся в свойстве</title>
-    <programlisting role="php">
+   </screen>
+  </example>
+  <para>
+   Это означает, что вызвать <link linkend="functions.anonymous">анонимную
+   функцию</link>, присвоенную переменной, напрямую не получится.
+   Вместо этого свойство должно быть назначено, например, переменной.
+   Можно вызвать такое свойство напрямую, заключив его в скобки.
+  </para>
+  <example>
+   <title>Вызов анонимной функции, содержащейся в свойстве</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 class Foo
@@ -334,42 +333,33 @@ class Foo
 
 $obj = new Foo();
 
-// Начиная с PHP 5.3.0:
-$func = $obj->bar;
-echo $func(), PHP_EOL;
-
-// Или так, начиная с PHP 7.0.0:
 echo ($obj->bar)(), PHP_EOL;
 ]]>
-  </programlisting>
-  &example.outputs;
-  <screen>
+    </programlisting>
+    &example.outputs;
+    <screen>
 <![CDATA[
 42
 ]]>
-  </screen>
-   </example>
+    </screen>
+  </example>
  </sect2>
  <sect2 xml:id="language.oop5.basic.extends">
+  <!-- TODO Example about class constant redefinition -->
+  <!-- TODO Split into it's own page? -->
   <title>extends</title>
   <para>
-   Класс может наследовать методы и свойства другого класса используя
+   Класс может наследовать константы, методы и свойства другого класса используя
    ключевое слово <literal>extends</literal> в его объявлении. Невозможно наследовать несколько
    классов, один класс может наследовать только один базовый класс.
   </para>
   <para>
-   Наследуемые методы и свойства могут быть переопределены (за исключением
+   Наследуемые константы, методы и свойства могут быть переопределены (за исключением
    случаев, когда метод класса объявлен как <link linkend="language.oop5.final">final</link>)
    путём объявления их с теми же именами, как и в родительском классе.
    Существует возможность доступа к переопределённым методам или статическим
    свойствам путём обращения к ним через
    <link linkend="language.oop5.paamayim-nekudotayim">parent::</link>
-  </para>
-  <para>
-   При переопределении методов количество и типы аргументов должны оставаться
-   такими же, как и были, иначе PHP вызовет ошибку уровня <constant>E_STRICT</constant>.
-   Это не относится к конструктору, который можно
-   переопределить с другими параметрами.
   </para>
   <example>
    <title>Простое наследование классов</title>
@@ -390,15 +380,175 @@ $extended = new ExtendClass();
 $extended->displayVar();
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
 Расширенный класс
 значение по умолчанию
 ]]>
-    </screen>
-   </example>
+   </screen>
+  </example>
+
+  <sect3 xml:id="language.oop.lsp">
+    <title>Правила совместимости сигнатуры</title>
+    <para>
+     При переопределении метода его сигнатура должна быть совместима с родительским методом.
+     В противном случае выдаётся фатальная ошибка или, до PHP 8.0.0,
+     генерируется ошибка уровня <constant>E_WARNING</constant>.
+     Сигнатура является совместимой, если она соответствует правилам <link linkend="language.oop5.variance">контравариантности</link>, делает
+     обязательный параметр необязательным и если какие-либо новые параметры являются необязательными.
+     Это известно как принцип подстановки Барбары Лисков или сокращённо LSP.
+     Правила совместимости не распространяются на <link linkend="language.oop5.decon.constructor">конструктор</link> и
+     сигнатуру <literal>private</literal> методов, они не будут выдавать фатальную ошибку
+     в случае несоответствия сигнатуры.
+    </para>
+    <example>
+     <title>Совместимость дочерних методов</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+class Base
+{
+    public function foo(int $a) {
+        echo "Допустимо\n";
+    }
+}
+
+class Extend1 extends Base
+{
+    function foo(int $a = 5)
+    {
+        parent::foo($a);
+    }
+}
+
+class Extend2 extends Base
+{
+    function foo(int $a, $b = 5)
+    {
+        parent::foo($a);
+    }
+}
+
+$extended1 = new Extend1();
+$extended1->foo();
+$extended2 = new Extend2();
+$extended2->foo(1);
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+Допустимо
+Допустимо
+]]>
+     </screen>
+    </example>
+
+    <para>
+     Следующие примеры демонстрируют, что дочерний метод, который удаляет параметр или делает необязательный
+     параметр обязательным, несовместим с родительским методом.
+    </para>
+    <example>
+     <title>Фатальная ошибка, когда дочерний метод удаляет параметр</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+class Base
+{
+    public function foo(int $a = 5) {
+        echo "Допустимо\n";
+    }
+}
+
+class Extend extends Base
+{
+    function foo()
+    {
+        parent::foo(1);
+    }
+}
+]]>
+     </programlisting>
+     &example.outputs.8.similar;
+     <screen>
+<![CDATA[
+Fatal error: Declaration of Extend::foo() must be compatible with Base::foo(int $a = 5) in /in/evtlq on line 13
+]]>
+     </screen>
+    </example>
+    <example>
+     <title>Фатальная ошибка, когда дочерний метод делает необязательный параметр обязательным.</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+class Base
+{
+    public function foo(int $a = 5) {
+        echo "Допустимо\n";
+    }
+}
+
+class Extend extends Base
+{
+    function foo(int $a)
+    {
+        parent::foo($a);
+    }
+}
+]]>
+     </programlisting>
+     &example.outputs.8.similar;
+     <screen>
+<![CDATA[
+Fatal error: Declaration of Extend::foo(int $a) must be compatible with Base::foo(int $a = 5) in /in/qJXVC on line 13
+]]>
+     </screen>
+    </example>
+
+    <warning>
+     <para>
+      Переименование параметра метода в дочернем классе не является
+      несовместимостью сигнатуры. Однако это не рекомендуется, так как приведёт к
+      <classname>Error</classname> во время выполнения, если используются
+      <link linkend="functions.named-arguments">именованные аргументы</link>.
+     </para>
+     <example>
+      <title>Ошибка при использовании именованных аргументов и параметров, переименованных в дочернем классе</title>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+class A {
+    public function test($foo, $bar) {}
+}
+
+class B extends A {
+    public function test($a, $b) {}
+}
+
+$obj = new B;
+
+// Передача параметров согласно контракту A::test()
+$obj->test(foo: "foo", bar: "bar"); // ОШИБКА!
+]]>
+      </programlisting>
+      &example.outputs.similar;
+      <screen>
+<![CDATA[
+Fatal error: Uncaught Error: Unknown named parameter $foo in /in/XaaeN:14
+Stack trace:
+#0 {main}
+  thrown in /in/XaaeN on line 14
+]]>
+      </screen>
+     </example>
+    </warning>
+   </sect3>
  </sect2>
 
  <sect2 xml:id="language.oop5.basic.class.class">
@@ -425,24 +575,24 @@ namespace NS {
 }
 ?>
 ]]>
-     </programlisting>
-     &example.outputs;
-     <screen>
+    </programlisting>
+    &example.outputs;
+    <screen>
 <![CDATA[
 NS\ClassName
 ]]>
-     </screen>
-    </example>
+    </screen>
+   </example>
+  </para>
+  <note>
+   <para>Разрешение имён класса с использованием <literal>::class</literal> происходит
+    на этапе компиляции. Это означает, что на момент создания строки с именем класса
+    автозагрузки класса не происходит. Как следствие, имена классов раскрываются, даже
+    если класс не существует. Ошибка в этом случае не выдаётся.
    </para>
-   <note>
-    <para>Разрешение имён класса с использованием <literal>::class</literal> происходит
-     на этапе компиляции. Это означает, что на момент создания строки с именем класса
-     автозагрузки класса не происходит. Как следствие, имена классов раскрываются, даже
-     если класс не существует. Ошибка в этом случае не выдаётся.
-    </para>
-    <example xml:id="language.oop5.basic.class.class.fail">
-     <title>Отсутствует разрешение имени класса</title>
-     <programlisting role="php">
+   <example xml:id="language.oop5.basic.class.class.fail">
+    <title>Отсутствует разрешение имени класса</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 print Does\Not\Exist::class;
@@ -456,15 +606,15 @@ Does\Not\Exist
 ]]>
      </screen>
     </example>
-   </note>
+  </note>
   <para>
    Начиная с PHP 8.0.0, константа <literal>::class</literal> также может использоваться
    для объектов. Это разрешение происходит во время выполнения, а не во время компиляции.
    Тоже самое, что и при вызове <function>get_class</function> для объекта.
-   </para>
-   <example xml:id="language.oop5.basic.class.class.object">
-    <title>Разрешение имени объекта</title>
-    <programlisting role="php">
+  </para>
+  <example xml:id="language.oop5.basic.class.class.object">
+   <title>Разрешение имени объекта</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 namespace NS {
@@ -482,7 +632,7 @@ print $c::class;
 NS\ClassName
 ]]>
     </screen>
-   </example>
+  </example>
  </sect2>
  <sect2 xml:id="language.oop5.basic.nullsafe">
   <title>Методы и свойства Nullsafe</title>
