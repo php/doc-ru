@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f90df97fa5ebfa6e7fcace04976900d6700467cc Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 0e06ad7d77756a2f390e14d19b823a42ab65892b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="function.libxml-set-external-entity-loader" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -16,6 +16,9 @@
   </methodsynopsis>
   <para>
    Изменение загрузчика по умолчанию для внешних объектов.
+   Можно использовать для подавления расширения произвольных внешних сущностей, чтобы избежать XXE-атак,
+   даже если для соответствующей операции установлено значение <constant>LIBXML_NOENT</constant>.
+   Обычно это лучше, чем вызов <function>libxml_disable_entity_loader</function>.
   </para>
  </refsect1>
 
@@ -26,10 +29,42 @@
     <term><parameter>resolver_function</parameter></term>
     <listitem>
      <para>
-      Функция обратного вызова (<type>callable</type>), принимающая три аргумента.
-      Две строки, публичный и системный идентификаторы и контекст (массив с четырьмя ключами).
-      Эта функция должна возвращать ресурс, строку, из которой этот ресурс можно открыть,
-      или &null;.
+      Callback-функция (<type>callable</type>) со следующей сигнатурой:
+      <methodsynopsis>
+       <type class="union"><type>resource</type><type>string</type><type>null</type></type><methodname><replaceable>resolver</replaceable></methodname>
+       <methodparam><type>string</type><parameter>public_id</parameter></methodparam>
+       <methodparam><type>string</type><parameter>system_id</parameter></methodparam>
+       <methodparam><type>array</type><parameter>context</parameter></methodparam>
+      </methodsynopsis>
+      <variablelist>
+       <varlistentry>
+        <term><parameter>public_id</parameter></term>
+        <listitem>
+         <simpara>
+          Публичный идентификатор.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><parameter>system_id</parameter></term>
+        <listitem>
+         <simpara>
+          Системный идентификатор.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><parameter>context</parameter></term>
+        <listitem>
+         <simpara>
+          Массив из четырёх элементов: <literal>"directory"</literal>, <literal>"intSubName"</literal>,
+          <literal>"extSubURI"</literal> и <literal>"extSubSystem"</literal>.
+         </simpara>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+      Эта callback-функция должна возвращать ресурс (&resource;) или строку (&string;) из которой
+      можно открыть ресурс. Если возвращается &null;, разрешение ссылки на сущность завершится ошибкой.
      </para>
     </listitem>
    </varlistentry>
