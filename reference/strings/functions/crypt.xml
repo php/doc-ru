@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7f569e1f175adf1fbd0e462eba8d6bc82214c939 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 5453bb7d88a586ef1e5f2bb01dd9f1a7540af348 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook" xml:id="function.crypt">
@@ -16,19 +16,18 @@
   &reftitle.description;
   <methodsynopsis>
    <type>string</type><methodname>crypt</methodname>
-   <methodparam><type>string</type><parameter>str</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>salt</parameter></methodparam>
+   <methodparam><type>string</type><parameter>string</parameter></methodparam>
+   <methodparam><type>string</type><parameter>salt</parameter></methodparam>
   </methodsynopsis>
   <para>
    <function>crypt</function> возвращает хешированную строку,
    полученную с помощью стандартного алгоритма UNIX, основанного
-   на <abbrev>DES</abbrev> или другого алгоритма, имеющегося в
-   системе.
+   на <abbrev>DES</abbrev> или другого алгоритма.
   </para>
   <para>
-   Параметр  <parameter>salt</parameter> является необязательным. Однако без <parameter>salt</parameter>
-   функция <function>crypt</function> создаёт слабый пароль. PHP 5.6 и новее вызывают ошибку E_NOTICE,
-   если не использовать соль. Убедитесь, что используете достаточно сложную соль для лучшей безопасности.
+   Параметр <parameter>salt</parameter> является необязательным. Однако без <parameter>salt</parameter>
+   функция <function>crypt</function> создаёт слабый пароль. Если не использовать
+   <parameter>salt</parameter>, выдаётся ошибка <constant>E_NOTICE</constant>. Убедитесь, что используете достаточно сложную соль для лучшей безопасности.
   </para>
   <para>
    Функция <function>password_hash</function> использует сложный хеш, генерирует сложную соль и применяет
@@ -37,12 +36,8 @@
    и совместима с существующими хешами паролей. Поэтому приветствуется использование <function>password_hash</function>.
   </para>
   <para>
-   Некоторые операционные системы поддерживают несколько алгоритмов
-   хеширования. Иногда стандартный алгоритм, основанный на DES,
-   заменяется алгоритмом на основе MD5. Вид хеширования определяется
-   переданным аргументом salt (соль). До версии PHP 5.3, PHP определял
-   доступные алгоритмы шифрования во время инсталляции, базируясь
-   на системной функции crypt(). Если соль не указана,
+   Вид хеширования определяется переданным аргументом salt (соль).
+   Если соль не указана,
    будет автоматически сгенерирована стандартная случайная
    двухсимвольная (DES) или двенадцатисимвольная (MD5) соль, в
    зависимости от доступности алгоритма MD5 в crypt().
@@ -54,14 +49,12 @@
    Стандартная функция <function>crypt</function> на основе DES
    возвращает соль в качестве первых двух символов возвращаемой
    строки. Кроме того, она использует только первые восемь символов
-   строки <parameter>str</parameter>, поэтому более длинные строки,
+   строки <parameter>string</parameter>, поэтому более длинные строки,
    начинающиеся с тех же восьми символов, сгенерируют один и тот же
    результат (при использовании одинаковой соли).
   </para>
   <simpara>
-   На системах, где функция crypt() поддерживает несколько алгоритмов
-   хеширования, следующие константы устанавливаются в 0 или 1, в
-   зависимости от доступности соответствующего алгоритма:
+   Поддерживаются следующие типы хешей:
   </simpara>
   <itemizedlist>
    <listitem>
@@ -99,11 +92,9 @@
      счётчика итераций нижележащего хеширующего алгоритма, основанного
      на Blowfish, и должен быть в диапазоне 04-31, значения вне
      данного диапазона вызовут отказ crypt().
-     Версии PHP до 5.3.7 поддерживали только префикс "$2a$" для соли: PHP
-     5.3.7 добавил новые префиксы для исправления уязвимостей в реализации Blowfish.
-     Для полного понимания ознакомьтесь с <link xlink:href="&url.crypt.blowfish;">этим разделом</link>, но
-     если кратко, то разработчики должны использовать "$2y$" вместо "$2a$"
-     начиная с PHP 5.3.7.
+     Хеши "$2x$" потенциально слабые; Хэши "$2a$" совместимы и
+     смягчают эту слабость. Для новых хэшей следует использовать "$2y$".
+     Для полного понимания ознакомьтесь с <link xlink:href="&url.crypt.blowfish;">этим разделом</link>.
     </simpara>
    </listitem>
    <listitem>
@@ -129,13 +120,6 @@
     </simpara>
    </listitem>
   </itemizedlist>
-  <note>
-   <para>
-    Начиная с версии PHP 5.3.0, PHP использует свою собственную
-    реализацию, которая будет использована при отсутствии в системе
-    какого-либо алгоритма.
-   </para>
-  </note>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -143,7 +127,7 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>str</parameter></term>
+     <term><parameter>string</parameter></term>
      <listitem>
       <para>
        Хешируемая строка.
@@ -151,7 +135,7 @@
       <caution>
        <para>
         При использовании алгоритма <constant>CRYPT_BLOWFISH</constant>,
-        параметр <parameter>str</parameter> обрезается до 72 символов.
+        параметр <parameter>string</parameter> обрезается до 72 символов.
        </para>
       </caution>
      </listitem>
@@ -181,9 +165,31 @@
    <simpara>
     При валидации паролей должны использоваться функции сравнения строк, устойчивые к
     атаке по времени, для сравнения вывода функции <function>crypt</function> с известным
-    хешом. В PHP 5.6 и новее для этих целей есть функция <function>hash_equals</function>.
+    хешом. В PHP для этих целей есть функция <function>hash_equals</function>.
    </simpara>
   </warning>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       <parameter>salt</parameter> больше не является необязательным.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
@@ -194,7 +200,8 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$hashed_password = crypt('mypassword'); // соль будет сгенерирована автоматически
+// соль будет сгенерирована автоматически; не рекомендуется
+$hashed_password = crypt('mypassword');
 
 /* Для проверки пароля в качестве параметра salt следует передавать результат работы
    crypt() целиком во избежание проблем при использовании различных
@@ -217,7 +224,7 @@ if (hash_equals($hashed_password, crypt($user_input, $hashed_password))) {
 // пароль
 $password = 'mypassword';
 
-// получение хеша, соль генерируется автоматически
+// получение хеша, соль генерируется автоматически; не рекомендуется
 $hash = crypt($password);
 ?>
 ]]>
@@ -233,29 +240,24 @@ $hash = crypt($password);
 /* Приведённая соль является только примером. Не используйте эту же соль в вашем коде.
    Вы должны сгенерировать уникальную и правильную соль для каждого пароля.
 */
-if (CRYPT_STD_DES == 1) {
-    echo 'Стандартный DES: ' . crypt('rasmuslerdorf', 'rl') . "\n";
-}
-
-if (CRYPT_EXT_DES == 1) {
-    echo 'Расширенный DES: ' . crypt('rasmuslerdorf', '_J9..rasm') . "\n";
-}
-
-if (CRYPT_MD5 == 1) {
-    echo 'MD5:             ' . crypt('rasmuslerdorf', '$1$rasmusle$') . "\n";
-}
-
-if (CRYPT_BLOWFISH == 1) {
-    echo 'Blowfish:        ' . crypt('rasmuslerdorf', '$2a$07$usesomesillystringforsalt$') . "\n";
-}
-
-if (CRYPT_SHA256 == 1) {
-    echo 'SHA-256:         ' . crypt('rasmuslerdorf', '$5$rounds=5000$usesomesillystringforsalt$') . "\n";
-}
-
-if (CRYPT_SHA512 == 1) {
-    echo 'SHA-512:         ' . crypt('rasmuslerdorf', '$6$rounds=5000$usesomesillystringforsalt$') . "\n";
-}
+echo 'Стандартный DES: ',
+    crypt('rasmuslerdorf', 'rl'),
+    "\n";
+echo 'Расширенный DES: ',
+    crypt('rasmuslerdorf', '_J9..rasm'),
+    "\n";
+echo 'MD5:          ',
+    crypt('rasmuslerdorf', '$1$rasmusle$'),
+    "\n";
+echo 'Blowfish:     ',
+    crypt('rasmuslerdorf', '$2a$07$usesomesillystringforsalt$'),
+    "\n";
+echo 'SHA-256:      ',
+    crypt('rasmuslerdorf', '$5$rounds=5000$usesomesillystringforsalt$'),
+    "\n";
+echo 'SHA-512:      ',
+    crypt('rasmuslerdorf', '$6$rounds=5000$usesomesillystringforsalt$'),
+    "\n";
 ?>
 ]]>
     </programlisting>
@@ -264,10 +266,10 @@ if (CRYPT_SHA512 == 1) {
 <![CDATA[
 Стандартный DES: rl.3StKT.4T8M
 Расширенный DES: _J9..rasmBYk8r9AiWNc
-MD5:             $1$rasmusle$rISCgZzpwk3UhDidwXvin0
-Blowfish:        $2a$07$usesomesillystringfore2uDLvp1Ii2e./U9C8sBjqp8I90dH6hi
-SHA-256:         $5$rounds=5000$usesomesillystri$KqJWpanXZHKq2BOB43TSaYhEWsQ1Lr5QNyPCDH/Tp.6
-SHA-512:         $6$rounds=5000$usesomesillystri$D4IrlXatmP7rx3P3InaxBeoomnAihCKRVQP22JZ6EY47Wc6BkroIuUUBOov1i.S5KPgErtP/EN5mcO.ChWQW21
+MD5:          $1$rasmusle$rISCgZzpwk3UhDidwXvin0
+Blowfish:     $2y$07$usesomesillystringfore2uDLvp1Ii2e./U9C8sBjqp8I90dH6hi
+SHA-256:      $5$rounds=5000$usesomesillystri$KqJWpanXZHKq2BOB43TSaYhEWsQ1Lr5QNyPCDH/Tp.6
+SHA-512:      $6$rounds=5000$usesomesillystri$D4IrlXatmP7rx3P3InaxBeoomnAihCKRVQP22JZ6EY47Wc6BkroIuUUBOov1i.S5KPgErtP/EN5mcO.ChWQW21
 ]]>
     </screen>
    </example>
@@ -291,14 +293,12 @@ SHA-512:         $6$rounds=5000$usesomesillystri$D4IrlXatmP7rx3P3InaxBeoomnAihCK
     <member><function>hash_equals</function></member>
     <member><function>password_hash</function></member>
     <member><function>md5</function></member>
-    <member>Расширение <link linkend="ref.mcrypt">Mcrypt</link></member>
     <member>Страница руководства Unix по вашей функции crypt</member>
    </simplelist>
   </para>
  </refsect1>
 
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
