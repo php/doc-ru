@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 958d58419816840c8a7866daccd83bc5a52f90c8 Maintainer: irker Status: ready -->
+<!-- EN-Revision: fa6c0138655159c9a360fbbf0364ac0f38274abd Maintainer: irker Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <chapter xml:id="security.database" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -92,8 +92,9 @@
    Наиболее простое решение этой проблемы - установить вначале обыкновенный
    программный пакет для шифрования данных, а затем использовать его в ваших
    <acronym>PHP</acronym>-скриптах. <acronym>PHP</acronym> может вам помочь с этой
-   задачей с помощью таких расширений как <link linkend="ref.mcrypt">Mcrypt</link> и <link
-   linkend="ref.mhash">Mhash</link>, реализующих довольно большое число алгоритмов
+   задачей с помощью таких расширений как <link
+     linkend="book.openssl">OpenSSL</link> и <link
+     linkend="book.sodium">Sodium</link>, реализующих довольно большое число алгоритмов
    шифрования. При таком подходе скрипт вначале шифрует сохраняемые данные, а затем
    дешифрует их при запросе. Ниже приведены примеры того, как работает шифрование
    данных в PHP-скриптах.
@@ -108,11 +109,8 @@
     хеша от пароля в БД, вместо хранения оригинального значения.
    </simpara>
    <simpara>
-    В PHP 5.5 и выше, функция <link linkend="ref.password">password</link> позволяет
+    Функция <link linkend="ref.password">password</link> позволяет
     удобно хешировать конфиденциальные данные и работать с этими хешами.
-    В 5.3.7+ можно использовать библиотеку
-    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="&url.password.compat;">
-     password_compat</link>.
    </simpara>
    <simpara>
     <function>password_hash</function> позволяет хешировать заданную строку самым
@@ -140,39 +138,6 @@ if ($row && password_verify($password, $row['pwd'])) {
     echo 'Добро пожаловать, ' . htmlspecialchars($username) . '!';
 } else {
     echo 'Ошибка авторизации, ' . htmlspecialchars($username) . '.';
-}
-
-?>
-]]>
-      </programlisting>
-     </example>
-     <simpara>
-      В более старых версиях PHP можно использовать функцию <function>crypt</function>.
-     </simpara>
-
-
-     <example>
-      <title>Хеширование паролей используя <function>crypt</function></title>
-      <programlisting role="php">
-<![CDATA[
-<?php
-
-// сохранение хешированного пароля
-// $random_chars получены например использованием /dev/random
-$query  = sprintf("INSERT INTO users(name,pwd) VALUES('%s','%s');",
-            pg_escape_string($username),
-            pg_escape_string(crypt($password, '$2a$07$' . $random_chars . '$')));
-$result = pg_query($connection, $query);
-
-// проверка введённого пользователем пароля на корректность
-$query = sprintf("SELECT pwd FROM users WHERE name='%s';",
-            pg_escape_string($username));
-$row = pg_fetch_assoc(pg_query($connection, $query));
-
-if ($row && crypt($password, $row['pwd']) == $row['pwd']) {
-    echo 'Добро пожаловать, ' . htmlspecialchars($username) . '!';
-} else {
-    echo 'Авторизация не удалась, ' . htmlspecialchars($username) . '.';
 }
 
 ?>
