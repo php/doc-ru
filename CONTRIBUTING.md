@@ -35,6 +35,7 @@
 | Entry | Элемент (существительное, для массивов, списков и прочих структур) |
 | Extension | Модуль |
 | Features/functionality | Возможности, функциональность |
+| Float (floating point) | Число с плавающей точкой (плавающая точка) |
 | Hash | Хеш |
 | HTML entity | HTML-сущность |
 | HTTP-Authentication | HTTP-аутентификация |
