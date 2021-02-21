@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: ee4558e955136c5a1dd8d6c34a61d786977ffd1c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 383a659e1f0f7aa3330b31a095a1e927611d4c71 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <chapter xml:id="mysqlinfo.concepts" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Основные понятия</title>
@@ -75,7 +75,6 @@ if ($uresult) {
        echo $row['Name'] . PHP_EOL;
    }
 }
-$uresult->close();
 ?>
 ]]>
    </programlisting>
@@ -92,25 +91,6 @@ $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
 $uresult = $pdo->query("SELECT Name FROM City");
 if ($uresult) {
    while ($row = $uresult->fetch(PDO::FETCH_ASSOC)) {
-       echo $row['Name'] . PHP_EOL;
-   }
-}
-?>
-]]>
-   </programlisting>
-  </example>
-
-  <example>
-   <title>Пример небуферизированного запроса: mysql</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-$conn = mysql_connect("localhost", "my_user", "my_pass");
-$db   = mysql_select_db("world");
-
-$uresult = mysql_unbuffered_query("SELECT Name FROM City");
-if ($uresult) {
-   while ($row = mysql_fetch_assoc($uresult)) {
        echo $row['Name'] . PHP_EOL;
    }
 }
@@ -137,8 +117,7 @@ if ($uresult) {
    <para>
     Кодировка символов должна быть чётко определена, поскольку влияет на каждое действие,
     в том числе на действия с последствиями для безопасности.
-    Например, механизмы экранирования (такие как <function>mysqli_real_escape_string</function> для mysqli, <function>mysql_real_escape_string</function>
-    для mysql и <methodname>PDO::quote</methodname> для PDO_MySQL) зависят от этих настроек.
+    Например, механизмы экранирования (такие как <function>mysqli_real_escape_string</function> для mysqli и <methodname>PDO::quote</methodname> для PDO_MySQL) зависят от этих настроек.
     Важно понимать, что эти функции не используют кодировку символов определённую в запросе, так например, следующие запросы не будут влиять на поведение этих функций:
    </para>
   </caution>
@@ -162,7 +141,6 @@ $mysqli->set_charset('utf8mb4');
 
 // а этот НЕ повлияет, потому что нельзя использовать "-"
 $mysqli->set_charset('UTF-8'); // (utf8mb4, а не UTF-8)
-
 ?>
 ]]>
    </programlisting>
@@ -189,16 +167,14 @@ $mysqli->set_charset('UTF-8'); // (utf8mb4, а не UTF-8)
 <?php
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-printf("Первоначальная кодировка: %s\n", $mysqli->character_set_name());
+echo 'Первоначальная кодировка: ' . $mysqli->character_set_name() . "\n";
 
 if (!$mysqli->set_charset('utf8mb4')) {
     printf("Ошибка загрузки кодировки utf8mb4: %s\n", $mysqli->error);
     exit;
 }
 
-echo "Информация о новой кодировки:\n";
-print_r( $mysqli->get_charset() );
-
+echo 'Ваша текущая кодировка: ' . $mysqli->character_set_name() . "\n";
 ?>
 ]]>
    </programlisting>
@@ -206,34 +182,10 @@ print_r( $mysqli->get_charset() );
 
   <example>
    <title>Пример установки кодировки символов: <link linkend="ref.pdo-mysql.connection">pdo_mysql</link></title>
-   <para>
-    Примечание: Это работает только с PHP 5.3.6.
-   </para>
    <programlisting role="php">
 <![CDATA[
 <?php
 $pdo = new PDO("mysql:host=localhost;dbname=world;charset=utf8mb4", 'my_user', 'my_pass');
-?>
-]]>
-   </programlisting>
-  </example>
-
-  <example>
-   <title>Пример установки кодировки символов: mysql</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-$conn = mysql_connect("localhost", "my_user", "my_pass");
-$db   = mysql_select_db("world");
-
-echo 'Первоначальная кодировка: ' .  mysql_client_encoding($conn) . "\n";
-
-if (!mysql_set_charset('utf8mb4', $conn)) {
-    echo "Ошибка: не удаётся установить кодировку.\n";
-    exit;
-}
-
-echo 'Ваша текущая кодировка: ' .  mysql_client_encoding($conn);
 ?>
 ]]>
    </programlisting>
