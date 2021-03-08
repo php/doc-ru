@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a9edd62d087ab1eb6292c795b7256e14ff9f1234 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 9ee9eccf455188ab6eb352194eb6f9eb99e15606 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <sect1 xml:id="language.oop5.magic" xmlns="http://docbook.org/ns/docbook">
  <title>Магические методы</title>
  <para>
-  Имена функций
+  Магические методы - это специальные методы, которые переопределяют действие PHP по умолчанию, когда над объектом выполняются определённые действия.
+ </para>
+ <caution>
+  <simpara>
+   Все имена методов, начинающиеся с <literal>__</literal>, зарезервированы PHP.
+   Не рекомендуется использовать имена методов с __ в PHP, если вы не хотите использовать соответствующую
+   магическую функциональность.
+  </simpara>
+ </caution>
+ <para>
+  Следующие названия методов считаются магическими:
   <link linkend="object.construct">__construct()</link>,
   <link linkend="object.destruct">__destruct()</link>,
   <link linkend="object.call">__call()</link>,
@@ -23,25 +33,32 @@
   <link linkend="object.set-state">__set_state()</link>,
   <link linkend="object.clone">__clone()</link> и
   <link linkend="object.debuginfo">__debugInfo()</link>
-  являются магическими в PHP.
-  Не стоит называть свои методы этими именами, если вы не хотите
-  использовать их магическую функциональность.
  </para>
 
- <note>
+ <warning>
   <simpara>
-   Все магические методы <emphasis>ДОЛЖНЫ</emphasis> быть объявлены как <literal>public</literal>.
+   Все магические методы, за исключением
+   <link linkend="object.construct">__construct()</link>,
+   <link linkend="object.destruct">__destruct()</link> и
+   <link linkend="object.clone">__clone()</link>,
+   <emphasis>ДОЛЖНЫ</emphasis> быть объявлены как <literal>public</literal>,
+   в противном случае будет вызвана ошибка уровня <constant>E_WARNING</constant>.
+   До PHP 8.0.0 для магических методов
+   <link linkend="object.sleep">__sleep()</link>,
+   <link linkend="object.wakeup">__wakeup()</link>,
+   <link linkend="object.serialize">__serialize()</link>,
+   <link linkend="object.unserialize">__unserialize()</link> и
+   <link linkend="object.set-state">__set_state()</link>
+   не выполнялась проверка.
   </simpara>
- </note>
-
- <caution>
-  <simpara>
-   PHP оставляет за собой право все методы, начинающиеся с __,
-   считать магическими. Не рекомендуется использовать имена
-   методов с __ в PHP, если вы не желаете использовать соответствующую
-   магическую функциональность.
-  </simpara>
- </caution>
+ </warning>
+ <warning>
+  <para>
+   Если объявления типа используются в определении магического метода, они должны быть идентичны сигнатуре, описанной в этом документе.
+   В противном случае выдается фатальная ошибка.
+   До PHP 8.0.0 диагностические сообщения не отправлялись.
+  </para>
+ </warning>
 
  <sect2 xml:id="language.oop5.magic.sleep">
   <title>
@@ -72,8 +89,8 @@
     Недопустимо возвращать в <link linkend="object.sleep">__sleep()</link>
     имена закрытых свойств в родительском классе. Это
     приведёт к ошибке уровня <constant>E_NOTICE</constant>.
-    Вместо этого вы можете использовать интерфейс
-    <classname>Serializable</classname>.
+    Вместо этого вы можете использовать
+    <link linkend="object.serialize">__serialize()</link>.
    </para>
   </note>
   <para>
@@ -229,7 +246,7 @@ class Connection
     }
 }?>
 ]]>
-    </programlisting>
+   </programlisting>
   </example>
  </sect2>
 
@@ -242,10 +259,23 @@ class Connection
   <para>
    Метод <link linkend="object.tostring">__toString()</link> позволяет классу решать,
    как он должен реагировать при преобразовании в
-   строку. Например, что вывести при выполнении <literal>echo $obj;</literal>. Этот метод
-   должен возвращать строку, иначе произойдёт фатальная ошибка уровня
-   <constant>E_RECOVERABLE_ERROR</constant>.
+   строку. Например, что вывести при выполнении <literal>echo $obj;</literal>.
   </para>
+  <warning>
+   <para>
+    Начиная с PHP 8.0.0, возвращаемое значение следует стандартной семантике типа PHP,
+    что означает, что оно будет преобразовано в строку (<type>string</type>), если возможно,
+    и если <link linkend="language.types.declarations.strict">strict typing</link> отключён.
+   </para>
+   <para>
+    В PHP 7.4 возвращаемое значение <emphasis>ДОЛЖНО</emphasis> быть строкой (<type>string</type>), иначе выдается <classname>Error</classname>.
+   </para>
+   <para>
+    До PHP 7.4.0 возвращаемое значение <emphasis>должно</emphasis> быть
+    строкой (<type>string</type>), в противном случае выдается фатальная ошибка <constant>E_RECOVERABLE_ERROR</constant>.
+    is emitted.
+   </para>
+  </warning>
   <warning>
    <simpara>
     Нельзя выбросить исключение из метода <link linkend="object.tostring">__toString()</link> до PHP 7.4.0. Это приведёт к фатальной ошибке.
@@ -337,7 +367,7 @@ bool(true)
   </para>
   <para>
    Единственный параметр этого метода является массив, содержащий экспортируемые
-   свойства в виде <literal>array('property' => value, ...)</literal>.
+   свойства в виде <literal>['property' => value, ...]</literal>.
   </para>
   <example>
    <title>Использование <link linkend="object.set-state">__set_state()</link></title>
@@ -363,18 +393,20 @@ $a = new A;
 $a->var1 = 5;
 $a->var2 = 'foo';
 
-eval('$b = ' . var_export($a, true) . ';'); // $b = A::__set_state(array(
-                                            //    'var1' => 5,
-                                            //    'var2' => 'foo',
-                                            // ));
+$b = var_export($a, true);
 var_dump($b);
-
+eval('$c = ' . $b . ';');
+var_dump($c);
 ?>
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
+string(60) "A::__set_state(array(
+   'var1' => 5,
+   'var2' => 'foo',
+))"
 object(A)#2 (2) {
   ["var1"]=>
   int(5)
