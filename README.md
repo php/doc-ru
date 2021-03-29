@@ -7,19 +7,3 @@
 ## Помощь
 
 Если вы хотите поучаствовать в переводе, пожалуйста, ознакомьтесь с [данным руководством](CONTRIBUTING.md).
-
-## Принятие пулреквестов
-
-Для пользователей с кармой `doc/ru` команда для принятия пулреквеста:
-
-```shell
-# В качестве origin используется git@git.php.net:/doc/ru.git
-# git remote add origin git@git.php.net:/doc/ru.git
-
-bash scripts/apply_patch.sh %PR_NUM%
-
-# То же самое, но вручную:
-curl -L "http://url_of_github_patch.patch" | git am
-git commit --am # Добавить в конец "Closes GH-%PR_NUM%"
-git push origin
-```
