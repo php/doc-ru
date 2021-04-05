@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ac2f69b3d07ae6a4e89a742918b01881b7381bf4 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli-stmt.execute" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_stmt::execute</refname>
   <refname>mysqli_stmt_execute</refname>
-  <refpurpose>
-   Выполняет подготовленный запрос
-  </refpurpose>
+  <refpurpose>Выполняет подготовленное утверждение</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,17 +14,18 @@
   <para>&style.oop;</para>
   <methodsynopsis role="oop">
    <modifier>public</modifier> <type>bool</type><methodname>mysqli_stmt::execute</methodname>
-   <void />
+   <void/>
   </methodsynopsis>
   <para>&style.procedural;</para>
-  <methodsynopsis>
+  <methodsynopsis role="procedural">
    <type>bool</type><methodname>mysqli_stmt_execute</methodname>
-   <methodparam><type>mysqli_stmt</type><parameter>stmt</parameter></methodparam>
+   <methodparam><type>mysqli_stmt</type><parameter>statement</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет запрос, который был ранее подготовлен функцией
-   <function>mysqli_prepare</function>. Если в запросе есть метки параметров,
-   они будут заменены привязанными к ним значениями.
+   Выполняет заранее подготовленное утверждение. Утверждение должно быть успешно
+   подготовлено перед выполнением с использованием функции <function>mysqli_prepare</function> или
+   <function>mysqli_stmt_prepare</function>, либо путём передачи второго
+   аргумента в <methodname>mysqli_stmt::__construct</methodname>.
   </para>
   <para>
    Если выполняются запросы <literal>UPDATE</literal>, <literal>DELETE</literal>,
@@ -35,13 +34,6 @@
    результирующий набор, для извлечения данных из него можно использовать
    функцию <function>mysqli_stmt_fetch</function>.
   </para>
-  <note>
-   <para>
-    Если используется <function>mysqli_stmt_execute</function>, то прежде чем
-    выполнить следующий запрос, необходимо выбрать все данные из текущего
-    результирующего набора функцией <function>mysqli_stmt_fetch</function>.
-   </para>
-  </note>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -63,116 +55,87 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>&style.oop;</title>
+   <title>Пример использования <methodname>mysqli_stmt::execute</methodname></title>
+   <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверяем соединение */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
 $mysqli->query("CREATE TABLE myCity LIKE City");
 
-/* подготавливаем запрос на вставку строк */
-$query = "INSERT INTO myCity (Name, CountryCode, District) VALUES (?,?,?)";
-$stmt = $mysqli->prepare($query);
+/* Подготавливаем утверждение на вставку строк */
+$stmt = $mysqli->prepare("INSERT INTO myCity (Name, CountryCode, District) VALUES (?,?,?)");
 
+/* Связываем переменные с метками */
 $stmt->bind_param("sss", $val1, $val2, $val3);
 
 $val1 = 'Stuttgart';
 $val2 = 'DEU';
 $val3 = 'Baden-Wuerttemberg';
 
-/* выполняем запрос */
+/* Выполняем утверждение */
 $stmt->execute();
 
 $val1 = 'Bordeaux';
 $val2 = 'FRA';
 $val3 = 'Aquitaine';
 
-/* выполняем запрос */
+/* Выполняем утверждение */
 $stmt->execute();
 
-/* закрываем запрос */
-$stmt->close();
-
-/* получаем все строки из таблицы myCity */
+/* Получаем все строки из myCity */
 $query = "SELECT Name, CountryCode, District FROM myCity";
-if ($result = $mysqli->query($query)) {
-    while ($row = $result->fetch_row()) {
-        printf("%s (%s,%s)\n", $row[0], $row[1], $row[2]);
-    }
-    /* очищаем результирующий набор */
-    $result->close();
+$result = $mysqli->query($query);
+while ($row = $result->fetch_row()) {
+    printf("%s (%s,%s)\n", $row[0], $row[1], $row[2]);
 }
 
-/* удаляем таблицу */
+/* Удаляем таблицу */
 $mysqli->query("DROP TABLE myCity");
-
-/* закрываем соединение */
-$mysqli->close();
-?>
 ]]>
    </programlisting>
-  </example>
-  <example>
-   <title>&style.procedural;</title>
+   <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверяем соединение */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
 mysqli_query($link, "CREATE TABLE myCity LIKE City");
 
-/* подготавливаем запрос на вставку строк */
-$query = "INSERT INTO myCity (Name, CountryCode, District) VALUES (?,?,?)";
-$stmt = mysqli_prepare($link, $query);
+/* Подготавливаем утверждение на вставку строк */
+$stmt = mysqli_prepare($link, "INSERT INTO myCity (Name, CountryCode, District) VALUES (?,?,?)");
 
+/* Связываем переменные с метками */
 mysqli_stmt_bind_param($stmt, "sss", $val1, $val2, $val3);
 
 $val1 = 'Stuttgart';
 $val2 = 'DEU';
 $val3 = 'Baden-Wuerttemberg';
 
-/* выполняем запрос */
+/* Выполняем утверждение */
 mysqli_stmt_execute($stmt);
 
 $val1 = 'Bordeaux';
 $val2 = 'FRA';
 $val3 = 'Aquitaine';
 
-/* выполняем запрос */
+/* Выполняем утверждение */
 mysqli_stmt_execute($stmt);
 
-/* закрываем запрос */
-mysqli_stmt_close($stmt);
-
-/* получаем все строки из таблицы myCity */
+/* Получаем все строки из myCity */
 $query = "SELECT Name, CountryCode, District FROM myCity";
-if ($result = mysqli_query($link, $query)) {
-    while ($row = mysqli_fetch_row($result)) {
-        printf("%s (%s,%s)\n", $row[0], $row[1], $row[2]);
-    }
-    /* очищаем результирующий набор */
-    mysqli_free_result($result);
+$result = mysqli_query($link, $query);
+while ($row = mysqli_fetch_row($result)) {
+    printf("%s (%s,%s)\n", $row[0], $row[1], $row[2]);
 }
 
-/* удаляем таблицу */
+/* Удаляем таблицу */
 mysqli_query($link, "DROP TABLE myCity");
-
-/* закрываем соединение */
-mysqli_close($link);
-?>
 ]]>
      </programlisting>
      &examples.outputs;
@@ -197,7 +160,6 @@ Bordeaux (FRA,Aquitaine)
  </refsect1>
 
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
