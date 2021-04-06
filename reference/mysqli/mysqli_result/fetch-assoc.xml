@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c1434c95fc666c20cdbd1e1d9a4183e0d11fb88c Maintainer: mch Status: ready -->
+<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: mch Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli-result.fetch-assoc" xmlns="http://docbook.org/ns/docbook">
@@ -13,12 +13,12 @@
   &reftitle.description;
   <para>&style.oop;</para>
   <methodsynopsis role="oop">
-   <modifier>public</modifier> <type>array</type><methodname>mysqli_result::fetch_assoc</methodname>
-   <void />
+   <modifier>public</modifier> <type class="union"><type>array</type><type>null</type><type>false</type></type><methodname>mysqli_result::fetch_assoc</methodname>
+   <void/>
   </methodsynopsis>
   <para>&style.procedural;</para>
-  <methodsynopsis>
-   <type>array</type><methodname>mysqli_fetch_assoc</methodname>
+  <methodsynopsis role="procedural">
+   <type class="union"><type>array</type><type>null</type><type>false</type></type><methodname>mysqli_fetch_assoc</methodname>
    <methodparam><type>mysqli_result</type><parameter>result</parameter></methodparam>
   </methodsynopsis>
   <para>
@@ -41,9 +41,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает ассоциативный массив строк, соответствующий результирующей выборке,
+   Возвращает ассоциативный массив значений, соответствующий результирующей выборке,
    где каждый ключ в массиве соответствует имени одного из столбцов выборки или
-   &null;, если других рядов не существует.
+   &null;, если других строк не существует.
   </para>
   <para>
    Если два или более столбца в выборке имеют одинаковое название полей, то
@@ -56,69 +56,44 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>&style.oop;</title>
+   <title>Пример использования <methodname>mysqli_result::fetch_assoc</methodname></title>
+   <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if ($mysqli->connect_errno) {
-    printf("Соединение не удалось: %s\n", $mysqli->connect_error);
-    exit();
+$query = "SELECT Name, CountryCode FROM City ORDER BY ID DESC";
+
+$result = $mysqli->query($query);
+
+/* извлечение ассоциативного массива */
+while ($row = $result->fetch_assoc()) {
+    printf("%s (%s)\n", $row["Name"], $row["CountryCode"]);
 }
-
-$query = "SELECT Name, CountryCode FROM City ORDER by ID DESC LIMIT 50,5";
-
-if ($result = $mysqli->query($query)) {
-
-    /* извлечение ассоциативного массива */
-    while ($row = $result->fetch_assoc()) {
-        printf ("%s (%s)\n", $row["Name"], $row["CountryCode"]);
-    }
-
-    /* удаление выборки */
-    $result->free();
-}
-
-/* закрытие соединения */
-$mysqli->close();
-?>
 ]]>
    </programlisting>
-  </example>
-  <example>
-   <title>&style.procedural;</title>
+   <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Соединение не удалось: %s\n", mysqli_connect_error());
-    exit();
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = mysqli_connect("localhost", "my_user", "my_password", "world");
+
+$query = "SELECT Name, CountryCode FROM City ORDER BY ID DESC";
+
+$result = mysqli_query($mysqli, $query);
+
+/* извлечение ассоциативного массива */
+while ($row = mysqli_fetch_assoc($result)) {
+    printf("%s (%s)\n", $row["Name"], $row["CountryCode"]);
 }
-
-$query = "SELECT Name, CountryCode FROM City ORDER by ID DESC LIMIT 50,5";
-
-if ($result = mysqli_query($link, $query)) {
-
-    /* извлечение ассоциативного массива */
-    while ($row = mysqli_fetch_assoc($result)) {
-        printf ("%s (%s)\n", $row["Name"], $row["CountryCode"]);
-    }
-
-    /* удаление выборки */
-    mysqli_free_result($result);
-}
-
-/* закрытие соединения */
-mysqli_close($link);
-?>
 ]]>
    </programlisting>
-   &examples.outputs;
+   &examples.outputs.similar;
    <screen>
 <![CDATA[
 Pueblo (USA)
@@ -130,42 +105,51 @@ Santa Clara (USA)
    </screen>
   </example>
   <example xml:id="mysqli-result.example.iterator">
-   <title>Пример использования <classname>mysqli_result</classname> с использованием класса <classname>iterator</classname></title>
+   <title>Сравнение использования <classname>mysqli_result</classname> <classname>iterator</classname> и <methodname>mysqli_result::fetch_assoc</methodname></title>
+   <para>
+    <classname>mysqli_result</classname> можно повторить с помощью &foreach;.
+    Результирующий набор всегда будет повторяться с первой строки, независимо от текущей позиции.
+   </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$c = mysqli_connect('127.0.0.1','user', 'pass');
 
-// Использование итераторов (поддержка была добавлена начиная с PHP 5.4)
-foreach ( $c->query('SELECT user,host FROM mysql.user') as $row ) {
-    printf("'%s'@'%s'\n", $row['user'], $row['host']);
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+
+$query = 'SELECT Name, CountryCode FROM City ORDER BY ID DESC';
+
+// Используем итераторы
+$result = $mysqli->query($query);
+foreach ($result as $row) {
+    printf("%s (%s)\n", $row["Name"], $row["CountryCode"]);
 }
 
 echo "\n==================\n";
 
-// Без использования итераторов
-$result = $c->query('SELECT user,host FROM mysql.user');
+// Не используем итераторы
+$result = $mysqli->query($query);
 while ($row = $result->fetch_assoc()) {
-    printf("'%s'@'%s'\n", $row['user'], $row['host']);
+    printf("%s (%s)\n", $row["Name"], $row["CountryCode"]);
 }
-
-?>
 ]]>
    </programlisting>
    &example.outputs.similar;
    <screen>
 <![CDATA[
-'root'@'192.168.1.1'
-'root'@'127.0.0.1'
-'dude'@'localhost'
-'lebowski'@'localhost'
+Pueblo (USA)
+Arvada (USA)
+Cape Coral (USA)
+Green Bay (USA)
+Santa Clara (USA)
 
 ==================
+Pueblo (USA)
+Arvada (USA)
+Cape Coral (USA)
+Green Bay (USA)
+Santa Clara (USA)
 
-'root'@'192.168.1.1'
-'root'@'127.0.0.1'
-'dude'@'localhost'
-'lebowski'@'localhost'
 ]]>
    </screen>
   </example>
@@ -185,7 +169,6 @@ while ($row = $result->fetch_assoc()) {
  </refsect1>
 
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
