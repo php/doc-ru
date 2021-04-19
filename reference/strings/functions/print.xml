@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3d974bf87ef32d933ca1d40828711a8da4b594f1 Maintainer: shein Status: ready -->
+<!-- EN-Revision: eea9c73ba47da81155ed5baa979dd2a085c3b874 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook" xml:id="function.print">
@@ -12,18 +12,18 @@
   &reftitle.description;
   <methodsynopsis>
    <type>int</type><methodname>print</methodname>
-   <methodparam><type>string</type><parameter>arg</parameter></methodparam>
+   <methodparam><type>string</type><parameter>expression</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Выводит <parameter>arg</parameter>.
+   Выводит <parameter>expression</parameter>.
   </para>
   <para>
-   <literal>print</literal> на самом деле не является настоящей функцией (это
-   конструкция языка), поэтому заключать аргументы в скобки необязательно.
+   <literal>print</literal> - это не функция, а языковая языковая конструкция.
+   Его аргумент - это выражение после ключевого слова <literal>print</literal>, не ограниченное круглыми скобками.
   </para>
   <para>
    Главное отличие от <literal>echo</literal> в том, что
-   <literal>print</literal> принимает только один аргумент и всегда возвращает 1.
+   <literal>print</literal> принимает только один аргумент и всегда возвращает <literal>1</literal>.
   </para>
  </refsect1>
 
@@ -32,10 +32,12 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>arg</parameter></term>
+     <term><parameter>expression</parameter></term>
      <listitem>
       <para>
-       Вводимые данные.
+       Выражение для вывода. Нестроковые значения будут преобразованы в строки,
+       даже если <link linkend="language.types.declarations.strict">включена директива
+       <literal>strict_types</literal></link>.
       </para>
      </listitem>
     </varlistentry>
@@ -58,41 +60,36 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-print("Привет мир!");
+print "print не требует скобок.";
 
-print "print() можно использовать и без скобок.";
+// Новая строка или пробел не добавляются; ниже выводит "приветмир" в одну строку
+print "привет";
+print "мир";
 
-print "Это займёт
-несколько строк. Переводы строки тоже
-выводятся";
+print "Эта строка занимает
+несколько строк. Новые строки
+также будут выведены";
 
-print "Это займёт\nнесколько строк. Переводы строки тоже\nвыводятся";
+print "Эта строка занимает\nнесколько строк. Новые строки\nтакже будут выведены";
 
-print "Экранирование символов делается \"Так\".";
+// Аргументом может быть любое выражение, производящее строку
+$foo = "пример";
+print "пример - это $foo"; // пример - это пример
 
-// с print можно использовать переменные
-$foo = "foobar";
-$bar = "barbaz";
+$fruits = ["лимон", "апельсин", "банан"];
+print implode(" и ", $fruits); // пример и апельсин и банан
 
-print "foo - это $foo"; // foo - это foobar
+// Нестроковые выражения приводятся к строковым, даже если используется declare(strict_types=1)
+print 6 * 7; // 42
 
-// ... и массивы
-$bar = array("value" => "foo");
+// Поскольку print имеет возвращаемое значение, его можно использовать в выражениях
+// Следующие выходные данные "привет мир"
+if ( print "привет" ) {
+    echo " мир";
+}
 
-print "это {$bar['value']} !"; // это foo !
-
-// При использовании одинарные кавычек выводится имя переменной, а не значение
-print 'foo - это $foo'; // foo - это $foo
-
-// Если вы не используете другие символы, можно вывести просто значения переменных
-print $foo;          // foobar
-
-print <<<END
-Здесь используется синтаксис "here document" для вывода
-нескольких строк с подстановкой переменных $variable.
-Заметьте, что закрывающий идентификатор должен
-располагаться в отдельной строке, никаких пробелов!
-END;
+// следующее выражение выведет "true"
+( 1 === 1 ) ? print 'true' : print 'false';
 ?>
 ]]>
     </programlisting>
@@ -102,6 +99,84 @@ END;
 
  <refsect1 role="notes">
   &reftitle.notes;
+
+  <note>
+   <title>Использование с круглыми скобками</title>
+   <para>
+    Заключение аргумента <literal>print</literal> в круглые скобки не
+    вызовет синтаксической ошибки и создаст синтаксис, который выглядит как обычный
+    вызов функции. Однако это может ввести в заблуждение, поскольку круглые скобки на самом деле
+    являются частью выводимого выражения, а не частью самого синтаксиса <literal>print</literal>.
+   </para>
+   <para>
+    <example>
+     <title/>
+     <programlisting role="php">
+<![CDATA[
+<?php
+print "привет";
+// выведет "привет"
+
+print("привет");
+// также выведет "привет", потому что ("привет") - корректное выражение
+
+print(1 + 2) * 3;
+// выведет "9"; круглые скобки приводят к тому, что сначала вычисляется 1+2, а затем 3*3
+// оператор print видит все выражение как один аргумент
+
+if ( print("привет") && false ) {
+    print " - внутри if";
+}
+else {
+    print " - внутри else";
+}
+// выведет " - внутри if"
+// сначала вычисляется выражение ("привет") && false, давая false
+// это приводится к пустой строке "" и выводится
+// конструкция print затем возвращает 1, поэтому выполняется код в блоке if
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+
+   <para>
+    При использовании <literal>print</literal> в более крупном выражении
+    может потребоваться размещение ключевого слова и его аргумента
+    в круглых скобках для получения желаемого результата:
+   </para>
+
+   <para>
+    <example>
+     <title/>
+     <programlisting role="php">
+<![CDATA[
+<?php
+if ( (print "привет") && false ) {
+    print " - внутри if";
+}
+else {
+    print " - внутри else";
+}
+// выведет "привет - внутри else"
+// в отличие от предыдущего примера, выражение (print "привет") вычисляется первым
+// после вывода "привет" print возвращает 1
+// поскольку 1 && false ложно, выполняется код в блоке else
+
+print "привет " && print "мир";
+// выведет "мир1"; print "мир" выполняется в первую очередь,
+// тогда выражение "привет" && 1 передается в левую часть print
+
+(print "привет ") && (print "мир");
+// выведет "привет мир"; круглые скобки заставляют выражения print
+// выполнятьтся перед &&
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </note>
+
   &note.language-construct;
  </refsect1>
 
@@ -112,13 +187,12 @@ END;
     <member><function>echo</function></member>
     <member><function>printf</function></member>
     <member><function>flush</function></member>
-    <member><link linkend="language.types.string.syntax.heredoc">Heredoc-синтаксис</link></member>
+    <member><link linkend="language.types.string">Способы работы со строками</link></member>
    </simplelist>
   </para>
  </refsect1>
 
 </refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
