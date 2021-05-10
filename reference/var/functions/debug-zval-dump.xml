@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0c9c2dd669fe9395eaa73d487fbd160f9057429a Maintainer: shein Status: ready -->
+<!-- EN-Revision: d08d2e887fdc229f16748df96450c9b68c9a3076 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.debug-zval-dump" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>debug_zval_dump</refname>
-  <refpurpose>Выводит строковое представление внутреннего значения zend</refpurpose>
+  <refpurpose>Выводит строковое представление внутренней структуры zval</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,7 +15,8 @@
    <methodparam rep="repeat"><type>mixed</type><parameter>values</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Выводит строковое представление внутреннего значения zend.
+   Выводит на вывод строковое представление внутренней структуры zval (значение Zend).
+   Это в основном полезно для понимания или отладки деталей реализации Zend Engine или модулей PHP.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -34,7 +35,7 @@
      <term><parameter>values</parameter></term>
      <listitem>
       <para>
-       Следующие переменные для обработки.
+       Следующие переменные или значения для обработки.
       </para>
      </listitem>
     </varlistentry>
@@ -55,36 +56,59 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$var1 = 'Hello World';
-$var2 = '';
+$var1 = 'Hello';
+$var1 .= ' World';
+$var2 = $var1;
 
-$var2 =& $var1;
-
-debug_zval_dump(&$var1);
+debug_zval_dump($var1);
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-&string(11) "Hello World" refcount(3)
+string(11) "Hello World" refcount(3)
 ]]>
     </screen>
    </example>
   </para>
   <note>
-   <title>Предостережение по поводу <literal>refcount</literal></title>
+   <title>Понимание <literal>refcount</literal></title>
    <para>
-    Значение <literal>refcount</literal>, возвращаемое этой функцией,
-    в некоторых случаях неочевидно. Например, разработчик может
-    ожидать, что в приведённом выше примере значение <literal>refcount</literal> будет
-    <literal>2</literal>. Третья ссылка была создана в момент
-    вызова <function>debug_zval_dump</function>.
+    Значение <literal>refcount</literal>, показываемое этой функцией,
+    может быть неожиданным без детального понимания реализации движка.
    </para>
    <para>
-    Это поведение более сложно, когда переменная не передаётся в функцию
-    <function>debug_zval_dump</function> по ссылке. Для иллюстрации рассмотрим
-    немного изменённый вариант приведённого выше примера:
+    Zend Engine использует подсчёт ссылок для двух разных целей:
+   </para>
+   <para>
+    <simplelist>
+     <member>
+      Оптимизация использования памяти с помощью метода, называемого "копирование при записи",
+      когда несколько переменных, содержащих одно и то же значение, указывают на одну
+      и ту же копию в памяти. Когда любая из переменных изменяется, она указывает на новую
+      копию в памяти, а счётчик ссылок на оригинал уменьшается на 1.
+     </member>
+     <member>
+      Отслеживание переменных, которые были назначены или переданы по ссылке (смотрите <link linkend="language.references">Объяснение ссылок</link>). Этот
+      счётчик ссылок хранится в отдельной ссылке zval, указывающей на zval для текущего значения.
+      Этот дополнительный zval в настоящее время не отображается в
+      <function>debug_zval_dump</function>.
+     </member>
+    </simplelist>
+   </para>
+   <para>
+    Поскольку <function>debug_zval_dump</function> принимает свои входные данные как обычные
+    параметры, передаваемые по значению, для их передачи будет использоваться
+    метод копирования при записи: вместо копирования данных счётчик ссылок будет увеличен
+    на единицу на время существования вызова функции. Если функция изменила
+    параметр после его получения, будет сделана копия; поскольку это не так,
+    покажет счётчик ссылок на один выше, чем в вызывающей области.
+   </para>
+   <para>
+    Передача параметров также предотвращает отображение переменных <function>debug_zval_dump</function>,
+    которые были назначены по ссылке. Для иллюстрации рассмотрим слегка
+    изменённую версию приведённого выше примера:
    </para>
    <para>
     <example>
@@ -92,39 +116,11 @@ debug_zval_dump(&$var1);
      <programlisting role="php">
 <![CDATA[
 <?php
-$var1 = 'Hello World';
-$var2 = '';
-
+$var1 = 'Hello';
+$var1 .= ' World';
+// Укажите три переменные как ссылки на одно и то же значение
 $var2 =& $var1;
-
-debug_zval_dump($var1); // в этот раз не передаётся по ссылке
-?>
-]]>
-     </programlisting>
-     &example.outputs;
-     <screen>
-<![CDATA[
-string(11) "Hello World" refcount(1)
-]]>
-     </screen>
-    </example>
-   </para>
-   <para>
-    Почему <literal>refcount(1)</literal>? Потому что копия <literal>$var1</literal>
-    создаётся при вызове функции.
-   </para>
-   <para>
-    Эта функция становится ещё <emphasis>более</emphasis> сбивающей с толку, когда
-    передаётся переменная со значением <literal>refcount</literal>, равным <literal>1</literal>
-    (копированием по значению):
-   </para>
-   <para>
-    <example>
-     <title/>
-     <programlisting role="php">
-<![CDATA[
-<?php
-$var1 = 'Hello World';
+$var3 =& $var1;
 
 debug_zval_dump($var1);
 ?>
@@ -139,27 +135,22 @@ string(11) "Hello World" refcount(2)
     </example>
    </para>
    <para>
-    Значение <literal>refcount</literal>, равное <literal>2</literal>, в данном случае совсем
-    непонятно. Особенно учитывая приведённые выше примеры. Так в чем же дело?
+    Хотя <varname>$var1</varname>, <varname>$var2</varname>, и
+    <varname>$var3</varname> связаны как ссылки,
+    только <emphasis>value</emphasis> передаётся в <function>debug_zval_dump</function>.
+    Это значение используется один раз набором ссылок и один раз внутри функции <function>debug_zval_dump</function>, поэтому счётчик
+    ссылок равен 2.
    </para>
    <para>
-    Когда переменная имеет единственную ссылку (как было с переменной <literal>$var1</literal>,
-    перед тем, как её передали в качестве аргумента в функцию <function>debug_zval_dump</function>),
-    процессор PHP оптимизирует метод, которым она передаётся в функцию.
-    Внутренне, PHP рассматривает <literal>$var1</literal> как ссылку (таким образом
-    <literal>refcount</literal> увеличивается для области видимости
-    функции), при условии, что <emphasis>если</emphasis> в переданную ссылку
-    придётся производить запись, то будет создана её копия, но только в момент
-    записи. Такое поведение известно как "copy on write."
-   </para>
-   <para>
-    Таким образом, если <function>debug_zval_dump</function> приходится писать в свой единственный
-    параметр (а она не делает этого), то будет создана копия. До этого момента
-    параметр остаётся ссылкой, приводя к увеличению <literal>refcount</literal>
-    до <literal>2</literal> в области видимости вызова функции.
+    Дальнейшие сложности возникают из-за оптимизации, сделанной в движке для
+    различных типов данных. Некоторые типы, такие как целые числа, не используют "копирование при записи",
+    поэтому не показывают счётчик ссылок вообще. В других случаях refcount показывает дополнительные
+    копии, используемые внутри, например, когда буквенная строка или массив сохраняется как
+    часть инструкции кода.
    </para>
   </note>
  </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
