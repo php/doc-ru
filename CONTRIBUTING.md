@@ -75,13 +75,12 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 --- a/reference/array/functions/in-array.xml
 +++ b/reference/array/functions/in-array.xml
 @@ -14,7 +14,7 @@
-    <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
-   </methodsynopsis>
-   <para>
--   Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison
-+   Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison
-    unless <parameter>strict</parameter> is set.
-   </para>
+  <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+-  Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison
++  Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison unless <parameter>strict</parameter> is set.
+  </para>
   </refsect1>
 ```
 
