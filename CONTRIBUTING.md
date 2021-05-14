@@ -45,10 +45,11 @@
 ```
 ├── doc-base/
 ├── en/
-└── {LANG}/
+└── ru/
 ```
 
 Обратите внимание, что языковые папки должны быть без префикса `doc-`.
+
 Для клонирования можно воспользоваться командой `git clone https://github.com/php/doc-ru.git ru`.
 
 Выполните следующую команду в терминале и откройте получившийся `revcheck.html` в браузере:
@@ -70,7 +71,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 
 Пример вывода:
 
-```
+```diff
 --- a/reference/array/functions/in-array.xml
 +++ b/reference/array/functions/in-array.xml
 @@ -14,7 +14,7 @@
@@ -85,6 +86,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 ```
 
 Как вы видите, изменилось описание функции.
+
 Строка `Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison`
 заменена на `Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison`.
 
