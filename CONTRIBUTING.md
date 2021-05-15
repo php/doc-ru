@@ -33,9 +33,62 @@
 где `0abaad099e3ec6064ed8cf31553dcd5e3e3fdfba` — полный номер коммита в англоязычной документации, последнего актуального на момент редактирования для данного файла.
 Это нужно для того, чтобы понимать, что именно переведено, а что ещё нет.
 
-[Инструмент для отслеживания изменений](https://doc.php.gpb.moe/tools/revcheck/ru/outdated.html) отображает устаревшие файлы, а также все изменения.
+### Отслеживание изменений
 
-Для актуализации перевода необходимо выбрать файл, посмотреть различия (`filename.xml [diff]`), внести изменения, обновить тег `EN-Revision` на значение из столбца `en` и прислать пуллреквест.
+Клонируйте репозиторий [doc-base](https://github.com/php/doc-base) на один уровень с
+[doc-en](https://github.com/php/doc-en) и `doc-ru`, чтобы структура папок была следующей:
+
+```
+├── doc-base/
+├── en/
+└── ru/
+```
+
+Обратите внимание, что языковые папки должны быть без префикса `doc-`.
+
+Для клонирования можно воспользоваться командой `git clone https://github.com/php/doc-ru.git ru`.
+
+Выполните следующую команду в терминале и откройте получившийся `revcheck.html` в браузере:
+
+```
+php doc-base/scripts/revcheck.php ru > revcheck.html
+```
+В разделе "Outdated Files" вы можете посмотреть актуальную английскую версию и текущую.
+
+### Просмотр изменений
+
+Чтобы посмотреть, какие изменения были произведены выполните следующую команду:
+
+```
+git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e0199307d87dd3739f719b reference/array/functions/in-array.xml
+```
+
+где первый хеш — это текущая версия из `EN-Revision`, а второй — хеш актуальной английской версии.
+
+Пример вывода:
+
+```diff
+--- a/reference/array/functions/in-array.xml
++++ b/reference/array/functions/in-array.xml
+@@ -14,7 +14,7 @@
+  <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+-  Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison
++  Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison unless <parameter>strict</parameter> is set.
+  </para>
+  </refsect1>
+```
+
+Как вы видите, изменилось описание функции.
+
+Строка `Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison`
+заменена на `Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison`.
+
+Откройте файл `reference/array/functions/in-array.xml` в репозитории `doc-ru`
+и измените строку в соответствии с английской версией.
+
+Затем обновите комментарий `EN-Revision`.
 
 ## Соглашение по переводу
 
