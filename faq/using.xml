@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f029b664b8728bd5cbb697cb9a4409aea07cb36c Maintainer: shein Status: ready -->
+<!-- EN-Revision: aab33d644359aba597e810e2fc0c0caa0d347c9c Maintainer: shein Status: ready -->
 <!-- Reviewed: yes Maintainer: rjhdby -->
 <!-- $Revision$ -->
 <chapter xml:id="faq.using" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -14,6 +14,7 @@
   <qandaset>
 
    <qandaentry xml:id="faq.using.parameterorder">
+    <!-- TODO: Mention named arguments -->
     <question>
      <para>
       Я не могу запомнить порядок аргументов PHP-функций, они что, случайны?
@@ -101,68 +102,6 @@ if (empty($empty)) {
      </para>
     </answer>
    </qandaentry>
-
-   <qandaentry xml:id="faq.register-globals">
-    <question>
-     <para>
-      Как директива PHP register_globals касается меня?
-     </para>
-    </question>
-    <answer>
-     &warn.deprecated.feature-5-3-0.removed-5-4-0;
-     <para>
-      Во-первых, следует объяснить что делает эта директива.
-      Скажем, используется вот такой URL:
-      <literal>http://example.com/foo.php?animal=cat</literal>
-      и в <filename>foo.php</filename> у нас находится следующий PHP-код:
-     </para>
-     <para>
-      <programlisting role="php">
-<![CDATA[
-<?php
-// Использование $_GET в данном случае более предпочтительно
-echo $_GET['animal'];
-
-// Чтобы переменная $animal была определена, директива register_globals должна
-// быть включена.
-// НЕ ДЕЛАЙТЕ ЭТОГО!
-echo $animal;
-
-// Это касается всех переменных, включая $_SERVER
-echo $_SERVER['PHP_SELF'];
-
-// Опять-таки, чтобы $PHP_SELF была определена, надо включить register_globals
-// НЕ ДЕЛАЙТЕ ЭТОГО!
-echo $PHP_SELF;
-?>
-]]>
-     </programlisting>
-    </para>
-    <para>
-     Код выше демонстрирует как register_globals создаёт множество переменных.
-     Годами такой стиль написания не одобрялся и годами register_globals была
-     выключена по умолчанию. Несмотря на то, что большинство хостингов отключает
-     register_globals, осталось ещё много устаревших статей, руководств и
-     книг, которые требуют включения этой директивы. Действуйте соответственно.
-    </para>
-    <para>
-     См. также следующие источники за дополнительной информацией:
-     <simplelist>
-      <member>Директива <link linkend="ini.register-globals">register_globals</link></member>
-      <member><link linkend="security.globals">Глава о безопасности и register_globals</link></member>
-      <member><link linkend="language.variables.external">Работа с внешними данными</link></member>
-      <member>В качестве альтернативы используйте <link linkend="language.variables.superglobals">суперглобальные переменные</link></member>
-     </simplelist>
-    </para>
-    <note>
-     <para>
-      В примере выше мы использовали <acronym>URL</acronym>, который содержал
-      QUERY_STRING. Передача информации подобным образом происходит с помощью
-      метода HTTP GET, вот почему мы использовали суперглобальный массив <varname>$_GET</varname>.
-     </para>
-    </note>
-   </answer>
-  </qandaentry>
 
    <qandaentry xml:id="faq.using.wrong-order">
     <question>
@@ -366,9 +305,6 @@ foreach ($headers as $name => $content) {
       </link> так как он описывает общие сценарии для внешних переменных, таких
       как HTML форма, Cookie и URL.
      </para>
-
-     &note.registerglobals;
-
     </answer>
    </qandaentry>
 
@@ -389,42 +325,6 @@ foreach ($headers as $name => $content) {
     </answer>
    </qandaentry>
 
-   <qandaentry xml:id="faq.using.cgi-vars">
-    <question>
-     <para>
-      Я пытаюсь получить доступ к одной из стандартных CGI переменных
-      (таких как <varname>$DOCUMENT_ROOT</varname> или
-      <varname>$HTTP_REFERER</varname>) в определённой
-      пользователем функции и, похоже, она не может быть найдена.
-      В чем дело?
-     </para>
-    </question>
-    <answer>
-     <para>
-      Важно осознавать, что директива PHP <link
-      linkend="ini.register-globals">register_globals</link>
-      также затрагивает переменные окружения и сервера.
-      Когда register_globals = off (по умолчанию off, начиная с PHP 4.2.0),
-      <varname>$DOCUMENT_ROOT</varname>
-      не будет существовать. Вместо неё используйте
-      <varname>$_SERVER['DOCUMENT_ROOT']</varname>. Если register_globals = on,
-      то переменные <varname>$DOCUMENT_ROOT</varname> и
-      <varname>$GLOBALS['DOCUMENT_ROOT']</varname> будут также существовать.
-     </para>
-     <para>
-      Если вы уверены, что register_globals = on и удивляетесь почему
-      <varname>$DOCUMENT_ROOT</varname> недоступна внутри функции, то
-      это потому, что, как любые другие переменные, она требует
-      <literal>global $DOCUMENT_ROOT</literal> внутри функции.
-      Также смотрите страницу руководства по
-      <link linkend="language.variables.scope">области
-      определения переменных</link>.
-      Рекомендуется работать с register_globals = off.
-     </para>
-
-    </answer>
-   </qandaentry>
-
    <qandaentry xml:id="faq.using.shorthandbytes">
     <question>
      <para>
@@ -435,8 +335,7 @@ foreach ($headers as $name => $content) {
     </question>
     <answer>
      <para>
-      Доступные опции: K (для килобайт), M (для мегабайт) и G (для гигабайт; доступна
-      начиная с PHP 5.1.0); они регистронезависимы. Все остальное считается байтами.
+      Доступные опции: K (для килобайт), M (для мегабайт) и G (для гигабайт); они регистронезависимы. Все остальное считается байтами.
       <literal>1M</literal> равно одному мегабайту или <literal>1048576</literal> байтам.
       <literal>1K</literal> равно одному килобайту или <literal>1024</literal> байтам. Эти
       сокращения вы можете использовать в &php.ini; и в функции <function>ini_set</function>.
@@ -453,28 +352,8 @@ foreach ($headers as $name => $content) {
      </note>
     </answer>
    </qandaentry>
-
-   <qandaentry xml:id="faq.using.windowslocalhostissue">
-    <question>
-     <para>
-      Windows: Я постоянно получаю таймауты при соединении с <literal>localhost</literal>,
-      хотя с <literal>"127.0.0.1"</literal> все работает нормально?
-     </para>
-    </question>
-    <answer>
-     <para>
-      До версии PHP 5.3.4, существовала ошибка в коде резолвинга доменного имени,
-      не дававшая определить адрес <literal>localhost</literal> при включённом IPv6,
-      во всех ситуациях связанных с потоками.
-      Для обхода этой проблемы можно использовать <literal>"127.0.0.1"</literal>
-      или отключить резолвинг IPv6 в файле <filename>hosts</filename>.
-     </para>
-    </answer>
-   </qandaentry>
-
   </qandaset>
  </chapter>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml

@@ -17,6 +17,88 @@
 Заголовок `<title><function>func_name</function> example</title>`
 всегда переводится как `<title>Пример использования <function>func_name</function></title>`.
 
+## Актуализация перевода
+
+Оригинал англоязычной документации находится по адресу [doc-en](https://github.com/php/doc-en).
+
+Файлы русскоязычной документации имеют определённый формат. В начале каждого файла должна быть конструкция следующего вида:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 0abaad099e3ec6064ed8cf31553dcd5e3e3fdfba Maintainer: sergey Status: ready -->
+<!-- Reviewed: yes -->
+<!-- $Revision$ -->
+```
+
+где `0abaad099e3ec6064ed8cf31553dcd5e3e3fdfba` — полный номер коммита в англоязычной документации, последнего актуального на момент редактирования для данного файла.
+Это нужно для того, чтобы понимать, что именно переведено, а что ещё нет.
+
+### Отслеживание изменений
+
+#### С помощью doc.php.net
+
+Выберите русский язык на правой боковой панели, а затем используйте инструмент "Outdated files".
+В таблице будут перечислены файлы, для которых необходимо обновить перевод.
+
+В столбце `en` указан хеш актуальной английской версии, а в столбце `ru` - хеш перевода.
+
+#### С помощью командной строки
+
+Клонируйте репозиторий [doc-base](https://github.com/php/doc-base) на один уровень с
+[doc-en](https://github.com/php/doc-en) и `doc-ru`, чтобы структура папок была следующей:
+
+```
+├── doc-base/
+├── en/
+└── ru/
+```
+
+Обратите внимание, что языковые папки должны быть без префикса `doc-`.
+
+Для клонирования можно воспользоваться командой `git clone https://github.com/php/doc-ru.git ru`.
+
+Выполните следующую команду в терминале и откройте получившийся `revcheck.html` в браузере:
+
+```
+php doc-base/scripts/revcheck.php ru > revcheck.html
+```
+В разделе "Outdated Files" вы можете посмотреть актуальную английскую версию и текущую.
+
+### Просмотр изменений
+
+Чтобы посмотреть, какие изменения были произведены выполните следующую команду:
+
+```
+git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e0199307d87dd3739f719b reference/array/functions/in-array.xml
+```
+
+где первый хеш — это текущая версия из `EN-Revision`, а второй — хеш актуальной английской версии.
+
+Пример вывода:
+
+```diff
+--- a/reference/array/functions/in-array.xml
++++ b/reference/array/functions/in-array.xml
+@@ -14,7 +14,7 @@
+  <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+-  Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison
++  Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison unless <parameter>strict</parameter> is set.
+  </para>
+  </refsect1>
+```
+
+Как вы видите, изменилось описание функции.
+
+Строка `Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison`
+заменена на `Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison`.
+
+Откройте файл `reference/array/functions/in-array.xml` в репозитории `doc-ru`
+и измените строку в соответствии с английской версией.
+
+Затем обновите комментарий `EN-Revision`.
+
 ## Соглашение по переводу
 
 | Оригинал | Перевод |
@@ -35,6 +117,7 @@
 | Entry | Элемент (существительное, для массивов, списков и прочих структур) |
 | Extension | Модуль |
 | Features/functionality | Возможности, функциональность |
+| Float (floating point) | Число с плавающей точкой (плавающая точка) |
 | Hash | Хеш |
 | HTML entity | HTML-сущность |
 | HTTP-Authentication | HTTP-аутентификация |

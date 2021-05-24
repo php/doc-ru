@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 51105156aac67e5fcb0670aef84a05da3330d8fb Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: eafb431a9abf9cd2f5ad5b2f699f8c8c37067453 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 
@@ -61,11 +61,12 @@
 
 <!ENTITY note.randomseed '<note xmlns="http://docbook.org/ns/docbook"><simpara>Нет необходимости инициализировать генератор случайных чисел функциями <function>srand</function> или <function>mt_srand</function>, поскольку это происходит автоматически.</simpara></note>'>
 
-<!ENTITY note.registerglobals '<note xmlns="http://docbook.org/ns/docbook"><title>register_globals: важное замечание</title><para>Начиная с PHP 4.2.0, значением директивы PHP <link linkend="ini.register-globals">register_globals</link> по умолчанию является <emphasis>off</emphasis> (выключено). Сообщество PHP рекомендует не полагаться на эту директиву, а использовать вместо этого иные средства, такие как &link.superglobals;.</para></note>'>
-
 <!ENTITY note.is-superglobal "<note xmlns='http://docbook.org/ns/docbook'><para>Это 'суперглобальная' или автоматическая глобальная переменная. Это просто означает, что она доступна во всех контекстах скрипта. Нет необходимости выполнять <command>global $variable;</command> для доступа к ней внутри метода или функции.</para></note>">
 
 <!ENTITY note.uses-ob '<note xmlns="http://docbook.org/ns/docbook"><para>При использовании параметра <parameter>return</parameter> данная функция использует внутреннюю буферизацию вывода, поэтому она не может быть использована внутри callback-функции <function>ob_start</function>.</para></note>'>
+
+<!ENTITY note.uses-ob-php70 '<note xmlns="http://docbook.org/ns/docbook"><para>Когда используется параметр <parameter>return</parameter>, функция использует внутреннюю буферизацию вывода до PHP 7.1.0, поэтому её нельзя использовать внутри
+callback-функции <function>ob_start</function>.</para></note>'>
 
 <!ENTITY note.filesystem-time-res '<note xmlns="http://docbook.org/ns/docbook"><para>Учтите, что обработка времени может отличаться в различных файловых системах.</para></note>'>
 
@@ -358,6 +359,8 @@ xmlns="http://docbook.org/ns/docbook"><simpara>Эта функция была
 
 <!ENTITY example.outputs.71 '<para xmlns="http://docbook.org/ns/docbook">Результат выполнения данного примера в PHP 7.1:</para>'>
 
+<!ENTITY example.outputs.72 '<para xmlns="http://docbook.org/ns/docbook">Результат выполнения данного примера в PHP 7.2:</para>'>
+
 <!ENTITY example.outputs.73 '<para xmlns="http://docbook.org/ns/docbook">Результат выполнения данного примера в PHP 7.3:</para>'>
 
 <!ENTITY example.outputs.8 '<para xmlns="http://docbook.org/ns/docbook">Результат выполнения данного примера в PHP 8:</para>'>
@@ -437,8 +440,6 @@ xmlns="http://docbook.org/ns/docbook"><simpara>Эта функция была
   </listitem>
  </varlistentry>
 '>
-
-<!ENTITY avail.register-long-arrays 'Начиная с PHP 5.0.0, длинные <link xmlns="http://docbook.org/ns/docbook" linkend="language.variables.predefined">предопределённые переменные</link> массивов PHP могут быть отключены директивой <link xmlns="http://docbook.org/ns/docbook" linkend="ini.register-long-arrays">register_long_arrays</link>.'>
 
 <!ENTITY ini.shorthandbytes '<simpara xmlns="http://docbook.org/ns/docbook">Если используется <type>int</type>, значение измеряется байтами. Вы также можете использовать сокращённую запись, которая описана в <link linkend="faq.using.shorthandbytes">этом разделе FAQ</link>.</simpara>'>
 
@@ -1369,15 +1370,15 @@ result</parameter></term><listitem><para>Идентификатор резуль
 
 <!-- MySQLi Notes -->
 <!ENTITY mysqli.result.description '<varlistentry xmlns="http://docbook.org/ns/docbook"><term><parameter>
-result</parameter></term><listitem><para>Только для процедурного стиля: Идентификатор результата запроса, полученный с помощью
+result</parameter></term><listitem><para>Только для процедурного стиля: Объект <classname>mysqli_result</classname>, полученный с помощью
 <function>mysqli_query</function>, <function>mysqli_store_result</function>
-или <function>mysqli_use_result</function>.</para></listitem></varlistentry>'>
+или <function>mysqli_use_result</function> или <function>mysqli_stmt_get_result</function>.</para></listitem></varlistentry>'>
 <!ENTITY mysqli.link.description '<varlistentry xmlns="http://docbook.org/ns/docbook"><term><parameter>
-link</parameter></term><listitem><para>Только для процедурного стиля: Идентификатор соединения, полученный с помощью
+link</parameter></term><listitem><para>Только для процедурного стиля: Объект <classname>mysqli</classname>, полученный с помощью
 <function>mysqli_connect</function> или <function>mysqli_init</function>
 </para></listitem></varlistentry>'>
 <!ENTITY mysqli.stmt.description '<varlistentry xmlns="http://docbook.org/ns/docbook"><term><parameter>
-stmt</parameter></term><listitem><para>Только для процедурного стиля: Идентификатор выражения, полученный с помощью
+stmt</parameter></term><listitem><para>Только для процедурного стиля: Объект <classname>mysqli_stmt</classname>, полученный с помощью
 <function>mysqli_stmt_init</function>.</para></listitem></varlistentry>'>
 <!ENTITY mysqli.available.mysqlnd 'Доступно только с расширением <link xmlns="http://docbook.org/ns/docbook"
 linkend="book.mysqlnd">mysqlnd</link>.'>
@@ -1481,32 +1482,27 @@ field_offset</parameter></term><listitem><para>Числовое смещение
 
 <!ENTITY mysql.alternative.note '<para xmlns="http://docbook.org/ns/docbook">Данное расширение устарело, начиная с версии PHP 5.5.0, и удалено в PHP 7.0.0.
 Используйте вместо него <link linkend="book.mysqli">MySQLi</link> или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
-Смотрите также инструкцию <link linkend="mysqlinfo.api.choosing">MySQL:
-выбор API</link> и <link linkend="faq.databases.mysql.deprecated">соответствующий FAQ</link> для получения более подробной информации.
+Смотрите также инструкцию <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link>.
 Альтернативы для данной функции:</para>'>
 
 <!ENTITY mysql.alternative.note.4-3-0 '<para xmlns="http://docbook.org/ns/docbook">Данная функция объявлена устаревшей в PHP 4.3.0, и, вместе с <link linkend="book.mysql">расширением MySQL</link>, удалена PHP 7.0.0.
 Вместо неё используйте активно развивающиеся расширения <link linkend="book.mysqli">MySQLi</link> или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
-Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link> и
-<link linkend="faq.databases.mysql.deprecated">это FAQ</link>.
+Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link>.
 Альтернативы для этой функции:</para>'>
 
 <!ENTITY mysql.alternative.note.5-3-0 '<para xmlns="http://docbook.org/ns/docbook">Данная функция объявлена устаревшей в PHP 5.3.0, и, вместе с <link linkend="book.mysql">расширением MySQL</link>, удалена PHP 7.0.0.
 Вместо неё используйте активно развивающиеся расширения <link linkend="book.mysqli">MySQLi</link> или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
-Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link> и
-<link linkend="faq.databases.mysql.deprecated">это FAQ</link>.
+Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link>.
 Альтернативы для этой функции:</para>'>
 
 <!ENTITY mysql.alternative.note.5-4-0 '<para xmlns="http://docbook.org/ns/docbook">Данная функция объявлена устаревшей в PHP 5.4.0, и, вместе с <link linkend="book.mysql">расширением MySQL</link>, удалена PHP 7.0.0.
 Вместо неё используйте активно развивающиеся расширения <link linkend="book.mysqli">MySQLi</link> или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
-Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link> и
-<link linkend="faq.databases.mysql.deprecated">это FAQ</link>.
+Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link>.
 Альтернативы для этой функции:</para>'>
 
 <!ENTITY mysql.alternative.note.5-5-0 '<para xmlns="http://docbook.org/ns/docbook">Данная функция объявлена устаревшей в PHP 5.5.0, и, вместе с <link linkend="book.mysql">расширением MySQL</link>, удалена PHP 7.0.0.
 Вместо неё используйте активно развивающиеся расширения <link linkend="book.mysqli">MySQLi</link> или <link linkend="ref.pdo-mysql">PDO_MySQL</link>.
-Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link> и
-<link linkend="faq.databases.mysql.deprecated">это FAQ</link>.
+Так же смотрите раздел <link linkend="mysqlinfo.api.choosing">MySQL: выбор API</link>.
 Альтернативы для этой функции:</para>'>
 
 <!ENTITY mysql.close.connections.result.sets '<para xmlns="http://docbook.org/ns/docbook">
@@ -1713,6 +1709,8 @@ writer</parameter></term><listitem><para>Только для процедурн�
 <!ENTITY imagick.method.available.0x649 'Этот метод доступен, если Imagick был скомпилирован с версией ImageMagick 6.4.9 или старше.'>
 <!ENTITY imagick.method.available.0x653 'Этот метод доступен, если Imagick был скомпилирован с версией ImageMagick 6.5.3 или старше.'>
 <!ENTITY imagick.method.available.0x657 'Этот метод доступен, если Imagick был скомпилирован с версией ImageMagick 6.5.7 или старше.'>
+
+<!ENTITY imagick.method.not.available.0x700 'Этот метод недоступен, если Imagick был скомпилирован с версией ImageMagick 7.0.70или старше.'>
 
 <!ENTITY imagick.constant.available 'Эта константа доступна, если Imagick был скомпилирован с версией ImageMagick '>
 
@@ -2551,7 +2549,8 @@ local: {
      </listitem>
      <listitem>
       <simpara>
-       Для спецификаторов <literal>g</literal> и <literal>G</literal>:
+       Для спецификаторов <literal>g</literal>,<literal>G</literal>,
+       <literal>h</literal> и <literal>H</literal>:
        задаёт максимальное значение печатаемых значащих цифр.
       </simpara>
      </listitem>
@@ -2620,10 +2619,6 @@ local: {
        <entry><literal>e</literal></entry>
        <entry>
         Аргумент считается за число в научной нотации (т.е. 1.2e+2).
-        Начиная с PHP 5.2.1, спецификатор точности задаёт количество
-        цифр после десятичной запятой. В более ранних версиях он
-        задавал общее количество значащих цифр (т.е. после запятой
-        выводилось на 1 символ меньше).
        </entry>
       </row>
       <row>
@@ -2645,7 +2640,6 @@ local: {
        <entry>
         Аргумент считается за число с плавающей точкой
         (без учёта локали).
-        Доступно с PHP 5.0.3.
        </entry>
       </row>
       <row>
@@ -2753,11 +2747,11 @@ local: {
      </thead>
      <tbody>
       <row>
-       <entry><literal>string</literal></entry>
+       <entry><type>string</type></entry>
        <entry><literal>s</literal></entry>
       </row>
       <row>
-       <entry><literal>integer</literal></entry>
+       <entry><type>int</type></entry>
        <entry>
         <literal>d</literal>,
         <literal>u</literal>,
@@ -2769,14 +2763,16 @@ local: {
        </entry>
       </row>
       <row>
-       <entry><literal>double</literal></entry>
+       <entry><type>float</type></entry>
        <entry>
-        <literal>g</literal>,
-        <literal>G</literal>,
         <literal>e</literal>,
         <literal>E</literal>,
         <literal>f</literal>,
-        <literal>F</literal>
+        <literal>F</literal>,
+        <literal>g</literal>,
+        <literal>G</literal>,
+        <literal>h</literal>,
+        <literal>H</literal>
        </entry>
       </row>
      </tbody>

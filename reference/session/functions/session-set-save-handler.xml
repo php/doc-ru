@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 88848833f762149b227f84d68e17a130fa043a41 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 184f3f7bd45643cb80f828d0bb001991ec3a5fad Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.session-set-save-handler" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -23,7 +23,7 @@
    <methodparam choice="opt"><type>callable</type><parameter>update_timestamp</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Начиная с PHP 5.4 появилась возможность регистрировать следующий прототип:
+   Также возможно зарегистрировать следующий прототип:
   </para>
   <methodsynopsis>
    <type>bool</type><methodname>session_set_save_handler</methodname>
@@ -53,7 +53,7 @@
        <interfacename>SessionIdInterface</interfacename> и/или
        <interfacename>SessionUpdateTimestampHandlerInterface</interfacename>,
        такой как <classname>SessionHandler</classname>, для регистрации
-       в качестве обработчика сессии. Только начиная с PHP 5.4.
+       в качестве обработчика сессии.
       </para>
      </listitem>
     </varlistentry>
@@ -281,7 +281,7 @@
      Пользовательский обработчик сессии: полный код смотрите в описании <classname>SessionHandlerInterface</classname>.
     </title>
     <para>
-     Следующий код для PHP версии 5.4.0 и выше. Здесь только продемонстрирован вызов session_set_save_handler,
+     Здесь только продемонстрирован вызов session_set_save_handler,
      полный пример можно посмотреть в описании <classname>SessionHandlerInterface</classname>.
     </para>
     <para>
@@ -305,95 +305,6 @@ session_start();
 ]]>
     </programlisting>
    </example>
-   <example>
-    <title>Пользовательский обработчик сессии с использованием объектов</title>
-    <para>
-     Следующий код для PHP версий ниже 5.4.0.
-    </para>
-    <para>
-     Следующий пример показывает реализацию файлового хранилища сессий, похожего на стандартный
-     обработчик PHP хранения сессии <parameter>files</parameter>. Этот пример может быть легко
-     расширен для реализации хранилища в базах данных, используя ваш любимый движок базы данных,
-     который поддерживает PHP.
-    </para>
-    <para>
-     Заметьте, что мы дополнительно регистрируем функцию завершения <function>session_write_close</function>,
-     используя <function>register_shutdown_function</function> в PHP версии меньше 5.4.0.
-     Это обычно рекомендуется при регистрации объектов в качестве обработчиков хранения сессии для PHP версий
-     меньше 5.4.0.
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-class FileSessionHandler
-{
-    private $savePath;
-
-    function open($savePath, $sessionName)
-    {
-        $this->savePath = $savePath;
-        if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0777);
-        }
-
-        return true;
-    }
-
-    function close()
-    {
-        return true;
-    }
-
-    function read($id)
-    {
-        return (string)@file_get_contents("$this->savePath/sess_$id");
-    }
-
-    function write($id, $data)
-    {
-        return file_put_contents("$this->savePath/sess_$id", $data) === false ? false : true;
-    }
-
-    function destroy($id)
-    {
-        $file = "$this->savePath/sess_$id";
-        if (file_exists($file)) {
-            unlink($file);
-        }
-
-        return true;
-    }
-
-    function gc($maxlifetime)
-    {
-        foreach (glob("$this->savePath/sess_*") as $file) {
-            if (filemtime($file) + $maxlifetime < time() && file_exists($file)) {
-                unlink($file);
-            }
-        }
-
-        return true;
-    }
-}
-
-$handler = new FileSessionHandler();
-session_set_save_handler(
-    array($handler, 'open'),
-    array($handler, 'close'),
-    array($handler, 'read'),
-    array($handler, 'write'),
-    array($handler, 'destroy'),
-    array($handler, 'gc')
-    );
-
-// предотвращает непредвиденные эффекты при использовании объектов в качестве обработчиков хранения сесси
-register_shutdown_function('session_write_close');
-
-session_start();
-// устанавливаем и получаем значения по ключу из $_SESSION
-]]>
-    </programlisting>
-   </example>
   </para>
  </refsect1>
 
@@ -401,23 +312,7 @@ session_start();
   &reftitle.notes;
   <warning>
    <para>
-    При использовании объектов в качестве обработчиков хранения сессии, важно регистрировать
-    функцию завершения с помощью PHP, чтобы избежать непредвиденных побочных эффектов от того,
-    как внутренний механизм PHP уничтожает объекты при завершении, что может предотвратить
-    вызовы <parameter>write</parameter> и <parameter>close</parameter>. Как правило, вы должны
-    регистрировать <parameter>'session_write_close'</parameter>, используя функцию
-    <function>register_shutdown_function</function>.
-   </para>
-   <para>
-    Начиная с PHP 5.4.0 вы можете использовать <function>session_register_shutdown</function> или
-    просто установить флаг 'register_shutdown' при вызове <function>session_set_save_handler</function>,
-    используя метод ООП и передать экземпляр класса, реализующего интерфейс
-    <classname>SessionHandlerInterface</classname>.
-   </para>
-  </warning>
-  <warning>
-   <para>
-    Начиная с версии PHP 5.0.5 обработчики <parameter>write</parameter> и
+    Обработчики <parameter>write</parameter> и
     <parameter>close</parameter> вызываются после деструктора объекта и
     поэтому не могут использовать его контекст или бросать исключения. Исключения
     не могут быть обработаны, так как не будут пойманы, не будет отражена трассировка
@@ -450,7 +345,7 @@ session_start();
      Директива <link linkend="ini.session.serialize-handler">session.serialize_handler</link>
     </member>
     <member><function>register_shutdown_function</function></member>
-    <member><function>session_register_shutdown</function> для PHP 5.4.0+</member>
+    <member><function>session_register_shutdown</function></member>
     <member>
      Обратитесь к <link xlink:href="&url.session-save-handler;">save_handler.inc</link>
      для полного набора рекомендаций по реализации
