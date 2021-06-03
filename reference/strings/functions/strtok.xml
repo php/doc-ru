@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2f4863e1f6066a7bc7802164a8f46cd46b067132 Maintainer: shein Status: ready -->
+<!-- EN-Revision: f1def1dea90866604da2ed230a2941778dd05802 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="function.strtok" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -37,6 +37,19 @@
    делиться по любому найденному символу, присутствующему в
    параметре (<parameter>token</parameter>).
   </para>
+  <note>
+   <para>
+    Функция ведёт себя немного иначе, чем можно было бы ожидать,
+    знакомясь с <function>explode</function>.
+    Во-первых, последовательность из двух или более смежных символов <parameter>token</parameter> в анализируемой строке считается одним разделителем.
+    Также игнорируется <parameter>token</parameter>, расположенный в начале или конце строки.
+    Например, если используется строка <literal>";aaa;;bbb;"</literal>,
+    последовательные вызовы <function>strtok</function> с <literal>";"</literal> в качестве <parameter>token</parameter>
+    вернут строки "aaa" и "bbb", а затем &false;.
+    В результате строка будет разделена только на два элемента, а
+    <literal>explode(";", $string)</literal> вернёт массив из 5 элементов.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -108,6 +121,35 @@ var_dump($first_token, $second_token);
 <![CDATA[
     string(9) "something"
     bool(false)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Различие между <function>strtok</function> и <function>explode</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$string = ";aaa;;bbb;";
+
+$parts = [];
+$tok = strtok($string, ";");
+while ($tok !== false) {
+    $parts[] = $tok;
+    $tok = strtok(";");
+}
+echo json_encode($parts),"\n";
+
+$parts = explode(";", $string);
+echo json_encode($parts),"\n";
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+["aaa","bbb"]
+["","aaa","","bbb",""]
 ]]>
     </screen>
    </example>
