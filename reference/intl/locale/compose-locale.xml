@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 656d1610af1a960d87c8b7056e54d0d4c75fb123 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e9340fb6bcb73976f0d18225b9fdbb49ba034100 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: yes Maintainer: sergey -->
 <!-- $Revision$ -->
 <refentry xml:id="locale.composelocale" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -45,21 +45,22 @@
      <term><parameter>subtags</parameter></term>
      <listitem>
       <para>
-       Массив, содержащий список пар ключ-значение, где ключи являются
+       Массив (&array;), содержащий список пар ключ-значение, где ключи являются
        именами подтегов идентификатора локали, а значения, соответственно,
        значениями этих подтегов.
        <note>
         <para>
-         Подтегов 'variant' и 'private' может быть не более 15, подтегов
-         'extlang' не более 3 и т.д. Варианты допустимы с суффиксами
+         Подтегов <literal>'variant'</literal> и <literal>'private'</literal> может быть не более 15, подтегов
+         <literal>'extlang'</literal> не более 3 и т.д. Варианты допустимы с суффиксами
          от 0 до 14. Ключи для этого подтега должны называться так:
-         variant0, variant1, ...,variant14. В возвращаемом идентификаторе локали, подтеги
-         будут отсортированы по этому суффиксу.
+         <literal>variant0</literal>, <literal>variant1</literal>, …,<literal>variant14</literal>.
+         В возвращаемом идентификаторе локали вложенный тег упорядочен по суффиксу, в результате чего следует <literal>variant0</literal>, за которым следует <literal>variant1</literal>,
+         за которым следует <literal>variant2</literal> и так далее.
         </para>
         <para>
-         Множественные подтеги 'variant', 'private' и 'extlang' можно задать в виде массива под
-         соответствующим ключом (например 'variant') или как несколько ключей с числовыми
-         суффиксами ('variant0', 'variant1', и т.д.).
+         В качестве альтернативы, множественные подтеги <literal>'variant'</literal>, <literal>'private'</literal> и <literal>'extlang'</literal> можно задать в виде массива под
+         соответствующим ключом (например <literal>'variant'</literal>).
+         В этом случае ограничения на количество распознанных вложенных тегов не применяются.
         </para>
        </note>
       </para>
@@ -85,15 +86,15 @@
 <![CDATA[
 <?php
 $arr = array(
-    'language'=>'en' ,
-    'script'  =>'Hans' ,
+    'language'=>'en',
+    'script'  =>'Hans',
     'region'  =>'CN',
-    'variant2'=>'rozaj' ,
-    'variant1'=>'nedis' ,
-    'private1'=>'prv1' ,
-    'private2'=>'prv2'
+    'variant2'=>'rozaj',
+    'variant1'=>'nedis',
+    'private1'=>'prv1',
+    'private2'=>'prv2',
 );
-echo locale_compose( $arr );
+echo locale_compose($arr);
 ?>
 ]]>
    </programlisting>
@@ -105,14 +106,14 @@ echo locale_compose( $arr );
 <?php
 $arr = array(
     'language'=>'en' ,
-    'script'  =>'Hans' ,
+    'script'  =>'Hans',
     'region'  =>'CN',
-    'variant2'=>'rozaj' ,
-    'variant1'=>'nedis' ,
-    'private1'=>'prv1' ,
-    'private2'=>'prv2'
+    'variant2'=>'rozaj',
+    'variant1'=>'nedis',
+    'private1'=>'prv1',
+    'private2'=>'prv2',
 );
-echo Locale::composeLocale( $arr );
+echo Locale::composeLocale($arr);
 ?>
 ]]>
    </programlisting>
@@ -121,6 +122,46 @@ echo Locale::composeLocale( $arr );
   <screen>
 <![CDATA[
 Locale: en_Hans_CN_nedis_rozaj_x_prv1_prv2
+]]>
+  </screen>
+
+  <example xml:id="locale.composelocale.example.limits">
+   <title>Пределы подтегов</title>
+   <para>
+    Если <parameter>subtags</parameter> заданы как отдельные ключи с числовым суффиксом,
+    неподдерживаемые ключи игнорируются (в данном случае <literal>'extlang3'</literal>) и упорядочиваются в результате по числовому суффиксу.
+    Нет никаких ограничений, если вложенные теги заданы как массив (&array;); упорядочены как указаны.
+   </para>
+   <programlisting role="php">
+    <![CDATA[
+<?php
+$arr = array(
+    'language' => 'en',
+    'script'   => 'Hans',
+    'region'   => 'CN',
+    'extlang3' => 'd',
+    'extlang2' => 'c',
+    'extlang1' => 'b',
+    'extlang0' => 'a',
+);
+echo locale_compose($arr), PHP_EOL;
+
+$arr = array(
+    'language' => 'en',
+    'script'   => 'Hans',
+    'region'   => 'CN',
+    'extlang'  => ['a', 'b', 'c', 'd'],
+);
+echo locale_compose($arr), PHP_EOL;
+?>
+]]>
+   </programlisting>
+  </example>
+  &example.outputs;
+  <screen>
+<![CDATA[
+en_a_b_c_Hans_CN
+en_a_b_c_d_Hans_CN
 ]]>
   </screen>
  </refsect1>

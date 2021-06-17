@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 5770355a66d2949f3132c7c6f4808dc035121a42 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 14e3e35ca0c82b3b5fb3fd71b9dd70e9eb250ab1 Maintainer: lex Status: ready -->
 <!-- Reviewed: yes Maintainer: sergey -->
 <refentry xml:id="function.sodium-crypto-box-seal" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>sodium_crypto_box_seal</refname>
-  <refpurpose>Зашифровать сообщение</refpurpose>
+  <refpurpose>Шифрование открытым ключом без проверки подлинности</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,11 +16,21 @@
    <methodparam><type>string</type><parameter>public_key</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   Шифрует сообщение так, что только получатель может его расшифровать.
   </para>
-
-  &warn.undocumented.func;
-
+  <para>
+   В отличие от <function>sodium_crypto_box</function>, вам нужно знать только открытый ключ получателя,
+   чтобы использовать <function>sodium_crypto_box_seal</function>.
+   Однако одним из следствий этого удобства является то, что зашифрованный текст не привязан к статическому открытому ключу и, следовательно, не аутентифицируется.
+   Следовательно, шифрование открытым ключом без проверки подлинности.
+  </para>
+  <para>
+   <function>sodium_crypto_box_seal</function> по-прежнему обеспечивает целостность зашифрованного текста.
+   Только не проверяет подлинность отправителя.
+  </para>
+  <para>
+   Если вам также нужна проверка подлинности отправителя, лучше всего начать с функций <function>sodium_crypto_sign</function>.
+  </para>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -30,7 +40,7 @@
     <term><parameter>message</parameter></term>
     <listitem>
      <para>
-
+      Сообщение, которое нужно зашифровать.
      </para>
     </listitem>
    </varlistentry>
@@ -38,7 +48,7 @@
     <term><parameter>public_key</parameter></term>
     <listitem>
      <para>
-
+      Открытый ключ, соответствующий единственному ключу, который может расшифровать сообщение.
      </para>
     </listitem>
    </varlistentry>
@@ -48,9 +58,41 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-
+   Строка зашифрованного текста в формате (одноразовый открытый ключ, зашифрованное сообщение, тег аутентификации).
   </para>
  </refsect1>
+
+ <refsect1 role="examples"><!-- {{{ -->
+  &reftitle.examples;
+  <example xml:id="sodium-crypto-box-seal.example.basic"><!-- {{{ -->
+   <title>Пример использования <function>sodium_crypto_box_seal</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$keypair = sodium_crypto_box_keypair();
+$public_key = sodium_crypto_box_publickey($keypair);
+
+// Обфусцированный текст, чтобы сделать пример более увлекательным
+$plaintext_b64 = "V3JpdGluZyBzb2Z0d2FyZSBpbiBQSFAgY2FuIGJlIGEgZGVsaWdodCE=";
+$decoded_plaintext = sodium_base642bin($plaintext_b64, SODIUM_BASE64_VARIANT_ORIGINAL);
+
+$sealed = sodium_crypto_box_seal($decoded_plaintext, $public_key);
+var_dump(base64_encode($sealed));
+
+$opened = sodium_crypto_box_seal_open($sealed, $keypair);
+var_dump($opened);
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+string(120) "oRBXXAV4iQBrxlV4A21Bord8Yo/D8ZlrIIGNyaRCcGBfpz0map52I3xq6l+CST+1NSgQkbV+HiYyFjXWiWiaCGupGf+zl4bgWj/A9Adtem7Jt3h3emrMsLw="
+string(41) "Writing software in PHP can be a delight!"
+]]>
+   </screen>
+  </example><!-- }}} -->
+ </refsect1><!-- }}} -->
 
 
 </refentry>
