@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 2d5c6bed30ea22d847bf03dad1072f075694b4c3 Maintainer: irker Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <refentry xml:id="mysqli-stmt.affected-rows" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_stmt::$affected_rows</refname>
   <refname>mysqli_stmt_affected_rows</refname>
-  <refpurpose>Возвращает общее количество строк, изменённых, удалённых или
-   добавленных последним выполненным выражением
+  <refpurpose>Возвращает общее количество строк, изменённых, удалённых, вставленных
+   или сопоставленных последним выполненным выражением
   </refpurpose>
  </refnamediv>
 
@@ -23,11 +23,7 @@
   <para>
    Возвращает количество строк, изменённых запросом <literal>INSERT</literal>,
    <literal>UPDATE</literal> или <literal>DELETE</literal>.
-  </para>
-  <para>
-   Эта функция работает только с запросами, обновляющими таблицу. Для получения
-   количества строк для запроса SELECT используйте вместо неё
-   <function>mysqli_stmt_num_rows</function>.
+   Работает аналогично <function>mysqli_stmt_num_rows</function> для выражений <literal>SELECT</literal>.
   </para>
  </refsect1>
 
@@ -43,13 +39,13 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Целое число больше нуля показывает количество изменённых или найденных
-   строк.
-   Ноль показывает, что не было обновлено ни одной записи для оператора
-   UPDATE/DELETE, ни одна строка не удовлетворила условию WHERE в запросе
-   или что ни один запрос ещё не выполнен. -1 показывает, что запрос
-   выполнен с ошибкой. NULL показывает, что функция получила неверный
-   аргумент.
+   Целое число больше нуля указывает количество затронутых или извлечённых строк.
+   Ноль означает, что записи для оператора <literal>UPDATE</literal> не обновлялись,
+   ни одна строка не соответствовала выражению <literal>WHERE</literal> в запросе
+   или что ни один запрос ещё не был выполнен.
+   <literal>-1</literal> означает, что во время выполнения запроса произошла ошибка
+   или что для запроса <literal>SELECT</literal>, <function>mysqli_stmt_affected_rows</function>
+   была вызваны до вызова <function>mysqli_stmt_store_result</function>.
   </para>
   <note>
    <para>
@@ -63,81 +59,58 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>&style.oop;</title>
+   <title>Пример использования <methodname>mysqli_stmt_affected_rows</methodname></title>
+   <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Подключение не удалось: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
 /* создание временной таблицы */
 $mysqli->query("CREATE TEMPORARY TABLE myCountry LIKE Country");
 
 $query = "INSERT INTO myCountry SELECT * FROM Country WHERE Code LIKE ?";
 
-/* подготовленное выражение */
-if ($stmt = $mysqli->prepare($query)) {
+/* подготовка выражения */
+$stmt = $mysqli->prepare($query);
 
-    /* привязка переменной к метке */
-    $code = 'A%';
-    $stmt->bind_param("s", $code);
+/* связывание переменных */
+$code = 'A%';
+$stmt->bind_param("s", $code);
 
-    /* выполнение выражения */
-    $stmt->execute();
+/* выполнение выражения */
+$stmt->execute();
 
-    printf("Добавлено строк: %d\n", $stmt->affected_rows);
-
-    /* закрытие подготовленного выражения */
-    $stmt->close();
-}
-
-/* закрытие соединения */
-$mysqli->close();
+printf("Добавлено строк: %d\n", $stmt->affected_rows);
 ?>
 ]]>
    </programlisting>
-  </example>
-  <example>
-   <title>&style.procedural;</title>
+   <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Подключение не удалось: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
 /* создание временной таблицы */
 mysqli_query($link, "CREATE TEMPORARY TABLE myCountry LIKE Country");
 
 $query = "INSERT INTO myCountry SELECT * FROM Country WHERE Code LIKE ?";
 
-/* подготовленное выражение */
-if ($stmt = mysqli_prepare($link, $query)) {
+/* подготовка выражения */
+$stmt = mysqli_prepare($link, $query);
 
-    /* привязка переменной к метке */
-    $code = 'A%';
-    mysqli_stmt_bind_param($stmt, "s", $code);
+/* связывание переменных */
+$code = 'A%';
+mysqli_stmt_bind_param($stmt, "s", $code);
 
-    /* выполнение выражения */
-    mysqli_stmt_execute($stmt);
+/* выполнение выражения */
+mysqli_stmt_execute($stmt);
 
-    printf("Добавлено строк: %d\n", mysqli_stmt_affected_rows($stmt));
-
-    /* закрытие подготовленного выражения */
-    mysqli_stmt_close($stmt);
-}
-
-/* закрытие соединения */
-mysqli_close($link);
+printf("Добавлено строк: %d\n", mysqli_stmt_affected_rows($stmt));
 ?>
 ]]>
       </programlisting>
@@ -155,7 +128,7 @@ mysqli_close($link);
   <para>
    <simplelist>
     <member><function>mysqli_stmt_num_rows</function></member>
-    <member><function>mysqli_prepare</function></member>
+    <member><function>mysqli_stmt_store_result</function></member>
    </simplelist>
   </para>
  </refsect1>

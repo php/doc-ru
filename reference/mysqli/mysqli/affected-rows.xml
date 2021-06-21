@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: mch Status: ready -->
+<!-- EN-Revision: cdd4a9f3a6a2b1fb18f0660829cbab1af7e9a701 Maintainer: mch Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli.affected-rows" xmlns="http://docbook.org/ns/docbook">
@@ -22,10 +22,7 @@
    Возвращает число строк, затронутых последним запросом <literal>INSERT</literal>,
    <literal>UPDATE</literal>, <literal>REPLACE</literal> или
    <literal>DELETE</literal>.
-  </para>
-  <para>
-   Для запросов вида SELECT <function>mysqli_affected_rows</function> работает
-   как <function>mysqli_num_rows</function>.
+   Работает аналогично <function>mysqli_num_rows</function> для выражений <literal>SELECT</literal>.
   </para>
  </refsect1>
 
@@ -43,15 +40,17 @@
   <para>
    Целое число, большее нуля, означает количество затронутых или полученных
    строк.
-   Ноль означает, что запросом вида UPDATE не обновлено ни одной записи, или
-   что ни одна строка не соответствует условию <literal>WHERE</literal> в запросе, или
-   что запрос ещё не был выполнен.
-   Значение -1 указывает на то, что запрос вернул ошибку.
+   Ноль означает, что записи для оператора <literal>UPDATE</literal> не обновлялись,
+   ни одна строка не соответствовала выражению <literal>WHERE</literal> в запросе
+   или что ни один запрос ещё не был выполнен.
+   <literal>-1</literal> означает, что во время выполнения запроса произошла ошибка
+   или что <function>mysqli_affected_rows</function> была вызвана для
+   небуферизованного запроса <literal>SELECT</literal>.
   </para>
   <note>
    <para>
-    Если число затронутых строк больше чем максимальное значение int (<constant> PHP_INT_MAX </constant>),
-    то число затронутых строк будет возвращено в строковом виде (string).
+    Если число затронутых строк больше чем максимальное значение целого числа (<constant>PHP_INT_MAX</constant>),
+    то число затронутых строк будет возвращено в виде строки.
    </para>
   </note>
  </refsect1>
@@ -64,39 +63,30 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* Проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Подключение не удалось: %s\n", mysqli_connect_error());
-    exit();
-}
-
-/* Добавление строк (Insert) */
+/* Добавление строк */
 $mysqli->query("CREATE TABLE Language SELECT * from CountryLanguage");
 printf("Затронутые строки (INSERT): %d\n", $mysqli->affected_rows);
 
 $mysqli->query("ALTER TABLE Language ADD Status int default 0");
 
-/* Обновление строк (Update) */
+/* Обновление строк */
 $mysqli->query("UPDATE Language SET Status=1 WHERE Percentage > 50");
 printf("Затронутые строки (UPDATE): %d\n", $mysqli->affected_rows);
 
-/* Удаление строк (Delete) */
+/* Удаление строк */
 $mysqli->query("DELETE FROM Language WHERE Percentage < 50");
 printf("Затронутые строки (DELETE): %d\n", $mysqli->affected_rows);
 
-/* Выбор всех строк (Select) */
+/* Выборка всех строк */
 $result = $mysqli->query("SELECT CountryCode FROM Language");
 printf("Затронутые строки (SELECT): %d\n", $mysqli->affected_rows);
 
-$result->close();
-
 /* Удаление таблицы Language */
 $mysqli->query("DROP TABLE Language");
-
-/* Закрытие соединения */
-$mysqli->close();
 ?>
 ]]>
    </programlisting>
@@ -104,38 +94,30 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-if (!$link) {
-    printf("Не могу подключиться к localhost. Ошибка: %s\n", mysqli_connect_error());
-    exit();
-}
-
-/* Добавление строк (Insert) */
+/* Добавление строк */
 mysqli_query($link, "CREATE TABLE Language SELECT * from CountryLanguage");
 printf("Затронутые строки (INSERT): %d\n", mysqli_affected_rows($link));
 
 mysqli_query($link, "ALTER TABLE Language ADD Status int default 0");
 
-/* Обновление строк (Update) */
+/* Обновление строк */
 mysqli_query($link, "UPDATE Language SET Status=1 WHERE Percentage > 50");
 printf("Затронутые строки (UPDATE): %d\n", mysqli_affected_rows($link));
 
-/* Удаление строк (Delete) */
+/* Удаление строк */
 mysqli_query($link, "DELETE FROM Language WHERE Percentage < 50");
 printf("Затронутые строки (DELETE): %d\n", mysqli_affected_rows($link));
 
-/* Выбор всех строк (Select) */
+/* Выборка всех строк */
 $result = mysqli_query($link, "SELECT CountryCode FROM Language");
 printf("Затронутые строки (SELECT): %d\n", mysqli_affected_rows($link));
 
-mysqli_free_result($result);
-
 /* Удаление таблицы Language */
 mysqli_query($link, "DROP TABLE Language");
-
-/* Закрытие соединения */
-mysqli_close($link);
 ?>
 ]]>
    </programlisting>
