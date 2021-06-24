@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: bfl Status: ready -->
+<!-- EN-Revision: e994a8d5be2529d508f6ee45fb53ca60502a7c9e Maintainer: bfl Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <refentry xml:id="mysqli-stmt.num-rows" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_stmt::$num_rows</refname>
   <refname>mysqli_stmt::num_rows</refname>
   <refname>mysqli_stmt_num_rows</refname>
-  <refpurpose>Возвращает число строк в результате запроса</refpurpose>
+  <refpurpose>Возвращает количество строк, полученных с сервера</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -24,15 +24,12 @@
    <methodparam><type>mysqli_stmt</type><parameter>statement</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает число строк в результате запроса.
-   Результат выполнения <function>mysqli_stmt_num_rows</function> зависит
-   от того использовалась ли <function>mysqli_stmt_store_result</function>
-   для буферизации результата выборки в дескрипторе.
+   Возвращает количество строк, помещённых в буфер в выражении. Функция будет
+   работать только после вызова <function>mysqli_stmt_store_result</function> для буферизации
+   всего набора результатов в дескрипторе оператора.
   </para>
   <para>
-   Если используется <function>mysqli_stmt_store_result</function>,
-   <function>mysqli_stmt_num_rows</function> может быть вызвана в тот же
-   момент.
+   Функция возвращает <literal>0</literal>, если с сервера не были получены все строки.
   </para>
  </refsect1>
 
@@ -48,7 +45,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Целое число, отражающее число строк в результате запроса.
+   Целое число (<type>int</type>), представляющее количество буферизованных строк.
+   Возвращает <literal>0</literal> в небуферизованном режиме, если с
+   сервера не были получены все строки.
   </para>
  </refsect1>
 
@@ -59,33 +58,18 @@
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Открыть соединение */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* Проверить соединение */
-if (mysqli_connect_errno()) {
-    printf("Ошибка соединения: %s\n", mysqli_connect_error());
-    exit();
-}
-
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name LIMIT 20";
-if ($stmt = $mysqli->prepare($query)) {
+$stmt = $mysqli->prepare($query);
+$stmt->execute();
 
-    /* Выполнить запрос */
-    $stmt->execute();
+/* сохранение результата во внутреннем буфере */
+$stmt->store_result();
 
-    /* Сохранить результат */
-    $stmt->store_result();
-
-    printf("Число строк: %d.\n", $stmt->num_rows);
-
-    /* Закрыть выражение */
-    $stmt->close();
-}
-
-/* Закрыть соединение */
-$mysqli->close();
-?>
+printf("Число строк: %d.\n", $stmt->num_rows);
 ]]>
    </programlisting>
   </example>
@@ -94,33 +78,18 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Открыть соединение */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* Проверить соединение */
-if (mysqli_connect_errno()) {
-    printf("Ошибка соединения: %s\n", mysqli_connect_error());
-    exit();
-}
-
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name LIMIT 20";
-if ($stmt = mysqli_prepare($link, $query)) {
+$stmt = mysqli_prepare($link, $query);
+mysqli_stmt_execute($stmt);
 
-    /* Выполнить запрос */
-    mysqli_stmt_execute($stmt);
+/* сохранение результата во внутреннем буфере */
+mysqli_stmt_store_result($stmt);
 
-    /* Сохранить результат */
-    mysqli_stmt_store_result($stmt);
-
-    printf("Число строк: %d.\n", mysqli_stmt_num_rows($stmt));
-
-    /* Закрыть выражение */
-    mysqli_stmt_close($stmt);
-}
-
-/* Закрыть соединение */
-mysqli_close($link);
-?>
+printf("Число строк: %d.\n", mysqli_stmt_num_rows($stmt));
 ]]>
    </programlisting>
    &examples.outputs;
@@ -136,9 +105,9 @@ mysqli_close($link);
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member><function>mysqli_stmt_store_result</function></member>
     <member><function>mysqli_stmt_affected_rows</function></member>
     <member><function>mysqli_prepare</function></member>
-    <member><function>mysqli_stmt_store_result</function></member>
    </simplelist>
   </para>
  </refsect1>
