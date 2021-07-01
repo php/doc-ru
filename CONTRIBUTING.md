@@ -66,7 +66,7 @@ php doc-base/scripts/revcheck.php ru > revcheck.html
 
 ### Просмотр изменений
 
-Чтобы посмотреть, какие изменения были произведены выполните следующую команду:
+Чтобы посмотреть, какие изменения были произведены, выполните следующую команду:
 
 ```
 git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e0199307d87dd3739f719b reference/array/functions/in-array.xml
