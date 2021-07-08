@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7f569e1f175adf1fbd0e462eba8d6bc82214c939 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 9c9b8f3e66ec3cb9a2e638bec8d2be2b8cfc0ff2 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli.query" xmlns="http://docbook.org/ns/docbook">
@@ -15,16 +15,16 @@
   &reftitle.description;
   <para>&style.oop;</para>
   <methodsynopsis role="oop">
-   <modifier>public</modifier> <type>mixed</type><methodname>mysqli::query</methodname>
+   <modifier>public</modifier> <type class="union"><type>mysqli_result</type><type>bool</type></type><methodname>mysqli::query</methodname>
    <methodparam><type>string</type><parameter>query</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>resultmode</parameter><initializer>MYSQLI_STORE_RESULT</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>result_mode</parameter><initializer><constant>MYSQLI_STORE_RESULT</constant></initializer></methodparam>
   </methodsynopsis>
   <para>&style.procedural;</para>
-  <methodsynopsis>
-   <type>mixed</type><methodname>mysqli_query</methodname>
-   <methodparam><type>mysqli</type><parameter>link</parameter></methodparam>
+  <methodsynopsis role="procedural">
+   <type class="union"><type>mysqli_result</type><type>bool</type></type><methodname>mysqli_query</methodname>
+   <methodparam><type>mysqli</type><parameter>mysql</parameter></methodparam>
    <methodparam><type>string</type><parameter>query</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>resultmode</parameter><initializer>MYSQLI_STORE_RESULT</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>result_mode</parameter><initializer><constant>MYSQLI_STORE_RESULT</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
    Выполняет запрос <parameter>query</parameter> к базе данных.
@@ -80,32 +80,41 @@
       <para>
        Текст запроса.
       </para>
-      <para>
-       Данные в тексте запроса должны быть <link
-       linkend="mysqli.real-escape-string">правильно экранированы</link>.
-      </para>
+      <warning>
+       <title>Предупреждение безопасности: SQL-инъекция</title>
+       <para>
+        Если запрос содержит какие-либо входные переменные, вместо этого следует
+        использовать <link linkend="mysqli.quickstart.prepared-statements">подготавливаемые запросы</link>.
+        В качестве альтернативы данные должны быть правильно отформатированы
+        и все строки должны быть экранированы с помощью функции <function>mysqli_real_escape_string</function>.
+       </para>
+      </warning>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>resultmode</parameter></term>
+     <term><parameter>result_mode</parameter></term>
      <listitem>
       <para>
-       Либо константа <constant>MYSQLI_USE_RESULT</constant>, либо
-       <constant>MYSQLI_STORE_RESULT</constant> в зависимости от требуемого
-       поведения функции. По умолчанию используется
-       <constant>MYSQLI_STORE_RESULT</constant>.
+       Режим результата может быть одной из 3 констант, указывающих,
+       как результат будет возвращён сервером MySQL.
       </para>
       <para>
-       При использовании <constant>MYSQLI_USE_RESULT</constant> все последующие
-       вызовы этой функции будут возвращать ошибку
-       <literal>Commands out of sync</literal> до тех пор, пока не будет вызвана
-       функция <function>mysqli_free_result</function>
+       <constant>MYSQLI_STORE_RESULT</constant> (по умолчанию) - возвращает объект
+       <classname>mysqli_result</classname> с буферизованным набором результатов.
       </para>
       <para>
-       С константой <constant>MYSQLI_ASYNC</constant> (доступна при использовании
-       mysqlnd) возможно выполнять запросы асинхронно. В этом случае для получения
-       результатов каждого запроса необходимо использовать функцию
-       <function>mysqli_poll</function>.
+       <constant>MYSQLI_USE_RESULT</constant> - возвращает объект
+       <classname>mysqli_result</classname> с небуферизованным набором результатов.
+       Пока есть отложенные записи, ожидающие выборки, линия соединения будет занята
+       и все последующие вызовы будут возвращать ошибку <literal>Commands out of sync</literal>.
+       Чтобы избежать ошибки, все записи должны быть получены с сервера или набор результатов должен быть отброшен путём вызова <function>mysqli_free_result</function>.
+      </para>
+      <para>
+       <constant>MYSQLI_ASYNC</constant> (доступно с mysqlnd) - запрос выполняется асинхронно, набор результатов сразу не возвращается.
+       Затем используется <function>mysqli_poll</function> для получения результатов по этим запросам.
+       Используется в сочетании с константой
+       <constant>MYSQLI_STORE_RESULT</constant> или
+       <constant>MYSQLI_USE_RESULT</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -116,11 +125,10 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &false; в случае неудачи. В случае успешного выполнения запросов
-   <literal>SELECT, SHOW, DESCRIBE</literal> или
-   <literal>EXPLAIN</literal> <function>mysqli_query</function> вернёт объект
-   <classname>mysqli_result</classname>. Для остальных успешных запросов
-   <function>mysqli_query</function> вернёт &true;.
+   Возвращает &false; в случае возникновения ошибки. В случае успешного выполнения запросов,
+   которые создают набор результатов, таких как <literal>SELECT, SHOW, DESCRIBE</literal> или
+   <literal>EXPLAIN</literal>, <function>mysqli_query</function> вернёт объект <classname>mysqli_result</classname>.
+   Для остальных успешных запросов <function>mysqli_query</function> вернёт &true;.
   </para>
  </refsect1>
 
@@ -132,90 +140,59 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if ($mysqli->connect_errno) {
-    printf("Не удалось подключиться: %s\n", $mysqli->connect_error);
-    exit();
-}
+/* Создание таблицы, не возвращает набор результатов */
+$mysqli->query("CREATE TEMPORARY TABLE myCity LIKE City");
+printf("Таблица myCity создана.\n");
 
-/* Создание таблицы не возвращает результирующего набора */
-if ($mysqli->query("CREATE TEMPORARY TABLE myCity LIKE City") === TRUE) {
-    printf("Таблица myCity успешно создана.\n");
-}
-
-/* Select запросы возвращают результирующий набор */
-if ($result = $mysqli->query("SELECT Name FROM City LIMIT 10")) {
-    printf("Select вернул %d строк.\n", $result->num_rows);
-
-    /* очищаем результирующий набор */
-    $result->close();
-}
+/* Запросы SELECT, возвращают набор результатов */
+$result = $mysqli->query("SELECT Name FROM City LIMIT 10");
+printf("Запрос SELECT вернул %d строк.\n", $result->num_rows);
 
 /* Если нужно извлечь большой объем данных, используем MYSQLI_USE_RESULT */
-if ($result = $mysqli->query("SELECT * FROM City", MYSQLI_USE_RESULT)) {
+$result = $mysqli->query("SELECT * FROM City", MYSQLI_USE_RESULT);
 
-    /* Важно заметить, что мы не можем вызывать функции, которые взаимодействуют
-       с сервером, пока не закроем результирующий набор. Все подобные вызовы
-       будут вызывать ошибку 'out of sync' */
-    if (!$mysqli->query("SET @a:='this will not work'")) {
-        printf("Ошибка: %s\n", $mysqli->error);
-    }
-    $result->close();
-}
-
-$mysqli->close();
-?>
+/* Важно заметить, что мы не можем вызывать функции, которые взаимодействуют
+   с сервером, пока не закроем набор результатов. Все подобные вызовы
+   будут вызывать ошибку 'out of sync' */
+$mysqli->query("SET @a:='this will not work'");
 ]]>
    </programlisting>
    <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
+/* Создание таблицы, не возвращает набор результатов */
+mysqli_query($link, "CREATE TEMPORARY TABLE myCity LIKE City");
+printf("Таблица myCity создана.\n");
 
-/* Создание таблицы не возвращает результирующего набора */
-if (mysqli_query($link, "CREATE TEMPORARY TABLE myCity LIKE City") === TRUE) {
-    printf("Таблица myCity успешно создана.\n");
-}
-
-/* Select запросы возвращают результирующий набор */
-if ($result = mysqli_query($link, "SELECT Name FROM City LIMIT 10")) {
-    printf("Select вернул %d строк.\n", mysqli_num_rows($result));
-
-    /* очищаем результирующий набор */
-    mysqli_free_result($result);
-}
+/* Запросы SELECT, возвращают набор результатов */
+$result = mysqli_query($link, "SELECT Name FROM City LIMIT 10");
+printf("Запрос SELECT вернул %d строк.\n", mysqli_num_rows($result));
 
 /* Если нужно извлечь большой объем данных, используем MYSQLI_USE_RESULT */
-if ($result = mysqli_query($link, "SELECT * FROM City", MYSQLI_USE_RESULT)) {
+$result = mysqli_query($link, "SELECT * FROM City", MYSQLI_USE_RESULT);
 
-    /* Важно заметить, что мы не можем вызывать функции, которые взаимодействуют
-       с сервером, пока не закроем результирующий набор. Все подобные вызовы
-       будут вызывать ошибку 'out of sync' */
-    if (!mysqli_query($link, "SET @a:='this will not work'")) {
-        printf("Ошибка: %s\n", mysqli_error($link));
-    }
-    mysqli_free_result($result);
-}
-
-mysqli_close($link);
-?>
+/* Важно заметить, что мы не можем вызывать функции, которые взаимодействуют
+   с сервером, пока не закроем набор результатов. Все подобные вызовы
+   будут вызывать ошибку 'out of sync' */
+mysqli_query($link, "SET @a:='this will not work'");
 ]]>
    </programlisting>
    &examples.outputs;
    <screen>
 <![CDATA[
-Таблица myCity успешно создана.
-Select вернул 10 строк.
-Ошибка: Commands out of sync;  You can't run this command now
+Таблица myCity создана.
+Запрос SELECT вернул 10 строк.
+
+Fatal error: Uncaught mysqli_sql_exception: Commands out of sync; you can't run this command now in...
 ]]>
    </screen>
   </example>
@@ -227,6 +204,7 @@ Select вернул 10 строк.
    <simplelist>
     <member><function>mysqli_real_query</function></member>
     <member><function>mysqli_multi_query</function></member>
+    <member><function>mysqli_prepare</function></member>
     <member><function>mysqli_free_result</function></member>
    </simplelist>
   </para>
