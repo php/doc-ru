@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- $Revision$ -->
+<!-- EN-Revision: 9da37a457ac3f846c659ec17977eca4fd235cadb Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+
+<refentry xml:id="sqlite3.setauthorizer" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>SQLite3::setAuthorizer</refname>
+  <refpurpose>Устанавливает callback-функцию, которая будет использоваться в
+   качестве авторизатора для ограничения действий выражения</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <type>bool</type><methodname>SQLite3::setAuthorizer</methodname>
+   <methodparam><type class="union"><type>callable</type><type>null</type></type><parameter>callback</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Устанавливает callback-функцию, которая будет вызываться SQLite каждый раз
+   при выполнении действия (чтение, удаление, модификация и т.д.). Это
+   используется при подготовке SQL-выражения из ненадёжного источника, чтобы
+   гарантировать, что SQL-выражения не будут пытаться получить доступ к данным,
+   которые им не разрешено видеть, или чтобы они не пытались выполнить
+   вредоносные выражения, которые повреждают базу данных. Например, приложение
+   может позволить пользователю вводить произвольные SQL-запросы для выполнения
+   в базе данных. Но приложение не хочет, чтобы пользователь мог вносить
+   произвольные изменения в базу данных. Тогда можно установить авторизатор,
+   который запрещает использование любых выражений, кроме SELECT, пока готовится
+   введённый пользователем SQL-запрос.
+  </para>
+  <para>
+   Callback-авторизатор может бывать вызван несколько раз для каждого выражения,
+   подготовленного SQLite. Запросы <literal>SELECT</literal> или
+   <literal>UPDATE</literal> будут вызывать авторизатор для каждой считываемой
+   или модифицируемой колонки.
+  </para>
+  <para>
+   При вызове авторизатора может использоваться до пяти параметров. Первый
+   параметр передаётся всегда, его тип - целое число (<type>int</type>) (код действия),
+   совпадающий с константой <literal>SQLite3</literal>. Другие параметры
+   передаются только для некоторых действий. Данная таблица описывает второй и
+   третий параметры в соответствии с действием:
+   <table>
+    <title>Список кодов действия и параметров</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Действие</entry>
+       <entry>Второй параметр</entry>
+       <entry>Третий параметр</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row><entry><constant>SQLite3::CREATE_INDEX</constant></entry><entry>Имя индекса</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TABLE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TEMP_INDEX</constant></entry><entry>Имя индекса</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TEMP_TABLE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TEMP_TRIGGER</constant></entry><entry>Имя триггера</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TEMP_VIEW</constant></entry><entry>Имя представления</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::CREATE_TRIGGER</constant></entry><entry>Имя триггера</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::CREATE_VIEW</constant></entry><entry>Имя представления</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DELETE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DROP_INDEX</constant></entry><entry>Имя индекса</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::DROP_TABLE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DROP_TEMP_INDEX</constant></entry><entry>Имя индекса</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::DROP_TEMP_TABLE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DROP_TEMP_TRIGGER</constant></entry><entry>Имя триггера</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::DROP_TEMP_VIEW</constant></entry><entry>Имя представления</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DROP_TRIGGER</constant></entry><entry>Имя триггера</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::DROP_VIEW</constant></entry><entry>Имя представления</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::INSERT</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::PRAGMA</constant></entry><entry>Имя pragma</entry><entry>Первый аргумент, переданный pragma, или &null;</entry></row>
+      <row><entry><constant>SQLite3::READ</constant></entry><entry>Имя таблицы</entry><entry>Имя колонки</entry></row>
+      <row><entry><constant>SQLite3::SELECT</constant></entry><entry>&null;</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::TRANSACTION</constant></entry><entry>Операция</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::UPDATE</constant></entry><entry>Имя таблицы</entry><entry>Имя колонки</entry></row>
+      <row><entry><constant>SQLite3::ATTACH</constant></entry><entry>Имя файла</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::DETACH</constant></entry><entry>Имя базы данных</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::ALTER_TABLE</constant></entry><entry>Имя базы данных</entry><entry>Имя таблицы</entry></row>
+      <row><entry><constant>SQLite3::REINDEX</constant></entry><entry>Имя индекса</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::ANALYZE</constant></entry><entry>Имя таблицы</entry><entry>&null;</entry></row>
+      <row><entry><constant>SQLite3::CREATE_VTABLE</constant></entry><entry>Имя таблицы</entry><entry>Имя модуля</entry></row>
+      <row><entry><constant>SQLite3::DROP_VTABLE</constant></entry><entry>Имя таблицы</entry><entry>Имя модуля</entry></row>
+      <row><entry><constant>SQLite3::FUNCTION</constant></entry><entry>&null;</entry><entry>Имя функции</entry></row>
+      <row><entry><constant>SQLite3::SAVEPOINT</constant></entry><entry>Операция</entry><entry>Имя точки сохранения</entry></row>
+      <row><entry><constant>SQLite3::RECURSIVE</constant></entry><entry>&null;</entry><entry>&null;</entry></row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Четвёртым параметром будет имя базы данных (<literal>"main"</literal>,
+   <literal>"temp"</literal> и т.д.), если необходимо.
+  </para>
+  <para>
+   Пятый параметр callback-авторизатора - имя самого внутреннего триггера или
+   представления, ответственного за попытку получения доступа, или &null;, если
+   эта попытка получения доступа произведена напрямую из кода SQL верхнего уровня.
+  </para>
+  <para>
+   Когда callback-функция возвращает <constant>SQLite3::OK</constant>, это
+   значит, что запрошенная операция принята. Когда callback-функция возвращает
+   <constant>SQLite3::DENY</constant>, вызов, запустивший авторизатор, потерпит
+   неудачу с сообщением об ошибке, объясняющим, что доступ запрещён.
+  </para>
+  <para>
+   Если код действия - <constant>SQLite3::READ</constant>, и callback-функция
+   возвращает <constant>SQLite3::IGNORE</constant>, то подготовленное выражение
+   составляется для замены на &null; значения колонки таблицы, которое бы
+   считывалось, если бы вернулся код <constant>SQLite3::OK</constant>. Возврат
+   <constant>SQLite3::IGNORE</constant> может использоваться, чтобы запретить
+   недоверенному пользователю доступ к отдельным колонкам таблицы.
+  </para>
+  <para>
+   Когда на таблицу ссылаются через <literal>SELECT</literal>, но из неё не
+   извлекается ни одного значения колонок, (например, в запросе <literal>"SELECT
+   count(*) FROM table"</literal>), то callback-авторизатор <constant>SQLite3::READ
+   </constant> вызывается один раз для этой таблицы с именем колонки, которое
+   равно пустой строке.
+  </para>
+  <para>
+   Если код действия - <constant>SQLite3::DELETE</constant>, и callback-функция
+   возвращает <constant>SQLite3::IGNORE</constant>, тогда операция DELETE
+   продолжает свою работу, но с выключенной оптимизацией удаления, и все строки
+   удаляются по отдельности.
+  </para>
+  <para>
+   В соединении с базой данных одновременно может использоваться только один
+   авторизатор. Каждый вызов <methodname>SQLite3::setAuthorizer</methodname>
+   перезаписывает предыдущий. Отключить авторизатор можно, передав &null;
+   вместо callback-функции. По умолчанию авторизатор выключен.
+  </para>
+  <para>
+   Callback-авторизатор не должен делать ничего, что изменяет подключение к
+   базе данных, которое вызвало callback-авторизатор.
+  </para>
+  <para>
+   Заметьте, что авторизатор вызывается только тогда, когда выражение
+   подготавливается, а не тогда, когда оно исполняется.
+  </para>
+  <para>
+   Более подробную информацию можно найти в
+   <link xlink:href="&url.sqlite;c3ref/set_authorizer.html">Документации SQLite3</link>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>callback</parameter></term>
+    <listitem>
+     <para>
+      Функция <type>callable</type> для вызова.
+     </para>
+     <para>
+      Если передан &null;, то текущий callback-авторизатор будет отключён.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   &return.success;
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Этот метод не вызывает никаких ошибок, но если авторизатор включён и
+   возвращает некорректное значение, то при подготовке выражения будет вызвана
+   ошибка (или выброшено исключение, в зависимости от использования метода
+   <methodname>SQLite3::enableExceptions</methodname>).
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <methodname>SQLite3::setAuthorizer</methodname></title>
+   <para>
+    В данном примере разрешён доступ только для чтения, и только некоторые из
+    колонок таблицы <literal>users</literal> будут возвращены. Остальные колонки
+    будут заменены на &null;.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$db = new SQLite3('data.sqlite');
+$db->exec('CREATE TABLE users (id, name, password);');
+$db->exec('INSERT INTO users VALUES (1, \'Pauline\', \'Snails4eva\');');
+
+$allowed_columns = ['id', 'name'];
+
+$db->setAuthorizer(function (int $action, ...$args) use ($allowed_columns) {
+    if ($action === SQLite3::READ) {
+        list($table, $column) = $args;
+
+        if ($table === 'users' && in_array($column, $allowed_columns) {
+            return SQLite3::OK;
+        }
+
+        return SQLite3::IGNORE;
+    }
+
+    return SQLite3::DENY;
+});
+
+print_r($db->querySingle('SELECT * FROM users WHERE id = 1;'));
+]]>
+   </programlisting>
+
+   &example.outputs;
+   <screen>
+<![CDATA[
+Array
+(
+    [id] => 1
+    [name] => Pauline
+    [password] =>
+)
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
