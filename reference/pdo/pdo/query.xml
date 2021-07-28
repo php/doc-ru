@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c9c158137b0f4658c29faef4043472dc74896d0c Maintainer: tmn Status: ready -->
+<!-- EN-Revision: f6e0117681a1d76916d1337c19245442a4fd2554 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="pdo.query" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PDO::query</refname>
   <refpurpose>
-   Выполняет SQL-запрос и возвращает результирующий набор в виде объекта
-   PDOStatement
+   Подготавливает и выполняет выражение SQL без заполнителей
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -41,12 +40,12 @@
   </methodsynopsis>
 
   <para>
-   <function>PDO::query</function> выполняет SQL-запрос без подготовки и возвращает
-   результирующий набор (если есть) в виде объекта PDOStatement.
+   <function>PDO::query</function> подготавливает и выполняет выражение SQL за один вызов функции,
+   возвращая выражение как объект <classname>PDOStatement</classname>.
   </para>
   <para>
    Если запрос будет запускаться многократно, для улучшения производительности
-   приложения имеет смысл этот запрос один раз подготовить методом
+   приложения имеет смысл этот запрос один раз подготовить <classname>PDOStatement</classname> методом
    <function>PDO::prepare</function>, а затем запускать на выполнение методом
    <function>PDOStatement::execute</function> столько раз, сколько потребуется.
   </para>
@@ -55,15 +54,15 @@
    результирующего набора, следующий вызов <function>PDO::query</function>
    может потерпеть неудачу. В таких случаях следует вызывать метод
    <function>PDOStatement::closeCursor</function>, который освободит ресурсы
-   базы данных, занятые предыдущим объектом PDOStatement. После этого можно
+   базы данных, занятые предыдущим объектом <classname>PDOStatement</classname>. После этого можно
    безопасно вызывать <function>PDO::query</function>.
   </para>
 
   <note>
    <para>
-    Если передано более двух аргументов, то они будут обработаны, как если
-    бы вы вызвали <function>PDOStatement::setFetchMode</function> применительно к
-    возвращаемому объекту.
+    Если <parameter>query</parameter> содержит заполнители, выражение должно быть подготовлено и выполнено отдельно
+    с использованием методов <function>PDO::prepare</function> и
+    <function>PDOStatement::execute</function>.
    </para>
   </note>
 
@@ -79,18 +78,35 @@
        SQL-запрос для подготовки и выполнения.
       </para>
       <para>
-       Данные в запросе должны быть <link linkend="pdo.quote">правильно экранированы</link>.
+       Если SQL содержит заполнители, вместо этого метода следует использовать <function>PDO::prepare</function> и
+        <function>PDOStatement::execute</function>.
+       В качестве альтернативы, SQL можно подготовить вручную перед вызовом <function>PDO::query</function>,
+       при этом данные должны быть правильно отформатированы с использованием <function>PDO::quote</function>,
+       если драйвер поддерживает это.
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry>
+     <term><parameter>fetchMode</parameter></term>
+      <listitem>
+       <para>
+        Режим выборки по умолчанию для возвращённого <classname>PDOStatement</classname>.
+        Должен быть одной из констант <link linkend="pdo.constants"><literal>PDO::FETCH_*</literal></link>.
+       </para>
+       <para>
+        Если этот аргумент передаётся функции, остальные аргументы будут обрабатываться так,
+        как если бы <methodname>PDOStatement::setFetchMode</methodname> был вызван для полученного объекта выражения.
+        Последующие аргументы зависят от выбранного режима выборки.
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   <function>PDO::query</function> возвращает объект PDOStatement или &false;,
-   если запрос выполнить не удалось.
+   Возвращает объект <classname>PDOStatement</classname>&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -98,12 +114,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Демонстрация работы PDO::query</title>
-    <para>
-     Приятной особенностью <function>PDO::query</function> является то, что
-     после выполнения запроса SELECT можно сразу работать с результирующим набором
-     посредством курсора.
-    </para>
+    <title>SQL без заполнителей может быть выполнен с использованием <function>PDO::query</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
