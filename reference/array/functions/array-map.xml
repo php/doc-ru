@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- $Revision$ -->
-<!-- EN-Revision: f9c4a68ef4f89e51e6d9b905ad3ddb6492386dd3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: d042804100d34f5389fe122b0e1cd41087fd94ba Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.array-map" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -25,6 +25,8 @@
    Количество параметров, передаваемых <parameter>callback</parameter>-функции,
    должно совпадать с количеством массивов,
    переданным функции <function>array_map</function>.
+   Лишние входные массивы игнорируются. Если предоставлено недостаточное
+   количество аргументов, выбрасывается <classname>ArgumentCountError</classname>.
   </para>
  </refsect1>
 
@@ -120,11 +122,16 @@ Array
     <programlisting role="php">
 <![CDATA[
 <?php
-$func = function($value) {
+$func = function(int $value): int {
     return $value * 2;
 };
 
 print_r(array_map($func, range(1, 5)));
+
+// Или с PHP 7.4.0:
+
+print_r(array_map(fn($value): int => $value * 2, range(1, 5)));
+
 ?>
 ]]>
     </programlisting>
@@ -148,12 +155,12 @@ Array
     <programlisting role="php">
 <![CDATA[
 <?php
-function show_Spanish($n, $m)
+function show_Spanish(int $n, string $m): string
 {
     return "Число {$n} по-испански - {$m}";
 }
 
-function map_Spanish($n, $m)
+function map_Spanish(int $n, string $m): array
 {
     return [$n => $m];
 }
@@ -367,6 +374,44 @@ array(1) {
     [1]=>
     string(5) "value"
   }
+}
+]]>
+    </screen>
+   </example>
+   <example>
+    <title><function>array_map</function> - ассоциативные массивы</title>
+    <para>
+     Хотя <function>array_map</function> напрямую не поддерживает использование ключа массива в качестве входных данных,
+     это можно смоделировать с помощью <function>array_keys</function>.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$arr = [
+    'v1' => 'Первый выпуск',
+    'v2' => 'Второй выпуск',
+    'v3' => 'Третий выпуск',
+];
+
+// Примечание: До версии 7.4.0 вместо этого используйте более длинный синтаксис для анонимных функций.
+$callback = fn(string $k, string $v): string => "$k - это $v";
+
+$result = array_map($callback, array_keys($arr), array_values($arr));
+
+var_dump($result);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(3) {
+  [0]=>
+  string(24) "v1 - это Первый выпуск"
+  [1]=>
+  string(25) "v2 - это Второй выпуск"
+  [2]=>
+  string(24) "v3 - это Третий выпуск"
 }
 ]]>
     </screen>
