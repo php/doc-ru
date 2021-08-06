@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 62d53f70bd8d83c2b5abf2b6d39b53657a2f41ae Maintainer: tony2001 Status: ready -->
+<!-- EN-Revision: 6f11457f11d91834e1240c3351d8c4e289371b6d Maintainer: tony2001 Status: ready -->
 <!-- Reviewed: yes Maintainer: rjhdby -->
 <!-- $Revision$ -->
 
@@ -14,56 +14,60 @@
  </para>
  <para>
   <example>
-   <title>classes.inc</title>
+   <title>Определения классов</title>
+   <para><varname>Овощ</varname></para>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-// базовый класс с основными свойствами и методами
 class Vegetable {
+    public $edible;
 
-    var $edible;
-    var $color;
+    public $color;
 
-    function __construct($edible, $color="green")
+    public function __construct($edible, $color = "green")
     {
         $this->edible = $edible;
         $this->color = $color;
     }
 
-    function is_edible()
+    public function isEdible()
     {
         return $this->edible;
     }
 
-    function what_color()
+    public function getColor()
     {
         return $this->color;
     }
+}
 
-} // конец класса Vegetable
+?>
+]]>
+   </programlisting>
+   <para><varname>Шпинат</varname></para>
+   <programlisting role="php">
+<![CDATA[
+<?php
 
-// расширяет базовый класс
 class Spinach extends Vegetable {
+    public $cooked = false;
 
-    var $cooked = false;
-
-    function __construct()
+    public function __construct()
     {
         parent::__construct(true, "green");
     }
 
-    function cook_it()
+    public function cook()
     {
         $this->cooked = true;
     }
 
-    function is_cooked()
+    public function isCooked()
     {
         return $this->cooked;
     }
-
-} // конец класса Spinach
+}
 
 ?>
 ]]>
@@ -80,77 +84,88 @@ class Spinach extends Vegetable {
    <title>test_script.php</title>
    <programlisting role="php">
 <![CDATA[
-<pre>
 <?php
 
-include "classes.inc";
+// зарегистрировать автозагрузчик для загрузки классов
+spl_autoload_register();
 
-// функции-утилиты
-
-function print_vars($obj)
+function printProperties($obj)
 {
-    $arr = get_object_vars($obj);
-    while (list($prop, $val) = each($arr))
+    foreach (get_object_vars($obj) as $prop => $val) {
         echo "\t$prop = $val\n";
-}
-
-function print_methods($obj)
-{
-    $arr = get_class_methods(get_class($obj));
-    foreach ($arr as $method)
-        echo "\tfunction $method()\n";
-}
-
-function class_parentage($obj, $class)
-{
-    if (is_subclass_of($GLOBALS[$obj], $class)) {
-        echo "Object $obj belongs to class " . get_class($GLOBALS[$obj]);
-        echo " подкласс класса $class\n";
-    } else {
-        echo "Объект $obj более не является подклассом $class\n";
     }
 }
 
-// создание экземпляров объектов
+function printMethods($obj)
+{
+    $arr = get_class_methods(get_class($obj));
+    foreach ($arr as $method) {
+        echo "\tфункция $method()\n";
+    }
+}
 
+function objectBelongsTo($obj, $class)
+{
+    if (is_subclass_of($obj, $class)) {
+        echo "Объект принадлежит к классу " . get_class($obj);
+        echo ", подкласс $class\n";
+    } else {
+        echo "Объект не принадлежит к подклассу $class\n";
+    }
+}
+
+// создание 2 объектов
 $veggie = new Vegetable(true, "blue");
 $leafy = new Spinach();
 
-// распечатка информации об объектах
-echo "veggie: CLASS " . get_class($veggie) . "\n";
-echo "leafy: CLASS " . get_class($leafy);
+// вывод информации об объектах
+echo "вегетарианский: CLASS " . get_class($veggie) . "\n";
+echo "листовой: CLASS " . get_class($leafy);
 echo ", PARENT " . get_parent_class($leafy) . "\n";
 
-// показать свойства объекта класса Spinach
-echo "\nveggie: Properties\n";
-print_vars($veggie);
+// показать вегетарианские свойства
+echo "\nвегетарианский: Свойства\n";
+printProperties($veggie);
 
-// и методы объекта базового класса Vegetable
-echo "\nleafy: Methods\n";
-print_methods($leafy);
+// и листовые методы
+echo "\nleafy: Методы\n";
+printMethods($leafy);
 
-echo "\nParentage:\n";
-class_parentage("leafy", "Spinach");
-class_parentage("leafy", "Vegetable");
+echo "\nПроисхождение:\n";
+objectBelongsTo($leafy, Spinach::class);
+objectBelongsTo($leafy, Vegetable::class);
+
 ?>
-</pre>
 ]]>
    </programlisting>
+   &examples.outputs;
+   <screen>
+<![CDATA[
+вегетарианский: CLASS Vegetable
+листовой: CLASS Spinach, PARENT Vegetable
+
+вегетарианский: Свойства
+        edible = 1
+        color = blue
+
+листовой: Методы
+        function __construct()
+        function cook()
+        function isCooked()
+        function isEdible()
+        function getColor()
+
+Происхождение:
+Объект не принадлежит к подклассу Spinach
+Объект принадлежит к классу Spinach, подкласс Vegetable
+]]>
+   </screen>
    <para>
     Важно заметить, что, в приведённом выше примере, объект
     <varname>$leafy</varname> - экземпляр класса
     <classname>Spinach</classname>, который наследует класс
-    <classname>Vegetable</classname>,
-    вследствие чего последняя часть скрипта выведет:
+    <classname>Vegetable</classname>.
    </para>
-   <screen>
-<![CDATA[
-       [...]
-Parentage:
-Object leafy does not belong to a subclass of Spinach
-Object leafy belongs to class spinach a subclass of Vegetable
-]]>
-   </screen>
   </example>
  </para>
 </appendix>

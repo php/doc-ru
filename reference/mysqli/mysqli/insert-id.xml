@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 05ccabd6b1d2b3ab3aaabdffd5d9da285313af88 Maintainer: mch Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli.insert-id" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli::$insert_id</refname>
   <refname>mysqli_insert_id</refname>
-  <refpurpose>Возвращает автоматически генерируемый ID, используя последний запрос</refpurpose>
+  <refpurpose>Возвращает значение, созданное для столбца AUTO_INCREMENT последним запросом</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,19 +19,22 @@
    <methodparam><type>mysqli</type><parameter>mysql</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>mysqli_insert_id</function> возвращает ID, генерируемый запросом
-   (обычно INSERT) к таблице, которая содержит колонку с атрибутом AUTO_INCREMENT. Если
-   последний запрос не был INSERT или UPDATE или в модифицируемой
-   таблице отсутствует колонка с атрибутом AUTO_INCREMENT,
-   данная функция вернёт ноль.
+   Возвращает идентификатор, сгенерированный запросом <literal>INSERT</literal> или
+   <literal>UPDATE</literal> для таблицы со столбцом,
+   имеющим атрибут <literal>AUTO_INCREMENT</literal>.
+   В случае многострочного оператора <literal>INSERT</literal> он возвращает первое автоматически сгенерированное значение,
+   которое было успешно добавлено.
   </para>
-  <note>
-   <para>
-    Выполнение выражения INSERT или UPDATE, используя функцию LAST_INSERT_ID(),
-    также изменяет значение, возвращаемое функцией
-    <function>mysqli_insert_id</function>.
-   </para>
-  </note>
+  <para>
+   Выполнение запроса <literal>INSERT</literal> или <literal>UPDATE</literal> с использованием MySQL-функции <literal>LAST_INSERT_ID()</literal> также изменит значение,
+   возвращаемое <function>mysqli_insert_id</function>.
+   Если <literal>LAST_INSERT_ID(expr)</literal> использовался для генерации значения <literal>AUTO_INCREMENT</literal>,
+   он возвращает значение последнего <literal>expr</literal> вместо сгенерированного значения <literal>AUTO_INCREMENT</literal>.
+  </para>
+  <para>
+   Возвращает <literal>0</literal>, если предыдущий оператор не изменил значение <literal>AUTO_INCREMENT</literal>.
+   <methodname>mysqli_insert_id</methodname> должен вызываться сразу после запроса, сгенерировавшего значение.
+  </para>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -50,10 +53,14 @@
    затронуто предыдущим запросом. Возвращает ноль, если предыдущий
    запрос не затронул таблицы, содержащие поле <literal>AUTO_INCREMENT</literal>.
   </para>
+  <para>
+   Только запросы, выданные с использованием текущего соединения, влияют на возвращаемое значение.
+   На значение не влияют запросы, выданные с использованием других подключений или клиентов.
+  </para>
   <note>
    <para>
     Если число больше максимального значения целого числа, функция
-    <function>mysqli_insert_id</function> вернёт строку.
+    вернёт строку.
    </para>
   </note>
  </refsect1>
@@ -66,54 +73,38 @@
    <programlisting role="php">
 <![CDATA[
 <?php
-$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Соединение не установлено: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
 $mysqli->query("CREATE TABLE myCity LIKE City");
 
 $query = "INSERT INTO myCity VALUES (NULL, 'Stuttgart', 'DEU', 'Stuttgart', 617000)";
 $mysqli->query($query);
 
-printf ("ID новой записи: %d.\n", $mysqli->insert_id);
+printf("ID новой записи: %d.\n", $mysqli->insert_id);
 
 /* удаление таблицы */
 $mysqli->query("DROP TABLE myCity");
-
-/* закрытие соединения */
-$mysqli->close();
-?>
 ]]>
    </programlisting>
    <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Соединение не установлено: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
 mysqli_query($link, "CREATE TABLE myCity LIKE City");
 
 $query = "INSERT INTO myCity VALUES (NULL, 'Stuttgart', 'DEU', 'Stuttgart', 617000)";
 mysqli_query($link, $query);
 
-printf ("ID новой записи: %d.\n", mysqli_insert_id($link));
+printf("ID новой записи: %d.\n", mysqli_insert_id($link));
 
 /* удаление таблицы */
 mysqli_query($link, "DROP TABLE myCity");
-
-/* закрытие соединения */
-mysqli_close($link);
-?>
 ]]>
    </programlisting>
    &examples.outputs;
