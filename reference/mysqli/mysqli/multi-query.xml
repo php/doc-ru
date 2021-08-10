@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3d34df408450460dcfb98e749bc14600059f6f73 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 22eb6b0686ff2e259687cd7927e0cad1c4cf2eb6 Maintainer: tmn Status: ready -->
 <!-- Reviewed: yes Maintainer: lex -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli.multi-query" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli::multi_query</refname>
   <refname>mysqli_multi_query</refname>
-  <refpurpose>
-   Выполняет запрос к базе данных
-  </refpurpose>
+  <refpurpose>Выполняет один или несколько запросов к базе данных</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -29,12 +27,38 @@
    точку с запятой.
   </para>
   <para>
-   Чтобы получить результирующий набор первого запроса, можно использовать функции
-   <function>mysqli_use_result</function> или
-   <function>mysqli_store_result</function>. Остальные результирующие наборы
-   извлекаются функциями <function>mysqli_more_results</function>
-   и <function>mysqli_next_result</function>.
+   Запросы отправляются асинхронно за один вызов базы данных, но база данных обрабатывает их последовательно.
+   <methodname>mysqli_multi_query</methodname> ожидает завершения первого запроса, прежде чем вернуть управление PHP.
+   Затем сервер MySQL обработает следующий запрос в последовательности.
+   Как только следующий результат будет готов, MySQL будет ждать следующего выполнения <function>mysqli_next_result</function> из PHP.
   </para>
+  <para>
+   Для обработки нескольких запросов рекомендуется использовать <link linkend="control-structures.do.while">do-while</link>.
+   Соединение будет занято до тех пор, пока все запросы не будут завершены и их результаты не будут загружены в PHP.
+   Никакой другой оператор не может быть выдан в том же соединении, пока не будут обработаны все запросы.
+   Чтобы перейти к следующему запросу в последовательности, используйте <function>mysqli_next_result</function>.
+   Если следующий результат ещё не готов, mysqli будет ждать ответа от сервера MySQL.
+   Чтобы проверить, есть ли ещё результаты, используйте <function>mysqli_more_results</function>.
+  </para>
+  <para>
+   Для запросов, которые производят набор результатов, таких как
+   <literal>SELECT, SHOW, DESCRIBE</literal> или
+   <literal>EXPLAIN</literal>, <function>mysqli_use_result</function> или <function>mysqli_store_result</function>
+   может использоваться для получения набора результатов.
+   Для запросов, которые не производят набор результатов, те же функции могут использоваться для получения информации,
+   такой как количество затронутых строк.
+  </para>
+  <tip>
+   <para>
+    Выполнение запросов <literal>CALL</literal> для хранимых процедур может дать несколько наборов результатов.
+    Если хранимая процедура содержит запросы <literal>SELECT</literal>,
+    наборы результатов возвращаются в том порядке, в котором они создаются при выполнении процедуры.
+    В общем, вызывающая функция не может знать, сколько наборов результатов вернёт процедура,
+    и должна быть готова получить несколько результатов.
+    Конечный результат процедуры - это результат статуса, который не включает набор результатов.
+    Статус показывает, была ли процедура успешной или произошла ошибка.
+   </para>
+  </tip>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -46,7 +70,8 @@
      <term><parameter>query</parameter></term>
      <listitem>
       <para>
-       Текст запроса в виде строки.
+       Строка, содержащая запросы, которые нужно выполнить.
+       Несколько запросов следует разделять точкой с запятой.
       </para>
       &mysqli.sqlinjection.warning;
      </listitem>
@@ -72,74 +97,54 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
-$query  = "SELECT CURRENT_USER();";
+$query = "SELECT CURRENT_USER();";
 $query .= "SELECT Name FROM City ORDER BY ID LIMIT 20, 5";
 
-/* запускаем мультизапрос */
-if ($mysqli->multi_query($query)) {
-    do {
-        /* получаем первый результирующий набор */
-        if ($result = $mysqli->store_result()) {
-            while ($row = $result->fetch_row()) {
-                printf("%s\n", $row[0]);
-            }
-            $result->free();
+/* выполнение нескольких запросов */
+$mysqli->multi_query($query);
+do {
+    /* сохранить набор результатов в PHP */
+    if ($result = $mysqli->store_result()) {
+        while ($row = $result->fetch_row()) {
+            printf("%s\n", $row[0]);
         }
-        /* печатаем разделитель */
-        if ($mysqli->more_results()) {
-            printf("-----------------\n");
-        }
-    } while ($mysqli->next_result());
-}
-
-/* закрываем соединение */
-$mysqli->close();
-?>
+    }
+    /* вывести разделитель */
+    if ($mysqli->more_results()) {
+        printf("-----------------\n");
+    }
+} while ($mysqli->next_result());
 ]]>
    </programlisting>
    <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
-$query  = "SELECT CURRENT_USER();";
+$query = "SELECT CURRENT_USER();";
 $query .= "SELECT Name FROM City ORDER BY ID LIMIT 20, 5";
 
-/* запускаем мультизапрос */
-if (mysqli_multi_query($link, $query)) {
-    do {
-        /* получаем первый результирующий набор */
-        if ($result = mysqli_store_result($link)) {
-            while ($row = mysqli_fetch_row($result)) {
-                printf("%s\n", $row[0]);
-            }
-            mysqli_free_result($result);
+/* выполнение нескольких запросов */
+mysqli_multi_query($link, $query);
+do {
+    /* сохранить набор результатов в PHP */
+    if ($result = mysqli_store_result($link)) {
+        while ($row = mysqli_fetch_row($result)) {
+            printf("%s\n", $row[0]);
         }
-        /* печатаем разделитель */
-        if (mysqli_more_results($link)) {
-            printf("-----------------\n");
-        }
-    } while (mysqli_next_result($link));
-}
-
-/* закрываем соединение */
-mysqli_close($link);
-?>
+    }
+    /* вывести разделитель */
+    if (mysqli_more_results($link)) {
+        printf("-----------------\n");
+    }
+} while (mysqli_next_result($link));
 ]]>
    </programlisting>
    &examples.outputs.similar;
