@@ -155,7 +155,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 | SQL query | Запрос SQL, SQL-запрос |
 | SQL | Структурированный язык запросов |
 | Throw exception | Выбросить исключение |
-| Timezone, time zone | Временная зона |
+| Timezone, time zone | Часовой пояс |
 | Token | Лексема |
 | Tokenizer | Лексер |
 | Trait | Трейт |
