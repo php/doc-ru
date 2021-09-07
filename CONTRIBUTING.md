@@ -118,6 +118,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 | Extension | Модуль |
 | Features/functionality | Возможности, функциональность |
 | Float (floating point) | Число с плавающей точкой (плавающая точка) |
+| Getter | Метод чтения |
 | Hash | Хеш |
 | HTML entity | HTML-сущность |
 | HTTP-Authentication | HTTP-аутентификация |
@@ -148,6 +149,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 | Returns | Возвращает |
 | SAPI | Интерфейс разработки серверных приложений |
 | Script | Скрипт |
+| Setter | Устанавливающий метод |
 | Single quotes | Одинарные кавычки |
 | Stream | Поток |
 | Shared block | Общая блокировка |
