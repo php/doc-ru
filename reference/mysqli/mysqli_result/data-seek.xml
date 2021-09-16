@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d68e83b719028bb068785cccc3205c23be530564 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 67c340d029add04675cd4b399f18ad390f485a7b Maintainer: irker Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="mysqli-result.data-seek" xmlns="http://docbook.org/ns/docbook">
@@ -56,73 +56,46 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>&style.oop;</title>
+   <title>Пример использования <methodname>mysqli::data_seek</methodname></title>
+   <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Создание подключения */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* Проверка подключения */
-if (mysqli_connect_errno()) {
-    printf("Соединение не удалось: %s\n", mysqli_connect_error());
-    exit();
-}
-
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name";
-if ($result = $mysqli->query($query)) {
+$result = $mysqli->query($query);
 
-    /* Переход к строке №400 */
-    $result->data_seek(399);
+/* Переход к строке 401 */
+$result->data_seek(400);
 
-    /* Получение строки */
-    $row = $result->fetch_row();
+/* Получение строки */
+$row = $result->fetch_row();
 
-    printf ("Город: %s  Код страны: %s\n", $row[0], $row[1]);
-
-    /* Закрытие набора данных */
-    $result->close();
-}
-
-/* Закрытие соединения */
-$mysqli->close();
-?>
+printf("Город: %s  Код страны: %s\n", $row[0], $row[1]);
 ]]>
    </programlisting>
-  </example>
-  <example>
-   <title>&style.procedural;</title>
+   <para>&style.procedural;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Создание подключения */
-$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* Проверка подключения */
-if (!$link) {
-    printf("Соединение не удалось: %s\n", mysqli_connect_error());
-    exit();
-}
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name";
 
-if ($result = mysqli_query($link, $query)) {
+$result = mysqli_query($link, $query);
 
-    /* Переход к строке №400 */
-    mysqli_data_seek($result, 399);
+/* Переход к строке 401 */
+mysqli_data_seek($result, 400);
 
-    /* Получение строки */
-    $row = mysqli_fetch_row($result);
+/* Получение строки */
+$row = mysqli_fetch_row($result);
 
-    printf ("Город: %s  Код страны: %s\n", $row[0], $row[1]);
-
-    /* Закрытие набора данных */
-    mysqli_free_result($result);
-}
-
-/* Закрытие соединения */
-mysqli_close($link);
-?>
+printf ("Город: %s  Код страны: %s\n", $row[0], $row[1]);
 ]]>
    </programlisting>
    &examples.outputs;
@@ -132,13 +105,66 @@ mysqli_close($link);
 ]]>
    </screen>
   </example>
+
+  <example>
+   <title>Регулировка указателя результата при перемещении</title>
+   <para>
+    Функция может быть полезна при перемещении по набору результатов для наложения
+    настраиваемого порядка или перемотки набора результатов при многократном повторении.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$mysqli = new mysqli("localhost", "my_user", "my_password", "world");
+
+$query = "SELECT Name, CountryCode FROM City ORDER BY Name LIMIT 15,4";
+$result = $mysqli->query($query);
+
+/* Перемещение по набору результатов в обратном порядке */
+for ($row_no = $result->num_rows - 1; $row_no >= 0; $row_no--) {
+    $result->data_seek($row_no);
+
+    /* Получение строки */
+    $row = $result->fetch_row();
+
+    printf("Город: %s  Код страны: %s\n", $row[0], $row[1]);
+}
+
+/* Сброс указателя на начало набора результатов */
+$result->data_seek(0);
+
+print "\n";
+
+/* Снова перемещение по тому же набору результатов */
+while ($row = $result->fetch_row()) {
+    printf("Город: %s  Код страны: %s\n", $row[0], $row[1]);
+}
+]]>
+   </programlisting>
+   &examples.outputs;
+   <screen>
+<![CDATA[
+Город: Acmbaro  Код страны: MEX
+Город: Abuja  Код страны: NGA
+Город: Abu Dhabi  Код страны: ARE
+Город: Abottabad  Код страны: PAK
+
+Город: Abottabad  Код страны: PAK
+Город: Abu Dhabi  Код страны: ARE
+Город: Abuja  Код страны: NGA
+Город: Acmbaro  Код страны: MEX
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="notes">
   &reftitle.notes;
   <note>
    <para>
-    Эта функция может быть использована только с буферизованными результатами,
+    Функция может быть использована только с буферизованными результатами,
     которые можно получить использованием функций <function>mysqli_store_result</function>
     или <function>mysqli_query</function>.
    </para>
