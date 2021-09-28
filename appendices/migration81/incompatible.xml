@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 4d2479dcf35d82aca39ee61f8ab36ceed78a869c Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="migration81.incompatible" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Изменения, ломающие обратную совместимость</title>
+
+ <sect2 xml:id="migration81.incompatible.core">
+  <title>Ядро PHP</title>
+
+  <sect3 xml:id="migration81.incompatible.core.globals-access">
+   <title>Ограничения доступа к $GLOBALS</title>
+
+   <para>
+    Доступ к массиву <varname>$GLOBALS</varname> теперь подвергается
+    ряду ограничений.
+    Доступ для чтения и записи к отдельным элементам массива,
+    таким как <code>$GLOBALS['var']</code>, продолжает работать как и раньше.
+    Доступ только для чтения ко всему массиву <varname>$GLOBALS</varname>
+    также продолжает поддерживаться.
+    Однако доступ на запись ко всему массиву <varname>$GLOBALS</varname> больше не поддерживается.
+    Например, <code>array_pop($GLOBALS)</code> приведёт к ошибке.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration81.incompatible.core.static-variable-inheritance">
+   <title>
+    Использование <modifier>static</modifier> переменных в унаследованных методах
+   </title>
+
+   <para>
+    Когда метод, использующий статические переменные, наследуется (но не переопределяется),
+    унаследованный метод теперь будет использовать статические переменные совместно с родительским методом.
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class A {
+    public static function counter() {
+        static $counter = 0;
+        $counter++;
+        return $counter;
+    }
+}
+class B extends A {}
+var_dump(A::counter()); // int(1)
+var_dump(A::counter()); // int(2)
+var_dump(B::counter()); // int(3), ранее было int(1)
+var_dump(B::counter()); // int(4), ранее было int(2)
+?>
+]]>
+     </programlisting>
+    </informalexample>
+
+    Это означает, что статические переменные в методах теперь ведут себя так же,
+    как статические свойства.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration81.incompatible.core.type-compatibility-internal">
+   <title>Совместимость типа возвращаемого значения с внутренними классами</title>
+
+   <para>
+    Большинство неокончательных внутренних методов теперь требуют переопределяющих методов
+    для объявления совместимого возвращаемого типа, в противном случае во время проверки
+    наследования выдаётся уведомление об устаревании функционала.
+    В случае, если тип возвращаемого значения не может быть объявлен для метода
+    переопределения из-за проблем совместимости версий PHP, можно добавить атрибут
+    <code>#[ReturnTypeWillChange]</code>, чтобы заглушить уведомление об устаревании.
+   </para>
+  </sect3>
+
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.resource2object">
+  <title>Миграция ресурса в объект</title>
+
+  <para>
+   Несколько ресурсов (&resource;) были перенесены в объекты (&object;).
+   Проверки возвращаемого значения с использованием функции <function>is_resource</function>
+   следует заменить проверками на &false;.
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Функции <link linkend="book.fileinfo">FileInfo</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>finfo</classname> вместо ресурсов (&resource;)
+     <literal>fileinfo</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.ftp">FTP</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>FTP\Connection</classname> вместо ресурсов (&resource;)
+     <literal>ftp</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.imap">IMAP</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>IMAP\Connection</classname> вместо ресурсов (&resource;)
+     <literal>imap</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     The <link linkend="book.ldap">LDAP</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>LDAP\Connection</classname> вместо ресурсов (&resource;)
+     <literal>ldap link</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.ldap">LDAP</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>LDAP\Result</classname> вместо ресурсов (&resource;)
+     <literal>ldap result</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.ldap">LDAP</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>LDAP\ResultEntry</classname> вместо ресурсов (&resource;)
+     <literal>ldap result entry</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.pgsql">PgSQL</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>PgSql\Connection</classname> вместо ресурсов (&resource;)
+     <literal>ppgsql link</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.pgsql">PgSQL</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>PgSql\Result</classname> вместо ресурсов (&resource;)
+     <literal>ppgsql result</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.pgsql">PgSQL</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>PgSql\Lob</classname> вместо ресурсов (&resource;)
+     <literal>ppgsql large object</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.pspell">PSpell</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>PSpell\Dictionary</classname> вместо ресурсов (&resource;)
+     <literal>pspell</literal>.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Функции <link linkend="book.pspell">PSpell</link> теперь принимают и возвращают,
+     соответственно, объекты <classname>PSpell\Config</classname> вместо ресурсов (&resource;)
+     <literal>pspell config</literal>.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.mysqli">
+  <title>MySQLi</title>
+
+  <para>
+   <function>mysqli_fetch_fields</function> и
+   <function>mysqli_fetch_field_direct</function> теперь всегда возвращают
+   <literal>0</literal> для <property>max_length</property>.
+   Эту информацию можно вычислить, перебирая набор результатов
+   и выбирая максимальную длину. Это то, чем раньше занимался PHP
+   во внутренних методах.
+  </para>
+
+  <para>
+   Опция <constant>MYSQLI_STMT_ATTR_UPDATE_MAX_LENGTH</constant>
+   больше не имеет смысла.
+  </para>
+
+  <para>
+   Опция <constant>MYSQLI_STORE_RESULT_COPY_DATA</constant>
+   больше не имеет смысла. Передача какого-либо значения в параметр
+   <parameter>mode</parameter> метода
+   <methodname>mysqli::store_result</methodname> больше не имеет смысла.
+  </para>
+
+  <para>
+   <methodname>mysqli::connect</methodname> теперь возвращает &true; вместо &null; в случае успешного выполнения.
+  </para>
+
+  <para>
+   Режим обработки ошибок по умолчанию был изменён с "silent" на "exceptions".
+   Смотрите страницу <link linkend="mysqli-driver.report-mode">Режимы обработки ошибок MySQLi</link>
+   для получения дополнительных сведений о том, что это влечёт за собой
+   и о том, как явно установить этот атрибут.
+   Чтобы восстановить предыдущее поведение, используйте:
+   <code>mysqli_report(MYSQLI_REPORT_OFF);</code>
+  </para>
+
+  <para>
+   Классы, расширяющие <methodname>mysqli_stmt::execute</methodname>,
+   теперь должны указывать дополнительный обязательный параметр.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.mysqlnd">
+  <title>MySQLnd</title>
+
+  <para>
+   INI-директива <link linkend="ini.mysqlnd.fetch_data_copy">mysqlnd.fetch_data_copy</link>
+   была удалена.
+   Это не должно приводить к видимым для пользователя изменениям в поведении.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.openssl">
+  <title>OpenSSL</title>
+
+  <para>
+   Секретные ключи EC теперь будут экспортироваться в формате PKCS#8,
+   а не в традиционном формате, как и все другие ключи.
+  </para>
+  <para>
+   <function>openssl_pkcs7_encrypt</function> и
+   <function>openssl_cms_encrypt</function> теперь по умолчанию используют шифр AES-128-CBC, а не RC2-40.
+   Шифр RC2-40 считается небезопасным и не включён по умолчанию в OpenSSL 3.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.pdo">
+  <title>Объекты данных PHP</title>
+
+  <para>
+   <constant>PDO::ATTR_STRINGIFY_FETCHES</constant> теперь преобразует логические значения (&boolean;)
+   в <literal>"0"</literal> или <literal>"1"</literal>.
+   Ранее логические значения (&boolean;) не были строковыми.
+  </para>
+  <para>
+   Вызов <methodname>PDOStatement::bindColumn</methodname> с <constant>PDO::PARAM_LOB</constant>
+   теперь будет постоянно связывать результат потока, если <constant>PDO::ATTR_STRINGIFY_FETCHES</constant> не включён.
+   Раньше результатом был либо поток, либо строка в зависимости от используемого драйвера базы данных
+   и времени выполнения привязки.
+  </para>
+
+  <sect3 xml:id="migration81.incompatible.pdo.mysql">
+   <title>Драйвер MySQL</title>
+
+   <para>
+    Целые числа и числа с плавающей запятой в наборах результатов
+    теперь будут возвращаться с использованием собственных типов PHP вместо
+    строк (&string;) при использовании эмулированных подготовленных операторов.
+    Это соответствует поведению собственных подготовленных операторов.
+    Предыдущее поведение можно восстановить,
+    включив опцию <constant>PDO::ATTR_STRINGIFY_FETCHES</constant>.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration81.incompatible.pdo.sqlite">
+   <title>Драйвер SQLite</title>
+
+   <para>
+    Целые числа и числа с плавающей запятой в наборах результатов
+    теперь будут возвращаться с использованием собственных типов PHP.
+    Предыдущее поведение можно восстановить,
+    включив опцию <constant>PDO::ATTR_STRINGIFY_FETCHES</constant>.
+   </para>
+  </sect3>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.phar">
+  <title>Phar</title>
+
+  <para>
+   Чтобы соответствовать интерфейсу <interfacename>ArrayAccess</interfacename>,
+   <methodname>Phar::offsetUnset</methodname> и <methodname>PharData::offsetUnset</methodname>
+   больше не возвращают логическое значение (&boolean;).
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.standard">
+  <title>Стандартные функции</title>
+
+  <para>
+   <function>version_compare</function> больше не принимает недокументированные сокращения операторов.
+  </para>
+
+  <para>
+   <function>htmlspecialchars</function>,
+   <function>htmlentities</function>,
+   <function>htmlspecialchars_decode</function>,
+   <function>html_entity_decode</function>,
+   м <function>get_html_translation_table</function>
+   теперь используют по умолчанию <literal>ENT_QUOTES | ENT_SUBSTITUTE</literal> вместо
+   <constant>ENT_COMPAT</constant>.
+   Это означает, что теперь <literal>'</literal> экранируется в <literal>&amp;#039;</literal>.
+   Кроме того, искажённый UTF-8 будет заменён символом подстановки Unicode,
+   вместо того, чтобы выдавать пустую строку.
+  </para>
+
+  <para>
+   <function>debug_zval_dump</function> теперь выводит refcount ссылочных
+   оболочек с их refcount, вместо того, чтобы просто добавлять
+   <literal>&amp;</literal> к значению.
+   Это более точно моделирует эталонное представление, начиная с PHP 7.0.
+  </para>
+
+  <para>
+   <function>debug_zval_dump</function> теперь выводит <literal>interned</literal>
+   вместо фиктивного refcount для интернированных строк и неизменяемых массивов.
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration81.incompatible.spl">
+  <title>Стандартная библиотека PHP (SPL)</title>
+
+  <para>
+   <classname>SplFixedArray</classname>, теперь будет закодирован в JSON как массив (&array;).
+  </para>
+ </sect2>
+
+</sect1>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
