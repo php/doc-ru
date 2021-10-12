@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8a7c2e03689cc5edf0dfb6710c9d3fe0b450849f Maintainer: shein Status: ready -->
+<!-- EN-Revision: 3ef3e56c80f7ae6b6a7291b7eb57dc6250b50801 Maintainer: shein Status: ready -->
 <!-- Reviewed: yes -->
 <!-- $Revision$ -->
 <refentry xml:id="function.count" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>count</refname>
-  <refpurpose>Подсчитывает количество элементов массива или чего-либо в объекте</refpurpose>
+  <refpurpose>Подсчитывает количество элементов массива или <interfacename>Countable</interfacename> объекте</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,21 +16,8 @@
    <methodparam choice="opt"><type>int</type><parameter>mode</parameter><initializer><constant>COUNT_NORMAL</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   Подсчитывает количество элементов массива или чего-то в объекте.
-  </para>
-  <para>
-   Для объектов, если у вас включена поддержка
-   <link linkend="ref.spl">SPL</link>, вы можете перехватить
-   <function>count</function>, реализуя интерфейс
-   <classname>Countable</classname>. Этот интерфейс имеет ровно один метод,
-   <methodname>Countable::count</methodname>, который возвращает значение функции
-   <function>count</function>.
-  </para>
-  <para>
-   Смотрите раздел
-   <link linkend="language.types.array">Массивы</link> в этом
-   руководстве для более детального представления о
-   реализации и использовании массивов в PHP.
+   Подсчитывает все элементы в массиве, если используется массив. Если используется объект, который реализует интерфейс <interfacename>Countable</interfacename>,
+   функция возвращает результат выполнения метода <methodname>Countable::count</methodname>.
   </para>
  </refsect1>
 
@@ -42,7 +29,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Массив или объект, реализующий <classname>Countable</classname>.
+       Массив или объект, реализующий <interfacename>Countable</interfacename>.
       </para>
      </listitem>
     </varlistentry>
@@ -75,11 +62,10 @@
   &reftitle.returnvalues;
   <para>
    Возвращает количество элементов в <parameter>value</parameter>.
-   Если параметр не является массивом или объектом,
-   реализующим интерфейс <classname>Countable</classname>,
-   будет возвращена <literal>1</literal>.
-   За одним исключением: если <parameter>value</parameter> - &null;,
-   то будет возвращён <literal>0</literal>.
+   До PHP 8.0.0, если параметр не был ни массивом (&array;), ни объектом (&object;), реализующим интерфейс <interfacename>Countable</interfacename>,
+   возвращалось <literal>1</literal>,
+   если значение параметра <parameter>value</parameter> не было &null;,
+   в этом случае возвращалось <literal>0</literal>.
   </para>
  </refsect1>
 
@@ -116,7 +102,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
-   <example>
+   <example xml:id="count.example.basic">
     <title>Пример использования <function>count</function></title>
     <programlisting role="php">
 <![CDATA[
@@ -143,7 +129,7 @@ int(3)
    </example>
   </para>
   <para>
-   <example>
+   <example xml:id="count.example.badexample">
     <title>Пример использования <function>count</function> с неисчисляемым типом (плохой пример - не делайте так)</title>
     <programlisting role="php">
 <![CDATA[
@@ -190,7 +176,7 @@ Fatal error: Uncaught TypeError: count(): Argument #1 ($var) must be of type Cou
    </example>
   </para>
   <para>
-   <example>
+   <example xml:id="count.example.recursive">
     <title>Пример рекурсивного использования <function>count</function></title>
     <programlisting role="php">
 <![CDATA[
@@ -199,14 +185,52 @@ $food = array('fruits' => array('orange', 'banana', 'apple'),
               'veggie' => array('carrot', 'collard', 'pea'));
 
 // рекурсивный подсчёт
-echo count($food, COUNT_RECURSIVE); // выводит 8
+var_dump(count($food, COUNT_RECURSIVE));
 
 // обычный подсчёт
-echo count($food); // выводит 2
+var_dump(count($food));
 
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+int(8)
+int(2)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example xml:id="count.example.countable">
+    <title>Объект, реализующий интерфейс <interfacename>Countable</interfacename></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class CountOfMethods implements Countable
+{
+    private function someMethod()
+    {
+    }
+
+    public function count(): int
+    {
+        return count(get_class_methods($this));
+    }
+}
+
+$obj = new CountOfMethods();
+var_dump(count($obj));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+int(2)
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
@@ -220,6 +244,7 @@ echo count($food); // выводит 2
     <member><function>empty</function></member>
     <member><function>strlen</function></member>
     <member><function>is_countable</function></member>
+    <member><link linkend="language.types.array">Массивы</link></member>
    </simplelist>
   </para>
  </refsect1>
