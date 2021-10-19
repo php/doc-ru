@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: aa19c140e6be8b9c324c32ace850dfc2911891a2 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.igbinary-serialize" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>igbinary_serialize</refname>
+  <refpurpose>Создаёт компактное, сохраняемое двоичное представление значения</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type class="union"><type>string</type><type>false</type></type><methodname>igbinary_serialize</methodname>
+   <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Создаёт сохраняемое представление значения.
+  </para>
+  <para>
+   Полезно для хранения или передачи значений PHP без потери их типа и структуры.
+  </para>
+  <para>
+   Чтобы снова превратить сериализованную строку в значение PHP,
+   можно использовать <function>igbinary_unserialize</function>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>value</parameter></term>
+    <listitem>
+      <para>
+       Значение, которое необходимо сериализовать. <function>igbinary_serialize</function>
+       обрабатывает все типы, кроме ресурсов (<type>resource</type>) и некоторых объектов (<type>object</type>) (смотрите примечание ниже).
+       Даже массивы (&array;), содержащие ссылки на себя, могут быть сериализованы функцией <function>igbinary_serialize</function>.
+       Циклические ссылки внутри сериализующихся массивов (&array;) или объектов (&object;) также будут сохранены.
+       Любая другая ссылка будет потеряна.
+      </para>
+      <para>
+       При сериализации объектов, igbinary будет пытаться вызвать функции
+       <link linkend="object.serialize">__serialize()</link> или <link linkend="object.sleep">__sleep()</link> перед сериализацией.
+       Это позволит объекту выполнить любую очистку в последнюю минуту и т.д. перед сериализацией.
+       Аналогичным образом, когда объект восстанавливается с помощью <function>igbinary_unserialize</function>,
+       вызывается функция <link linkend="object.unserialize">__unserialize()</link> или
+       <link linkend="object.wakeup">__wakeup()</link>.
+      </para>
+      <note>
+       <para>
+        Начало имён закрытых членов объекта (&object;) дополняются именем класса,
+        а начало имён защищённых членов символом <literal>'*'</literal>.
+        Эти дополненные значения окружаются нулевым байтом с обеих сторон.
+       </para>
+      </note>
+     </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает строку, содержащую представление потока байтов <parameter>value</parameter>,
+   которое может быть сохранено где угодно.
+  </para>
+  <para>
+   Обратите внимание, что это двоичная строка, которая может включать в себя любое байтовое значение
+   и должна храниться и обрабатываться как таковая.
+   Например, вывод функции <function>igbinary_serialize</function> обычно должен храниться
+   в поле базы данных <literal>BLOB</literal>, а не в поле <literal>CHAR</literal> или <literal>TEXT</literal>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>igbinary_serialize</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$ser = igbinary_serialize(['test', 'test']);
+echo urlencode($ser), "\n";
+var_export(igbinary_unserialize($ser));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+%00%00%00%02%14%02%06%00%11%04test%06%01%0E%00
+array (
+  0 => 'test',
+  1 => 'test',
+)
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Обратите внимание, что многие встроенные объекты PHP не могут быть сериализованы.
+    Однако те, у кого есть такая возможность, реализуют либо интерфейс <interfacename>Serializable</interfacename>,
+    либо магические методы <link linkend="object.serialize">__serialize()</link>/<link linkend="object.unserialize">__unserialize()</link>
+    или <link linkend="object.sleep">__sleep()</link>/<link linkend="object.wakeup">__wakeup()</link>.
+    Если внутренний класс не соответствует ни одному из этих требований,
+    он не может быть надёжно сериализован с помощью какого-либо сериализатора.
+   </para>
+   <para>
+    Есть несколько исторических исключений из приведённого выше правила, когда некоторые внутренние объекты
+    могут быть сериализованы без реализации интерфейса или раскрытия методов.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>serialize</function></member>
+    <member><function>igbinary_unserialize</function></member>
+    <member><function>var_export</function></member>
+    <member><function>json_encode</function></member>
+    <member><link linkend="language.oop5.serialization">Сериализация объектов</link></member>
+    <member><link linkend="object.sleep">__sleep()</link></member>
+    <member><link linkend="object.wakeup">__wakeup()</link></member>
+    <member><link linkend="object.serialize">__serialize()</link></member>
+    <member><link linkend="object.unserialize">__unserialize()</link></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
