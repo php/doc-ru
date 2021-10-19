@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 18f9cbcbc404fa3161104e4f3969531f686457af Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<chapter xml:id="parle.pattern.matching" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Сопоставление с шаблоном Parle</title>
+ <titleabbrev>Сопоставление с шаблоном</titleabbrev>
+ <para>
+  Parle поддерживает сопоставление регулярных выражений аналогично flex. Также поддерживаются следующие наборы символов POSIX: <literal>[:alnum:]</literal>, <literal>[:alpha:]</literal>, <literal>[:blank:]</literal>, <literal>[:cntrl:]</literal>, <literal>[:digit:]</literal>, <literal>[:graph:]</literal>, <literal>[:lower:]</literal>, <literal>[:print:]</literal>, <literal>[:punct:]</literal>, <literal>[:space:]</literal>, <literal>[:upper:]</literal> и <literal>[:xdigit:]</literal>.
+ </para>
+ <para>
+  Классы символов Unicode в настоящее время не включены по умолчанию, передайте --enable-parle-utf32, чтобы сделать их доступными.
+  Конкретная кодировка может быть отображена с помощью правильно построенного регулярного выражения.
+  Например, чтобы соответствовать символу евро, закодированному в UTF-8, можно использовать регулярное выражение <literal>[\xe2][\x82][\xac]</literal>.
+  Шаблон для строки в кодировке UTF-8 может быть <literal>[ -\x7f]{+}[\x80-\xbf]{+}[\xc2-\xdf]{+}[\xe0-\xef]{+}[\xf0-\xff]+</literal>.
+ </para>
+ <section xml:id="parle.regex.chars">
+  <title>Представления символов</title>
+  <para>
+   <table>
+    <title>Представления символов</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>\a</entry><entry>Символ оповещения, сигнал.</entry>
+      </row>
+      <row>
+       <entry>\b</entry><entry>Символ возврата "Backspace".</entry>
+      </row>
+      <row>
+       <entry>\e</entry><entry>Символ ESC, \x1b.</entry>
+      </row>
+      <row>
+       <entry>\n</entry><entry>Новая строка.</entry>
+      </row>
+      <row>
+       <entry>\r</entry><entry>Возврат каретки.</entry>
+      </row>
+      <row>
+       <entry>\f</entry><entry>Разрыв страницы, \x0c.</entry>
+      </row>
+      <row>
+       <entry>\t</entry><entry>Горизонтальная табуляция, \x09.</entry>
+      </row>
+      <row>
+       <entry>\v</entry><entry>Вертикальная табуляция, \x0b.</entry>
+      </row>
+      <row>
+       <entry>\oct</entry><entry>Символ, заданный трёхзначным восьмеричным кодом.</entry>
+      </row>
+      <row>
+       <entry>\xhex</entry><entry>Символ, заданный шестнадцатеричным кодом.</entry>
+      </row>
+      <row>
+       <entry>\cchar</entry><entry>Именованный управляющий символ.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="parle.regex.charclass">
+  <title>Классы символов</title>
+  <para>
+   <table>
+    <title>Классы символов</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>[...]</entry><entry>Одиночный символ, указанный или содержащийся в указанном диапазоне. Диапазоны можно комбинировать с операторами <literal>{+}</literal> и <literal>{-}</literal>. Например, <literal>[a-z]{+}[0-9]</literal> то же, что и <literal>[0-9a-z]</literal>, а <literal>[a-z]{-}[aeiou]</literal> то же, что и <literal>[b-df-hj-np-tv-z]</literal>.</entry>
+      </row>
+      <row>
+       <entry>[^...]</entry><entry>Одиночный символ не указан и не содержится в указанном диапазоне.</entry>
+      </row>
+      <row>
+       <entry>.</entry><entry>Любой символ, по умолчанию <literal>[^\n].</literal></entry>
+      </row>
+      <row>
+       <entry>\d</entry><entry>Любая десятичная цифра, <literal>[0-9]</literal>.</entry>
+      </row>
+      <row>
+       <entry>\D</entry><entry>Любой символ, кроме десятичной цифры, <literal>[^0-9]</literal>.</entry>
+      </row>
+      <row>
+       <entry>\s</entry><entry>Любой пробельный символ, <literal>[ \t\n\r\f\v]</literal>.</entry>
+      </row>
+      <row>
+       <entry>\S</entry><entry>Любой непробельный символ, <literal>[^ \t\n\r\f\v]</literal>.</entry>
+      </row>
+      <row>
+       <entry>\w</entry><entry>Любой символ, образующий "слово", <literal>[a-zA-Z0-9_]</literal>.</entry>
+      </row>
+      <row>
+       <entry>\W</entry><entry>Любой символ, не образующий "слово", <literal>[^a-zA-Z0-9_]</literal>.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="parle.regex.unicodecharclass">
+  <title>Классы символов Unicode</title>
+  <para>
+   <table>
+    <title>Классы символов Unicode</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>\p{C}</entry><entry>Прочие.</entry>
+      </row>
+      <row>
+       <entry>\p{Cc}</entry><entry>Прочие, контрольные.</entry>
+      </row>
+      <row>
+       <entry>\p{Cf}</entry><entry>Прочие, форматирование.</entry>
+      </row>
+      <row>
+       <entry>\p{Co}</entry><entry>Прочие, для приватного использования.</entry>
+      </row>
+      <row>
+       <entry>\p{Cs}</entry><entry>Прочие, суррогаты.</entry>
+      </row>
+      <row>
+       <entry>\p{L}</entry><entry>Буквы.</entry>
+      </row>
+      <row>
+       <entry>\p{LC}</entry><entry>Буквы, регистр.</entry>
+      </row>
+      <row>
+       <entry>\p{Ll}</entry><entry>Буквы, в нижнем регистре.</entry>
+      </row>
+      <row>
+       <entry>\p{Lm}</entry><entry>Буквы, модификаторы.</entry>
+      </row>
+      <row>
+       <entry>\p{Lo}</entry><entry>Буквы, прочее.</entry>
+      </row>
+      <row>
+       <entry>\p{Lt}</entry><entry>Буквы, заглавные буквы.</entry>
+      </row>
+      <row>
+       <entry>\p{Lu}</entry><entry>Буквы, в верхнем регистре.</entry>
+      </row>
+      <row>
+       <entry>\p{M}</entry><entry>Отметки.</entry>
+      </row>
+      <row>
+       <entry>\p{Mc}</entry><entry>Отметки, двоеточия.</entry>
+      </row>
+      <row>
+       <entry>\p{Me}</entry><entry>Отметки, вложения.</entry>
+      </row>
+      <row>
+       <entry>\p{Mn}</entry><entry>Отметки, апострофы.</entry>
+      </row>
+      <row>
+       <entry>\p{N}</entry><entry>Числа.</entry>
+      </row>
+      <row>
+       <entry>\p{Nd}</entry><entry>Числа, десятичная цифра.</entry>
+      </row>
+      <row>
+       <entry>\p{Nl}</entry><entry>Числа, цифры обозначаемые буквами (римские).</entry>
+      </row>
+      <row>
+       <entry>\p{No}</entry><entry>Числа, прочие.</entry>
+      </row>
+      <row>
+       <entry>\p{P}</entry><entry>Знаки пунктуации.</entry>
+      </row>
+      <row>
+       <entry>\p{Pc}</entry><entry>Знаки пунктуации, соединители.</entry>
+      </row>
+      <row>
+       <entry>\p{Pd}</entry><entry>Знаки пунктуации, тире.</entry>
+      </row>
+      <row>
+       <entry>\p{Pe}</entry><entry>Знаки пунктуации, закрывающие скобки.</entry>
+      </row>
+      <row>
+       <entry>\p{Pf}</entry><entry>Знаки пунктуации, закрывающие кавычки.</entry>
+      </row>
+      <row>
+       <entry>\p{Pi}</entry><entry>Знаки пунктуации, открывающие кавычки.</entry>
+      </row>
+      <row>
+       <entry>\p{Po}</entry><entry>Знаки пунктуации, прочее.</entry>
+      </row>
+      <row>
+       <entry>\p{Ps}</entry><entry>Знаки пунктуации, открывающие скобки.</entry>
+      </row>
+      <row>
+       <entry>\p{S}</entry><entry>Символы.</entry>
+      </row>
+      <row>
+       <entry>\p{Sc}</entry><entry>Символы, валюты.</entry>
+      </row>
+      <row>
+       <entry>\p{Sk}</entry><entry>Символы, модификаторы.</entry>
+      </row>
+      <row>
+       <entry>\p{Sm}</entry><entry>Символы, математические.</entry>
+      </row>
+      <row>
+       <entry>\p{So}</entry><entry>Символы, прочие.</entry>
+      </row>
+      <row>
+       <entry>\p{Z}</entry><entry>Разделители.</entry>
+      </row>
+      <row>
+       <entry>\p{Zl}</entry><entry>Разделители, линия.</entry>
+      </row>
+      <row>
+       <entry>\p{Zp}</entry><entry>Разделители, параграф.</entry>
+      </row>
+      <row>
+       <entry>\p{Zs}</entry><entry>Разделители, пробел.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+  <para>
+   Эти классы символов доступны только в том случае, если во время компиляции была передана опция --enable-parle-utf32.
+  </para>
+ </section>
+ <section xml:id="parle.regex.alternation">
+  <title>Чередование и повторение</title>
+  <para>
+   <table>
+    <title>Чередование и повторение</title>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Жадный квантификатор</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>...|...</entry><entry>-</entry><entry>Попробуйте чередовать дочерние шаблоны.</entry>
+      </row>
+      <row>
+       <entry>*</entry><entry>да</entry><entry>Совпадение 0 или более раз.</entry>
+      </row>
+      <row>
+       <entry>+</entry><entry>да</entry><entry>Совпадение 1 или более раз.</entry>
+      </row>
+      <row>
+       <entry>?</entry><entry>да</entry><entry>Совпадение 0 или 1 раз.</entry>
+      </row>
+      <row>
+       <entry>{n}</entry><entry>нет</entry><entry>Совпадение ровно n раз.</entry>
+      </row>
+      <row>
+       <entry>{n,}</entry><entry>да</entry><entry>Совпадение не менее n раз.</entry>
+      </row>
+      <row>
+       <entry>{n,m}</entry><entry>да</entry><entry>Совпадение не менее n раз, но не более m раз.</entry>
+      </row>
+      <row>
+       <entry>*?</entry><entry>нет</entry><entry>Match 0 or more times.</entry>
+      </row>
+      <row>
+       <entry>+?</entry><entry>нет</entry><entry>Match 1 or more times.</entry>
+      </row>
+      <row>
+       <entry>??</entry><entry>нет</entry><entry>Совпадение 0 или 1 раз.</entry>
+      </row>
+      <row>
+       <entry>{n,}?</entry><entry>нет</entry><entry>Совпадение не менее n раз.</entry>
+      </row>
+      <row>
+       <entry>{n,m}?</entry><entry>нет</entry><entry>Совпадение не менее n раз, но не более m раз.</entry>
+      </row>
+      <row>
+       <entry>{MACRO}</entry><entry>-</entry><entry>Включить макрос регулярного выражения в текущее регулярное выражение.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="parle.regex.anchors">
+  <title>Якоря</title>
+  <para>
+   <table>
+    <title>Якоря</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>^</entry><entry>Начало строки или после новой строки.</entry>
+      </row>
+      <row>
+       <entry>$</entry><entry>Конец строки или перед новой строкой.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+ <section xml:id="parle.regex.grouping">
+  <title>Группировка</title>
+  <para>
+   <table>
+    <title>Группировка</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Последовательность</entry><entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>(...)</entry><entry>Сгруппировать регулярное выражение, чтобы переопределить приоритет оператора по умолчанию.</entry>
+      </row>
+      <row>
+       <entry valign="top">(?r-s:pattern)</entry>
+       <entry>
+        Применить опцию r и опустите опцию s при интерпретации шаблона. Параметры могут быть нулём или более символов i, s или x.
+        <table>
+         <title>Опции</title>
+          <tgroup cols="2">
+           <thead>
+            <row>
+             <entry>Опция</entry><entry>Описание</entry>
+            </row>
+           </thead>
+          <tbody>
+            <row>
+             <entry>i</entry><entry>Без учёта регистра.</entry>
+            </row>
+            <row>
+             <entry>-i</entry><entry>С учётом регистра..</entry>
+            </row>
+            <row>
+             <entry>s</entry><entry>Изменяет значение ".", чтобы соответствовать любому символу.</entry>
+            </row>
+            <row>
+             <entry>-s</entry><entry>изменяет значение ".", чтобы соответствовать любому символу кроме "\n".</entry>
+            </row>
+            <row>
+             <entry>x</entry><entry>Игнорирует комментарии и пробелы в шаблонах. Пробелы игнорируются, если они не экранированы обратной косой чертой, не содержатся в "" или не появляются внутри диапазона символов.</entry>
+            </row>
+          </tbody>
+         </tgroup>
+        </table>
+        Эти параметры могут применяться глобально на уровне правил путём передачи комбинации битовых флагов в лексер.
+       </entry>
+      </row>
+      <row>
+       <entry>(?# comment )</entry><entry>Пропускает всё, что находится внутри (). Первый встреченный символ ) завершает шаблон. Комментарий не может содержать символ а ). Комментарий может занимать строки.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </section>
+</chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
