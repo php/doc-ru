@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 648875cf73af01acdb6afaa5ca38b0bf6631bf42 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.cubrid-get-db-parameter" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>cubrid_get_db_parameter</refname>
+  <refpurpose>Возвращает параметры базы данных CUBRID</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>array</type><methodname>cubrid_get_db_parameter</methodname>
+   <methodparam><type>resource</type><parameter>conn_identifier</parameter></methodparam>
+  </methodsynopsis>
+  <para>
+   Функция возвращает параметры базы данных CUBRID&return.falseforfailure;.
+   Возвращается ассоциативный массив со значениями следующих параметров:
+  </para>
+  <para>
+  <simplelist>
+   <member><constant>PARAM_ISOLATION_LEVEL</constant></member>
+   <member><constant>PARAM_LOCK_TIMEOUT</constant></member>
+   <member><constant>PARAM_MAX_STRING_LENGTH</constant></member>
+   <member><constant>PARAM_AUTO_COMMIT</constant></member>
+  </simplelist>
+  </para>
+  <para>
+  <table>
+   <title>Параметры базы данных</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Параметр</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>PARAM_ISOLATION_LEVEL</entry>
+       <entry>Уровень изоляции транзакции.</entry>
+      </row>
+      <row>
+       <entry>LOCK_TIMEOUT</entry>
+       <entry>
+        CUBRID предоставляет функцию времени ожидания блокировки,
+        которая устанавливает время ожидания (в секундах) для блокировки до тех пор,
+        пока не будет разрешена настройка блокировки транзакции.
+        Значение по умолчанию для параметра lock_timeout_in_secs равно -1,
+        что означает, что клиент приложения будет ждать бесконечно,
+        пока блокировка транзакции не будет разрешена.
+       </entry>
+      </row>
+      <row>
+       <entry>PARAM_AUTO_COMMIT</entry>
+       <entry>
+        В CUBRID PHP режим автоматической фиксации отключён по умолчанию
+        для управления транзакциями. Его можно установить с помощью
+        <function>cubrid_set_autocommit</function>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+
+  <para>
+   В следующей таблице показаны уровни изоляции от 1 до 6.
+   Она состоит из схемы (строки) таблицы и уровня изоляции:
+  <table>
+   <title>Уровни изоляции, поддерживаемые CUBRID</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Имя</entry>
+       <entry>Описание</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>SERIALIZABLE (6)</entry>
+       <entry>
+        На этом уровне изоляции проблем, связанных с параллелизмом (например,
+        грязное чтение, неповторяющееся чтение, фантомное чтение и т.д.) не возникает.
+       </entry>
+      </row>
+      <row>
+       <entry>REPEATABLE READ CLASS с REPEATABLE READ INSTANCES (5)</entry>
+       <entry>
+        Другая транзакция T2 не может обновить схему таблицы A, пока транзакция T1 просматривает таблицу A.
+        Транзакция T1 может испытывать фантомное чтение для записи R,
+        которая была вставлена другой транзакцией T2,
+        когда она повторно получает определённую запись.
+       </entry>
+      </row>
+      <row>
+       <entry>REPEATABLE READ CLASS с READ COMMITTED INSTANCES (или CURSOR STABILITY) (4)</entry>
+       <entry>
+        Другая транзакция T2 не может обновить схему таблицы A, пока транзакция T1 просматривает таблицу A.
+        Транзакция T1 может испытывать чтение R (неповторяющееся чтение),
+        которое было обновлено и зафиксировано другой транзакцией T2,
+        когда она повторно получает запись R.
+       </entry>
+      </row>
+      <row>
+       <entry>REPEATABLE READ CLASS с READ UNCOMMITTED INSTANCES (3)</entry>
+       <entry>
+        Уровень изоляции по умолчанию. Другая транзакция T2 не может обновить схему таблицы A,
+        пока транзакция T1 просматривает таблицу A.
+        В транзакции T1 может произойти чтение R (грязное чтение) для записи,
+        которая была обновлена, но не зафиксирована другой транзакцией T2.
+       </entry>
+      </row>
+      <row>
+       <entry>READ COMMITTED CLASS с READ COMMITTED INSTANCES (2)</entry>
+       <entry>
+        Транзакция T1 может испытывать чтение A' (неповторяющееся чтение) для таблицы,
+        которая была обновлена и зафиксирована другой транзакцией T2, пока она просматривает таблицу A несколько раз.
+        Транзакция T1 может испытывать чтение R' (неповторяющееся чтение) для записи,
+        которая была обновлена и зафиксирована другой транзакцией T2, пока она повторно извлекает запись R.
+       </entry>
+      </row>
+      <row>
+       <entry>READ COMMITTED CLASS с READ UNCOMMITTED INSTANCES (1)</entry>
+       <entry>
+        Транзакция T1 может испытывать чтение A' (неповторяющееся чтение) для таблицы,
+        которая была обновлена и зафиксирована другой транзакцией T2,
+        в то время как она многократно просматривает таблицу A.
+        Транзакция T1 может испытывать чтение R' (грязное чтение) для записи,
+        которая была обновлена, но не зафиксирована другой транзакцией T2.
+        </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+ &reftitle.parameters;
+ <para>
+  <variablelist>
+   <varlistentry>
+    <term><parameter>conn_identifier</parameter></term>
+    <listitem><para>
+     Соединение CUBRID. Если идентификатор соединения не указан,
+     предполагается последняя ссылка, открытая <function>cubrid_connect</function>.
+    </para></listitem>
+   </varlistentry>
+  </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Ассоциативный массив с параметрами базы данных CUBRID в случае успешного выполнения&return.falseforfailure;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>8.4.0</entry>
+       <entry>
+        В результате изменился LOCK_TIMEOUT на PARAM_LOCK_TIMEOUT
+        и MAX_STRING_LENGTH на PARAM_MAX_STRING_LENGTH.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования <function>cubrid_get_db_parameter</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+printf("%-30s %s\n", "Версия CUBRID PHP:", cubrid_version());
+
+printf("\n");
+
+$conn = cubrid_connect("localhost", 33088, "demodb");
+
+if (!$conn) {
+    die('Connect Error ('. cubrid_error_code() .')' . cubrid_error_msg());
+}
+
+$db_params = cubrid_get_db_parameter($conn);
+
+while (list($param_name, $param_value) = each($db_params)) {
+    printf("%-30s %s\n", $param_name, $param_value);
+}
+
+printf("\n");
+
+$server_info = cubrid_get_server_info($conn);
+$client_info = cubrid_get_client_info();
+
+printf("%-30s %s\n", "Информация о сервере:", $server_info);
+printf("%-30s %s\n", "Информация о клиенте:", $client_info);
+
+printf("\n");
+
+$charset = cubrid_get_charset($conn);
+
+printf("%-30s %s\n", "Кодировка CUBRID:", $charset);
+
+cubrid_disconnect($conn);
+
+?>
+]]>
+   </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Версия CUBRID PHP:            9.1.0.0001
+
+PARAM_ISOLATION_LEVEL          3
+LOCK_TIMEOUT                   -1
+MAX_STRING_LENGTH              1073741823
+PARAM_AUTO_COMMIT              1
+
+Информация о сервере:             9.1.0.0212
+Информация о клиенте:             9.1.0
+
+Кодировка CUBRID:                iso8859-1
+]]>
+    </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>cubrid_set_db_parameter</function></member>
+    <member><function>cubrid_get_autocommit</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
