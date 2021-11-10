@@ -1,29 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b0b19b66183b28cebc1ffbcf1e2b8763f9d9c7b3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: b0b19b66183b28cebc1ffbcf1e2b8763f9d9c7b3 Maintainer: evvc Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="function.snmp2-set" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="function.snmp2-walk" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>snmp2_set</refname>
-  <refpurpose>Устанавливает значение объекта <acronym>SNMP</acronym></refpurpose>
+  <refname>snmp2_walk</refname>
+  <refpurpose>Получает все объекты <acronym>SNMP</acronym> из агента</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>bool</type><methodname>snmp2_set</methodname>
+   <type class="union"><type>array</type><type>false</type></type><methodname>snmp2_walk</methodname>
    <methodparam><type>string</type><parameter>hostname</parameter></methodparam>
    <methodparam><type>string</type><parameter>community</parameter></methodparam>
    <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>object_id</parameter></methodparam>
-   <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>type</parameter></methodparam>
-   <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>value</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>timeout</parameter><initializer>-1</initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>retries</parameter><initializer>-1</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>snmp2_set</function> используется для установки значения объекта
-   <acronym>SNMP</acronym>, указанного в <parameter>object_id</parameter>.
+   Функция <function>snmp2_walk</function> используется для чтения всех значений из агента <acronym>SNMP</acronym>,
+   указанного в <parameter>hostname</parameter>.
   </para>
-
  </refsect1>
 
  <refsect1 role="parameters">
@@ -33,7 +30,7 @@
     <term><parameter>hostname</parameter></term>
     <listitem>
      <para>
-      Имя хоста агента (сервера) <acronym>SNMP</acronym>.
+      Агент SNMP (сервер).
      </para>
     </listitem>
    </varlistentry>
@@ -41,7 +38,7 @@
     <term><parameter>community</parameter></term>
     <listitem>
      <para>
-      Write-сообщество.
+      Read-сообщество.
      </para>
     </listitem>
    </varlistentry>
@@ -49,24 +46,12 @@
     <term><parameter>object_id</parameter></term>
     <listitem>
      <para>
-      Идентификатор объекта <acronym>SNMP</acronym>.
+      Если &null;, <parameter>object_id</parameter> берётся в качестве корня дерева объектов <acronym>SNMP</acronym>
+      и все объекты этого дерева возвращаются в виде массива.
      </para>
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><parameter>type</parameter></term>
-    <listitem>
-     &snmp.set.type.values;
-     &snmp.set.type.values.asn.mapping;
-     &snmp.set.type.values.equal.note;
-     &snmp.set.type.values.bitset.note;
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><parameter>value</parameter></term>
-    <listitem>
      <para>
-      Новое значение.
+      Если указан <parameter>object_id</parameter>, возвращаются все объекты <acronym>SNMP</acronym>
+      ниже этого <parameter>object_id</parameter>.
      </para>
     </listitem>
    </varlistentry>
@@ -92,45 +77,41 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
-  </para>
-  <para>
-   Если хост SNMP отклоняет тип данных, выводится ошибка уровня E_WARNING вроде "Warning: Error in packet. Reason: (badValue) The value given has the wrong type or length.".
-   Если указан неизвестный или недопустимый OID, вероятно, выведется предупреждение "Could not add variable".
+   Возвращает массив значений объекта <acronym>SNMP</acronym>,
+   начиная с <parameter>object_id</parameter> в качестве корня или &false; в случае возникновения ошибки.
   </para>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
+  <para>
    <example>
-    <title>Пример использования <function>snmp2_set</function></title>
+    <title>Пример использования <function>snmp2_walk</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  snmp2_set("localhost", "public", "IF-MIB::ifAlias.3", "s", "foo");
+$a = snmp2_walk("127.0.0.1", "public", "");
+
+foreach ($a as $val) {
+    echo "$val\n";
+}
+
 ?>
- ]]>
+]]>
     </programlisting>
    </example>
-   <example>
-    <title>Пример использования <function>snmp2_set</function> для установки BITS идентификатору объекта <acronym>SNMP</acronym></title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-  snmp2_set("localhost", "public", 'FOO-MIB::bar.42', 'b', '0 1 2 3 4');
-// или
-  snmp2_set("localhost", "public", 'FOO-MIB::bar.42', 'x', 'F0');
-?>
- ]]>
-    </programlisting>
-   </example>
+  </para>
+  <para>
+   Вызов функции вернёт все объекты <acronym>SNMP</acronym> из агента <acronym>SNMP</acronym>, работающего на localhost.
+   Можно перемещаться по значениям с помощью цикла.
+  </para>
  </refsect1>
 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member><function>snmp2_get</function></member>
+    <member><function>snmp2_real_walk</function></member>
    </simplelist>
   </para>
  </refsect1>

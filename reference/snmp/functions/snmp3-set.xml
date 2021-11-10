@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b0b19b66183b28cebc1ffbcf1e2b8763f9d9c7b3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: b0b19b66183b28cebc1ffbcf1e2b8763f9d9c7b3 Maintainer: evvc Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="function.snmp2-set" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="function.snmp3-set" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>snmp2_set</refname>
-  <refpurpose>Устанавливает значение объекта <acronym>SNMP</acronym></refpurpose>
+  <refname>snmp3_set</refname>
+  <refpurpose>Устанавливает значение объекта SNMP</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>bool</type><methodname>snmp2_set</methodname>
+   <type>bool</type><methodname>snmp3_set</methodname>
    <methodparam><type>string</type><parameter>hostname</parameter></methodparam>
-   <methodparam><type>string</type><parameter>community</parameter></methodparam>
+   <methodparam><type>string</type><parameter>security_name</parameter></methodparam>
+   <methodparam><type>string</type><parameter>security_level</parameter></methodparam>
+   <methodparam><type>string</type><parameter>auth_protocol</parameter></methodparam>
+   <methodparam><type>string</type><parameter>auth_passphrase</parameter></methodparam>
+   <methodparam><type>string</type><parameter>privacy_protocol</parameter></methodparam>
+   <methodparam><type>string</type><parameter>privacy_passphrase</parameter></methodparam>
    <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>object_id</parameter></methodparam>
    <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>type</parameter></methodparam>
    <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>value</parameter></methodparam>
@@ -20,8 +25,11 @@
    <methodparam choice="opt"><type>int</type><parameter>retries</parameter><initializer>-1</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>snmp2_set</function> используется для установки значения объекта
-   <acronym>SNMP</acronym>, указанного в <parameter>object_id</parameter>.
+   Функция <function>snmp3_set</function> используется для установки значения объекта <acronym>SNMP</acronym>,
+   указанного в <parameter>object_id</parameter>.
+  </para>
+  <para>
+   Даже если уровень безопасности не использует протокол авторизации или пароль, необходимо указать корректные значения.
   </para>
 
  </refsect1>
@@ -33,15 +41,55 @@
     <term><parameter>hostname</parameter></term>
     <listitem>
      <para>
-      Имя хоста агента (сервера) <acronym>SNMP</acronym>.
+      Имя хоста агента (сервера) SNMP.
      </para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>community</parameter></term>
+    <term><parameter>security_name</parameter></term>
     <listitem>
      <para>
-      Write-сообщество.
+      Имя безопасности, обычно какое-то имя пользователя.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>security_level</parameter></term>
+    <listitem>
+     <para>
+      Уровень безопасности (noAuthNoPriv|authNoPriv|authPriv).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>auth_protocol</parameter></term>
+    <listitem>
+     <para>
+      Протокол аутентификации (MD5 или SHA).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>auth_passphrase</parameter></term>
+    <listitem>
+     <para>
+      Пароль для аутентификации.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>privacy_protocol</parameter></term>
+    <listitem>
+     <para>
+      Протокол конфиденциальности (DES или AES).
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>privacy_passphrase</parameter></term>
+    <listitem>
+     <para>
+      Пароль конфиденциальности.
      </para>
     </listitem>
    </varlistentry>
@@ -103,36 +151,27 @@
  <refsect1 role="examples">
   &reftitle.examples;
    <example>
-    <title>Пример использования <function>snmp2_set</function></title>
+    <title>Пример использования <function>snmp3_set</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  snmp2_set("localhost", "public", "IF-MIB::ifAlias.3", "s", "foo");
+  snmp3_set('localhost', 'james', 'authPriv', 'SHA', 'secret007', 'AES', 'secret007', 'IF-MIB::ifAlias.3', 's', "foo");
 ?>
  ]]>
     </programlisting>
    </example>
    <example>
-    <title>Пример использования <function>snmp2_set</function> для установки BITS идентификатору объекта <acronym>SNMP</acronym></title>
+    <title>Пример использования <function>snmp3_set</function> для установки BITS идентификатору объекта <acronym>SNMP</acronym></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  snmp2_set("localhost", "public", 'FOO-MIB::bar.42', 'b', '0 1 2 3 4');
+  snmp3_set('localhost', 'james', 'authPriv', 'SHA', 'secret007', 'AES', 'secret007', 'FOO-MIB::bar.42', 'b', '0 1 2 3 4');
 // или
-  snmp2_set("localhost", "public", 'FOO-MIB::bar.42', 'x', 'F0');
+  snmp3_set('localhost', 'james', 'authPriv', 'SHA', 'secret007', 'AES', 'secret007', 'FOO-MIB::bar.42', 'x', 'F0');
 ?>
  ]]>
     </programlisting>
    </example>
- </refsect1>
-
- <refsect1 role="seealso">
-  &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>snmp2_get</function></member>
-   </simplelist>
-  </para>
  </refsect1>
 
 </refentry>
