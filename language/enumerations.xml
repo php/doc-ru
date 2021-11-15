@@ -1,0 +1,840 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 62739864aa74b9e962493f85053229e9981d6d03 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<chapter xml:id="language.enumerations" xmlns="http://docbook.org/ns/docbook">
+ <title>Перечисления</title>
+ <sect1 xml:id="language.enumerations.overview">
+  <title>Обзор перечислений</title>
+  <?phpdoc print-version-for="enumerations"?>
+
+  <para>
+   Перечисления или "Enums" позволяют разработчику определять настраиваемый тип,
+   который ограничен одним из дискретного числа возможных значений.
+   Это может быть особенно полезно при определении модели предметной области,
+   поскольку позволяет "сделать недопустимые состояния непредставимыми".
+  </para>
+
+  <para>
+   Перечисления появляются на многих языках с множеством различных функций.
+   В PHP перечисления - это особый вид объектов. Сами перечисления являются классами и все его
+   возможные случаи являются объектами одного экземпляра этого класса.
+   Это означает, что варианты перечисления являются допустимыми объектами и могут использоваться везде,
+   где можно использовать объект, включая проверки типов.
+  </para>
+
+  <para>
+   Самым популярным примером перечислений является встроенный логический тип,
+   который представляет собой перечислимый тип с допустимыми значениями &true; и &false;.
+   Перечисления позволяют разработчикам определять свои собственные произвольно надёжные перечисления.
+  </para>
+ </sect1>
+ <sect1 xml:id="language.enumerations.basics">
+  <title>Основы перечислений</title>
+
+  <para>
+   Перечисления похожи на классы и используют те же пространства имён, что и классы, интерфейсы и трейты.
+   Они также могут быть загружены автоматически. Перечисления определяют новый тип, который имеет фиксированное
+   ограниченное количество возможных допустимых значений.
+  </para>
+
+  <programlisting role="php">
+<![CDATA[
+<?php
+enum Suit
+{
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
+}
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Это объявление создаёт новый перечислимый тип с именем <literal>Suit</literal>, у которого четыре и только четыре
+   допустимых значения: <literal>Suit::Hearts</literal>, <literal>Suit::Diamonds</literal>,
+   <literal>Suit::Clubs</literal> и <literal>Suit::Spades</literal>.
+   Переменным может быть присвоено одно из этих допустимых значений. Тип функции может быть проверен на соответствие типу перечисления
+   и в этом случае могут быть переданы только значения этого типа.
+  </para>
+
+  <programlisting role="php">
+<![CDATA[
+<?php
+function pick_a_card(Suit $suit) { ... }
+
+$val = Suit::Diamonds;
+
+// OK
+pick_a_card($val);
+// OK
+pick_a_card(Suit::Clubs);
+// TypeError: pick_a_card(): Argument #1 ($suit) must be of type Suit, string given
+pick_a_card('Spades');
+?>
+]]>
+   </programlisting>
+
+   <para>
+    Перечисление может иметь ноль или более вариантов <literal>case</literal> без ограничений.
+    Перечисление без вариантов синтаксически корректно, хотя и бесполезно.
+   </para>
+
+   <para>
+    По умолчанию варианты не поддерживаются скалярным значением. То есть <literal>Suit::Hearts</literal>
+    не равно <literal>"0"</literal>. Вместо этого каждый вариант поддерживается одноэлементным объектом с таким именем.
+    Это означает, что:
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+$a = Suit::Spades;
+$b = Suit::Spades;
+
+$a === $b; // true
+
+$a instanceof Suit;  // true
+?>
+]]>
+   </programlisting>
+
+   <para>
+    Это также означает, что значения перечисления никогда не являются <literal>&lt;</literal> или <literal>&gt;</literal>
+    друг с другом, поскольку эти сравнения не имеют смысла для объектов.
+    Сравнения всегда будут возвращать false при работе с вариантами перечисления.
+   </para>
+
+   <para>
+    Тип варианта без связанных данных называется "Чистый вариант". Перечисление, которое содержит только чистые варианты,
+    называется чистым перечислением.
+   </para>
+
+   <para>
+    Все чистые варианты реализованы как экземпляры своего типа перечисления.
+    Тип перечисления внутренне представлен как класс.
+   </para>
+
+   <para>
+    У всех обращений есть свойство, доступное только для чтения, <literal>name</literal>,
+    которое является именем самого варианта, чувствительным к регистру. Иногда это может быть полезно для отладки.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+print Suit::Spades->name;
+// prints "Spades"
+?>
+]]>
+   </programlisting>
+
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.backed">
+   <title>Типизированные перечисления</title>
+
+   <para>
+    По умолчанию у вариантов перечислений нет скалярного эквивалента. Это просто одноэлементные объекты.
+    Однако существует множество случаев, когда варианты перечислений должны иметь возможность обращаться к базе данных
+    или аналогичному хранилищу данных и обратно, поэтому полезно иметь встроенный скалярный
+    (и, следовательно, тривиально сериализуемый) эквивалент, определённый внутренне.
+   </para>
+
+   <para>Чтобы определить скалярный эквивалент для перечислений, используйте следующий синтаксис:</para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+enum Suit: string
+{
+    case Hearts = 'H';
+    case Diamonds = 'D';
+    case Clubs = 'C';
+    case Spades = 'S';
+}
+?>
+]]>
+   </programlisting>
+
+   <para>
+    Вариант, имеющий скалярный эквивалент, называется типизированным, поскольку он "поддерживается" более простым значением.
+    Перечисление, у которого все варианты типизированные, называется "типизированным перечислением".
+    Типизированное перечисление может содержать только типизированные варианты.
+    Чистое перечисление может содержать только чистые варианты.
+   </para>
+
+   <para>
+    Типизированное перечисление может поддерживаться типами <literal>int</literal> или <literal>string</literal>
+    и данное перечисление поддерживает только один тип за раз (то есть не допускается объединение <literal>int|string</literal>).
+    Если перечисление помечено как имеющее скалярный эквивалент, тогда все варианты должны иметь определённый явно уникальный скалярный эквивалент.
+    Не существует автоматически генерируемых скалярных эквивалентов (например, последовательных целых чисел).
+    Типизированные варианты должны быть уникальными; два варианта типизированных перечисления не могут иметь одного и того же скалярного эквивалента.
+    Однако константа может относиться к варианту, фактически создавая псевдоним.
+    Смотрите <link linkend="language.enumerations.constants">Константы перечислений</link>.
+   </para>
+
+   <para>
+    Эквивалентные значения должны быть строками или строковыми выражениями.
+    Константы и постоянные выражения не поддерживаются. То есть <literal>1 + 1</literal> разрешено,
+    а <literal>1 + SOME_CONST</literal> - нет.
+   </para>
+
+   <para>
+    У типизированных вариантов есть дополнительное свойство, доступное только для чтения, <literal>value</literal>,
+    которое является значением, указанным в определении.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+print Suit::Clubs->value;
+// Выведет "C"
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Чтобы сделать свойство <literal>value</literal> доступным только для чтения, нельзя назначить переменную в качестве ссылки на неё.
+   То есть следующий код выдаст ошибку:
+  </para>
+
+  <programlisting role="php">
+<![CDATA[
+<?php
+$suit = Suit::Clubs;
+$ref = &$suit->value;
+// Error: Cannot acquire reference to property Suit::$value
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Типизированные перечисления реализуют внутренний интерфейс <interfacename>BackedEnum</interfacename>,
+   который предоставляет два дополнительных метода:
+  </para>
+
+  <simplelist>
+   <member>
+    <literal>from(int|string): self</literal> возьмёт скаляр и вернёт соответствующий вариант перечисления.
+    Если вариант не найден, метод выдаст <classname>ValueError</classname>.
+    Это полезно в тех случаях, когда входной скаляр является доверенным,
+    а отсутствие значения перечисления следует рассматривать как ошибку остановки приложения.
+   </member>
+   <member>
+    <literal>tryFrom(int|string): ?self</literal> возьмёт скаляр и вернёт соответствующий вариант перечисления.
+    Если вариант не найден, метод вернёт <literal>null</literal>.
+    Это полезно в тех случаях, когда входной скаляр не является доверенным и вызывающая функция
+    хочет реализовать свою собственную обработку ошибок или логику значения по умолчанию.
+   </member>
+  </simplelist>
+
+  <para>
+   Методы <literal>from()</literal> и <literal>tryFrom()</literal> следуют стандартным правилам
+   слабой/строгой типизации. В режиме слабой типизации допустима передача целого числа или строки
+   и система соответствующим образом преобразует значение.
+   Передача числа с плавающей точкой также будет работать с принудительным преобразованием.
+   В режиме строгой типизации передача целого числа в <literal>from()</literal> в перечислении
+   со строковой типизацией (или наоборот) приведёт к <classname>TypeError</classname>,
+   как и передача числа с плавающей точкой при любых обстоятельствах.
+   Все остальные типы параметров вызовут ошибку TypeError в обоих режимах.
+  </para>
+
+  <programlisting role="php">
+<![CDATA[
+<?php
+$record = get_stuff_from_database($id);
+print $record['suit'];
+
+$suit =  Suit::from($record['suit']);
+
+// Недопустимые данные выдают ошибку ValueError: "X" не является допустимым скалярным значением для перечисления "Suit"
+print $suit->value;
+
+$suit = Suit::tryFrom('A') ?? Suit::Spades;
+
+// Недопустимые данные возвращают значение null, поэтому вместо этого используется Suit::Spades.
+print $suit->value;
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Ручное определение метода <literal>from()</literal> или <literal>tryFrom()</literal> в типизированных перечислениях
+   приведёт к фатальной ошибке.
+  </para>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.methods">
+   <title>Методы перечислений</title>
+
+   <para>
+    Перечисления (как чистые перечисления, так и типизированные перечисления) могут содержать методы и могут реализовывать интерфейсы.
+    Если перечисление реализует интерфейс, то любая проверка типа для этого интерфейса также будет принимать все варианты этого перечисления.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+interface Colorful
+{
+    public function color(): string;
+}
+
+enum Suit implements Colorful
+{
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
+
+    // Выполняет интерфейсный контракт.
+    public function color(): string
+    {
+        return match($this) {
+            Suit::Hearts, Suit::Diamonds => 'Красный',
+            Suit::Clubs, Suit::Spades => 'Чёрный'
+        };
+    }
+
+    // Не является частью интерфейса; хорошо.
+    public function shape(): string
+    {
+        return "Rectangle";
+    }
+}
+
+function paint(Colorful $c) { ... }
+
+paint(Suit::Clubs);  // Работает
+
+print Suit::Diamonds->shape(); // выведет "Rectangle"
+?>
+]]>
+   </programlisting>
+
+   <para>
+    В этом примере у всех четырёх экземпляров <literal>Suit</literal> есть два метода:
+    <literal>color()</literal> и <literal>shape()</literal>.
+    Что касается вызывающего кода и проверки типов, они ведут себя точно так же, как и любой другой экземпляр объекта.
+   </para>
+
+   <para>
+    В типизированных перечислениях объявление интерфейса идёт после объявления типа.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+interface Colorful
+{
+    public function color(): string;
+}
+
+enum Suit: string implements Colorful
+{
+    case Hearts = 'H';
+    case Diamonds = 'D';
+    case Clubs = 'C';
+    case Spades = 'S';
+
+    // Выполняет интерфейсный контракт.
+    public function color(): string
+    {
+        return match($this) {
+            Suit::Hearts, Suit::Diamonds => 'Красный',
+            Suit::Clubs, Suit::Spades => 'Чёрный'
+        };
+    }
+}
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Внутри метода определяется переменная <literal>$this</literal>, которая ссылается на экземпляр варианта.
+  </para>
+
+  <para>
+   Методы могут быть сколь угодно сложными, но на практике обычно возвращают статическое значение
+   или <link linkend="control-structures.match">match</link> для <literal>$this</literal>,
+   чтобы предоставить разные результаты для разных случаев.
+  </para>
+
+  <para>
+   Обратите внимание, что в этом случае было бы лучше также определить тип перечисления <literal>SuitColor</literal>
+   со значениями Red и Black и вернуть его вместо этого.
+   Однако это усложнило бы этот пример.
+  </para>
+
+  <para>
+   Вышеупомянутая иерархия логически похожа на следующую структуру классов
+   (хотя это не фактический исполняемый код):
+  </para>
+
+  <programlisting role="php">
+<![CDATA[
+<?php
+interface Colorful
+{
+    public function color(): string;
+}
+
+final class Suit implements UnitEnum, Colorful
+{
+    public const Hearts = new self('Hearts');
+    public const Diamonds = new self('Diamonds');
+    public const Clubs = new self('Clubs');
+    public const Spades = new self('Spades');
+
+    private function __construct(public readonly string $name) {}
+
+    public function color(): string
+    {
+        return match($this) {
+            Suit::Hearts, Suit::Diamonds => 'Красный',
+            Suit::Clubs, Suit::Spades => 'Чёрный'
+        };
+    }
+
+    public function shape(): string
+    {
+        return "Прямоугольник";
+    }
+
+    public static function cases(): array
+    {
+        // Недопустимый метод, поскольку определение метода cases() в перечислениях вручную запрещено.
+        // Смотрите также раздел "Список значений".
+    }
+}
+?>
+]]>
+  </programlisting>
+
+  <para>
+   Методы могут быть общедоступными, закрытыми или защищёнными, хотя на практике закрытые и защищённые эквивалентны,
+   поскольку наследование не допускается.
+  </para>
+
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.static-methods">
+   <title>Статические методы перечислений</title>
+
+   <para>
+    Перечисления также могут иметь статические методы. Использование статических методов в самом перечислении
+    в первую очередь предназначено для альтернативных конструкторов. Например:
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+enum Size
+{
+    case Small;
+    case Medium;
+    case Large;
+
+    public static function fromLength(int $cm): static
+    {
+        return match(true) {
+            $cm < 50 => static::Small,
+            $cm < 100 => static::Medium,
+            default => static::Large,
+        };
+    }
+}
+?>
+]]>
+   </programlisting>
+
+   <para>
+    Статические методы могут быть общедоступными, закрытыми или защищёнными,
+    хотя на практике частные и защищённые эквивалентны, поскольку наследование не допускается.
+   </para>
+
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.constants">
+   <title>Константы перечислений</title>
+
+   <para>
+    Перечисления могут содержать константы, которые могут быть общедоступными,
+    закрытыми или защищёнными, хотя на практике закрытые и защищённые эквивалентны,
+    поскольку наследование не допускается.
+   </para>
+
+   <para>Константа перечисления может относиться к варианту перечисления:</para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+enum Size
+{
+    case Small;
+    case Medium;
+    case Large;
+
+    public const Huge = self::Large;
+}
+?>
+]]>
+   </programlisting>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.traits">
+   <title>Трейты</title>
+
+   <para>
+    Перечисления могут использовать трейты, которые будут вести себя так же, как и классы.
+    Предостережение заключается в том, что трейты, используемые (<literal>use</literal>)
+    в перечислении не должны содержать свойств.
+    Они могут включать только методы и статические методы. Трейт со свойствами приведёт к фатальной ошибке.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+interface Colorful
+{
+    public function color(): string;
+}
+
+trait Rectangle
+{
+    public function shape(): string {
+        return "Прямоугольние";
+    }
+}
+
+enum Suit implements Colorful
+{
+    use Rectangle;
+
+    case Hearts;
+    case Diamonds;
+    case Clubs;
+    case Spades;
+
+    public function color(): string
+    {
+        return match($this) {
+            Suit::Hearts, Suit::Diamonds => 'Красный',
+            Suit::Clubs, Suit::Spades => 'Чёрный',
+        };
+    }
+}
+?>
+]]>
+   </programlisting>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.expressions">
+   <title>Значения перечисления в постоянных выражениях</title>
+
+   <para>
+    Поскольку варианты представлены как константы в самом перечислении,
+    они могут использоваться как статические значения в большинстве константных выражений:
+    значения по умолчанию для свойств, значения по умолчанию для статических переменных, значения по умолчанию для параметров,
+    глобальные значения и значения констант класса.
+    Они не могут использоваться в других значениях варианта перечисления, но обычные константы могут относиться к варианту перечисления.
+   </para>
+
+   <para>
+    Однако неявные вызовы магических методов, таких как <classname>ArrayAccess</classname> в перечислениях,
+    не допускаются в статических или константных определениях, поскольку мы не можем абсолютно гарантировать,
+    что результирующее значение будет детерминированным или что вызов метода не будет иметь побочных эффектов.
+    Вызовы функций, вызовы методов и доступ к свойствам по-прежнему являются недопустимыми операциями в постоянных выражениях.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+// Это полностью законное определение перечисления.
+enum Direction implements ArrayAccess
+{
+    case Up;
+    case Down;
+
+    public function offsetGet($val) { ... }
+    public function offsetExists($val) { ... }
+    public function offsetSet($val) { throw new Exception(); }
+    public function offsetUnset($val) { throw new Exception(); }
+}
+
+class Foo
+{
+    // Это разрешено.
+    const Bar = Direction::Down;
+
+    // Это запрещено, так как не может быть детерминированным.
+    const Bar = Direction::Up['short'];
+    // Fatal error: Cannot use [] on enums in constant expression
+}
+
+// Это совершенно законно, потому что это не постоянное выражение.
+$x = Direction::Up['short'];
+?>
+]]>
+   </programlisting>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.object-differences">
+   <title>Отличия от объектов</title>
+
+   <para>
+    Хотя перечисления построены на классах и объектах, они не поддерживают все функциональные возможности, связанные с объектами.
+    В частности, вариантам перечислений запрещено иметь состояние.
+   </para>
+
+   <simplelist>
+    <member>Конструкторы и деструкторы запрещены.</member>
+    <member>Наследование не поддерживается. Перечисления не могут наследовать или наследоваться.</member>
+    <member>Статические свойства или свойства объекта не допускаются.</member>
+    <member>Клонирование варианта перечисления не поддерживается, так как варианты должны быть одноэлементными экземплярами.</member>
+    <member><link linkend="language.oop5.magic">Магические методы</link>, кроме перечисленных ниже, запрещены.</member>
+   </simplelist>
+
+   <para>Доступны следующие функциональные возможности объекта, которые ведут себя так же, как и для любого другого объекта:</para>
+
+   <simplelist>
+    <member>Методы public, private и protected.</member>
+    <member>Статические методы public, private и protected.</member>
+    <member>Константы public, private и protected.</member>
+    <member>Перечисления могут реализовывать любое количество интерфейсов.</member>
+    <member>
+     К перечислениям и вариантам могут быть добавлены <link linkend="language.attributes">атрибуты</link>.
+     Целевой фильтр <constant>TARGET_CLASS</constant> включает сами перечисления.
+     Целевой фильтр <constant>TARGET_CLASS_CONST</constant> включает варианты перечислений.
+    </member>
+    <member>
+     Магические методы <link linkend="object.call">__call</link>, <link linkend="object.callstatic">__callStatic</link>,
+     и <link linkend="object.invoke">__invoke</link>.
+    </member>
+    <member>Константы <constant>__CLASS__</constant> и <constant>__FUNCTION__</constant> ведут себя как обычно.</member>
+   </simplelist>
+
+   <para>
+    Магическая константа <literal>::class</literal> для типа перечисления оценивает имя типа,
+    включая любое пространство имён, точно так же, как объект.
+    Магическая константа <literal>::class</literal> в экземпляре варианта также оценивается как тип перечисления,
+    поскольку она является экземпляром этого типа.
+   </para>
+
+   <para>
+    Кроме того, варианты перечисления не могут быть созданы напрямую с помощью <literal>new</literal> или с помощью
+    <methodname>ReflectionClass::newInstanceWithoutConstructor</methodname>. Оба способа приведут к ошибке.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+$clovers = new Suit();
+// Error: Cannot instantiate enum Suit
+$horseshoes = (new ReflectionClass(Suit::class))->newInstanceWithoutConstructor()
+// Error: Cannot instantiate enum Suit
+?>
+]]>
+   </programlisting>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.listing">
+   <title>Список значений</title>
+
+   <para>
+    И чистые перечисления, и типизированные перечисления реализуют внутренний интерфейс
+    с именем <interfacename>UnitEnum</interfacename>.
+    <literal>UnitEnum</literal> включает статический метод <literal>cases()</literal>.
+    <literal>cases()</literal> возвращает упакованный массив всех определённых вариантов в порядке объявления.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+Suit::cases();
+// Produces: [Suit::Hearts, Suit::Diamonds, Suit::Clubs, Suit:Spades]
+?>
+]]>
+   </programlisting>
+
+   <para>
+    Ручное определение метода <literal>cases()</literal> в перечислении приведёт к фатальной ошибке.
+   </para>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.serialization">
+   <title>Сериализация</title>
+
+   <para>
+    Перечисления сериализуются иначе, чем объекты. В частности, у них есть новый код сериализации,
+    <literal>"E"</literal>, который указывает имя варианта перечисления.
+    Затем процедура десериализации может использовать это для установки переменной в существующее одноэлементное значение.
+    Это гарантирует, что:
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+Suit::Hearts === unserialize(serialize(Suit::Hearts));
+
+print serialize(Suit::Hearts);
+// E:11:"Suit:Hearts";
+?>
+]]>
+   </programlisting>
+
+   <para>
+    При десериализации, если не удаётся найти перечисление и сопоставить с соответствующим сериализованном значением,
+    будет выдано предупреждение и будет возвращено <literal>false</literal>.
+   </para>
+
+   <para>
+    Если чистое перечисление сериализуется в JSON, будет выдана ошибка.
+    Если типизированное перечисление сериализуется в JSON, оно будет представлено только его скаляром значений в соответствующем типе.
+    Поведение обоих способов может быть изменено путём реализации <classname>JsonSerializable</classname>.
+   </para>
+
+   <para>
+    Для <function>print_r</function> вывод варианта перечисления немного отличается от объектов, чтобы свести к минимуму путаницу.
+   </para>
+
+   <programlisting role="php">
+<![CDATA[
+<?php
+enum Foo {
+    case Bar;
+}
+
+enum Baz: int {
+    case Beep = 5;
+}
+
+print_r(Foo::Bar);
+print_r(Baz::Beep);
+
+/* Выводит
+
+Foo Enum (
+    [name] => Bar
+)
+Baz Enum:int {
+    [name] => Beep
+    [value] => 5
+}
+*/
+?>
+]]>
+  </programlisting>
+  </sect1>
+
+  <sect1 xml:id="language.enumerations.examples">
+   &reftitle.examples;
+
+   <para>
+    <example>
+     <title>Основные ограниченные значения</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+enum SortOrder
+{
+    case ASC;
+    case DESC;
+}
+
+function query($fields, $filter, SortOrder $order = SortOrder::ASC) { ... }
+?>
+]]>
+     </programlisting>
+     <para>
+      Функция <literal>query()</literal> теперь может безопасно работать,
+      зная, что <literal>$order</literal> гарантированно будет либо <literal>SortOrder::ASC</literal>,
+      либо <literal>SortOrder::DESC</literal>.
+      Любое другое значение привело бы к <classname>TypeError</classname>,
+      поэтому дальнейшая проверка ошибок или тестирование не требуется.
+     </para>
+    </example>
+   </para>
+
+   <para>
+
+    <example>
+     <title>Расширенные эксклюзивные значения</title>
+
+     <programlisting role="php">
+<![CDATA[
+<?php
+enum UserStatus: string
+{
+    case Pending = 'P';
+    case Active = 'A';
+    case Suspended = 'S';
+    case CanceledByUser = 'C';
+
+    public function label(): string
+    {
+        return match($this) {
+            static::Pending => 'В ожидании',
+            static::Active => 'Активный',
+            static::Suspended => 'Приостановленный',
+            static::CanceledByUser => 'Отменено пользователем',
+        };
+    }
+}
+?>
+]]>
+    </programlisting>
+
+    <para>
+     В этом примере статус пользователя может быть одним из и следующих:
+     <literal>UserStatus::Pending</literal>,
+     <literal>UserStatus::Active</literal>, <literal>UserStatus::Suspended</literal> или
+     <literal>UserStatus::CanceledByUser</literal>.
+     Функция может ввести параметр <literal>UserStatus</literal> и затем принять только эти четыре значения, точка.
+    </para>
+
+    <para>
+     У всех четырёх значений есть метод <literal>label()</literal>, который возвращает читаемою строку.
+     Эта строка не зависит от скалярной эквивалентной строки "machine name", которую можно использовать,
+     например, в поле базы данных или поле выбора HTML.
+    </para>
+
+    <programlisting role="php">
+<![CDATA[
+<?php
+foreach (UserStatus::cases() as $case) {
+    printf('<option value="%s">%s</option>\n', $case->value, $case->label());
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  </sect1>
+
+</chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
