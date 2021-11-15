@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: e41806c30bf6975e452c0d4ce35ab0984c2fa68c Maintainer: evvc Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.db2-fetch-object" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>db2_fetch_object</refname>
+  <refpurpose>Возвращает объект со свойствами, представляющими столбцы в выбранной строке</refpurpose>
+ </refnamediv>
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>object</type><methodname>db2_fetch_object</methodname>
+   <methodparam><type>resource</type><parameter>stmt</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>row_number</parameter><initializer>-1</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает объект, в котором каждое свойство представляет столбец,
+   возвращённый в строке, полученной из набора результатов.
+  </para>
+
+ </refsect1>
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>stmt</parameter></term>
+     <listitem>
+      <para>
+       Допустимый ресурс <literal>stmt</literal>, содержащий набор результатов.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>row_number</parameter></term>
+     <listitem>
+      <para>
+       Запрашивает конкретную строку по индексу (начинается с 1) из набора результатов.
+       Передача параметра приводит к предупреждению PHP, если в наборе результатов используется курсор "forward-only".
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает объект, представляющий одну строку в наборе результатов.
+   Свойства объекта сопоставляются с именами столбцов в наборе результатов.
+  </para>
+  <para>
+   Серверы баз данных IBM DB2, Cloudscape и Apache Derby обычно переводят имена столбцов
+   в верхний регистр, поэтому свойства объекта будут отражать этот регистр.
+  </para>
+  <para>
+   Если запрос SELECT вызывает скалярную функцию для изменения значения столбца,
+   серверы баз данных возвращают номер столбца как имя столбца в наборе результатов.
+   Если требуется более осмысленное имя столбца и свойство объекта,
+   вы можете использовать конструкцию AS, чтобы присвоить имя столбцу в наборе результатов.
+  </para>
+  <para>
+   Возвращает &false;, если ни одна строка не была получена.
+  </para>
+ </refsect1>
+
+<refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>db2_fetch_object</function></title>
+    <para>
+     В следующем примере выполняется запрос SELECT со скалярной функцией RTRIM,
+     которая удаляет пробелы в конце столбца. Вместо того, чтобы создавать объект со свойствами "BREED" и "2",
+     мы используем конструкцию AS в запросе SELECT для присвоения имени "name" изменённому столбцу.
+     Сервер базы данных переводит имена столбцов в верхний регистр,
+     в результате чего получается объект со свойствами "BREED" и "NAME".
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$conn = db2_connect($database, $user, $password);
+
+$sql = "SELECT breed, RTRIM(name) AS name
+    FROM animals
+    WHERE id = ?";
+
+if ($conn) {
+    $stmt = db2_prepare($conn, $sql);
+    db2_execute($stmt, array(0));
+
+    while ($pet = db2_fetch_object($stmt)) {
+        echo "Иди сюда, {$pet->NAME}, мой маленький {$pet->BREED}!";
+    }
+    db2_close($conn);
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Иди сюда, Пушок, мой маленький котёнок!
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>db2_fetch_array</function></member>
+    <member><function>db2_fetch_assoc</function></member>
+    <member><function>db2_fetch_both</function></member>
+    <member><function>db2_fetch_row</function></member>
+    <member><function>db2_result</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
