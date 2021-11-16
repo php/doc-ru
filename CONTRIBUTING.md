@@ -26,7 +26,7 @@
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: 0abaad099e3ec6064ed8cf31553dcd5e3e3fdfba Maintainer: sergey Status: ready -->
-<!-- Reviewed: yes -->
+<!-- Reviewed: no -->
 ```
 
 где `0abaad099e3ec6064ed8cf31553dcd5e3e3fdfba` — полный номер коммита в англоязычной документации, последнего актуального на момент редактирования для данного файла.
