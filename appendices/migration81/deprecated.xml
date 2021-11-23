@@ -14,8 +14,8 @@
    </title>
 
    <para>
-    Должны быть реализованы либо только новые методы, если не предусмотрена поддержка PHP до версии 7.4,
-    либо должны быть реализованы оба способа.
+    Если не требуется поддержка версий PHP меньше 7.4, должны быть реализованы только эти два магических метода,
+    иначе нужно реализовать как методы интерфейса, так и магические методы.
    </para>
   </sect3>
 
@@ -23,10 +23,9 @@
    <title>Передача &null; параметрам встроенных функций, не допускающим значение NULL</title>
 
    <para>
-    Скалярные типы для встроенных функций по умолчанию допускают значение NULL,
-    это поведение не рекомендуется для согласования с поведением пользовательских функций,
-    где скалярные типы должны быть явно помечены как допускающие значение NULL.
-
+    Больше не рекомендуется передавать значение NULL скалярным параметрам встроенных функций. В противном случае
+    теперь будет вызвано уведомление. Такое ограничение было введено, чтобы лучше соответствовать работе
+    пользовательских функций, где параметры, допускающие значение NULL, должны быть для этого явно обозначены.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
@@ -45,8 +44,8 @@ var_dump(str_contains("foobar", null));
    <title>Неявная несовместимость преобразования &float; к &integer;</title>
 
    <para>
-    Неявное преобразование числа с плавающей точкой (&float;) к целому числу (&integer;),
-    что приводит к потере точности, теперь не рекомендуется.
+    Теперь нужно избегать неявного преобразования числа с плавающей точкой (&float;) к целому числу (&integer;),
+    которое приводит потере точности.
     Это влияет на ключи массива (&array;), объявления целочисленных (&integer;) типов в принудительном режиме
     и операторов, работающие с целыми числами (&integer;).
 
@@ -65,7 +64,7 @@ $a[15.0]; // работает, так как 15.0 == 15
   </sect3>
 
   <sect3 xml:id="migration81.deprecated.core.static-trait">
-   <title>Вызов элемента <modifier>static</modifier> в трейтах</title>
+   <title>Вызов <modifier>static</modifier>-элемента в трейтах</title>
 
    <para>
     Вызов <modifier>static</modifier>-метода или доступ к <modifier>static</modifier>-свойству
@@ -75,16 +74,16 @@ $a[15.0]; // работает, так как 15.0 == 15
   </sect3>
 
   <sect3 xml:id="migration81.deprecated.core.magic-sleep">
-   <title>Возвращаемое значение <function>__sleep</function> не массив (&array;)</title>
+   <title>Возврат не массива (&array;) из <function>__sleep</function> </title>
 
    <para>
-    Возвращаемое значение <link linkend="object.sleep">__sleep()</link>, не являющееся массивом
-    теперь выводит диагностику.
+    Возвращаемое значение <link linkend="object.sleep">__sleep()</link>, не являющееся массивом,
+    теперь сгенерирует уведомление.
    </para>
   </sect3>
 
   <sect3 xml:id="migration81.deprecated.core.void-by-ref">
-   <title>Возвращаемое значение по ссылке из функции <type>void</type></title>
+   <title>Возврат значения по ссылке из функции <type>void</type></title>
 
    <para>
     <informalexample>
@@ -96,7 +95,7 @@ function &test(): void {}
 ]]>
      </programlisting>
     </informalexample>
-    Такая функция противоречива и уже при вызове выдаёт следующий <constant>E_NOTICE</constant>:
+    Такая функция сбивает с толку, поэтому теперь выдаст следующий <constant>E_NOTICE</constant>:
     <literal>Only variable references should be returned by reference</literal>
     (По ссылке должны возвращаться только ссылки на переменные).
    </para>
@@ -106,7 +105,7 @@ function &test(): void {}
    <title>Автовивификация из &false;</title>
    <para>
     Автовивификация - это процесс создания нового массива (&array;) при добавлении нового значения.
-    Автовивификация запрещена для скалярных значений, &false; однако был исключением.
+    Автовивификация запрещена для скалярных значений, однако &false; был исключением.
     Теперь такое поведение устарело.
 
     <informalexample>
@@ -122,7 +121,7 @@ $arr[] = 2;   // устарело
    </para>
    <note>
     <para>
-     Автовивификация из &null; и неопределённого значения по-прежнему разрешены:
+     Автовивификация из &null; и неопределённого значения по-прежнему разрешена:
      <informalexample>
       <programlisting role="php">
 <![CDATA[
@@ -153,8 +152,8 @@ $arr[] = 2;
     Передача нестрокового аргумента устарела.
     В будущем аргумент будет интерпретироваться как строка вместо кода ASCII.
     В зависимости от предполагаемого поведения аргумент должен быть приведён к строке (&string;)
-    или должен быть сделан явный вызов <function>chr</function>.
-    Затронуты все функции <literal>ctype_*()</literal>.
+    явным образом или через вызов <function>chr</function>.
+    Это изменение относится ко всем функциям <literal>ctype_*()</literal>.
    </para>
   </sect3>
  </sect2>
@@ -200,7 +199,7 @@ $arr[] = 2;
   <title>Хеширование</title>
 
   <para>
-   Функция <function>mhash</function>,
+   Функции <function>mhash</function>,
    <function>mhash_keygen_s2k</function>,
    <function>mhash_count</function>,
    <function>mhash_get_block_size</function>
@@ -223,7 +222,7 @@ $arr[] = 2;
 
   <para>
    Вызов <methodname>IntlCalendar::roll</methodname> с логическим значением (&boolean;) устарел.
-   Используйте <literal>1</literal> and <literal>-1</literal> вместо &true; и &false;, соответственно.
+   Используйте <literal>1</literal> и <literal>-1</literal> вместо &true; и &false; соответственно.
   </para>
  </sect2>
 
@@ -241,7 +240,7 @@ $arr[] = 2;
 
   <para>
    Свойство <property>mysqli_driver::$driver_version</property> устарело.
-   Оно было бессмысленным и устаревшим, используйте вместо него <constant>PHP_VERSION_ID</constant>.
+   Оно было неактуальным, используйте вместо него <constant>PHP_VERSION_ID</constant>.
   </para>
 
   <para>
@@ -287,8 +286,7 @@ $arr[] = 2;
   <title>PgSQL</title>
 
   <para>
-   Отсутствие передачи аргумента подключения всем
-   функциям <literal>pgsql_*()</literal> устарело.
+   Функциям <literal>pgsql_*()</literal> теперь нужно явно передавать параметр connection.
   </para>
  </sect2>
 
@@ -311,9 +309,9 @@ $arr[] = 2;
    Вызов <function>key</function>, <function>current</function>,
    <function>next</function>, <function>prev</function>,
    <function>reset</function> или <function>end</function>
-   для объектов (&object;) устарел.
-   Либо сначала используйте <function>get_mangled_object_vars</function> для объекта,
-   либо используйте <classname>ArrayIterator</classname>.
+   с объектами (&object;) устарел.
+   Используйте эти функции на объекте через <function>get_mangled_object_vars</function>,
+   либо через <classname>ArrayIterator</classname>.
   </para>
 
   <para>
