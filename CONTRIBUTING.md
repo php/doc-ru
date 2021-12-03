@@ -98,6 +98,23 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
 
 Затем обновите комментарий `EN-Revision`.
 
+## Проверка отображения перевода
+
+Для локального просмотра документации, выполните следующие команды в терминале:
+
+````bash
+# Настройка
+git clone https://github.com/php/phd.git
+git clone https://github.com/php/doc-base.git
+git clone https://github.com/php/doc-ru.git ru
+
+# Проверка изменений
+php doc-base/configure.php --with-lang=ru
+php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
+
+# Откройте output/php-chunked-xhtml/ в браузере.
+````
+
 ## Соглашение по переводу
 
 | Оригинал | Перевод |
