@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c140370c354496b38b97dfafe2e31f3f8df8bb44 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 2ff6e6bcad9700adaf50f9e1639c6d7d7d1f059d Maintainer: shein Status: ready -->
 <!-- Reviewed: no  -->
 <sect1 xml:id="language.types.array">
  <title>Массивы</title>
@@ -939,6 +939,94 @@ array(3) {
    Массивы можно сравнивать при помощи функции <function>array_diff</function>
    и <link linkend="language.operators.array">операторов массивов</link>.
   </para>
+ </sect2>
+
+ <sect2 xml:id="language.types.array.unpacking">
+  <title>Распаковка массива</title>
+
+  <para>
+   Массив с префиксом <code>...</code> будет распакован во время определения массива.
+   Только массивы и объекты, которые реализуют интерфейс <interfacename>Traversable</interfacename>, могут быть распакованы.
+   Распаковка массива с помощью <code>...</code> доступна, начиная с PHP 7.4.0.
+  </para>
+
+  <para>
+   Массив можно распаковывать несколько раз и добавлять обычные элементы до или после оператора <code>...</code>:
+   <example>
+    <title>Простая распаковка массива</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Использование короткого синтаксиса массива.
+// Также работает с синтаксисом array().
+$arr1 = [1, 2, 3];
+$arr2 = [...$arr1]; // [1, 2, 3]
+$arr3 = [0, ...$arr1]; // [0, 1, 2, 3]
+$arr4 = [...$arr1, ...$arr2, 111]; // [1, 2, 3, 1, 2, 3, 111]
+$arr5 = [...$arr1, ...$arr1]; // [1, 2, 3, 1, 2, 3]
+function getArr() {
+  return ['a', 'b'];
+}
+$arr6 = [...getArr(), 'c' => 'd']; // ['a', 'b', 'c' => 'd']
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <para>
+   Распаковка массива с помощью оператора <code>...</code> следует семантике функции <function>array_merge</function>.
+   То есть более поздние строковые ключи перезаписывают более ранние, а целочисленные ключи перенумеровываются:
+   <example>
+    <title>Распаковка массива с дублирующим ключом</title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+// строковый ключ
+$arr1 = ["a" => 1];
+$arr2 = ["a" => 2];
+$arr3 = ["a" => 0, ...$arr1, ...$arr2];
+var_dump($arr3); // ["a" => 2]
+// целочисленный ключ
+$arr4 = [1, 2, 3];
+$arr5 = [4, 5, 6];
+$arr6 = [...$arr4, ...$arr5];
+var_dump($arr6); // [1, 2, 3, 4, 5, 6]
+// Который [0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6]
+// где исходные целочисленные ключи не были сохранены.
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <note>
+   <para>
+    Ключи, которые не являются ни целыми числами, ни строками, вызывают ошибку <classname>TypeError</classname>.
+    Такие ключи могут быть сгенерированы только объектом <interfacename>Traversable</interfacename>.
+   </para>
+  </note>
+  <note>
+   <para>
+    До PHP 8.1 распаковка массива со строковым ключом не поддерживалась:
+   </para>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$arr1 = [1, 2, 3];
+$arr2 = ['a' => 4];
+$arr3 = [...$arr1, ...$arr2];
+// Ошибка: невозможно распаковать массив со строковыми ключами в example.php:5
+$arr4 = [1, 2, 3];
+$arr5 = [4, 5];
+$arr6 = [...$arr4, ...$arr5]; // работает. [1, 2, 3, 4, 5]
+?>
+]]>
+    </programlisting>
+   </informalexample>
+  </note>
+
  </sect2>
 
  <sect2 xml:id="language.types.array.examples">
