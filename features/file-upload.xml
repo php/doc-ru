@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a0ae28d3bc85f927c22649ebd9a590b921534b7d Maintainer: shein Status: ready -->
+<!-- EN-Revision: 92673cc45aefdb6085b332cb381675825926a519 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="features.file-upload" xmlns="http://docbook.org/ns/docbook">
  <title>Загрузка файлов на сервер</title>
@@ -136,6 +136,15 @@
       <para>
        <link linkend="features.file-upload.errors">Код ошибки</link>,
        которая может возникнуть при загрузке файла.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><varname>$_FILES['userfile']['full_path']</varname></term>
+     <listitem>
+      <para>
+       Полный путь, представленный браузером. Это значение не всегда содержит реальную структуру каталогов и ему нельзя доверять.
+       Доступно, начиная с PHP 8.1.0.
       </para>
      </listitem>
     </varlistentry>
@@ -477,6 +486,42 @@ foreach ($_FILES["pictures"]["error"] as $key => $error) {
      не пытается загрузить файлов больше этого лимита за один запрос.
     </simpara>
    </warning>
+   <para>
+    <example>
+     <title>Загрузка всего каталога</title>
+     <simpara>
+      В полях загрузки HTML-файла можно загрузить весь каталог с помощью атрибута <literal>webkitdirectory</literal>.
+      Он поддерживается большинством современных браузеров.
+     </simpara>
+     <simpara>
+      С помощью информации <literal>full_path</literal> можно сохранить относительные пути
+      или восстановить тот же каталог на сервере.
+     </simpara>
+     <programlisting role="html">
+<![CDATA[
+<form action="file-upload.php" method="post" enctype="multipart/form-data">
+  Загрузка каталога:<br />
+  <input name="userfile[]" type="file" webkitdirectory multiple />
+  <input type="submit" value="Загрузить файлы" />
+</form>
+]]>
+     </programlisting>
+    </example>
+
+    <warning>
+     <simpara>
+      Атрибут <literal>webkitdirectory</literal> нестандартен и не входит в стандартную поставку.
+      Не используйте его на рабочих сайтах: он работает не у всех пользователей.
+      Между реализациями также может быть большая несовместимость, также поведение может измениться в будущем.
+     </simpara>
+     <simpara>
+      PHP анализирует только информацию об относительном пути, отправленную браузером/пользовательским агентом
+      и передаёт эту информацию в массив <varname>$_FILES</varname>.
+      Нет никакой гарантии, что значения в массиве <literal>full_path</literal> содержат реальную структуру каталогов
+      и приложение PHP не должно доверять этой информации.
+     </simpara>
+    </warning>
+   </para>
   </sect1>
 
   <sect1 xml:id="features.file-upload.put-method">
