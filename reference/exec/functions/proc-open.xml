@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c1f8c2ea33c70f59557175e1a43af7153b1df565 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 769812c12f00c1978bf7dd711dca38dbf05462da Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id='function.proc-open' xmlns="http://docbook.org/ns/docbook">
+<refentry xml:id="function.proc-open" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>proc_open</refname>
   <refpurpose>
@@ -11,13 +11,13 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>resource</type><methodname>proc_open</methodname>
-   <methodparam><type>mixed</type><parameter>cmd</parameter></methodparam>
-   <methodparam><type>array</type><parameter>descriptorspec</parameter></methodparam>
+   <type class="union"><type>resource</type><type>false</type></type><methodname>proc_open</methodname>
+   <methodparam><type class="union"><type>array</type><type>string</type></type><parameter>command</parameter></methodparam>
+   <methodparam><type>array</type><parameter>descriptor_spec</parameter></methodparam>
    <methodparam><type>array</type><parameter role="reference">pipes</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>cwd</parameter><initializer>&null;</initializer></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter>env</parameter><initializer>&null;</initializer></methodparam>
-   <methodparam choice="opt"><type>array</type><parameter>other_options</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>cwd</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>env_vars</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>options</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
    <function>proc_open</function> аналогична <function>popen</function>,
@@ -30,7 +30,7 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>cmd</parameter></term>
+     <term><parameter>command</parameter></term>
      <listitem>
       <para>
        Командная для выполнения, указанная как строка (&string;).
@@ -40,20 +40,20 @@
       <note>
        <simpara>
         В <emphasis>Windows</emphasis>, если для <literal>bypass_shell</literal> не установлено значение &true; в
-        <parameter>other_options</parameter>, <parameter>cmd</parameter>
+        <parameter>options</parameter>, <parameter>command</parameter>
         передаётся в <command>cmd.exe</command> (точнее, <literal>%ComSpec%</literal>)
         с флагом <literal>/c</literal> в виде строки  <emphasis>без кавычек</emphasis>
         (т.е. точно так, как было задано в <function>proc_open</function>).
         Это может привести к тому, что <command>cmd.exe</command> удалит заключающие из
-        <parameter>cmd</parameter> (подробности смотрите в документации <command>cmd.exe</command>),
+        <parameter>command</parameter> (подробности смотрите в документации <command>cmd.exe</command>),
         приводя к неожиданному и потенциально даже опасному поведению, потому что сообщения об ошибках <command>cmd.exe</command> могут содержать (частично) переданный параметр
-        <parameter>cmd</parameter> (смотрите пример ниже).
+        <parameter>command</parameter> (смотрите пример ниже).
        </simpara>
       </note>
       <para>
-       Начиная с PHP 7.4.0, <parameter>cmd</parameter> может передаваться как массив (&array;) параметров команды.
+       Начиная с PHP 7.4.0, <parameter>command</parameter> может передаваться как массив (&array;) параметров команды.
        В этом случае процесс будет открыт напрямую (не проходя через оболочку)
-       и PHP позаботится о экранировании любого необходимого аргумента.
+       и PHP позаботится об экранировании любого необходимого аргумента.
       </para>
       <note>
        <para>
@@ -65,7 +65,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>descriptorspec</parameter></term>
+     <term><parameter>descriptor_spec</parameter></term>
      <listitem>
       <para>
        Массив, ключи которого представляют собой номер дескриптора, а значение
@@ -123,7 +123,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>env</parameter></term>
+     <term><parameter>env_vars</parameter></term>
      <listitem>
       <para>
        Массив переменных окружения для запускаемой команды или &null;, если
@@ -132,7 +132,7 @@
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>other_options</parameter></term>
+     <term><parameter>options</parameter></term>
      <listitem>
       <para>
        Позволяет задать дополнительные настройки. На данный момент
@@ -192,21 +192,21 @@
        <entry>7.4.4</entry>
        <entry>
         Добавлена опция <literal>create_new_console</literal> в
-        параметр <parameter>other_options</parameter>.
+        параметр <parameter>options</parameter>.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
         <function>proc_open</function> теперь также принимает массив (&array;)
-        в <parameter>cmd</parameter>.
+        в <parameter>command</parameter>.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
         Добавлена опция <literal>create_process_group</literal> в
-        параметр <parameter>other_options</parameter>.
+        параметр <parameter>options</parameter>.
        </entry>
       </row>
      </tbody>
@@ -297,8 +297,7 @@ proc_close($proc);
 ]]>
     </screen>
     <simpara>
-     Чтобы обойти это поведение, обычно достаточно
-     передать <parameter>cmd</parameter> в дополнительных кавычках:
+     Чтобы обойти это поведение, обычно достаточно передать <parameter>command</parameter> в дополнительных кавычках:
     </simpara>
     <programlisting role="php">
 <![CDATA[
@@ -307,30 +306,6 @@ $cmd = '""findstr" "search" "filename.txt""';
     </programlisting>
    </example>
   </para>
-
-  <!-- ptys are currently disabled
-  <para>
-   <example>
-    <title>ptys usage</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-// Create a pseudo terminal for the child process
-$descriptorspec = array(
-   0 => array("pty"),
-   1 => array("pty"),
-   2 => array("pty")
-);
-$process = proc_open("cvs -d:pserver:cvsread@cvs.php.net:/repository login", $descriptorspec, $pipes);
-if (is_resource($process)) {
-   // work with it here
-}
-?>
-]]>
-    </programlisting>
-   </example>
-  </para>
--->
 
  </refsect1>
 
