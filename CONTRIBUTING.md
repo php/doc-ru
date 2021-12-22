@@ -117,70 +117,71 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 
 ## Соглашение по переводу
 
-| Оригинал | Перевод |
-| -------- | ------- |
-| Application | Приложение |
-| Cache | Кеш |
-| Callback function | Callback-функция |
-| Child | Потомок, дочерний элемент (узел) |
-| CLI | Интерфейс командной строки |
-| Code (php-code) | Код, PHP-код |
-| Coding standards | Стандарты кодирования |
-| Commandline program | Консольная программа |
-| Commit | Фиксация (например, транзакции) |
-| Default, by default | По умолчанию (пишется без дефиса) |
-| Directory | Директория |
-| Entry | Элемент (существительное, для массивов, списков и прочих структур) |
-| Extension | Модуль |
-| Features/functionality | Возможности, функциональность |
-| Float (floating point) | Число с плавающей точкой (плавающая точка) |
-| Getter | Метод чтения |
-| Hash | Хеш |
-| HTML entity | HTML-сущность |
-| HTTP-Authentication | HTTP-аутентификация |
-| Hypertext preprocessor | Препроцессор гипертекста |
-| Handle | Дескриптор (например, cURL) |
-| ID (БД) | ID |
-| ID (в тексте) | Идентификатор |
-| Legacy (system, server) | Устаревшая система, сервер, протокол |
-| Legacy support | Поддержка старых версий |
-| Magic quotes | "Магические" кавычки |
-| Magic constants/methods/numbers | "Магические" константы/методы/числа |
-| Multibyte string | Многобайтовая строка |
-| Node | Узел |
-| Optional | Необязательный |
-| Override | Переопределять |
-| Otherwise | В противном случае, иначе |
-| On success | В случае успешного выполнения |
-| On fail | В случае возникновения ошибки |
-| Parameter(s) | Параметр(ы), аргумент(ы) |
-| Parser | Парсер |
-| Parsing | Разбор (например, разбор строки) |
-| Prefetch | Предварительная выборка |
-| PCRE | Perl-совместимые регулярные выражения |
-| Private | Закрытый |
-| Public | Общедоступный |
-| Read-only | Доступен только для чтения |
-| Result set | Результирующий набор |
-| Returns | Возвращает |
-| SAPI | Интерфейс разработки серверных приложений |
-| Script | Скрипт |
-| Setter | Устанавливающий метод |
-| Single quotes | Одинарные кавычки |
-| Stream | Поток |
-| Shared block | Общая блокировка |
-| Shared memory | Разделяемая память |
-| SQL query | Запрос SQL, SQL-запрос |
-| SQL | Структурированный язык запросов |
-| Throw exception | Выбросить исключение |
-| Timezone, time zone | Часовой пояс |
-| Token | Лексема |
-| Tokenizer | Лексер |
-| Trait | Трейт |
-| Writable | Доступен для записи |
-| Wrapper | Обёртка |
-| URL wrapper | Обёртка URL |
-| To throw a warning/error | Вызвать предупреждение/ошибку |
+| Оригинал                        | Перевод                                                            |
+|---------------------------------|--------------------------------------------------------------------|
+| Application                     | Приложение                                                         |
+| Cache                           | Кеш                                                                |
+| Callback function               | Callback-функция                                                   |
+| Child                           | Потомок, дочерний элемент (узел)                                   |
+| CLI                             | Интерфейс командной строки                                         |
+| Code (php-code)                 | Код, PHP-код                                                       |
+| Coding standards                | Стандарты кодирования                                              |
+| Commandline program             | Консольная программа                                               |
+| Commit                          | Фиксация (например, транзакции)                                    |
+| Default, by default             | По умолчанию (пишется без дефиса)                                  |
+| Directory                       | Директория                                                         |
+| Entry                           | Элемент (существительное, для массивов, списков и прочих структур) |
+| Extension                       | Модуль                                                             |
+| Features/functionality          | Возможности, функциональность                                      |
+| Float (floating point)          | Число с плавающей точкой (плавающая точка)                         |
+| Getter                          | Метод чтения                                                       |
+| Hash                            | Хеш                                                                |
+| HTML entity                     | HTML-сущность                                                      |
+| HTTP-Authentication             | HTTP-аутентификация                                                |
+| Hypertext preprocessor          | Препроцессор гипертекста                                           |
+| Handle                          | Дескриптор (например, cURL)                                        |
+| ID (БД)                         | ID                                                                 |
+| ID (в тексте)                   | Идентификатор                                                      |
+| Legacy (system, server)         | Устаревшая система, сервер, протокол                               |
+| Legacy support                  | Поддержка старых версий                                            |
+| Magic quotes                    | "Магические" кавычки                                               |
+| Magic constants/methods/numbers | "Магические" константы/методы/числа                                |
+| Multibyte string                | Многобайтовая строка                                               |
+| Node                            | Узел                                                               |
+| Optional                        | Необязательный                                                     |
+| Override                        | Переопределять                                                     |
+| Otherwise                       | В противном случае, иначе                                          |
+| On success                      | В случае успешного выполнения                                      |
+| On fail                         | В случае возникновения ошибки                                      |
+| Parameter(s)                    | Параметр(ы), аргумент(ы)                                           |
+| Parser                          | Парсер                                                             |
+| Parsing                         | Разбор (например, разбор строки)                                   |
+| Prefetch                        | Предварительная выборка                                            |
+| PCRE                            | Perl-совместимые регулярные выражения                              |
+| Private                         | Закрытый                                                           |
+| Public                          | Общедоступный                                                      |
+| Read-only                       | Доступен только для чтения                                         |
+| Result set                      | Результирующий набор                                               |
+| Returns                         | Возвращает                                                         |
+| SAPI                            | Интерфейс разработки серверных приложений                          |
+| Script                          | Скрипт                                                             |
+| Setter                          | Устанавливающий метод                                              |
+| Single quotes                   | Одинарные кавычки                                                  |
+| Stream                          | Поток                                                              |
+| Shared block                    | Общая блокировка                                                   |
+| Shared memory                   | Разделяемая память                                                 |
+| SQL query                       | Запрос SQL, SQL-запрос                                             |
+| SQL                             | Структурированный язык запросов                                    |
+| Throw exception                 | Выбросить исключение                                               |
+| Timeout                         | Время ожидания                                                     |
+| Timezone, time zone             | Часовой пояс                                                       |
+| Token                           | Лексема                                                            |
+| Tokenizer                       | Лексер                                                             |
+| Trait                           | Трейт                                                              |
+| Writable                        | Доступен для записи                                                |
+| Wrapper                         | Обёртка                                                            |
+| URL wrapper                     | Обёртка URL                                                        |
+| To throw a warning/error        | Вызвать предупреждение/ошибку                                      |
 
 ## Не переводятся
 
