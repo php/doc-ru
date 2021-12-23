@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9d2b858bca85edbeebb83f05a1cd2e87cf90127d Maintainer: shein Status: ready -->
+<!-- EN-Revision: ea62fb83196997032641b50fe44420305466195e Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.fwrite">
  <refnamediv>
@@ -10,14 +10,14 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>int</type><methodname>fwrite</methodname>
-   <methodparam><type>resource</type><parameter>handle</parameter></methodparam>
-   <methodparam><type>string</type><parameter>string</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>length</parameter></methodparam>
+   <type class="union"><type>int</type><type>false</type></type><methodname>fwrite</methodname>
+   <methodparam><type>resource</type><parameter>stream</parameter></methodparam>
+   <methodparam><type>string</type><parameter>data</parameter></methodparam>
+   <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>length</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   <function>fwrite</function> записывает содержимое <parameter>string</parameter>
-   в файловый поток <parameter>handle</parameter>.
+   <function>fwrite</function> записывает содержимое <parameter>data</parameter>
+   в файловый поток <parameter>stream</parameter>.
   </simpara>
  </refsect1>
 
@@ -26,13 +26,13 @@
   <para>
    <variablelist>
     <varlistentry>
-     <term><parameter>handle</parameter></term>
+     <term><parameter>stream</parameter></term>
      <listitem>
       &fs.file.pointer;
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>string</parameter></term>
+     <term><parameter>data</parameter></term>
      <listitem>
       <para>
        Записываемая строка.
@@ -43,10 +43,10 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Если передан аргумент <parameter>length</parameter>, запись
+       Если параметр <parameter>length</parameter> является целым числом (&integer;), запись
        остановится после того, как <parameter>length</parameter>
        байтов будут записаны или будет достигнут конец строки
-       <parameter>string</parameter>, смотря что произойдёт раньше.
+       <parameter>data</parameter>, смотря что произойдёт раньше.
       </para>
      </listitem>
     </varlistentry>
@@ -60,6 +60,28 @@
    <function>fwrite</function> возвращает количество записанных байт
    или &false; в случае возникновения ошибки.
   </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Параметр <parameter>length</parameter> теперь допускает значение &null;.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
@@ -79,20 +101,20 @@ if (is_writable($filename)) {
     // В нашем примере мы открываем $filename в режиме "записи в конец".
     // Таким образом, смещение установлено в конец файла и
     // наш $somecontent допишется в конец при использовании fwrite().
-    if (!$handle = fopen($filename, 'a')) {
+    if (fp = fopen($filename, 'a')) {
          echo "Не могу открыть файл ($filename)";
          exit;
     }
 
     // Записываем $somecontent в наш открытый файл.
-    if (fwrite($handle, $somecontent) === FALSE) {
+    if (fwrite($fp, $somecontent) === FALSE) {
         echo "Не могу произвести запись в файл ($filename)";
         exit;
     }
 
     echo "Ура! Записали ($somecontent) в файл ($filename)";
 
-    fclose($handle);
+    fclose($fp);
 
 } else {
     echo "Файл $filename недоступен для записи";
@@ -138,10 +160,10 @@ function fwrite_stream($fp, $string) {
   </note>
   <note>
    <para>
-    Если дескриптор <parameter>handle</parameter> был открыт функцией
+    Если дескриптор <parameter>stream</parameter> был открыт функцией
     <function>fopen</function> в режиме "добавление в конец", то вызовы
     <function>fwrite</function> будут атомарными (за исключением
-    случая, если размер <parameter>string</parameter> превысит размер
+    случая, если размер <parameter>data</parameter> превысит размер
     блока файловой системы, на некоторых платформах, и пока файл хранится
     на локальной файловой системе). То есть нет необходимости блокировать ресурс
     с помощью <function>flock</function> перед вызовом <function>fwrite</function>,
