@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0219f62dcd220d3c02911891b6946d82af232171 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 0b005cfe4e7075d8f7c7472545eaee2b7f38526e Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
  <title>Функции</title>
@@ -1512,6 +1512,116 @@ var_export($x);  // Выведет 1
     </simpara>
    </note>
   </sect2>
+ </sect1>
+
+ <sect1 xml:id="functions.first_class_callable_syntax">
+  <title>Callback-функции как объекты первого класса</title>
+
+  <para>
+   Callback-функции как объекты первого класса представлены в PHP 8.1.0 как способ создания <link linkend="functions.anonymous">анонимных функций</link> из <link linkend="language.types.callable">callback-функций</link>.
+   Синтаксис заменяет существующий синтаксис вызова с использованием строк и массивов.
+   Преимущество синтаксиса заключается в том, что он доступен для статического анализа и использует область видимости в точке, где получена callback-функция.
+  </para>
+
+  <para>
+   Синтаксис <code>CallableExpr(...)</code> используется для создания объекта <classname>Closure</classname> из callback-функции. <code>CallableExpr</code> принимает любое выражение, которое может быть вызвано напрямую в грамматике PHP:
+   <example>
+    <title>Простой пример callback-функции как объекты первого класса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Foo {
+   public function method() {}
+   public static function staticmethod() {}
+   public function __invoke() {}
+}
+$obj = new Foo();
+$classStr = 'Foo';
+$methodStr = 'method';
+$staticmethodStr = 'staticmethod';
+$f1 = strlen(...);
+$f2 = $obj(...);  // вызываемый объект
+$f3 = $obj->method(...);
+$f4 = $obj->$methodStr(...);
+$f5 = Foo::staticmethod(...);
+$f6 = $classStr::$staticmethodStr(...);
+// традиционная callback-функция с использованием строки, массива
+$f7 = 'strlen'(...);
+$f8 = [$obj, 'method'](...);
+$f9 = [Foo::class, 'staticmethod'](...);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+
+  <note>
+   <para>
+    <code>...</code> является частью синтаксиса, а не пропуском.
+   </para>
+  </note>
+
+  <para>
+   У <code>CallableExpr</code> та же семантика, что и у <methodname>Closure::fromCallable</methodname>.
+   То есть, в отличие от callback-функции с использованием строк и массивов, <code>CallableExpr(...)</code> учитывает область видимости в точке, где она создаётся:
+   <example>
+    <title>Сравнение области действия <code>CallableExpr(...)</code> и традиционной callback-функции</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Foo {
+    public function getPrivateMethod() {
+        return [$this, 'privateMethod'];
+    }
+    private function privateMethod() {
+        echo __METHOD__, "\n";
+    }
+}
+$foo = new Foo;
+$privateMethod = $foo->getPrivateMethod();
+$privateMethod();
+// Fatal error: Call to private method Foo::privateMethod() from global scope
+// Это потому, что вызов выполняется вне Foo, и с этого момента будет проверяться видимость.
+class Foo1 {
+    public function getPrivateMethod() {
+        // Использует область, в которой получена callback-функция.
+        return $this->privateMethod(...); // идентично Closure::fromCallable([$this, 'privateMethod']);
+    }
+    private function privateMethod() {
+        echo __METHOD__, "\n";
+    }
+}
+$foo1 = new Foo1;
+$privateMethod = $foo1->getPrivateMethod();
+$privateMethod();  // Foo1::privateMethod
+?>
+]]>
+    </programlisting>
+   </example>
+
+  </para>
+
+  <note>
+   <para>
+    Создание объекта с помощью этого синтаксиса (например, <code>new Foo(...)</code>) не поддерживается, поскольку синтаксис <code>new Foo()</code> не считается callback-функцией.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Callback-функции как объекты первого класса нельзя комбинировать с оператором nullsafe. Оба следующих результата приводят к ошибке времени компиляции:
+    <example>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$obj?->method(...);
+$obj?->prop->method(...);
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+  </note>
  </sect1>
 
 </chapter>
