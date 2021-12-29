@@ -134,7 +134,9 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Extension                       | Модуль                                                             |
 | Features/functionality          | Возможности, функциональность                                      |
 | Float (floating point)          | Число с плавающей точкой (плавающая точка)                         |
+| Fully Qualified name            | Абсолютное имя                                                     |
 | Getter                          | Метод чтения                                                       |
+| Global scope                    | Глобальное пространство                                            |
 | Hash                            | Хеш                                                                |
 | HTML entity                     | HTML-сущность                                                      |
 | HTTP-Authentication             | HTTP-аутентификация                                                |
@@ -147,6 +149,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Magic quotes                    | "Магические" кавычки                                               |
 | Magic constants/methods/numbers | "Магические" константы/методы/числа                                |
 | Multibyte string                | Многобайтовая строка                                               |
+| Namespace                       | Пространство имён                                                  |
 | Node                            | Узел                                                               |
 | Optional                        | Необязательный                                                     |
 | Override                        | Переопределять                                                     |
@@ -160,6 +163,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | PCRE                            | Perl-совместимые регулярные выражения                              |
 | Private                         | Закрытый                                                           |
 | Public                          | Общедоступный                                                      |
+| Qualified name                  | Полное имя                                                         |
 | Read-only                       | Доступен только для чтения                                         |
 | Result set                      | Результирующий набор                                               |
 | Returns                         | Возвращает                                                         |
@@ -177,11 +181,12 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Timezone, time zone             | Часовой пояс                                                       |
 | Token                           | Лексема                                                            |
 | Tokenizer                       | Лексер                                                             |
+| To throw a warning/error        | Вызвать предупреждение/ошибку                                      |
 | Trait                           | Трейт                                                              |
 | Writable                        | Доступен для записи                                                |
 | Wrapper                         | Обёртка                                                            |
+| Unqualified name                | Неполное имя                                                       |
 | URL wrapper                     | Обёртка URL                                                        |
-| To throw a warning/error        | Вызвать предупреждение/ошибку                                      |
 
 ## Не переводятся
 
