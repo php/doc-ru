@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9dd74f527dc164165dee7f19058bec75a901e770 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: b57f8f256a4773fc09d19733c70ef8816074d12d Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.types.declarations">
  <title>Объявление типов</title>
@@ -163,7 +163,7 @@ Stack trace:
   <title>mixed</title>
 
   <para>
-   <type>mixed</type> эквивалентен <link linkend="language.types.declarations.union">типу union</link>
+   <type>mixed</type> эквивалентен <link linkend="language.types.declarations.composite.union">объединению типов</link>
    <type class="union">
     <type>object</type><type>resource</type><type>array</type><type>string</type>
     <type>int</type><type>float</type><type>bool</type><type>null</type>
@@ -382,118 +382,184 @@ NULL
   </note>
  </sect2>
 
- <sect2 xml:id="language.types.declarations.union">
-  <title>Тип union</title>
+ <sect2 xml:id="language.types.declarations.composite">
+  <title>Составные типы</title>
   <para>
-   Тип union позволяет использовать несколько типов, а не исключительно один.
-   Для их объявления используется следующий синтаксис: <literal>T1|T2|...</literal>.
-   Тип union доступен, начиная с PHP 8.0.0.
+   Можно комбинировать простые типы в составные типы.
+   PHP позволяет комбинировать типы следующими способами:
   </para>
 
-  <sect3 xml:id="language.types.declarations.union.nullable">
-   <title>Обнуляемый тип union</title>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Объединение простых типов. Начиная с PHP 8.0.0.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Пересечение типов классов (интерфейсы и имена классов). Начиная с PHP 8.1.0.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+
+  <caution>
+   <simpara>
+    Невозможно комбинировать пересечения типов с объединением типов.
+   </simpara>
+  </caution>
+
+  <sect3 xml:id="language.types.declarations.composite.union">
+   <title>Объединение типов</title>
    <para>
-    Тип <literal>null</literal> можно использовать как часть объединений следующим образом:
-    <literal>T1|T2|null</literal>.
-    Существующая нотация <literal>?T</literal> рассматривается как сокращение для <literal>T|null</literal>.
+    Объединение типов позволяет использовать несколько типов, а не исключительно один.
+    Для их объявления используется следующий синтаксис: <literal>T1|T2|...</literal>.
+    Объединение типов доступно, начиная с PHP 8.0.0.
    </para>
 
-   <caution>
-    <simpara>
-     <literal>null</literal> не может использоваться как отдельный тип.
-    </simpara>
-   </caution>
+   <sect4 xml:id="language.types.declarations.composite.union.nullable">
+    <title>Объединение типов, допускающее значение null</title>
+    <para>
+     Тип <literal>null</literal> можно использовать как часть объединения следующим образом:
+     <literal>T1|T2|null</literal>.
+     Существующая нотация <literal>?T</literal> рассматривается как сокращение для <literal>T|null</literal>.
+    </para>
+
+    <caution>
+     <simpara>
+      <literal>null</literal> не может использоваться как отдельный тип.
+     </simpara>
+    </caution>
+   </sect4>
+
+   <sect4 xml:id="language.types.declarations.composite.union.false">
+    <title>Псевдотип false</title>
+    <para>
+     Псевдотип <literal>false</literal> поддерживается как часть объединения типов.
+     Он добавлен по историческим причинам, так как многие встроенные функции возвращают
+     <literal>false</literal> вместо <literal>null</literal> в случае возникновения ошибки.
+     Классический пример - функция <function>strpos</function>.
+    </para>
+
+    <caution>
+     <simpara>
+      <literal>false</literal> нельзя использовать как самостоятельный тип (включая обнуляемый вариант).
+      Таким образом, все объявления такого типа недопустимы: <literal>false</literal>, <literal>false|null</literal>
+      и <literal>?false</literal>.
+     </simpara>
+    </caution>
+    <caution>
+     <simpara>
+      Обратите внимание, что псевдотип <literal>true</literal> <emphasis>не</emphasis> существует.
+     </simpara>
+    </caution>
+   </sect4>
   </sect3>
 
-  <sect3 xml:id="language.types.declarations.union.false">
-   <title>Псевдотип false</title>
+  <sect3 xml:id="language.types.declarations.composite.intersection">
+   <title>Пересечения типов</title>
    <para>
-    Псевдотип <literal>false</literal> поддерживается как часть объединённых типов.
-    Он добавлен по историческим причинам, так как многие встроенные функции возвращают
-    <literal>false</literal> вместо <literal>null</literal> в случае ошибок.
-    Классический пример - функция <function>strpos</function>.
+    Объявление пересечения типов принимает значения,
+    которые удовлетворяют нескольким объявлениям типа класса, а не одному.
+    Пересечения типов указываются с использованием синтаксиса <literal>T1&amp;T2&amp;...</literal>.
+    Пересечения типов доступны, начиная с PHP 8.1.0.
    </para>
-
-   <caution>
-    <simpara>
-     <literal>false</literal> нельзя использовать как самостоятельный тип (включая
-     обнуляемый вариант).
-     Таким образом, все объявления такого типа недопустимы: <literal>false</literal>, <literal>false|null</literal>
-     и <literal>?false</literal>.
-    </simpara>
-   </caution>
-   <caution>
-    <simpara>
-     Обратите внимание, что псевдотип <literal>true</literal> <emphasis>не</emphasis> существует.
-    </simpara>
-   </caution>
   </sect3>
 
-  <sect3 xml:id="language.types.declarations.union.redundant">
-   <title>Дублирующиеся и повторяющиеся типы</title>
-   <para>
-    Для отлова простых ошибок в объединённых объявлениях, повторяющиеся типы, которые
-    можно отследить без загрузки класса, приведут к ошибке компиляции.
-    В том числе:
-    <itemizedlist>
-     <listitem>
-      <simpara>
-       Каждый тип, распознаваемый по имени, должен встречаться только один раз.
-       Типы вида <literal>int|string|INT</literal> приведут к ошибке.
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       Если используется <type>bool</type>, то использовать дополнительно <type>false</type> нельзя.
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       Если используется тип <type>object</type>, то дополнительное использование имён классов недопустимо.
-      </simpara>
-     </listitem>
-     <listitem>
-      <simpara>
-       Если используется <type>iterable</type>, то к нему нельзя добавить <type>array</type>
-       или <classname>Traversable</classname>.
-      </simpara>
-     </listitem>
-    </itemizedlist>
-   </para>
+  <sect3 xml:id="language.types.declarations.composite.redundant">
+    <title>Дублирующиеся и повторяющиеся типы</title>
+    <para>
+     Для отлова простых ошибок в составных объявлениях, повторяющиеся типы, которые
+     можно отследить без загрузки класса, приведут к ошибке компиляции.
+     В том числе:
 
-   <note>
-    <simpara>
-     Это не гарантирует, что все объединённые типы объявлены корректно, поскольку
-     такая проверка потребует загрузки всех используемых классов.
-    </simpara>
-   </note>
+     <itemizedlist>
+      <listitem>
+       <simpara>
+        Каждый тип, распознаваемый по имени, должен встречаться только один раз.
+        Типы вида <literal>int|string|INT</literal> или
+        <literal>Countable&amp;Traversable&amp;COUNTABLE</literal> приведут к ошибке.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>
+        Использование типа <type>mixed</type> приводит к ошибке.
+       </simpara>
+      </listitem>
+      <listitem>
+       <simpara>Для объединения типов:</simpara>
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          Если используется <type>bool</type>, то использовать дополнительно <type>false</type> нельзя.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          Если используется тип <type>object</type>, то дополнительное использование типов классов недопустимо.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          Если используется <type>iterable</type>, то к нему нельзя добавить <type>array</type>
+          или <classname>Traversable</classname>.
+         </simpara>
+        </listitem>
+       </itemizedlist>
+      </listitem>
+      <listitem>
+       <simpara>Для пересечения типов:</simpara>
+       <itemizedlist>
+        <listitem>
+         <simpara>
+          Использование типа, который не является типом класса, приводит к ошибке.
+         </simpara>
+        </listitem>
+        <listitem>
+         <simpara>
+          Использование <type>self</type>, <type>parent</type> или
+          <type>static</type> приводит к ошибке.
+         </simpara>
+        </listitem>
+       </itemizedlist>
+      </listitem>
+     </itemizedlist>
+    </para>
 
-   <para>
-    К примеру, если <literal>A</literal> и <literal>B</literal> являются псевдонимами одного и того же класса,
-    то <literal>A|B</literal> выглядит как корректный объединённый тип, даже если фактически объявление
-    может быть сокращено до <literal>A</literal> или <literal>B</literal>.
-    Аналогично, если <code>B extends A {}</code>, то <literal>A|B</literal> тоже
-    выглядит корректным типом, несмотря на то, что он может быть сокращён до
-    <literal>A</literal>.
+    <note>
+     <simpara>
+      Это не гарантирует, что все объединённые типы объявлены корректно, поскольку
+      такая проверка потребует загрузки всех используемых классов.
+     </simpara>
+    </note>
 
-    <informalexample>
-     <programlisting role="php">
+    <para>
+     К примеру, если <literal>A</literal> и <literal>B</literal> являются псевдонимами одного и того же класса,
+     то <literal>A|B</literal> выглядит как корректный объединённый тип, даже если фактически объявление
+     может быть сокращено до <literal>A</literal> или <literal>B</literal>.
+     Аналогично, если <code>B extends A {}</code>, то <literal>A|B</literal> тоже
+     выглядит корректным типом, несмотря на то, что он может быть сокращён до
+     <literal>A</literal>.
+
+     <informalexample>
+      <programlisting role="php">
 <![CDATA[
 <?php
 function foo(): int|INT {} // Запрещено
 function foo(): bool|false {} // Запрещено
-
+function foo(): int&Traversable {} // Запрещено
+function foo(): self&Traversable {} // Запрещено
 use A as B;
 function foo(): A|B {} // Запрещено ("use" является частью разрешения имён)
-
+function foo(): A&B {} // Запрещено ("use" является частью разрешения имён)
 class_alias('X', 'Y');
 function foo(): X|Y {} // Допустимо (повторение будет определено только во время выполнения)
+function foo(): X&Y {} // Допустимо (повторение будет определено только во время выполнения)
 ?>
 ]]>
-     </programlisting>
-    </informalexample>
-   </para>
-  </sect3>
+      </programlisting>
+     </informalexample>
+    </para>
+   </sect3>
 
  </sect2>
 
