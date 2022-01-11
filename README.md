@@ -5,6 +5,10 @@
 ![Проверка сборки](https://github.com/php/doc-ru/workflows/Проверка%20документации/badge.svg)
 ![Проверка орфографии](https://github.com/php/doc-ru/workflows/Проверка%20орфографии/badge.svg)
 
+## Текущее состояние
+
+![График](http://doc.php.net/images/revcheck/info_revcheck_php_ru.png "График текущего состояния")
+
 ## Помощь
 
 Если вы хотите поучаствовать в переводе, пожалуйста, ознакомьтесь с [данным руководством](CONTRIBUTING.md).
