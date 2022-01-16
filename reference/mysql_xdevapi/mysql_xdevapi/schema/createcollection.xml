@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 730ae1c76c5312b00b284d36fe42436e1cdbcae2 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 06cd4fdff7ed6962955f5bc9fbe7c6a30517979e Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="mysql-xdevapi-schema.createcollection" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Schema::createCollection</refname>
@@ -13,13 +12,11 @@
   <methodsynopsis>
    <modifier>public</modifier> <type>mysql_xdevapi\Collection</type><methodname>mysql_xdevapi\Schema::createCollection</methodname>
    <methodparam><type>string</type><parameter>name</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>validate</parameter></methodparam>
   </methodsynopsis>
   <para>
    Создать коллекцию внутри схемы.
   </para>
-
-  &warn.undocumented.func;
-
  </refsect1>
 
  <refsect1 role="parameters">
@@ -29,7 +26,15 @@
     <term><parameter>name</parameter></term>
     <listitem>
      <para>
-
+      Имя коллекции.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>validate</parameter></term>
+    <listitem>
+     <para>
+      Определение проверки в виде объекта JSON.
      </para>
     </listitem>
    </varlistentry>
@@ -39,8 +44,30 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-
+   Объект коллекции.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable xml:id="mysql-xdevapi-schema.createcollection.changelog">
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.20</entry>
+      <entry>
+       Добавлен необязательный параметр validate.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
@@ -82,6 +109,37 @@ Array
 )
 ]]>
    </screen>
+  </example>
+  <example>
+   <title>Пример использования Schema::createCollection с параметром validate</title>
+   <programlisting role="php">
+<![CDATA[
+ <?php
+ $collection = $schema->createCollection("mycollection", '{
+	"validation": {
+		"level": "strict",
+		"schema": {
+			"id": "http://json-schema.org/geo",
+			"description": "A geographical coordinate",
+			"type": "object",
+			"properties": {
+				"latitude": {
+					"type": "number"
+				},
+				"longitude": {
+					"type": "number"
+				}
+			},
+			"required": ["latitude", "longitude"]
+		}
+	}
+}');
+// Успешное выполнение
+$collection->add('{"latitude": 10, "longitude": 20}')->execute();
+// Ошибка, недопустимые типы (не числа)
+$collection->add('{"latitude": "lat", "longitude": "long"}')->execute();
+]]>
+   </programlisting>
   </example>
  </refsect1>
 
