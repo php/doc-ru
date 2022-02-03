@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 65d4ecb42e75a180eb8964968c230b09d81d3601 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 3562cc154f5f0dbc22918706708fcd745ed7771a Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdostatement.bindparam" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -65,10 +65,10 @@
       <listitem>
        <para>
         Явно заданный тип данных параметра. Тип задаётся одной из <link linkend="pdo.constants">констант
-        <literal>PDO::PARAM_*</literal></link>. Если параметр используется в том числе для вывода информации
+        <literal>PDO::PARAM_*</literal></link>. Если параметр используется, в том числе для вывода информации
         из хранимой процедуры, к значению аргумента
         <parameter>type</parameter> необходимо добавить
-        PDO::PARAM_INPUT_OUTPUT, используя оператор побитовое ИЛИ.
+        <constant>PDO::PARAM_INPUT_OUTPUT</constant>, используя оператор побитовое ИЛИ.
        </para>
       </listitem>
      </varlistentry>
@@ -78,6 +78,8 @@
        <para>
         Размер типа данных. Чтобы указать, что параметр используется для вывода
         данных из хранимой процедуры, необходимо явно задать его размер.
+        Имеет значение, только если у параметра <parameter>type</parameter>
+        установлено значение <constant>PDO::PARAM_INPUT_OUTPUT</constant>.
        </para>
       </listitem>
      </varlistentry>
@@ -117,7 +119,7 @@ $sth = $dbh->prepare('SELECT name, colour, calories
     WHERE calories < :calories AND colour = :colour');
 $sth->bindParam('calories', $calories, PDO::PARAM_INT);
 /* Имена также могут начинаться с двоеточия ":" (необязательно) */
-$sth->bindParam(':colour', $colour, PDO::PARAM_STR, 12);
+$sth->bindParam(':colour', $colour, PDO::PARAM_STR);
 $sth->execute();
 ?>
 ]]>
@@ -138,35 +140,12 @@ $sth = $dbh->prepare('SELECT name, colour, calories
     FROM fruit
     WHERE calories < ? AND colour = ?');
 $sth->bindParam(1, $calories, PDO::PARAM_INT);
-$sth->bindParam(2, $colour, PDO::PARAM_STR, 12);
+$sth->bindParam(2, $colour, PDO::PARAM_STR);
 $sth->execute();
 ?>
 ]]>
    </programlisting>
   </example>
-
-<!--
-  <example><title>Pass a NULL value into a prepared statement</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-/* Выполнение запроса с привязкой PHP переменных */
-$calories = 150;
-$colour = 'red';
-$sth = $dbh->prepare('SELECT name, colour, calories
-    FROM fruit
-    WHERE calories < :calories AND colour = :colour');
-$sth->bindParam(':calories', $calories, PDO::PARAM_INT);
-
-/* Найдём фрукт с NULL значением в столбце, отвечающем за цвет */
-$sth->bindParam(':colour', $colour, PDO::PARAM_NULL);
-
-$sth->execute();
-?>
-]]>
-   </programlisting>
-  </example>
--->
   <example>
    <title>
     Вызов хранимой процедуры с INOUT-параметром
@@ -198,7 +177,8 @@ print("После приготовления фруктового пюра, цв
   </para>
 
  </refsect1>
-</refentry><!-- Keep this comment at the end of the file
+</refentry>
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
