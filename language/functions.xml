@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5c2678e02f0eb135946799eed02d884de1bcf4ad Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 0bafd5454e7c54de5b9e455f997bec3ecf89cfdb Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook">
  <title>Функции</title>
@@ -225,28 +225,6 @@ function takes_many_args(
 ]]>
     </programlisting>
   </example>
-  <para>
-   Начиная с PHP 8.0.0, объявление обязательных аргументов после необязательных аргументов
-   устарела. Обычно это можно решить, отказавшись от значения по умолчанию.
-   Единственным исключением из этого правила являются аргументы формы
-   <code>Type $param = null</code>, где &null; по умолчанию делает тип неявно
-   допускающим значение null. Это использование остаётся разрешённым, хотя вместо этого рекомендуется использовать явный тип,
-   допускающий значение null.
-   </para>
-   <example>
-    <title>Объявление необязательных аргументов после обязательных аргументов</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
-function foo($a = [], $b) {} // Раньше
-function foo($a, $b) {}      // Теперь
-
-function bar(A $a = null, $b) {} // Все ещё разрешено
-function bar(?A $a, $b) {}       // Рекомендуется
-?>
-]]>
-    </programlisting>
-   </example>
 
   <sect2 xml:id="functions.arguments.by-reference">
    <title>Передача аргументов по ссылке</title>
@@ -289,8 +267,11 @@ echo $str;    // выведет 'Это строка, и кое-что ещё.'
    <title>Значения аргументов по умолчанию</title>
 
    <para>
-    Функция может определять значения по умолчанию в стиле C++ для
-    скалярных аргументов, например:
+    Функция может определять значения по умолчанию для аргументов,
+    используя синтаксис, подобный присвоению переменной.
+    Значение по умолчанию используется только в том случае, если параметр не указан;
+    в частности, обратите внимание, что передача &null;
+    <emphasis>не</emphasis> присваивает значение по умолчанию.
    </para>
    <para>
     <example>
@@ -319,8 +300,9 @@ echo makecoffee("эспрессо");
     </example>
    </para>
    <para>
-    PHP также позволяет использовать массивы (<type>array</type>) и специальный тип &null; в
-    качестве значений по умолчанию, например:
+    Значениями параметров по умолчанию могут быть скалярные значения, массивы (<type>array</type>),
+    специальный тип &null;, и, начиная с версии PHP 8.1.0, объекты,
+    использующие синтаксис <link linkend="language.oop5.basic.new">new ClassName()</link>.
    </para>
    <para>
     <example>
@@ -339,18 +321,42 @@ echo makecoffee(array("капучино", "лавацца"), "в чайнике"
 ]]>
      </programlisting>
     </example>
-
+   </para>
+   <para>
+    <example>
+     <title>Использование объектов в качестве значений по умолчанию (начиная с PHP 8.1.0)</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+class DefaultCoffeeMaker {
+    public function brew() {
+        return 'Приготовление кофе.';
+    }
+}
+class FancyCoffeeMaker {
+    public function brew() {
+        return 'Приготовление прекрасного кофе специально для вас.';
+    }
+}
+function makecoffee($coffeeMaker = new DefaultCoffeeMaker)
+{
+    return $coffeeMaker->brew();
+}
+echo makecoffee();
+echo makecoffee(new FancyCoffeeMaker);
+?>
+]]>
+     </programlisting>
+    </example>
    </para>
    <simpara>
     Значение по умолчанию должно быть константным выражением, а не
     (к примеру) переменной или вызовом функции/метода класса.
    </simpara>
    <para>
-    Обратите внимание, что все аргументы, для которых установлены
-    значения по умолчанию, должны находиться правее аргументов,
-    для которых значения по умолчанию не заданы, в противном случае
-    ваш код может работать не так, как вы этого ожидаете. Рассмотрим
-    следующий пример:
+    Обратите внимание, что любые необязательные аргументы должны быть указаны после любых обязательных аргументов,
+    иначе они не могут быть опущены при вызове.
+    Рассмотрим следующий пример:
    </para>
    <para>
     <example>
@@ -358,21 +364,20 @@ echo makecoffee(array("капучино", "лавацца"), "в чайнике"
      <programlisting role="php">
 <![CDATA[
 <?php
-function makeyogurt($type = "ацидофил", $flavour)
+function makeyogurt($container = "миску", $flavour)
 {
-    return "Готовим чашку из бактерий $type со вкусом $flavour.\n";
+    return "Делаем $container с $flavour йогуртом.\n";
 }
 
-echo makeyogurt("малины");   // Не будет работать так, как мы могли бы ожидать
+echo makeyogurt("малиновым"); // "малиновым" - это $container, не $flavour
 ?>
 ]]>
      </programlisting>
      &example.outputs;
      <screen>
 <![CDATA[
-Warning: Missing argument 2 in call to makeyogurt() in
-/usr/local/etc/httpd/htdocs/phptest/functest.html on line 41
-Готовим чашку из бактерий малины со вкусом .
+Fatal error: Uncaught ArgumentCountError: Too few arguments
+to function makeyogurt(), 1 passed in example.php on line 42
 ]]>
      </screen>
     </example>
@@ -386,23 +391,78 @@ Warning: Missing argument 2 in call to makeyogurt() in
      <programlisting role="php">
 <![CDATA[
 <?php
-function makeyogurt($flavour, $type = "ацидофил")
+function makeyogurt($flavour, $container = "миску")
 {
-    return "Готовим чашку из бактерий $type со вкусом $flavour.\n";
+    return "Делаем $container с $flavour йогуртом.\n";
 }
 
-echo makeyogurt("малины");   // отрабатывает правильно
+echo makeyogurt("малиновым"); // "малиновым" - это $flavour
 ?>
 ]]>
      </programlisting>
      &example.outputs;
      <screen>
 <![CDATA[
-Готовим чашку из бактерий ацидофил со вкусом малины.
+Делаем миску с малиновым йогуртом.
 ]]>
      </screen>
     </example>
    </para>
+   <para>
+    Начиная с PHP 8.0.0, <link linkend="functions.named-arguments">именованные аргументы</link>
+    можно использовать для пропуска нескольких необязательных параметров.
+   </para>
+   <para>
+    <example>
+     <title>Правильное использование аргументов функций по умолчанию</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+function makeyogurt($container = "миску", $flavour = "малиновым", $style = "греческим")
+{
+    return "Делаем $container с $flavour $style йогуртом.\n";
+}
+echo makeyogurt(style: "натуральным");
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+Делаем миску с малиновым натуральным йогуртом.
+]]>
+     </screen>
+    </example>
+   </para>
+   <para>
+    Начиная с PHP 8.0.0, объявление обязательных аргументов после необязательных
+    аргументов является <emphasis>устаревшим</emphasis>.
+    Обычно это можно решить отказавшись от значения по умолчанию, поскольку оно никогда не будет использоваться.
+    Исключением из этого правила являются аргументы вида <code>Type $param = null</code>,
+    где &null; по умолчанию делает тип неявно обнуляемым.
+    Такое использование остаётся допустимым, хотя рекомендуется использовать
+    явный <link linkend="language.types.declarations.nullable">тип nullable</link>.
+    <example>
+     <title>Объявление необязательных аргументов после обязательных аргументов</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+function foo($a = [], $b) {} // По умолчанию не используется; устарел, начиная с версии PHP 8.0.0
+function foo($a, $b) {}      // Функционально эквивалентны, без уведомления об устаревании
+function bar(A $a = null, $b) {} // Все еще разрешено; $a является обязательным, но допускающим значение null
+function bar(?A $a, $b) {}       // Рекомендуется
+?>
+]]>
+     </programlisting>
+    </example>
+   </para>
+   <note>
+    <simpara>
+     Начиная с PHP 7.1.0, опущение параметра, не заданного по умолчанию,
+     выбрасывает исключение <classname>ArgumentCountError</classname>;
+     в предыдущих версиях это вызывало предупреждение.
+    </simpara>
+   </note>
    <note>
     <simpara>
      Значения по умолчанию могут быть переданы по ссылке.
@@ -677,7 +737,7 @@ htmlspecialchars($string, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8', fa
     </para>
 
     <example>
-     <title>Выбрасывание исключения Error при передаче одного и того же параметра несколько раз</title>
+     <title>Ошибка, возникающая при передаче одного и того же параметра несколько раз</title>
      <programlisting role="php">
 <![CDATA[
 <?php
