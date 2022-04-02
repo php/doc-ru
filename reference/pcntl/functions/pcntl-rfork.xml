@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 58c419eb2e8fd09fbe3bc897cfb4c52ba4be7be6 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="function.pcntl-rfork" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>pcntl_rfork</refname>
+  <refpurpose>Взаимодействует с ресурсами процесса</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <type>int</type><methodname>pcntl_rfork</methodname>
+   <methodparam><type>int</type><parameter>flags</parameter></methodparam>
+   <methodparam><type>int</type><parameter>signal</parameter><initializer>0</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Взаимодействует с ресурсами процесса.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>flags</parameter></term>
+     <listitem>
+      <para>
+       Параметр <parameter>flags</parameter> определяет, какие ресурсы вызывающего процесса (родительского)
+       разделяются новым процессом (дочерним) или инициализируются в значения по умолчанию.
+      </para>
+      <para>
+       <parameter>flags</parameter> является логическим OR (или) некоторого подмножества из:
+       <simplelist>
+        <member>
+         <constant>RFPROC</constant>: Если установлено, создаётся новый процесс;
+         в противном случае изменения затрагивают текущий процесс.
+        </member>
+        <member>
+         <constant>RFNOWAIT</constant>: Если установлено, дочерний процесс будет отделён от родительского.
+         При выходе дочерний процесс не будет оставлять статус для родителя, чтобы забрать его.
+        </member>
+        <member>
+         <constant>RFFDG</constant>: Если установлено, копируется таблица дескрипторов файлов вызывающей стороны;
+         В противном случае два процесса используют одну таблицу.
+        </member>
+        <member>
+         <constant>RFCFDG</constant>: Если установлено, новый процесс начинается с чистой таблицей дескрипторов файлов.
+         Взаимоисключающий флаг с <literal>RFFDG</literal>.
+        </member>
+        <member>
+         <constant>RFLINUXTHPN</constant>: Если установлено, ядро будет возвращать SIGUSR1 вместо SIGCHILD при выходе из дочернего потока.
+         Предназначен для уведомления родительского процесса о выходе из Linux-клона.
+        </member>
+       </simplelist>
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>signal</parameter></term>
+     <listitem>
+      <para>
+       Номер сигнала.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   В случае успешного выполнения в потоке выполнения родительского процесса возвращается PID дочернего процесса,
+   а в потоке выполнения дочернего процесса возвращается <literal>0</literal>.
+   В случае возникновения ошибки в контексте родителя будет возвращено <literal>-1</literal>,
+   дочерний процесс не будет создан и будет выдана ошибка PHP.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования <function>pcntl_rfork</function></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$pid = pcntl_rfork(RFNOWAIT|RFTSIGZMB, SIGUSR1);
+if ($pid > 0) {
+  // Родительский процесс.
+  var_dump($pid);
+} else {
+  // Дочерний процесс.
+  var_dump($pid);
+  sleep(2); // поскольку дочерний процесс не ждёт, мы видим его "pid".
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+int(77093)
+int(0)
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><function>pcntl_fork</function></member>
+    <member><function>pcntl_waitpid</function></member>
+    <member><function>pcntl_signal</function></member>
+    <member><function>cli_set_process_title</function></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
