@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: eec6a4a36bf452bf271f116e7b6b9bb09d1181c3 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 5065e44c26ccb29437ce26e9df0d26f446583d7a Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.create-function" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>create_function</refname>
-  <refpurpose>Создаёт анонимную (лямбда) функцию</refpurpose>
+  <refpurpose>Создаёт функцию динамически, оценивая строку кода</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -19,13 +19,15 @@
    <methodparam><type>string</type><parameter>code</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Создаёт анонимную функцию из переданных параметров
+   Создаёт функцию динамически из переданных параметров
    и возвращает её уникальное имя.
   </para>
   <caution>
    <para>
-    Эта функция внутри себя делает вызов функции <function>eval</function>, а значит
+    Функция внутри себя делает вызов функции <function>eval</function>, а значит
     имеет такие же проблемы с безопасностью, как и <function>eval</function>.
+    Также у неё плохие характеристики производительности и использования памяти,
+    поскольку созданные функции являются глобальными и не могут быть освобождены.
    </para>
    <para>
     Используйте
@@ -33,21 +35,21 @@
    </para>
   </caution>
  </refsect1>
+
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
-   Обычно параметры передаются строкой в одинарных кавычках.
-   Основанием для использования строк в одинарных кавычках является
-   защита имён переменных от обработки, другими словами, если вы
-   будете использовать двойные кавычки, то необходимо будет
-   проэкранировать все имена переменных, вот так:
-   <literal>\$avar</literal>.
+   Обычно рекомендуется передавать параметры в виде строк
+   <link linkend="language.types.string.syntax.single">с одинарной кавычкой</link>.
+   При использовании строк <link linkend="language.types.string.syntax.double">с двойной кавычкой</link>
+   имена переменных в коде должны быть тщательно экранированы,
+   например, вот так: <literal>\$somevar</literal>.
    <variablelist>
     <varlistentry>
      <term><parameter>args</parameter></term>
      <listitem>
       <para>
-       Аргументы функции.
+       Аргументы функции в виде строки, разделённой запятыми.
       </para>
      </listitem>
     </varlistentry>
@@ -66,8 +68,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает уникальное имя функции в виде строки или &false; в случае
-   ошибки.
+   Возвращает уникальное имя функции в виде строки&return.falseforfailure;.
+   Обратите внимание, что имя содержит непечатаемый символ (<literal>"\0"</literal>),
+   поэтому следует соблюдать осторожность при печати имени или включении его в любую другую строку.
   </para>
  </refsect1>
 
@@ -76,35 +79,50 @@
   <para>
    <example>
     <title>
-     Создание анонимной функции с помощью <function>create_function</function>
+     Создание функции динамически с помощью <function>create_function</function> или анонимных функций
     </title>
     <para>
-     Вы можете использовать эту функцию (к примеру) для создания функций
-     из информации, полученной во время выполнения:
+     Вы можете использовать динамически созданную функцию, чтобы, например,
+     создать функцию на основе информации, собранной во время выполнения.
+     Во-первых, используя функцию <function>create_function</function>:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
 $newfunc = create_function('$a,$b', 'return "ln($a) + ln($b) = " . log($a * $b);');
-echo "Новая анонимная функция: $newfunc\n";
 echo $newfunc(2, M_E) . "\n";
-// выводит
-// Новая анонимная функция: lambda_1
-// ln(2) + ln(2.718281828459) = 1.6931471805599
 ?>
 ]]>
     </programlisting>
+    <para>
+     Теперь тот же код, используя <link linkend="functions.anonymous">анонимную функцию</link>;
+     обратите внимание, что код и аргументы больше не содержатся в строках:
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$newfunc = function($a,$b) { return "ln($a) + ln($b) = " . log($a * $b); };
+echo $newfunc(2, M_E) . "\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+ln(2) + ln(2.718281828459) = 1.6931471805599
+]]>
+    </screen>
    </example>
-  </para>
-  <para>
-   Или, возможно, чтобы иметь общий обработчик для применения набора
-   операций к списку параметров:
   </para>
   <para>
    <example>
     <title>
-     Создание функции-обработчика с помощью <function>create_function</function>
+     Создание общей функции-обработчика с помощью <function>create_function</function> или анонимных функций
     </title>
+    <para>
+     Другим вариантом использования может быть общая функция-обработчик,
+     которая может применять набор операций к списку параметров:
+    </para>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -116,62 +134,110 @@ function process($var1, $var2, $farr)
 }
 
 // создаём кучу математических функций
-$f1 = 'if ($a >=0) {return "b*a^2 = ".$b*sqrt($a);} else {return false;}';
-$f2 = "return \"min(b^2+a, a^2,b) = \".min(\$a*\$a+\$b,\$b*\$b+\$a);";
-$f3 = 'if ($a > 0 && $b != 0) {return "ln(a)/b = ".log($a)/$b; } else { return false; }';
 $farr = array(
     create_function('$x,$y', 'return "тригонометрия: ".(sin($x) + $x*cos($y));'),
     create_function('$x,$y', 'return "гипотенуза: ".sqrt($x*$x + $y*$y);'),
-    create_function('$a,$b', $f1),
-    create_function('$a,$b', $f2),
-    create_function('$a,$b', $f3)
-    );
+    create_function('$a,$b', 'if ($a >=0) {return "b*a^2 = ".$b*sqrt($a);} else {return false;}'),
+    create_function('$a,$b', "return \"min(b^2+a, a^2,b) = \".min(\$a*\$a+\$b,\$b*\$b+\$a);"),
+    create_function('$a,$b', 'if ($a > 0 && $b != 0) {return "ln(a)/b = ".log($a)/$b; } else { return false; }')
+);
 
-echo "\nИспользуем первый массив анонимных функций\n";
-echo "параметры: 2.3445, M_PI\n";
+echo "\nИспользование первого массива динамических функций\n";
+echo "Параметры: 2.3445, M_PI\n";
 process(2.3445, M_PI, $farr);
 
 // теперь создаём кучу функций обработки строк
 $garr = array(
     create_function('$b,$a', 'if (strncmp($a, $b, 3) == 0) return "** \"$a\" '.
-    'и \"$b\"\n** для меня одинаковы! (смотря по первым 3 символам)";'),
-    create_function('$a,$b', '; return "CRC: " . crc32($a) . ", ".crc32($b);'),
-    create_function('$a,$b', '; return "similar(a,b) = " . similar_text($a, $b, &$p) . "($p%)";')
-    );
-echo "\nИспользование второго массива анонимных функций\n";
-process("Варкалось. Хливкие шорьки пырялись по наве", "Воробей под кровлю, а сова на ловлю", $garr);
+        'и \"$b\"\n** для меня одинаковы! (смотря по первым 3 символам)";'),
+    create_function('$a,$b', 'return "CRCs: " . crc32($a) . ", ".crc32($b);'),
+    create_function('$a,$b', 'return "similar(a,b) = " . similar_text($a, $b, $p) . "($p%)";')
+);
+echo "\nИспользование второго массива динамических функций\n";
+process("Варкалось. Хливкие шорьки пырялись по наве", "Варан ползёт", $garr);
+?>
+]]>
+    </programlisting>
+    <para>
+     И снова, тот же самый код с использованием <link linkend="functions.anonymous">анонимных функций</link>.
+     Обратите внимание, что имена переменных в коде больше не нужно экранировать,
+     поскольку они не заключены в строку.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function process($var1, $var2, $farr)
+{
+    foreach ($farr as $f) {
+        echo $f($var1, $var2) . "\n";
+    }
+}
+
+// создаём кучу математических функций
+$farr = array(
+    function($x,$y) { return "тригонометрия: ".(sin($x) + $x*cos($y)); },
+    function($x,$y) { return "гипотенуза: ".sqrt($x*$x + $y*$y); },
+    function($a,$b) { if ($a >=0) {return "b*a^2 = ".$b*sqrt($a);} else {return false;} },
+    function($a,$b) { return "min(b^2+a, a^2,b) = " . min($a*$a+$b, $b*$b+$a); },
+    function($a,$b) { if ($a > 0 && $b != 0) {return "ln(a)/b = ".log($a)/$b; } else { return false; } }
+);
+
+echo "\nИспользование первого массива динамических функций\n";
+echo "Параметры: 2.3445, M_PI\n";
+process(2.3445, M_PI, $farr);
+
+// теперь создаём кучу функций обработки строк
+$garr = array(
+    function($b,$a) { if (strncmp($a, $b, 3) == 0) return "** \"$a\" " .
+        "и \"$b\"\n** для меня одинаковы! (смотря по первым 3 символам)"; },
+    function($a,$b) { return "CRCs: " . crc32($a) . ", ".crc32($b); },
+    function($a,$b) { return "similar(a,b) = " . similar_text($a, $b, $p) . "($p%)"; }
+);
+echo "\nИспользование второго массива динамических функций\n";
+process("Варкалось. Хливкие шорьки пырялись по наве", "Варан ползёт", $garr);
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-Используем первый массив анонимных функций
-параметры: 2.3445, M_PI
+Использование первого массива динамических функций
+Параметры: 2.3445, M_PI
 тригонометрия: -1.6291725057799
 гипотенуза: 3.9199852871011
 b*a^2 = 4.8103313314525
 min(b^2+a, a^2,b) = 8.6382729035898
 ln(a)/b = 0.27122299212594
 
-Использование второго массива анонимных функций
-** "Воробей под кровлю, а сова на ловлю" и "Варкалось. Хливкие шорьки пырялись по наве"
+Использование второго массива динамических функций
+** "Варан ползёт" и "Варкалось. Хливкие шорьки пырялись по наве"
 ** для меня одинаковы! (смотря по первым 3 символам)
-CRC: 2672527412, 1981818417
-similar(a,b) = 23(32.624113475177%)
+CRCs: 2672527412, 2269828269
+similar(a,b) = 16(31.683168316832%)
 ]]>
     </screen>
    </example>
   </para>
   <para>
-   Однако, вероятно, наиболее обоснованное использование лямбда
-   (анонимных) функций - это создание функций обратного вызова, например,
-   при использовании <function>array_walk</function> или
-   <function>usort</function>
-  </para>
-  <para>
    <example>
-    <title>Использование анонимной функции в качестве функции обратного вызова</title>
+    <title>Использование динамических функций в качестве callback-функций</title>
+    <para>
+     Возможно, самым распространённым использованием динамических функций
+     является передача их в качестве callback-функций, например,
+     при использовании <function>array_walk</function> или <function>usort</function>.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$av = array("the ", "a ", "that ", "this ");
+array_walk($av, create_function('&$v,$k', '$v = $v . "mango";'));
+print_r($av);
+?>
+]]>
+    </programlisting>
+    <para>
+     Преобразование приведённого выше кода в <link linkend="functions.anonymous">анонимную функцию</link>:
+    </para>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -194,52 +260,53 @@ Array
 ]]>
     </screen>
     <para>
-     Сортировка строк по их длине
+     Сортировка строки от самой длинной до самой короткой с помощью <function>create_function</function>:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $sv = array("мало", "много", "большая строка", "строка строка строка");
+echo "Оригинальный массив:\n";
 print_r($sv);
-
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-Array
-(
-  [0] => мало
-  [1] => много
-  [2] => большая строка
-  [3] => строка строка строка
-)
-]]>
-    </screen>
-    <para>
-     Теперь отсортируем их в обратном порядке:
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-
+echo "Отсортированный:\n";
 usort($sv, create_function('$a,$b','return strlen($b) - strlen($a);'));
 print_r($sv);
-
+?>
+]]>
+    </programlisting>
+    <para>
+     Преобразование приведённого выше кода в <link linkend="functions.anonymous">анонимную функцию</link>:
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$sv = array("мало", "много", "большая строка", "строка строка строка");
+echo "Оригинальный массив:\n";
+print_r($sv);
+echo "Отсортированный:\n";
+usort($sv, function($a,$b) { return strlen($b) - strlen($a); });
+print_r($sv);
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
+Оригинальный массив:
 Array
 (
-  [0] => строка строка строка
-  [1] => большая строка
-  [2] => много
-  [3] => мало
+    [0] => мало
+    [1] => много
+    [2] => большая строка
+    [3] => строка строка строка
+)
+Отсортированный:
+Array
+(
+    [0] => строка строка строка
+    [1] => большая строка
+    [2] => много
+    [3] => мало
 )
 ]]>
     </screen>
