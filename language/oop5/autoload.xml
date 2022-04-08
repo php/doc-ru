@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9ee9eccf455188ab6eb352194eb6f9eb99e15606 Maintainer: irker Status: ready -->
+<!-- EN-Revision: fca50d321ce57036f3786f278887abe58cd41de8 Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.autoload" xmlns="http://docbook.org/ns/docbook">
  <title>Автоматическая загрузка классов</title>
@@ -18,6 +18,10 @@
   Регистрируя автозагрузчики, PHP получает последний шанс для интерпретатора загрузить класс
   прежде, чем он закончит выполнение скрипта с ошибкой.
  </para>
+ <para>
+  Любая конструкция, подобная классу может быть автоматически загружена таким же образом,
+  включая классы, интерфейсы, трейты и перечисления.
+ </para>
  <caution>
   <para>
    До PHP 8.0.0 можно было использовать <function>__autoload</function> для автозагрузки
@@ -25,6 +29,14 @@
    функция <function>__autoload</function> объявлена устаревшей в PHP 7.2.0 и удалена в PHP 8.0.0.
   </para>
  </caution>
+ <note>
+  <para>
+   Функция <function>spl_autoload_register</function> может быть вызвана несколько раз,
+   чтобы зарегистрировать несколько автозагрузчиков. Выброс исключения из функции автозагрузки,
+   однако, прервёт этот процесс и не позволит запускать дальнейшие функции автозагрузки.
+   По этой причине выбрасывать исключения из функции автозагрузки настоятельно не рекомендуется.
+  </para>
+ </note>
  <para>
   <example>
    <title>Пример автоматической загрузки</title>
@@ -70,66 +82,6 @@ Fatal error: Interface 'ITest' not found in ...
 ?>
 ]]>
     </programlisting>
-   </example>
-   <example>
-    <title>Автоматическая загрузка с перехватом исключения</title>
-    <para>
-     В данном примере вызывается исключение и отлавливается блоком try/catch.
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-spl_autoload_register(function ($name) {
-    echo "Хочу загрузить $name.\n";
-    throw new Exception("Невозможно загрузить $name.");
-});
-
-try {
-    $obj = new NonLoadableClass();
-} catch (Exception $e) {
-    echo $e->getMessage(), "\n";
-}
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-Хочу загрузить NonLoadableClass.
-Невозможно загрузить NonLoadableClass.
-]]>
-    </screen>
-   </example>
-   <example>
-    <title>Автоматическая загрузка с перехватом исключения - Класс пользовательского исключения отсутствует</title>
-    <para>
-     В данном примере вызывается незагруженное пользовательское исключение.
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-spl_autoload_register(function ($name) {
-    echo "Хочу загрузить $name.\n";
-    throw new MissingException("Невозможно загрузить $name.");
-});
-
-try {
-    $obj = new NonLoadableClass();
-} catch (Exception $e) {
-    echo $e->getMessage(), "\n";
-}
-?>
-]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-Хочу загрузить NonLoadableClass.
-Хочу загрузить MissingException.
-
-Fatal error: Class 'MissingException' not found in testMissingException.php on line 4
-]]>
-    </screen>
    </example>
   </para>
 
