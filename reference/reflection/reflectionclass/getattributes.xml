@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b0b19b66183b28cebc1ffbcf1e2b8763f9d9c7b3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 8d2b545eef87d52bdbe07cdac53a22910c077967 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionclass.getattributes" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -17,9 +17,6 @@
   <para>
    Возвращает все атрибуты, объявленные в этом классе, в виде массива <type>ReflectionAttribute</type>.
   </para>
-
-  &warn.undocumented.func;
-
  </refsect1>
 
  <refsect1 role="parameters">
@@ -29,7 +26,8 @@
     <term><parameter>name</parameter></term>
     <listitem>
      <para>
-
+      Фильтрация результатов, чтобы оставить только экземпляры
+      <classname>ReflectionAttribute</classname> для атрибутов, соответствующих этому имени класса.
      </para>
     </listitem>
    </varlistentry>
@@ -37,7 +35,18 @@
     <term><parameter>flags</parameter></term>
     <listitem>
      <para>
-
+      Флаги для определения способа фильтрации результатов,
+      если указан параметр <parameter>name</parameter>.
+     </para>
+     <para>
+      По умолчанию значение <literal>0</literal>, которое
+      возвращает результаты только для атрибутов,
+      относящихся к классу <parameter>name</parameter>.
+     </para>
+     <para>
+      Единственным доступным вариантом является использование
+      константы <constant>ReflectionAttribute::IS_INSTANCEOF</constant>,
+      которая вместо этого будет использовать для фильтрации <literal>instanceof</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -48,6 +57,122 @@
   &reftitle.returnvalues;
   <para>
    Массив атрибутов в виде объекта <classname>ReflectionAttribute</classname>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Простой пример использования</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+#[Attribute]
+class Fruit {
+}
+
+#[Attribute]
+class Red {
+}
+
+#[Fruit]
+#[Red]
+class Apple {
+}
+
+$class = new ReflectionClass('Apple');
+$attributes = $class->getAttributes();
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Fruit
+    [1] => Red
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Фильтрация результатов по имени класса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+#[Attribute]
+class Fruit {
+}
+
+#[Attribute]
+class Red {
+}
+
+#[Fruit]
+#[Red]
+class Apple {
+}
+
+$class = new ReflectionClass('Apple');
+$attributes = $class->getAttributes('Fruit');
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Fruit
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Фильтрация результатов по имени класса с наследованием</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+interface Color {
+}
+
+#[Attribute]
+class Fruit {
+}
+
+#[Attribute]
+class Red implements Colour {
+}
+
+#[Fruit]
+#[Red]
+class Apple {
+}
+
+$class = new ReflectionClass('Apple');
+$attributes = $class->getAttributes('Colour', ReflectionAttribute::IS_INSTANCEOF);
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Red
+)
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
@@ -63,7 +188,8 @@
   </para>
  </refsect1>
 
-</refentry><!-- Keep this comment at the end of the file
+</refentry>
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
