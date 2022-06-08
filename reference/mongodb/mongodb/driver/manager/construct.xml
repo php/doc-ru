@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fbe040bfc221e53f0723e636afd45acba6eeaafd Maintainer: lex Status: ready -->
+<!-- EN-Revision: 694a088f76db3a6d4b146d3f5ddaafb84fbeb820 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mongodb-driver-manager.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -711,6 +711,22 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
           <entry>
            <para>
             Предоставляет опции для включения автоматического шифрования на уровне поля на стороне клиента.
+            </para>
+           <note>
+            <para>
+             Автоматическое шифрование - функция только для Enterprise версии, которая применяется только к операциям над коллекцией.
+             Автоматическое шифрование не поддерживается для операций над базой данных или представлением,
+             а операции, которые не обходятся, приведут к ошибке (смотрите <link xlink:href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/client-side-encryption.rst#libmongocrypt-auto-encryption-allow-list">libmongocrypt: Список разрешений на автоматическое шифрование</link>). Чтобы обойти автоматическое шифрование для всех операций, установите <literal>bypassAutoEncryption</literal> в значение &true;.
+            </para>
+            <para>
+             Автоматическое шифрование требует, чтобы у аутентифицированного пользователя была привилегия <link xlink:href="&url.mongodb.docs;reference/command/listCollections/#required-access">listCollections</link>.
+            </para>
+            <para>
+             Явное шифрование/дешифрование и автоматическая расшифровка - это функция Community версии.
+             Драйвер все ещё может автоматически расшифровывать, если у опции <literal>bypassAutoEncryption</literal> установлено значение &true;.
+            </para>
+           </note>
+           <para>
             Поддерживаются следующие опции:
 
             <table>
@@ -730,10 +746,12 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
                &mongodb.option.encryption.tlsOptions;
                <row>
                 <entry>schemaMap</entry>
-                <entry><type>array</type></entry>
+                <entry><type class="union"><type>array</type><type>object</type></type></entry>
                 <entry>
                  <para>
-                  Позволяет указать локальную схему JSON, которая используется для настройки шифрования.
+                  Карта пространств имён коллекции в локальную схему JSON. Используется для настройки автоматического шифрования.
+                  Дополнительную информацию смотрите в <link xlink:href="&url.mongodb.docs;reference/security-client-side-automatic-json-schema/">Правилах автоматического шифрования</link> в руководстве по MongoDB.
+                  Ошибкой является указание коллекции как в <literal>schemaMap</literal>, так и в <literal>encryptedFieldsMap</literal>.
                  </para>
                  <note>
                   <simpara>
@@ -758,9 +776,33 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
                 <entry>bypassAutoEncryption</entry>
                 <entry><type>bool</type></entry>
                 <entry>
-                 Если для этого параметра установлено значение &true;, <literal>mongocryptd</literal>
-                 не будет появляться автоматически. Это используется для отключения
-                 автоматического шифрования.
+                 Если &true;, <literal>mongocryptd</literal>
+                 не будет появляться автоматически.
+                 Используется для отключения автоматического шифрования. По умолчанию &false;.
+                </entry>
+               </row>
+               <row>
+                <entry>bypassQueryAnalysis</entry>
+                <entry><type>bool</type></entry>
+                <entry>
+                 Если &true;, автоматический анализ исходящих команд будет отключён и <literal>mongocryptd</literal> не будет появляться автоматически.
+                 Это позволяет использовать явное шифрование для запроса индексированных полей без необходимости использования лицензированной корпоративной библиотеки <literal>crypt_shared</literal> или процесса <literal>mongocryptd</literal>. По умолчанию установлено значение &false;.
+                </entry>
+               </row>
+               <row>
+                <entry>encryptedFieldsMap</entry>
+                <entry><type class="union"><type>array</type><type>object</type></type></entry>
+                <entry>
+                 <para>
+                  Карта пространств имён коллекции в документе <literal>encryptedFields</literal>. Используется для настройки шифрования с возможностью запроса. Смотрите <link xlink:href="https://www.mongodb.com/docs/v6.0/core/queryable-encryption/fundamentals/encrypt-and-query/">Шифрование полей и возможность запросов</link> в руководстве по MongoDB для получения дополнительной информации.
+                  Ошибкой является указание коллекции как в <literal>encryptedFieldsMap</literal>, так и в <literal>schemaMap</literal>.
+                 </para>
+                 <note>
+                  <simpara>
+                   Указание <literal>encryptedFieldsMap</literal> обеспечивает большую безопасность, чем полагаться на зашифрованные поля <literal>encryptedFields</literal>, полученные от сервера.
+                   Это защищает от злонамеренного сервера, рекламирующего ложные <literal>encryptedFields</literal>.
+                  </simpara>
+                 </note>
                 </entry>
                </row>
                <row>
@@ -771,16 +813,26 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
                   <literal>extraOptions</literal> относится к процессу <literal>mongocryptd</literal>.
                   Поддерживаются следующие параметры:
                  </para>
-                 <programlisting role="javascript">
-<![CDATA[
-<provider>: {
-    mongocryptdURI: <optional string>, // По умолчанию "mongodb://localhost:27027"
-    mongocryptdBypassSpawn: <optional string>, // По умолчанию false
-    mongocryptdSpawnPath: <optional string>, // По умолчанию используется пустая строка и используются системные пути по умолчанию
-    mongocryptdSpawnArgs: <optional array of strings> // По умолчанию [ "--idleShutdownTimeoutSecs=60" ]
-}
-]]>
-                 </programlisting>
+                 <simplelist>
+                  <member>
+                   <literal>mongocryptdURI</literal> (<type>string</type>): URI для подключения к существующему процессу <literal>mongocryptd</literal>. По умолчанию <literal>"mongodb://localhost:27020"</literal>.
+                  </member>
+                  <member>
+                   <literal>mongocryptdBypassSpawn</literal> (<type>bool</type>): Если &true;, предотвращает создание драйвером <literal>mongocryptd</literal>. По умолчанию &false;.
+                  </member>
+                  <member>
+                   <literal>mongocryptdSpawnPath</literal> (<type>string</type>): Абсолютный путь для поиска двоичного файла <literal>mongocryptd</literal>. По умолчанию это пустая строка, использующая системные пути.
+                  </member>
+                  <member>
+                   <literal>mongocryptdSpawnArgs</literal> (<type>array</type>): Массив строковых аргументов для передачи в <literal>mongocryptd</literal> при создании. По умолчанию <literal>["--idleShutdownTimeoutSecs=60"]</literal>.
+                  </member>
+                  <member>
+                   <literal>cryptSharedLibPath</literal> (<type>string</type>): Абсолютный путь к библиотеке общего доступа <literal>crypt_shared</literal>. По умолчанию - пустая строка и использует системные пути.
+                  </member>
+                  <member>
+                   <literal>cryptSharedLibRequired</literal> (<type>bool</type>): Если &true;, требует, чтобы драйвер загружал <literal>crypt_shared</literal>. По умолчанию &false;.
+                  </member>
+                 </simplelist>
                  <para>
                   Смотрите
                  <link xlink:href="&url.mongodb.specs;/blob/master/source/client-side-encryption/client-side-encryption.rst#extraoptions">Руководство по шифрованию на стороне клиента</link>,
@@ -1005,6 +1057,16 @@ mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>PECL mongodb 1.14.0</entry>
+       <entry>
+        <para>
+         Добавлены опции автоматического шифрования <literal>"bypassQueryAnalysis"</literal> и <literal>"encryptedFieldsMap"</literal>.
+         Дополнительные опции, относящиеся к <literal>crypt_shared</literal>, теперь поддерживаются в опции автоматического шифрования <literal>"extraOptions"</literal>.
+         option.
+        </para>
+       </entry>
+      </row>
       <row>
        <entry>PECL mongodb 1.13.0</entry>
        <entry>
@@ -1242,7 +1304,7 @@ $manager = new MongoDB\Driver\Manager("mongodb://myusername:mypassword@example.c
     символы (например, <literal>@</literal>, <literal>:</literal>,
     <literal>%</literal>). В следующем примере, строка с паролем
     <literal>myp@ss:w%rd</literal> была вручную экранирована; однако
-    <function>rawurlencode</function> может использоваться для экранирования URI-компонетов,
+    <function>rawurlencode</function> может использоваться для экранирования URI-компонентов,
     которые могут содержать специальные символы.
    </para>
    <programlisting role="php">
