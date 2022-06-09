@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d836dea93eeac2383cd4bd7dc09229a1e5652c58 Maintainer: aur Status: ready -->
+<!-- EN-Revision: c613965f9a9de27ffcbe4b0ceb71cbc9f7cb3837 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="datetime.formats" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Допустимые форматы даты/времени</title>
@@ -7,8 +7,9 @@
  <para>
   В этом разделе описываются все различные форматы, которые принимает парсер:
   <classname>DateTimeImmutable</classname>, <classname>DateTime</classname>,
-  <function>date_create</function>,
-  <function>date_create_immutable</function>. Форматы сгруппированы
+  <function>date_create_immutable</function>,
+  <function>date_create</function>, <function>date_parse</function> и
+  <function>strtotime</function>. Форматы сгруппированы
   по разделам. В большинстве случаев форматы из разных разделов, разделённые
   пробелом, запятой или точкой, могут использоваться в одной и той же строке даты/времени. Для каждого
   из поддерживаемых форматов приведены один или несколько примеров, а также
@@ -18,16 +19,109 @@
   (<literal>"T"</literal> означает только <literal>T</literal>).
  </para>
 
+ <para>
+  Следует принять во внимание общий свод правил.
+ </para>
+ <orderedlist>
+  <listitem>
+   <simpara>
+    Парсер допускает для каждой единицы измерения (год, месяц, день, час, минута, секунда) полный диапазон значений.
+    Для года это всего 4 цифры, для месяца - 0-12, дня - 0-31, а для часа и минуты - 0-59.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Для секунд допускается значение 60, так как иногда строки даты с этой прыгающей секундой действительно появляются.
+    Но PHP реализует время Unix, где "60" не является допустимым числом секунд и поэтому происходит переполнение.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Функция <function>strtotime</function> возвращает &false;, если какое-либо число находится вне диапазонов,
+    а конструктор <function>DateTimeImmutable::__construct</function> выбрасывает исключение.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Если строка содержит дату, все элементы времени обнуляются до 0.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Все менее значимые элементы времени сбрасываются до 0,
+    если в данной строке присутствует какая-либо часть времени.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Парсер не делает никаких проверок, чтобы сделать его быстрее (и более универсальным).
+   </simpara>
+  </listitem>
+  <listitem>
+   <para>
+    Существует дополнительная проверка, если указана недействительная дата:
+    <example>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$res = date_parse("2015-09-31");
+var_dump($res["warnings"]);
+?>
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+array(1) {
+  [11] =>
+  string(27) "The parsed date was invalid"
+}
+]]>
+     </screen>
+    </example>
+   </para>
+  </listitem>
+  <listitem>
+   <para>
+    Крайние случаи уже можно обработать, для этого необходимо использовать метод <function>DateTimeImmutable::createFromFormat</function>,
+    предоставляя правильный формат.
+    <example>
+     <programlisting role="php">
+<![CDATA[
+<?php
+$res = DateImmutable::createFromFormat("Y-m-d", "2015-09-34");
+var_dump($res);
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+class DateTime#1 (3) {
+  public $date =>
+  string(26) "2015-10-04 17:24:43.000000"
+  public $timezone_type =>
+  int(3)
+  public $timezone =>
+  string(13) "Europe/London"
+}
+]]>
+     </screen>
+    </example>
+   </para>
+  </listitem>
+ </orderedlist>
+
  <!--Time Formats: {{{-->
  <sect1 xml:id="datetime.formats.time">
   <title>Форматы времени</title>
   <para>
    На этой странице описаны форматы даты/времени, которые понимает парсер функций:
    <classname>DateTimeImmutable</classname>, <classname>DateTime</classname>,
-  <function>date_create</function>,
-  <function>date_create_immutable</function> и
-  <function>strtotime</function>.
+   <function>date_create</function>,
+   <function>date_create_immutable</function> и
+   <function>strtotime</function>.
   </para>
+
   <table>
    <title>Используемые символы</title>
    <tgroup cols="3">
@@ -180,9 +274,11 @@
   <title>Форматы даты</title>
 
   <para>
-   На этой странице описаны форматы даты, которые понимает парсер функций
-   <function>strtotime</function>, <classname>DateTime</classname> и
-   <function>date_create</function>.
+   На этой странице описаны форматы даты, которые понимает парсер функций:
+   <classname>DateTimeImmutable</classname>, <classname>DateTime</classname>,
+   <function>date_create</function>,
+   <function>date_create_immutable</function> и
+   <function>strtotime</function>.
   </para>
 
   <table>
@@ -450,8 +546,10 @@
 
   <para>
    На этой странице описаны различные составные форматы даты/времени, которые понимает парсер
-   функций <function>strtotime</function>, <classname>DateTime</classname> и
-   <function>date_create</function>.
+   функций: <classname>DateTimeImmutable</classname>, <classname>DateTime</classname>,
+   <function>date_create</function>,
+   <function>date_create_immutable</function> и
+   <function>strtotime</function>.
   </para>
 
   <table>
@@ -550,6 +648,72 @@
   </table>
 
   <table>
+   <title>Форматы стандартов</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Описание</entry>
+      <entry>Примеры</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>ATOM</entry>
+      <entry>"2022-06-02T16:58:35+00:00"</entry>
+     </row>
+     <row>
+      <entry>COOKIE</entry>
+      <entry>"Thursday, 02-Jun-2022 16:58:35 UTC"</entry>
+     </row>
+     <row>
+      <entry>ISO8601</entry>
+      <entry>"2022-06-02T16:58:35+0000"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;822">RFC 822</link></entry>
+      <entry>"Thu, 02 Jun 22 16:58:35 +0000"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;850">RFC 850</link></entry>
+      <entry>"Thursday, 02-Jun-22 16:58:35 UTC"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;1036">RFC 1036</link></entry>
+      <entry>"Thu, 02 Jun 22 16:58:35 +0000"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;1123">RFC 1123</link></entry>
+      <entry>"Thu, 02 Jun 2022 16:58:35 +0000"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;2822">RFC 2822</link></entry>
+      <entry>"Thu, 02 Jun 2022 16:58:35 +0000"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;3339">RFC 3339</link></entry>
+      <entry>"2022-06-02T16:58:35+00:00"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;3339">RFC 3339</link> Extended</entry>
+      <entry>"2022-06-02T16:58:35.698+00:00"</entry>
+     </row>
+     <row>
+      <entry><link xlink:href="&url.rfc;7231">RFC 7231</link></entry>
+      <entry>"Thu, 02 Jun 2022 16:58:35 GMT"</entry>
+     </row>
+     <row>
+      <entry>RSS</entry>
+      <entry>"Thu, 02 Jun 2022 16:58:35 +0000"</entry>
+     </row>
+     <row>
+      <entry>W3C</entry>
+      <entry>"2022-06-02T16:58:35+00:00"</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table>
    <title>Региональные нотации</title>
    <tgroup cols="3">
     <thead>
@@ -642,8 +806,10 @@
 
   <para>
    На этой странице описаны относительные форматы даты/времени, которые понимает парсер
-   функций <function>strtotime</function>, <classname>DateTime</classname> и
-   <function>date_create</function>.
+   функций: <classname>DateTimeImmutable</classname>, <classname>DateTime</classname>,
+   <function>date_create</function>,
+   <function>date_create_immutable</function> и
+   <function>strtotime</function>.
   </para>
 
   <table>
@@ -788,7 +954,9 @@
      </row>
      <row>
       <entry><literal>dayname</literal></entry>
-      <entry>Перемещается на следующий день указанного дня недели.</entry>
+      <entry>
+       Перемещается на следующий день указанного дня недели. (Смотрите <link linkend="datetime.formats.relative.dayname-note">замечание</link>)
+      </entry>
       <entry>"Monday"</entry>
      </row>
      <row>
@@ -811,10 +979,17 @@
     то первая запись возвращает "2008-07-24 11:00", а вторая "2008-07-24 00:00". Причина такого поведения в том,
     что эти пять выражений влияют непосредственно на время.
    </para>
+   <para>
+    Такие ключевые слова, как "first day of", зависят от контекста, в котором используется строка относительного формата.
+    Если она используется в статическом методе или функции, то референтом является текущая системная метка времени.
+    Однако при использовании в методе <function>DateTime::modify</function> или
+    <function>DateTimeImmutable::modify</function>,
+    референтом является объект, на котором вызывается метод <literal>modify()</literal>.
+   </para>
   </note>
 
   <note>
-   <para>
+   <para xml:id="datetime.formats.relative.dayname-note">
     Следует обратить внимание на приведённые ниже замечания относительно текущего дня недели и дня недели,
     указанного в строке даты/времени. Текущий день недели может быть вычислен из независимой части строки
     даты/времени.
