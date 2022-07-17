@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f5bd78b3c2c48b8702bc1547a08a9ad592047c1c Maintainer: shein Status: ready -->
+<!-- EN-Revision: 26cf98b63af3d5dd9793055596d2996851e65ffe Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.strtotime" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -19,6 +19,8 @@
    года 00:00:00 UTC) относительно метки времени, переданной в
    <parameter>baseTimestamp</parameter>, или текущего времени, если аргумент
    <parameter>baseTimestamp</parameter> опущен.
+   Разбор строки даты определён в разделе <link linkend="datetime.formats">Форматы даты и времени</link>
+   и содержит несколько аспектов. Настоятельно рекомендуется с ними ознакомиться.
   </simpara>
   <warning>
    <para>
@@ -141,6 +143,19 @@ if (($timestamp = strtotime($str)) === false) {
   &reftitle.notes;
   <note>
    <para>
+    "Относительная" дата в данном случае также означает,
+    что если конкретный компонент метки даты/времени не указан,
+    он будет взят дословно из параметр <parameter>baseTimestamp</parameter>.
+    То есть, <code>strtotime('February')</code>, если его запустить 31 мая 2022 года,
+    будет интерпретирован как <literal>31 февраля 2022</literal>,
+    что перенесётся в метку времени <literal>3 марта</literal>
+    (в високосный год будет <literal>2 марта</literal>).
+    Использование <code>strtotime('1 February')</code> или <code>strtotime('first day of February')</code>
+    позволит избежать этой проблемы.
+   </para>
+  </note>
+  <note>
+   <para>
     Если количество лет указано двумя цифрами, то значения 00-69 будут считаться 2000-2069,
     а 70-99 - 1970-1999. Смотрите также замечания ниже о возможных различиях на 32-битных
     системах (допустимые даты заканчиваются 2038-01-19 03:14:07).
@@ -157,28 +172,6 @@ if (($timestamp = strtotime($str)) === false) {
     В 64-битных версиях PHP корректный диапазон временных меток фактически бесконечен,
     так как 64 битов хватит для представления приблизительно 293 миллиарда лет в обоих
     направлениях.
-   </para>
-  </note>
-  <note>
-   <para>
-    Даты в формате <literal>m/d/y</literal> или <literal>d-m-y</literal>
-    разрешают неоднозначность с помощью анализа разделителей их элементов:
-    если разделителем является слеш (<literal>/</literal>), то дата
-    интерпретируется в американском формате <literal>m/d/y</literal>,
-    если же разделителем является дефис (<literal>-</literal>) или точка
-    (<literal>.</literal>), то подразумевается использование европейского
-    формата <literal>d-m-y</literal>.
-
-    Однако, если, год указан в двухзначном формате,
-    а разделителем является дефис (<literal>-</literal>),
-    строка даты интерпретируется как <literal>y-m-d</literal>.
-   </para>
-   <para>
-    Чтобы избежать потенциальной неоднозначности, рекомендуется
-    использовать даты в формате стандарта ISO 8601
-    (<literal>YYYY-MM-DD</literal>), либо пользоваться функцией
-    <methodname>DateTime::createFromFormat</methodname> там, где это
-    возможно.
    </para>
   </note>
   <note>
@@ -201,7 +194,8 @@ if (($timestamp = strtotime($str)) === false) {
    </simplelist>
   </para>
  </refsect1>
-</refentry><!-- Keep this comment at the end of the file
+</refentry>
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
