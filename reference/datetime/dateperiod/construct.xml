@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e2c7b3635d5353c05c248c29038bf9d5b7133d6e Maintainer: aur Status: ready -->
+<!-- EN-Revision: aab7fca69ffc28b60f6f7b08ed48933d41815062 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="dateperiod.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -31,6 +31,16 @@
   <para>
    Создаёт новый объект DatePeriod.
   </para>
+  <para>
+   Объекты <classname>DatePeriod</classname> можно использовать в качестве итератора
+   для генерации ряда объектов <classname>DateTimeImmutable</classname> или <classname>DateTime</classname>
+   из даты <parameter>start</parameter>, <parameter>interval</parameter> и <parameter>end</parameter>
+   или числа <parameter>recurrences</parameter>.
+  </para>
+  <para>
+   Класс возвращаемых объектов эквивалентен классу-родителю <classname>DateTimeImmutable</classname>
+   или <classname>DateTime</classname> объекта <parameter>start</parameter>.
+  </para>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -41,7 +51,7 @@
      <term><parameter>start</parameter></term>
      <listitem>
       <para>
-       Начальная дата.
+       Начальная дата. По умолчанию включается в набор результатов.
       </para>
      </listitem>
     </varlistentry>
@@ -57,7 +67,9 @@
      <term><parameter>recurrences</parameter></term>
      <listitem>
       <para>
-       Количество повторений. Должно быть больше <literal>0</literal>.
+       Количество повторений. Число возвращаемых результатов на единицу больше этого,
+       так как дата начала включается в набор результатов по умолчанию.
+       Должно быть больше, чем <literal>0</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -65,7 +77,7 @@
      <term><parameter>end</parameter></term>
      <listitem>
       <para>
-       Конечная дата.
+       Конечная дата. По умолчанию исключается из набора результатов.
       </para>
      </listitem>
     </varlistentry>
@@ -83,8 +95,15 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Может быть установлено значение <constant>DatePeriod::EXCLUDE_START_DATE</constant>
-       для исключения начальной даты из периода.
+       Битовое поле, которое можно использовать для управления определённым поведением с начальной и конечной датами.
+      </para>
+      <para>
+       Исключить начальную дату внутри периода из набора повторяющихся дат можно
+       с помощью константы <constant>DatePeriod::EXCLUDE_START_DATE</constant>.
+      </para>
+      <para>
+       Включить конечную дату внутри периода в набор повторяющихся дат можно
+       с помощью константы <constant>DatePeriod::EXCLUDE_START_DATE</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -104,6 +123,12 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>8.2.0</entry>
+       <entry>
+        Добавлена константа <constant>DatePeriod::INCLUDE_END_DATE</constant>.
+       </entry>
+      </row>
       <row>
        <entry>7.2.19, 7.3.6, 7.4.0</entry>
        <entry>
@@ -184,6 +209,43 @@ foreach ($period as $date) {
 2012-07-15
 2012-07-22
 2012-07-29
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример использования DatePeriod, показывающий все последние четверги в году</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$begin = new DateTime('2021-12-31');
+$end = new DateTime('2022-12-31 23:59:59');
+
+$interval = DateInterval::createFromDateString('last thursday of next month');
+$period = new DatePeriod($begin, $interval, $end, DatePeriod::EXCLUDE_START_DATE);
+
+foreach ($period as $dt) {
+    echo $dt->format('l Y-m-d'), "\n";
+}
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Thursday 2022-01-27
+Thursday 2022-02-24
+Thursday 2022-03-31
+Thursday 2022-04-28
+Thursday 2022-05-26
+Thursday 2022-06-30
+Thursday 2022-07-28
+Thursday 2022-08-25
+Thursday 2022-09-29
+Thursday 2022-10-27
+Thursday 2022-11-24
+Thursday 2022-12-29
 ]]>
     </screen>
    </example>
