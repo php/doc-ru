@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d9ae294a02fa49a5d063dbcde2ca1f7e7a770c80 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 5c951013ca04161992efed8b86fb40f55669958e Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.date-sun-info" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -197,73 +197,89 @@ astronomical_twilight_end: 17:12:00
 ]]>
     </screen>
    </example>
-      <example>
-    <title>Полярная ночь</title>
+
+   <example>
+    <title>Полярная ночь с некоторой обработкой</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-var_dump(date_sun_info(strtotime("2017-12-21"), 90, 0));
-?>
+$tz = new \DateTimeZone('America/Anchorage');
+$si = date_sun_info(strtotime("2022-12-21"), 70.21, -148.51);
+foreach ($si as $key => $value) {
+    echo
+        match ($value) {
+            true => 'always',
+            false => 'never',
+            default => date_create("@{$value}")->setTimeZone($tz)->format( 'H:i:s T' ),
+        },
+        ": {$key}",
+        "\n";
+}?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-array(9) {
-  ["sunrise"]=>
-  bool(false)
-  ["sunset"]=>
-  bool(false)
-  ["transit"]=>
-  int(1513857490)
-  ["civil_twilight_begin"]=>
-  bool(false)
-  ["civil_twilight_end"]=>
-  bool(false)
-  ["nautical_twilight_begin"]=>
-  bool(false)
-  ["nautical_twilight_end"]=>
-  bool(false)
-  ["astronomical_twilight_begin"]=>
-  bool(false)
-  ["astronomical_twilight_end"]=>
-  bool(false)
-}
+never: sunrise
+never: sunset
+12:52:18 AKST: transit
+10:53:19 AKST: civil_twilight_begin
+14:51:17 AKST: civil_twilight_end
+09:01:47 AKST: nautical_twilight_begin
+16:42:48 AKST: nautical_twilight_end
+07:40:47 AKST: astronomical_twilight_begin
+18:03:49 AKST: astronomical_twilight_end
 ]]>
     </screen>
    </example>
    <example>
-    <title>Полуночное солнце</title>
+    <title>Полуночное солнце (Тромсё, Норвегия)</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-var_dump(date_sun_info(strtotime("2017-06-21"), 90, 0));
+$si = date_sun_info(strtotime("2022-06-26"), 69.68, 18.94);
+print_r($si);
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-array(9) {
-  ["sunrise"]=>
-  bool(true)
-  ["sunset"]=>
-  bool(true)
-  ["transit"]=>
-  int(1498046510)
-  ["civil_twilight_begin"]=>
-  bool(true)
-  ["civil_twilight_end"]=>
-  bool(true)
-  ["nautical_twilight_begin"]=>
-  bool(true)
-  ["nautical_twilight_end"]=>
-  bool(true)
-  ["astronomical_twilight_begin"]=>
-  bool(true)
-  ["astronomical_twilight_end"]=>
-  bool(true)
-}
+Array
+(
+    [sunrise] => 1
+    [sunset] => 1
+    [transit] => 1656240426
+    [civil_twilight_begin] => 1
+    [civil_twilight_end] => 1
+    [nautical_twilight_begin] => 1
+    [nautical_twilight_end] => 1
+    [astronomical_twilight_begin] => 1
+    [astronomical_twilight_end] => 1
+)
+]]>
+    </screen>
+   </example>
+  </para>
+
+  <para>
+   <example>
+    <title>Вычисление продолжительности дня (Киев)</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$si = date_sun_info(strtotime('2022-08-26'), 50.45, 30.52);
+$diff = $si['sunset'] - $si['sunrise'];
+echo "Продолжительность дня: ",
+    floor($diff / 3600), " ч. ",
+    floor(($diff % 3600) / 60), " сек.\n";
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Продолжительность дня: 13 ч. 56 сек.
 ]]>
     </screen>
    </example>
