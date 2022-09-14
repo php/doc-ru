@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1a9ee818e554e116b4721d432c6d671e14281ea0 Maintainer: shein Status: ready -->
+<!-- EN-Revision: cd6c0433a8a64d507e0cf3728ac8d3e1d58b4346 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetimeimmutable.createfromformat" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -62,6 +62,12 @@
       Единственным ограничением является количество цифр.
       Механизм переполнения парсера даты/времени используется, когда задаются значения, выходящие за пределы диапазона.
       Приведённые ниже примеры демонстрируют некоторые особенности такого поведения.
+     </para>
+     <para>
+      Это означает, что разобранные данные для буквы формата являются жадными
+      и будут считываться до количества цифр, допускаемого форматом.
+      Также это означает, что в строке <parameter>datetime</parameter> уже не хватает
+      символов для следующих символов формата. Пример на этой странице также иллюстрирует эту проблему.
      </para>
      <para>
       <table>
@@ -684,6 +690,63 @@ array(4) {
 }
 ]]>
    </screen>
+  </example>
+
+  <example>
+   <title>Жадное поведение при разборе</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+print_r(date_parse_from_format('Gis', '60101'));
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Array
+(
+    [year] =>
+    [month] =>
+    [day] =>
+    [hour] => 60
+    [minute] => 10
+    [second] => 0
+    [fraction] => 0
+    [warning_count] => 1
+    [warnings] => Array
+        (
+            [5] => The parsed time was invalid
+        )
+
+    [error_count] => 1
+    [errors] => Array
+        (
+            [4] => A two digit second could not be found
+        )
+
+    [is_localtime] =>
+)
+]]>
+   </screen>
+   <para>
+    Формат <literal>G</literal> предназначен для разбора 24-часовых часов
+    с ведущим нулём или без него. Для этого необходимо разобрать 1 или 2 цифры.
+    Так как есть две следующие цифры, он жадно считывает это как <literal>60</literal>.
+   </para>
+   <para>
+    Следующие символы формата <literal>i</literal> и <literal>s</literal> требуют двух цифр.
+    Это означает, что <literal>10</literal> передаётся как минута (<literal>i</literal>)
+    и что затем остаётся недостаточно цифр для разбора секунд (<literal>s</literal>).
+   </para>
+   <para>
+    На эту проблему указывает массив <literal>errors</literal>.
+   </para>
+   <para>
+    Кроме того, час <literal>60</literal> находится вне диапазона
+    <literal>0</literal>-<literal>24</literal>, что добавляет предупреждение
+    в массив <literal>warnings</literal> о том, что время является недействительным.
+   </para>
   </example>
 
  </refsect1>
