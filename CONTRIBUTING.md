@@ -133,6 +133,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Entry                           | Элемент (существительное, для массивов, списков и прочих структур) |
 | Extension                       | Модуль                                                             |
 | Features/functionality          | Возможности, функциональность                                      |
+| Fiber                           | Файбер                                                             |
 | Float (floating point)          | Число с плавающей точкой (плавающая точка)                         |
 | Fully Qualified name            | Абсолютное имя                                                     |
 | Getter                          | Метод чтения                                                       |
