@@ -162,6 +162,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Parsing                         | Разбор (например, разбор строки)                                   |
 | Prefetch                        | Предварительная выборка                                            |
 | PCRE                            | Perl-совместимые регулярные выражения                              |
+| PHP value                       | PHP-значение                                                       |
 | Private                         | Закрытый                                                           |
 | Public                          | Общедоступный                                                      |
 | Qualified name                  | Полное имя                                                         |
