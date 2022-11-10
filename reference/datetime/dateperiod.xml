@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c249f3bc56fcdb3ea3f64b1fa0c4fd96a7dcd5a4 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 0466dd93f73635c728c6c4707aaf5876692f1ef3 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <phpdoc:classref xml:id="class.dateperiod" xmlns:phpdoc="http://php.net/ns/phpdoc" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
 
@@ -42,53 +42,60 @@
 
     <classsynopsisinfo role="comment">&Constants;</classsynopsisinfo>
     <fieldsynopsis>
+     <modifier>public</modifier>
      <modifier>const</modifier>
      <type>int</type>
      <varname linkend="dateperiod.constants.exclude-start-date">DatePeriod::EXCLUDE_START_DATE</varname>
-     <initializer>1</initializer>
     </fieldsynopsis>
     <fieldsynopsis>
+     <modifier>public</modifier>
      <modifier>const</modifier>
      <type>int</type>
      <varname linkend="dateperiod.constants.include-end-date">DatePeriod::INCLUDE_END_DATE</varname>
-     <initializer>2</initializer>
     </fieldsynopsis>
 
     <classsynopsisinfo role="comment">&Properties;</classsynopsisinfo>
     <fieldsynopsis>
      <modifier>public</modifier>
+     <modifier>readonly</modifier>
+     <type class="union"><type>DateTimeInterface</type><type>null</type></type>
+     <varname linkend="dateperiod.props.start">start</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>public</modifier>
+     <modifier>readonly</modifier>
+     <type class="union"><type>DateTimeInterface</type><type>null</type></type>
+     <varname linkend="dateperiod.props.current">current</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>public</modifier>
+     <modifier>readonly</modifier>
+     <type class="union"><type>DateTimeInterface</type><type>null</type></type>
+     <varname linkend="dateperiod.props.end">end</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>public</modifier>
+     <modifier>readonly</modifier>
+     <type class="union"><type>DateInterval</type><type>null</type></type>
+     <varname linkend="dateperiod.props.interval">interval</varname>
+    </fieldsynopsis>
+    <fieldsynopsis>
+     <modifier>public</modifier>
+     <modifier>readonly</modifier>
      <type>int</type>
      <varname linkend="dateperiod.props.recurrences">recurrences</varname>
     </fieldsynopsis>
     <fieldsynopsis>
      <modifier>public</modifier>
+     <modifier>readonly</modifier>
      <type>bool</type>
-     <varname linkend="dateperiod.props.include_end_date">include_end_date</varname>
+     <varname linkend="dateperiod.props.include-start-date">include_start_date</varname>
     </fieldsynopsis>
     <fieldsynopsis>
      <modifier>public</modifier>
+     <modifier>readonly</modifier>
      <type>bool</type>
-     <varname linkend="dateperiod.props.include_start_date">include_start_date</varname>
-    </fieldsynopsis>
-    <fieldsynopsis>
-     <modifier>public</modifier>
-     <type>DateTimeInterface</type>
-     <varname linkend="dateperiod.props.start">start</varname>
-    </fieldsynopsis>
-    <fieldsynopsis>
-     <modifier>public</modifier>
-     <type>DateTimeInterface</type>
-     <varname linkend="dateperiod.props.current">current</varname>
-    </fieldsynopsis>
-    <fieldsynopsis>
-     <modifier>public</modifier>
-     <type>DateTimeInterface</type>
-     <varname linkend="dateperiod.props.end">end</varname>
-    </fieldsynopsis>
-    <fieldsynopsis>
-     <modifier>public</modifier>
-     <type>DateInterval</type>
-     <varname linkend="dateperiod.props.interval">interval</varname>
+     <varname linkend="dateperiod.props.include-end-date">include_end_date</varname>
     </fieldsynopsis>
 
     <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
@@ -132,13 +139,70 @@
      <term><varname>recurrences</varname></term>
      <listitem>
       <para>
-       Число повторов, если объект <classname>DatePeriod</classname>
-       создавался с явным указанием <literal>$recurrences</literal>.
-       Смотрите <methodname>DatePeriod::getRecurrences</methodname>.
+       Минимальное количество экземпляров, возвращаемое итератором.
+      </para>
+      <para>
+       Если количество повторений было явно передано с помощью параметра
+       <literal>$recurrences</literal> в конструктор экземпляра <classname>DatePeriod</classname>,
+       то это свойство содержит это значение, <emphasis>плюс</emphasis> один,
+       если дата начала не была отключена
+       с помощью константы <constant>DatePeriod::EXCLUDE_START_DATE</constant>,
+       <emphasis>плюс</emphasis> один, если дата окончания была включена
+       с помощью константы <constant>DatePeriod::INCLUDE_END_DATE</constant>.
+      </para>
+      <para>
+       Если количество повторений не было передано явно, то это свойство содержит
+       минимальное количество возвращённых экземпляров.
+       Это будет <literal>0</literal>, <emphasis>плюс</emphasis> один, если дата начала не отключена
+       с помощью константы <constant>DatePeriod::EXCLUDE_START_DATE</constant>,
+       <emphasis>плюс</emphasis> один, если дата окончания была включена
+       с помощью константы <constant>DatePeriod::INCLUDE_END_DATE</constant>.
+      </para>
+      <para>
+       <example>
+        <programlisting role="php">
+<![CDATA[
+<?php
+$start = new DateTime('2018-12-31 00:00:00');
+$end   = new DateTime('2021-12-31 00:00:00');
+$interval = new DateInterval('P1M');
+$recurrences = 5;
+
+// повторения явно задаются в конструкторе
+$period = new DatePeriod($start, $interval, $recurrences, DatePeriod::EXCLUDE_START_DATE);
+echo $period->recurrences, "\n";
+
+$period = new DatePeriod($start, $interval, $recurrences);
+echo $period->recurrences, "\n";
+
+$period = new DatePeriod($start, $interval, $recurrences, DatePeriod::INCLUDE_END_DATE);
+echo $period->recurrences, "\n";
+
+// повторения не заданы в конструкторе
+$period = new DatePeriod($start, $interval, $end);
+echo $period->recurrences, "\n";
+
+$period = new DatePeriod($start, $interval, $end, DatePeriod::EXCLUDE_START_DATE);
+echo $period->recurrences, "\n";
+?>
+]]>
+        </programlisting>
+        &example.outputs;
+        <screen role="php">
+5
+6
+7
+1
+0
+        </screen>
+       </example>
+      </para>
+      <para>
+       Смотрите также описание метода <methodname>DatePeriod::getRecurrences</methodname>.
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry xml:id="dateperiod.props.include_end_date">
+    <varlistentry xml:id="dateperiod.props.include-end-date">
      <term><varname>include_end_date</varname></term>
      <listitem>
       <para>
@@ -146,7 +210,7 @@
       </para>
      </listitem>
     </varlistentry>
-    <varlistentry xml:id="dateperiod.props.include_start_date">
+    <varlistentry xml:id="dateperiod.props.include-start-date">
      <term><varname>include_start_date</varname></term>
      <listitem>
       <para>
