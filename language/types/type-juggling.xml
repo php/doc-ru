@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f32703dce3d941dd6add101551a6c9f126d8eaa0 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 445502deadd968bfb0207f96237b8fb6f968b100 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.types.type-juggling">
  <title>Манипуляции с типами</title>
@@ -76,6 +76,8 @@
 
   <simpara>
    В данном контексте значение будет интерпретироваться как строка (<type>string</type>).
+   Если значение не может быть интерпретировано, выбрасывается ошибка <classname>TypeError</classname>.
+   До версии PHP 7.4.0 выдавалась ошибка уровня <constant>E_RECOVERABLE_ERROR</constant>.
   </simpara>
  </sect2>
 
@@ -118,7 +120,7 @@
   </simpara>
  </sect2>
 
- <sect2>
+ <sect2 xml:id="language.types.type-juggling.function">
   <title>Контекст функций</title>
 
   <simpara>
@@ -126,8 +128,23 @@
   </simpara>
 
   <para>
-   В этом контексте, когда активен режим строгой типизации (по умолчанию), только скалярные значения могут быть преобразованы в другое скалярное значение.
-   Для объявлений простых типов поведение следующее:
+   В этом контексте значение должно быть значением данного типа.
+   Существуют два исключения, первое: если тип значения – целое число (<type>int</type>),
+   а объявленный тип - число с плавающей точкой (<type>float</type>), то целое число преобразуется в число с плавающей точкой.
+   Второй: если значение и объявленный тип являются <emphasis>скалярными</emphasis> типами и режим строгой типизации активен (по умолчанию),
+   то значение может быть преобразовано в допустимое скалярное значение.
+   Описание такого поведения смотрите ниже.
+  </para>
+
+  <warning>
+   <simpara>
+    <link linkend="functions.internal">Встроенные функции</link> автоматически подставляют &null; к скалярным типам,
+    это поведение <emphasis>УСТАРЕЛО</emphasis> в PHP 8.1.0.
+   </simpara>
+  </warning>
+
+  <sect3 xml:id="language.types.type-juggling.function.simple">
+   <title>Принудительная типизация с простым объявлением типов</title>
    <itemizedlist>
     <listitem>
      <simpara>
@@ -154,20 +171,94 @@
      </simpara>
     </listitem>
    </itemizedlist>
+  </sect3>
 
-   Если объявление типа является объединённым, смотрите раздел
-   <link linkend="language.types.declarations.union.coercive">Приведение для объединённых типов</link>.
-  </para>
+  <sect3 xml:id="language.types.type-juggling.function.union">
+   <title>Принудительная типизация с объединением типов</title>
+   <para>
+    При выключенном <literal>strict_types</literal>, объявления скалярных типов
+    подвергаются ограниченному неявному приведению типов.
+    Если точный тип значения не является частью объединения,
+    то целевой тип выбирается в следующем порядке предпочтения:
 
-  <warning>
-   <simpara>
-    <link linkend="functions.internal">Внутренние функции</link>
-    автоматически подставляют &null; к скалярным типам,
-    это поведение <emphasis>УСТАРЕЛО</emphasis> в PHP 8.1.0.
-   </simpara>
-  </warning>
+    <orderedlist>
+     <listitem>
+      <simpara>
+       <type>int</type>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <type>float</type>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <type>string</type>
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       <type>bool</type>
+      </simpara>
+     </listitem>
+    </orderedlist>
+
+    Если тип и существует в объединении и значение может быть приведено к этому типу
+    в соответствии с существующей семантикой проверки типов PHP, то выбирается этот тип.
+    В противном случае выбирается следующий тип.
+   </para>
+
+   <caution>
+    <para>
+     В качестве исключения, если значение является строкой,
+     а целое число (int) и число с плавающей точкой (float) являются частью объединения,
+     предпочтительный тип определяется существующей семантикой "числовой строки".
+     Например, для <literal>"42"</literal> выбирается целое число (<type>int</type>),
+     а для <literal>"42.0"</literal> выбирается число с плавающей точкой (<type>float</type>).
+    </para>
+   </caution>
+
+   <note>
+    <para>
+     Типы, не входящие в приведённый выше список предпочтений, не являются объектами
+     для неявного приведения. В частности, не происходит неявного приведения
+     к типам <literal>null</literal> и <literal>false</literal>.
+    </para>
+   </note>
+
+   <example>
+    <title>Пример принудительного включения типов в состав объединения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// int|string
+42    --> 42          // точный тип
+"42"  --> "42"        // точный тип
+new ObjectWithToString --> "Результат __toString()"
+                      // объект не совместим с int, переход к string
+42.0  --> 42          // float совместимый с int
+42.1  --> 42          // float совместимый с int
+1e100 --> "1.0E+100"  // float слишком велик для типа int, переход к string
+INF   --> "INF"       // float слишком велик для типа int, переход к string
+true  --> 1           // bool совместимый с int
+[]    --> TypeError   // массив не совместим с int или string
+
+// int|float|bool
+"45"    --> 45        // int числовая строка
+"45.0"  --> 45.0      // float числовая строка
+
+"45X"   --> true      // не числовая строка, переход к bool
+""      --> false     // не числовая строка, переход к bool
+"X"     --> true      // не числовая строка, переход к bool
+[]      --> TypeError // массив не совместимый с int, float или bool
+?>
+]]>
+    </programlisting>
+   </example>
+  </sect3>
+
  </sect2>
-
 
  <sect2 xml:id="language.types.typecasting">
   <title>Приведение типов</title>
