@@ -1,295 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2e8ef0a1bd98243cb2c6c5c627a195bb53a7a440  Maintainer: irker Status: ready -->
+<!-- EN-Revision: 491a7cc9cddf1e20cda76b16226d0bc020402476 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
-<chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
+<chapter xml:id="language.exceptions" xmlns:phd="http://www.php.net/ns/phd">
  <title>Исключения</title>
+ <para>
+  В PHP реализована модель исключений, аналогичная тем, что используются в других языках программирования.
+  Исключение в PHP может быть выброшено (&throw;) и поймано (&catch;).
+  Код может быть заключён в блок &try;, чтобы облегчить обработку потенциальных исключений.
+  У каждого блока &try; должен быть как минимум один соответствующий блок &catch; или &finally;.
+ </para>
+ <para>
+  Если выброшено исключение, а в текущей области видимости функции нет блока &catch;,
+  исключение будет "подниматься" по стеку вызовов к вызывающей функции, пока не найдёт подходящий блок &catch;.
+  Все блоки &finally;, которые встретятся на этом пути, будут выполнены.
+  Если стек вызовов разворачивается до глобальной области видимости, не встречая подходящего блока &catch;,
+  программа завершается с неисправимой ошибкой, если не был установлен глобальный обработчик исключений.
+ </para>
+ <para>
+  Выброшенный объект должен наследовать (&instanceof;) интерфейс <interfacename>Throwable</interfacename>.
+  Попытка выбросить объект, который таковым не является, приведёт к неисправимой ошибке PHP.
+ </para>
+ <para>
+  Начиная с PHP 8.0.0, ключевое слово &throw; является выражением и может быть использовано
+  в любом контексте выражения. В предыдущих версиях оно было утверждением
+  и должно было располагаться в отдельной строке.
+ </para>
 
- <sect1 xml:id="language.exceptions.extending">
-  <title>Наследование исключений</title>
-  <para>
-   Определённый пользователем класс исключения должен быть определён, как
-   класс расширяющий (наследующий) встроенный класс Exception. Ниже приведены методы и
-   свойства класса  Exception, доступные дочерним классам.
-  </para>
-  <example>
-   <title>Встроенный класс Exception</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-class Exception implements Throwable
-{
-    protected $message = 'Unknown exception';   // сообщение об исключении
-    private   $string;                          // свойство для __toString
-    protected $code = 0;                        // пользовательский код исключения
-    protected $file;                            // файл, в котором было выброшено исключение
-    protected $line;                            // строка, в которой было выброшено исключение
-    private   $trace;                           // трассировка вызовов методов и функций
-    private   $previous;                        // предыдущее исключение, если исключение вложенное
-
-    public function __construct($message = '', $code = 0, Throwable $previous = null);
-
-    final private function __clone();           // запрещает клонирования исключения
-
-    final public  function getMessage();        // сообщение исключения
-    final public  function getCode();           // код исключения
-    final public  function getFile();           // файл, где выброшено исключение
-    final public  function getLine();           // строка, на которой выброшено исключение
-    final public  function getTrace();          // массив backtrace()
-    final public  function getPrevious();       // предыдущее исключение
-    final public  function getTraceAsString();  // отформатированная строка трассировки
-
-    // Переопределяемый
-    public function __toString();               // отформатированная строка для отображения
-}
-?>
-]]>
-   </programlisting>
-  </example>
-  <para>
-   Если класс, наследуемый от Exception переопределяет <link
-   linkend="language.oop5.decon">конструктор</link>, необходимо вызвать в
-   конструкторе <link linkend="language.oop5.paamayim-nekudotayim"
-   >parent::__construct()</link>, чтобы быть уверенным, что все доступные данные
-   были правильно присвоены. Метод <link linkend="language.oop5.magic">__toString()</link>
-   может быть переопределён, чтобы обеспечить нужный вывод, когда объект
-   преобразуется в строку.
-  </para>
-  <note>
-   <para>
-    Исключения нельзя клонировать. Попытка <link
-    linkend="language.oop5.cloning">клонировать</link> исключение приведёт
-    к неисправимой ошибке <constant>E_ERROR</constant>.
-   </para>
-  </note>
-  <example>
-   <title>Наследование класса Exception</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-/**
- * Определим свой класс исключения
- */
-class MyException extends Exception
-{
-    // Переопределим исключение так, что параметр message станет обязательным
-    public function __construct($message, $code = 0, Throwable $previous = null) {
-        // некоторый код
-
-        // убедитесь, что все передаваемые параметры верны
-        parent::__construct($message, $code, $previous);
-    }
-
-    // Переопределим строковое представление объекта.
-    public function __toString() {
-        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
-    }
-
-    public function customFunction() {
-        echo "Мы можем определять новые методы в наследуемом классе\n";
-    }
-}
-
-
-/**
- * Создадим класс для тестирования исключения
- */
-class TestException
-{
-    public $var;
-
-    const THROW_NONE    = 0;
-    const THROW_CUSTOM  = 1;
-    const THROW_DEFAULT = 2;
-
-    function __construct($avalue = self::THROW_NONE) {
-
-        switch ($avalue) {
-            case self::THROW_CUSTOM:
-                // Выбрасываем собственное исключение
-                throw new MyException('1 - неправильный параметр', 5);
-                break;
-
-            case self::THROW_DEFAULT:
-                // Выбрасываем встроеное исключение
-                throw new Exception('2 - недопустимый параметр', 6);
-                break;
-
-            default:
-                // Никаких исключений, объект будет создан.
-                $this->var = $avalue;
-                break;
-        }
-    }
-}
-
-
-// Пример 1
-try {
-    $o = new TestException(TestException::THROW_CUSTOM);
-} catch (MyException $e) {      // Будет перехвачено
-    echo "Поймано собственное переопределённое исключение\n", $e;
-    $e->customFunction();
-} catch (Exception $e) {        // Будет пропущено
-    echo "Поймано встроенное исключение\n", $e;
-}
-
-// Отсюда будет продолжено выполнение программы
-var_dump($o); // Null
-echo "\n\n";
-
-
-// Пример 2
-try {
-    $o = new TestException(TestException::THROW_DEFAULT);
-} catch (MyException $e) {      // Тип исключения не совпадёт
-    echo "Поймано переопределённое исключение\n", $e;
-    $e->customFunction();
-} catch (Exception $e) {        // Будет перехвачено
-    echo "Перехвачено встроенное исключение\n", $e;
-}
-
-// Отсюда будет продолжено выполнение программы
-var_dump($o); // Null
-echo "\n\n";
-
-
-// Пример 3
-try {
-    $o = new TestException(TestException::THROW_CUSTOM);
-} catch (Exception $e) {        // Будет перехвачено
-    echo "Поймано встроенное исключение\n", $e;
-}
-
-// Продолжение исполнения программы
-var_dump($o); // Null
-echo "\n\n";
-
-
-// Пример 4
-try {
-    $o = new TestException();
-} catch (Exception $e) {        // Будет пропущено, т.к. исключение не выбрасывается
-    echo "Поймано встроенное исключение\n", $e;
-}
-
-// Продолжение выполнения программы
-var_dump($o); // TestException
-echo "\n\n";
-?>
-]]>
-   </programlisting>
-  </example>
- </sect1>
-
- <simplesect xml:id="language.exceptions.introduction">
-  <para>
-   Модель исключений (exceptions) в PHP похожа с используемыми в других языках программирования.
-   Исключение можно сгенерировать (выбросить) при помощи оператора
-   &throw;, и можно перехватить (поймать)
-   оператором &catch;. Код генерирующий исключение, должен
-   быть окружён блоком &try;, для того, чтобы можно было
-   перехватить исключение. Каждый блок &try;
-   должен иметь как минимум один соответствующий ему блок &catch; или &finally;.
-  </para>
-  <para>
-   В случае, если выброшено исключение, для которого нет блока &catch; в текущей функции,
-   это исключение будет "всплывать" по стеку вызова, пока не будет найден
-   подходящий блок &catch;. При этом, все встреченные блоки &finally; будут исполнены.
-   Если стек вызовов раскрутится до глобальной области видимости, не встретив подходящего
-   блока &catch;, программа завершит работу с фатальной ошибкой, если только у вас
-   не настроен глобальный обработчик исключений.
-  </para>
-  <para>
-   Генерируемый объект должен принадлежать классу <classname>Exception</classname>
-   или наследоваться от <classname>Exception</classname>. Попытка сгенерировать
-   исключение другого класса приведёт к фатальной ошибке PHP.
-  </para>
-  <para>
-   Начиная с PHP 8.0.0, ключевое слово &throw; является выражением и может использоваться
-   в контексте других выражений. В более ранних версиях оно являлось оператором и требовало
-   размещения в отдельной строке.
-  </para>
- </simplesect>
-
- <simplesect xml:id="language.exceptions.catch">
+ <sect1 phd:chunk="false" xml:id="language.exceptions.catch">
   <title><literal>catch</literal></title>
   <para>
-   Блок &catch; определяет то, как следует реагировать на выброшенное исключение.
-   В блоке &catch; указывается один или более типов исключений или ошибок(Error), которые он
-   будет обрабатывать. Также указывается и переменная, которой будет присвоено
-   пойманное исключение (начиная с PHP 8.0.0 задавать эту переменную не обязательно).
-   Выброшенное исключение или ошибка будут обработаны первым подходящим блоком &catch;.
+   Блок &catch; определяет, как реагировать на выброшенное исключение.
+   Блок &catch; определяет один или несколько типов исключений или ошибок, которые он может обработать,
+   и, по желанию, переменную, которой можно присвоить исключение
+   (указание переменной было обязательно до версии PHP 8.0.0).
+   Первый блок &catch;, с которым столкнётся выброшенное исключение или ошибка
+   и соответствует типу выброшенного объекта, обработает объект.
   </para>
   <para>
-   Можно использовать несколько блоков &catch;, перехватывающих различные классы
-   исключений. Нормальное выполнение (когда не генерируются исключения в блоках
-   &try;) будет продолжено за последним блоком &catch;. Исключения могут быть
-   сгенерированы (или вызваны ещё раз) оператором &throw; внутри блока &catch;.
-   Если нет, то исполнение будет продолжено после отработки блока &catch;.
+   Несколько блоков &catch; могут быть использованы для перехвата различных классов исключений.
+   Нормальное выполнение (когда исключение не выброшено в блоке &try;)
+   будет продолжаться после последнего блока &catch;, определённого в последовательности.
+   Исключения могут быть выброшены (&throw;) (или повторно выброшены) внутри блока &catch;.
+   В противном случае выполнение будет продолжено после блока &catch;, который был вызван.
   </para>
   <para>
-   При генерации исключения код, следующий после описываемого выражения,
-   не будет выполнен, а PHP попытается найти
-   первый блок &catch;, перехватывающий исключение данного
-   класса. Если исключение не будет перехвачено, PHP выдаст фатальную
-   ошибку: "<literal>Uncaught Exception ...</literal>" (Неперехваченное
-   исключение), если не был определён обработчик ошибок при помощи
-   функции <function>set_exception_handler</function>.
+   При возникновении исключения, код, следующий за утверждением, не будет выполнен,
+   а PHP попытается найти первый подходящий блок &catch;.
+   Если исключение не поймано, будет выдана неисправимая ошибка PHP
+   с сообщением "<literal>Uncaught Exception ...</literal>",
+   если только обработчик не был определён с помощью функции <function>set_exception_handler</function>.
   </para>
   <para>
-   Начиная с PHP 7.1.0, блок &catch; может принимать несколько типов исключений с помощью
-   символа (<literal>|</literal>). Это полезно, когда разные исключения из разных
-   иерархий классов обрабатываются одинаково.
+   Начиная с версии PHP 7.1.0, в блоке &catch; можно указывать несколько исключений,
+   используя символ <literal>|</literal>. Это полезно, когда разные исключения
+   из разных иерархий классов обрабатываются одинаково.
   </para>
   <para>
-   Начиная с PHP 8.0.0, задание переменной для пойманного исключения опционально.
-   Если она не задана, блок &catch; будет исполняться, но не будет иметь доступа
-   к объекту исключения.
+   Начиная с версии PHP 8.0.0, имя переменной для пойманного исключения является необязательным.
+   Если оно не указано, блок &catch; будет выполнен,
+   но не будет иметь доступа к выброшенному объекту.
   </para>
- </simplesect>
+ </sect1>
 
- <simplesect xml:id="language.exceptions.finally">
+ <sect1 phd:chunk="false" xml:id="language.exceptions.finally">
   <title><literal>finally</literal></title>
   <para>
-   Блок &finally; также можно использовать
-   после или вместо блока &catch;. Код в блоке
-   &finally; всегда будет выполняться после кода в блоках
-   &try; и &catch;, независимо от того, было ли
-   выброшено исключение, перед тем как продолжится нормальное выполнение кода.
+   Блок &finally; также может быть указан после или вместо блоков &catch;.
+   Код в блоке &finally; всегда будет выполняться после блоков &try; и &catch;,
+   независимо от того, было ли выброшено исключение
+   и до возобновления нормального выполнения.
   </para>
   <para>
-   Одно важное взаимодействие происходит между блоком &finally; и оператором &return;.
-   Если оператор &return; встречается внутри блоков &try; или &catch;, блок &finally; всё равно будет выполнен. Кроме того, оператор &return; выполняется, когда встречается, но результат будет возвращён после выполнения блока &finally;.
-   Если блок &finally; также содержит оператор &return;, возвращается значение, указанное в блоке &finally;.
+   Одно из заметных взаимодействий происходит между блоком &finally; и оператором &return;.
+   Если оператор &return; встречается внутри блоков &try; или &catch;, блок &finally;
+   всё равно будет выполнен. Более того, оператор &return; выполнится, когда встретится,
+   но результат будет возвращён после выполнения блока &finally;.
+   Кроме того, если блок &finally; также содержит оператор &return;,
+   возвращается значение из блока &finally;.
   </para>
- </simplesect>
+ </sect1>
 
- <simplesect xml:id="language.exceptions.exception-handler">
-  <title><literal>Глобальный обработчик исключений</literal></title>
+ <sect1 phd:chunk="false" xml:id="language.exceptions.exception-handler">
+  <title>Глобальный обработчик исключений</title>
   <para>
-   Если исключение дошло по стеку вызовов до глобальной области видимости, оно может быть
-   обработано глобальным обработчиком исключений, если он задан.
-   С помощью функции <function>set_exception_handler</function> можно задать функцию,
-   которая будет выполнена вместо блока &catch;, если не нашлось подходящего. Эффект
-   аналогичен тому, как будто мы всю нашу программу обернули в блок &try;-&catch;, где
-   за реализацию блока &catch; отвечает установленная функция.
+   Если исключению разрешено распространяться на глобальную область видимости,
+   оно может быть перехвачено глобальным обработчиком исключений, если он установлен.
+   Функция <function>set_exception_handler</function> может задать функцию,
+   которая будет вызвана вместо блока &catch;, если не будет вызван никакой другой блок.
+   Эффект по сути такой же, как если бы вся программа была обёрнута в блок &try;-&catch;
+   с этой функцией в качестве &catch;.
   </para>
- </simplesect>
+ </sect1>
 
- <simplesect xml:id="language.exceptions.notes">
+ <sect1 phd:chunk="false" xml:id="language.exceptions.notes">
   &reftitle.notes;
 
   <note>
    <para>
-    Внутренние функции PHP в основном используют
-    <link linkend="ini.error-reporting">сообщения об ошибках</link>, и только
-    новые <link linkend="language.oop5">объектно-ориентированные</link>
-    модули используют исключения. Однако, ошибки можно легко преобразовать
-    в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
-    Однако это не сработает для фатальных ошибок.
+    Внутренние функции PHP в основном используют <link linkend="ini.error-reporting">отчёт об ошибках</link>,
+    только современные <link linkend="language.oop5">объектно-ориентированные</link> модули используют исключения.
+    Однако ошибки можно легко перевести в исключения с помощью класса <link linkend="class.errorexception">ErrorException</link>.
+    Однако эта техника работает только с исправляемыми ошибками.
    </para>
    <example>
-    <title>Преобразование сообщения об ошибках в исключение</title>
+    <title>Преобразование отчётов об ошибках в исключения</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -305,17 +119,17 @@ set_error_handler('exceptions_error_handler');
   </note>
   <tip>
    <para>
-    <link linkend="intro.spl">Стандартная библиотека PHP (SPL)</link> предоставляет
-    хороший набор <link linkend="spl.exceptions">встроенных классов исключений</link>.
+    Библиотека <link linkend="intro.spl">Стандартная библиотека PHP (SPL)</link>
+    предоставляет большое количество <link linkend="spl.exceptions">встроенных исключений</link>.
    </para>
   </tip>
- </simplesect>
+ </sect1>
 
- <simplesect xml:id="language.exceptions.examples">
+ <sect1 phd:chunk="false" xml:id="language.exceptions.examples">
   &reftitle.examples;
 
   <example>
-   <title>Выбрасывание исключений</title>
+   <title>Выбрасывание исключения</title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -531,7 +345,182 @@ try {
 ]]>
    </programlisting>
   </example>
- </simplesect>
+ </sect1>
+
+ <sect1 xml:id="language.exceptions.extending">
+  <title>Наследование исключений</title>
+  <para>
+   Определённый пользователем класс исключения должен быть определён, как
+   класс расширяющий (наследующий) встроенный класс Exception. Ниже приведены методы и
+   свойства класса Exception, доступные дочерним классам.
+  </para>
+  <example>
+   <title>Встроенный класс Exception</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class Exception implements Throwable
+{
+    protected $message = 'Unknown exception';   // сообщение об исключении
+    private   $string;                          // свойство для __toString
+    protected $code = 0;                        // пользовательский код исключения
+    protected $file;                            // файл, в котором было выброшено исключение
+    protected $line;                            // строка, в которой было выброшено исключение
+    private   $trace;                           // трассировка вызовов методов и функций
+    private   $previous;                        // предыдущее исключение, если исключение вложенное
+
+    public function __construct($message = '', $code = 0, Throwable $previous = null);
+
+    final private function __clone();           // запрещает клонирования исключения
+
+    final public  function getMessage();        // сообщение исключения
+    final public  function getCode();           // код исключения
+    final public  function getFile();           // файл, где выброшено исключение
+    final public  function getLine();           // строка, на которой выброшено исключение
+    final public  function getTrace();          // массив backtrace()
+    final public  function getPrevious();       // предыдущее исключение
+    final public  function getTraceAsString();  // отформатированная строка трассировки
+
+    // Переопределяемый
+    public function __toString();               // отформатированная строка для отображения
+}
+?>
+]]>
+   </programlisting>
+  </example>
+  <para>
+   Если класс, наследуемый от Exception переопределяет <link
+   linkend="language.oop5.decon">конструктор</link>, необходимо вызвать в
+   конструкторе <link linkend="language.oop5.paamayim-nekudotayim">parent::__construct()</link>, чтобы быть уверенным, что все доступные данные
+   были правильно присвоены. Метод <link linkend="language.oop5.magic">__toString()</link>
+   может быть переопределён, чтобы обеспечить нужный вывод, когда объект
+   преобразуется в строку.
+  </para>
+  <note>
+   <para>
+    Исключения нельзя клонировать.
+    Попытка <link linkend="language.oop5.cloning">клонировать</link>
+    исключение приведёт к неисправимой ошибке <constant>E_ERROR</constant>.
+   </para>
+  </note>
+  <example>
+   <title>Наследование класса Exception</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+/**
+ * Определим свой класс исключения
+ */
+class MyException extends Exception
+{
+    // Переопределим исключение так, что параметр message станет обязательным
+    public function __construct($message, $code = 0, Throwable $previous = null) {
+        // некоторый код
+
+        // убедитесь, что все передаваемые параметры верны
+        parent::__construct($message, $code, $previous);
+    }
+
+    // Переопределим строковое представление объекта.
+    public function __toString() {
+        return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
+    }
+
+    public function customFunction() {
+        echo "Мы можем определять новые методы в наследуемом классе\n";
+    }
+}
+
+
+/**
+ * Создадим класс для тестирования исключения
+ */
+class TestException
+{
+    public $var;
+
+    const THROW_NONE    = 0;
+    const THROW_CUSTOM  = 1;
+    const THROW_DEFAULT = 2;
+
+    function __construct($avalue = self::THROW_NONE) {
+
+        switch ($avalue) {
+            case self::THROW_CUSTOM:
+                // Выбрасываем собственное исключение
+                throw new MyException('1 - неправильный параметр', 5);
+                break;
+
+            case self::THROW_DEFAULT:
+                // Выбрасываем встроеное исключение
+                throw new Exception('2 - недопустимый параметр', 6);
+                break;
+
+            default:
+                // Никаких исключений, объект будет создан.
+                $this->var = $avalue;
+                break;
+        }
+    }
+}
+
+// Пример 1
+try {
+    $o = new TestException(TestException::THROW_CUSTOM);
+} catch (MyException $e) {      // Будет перехвачено
+    echo "Поймано собственное переопределённое исключение\n", $e;
+    $e->customFunction();
+} catch (Exception $e) {        // Будет пропущено
+    echo "Поймано встроенное исключение\n", $e;
+}
+
+// Отсюда будет продолжено выполнение программы
+var_dump($o); // Null
+echo "\n\n";
+
+
+// Пример 2
+try {
+    $o = new TestException(TestException::THROW_DEFAULT);
+} catch (MyException $e) {      // Тип исключения не совпадёт
+    echo "Поймано переопределённое исключение\n", $e;
+    $e->customFunction();
+} catch (Exception $e) {        // Будет перехвачено
+    echo "Перехвачено встроенное исключение\n", $e;
+}
+
+// Отсюда будет продолжено выполнение программы
+var_dump($o); // Null
+echo "\n\n";
+
+
+// Пример 3
+try {
+    $o = new TestException(TestException::THROW_CUSTOM);
+} catch (Exception $e) {        // Будет перехвачено
+    echo "Поймано встроенное исключение\n", $e;
+}
+
+// Продолжение исполнения программы
+var_dump($o); // Null
+echo "\n\n";
+
+
+// Пример 4
+try {
+    $o = new TestException();
+} catch (Exception $e) {        // Будет пропущено, т.к. исключение не выбрасывается
+    echo "Поймано встроенное исключение\n", $e;
+}
+
+// Продолжение выполнения программы
+var_dump($o); // TestException
+echo "\n\n";
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect1>
 
 </chapter>
 <!-- Keep this comment at the end of the file
