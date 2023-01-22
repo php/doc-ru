@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ec2fe9a592f794978114ef5021db9f1d00c2e05d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: fadab82e11cf93c08eb214cf9d67e9e5ac586a30 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionparameter.getattributes" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -17,30 +17,13 @@
   <para>
    Возвращает все атрибуты, объявленные в этом параметре, в виде массива <type>ReflectionAttribute</type>.
   </para>
-
-  &warn.undocumented.func;
-
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <variablelist>
-   <varlistentry>
-    <term><parameter>name</parameter></term>
-    <listitem>
-     <para>
-
-     </para>
-    </listitem>
-   </varlistentry>
-   <varlistentry>
-    <term><parameter>flags</parameter></term>
-    <listitem>
-     <para>
-
-     </para>
-    </listitem>
-   </varlistentry>
+   &reflection.getattributes.param.name;
+   &reflection.getattributes.param.flags;
   </variablelist>
  </refsect1>
 
@@ -48,6 +31,124 @@
   &reftitle.returnvalues;
   <para>
    Массив атрибутов в виде объекта <classname>ReflectionAttribute</classname>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Простой пример</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+#[Attribute]
+class Fruit {
+}
+
+#[Attribute]
+class Red {
+}
+
+function fruitBasket(
+   #[Fruit]
+   #[Red]
+   string $apple
+) { }
+
+$reflection = new ReflectionFunction('fruitBasket');
+$parameter = $reflection->getParameter('apple');
+$attributes = $parameter->getAttributes();
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Fruit
+    [1] => Red
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Фильтрация результатов по имени класса</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+#[Attribute]
+class Fruit {
+}
+
+#[Attribute]
+class Red {
+}
+
+function fruitBasket(
+   #[Fruit]
+   #[Red]
+   string $apple
+) { }
+
+$reflection = new ReflectionFunction('fruitBasket');
+$parameter = $reflection->getParameter('apple');
+$attributes = $parameter->getAttributes('Fruit');
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Fruit
+)
+]]>
+    </screen>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Фильтрация результатов по имени класса, с наследованием</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+interface Color {
+}
+
+#[Attribute]
+class Fruit {
+}
+
+function fruitBasket(
+   #[Fruit]
+   #[Red]
+   string $apple
+) { }
+
+$reflection = new ReflectionFunction('fruitBasket');
+$parameter = $reflection->getParameter('apple');
+$attributes = $parameter->getAttributes('Color', ReflectionAttribute::IS_INSTANCEOF);
+print_r(array_map(fn($attribute) => $attribute->getName(), $attributes));
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Array
+(
+    [0] => Red
+)
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
