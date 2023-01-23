@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e2031dc70157464c05c1c1e00b3201604a025f1 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 43756e54fb34ece9b83559ccdde98864b9c3fb5c Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="random-engine.generate" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -56,16 +56,49 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+/**
+ * Реализует линейный конгруэнтный генератор с модулем 65536,
+ * множителем 61 и инкрементом 17, возвращающий 8-битное целое число.
+ *
+ * Примечание: Движок предназначен только для демонстрационных целей.
+ *       Линейные конгруэнтные генераторы обычно генерируют случайность низкого
+ *       качества, а данная конкретная реализация имеет
+ *       очень короткий 16-битный период, который не подходит практически
+ *       ни для одного реального случая использования.
+ */
+final class LinearCongruentialGenerator implements \Random\Engine
+{
+    private int $state;
 
-/* ... */
+    public function __construct(?int $seed = null)
+    {
+        if ($seed === null) {
+            $seed = random_int(0, 0xffff);
+        }
 
+        $this->state = $seed & 0xffff;
+    }
+
+    public function generate(): string
+    {
+        $this->state = (61 * $this->state + 17) & 0xffff;
+
+        return pack('C', $this->state >> 8);
+    }
+}
+
+$r = new \Random\Randomizer(
+    new LinearCongruentialGenerator(seed: 1)
+);
+
+echo "Счастливое число: ", $r->getInt(0, 99), "\n";
 ?>
 ]]>
    </programlisting>
-   &example.outputs.similar;
+   &example.outputs;
    <screen>
 <![CDATA[
-...
+Счастливое число: 4
 ]]>
    </screen>
   </example>
