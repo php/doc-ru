@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e2031dc70157464c05c1c1e00b3201604a025f1 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: f5b15841e613d09971de3652a8d25da4438cb4a2 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="random-engine-xoshiro256starstar.jumplong" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -28,7 +28,7 @@
   <para>
    Метод может быть объединён с <function>Random\Engine\Xoshiro256StarStar::jump</function>
    для дальнейшего разделения каждой из 2<superscript>64</superscript> последовательностей,
-   сгенерированных данным методом, на 2<superscript>128</superscript> последовательности по 2<superscript>64</superscript> значения каждая.
+   сгенерированных данным методом, на 2<superscript>64</superscript> последовательности по 2<superscript>128</superscript> значения каждая.
   </para>
 
  </refsect1>
@@ -52,16 +52,41 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+$blueprintRng = new \Random\Engine\Xoshiro256StarStar(0);
 
-/* ... */
+// У каждого родительского движка свой собственный блок из 2**192 значений.
+$parent1 = clone $blueprintRng;
+$blueprintRng->jumpLong();
 
+$parent2 = clone $blueprintRng;
+$blueprintRng->jumpLong();
+
+// У каждого из дочерних движков свой собственный блок из 2**128 значений,
+взятый из блока 2**192 значений их родительского движка.
+$child1a = clone $parent1;
+$parent1->jump();
+$child1b = clone $parent1;
+$parent1->jump();
+
+$child2a = clone $parent2;
+$parent2->jump();
+$child2b = clone $parent2;
+$parent2->jump();
+
+echo "Дочерний 1A: ", bin2hex( $child1a->generate() ), "\n";
+echo "Дочерний 1B: ", bin2hex( $child1b->generate() ), "\n";
+echo "Дочерний 2A: ", bin2hex( $child2a->generate() ), "\n";
+echo "Дочерний 2B: ", bin2hex( $child2b->generate() ), "\n";
 ?>
 ]]>
    </programlisting>
    &example.outputs.similar;
    <screen>
 <![CDATA[
-...
+Дочерний 1A: b4f275cb365fec99
+Дочерний 1B: 2cd646c8ed156237
+Дочерний 2A: eb3729a722a504e7
+Дочерний 2B: d4208dc85bdd6dc3
 ]]>
    </screen>
   </example>

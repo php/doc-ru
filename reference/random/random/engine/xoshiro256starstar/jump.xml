@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e2031dc70157464c05c1c1e00b3201604a025f1 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: f5b15841e613d09971de3652a8d25da4438cb4a2 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="random-engine-xoshiro256starstar.jump" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -47,16 +47,65 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+use Random\Engine\Xoshiro256StarStar;
+use Random\Randomizer;
 
-/* ... */
+$blueprintRng = new Xoshiro256StarStar(0);
 
+$fibers = [];
+for ($i = 0; $i < 8; $i++) {
+    $fiberRng = clone $blueprintRng;
+    $blueprintRng->jump();
+
+    $fiber = new Fiber(static function () use ($fiberRng, $i): void {
+        $randomizer = new Randomizer($fiberRng);
+
+        while (true) {
+            Fiber::suspend();
+            echo "{$i}: " . $randomizer->getInt(0, 100), PHP_EOL;
+        }
+    });
+    $fiber->start();
+
+    $fibers[] = $fiber;
+}
+
+
+// Даже если файберы выполняются в случайном порядке, они будут выводить одно и то же значение каждый раз,
+// потому что у каждого из них свой собственный уникальный экземпляр RNG.
+$randomizer = new Randomizer();
+
+$fibers = $randomizer->shuffleArray($fibers);
+foreach ($fibers as $fiber) {
+    $fiber->resume();
+}
+
+$fibers = $randomizer->shuffleArray($fibers);
+foreach ($fibers as $fiber) {
+    $fiber->resume();
+}
 ?>
 ]]>
    </programlisting>
    &example.outputs.similar;
    <screen>
 <![CDATA[
-...
+4: 89
+3: 10
+2: 63
+1: 75
+6: 41
+5: 56
+0: 16
+7: 60
+7: 34
+6: 58
+1: 74
+4: 63
+3: 3
+5: 42
+2: 45
+0: 86
 ]]>
    </screen>
   </example>
