@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 035c126c0393fe154bac46e2c3c489ebadce48a5 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 51c34024efa35d5691825b3e61037ffe61c46d20 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli-stmt.data-seek" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_stmt::data_seek</refname>
   <refname>mysqli_stmt_data_seek</refname>
-  <refpurpose>
-   Переход к заданной строке в результирующем наборе
-  </refpurpose>
+  <refpurpose>Корректирует указатель результата на произвольную строку в буферизованном результате</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -24,10 +22,12 @@
    <methodparam><type>int</type><parameter>offset</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Перемещает указатель на заданную строку в результирующем наборе.
+   Функция перемещает указатель буферизованного набора результатов в произвольную строку,
+   заданную параметром <parameter>offset</parameter>.
   </para>
   <para>
-   <function>mysqli_stmt_store_result</function> must be called prior to
+   Функция работает только с буферизованным внутренним набором результатов.
+   Функция <function>mysqli_stmt_store_result</function> должна быть вызвана до
    <function>mysqli_stmt_data_seek</function>.
   </para>
  </refsect1>
@@ -64,41 +64,24 @@
    <programlisting role="php">
 <![CDATA[
 <?php
-/* открываем соединение */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверяем соединение */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name";
-if ($stmt = $mysqli->prepare($query)) {
+$stmt = $mysqli->prepare($query);
+$stmt->execute();
 
-    /* выполняем запрос */
-    $stmt->execute();
+$stmt->bind_result($name, $code);
 
-    /* привязываем переменные к результату запроса */
-    $stmt->bind_result($name, $code);
+$stmt->store_result();
 
-    /* помещаем результаты запроса в переменные */
-    $stmt->store_result();
+/* переходим к строке 400 результирующей таблицы */
+$stmt->data_seek(399);
 
-    /* переходим к строке 400 результирующей таблицы */
-    $stmt->data_seek(399);
+$stmt->fetch();
 
-    /* извлекаем данные */
-    $stmt->fetch();
-
-    printf ("Город: %s  Код страны: %s\n", $name, $code);
-
-    /* закрываем запрос */
-    $stmt->close();
-}
-
-/* закрываем соединение */
-$mysqli->close();
+printf("Город: %s  Код страны: %s\n", $name, $code);
 ?>
 ]]>
    </programlisting>
@@ -108,41 +91,25 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
-/* открываем соединение */
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверяем соединение */
-if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
-    exit();
-}
-
 $query = "SELECT Name, CountryCode FROM City ORDER BY Name";
-if ($stmt = mysqli_prepare($link, $query)) {
+$stmt = mysqli_prepare($link, $query);
 
-    /* выполняем запрос */
-    mysqli_stmt_execute($stmt);
+mysqli_stmt_execute($stmt);
 
-    /* привязываем переменные к результату запроса */
-    mysqli_stmt_bind_result($stmt, $name, $code);
+mysqli_stmt_bind_result($stmt, $name, $code);
 
-    /* помещаем результаты запроса в переменные */
-    mysqli_stmt_store_result($stmt);
+mysqli_stmt_store_result($stmt);
 
-    /* переходим к строке 400 результирующей таблицы */
-    mysqli_stmt_data_seek($stmt, 399);
+/* переходим к строке 400 результирующей таблицы */
+mysqli_stmt_data_seek($stmt, 399);
 
-    /* извлекаем данные */
-    mysqli_stmt_fetch($stmt);
+mysqli_stmt_fetch($stmt);
 
-    printf ("Город: %s  Код страны: %s\n", $name, $code);
-
-    /* закрываем запрос */
-    mysqli_stmt_close($stmt);
-}
-
-/* закрываем соединение */
-mysqli_close($link);
+printf("Город: %s  Код страны: %s\n", $name, $code);
 ?>
 ]]>
    </programlisting>
@@ -160,6 +127,9 @@ mysqli_close($link);
   <para>
    <simplelist>
     <member><function>mysqli_prepare</function></member>
+    <member><function>mysqli_stmt_store_result</function></member>
+    <member><function>mysqli_stmt_num_rows</function></member>
+    <member><function>mysqli_data_seek</function></member>
    </simplelist>
   </para>
  </refsect1>
