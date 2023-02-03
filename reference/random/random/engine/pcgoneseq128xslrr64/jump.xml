@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e2031dc70157464c05c1c1e00b3201604a025f1 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: ba1733f09993b1fdf1656908d9d9878d6fb0b707 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="random-engine-pcgoneseq128xslrr64.jump" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -60,16 +60,56 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+$a = new \Random\Engine\PcgOneseq128XslRr64(0);
+$b = clone $a;
 
-/* ... */
+for ($i = 0; $i < 1_000; $i++) {
+    $a->generate();
+}
+$b->jump(1_000);
 
+echo "A: ", bin2hex( $a->generate() ), "\n";
+echo "B: ", bin2hex( $b->generate() ), "\n";
 ?>
 ]]>
    </programlisting>
-   &example.outputs.similar;
+   &example.outputs;
    <screen>
 <![CDATA[
-...
+A: e6d0d5813913a424
+B: e6d0d5813913a424
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Методы Randomizer могут вызывать движок более одного раза</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$a = new \Random\Randomizer(new \Random\Engine\PcgOneseq128XslRr64(42659));
+$b = new \Random\Randomizer(clone $a->engine);
+
+$a->getInt(1, 1572864); // Выполняет два вызова generate().
+$a->getInt(1, 1572864);
+
+$b->engine->jump(2);
+
+// Потому что первый вызов ->getInt() вызвал ->generate() дважды
+// движки не совпадают после выполнения ->jump(2).
+echo "A: ", bin2hex( $a->engine->generate() ), "\n";
+echo "B: ", bin2hex( $b->engine->generate() ), "\n";
+
+// Теперь движок B соответствует движку A.
+echo "B: ", bin2hex( $b->engine->generate() ), "\n";
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+A: 1e9f3107d56653d0
+B: a156c0086dd79d44
+B: 1e9f3107d56653d0
 ]]>
    </screen>
   </example>
