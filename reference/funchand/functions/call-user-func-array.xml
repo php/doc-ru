@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 21a6e32de516563e314a7f1177312bec4737b291 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 5832a97c699c5e1bc808ee900447fe751af0d540 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.call-user-func-array" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -36,7 +36,23 @@
      <term><parameter>args</parameter></term>
      <listitem>
       <para>
-       Передаваемые в функцию параметры в виде индексированного массива.
+       Передаваемые в функцию параметры в виде массива.
+      </para>
+      <para>
+       Если все ключи <parameter>args</parameter> являются числовыми,
+       ключи игнорируются и каждый элемент будет передан
+       в параметр <parameter>callback</parameter> как позиционный аргумент,
+       по порядку.
+      </para>
+      <para>
+       Если какие-либо ключи <parameter>args</parameter> являются строками,
+       эти элементы будут переданы в параметр <parameter>callback</parameter>
+       как именованные аргументы, с именем, заданным ключом.
+      </para>
+      <para>
+       Произойдёт неисправимая ошибка, если числовой ключ в <parameter>args</parameter>
+       появляется после строкового ключа
+       или если строковый ключ не совпадает с именем любого параметра <parameter>callback</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -183,6 +199,37 @@ echo "global \$bar=$bar\n";
 <![CDATA[
 function mega $a=55
 global $bar=55
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Пример использования <function>call_user_func_array</function> с именованными аргументами</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function foobar($first, $second) {
+    echo __FUNCTION__, " получает $first и $second\n";
+}
+
+// Вызов функции foobar() с именованными аргументами в непозиционном порядке
+call_user_func_array("foobar", array("second" => "two", "first" => "one"));
+
+// Вызов функции foobar() с одним именованным аргументом
+call_user_func_array("foobar", array("foo", "second" => "bar"));
+
+// Неисправимая ошибка: Невозможно использовать позиционный аргумент после именованного аргумента
+call_user_func_array("foobar", array("first" => "one", "bar"));
+
+?>
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+foobar получает one и two
+foobar получает foo и bar
+
+Fatal error: Uncaught Error: Cannot use positional argument after named argument
 ]]>
     </screen>
    </example>
