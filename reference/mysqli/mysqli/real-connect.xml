@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 63b99082ef83eade08151f8cb528246fded81db9 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 2d77c9fe145f74663128006eb71662b0c44e8987 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli.real-connect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -13,25 +13,25 @@
   <para>&style.oop;</para>
   <methodsynopsis role="mysqli">
    <modifier>public</modifier> <type>bool</type><methodname>mysqli::real_connect</methodname>
-   <methodparam choice="opt"><type>string</type><parameter>host</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>username</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>passwd</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>dbname</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>port</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>socket</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>flags</parameter></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>hostname</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>username</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>password</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>database</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>port</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>socket</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>&style.procedural;</para>
   <methodsynopsis>
    <type>bool</type><methodname>mysqli_real_connect</methodname>
-   <methodparam><type>mysqli</type><parameter>link</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>host</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>username</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>passwd</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>dbname</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>port</parameter></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>socket</parameter></methodparam>
-   <methodparam choice="opt"><type>int</type><parameter>flags</parameter></methodparam>
+   <methodparam><type>mysqli</type><parameter>mysql</parameter></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>hostname</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>username</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>password</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>database</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>port</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>socket</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
    Устанавливает соединение с СУБД MySQL.
@@ -66,13 +66,13 @@
    <variablelist>
     &mysqli.link.description;
     <varlistentry>
-     <term><parameter>host</parameter></term>
+     <term><parameter>hostname</parameter></term>
      <listitem>
       <para>
-       Может быть именем хоста или IP-адресом. Передача &null; или строки
-       "localhost" этому параметру означает, что в качестве хоста будет
-       использоваться локальная машина, на которой запущен скрипт. Если
-       есть такая возможность, будут использоваться пайпы вместо протокола TCP/IP.
+       Может быть либо именем хоста, либо IP-адресом.
+       При передаче &null;, значение извлекается из <link linkend="ini.mysqli.default-host">mysqli.default_host</link>.
+       По возможности вместо протокола TCP/IP будут использоваться каналы.
+       Протокол TCP/IP используется, если указаны и имя хоста и номер порта, например, <literal>localhost:3308</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -80,28 +80,26 @@
      <term><parameter>username</parameter></term>
      <listitem>
       <para>
-       Имя пользователя MySQL.
+       Имя пользователя MySQL или &null; для принятия имени пользователя
+       на основе ini-опции <link linkend="ini.mysqli.default-user">mysqli.default_user</link>.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>passwd</parameter></term>
+     <term><parameter>password</parameter></term>
      <listitem>
       <para>
-       Если не задан или равен &null;, MySQL-сервер в первую очередь
-       попытается аутентифицировать пользователя в принципе имеющего пароль,
-       а затем будет искать среди пользователей, у которых нет пароля. Такой подход
-       позволяет одному пользователю назначать различные права (в зависимости от
-       того, задан пароль или нет).
+       Пароль MySQL или &null; для принятия пароля
+       на основе ini-опции <link linkend="ini.mysqli.default-pw">mysqli.default_pw</link>.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>dbname</parameter></term>
+     <term><parameter>database</parameter></term>
      <listitem>
       <para>
-       Если параметр задан, его значение будет использоваться в качестве имени
-       базы данных по умолчанию при выполнении запросов.
+       База данных по умолчанию, которая будет использоваться при выполнении запросов
+       или &null;.
       </para>
      </listitem>
     </varlistentry>
@@ -109,7 +107,8 @@
      <term><parameter>port</parameter></term>
      <listitem>
       <para>
-       Порт, к которому будет производиться подключение.
+       Номер порта для попытки подключения к серверу MySQL
+       или &null; для принятия порта на основе ini-опции <link linkend="ini.mysqli.default-port">mysqli.default_port</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -124,7 +123,7 @@
         Передача параметра <parameter>socket</parameter> не будет явно
         задавать тип соединения при подключении к серверу MySQL. То, как будет
         устанавливаться соединение с MySQL-сервером, определяется параметром
-        <parameter>host</parameter>.
+        <parameter>hostname</parameter>.
        </para>
       </note>
      </listitem>
@@ -208,6 +207,30 @@
  <refsect1 role="errors">
   &reftitle.errors;
   &mysqli.conditionalexception;
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>7.4.0</entry>
+       <entry>
+        Все параметры теперь допускают значение &null;
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
  </refsect1>
 
  <refsect1 role="examples">
