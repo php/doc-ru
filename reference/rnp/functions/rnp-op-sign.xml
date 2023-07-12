@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: 79bc1248b2295d9c9f0837d1ddcaea9d7c2853a7 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="function.rnp-op-encrypt" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<refentry xml:id="function.rnp-op-sign" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
-  <refname>rnp_op_encrypt</refname>
-  <refpurpose>Шифрует сообщение</refpurpose>
+  <refname>rnp_op_sign</refname>
+  <refpurpose>Выполняет операцию подписания бинарных данных, возвращает присоединённую подпись (подписи)</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type class="union"><type>string</type><type>false</type></type><methodname>rnp_op_encrypt</methodname>
+   <type class="union"><type>string</type><type>false</type></type><methodname>rnp_op_sign</methodname>
    <methodparam><type>RnpFFI</type><parameter>ffi</parameter></methodparam>
-   <methodparam><type>string</type><parameter>message</parameter></methodparam>
-   <methodparam><type>array</type><parameter>recipient_keys_fp</parameter></methodparam>
+   <methodparam><type>string</type><parameter>data</parameter></methodparam>
+   <methodparam><type>array</type><parameter>keys_fp</parameter></methodparam>
    <methodparam choice="opt"><type>array</type><parameter>options</parameter></methodparam>
   </methodsynopsis>
   <para>
@@ -34,18 +34,19 @@
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>message</parameter></term>
+    <term><parameter>data</parameter></term>
     <listitem>
      <para>
-      Сообщение, которое необходимо зашифровать.
+      Данные для подписи.
      </para>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>recipient_keys_fp</parameter></term>
+    <term><parameter>keys_fp</parameter></term>
     <listitem>
      <para>
-      Массив с отпечатками ключей получателя. Должен присутствовать хотя бы один ключ.
+      Массив с цифровыми отпечатками ключей. Должен быть указан хотя бы один ключ.
+      Ключи должны присутствовать в параметре <parameter>ffi</parameter>.
      </para>
     </listitem>
    </varlistentry>
@@ -68,8 +69,9 @@
         <row>
          <entry><literal>"compression_alg"</literal></entry>
          <entry>string</entry>
-         <entry>Алгоритм сжатия. Для включения сжатия данных
-          должны быть заданы как <literal>"compression_alg"</literal>, так и <literal>"compression_level"</literal>.
+         <entry>
+          Алгоритм сжатия. Для включения сжатия данных должны быть заданы
+          как <literal>"compression_alg"</literal>, так и <literal>"compression_level"</literal>.
          </entry>
         </row>
         <row>
@@ -83,14 +85,9 @@
          <entry>Включает ASCII-защищённый вывод. По умолчанию отключён.</entry>
         </row>
         <row>
-         <entry><literal>"add_signature"</literal></entry>
-         <entry>boolean</entry>
-         <entry>Зашифрованное сообщение будет также подписано.</entry>
-        </row>
-        <row>
          <entry><literal>"hash"</literal></entry>
          <entry>string</entry>
-         <entry>Устанавливает хеш-алгоритм, используемый при вычислении подписи. Опции "add_signature" должно быть установлено значение &true;.</entry>
+         <entry>Устанавливает хеш-алгоритм, используемый при вычислении подписи.</entry>
         </row>
         <row>
          <entry><literal>"creation_time"</literal></entry>
@@ -101,41 +98,6 @@
          <entry><literal>"expiration_time"</literal></entry>
          <entry>integer</entry>
          <entry>Устанавливает время истечения срока действия подписи в секундах с момента создания. Значение 0 используется для пометки подписи как не истекающей (значение по умолчанию).</entry>
-        </row>
-        <row>
-         <entry><literal>"password"</literal></entry>
-         <entry>string</entry>
-         <entry>Добавляет пароль, который используется для шифрования данных.</entry>
-        </row>
-        <row>
-         <entry><literal>"cipher"</literal></entry>
-         <entry>string</entry>
-         <entry>
-          Устанавливает алгоритм симметричного шифрования. Возможные значения: "IDEA", "TRIPLEDES",
-          "CAST5", "BLOWFISH", "AES128", "AES192", "AES256", "TWOFISH", "CAMELLIA128",
-          "CAMELLIA192", "CAMELLIA256", "SM4".
-         </entry>
-        </row>
-        <row>
-         <entry><literal>"aead"</literal></entry>
-         <entry>string</entry>
-         <entry>
-          Устанавливает алгоритм режима AEAD. Возможные значения: "None" для отключения AEAD, "EAX", "OCB".
-         </entry>
-        </row>
-        <row>
-         <entry><literal>"aead_bits"</literal></entry>
-         <entry>integer</entry>
-         <entry>Устанавливает длину ячейки для режима AEAD через количество битов размера ячейки. Должно быть от 0 до 56.</entry>
-        </row>
-        <row>
-         <entry><literal>"flags"</literal></entry>
-         <entry>integer</entry>
-         <entry>
-          Устанавливает дополнительные флаги шифрования. Поддерживаемые флаги:
-          RNP_ENCRYPT_NOWRAP - не заворачивать данные в литеральный пакет данных.
-          Это позволит шифровать уже подписанные данные.
-         </entry>
         </row>
         <row>
          <entry><literal>"file_name"</literal></entry>
@@ -163,7 +125,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Зашифрованные данные в случае успешного выполнения&return.falseforfailure;.
+   Возвращает данные с присоединённой подписью (подписями) в случае успешного выполнения&return.falseforfailure;.
   </para>
  </refsect1>
 
