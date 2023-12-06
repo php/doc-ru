@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a0a0165e07a83d74a66c316d52b04c1f4bf52aeb Maintainer: aur Status: ready -->
+<!-- EN-Revision: 68308f0095c6ebf0d19afa72f2bac0a9f194e77d Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.eval" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>eval</refname>
-  <refpurpose>Выполняет код PHP, содержащейся в строке</refpurpose>
+  <refpurpose>Расценивает строку как PHP-код и выполняет его</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,17 +14,25 @@
    <methodparam><type>string</type><parameter>code</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет строку, переданную в параметре <parameter>code</parameter>,
-   как код PHP.
+   Выполняет переданную в параметре <parameter>code</parameter> строку как код PHP.
+  </para>
+  <para>
+   Выполняемый код наследует ту же
+   <link linkend="language.variables.scope">область видимости переменной</link>,
+   что и строка, на которой языковая конструкция <function>eval</function> была вызвана.
+   Любые доступные на этой строке переменные будут доступны для чтения
+   и изменения в выполняемом коде.
+   Однако все объявленные в этом коде функции и классы получат глобальную область видимости.
+   Говоря по-другому, компилятор расценит выполняемый код так, как если бы это был
+   <link linkend="function.include">подключёный</link> файл.
   </para>
   <caution>
    <para>
     Языковая конструкция <function>eval</function> может быть <emphasis>очень
-    опасной</emphasis>, поскольку позволяет выполнить произвольный код.
-    <emphasis>Использование данной функции не рекомендуется.</emphasis> Если вы
-    полностью убеждены, что нет другого способа, кроме использования этой конструкции,
-    обратите особое внимание на то, <emphasis>чтобы не передавать какие-либо данные, предоставленные
-    пользователем</emphasis>, без предварительной проверки.
+    опасной</emphasis>, поскольку может выполнять произвольный код.
+    <emphasis>Поэтому от работы с ней воздерживаются</emphasis>. Если тщательный поиск других решений показал,
+    что альтернативы нет, внимательно проверяют, чтобы в нее
+    <emphasis>не передавались пользовательские данные</emphasis> без их правильной предварительной проверки.
    </para>
   </caution>
  </refsect1>
@@ -42,26 +50,26 @@
       <para>
        Код не должен быть обёрнут открывающимся и закрывающимся
        <link linkend="language.basic-syntax.phpmode">тегами PHP</link>, то есть
-       строка должна быть, например, такой <literal>'echo "Привет!";'</literal>,
+       строка должна быть, например, такой: <literal>'echo "Привет!";'</literal>,
        но не такой <literal>'&lt;?php echo "Привет!"; &gt;'</literal>.
-       Возможно переключаться между режимами PHP- и HTML-кода, например
+       Можно переключаться между режимами PHP- и HTML-кода, например:
        <literal>'echo "Код PHP!"; ?&gt;Код HTML&lt;?php echo "Снова код PHP!";'</literal>.
       </para>
       <para>
-       Передаваемый код должен быть верным исполняемым кодом PHP. Это значит, что
+       Передаваемый код должен быть верным выполняемым кодом PHP. Это значит, что
        операторы должны быть разделены точкой с запятой (;).
-       При исполнении строки <literal>'echo "Привет!"'</literal> будет сгенерирована ошибка,
+       При выполнении строки <literal>'echo "Привет!"'</literal> будет сгенерирована ошибка,
        а строка <literal>'echo "Привет!";'</literal> будет успешно выполнена.
       </para>
       <para>
-       Указание в коде ключевого слова <literal>return</literal> прекращает
-       исполнение кода в строке.
+       Указание в строке кода ключевого слова <literal>return</literal> прекращает
+       выполнение.
       </para>
       <para>
-       Исполняемый код из строки будет выполняться в области видимости кода, вызвавшего
-       <function>eval</function>. Таким образом, любые переменные, определённые или
-       изменённые в вызове <function>eval</function>, будут доступны после его
-       выполнения в теле программы.
+       Код из строки будет выполнен в той области видимости, в которой вызвана конструкция <function>eval</function>.
+       Поэтому переменные, которые определены или
+       изменены в ней, сохранят видимость
+       после завершения вызова конструкции <function>eval</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -72,13 +80,13 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция <function>eval</function> возвращает &null;, если не вызывается
-   <literal>return</literal>, в случае чего возвращается значение, переданное
-   <literal>return</literal>. С PHP 7, если в исполняемом коде присутствует ошибка, то
-   <function>eval</function> вызывает исключение "ParseError". До PHP 7 в этом случае
-   возвращается &false; и продолжается нормальное
-   выполнение последующего кода. Невозможно поймать ошибку парсера в <function>eval</function>,
-   используя <function>set_error_handler</function>.
+   Языковая конструкция <function>eval</function> возвращает значение &null;, или значение,
+   которое вернул вызванный в выполняемом коде оператор <literal>return</literal>.
+   Начиная с PHP 7, если в выполняемом коде присутствует ошибка,
+   то конструкция <function>eval</function> вызывает исключение "ParseError". До PHP 7 в таких случаях
+   возвращалось булево значение &false; и продолжалось нормальное
+   выполнение последующего кода. Невозможно поймать ошибку парсера в конструкции <function>eval</function>
+   функцией <function>set_error_handler</function>.
   </para>
  </refsect1>
 
@@ -86,7 +94,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример функции <function>eval</function> - простое слияние текста</title>
+    <title>Пример функции <function>eval</function> — простое слияние текста</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -118,7 +126,7 @@ echo $str. "\n";
   &tip.ob-capture;
   <note>
    <para>
-    В случае фатальной ошибки в исполняемом коде прекращается исполнение всего скрипта.
+    В случае фатальной ошибки в выполняемом коде прекращается выполнение всего скрипта.
    </para>
   </note>
  </refsect1>
