@@ -3,17 +3,9 @@
 <sect1 xml:id="language.operators.increment">
  <title>Операторы инкремента и декремента</title>
  <para>
-  PHP поддерживает префиксные и постфиксные операторы инкремента и декремента
-  в стиле C.
+  PHP поддерживает префиксные и постфиксные операторы инкремента и декремента.
+  Эти унарные операторы разрешают увеличивать или уменьшать значение на единицу.
  </para>
- <note>
-  <simpara>
-  Операторы инкремента/декремента влияют только на числа и строки.
-  Массивы, объекты, булевы значения и ресурсы не будут изменены.
-  Декремент &null; также не даст никакого эффекта, однако инкремент
-  даст значение <literal>1</literal>.
-  </simpara>
- </note>
  <table>
   <title>Операторы инкремента и декремента</title>
   <tgroup cols="3">
@@ -48,67 +40,126 @@
    </tbody>
   </tgroup>
  </table>
+
  <para>
   Приведём пример простого скрипта:
-  <informalexample><programlisting role="php"><![CDATA[
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
 <?php
-echo "<h3>Постфиксный инкремент</h3>";
+echo 'Постфиксный инкремент:', PHP_EOL;
 $a = 5;
-echo "Должно быть 5: " . $a++ . "<br />\n";
-echo "Должно быть 6: " . $a . "<br />\n";
-echo "<h3>Префиксный инкремент</h3>";
+var_dump($a++);
+var_dump($a);
+
+echo 'Префиксный инкремент:', PHP_EOL;
 $a = 5;
-echo "Должно быть 6: " . ++$a . "<br />\n";
-echo "Должно быть 6: " . $a . "<br />\n";
-echo "<h3>Постфиксный декремент</h3>";
+var_dump(++$a);
+var_dump($a);
+
+echo 'Постфиксный декремент:', PHP_EOL;
 $a = 5;
-echo "Должно быть 5: " . $a-- . "<br />\n";
-echo "Должно быть 4: " . $a . "<br />\n";
-echo "<h3>Префиксный декремент</h3>";
+var_dump($a--);
+var_dump($a);
+
+echo 'Префиксный декремент:', PHP_EOL;
 $a = 5;
-echo "Должно быть 4: " . --$a . "<br />\n";
-echo "Должно быть 4: " . $a . "<br />\n";
+var_dump(--$a);
+var_dump($a);
 ?>
-]]></programlisting>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Постфиксный инкремент:
+int(5)
+int(6)
+Префиксный инкремент:
+int(6)
+int(6)
+Постфиксный декремент:
+int(5)
+int(4)
+Префиксный декремент:
+int(4)
+int(4)
+]]>
+   </screen>
   </informalexample>
+
+  <warning>
+   <para>
+    Операторы инкремента и декремента влияет на логические значения (<type>bool</type>).
+    Начиная с PHP 8.3.0 вызывается ошибка уровня <constant>E_WARNING</constant> is emitted,
+    потому что это в будущем будет неявно приведено к значению целого числа (<type>int</type>).
+   </para>
+   <para>
+    Оператор декремента не влияет на значения <type>null</type>.
+    Начиная с PHP 8.3.0 вызывается ошибка уровня <constant>E_WARNING</constant>,
+    потому что это в будущем будет неявно приведено к значению целого числа (<type>int</type>).
+   </para>
+   <para>
+    Оператор декремента не влияет на не-
+    <link linkend="language.types.numeric-strings">числовые строки</link>.
+    Начиная с PHP 8.3.0 вызывается ошибка уровня <constant>E_WARNING</constant>,
+    потому в будущем будет выбрасываться исключение <classname>TypeError</classname>.
+   </para>
+  </warning>
+  <note>
+   <para>
+    Внутренние объекты, которые поддерживают перегрузку сложения и/или вычитания,
+    могут также быть инкрементированы и/или декрементированы.
+    Один такой внутренний объект — это <classname>GMP</classname>.
+   </para>
+  </note>
  </para>
- <para>
-  PHP следует соглашениям Perl (в отличие от С) касательно выполнения
-  арифметических операций с символьными переменными. Например, в PHP и Perl
-  <literal>$a = 'Z'; $a++;</literal> присвоит <literal>$a</literal>
-  значение <literal>'AA'</literal>, в то время как в C
-  <literal>a = 'Z'; a++;</literal> присвоит <literal>a</literal>
-  значение <literal>'['</literal> (ASCII-значение
-  <literal>'Z'</literal> равно 90, а ASCII-значение
-  <literal>'['</literal> равно 91). Следует учесть, что к
-  символьным переменным можно применять операцию инкремента,
-  в то время как операцию декремента применять нельзя, кроме того,
-  поддерживаются только ASCII-символы (a-z, A-Z и 0-9).
-  Попытка инкремента/декремента других символьных переменных не
-  будет иметь никакого эффекта, исходная строка останется
-  неизменной.
-  <example><title>Арифметические операции с символьными переменными</title>
-   <programlisting role="php"><![CDATA[
+
+ <sect2 xml:id="language.operators.increment.string">
+  <title>Функция увеличения строки PERL</title>
+  <warning>
+   <simpara>
+    Начиная с PHP 8.3.0 эта функция мягко устарела.
+    Вместо этого вызывают функцию <function>str_increment</function>.
+   </simpara>
+  </warning>
+
+  <para>
+   В PHP можно инкрементировать не-
+   <link linkend="language.types.numeric-strings">числовую строку</link>.
+   Строка  должна быть буквенно-цифровой последовательностью в кодировке ASCII.
+   Буквы увеличиваются до следующей буквы, при достижении буквы
+   <literal>Z</literal> инкремент переносится в следующий разряд слева.
+   Например, <code>$a = 'Z'; $a++;</code> превратит значение переменной <varname>$a</varname>
+   в значение <literal>'AA'</literal>.
+  </para>
+
+  <example>
+   <title>Пример увеличения строки PERL</title>
+   <programlisting role="php">
+<![CDATA[
 <?php
 echo '== Буквенные строки ==' . PHP_EOL;
 $s = 'W';
 for ($n=0; $n<6; $n++) {
-  echo ++$s . PHP_EOL;
+    echo ++$s . PHP_EOL;
 }
-// Буквенно-цифровые строки ведут себя по-разному
+// Буквенно-цифровые строки ведут себя иначе
 echo '== Буквенно-цифровые строки ==' . PHP_EOL;
 $d = 'A8';
 for ($n=0; $n<6; $n++) {
-  echo ++$d . PHP_EOL;
+    echo ++$d . PHP_EOL;
 }
 $d = 'A08';
 for ($n=0; $n<6; $n++) {
-  echo ++$d . PHP_EOL;
+    echo ++$d . PHP_EOL;
 }
 ?>
-]]></programlisting>
-  &example.outputs;
-  <screen><![CDATA[
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
 == Буквенные строки ==
 X
 Y
@@ -129,10 +180,43 @@ A11
 A12
 A13
 A14
-]]></screen>
+]]>
+   </screen>
   </example>
- </para>
- <para>
-  Инкрементирование или декрементирование булевых переменных не приводит ни к какому результату.
- </para>
+
+  <warning>
+   <para>
+    Если буквенно-цифровая строка может быть интерпретирована как
+    <link linkend="language.types.numeric-strings">числовая строка</link>,
+    она будет приведена к типу <type>int</type> или <type>float</type>.
+    Эта проблема встаёт особенно остро со строками, которые выглядят как числа с плавающей точкой,
+    записанные в научной нотации.
+    Функция <function>str_increment</function> не страдает от эти неявных приведений типов.
+   </para>
+   <example>
+    <title>Буквенно-цифровая строка, преобразованная в число с плавающей точкой</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+$s = "5d9";
+var_dump(++$s);
+var_dump(++$s);
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+string(3) "5e0"
+float(6)
+]]>
+    </screen>
+    <para>
+     Так происходит потому, что значение <literal>"5e0"</literal> было интерпретировано
+     как число с плавающей точкой (<type>float</type>) и приведено к значению <literal>5.0</literal>
+     перед началом увеличения.
+    </para>
+   </example>
+  </warning>
+ </sect2>
 </sect1>
