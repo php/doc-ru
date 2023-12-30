@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9b89d5c26bba2f062bfbaba2e8c4c8cd89646770 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 62421b98a97fe576987878055e17cf755eb395af Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.range" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -17,7 +17,19 @@
   <para>
    Создаёт массив, содержащий диапазон элементов.
   </para>
+  <para>
+   Если оба параметра — <parameter>start</parameter> и <parameter>end</parameter> —
+   будут строками (<type>string</type>), а параметр <parameter>step</parameter> — числом (<type>int</type>),
+   то созданный массив будет последовательностью байтов.
+   В других случаях созданный массив будет последовательностью чисел.
+  </para>
+  <para>
+   Последовательность будет возрастать, если значение параметра <parameter>start</parameter>
+   меньше или равно значению параметра <parameter>end</parameter>.
+   В противном случае последовательность будет убывать.
+  </para>
  </refsect1>
+
  <refsect1 role="parameters">
   &reftitle.parameters;
   <para>
@@ -34,7 +46,7 @@
      <term><parameter>end</parameter></term>
      <listitem>
       <para>
-       Конечное значение, которым заканчивается последовательность.
+       Последнее значение последовательности.
       </para>
      </listitem>
     </varlistentry>
@@ -42,12 +54,15 @@
      <term><parameter>step</parameter></term>
      <listitem>
       <para>
-       Если указан параметр <parameter>step</parameter>, то он будет
-       использоваться как инкремент (или декремент) между элементами последовательности.
-       Параметр <parameter>step</parameter> не должен быть равен <literal>0</literal>
-       и не должен выходить за пределы указанного диапазона.
-       Если <parameter>step</parameter> не указан, он принимает
-       значение по умолчанию, равное <literal>1</literal>.
+       Параметр <parameter>step</parameter> определяет, на сколько будут изменяться
+       значения в создаваемой последовательности.
+      </para>
+      <para>
+       В параметр <parameter>step</parameter> можно передавать отрицательное значение, если нужно создать убывающую последовательность.
+      </para>
+      <para>
+       Если значение параметра <parameter>step</parameter> будет числом с плавающей точкой (<type>float</type>)
+       без дробной части, то оно будет интерпретировано как целое число (<type>int</type>).
       </para>
      </listitem>
     </varlistentry>
@@ -57,9 +72,168 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив элементов от <parameter>start</parameter> до
-   <parameter>end</parameter>, включительно.
+   Возвращает последовательность элементов в виде массива (<type>array</type>),
+   в котором первый элемент получает значение параметра <parameter>start</parameter>,
+   а последний — параметра <parameter>end</parameter>, в которой каждое значение
+   последовательности отстаёт от другого на указанное в параметре <parameter>step</parameter> количество шагов.
   </para>
+  <para>
+   Последний элемент возвращённого массива будет равен либо значению параметра <parameter>end</parameter>,
+   либо предыдущему значению последовательности,
+   в зависимости от значения параметра <parameter>step</parameter>.
+  </para>
+  <para>
+   Если оба параметра — <parameter>start</parameter> и <parameter>end</parameter> —
+   будут строками (<type>string</type>), а параметр <parameter>step</parameter> — числом (<type>int</type>),
+   то созданный массив будет последовательностью байтов, обычно латинских символов в кодировке <abbrev>ASCII</abbrev>.
+  </para>
+  <para>
+   Если хотя бы одно из значений параметров <parameter>start</parameter>, <parameter>end</parameter>,
+   или <parameter>step</parameter> будет числом с плавающей точкой (<type>float</type>),
+   созданный массив будет последовательностью значений <type>float</type>.
+  </para>
+  <para>
+   В противном случае созданный массив будет последовательностью целых чисел (<type>int</type>).
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Если значение параметра <parameter>step</parameter> будет равно <literal>0</literal>,
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение хотя бы одного из параметров <parameter>start</parameter>, <parameter>end</parameter>,
+     или <parameter>step</parameter> окажется недопустимым конечным числом, как его определяет функция <function>is_finite</function>,
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение параметра <parameter>step</parameter> будет отрицательным
+     при создании возрастающей последовательности
+     (т. е. <code>$start &lt;= $end</code>),
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+     будет пустой строкой (<literal>''</literal>),
+     это приведёт к ошибке уровня <constant>E_WARNING</constant>,
+     а пустая строка будет интерпретирована как целое число <literal>0</literal>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+     окажется <link linkend="language.types.numeric-strings">нечисловой строкой</link>
+     размером более одного байта, будет сгенерирована ошибка уровня <constant>E_WARNING</constant>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter> будет строкой,
+     которая неявно приводится к целому числу (<type>int</type>) из-за наличия в ней числовых символов,
+     появится ошибка уровня <constant>E_WARNING</constant>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение хотя бы одного из параметров <parameter>step</parameter> будет числом с плавающей точкой (<type>float</type>),
+     а значение параметров <parameter>start</parameter> и <parameter>end</parameter>
+     окажется <link linkend="language.types.numeric-strings">нечисловой строкой</link>,
+     будет сгенерирована ошибка уровня <constant>E_WARNING</constant>.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Если значения обоих параметров — <parameter>start</parameter> и <parameter>end</parameter> —
+       окажутся строками, то теперь функция <function>range</function> всегда будет создавать
+       массив (<type>array</type>) байтов.
+       Ранее, если один из символов в строке был числом,
+       другие символы неявно приводились к числу (<type>int</type>).
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь появляется ошибка уровня <constant>E_WARNING</constant>,
+       если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+       оказывается строкой, которая неявно приводится к целому числу (<type>int</type>)
+       из-за наличия в ней числовых символов.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь появляется ошибка уровня <constant>E_WARNING</constant>,
+       если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+       оказывается нечисловой строкой с размером более одного байта.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь появляется ошибка уровня <constant>E_WARNING</constant>,
+       если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+       оказывается пустой строкой.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Если значение параметра <parameter>step</parameter> окажется числом с плавающей точкой (<type>float</type>)
+       без дробной части, оно будет интерпретировано как целое число (<type>int</type>).
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь выбрасывается исключение <classname>ValueError</classname>,
+       если при создании восходящей последовательности
+       значение параметра <parameter>step</parameter> оказывается отрицательным числом.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь выбрасывается исключение <classname>ValueError</classname>,
+       если значение параметра <parameter>step</parameter> не является допустимым конечным числом.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Теперь выбрасывается исключение <classname>TypeError</classname>,
+       если значение хотя бы одного из параметров <parameter>start</parameter> или <parameter>end</parameter>
+       окажется массивом (<type>array</type>), объектом (<type>object</type>) или ресурсом (<type>resource</type>).
+       Ранее они неявно приводились к целому числу (<type>int</type>).
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
  <refsect1 role="examples">
   &reftitle.examples;
@@ -69,48 +243,32 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-// array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
-foreach (range(0, 12) as $number) {
-    echo $number;
-}
+echo implode(', ', range(0, 12)), PHP_EOL;
 
-echo "\n";
+echo implode(', ', range(0, 100, 10)), PHP_EOL;
 
-// Параметр step
-// array(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
-foreach (range(0, 100, 10) as $number) {
-    echo $number;
-}
+echo implode(', ', range('a', 'i')), PHP_EOL;
 
-echo "\n";
+echo implode(', ', range('c', 'a')), PHP_EOL;
 
-// Использование последовательности знаков
-// array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i');
-foreach (range('a', 'i') as $letter) {
-    echo $letter;
-}
-
-echo "\n";
-
-// array('c', 'b', 'a');
-foreach (range('c', 'a') as $letter) {
-    echo $letter;
-}
+echo implode(', ', range('A', 'z')), PHP_EOL;
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+a, b, c, d, e, f, g, h, i
+c, b, a
+A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z, [, \, ], ^, _, `, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
- <refsect1 role="notes">
-  &reftitle.notes;
-  <note>
-   <para>
-    Значения для последовательности знаков ограничены длиной в один символ. Если
-    их длина больше одного, то только первый символ используется.
-   </para>
-  </note>
- </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
@@ -121,6 +279,7 @@ foreach (range('c', 'a') as $letter) {
    </simplelist>
   </para>
  </refsect1>
+
 </refentry>
 <!-- Keep this comment at the end of the file
 Local variables:

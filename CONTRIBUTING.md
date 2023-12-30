@@ -34,14 +34,14 @@
 
 ### Отслеживание изменений
 
-#### С помощью doc.php.net
+#### На сайте doc.php.net
 
-Выберите русский язык на правой боковой панели, а затем используйте инструмент "Outdated files".
+Выберите русский язык на правой боковой панели, а затем используйте инструмент Outdated files.
 В таблице будут перечислены файлы, для которых необходимо обновить перевод.
 
-В столбце `en` указан хеш актуальной английской версии, а в столбце `ru` - хеш перевода.
+В столбце `en` указан хеш актуальной английской версии, а в столбце `ru` — хеш перевода.
 
-#### С помощью командной строки
+#### В командной строке
 
 Клонируйте репозиторий [doc-base](https://github.com/php/doc-base) на один уровень с
 [doc-en](https://github.com/php/doc-en) и `doc-ru`, чтобы структура папок была следующей:
@@ -61,7 +61,7 @@
 ```
 php doc-base/scripts/revcheck.php ru > revcheck.html
 ```
-В разделе "Outdated Files" вы можете посмотреть актуальную английскую версию и текущую.
+В разделе Outdated Files можно посмотреть актуальную английскую версию и текущую.
 
 ### Просмотр изменений
 
@@ -88,7 +88,7 @@ git --no-pager diff 8b5940cadeb4f1c8492f4a7f70743a2be807cf39 68a9c82e06906a5c00e
   </refsect1>
 ```
 
-Как вы видите, изменилось описание функции.
+Как видите, изменилось описание функции.
 
 Строка `Searches <parameter>haystack</parameter> for <parameter>needle</parameter> using loose comparison`
 заменена на `Searches for <parameter>needle</parameter> in <parameter>haystack</parameter> using loose comparison`.
@@ -130,6 +130,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Commit                          | Фиксация (например, транзакции)                                    |
 | Default, by default             | По умолчанию (пишется без дефиса)                                  |
 | Directory                       | Директория                                                         |
+| Download                        | Скачать (не то же, что «загрузить», см. Load)                      |
 | Entry                           | Элемент (существительное, для массивов, списков и прочих структур) |
 | Extension                       | Модуль                                                             |
 | Features/functionality          | Возможности, функциональность                                      |
@@ -147,8 +148,9 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | ID (в тексте)                   | Идентификатор                                                      |
 | Legacy (system, server)         | Устаревшая система, сервер, протокол                               |
 | Legacy support                  | Поддержка старых версий                                            |
-| Magic quotes                    | "Магические" кавычки                                               |
-| Magic constants/methods/numbers | "Магические" константы/методы/числа                                |
+| Load                            | Загрузить (не то же, что «скачать», см. Download)                  |
+| Magic quotes                    | «Магические» кавычки                                               |
+| Magic constants/methods/numbers | «Магические» константы/методы/числа                                |
 | Multibyte string                | Многобайтовая строка                                               |
 | Namespace                       | Пространство имён                                                  |
 | Node                            | Узел                                                               |

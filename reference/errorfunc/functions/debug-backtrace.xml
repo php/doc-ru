@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 26a8f2141b987f95047435f83d2710eb11468778 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: e203b12d7964aa7c729e1f7c26fcbf357fc9fb63 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.debug-backtrace" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>debug_backtrace</refname>
-  <refpurpose>Выводит стек вызовов функций в массив</refpurpose>
+  <refpurpose>Генерирует стек вызовов функций</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,8 +15,7 @@
    <methodparam choice="opt"><type>int</type><parameter>limit</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>debug_backtrace</function> выводит стек вызовов функций PHP в
-   массив.
+   Функция <function>debug_backtrace</function> генерирует стек вызовов функций PHP.
   </para>
  </refsect1>
 
@@ -28,8 +27,7 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Аргумент является битовой маской для следующих
-       настроек:
+       Этот параметр — битовая маска для следующих настроек:
        <table>
         <title>Опции <function>debug_backtrace</function></title>
         <tgroup cols="2">
@@ -37,14 +35,14 @@
           <row>
            <entry>DEBUG_BACKTRACE_PROVIDE_OBJECT</entry>
            <entry>
-            Нужно ли заполнять данные для ключа object.
+            Нужно ли заполнять ключ "object" (в выходом массиве).
            </entry>
           </row>
           <row>
            <entry>DEBUG_BACKTRACE_IGNORE_ARGS</entry>
            <entry>
-            Нужно ли исключить аргументы всех функций/методов
-            в ключе "args" для уменьшения расхода памяти.
+            Нужно ли исключить ключ "args" (из выходного массива) с сопутствующим
+            исключением всех аргументов функций/методов, чтобы уменьшить расход памяти.
            </entry>
           </row>
          </tbody>
@@ -60,7 +58,7 @@
             <row>
              <entry><code>debug_backtrace()</code></entry>
              <entry morerows="2" valign="middle">
-              Заполняются оба индекса.
+              Заполняются оба ключа.
              </entry>
             </row>
             <row>
@@ -70,22 +68,28 @@
              <entry><code>debug_backtrace(1)</code></entry>
             </row>
             <row>
-             <entry><code>debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS &amp; DEBUG_BACKTRACE_PROVIDE_OBJECT)</code></entry>
-             <entry morerows="1" valign="middle">
-              Опускается индекс <literal>"object"</literal>.
-             </entry>
-            </row>
-            <row>
              <entry><code>debug_backtrace(0)</code></entry>
+             <entry valign="middle">
+              Не включается ключ <literal>"object"</literal> и заполняется ключ <literal>"args"</literal>.
+             </entry>
             </row>
             <row>
              <entry><code>debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)</code></entry>
              <entry morerows="1" valign="middle">
-              Опускается индекс <literal>"object"</literal> <emphasis>и</emphasis> индекс <literal>"args"</literal>.
+              Опускается ключ <literal>"object"</literal> <emphasis>и</emphasis> ключ <literal>"args"</literal>.
              </entry>
             </row>
             <row>
              <entry><code>debug_backtrace(2)</code></entry>
+            </row>
+            <row>
+             <entry><code>debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT|DEBUG_BACKTRACE_IGNORE_ARGS)</code></entry>
+             <entry morerows="1" valign="middle">
+              Заполняется ключ <literal>"object"</literal> <emphasis>и</emphasis> опускается ключ <literal>"args"</literal>.
+             </entry>
+            </row>
+            <row>
+             <entry><code>debug_backtrace(3)</code></entry>
             </row>
            </tbody>
           </tgroup>
@@ -99,9 +103,9 @@
      <term><parameter>limit</parameter></term>
      <listitem>
       <para>
-       Аргумент используется для ограничения количества
-       вызовов функций, которые будут выведены. По умолчанию
-       (<parameter>limit</parameter>=<literal>0</literal>) будет выведен весь
+       Этим параметром можно ограничить количество возвращаемых
+       вызовов функций. По умолчанию
+       параметр (<parameter>limit</parameter>=<literal>0</literal>) — будет выведен весь
        стек вызовов.
       </para>
      </listitem>
@@ -113,7 +117,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив вложенных ассоциативных массивов (<type>array</type>).
+   Функция возвращает массив вложенных ассоциативных массивов (<type>array</type>).
    Описание элементов массива приведено ниже:
   </para>
   <para>
@@ -175,17 +179,17 @@
        <entry><type>string</type></entry>
        <entry>
         Текущий тип вызова функции. Если это вызов метода объекта, будет
-        выведено "-&gt;". Если это вызов статического метода класса, то "::".
-        Если это простой вызов функции, не выводится ничего.
+        возвращено значение "-&gt;". Если это вызов статического метода класса, то "::".
+        Если это простой вызов функции, ничего не возвращается.
        </entry>
       </row>
       <row>
        <entry>args</entry>
        <entry><type>array</type></entry>
        <entry>
-        При нахождении внутри функции, будет выведен список аргументов этой
-        функции. Если внутри включаемого файла, будет выведен список включаемых
-        файлов.
+        Если (функция <function>debug_backtrace</function>) вызвана внутри функции,
+        в этих ключах будут перечислены аргументы функций. Если вызов выполнен внутри включаемого файла,
+        будут перечислены имена включённых файлов.
        </entry>
       </row>
      </tbody>
