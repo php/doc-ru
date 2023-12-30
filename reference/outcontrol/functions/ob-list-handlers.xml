@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6ab6ea465889620fc2a8cdaf7b008cbaed83c523 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 87a266cdd7f53bc86cd22d21af289b9a75f57f94 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ob-list-handlers">
  <refnamediv>
@@ -27,10 +27,27 @@
   &reftitle.returnvalues;
   <para>
    Функция вернёт массив с заданными обработчиками вывода (если есть).
-   Если включена настройка <link linkend="ini.output-buffering">output_buffering</link>
-   или в функцию <function>ob_start</function> передана анонимная функция,
-   функция <function>ob_list_handlers</function> вернёт массив
-   с элементом «default output handler» или «Closure::__invoke» соответственно.
+  </para>
+  <para>
+   Возвращает строку <literal>"default output handler"</literal>,
+   если настройка <link linkend="ini.output-buffering">output_buffering</link> включена
+   и настройка <link linkend="ini.output-handler">output_handler</link> не установлена,
+   или в функцию <function>ob_start</function> не передана callback-функция или вместо неё передано значение &null;.
+   Включение настройки <link linkend="ini.output-buffering">output_buffering</link>
+   и установка значения для настройки <link linkend="ini.output-handler">output_handler</link>
+   эквевалентно передаче в функцию <function>ob_start</function>
+   <link linkend="functions.internal">внутренней (встроенной) функции</link>.
+  </para>
+  <para>
+   Возвращает <link linkend="language.namespaces.basics">абсолютное имя</link>
+   переданной в параметр <type>callable</type> функции,
+   если в параметр <type>callable</type> функции <function>ob_start</function> была передана callback-функция.
+   Возвращает <link linkend="language.namespaces.basics">абсолютное имя</link>
+   объекта с методом <link linkend="language.oop5.magic.invoke">__invoke()</link>,
+   если параметр <type>callable</type> — это объект, который реализует
+   метод <link linkend="language.oop5.magic.invoke">__invoke()</link>.
+   Возвращает строку <literal>"Closure::__invoke"</literal>,
+   если параметр <type>callable</type> — это объект класса <classname>Closure</classname>.
   </para>
  </refsect1>
 
@@ -42,17 +59,71 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-//используется output_buffering=On
-print_r(ob_list_handlers());
+// настройка включена output_buffering=On, значение для настройки output_handler не установлено
+var_dump(ob_list_handlers());
 ob_end_flush();
 
-ob_start("ob_gzhandler");
-print_r(ob_list_handlers());
+// callback-функция не передана или null
+ob_start();
+var_dump(ob_list_handlers());
 ob_end_flush();
 
 // анонимная функция
 ob_start(function($string) { return $string; });
-print_r(ob_list_handlers());
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// стрелочная функция
+ob_start(fn($string) => $string);
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// callable-функция как объект первого класса
+$firstClassCallable = userDefinedFunction(...);
+
+ob_start([$firstClassCallable, '__invoke']);
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// внутренняя (встроенная функция)
+ob_start('print_r');
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// пользовательская функция
+function userDefinedFunction($string, $flags) { return $string; };
+
+ob_start('userDefinedFunction');
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+class MyClass {
+    public static function staticHandle($string) {
+        return $string;
+    }
+
+    public static function handle($string) {
+        return $string;
+    }
+
+    public function __invoke($string) {
+        return $string;
+    }
+}
+
+// класс и статический метод
+ob_start(['MyClass','staticHandle']);
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// Объект и нестатический метод
+ob_start([new MyClass,'handle']);
+var_dump(ob_list_handlers());
+ob_end_flush();
+
+// Вызываемый объект
+ob_start(new MyClass);
+var_dump(ob_list_handlers());
 ob_end_flush();
 ?>
 ]]>
@@ -60,20 +131,46 @@ ob_end_flush();
     &example.outputs;
     <screen>
 <![CDATA[
-Array
-(
-    [0] => default output handler
-)
-
-Array
-(
-    [0] => ob_gzhandler
-)
-
-Array
-(
-    [0] => Closure::__invoke
-)
+array(1) {
+  [0]=>
+  string(22) "default output handler"
+}
+array(1) {
+  [0]=>
+  string(22) "default output handler"
+}
+array(1) {
+  [0]=>
+  string(7) "print_r"
+}
+array(1) {
+  [0]=>
+  string(19) "userDefinedFunction"
+}
+array(1) {
+  [0]=>
+  string(17) "Closure::__invoke"
+}
+array(1) {
+  [0]=>
+  string(17) "Closure::__invoke"
+}
+array(1) {
+  [0]=>
+  string(17) "Closure::__invoke"
+}
+array(1) {
+  [0]=>
+  string(21) "MyClass::staticHandle"
+}
+array(1) {
+  [0]=>
+  string(15) "MyClass::handle"
+}
+array(1) {
+  [0]=>
+  string(17) "MyClass::__invoke"
+}
 ]]>
     </screen>
    </example>
