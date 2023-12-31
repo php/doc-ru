@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 55f70d19870c396f3bf86b6c45826da3cb7e525f Maintainer: mch Status: ready -->
+<!-- EN-Revision: 2b3715871c83b928ac496e6c777d6be9f0d71cbf Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ob-get-status" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -39,80 +39,148 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Если функция вызвана без параметра <parameter>full_status</parameter>
-   или <parameter>full_status</parameter> = &false;, то возвращается
-   простой массив из следующих элементов:
-   <informalexample>
+   Если параметр <parameter>full_status</parameter> опущен или равен &false;,
+   возвращает простой массив с информацией о статусе активного уровня вывода.
+  </para>
+  <para>
+   Если параметр <parameter>full_status</parameter> равен &true;,
+   возвращает массив с одним элементом для каждого активного уровня буфера вывода.
+   Уровень вывода будет указан как ключ верхнего уровня массива
+   и каждый элемент массива сам будет другим массивом
+   с информацией о статусе одного активного уровня вывода.
+  </para>
+  <para>
+   Возвращает пустой массив, если буферизация вывода не была включена.
+  </para>
+  <para>
+   <segmentedlist>
+    <title>Элементы массива, которые возвращает функция <function>ob_get_status</function></title>
+    <segtitle>Key</segtitle><segtitle>Value</segtitle>
+    <seglistitem>
+     <seg>name</seg>
+     <seg>
+      Имя активного обработчика вывода, заданное в параметре <parameter>callback</parameter>
+      функции <function>ob_start</function>,
+      значение директивы <link linkend="ini.output-handler">output_handler</link>, если
+      настройка <link linkend="ini.output-buffering">output_buffering</link> была включена,
+      или строку <literal>'default output handler'</literal>, если не была.
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>type</seg>
+     <seg>
+      <literal>0</literal> (внутренний обработчик)
+      или <literal>1</literal> (предоставленный пользователем обработчик)
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>flags</seg>
+     <seg>
+      Битовая маска флагов, заданных в функции <function>ob_start</function>,
+      тип обработчика вывода (см. выше)
+      и статус процесса буферизации
+      (константы <link linkend="outcontrol.constants">
+       <constant>PHP_OUTPUT_HANDLER_<replaceable>*</replaceable></constant>
+      </link>).
+      Если обработчик успешно обработал буфер и не вернул &false;,
+      будут установлены значения констант
+      <constant>PHP_OUTPUT_HANDLER_STARTED</constant>
+      и <constant>PHP_OUTPUT_HANDLER_PROCESSED</constant>.
+      Если обработчик не смог обработать буфер или вернул &false;,
+      будут установлены значения констант
+      <constant>PHP_OUTPUT_HANDLER_STARTED</constant>
+      и <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>level</seg>
+     <seg>
+      Уровень вложенности вывода (начинается с нуля).
+      Заметьте, что значение, возвращаемое функцией <function>ob_get_level</function>
+      для того же уровня, больше на единицу.
+      Первый уровень для функции <function>ob_get_status</function> — это <literal>0</literal>,
+      а для функции <function>ob_get_level</function> — это <literal>1</literal>.
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>chunk_size</seg>
+     <seg>
+      Размер части в байтах. Значение, устанавленное в функции <function>ob_start</function>,
+      или значение настройки
+      <link linkend="ini.output-buffering">output_buffering</link>,
+      если она включена и её значение установлено как целое положительное число.
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>buffer_size</seg>
+     <seg>
+      Размер буфера вывода в байтах.
+     </seg>
+    </seglistitem>
+    <seglistitem>
+     <seg>buffer_used</seg>
+     <seg>
+      Размер данных буфера вывода в байтах.
+     </seg>
+    </seglistitem>
+   </segmentedlist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Массив, который будет возвращён, если значение параметра <parameter>full_status</parameter> равно &false;</title>
     <screen>
 <![CDATA[
 Array
 (
-    [level] => 2
-    [type] => 0
-    [status] => 0
     [name] => URL-Rewriter
-    [del] => 1
+    [type] => 0
+    [flags] => 112
+    [level] => 2
+    [chunk_size] => 0
+    [buffer_size] => 16384
+    [buffer_used] => 1024
 )
 ]]>
     </screen>
-   </informalexample>
-   <segmentedlist>
-    <title>Результаты простого вызова <function>ob_get_status</function></title>
-    <segtitle>Ключ</segtitle><segtitle>Значение</segtitle>
-    <seglistitem><seg>level</seg><seg>Уровень вложенности вывода</seg></seglistitem>
-    <seglistitem><seg>type</seg><seg><literal>PHP_OUTPUT_HANDLER_INTERNAL (0)</literal> или <literal>PHP_OUTPUT_HANDLER_USER (1)</literal></seg></seglistitem>
-    <seglistitem><seg>type</seg><seg><literal>0</literal> (внутренний обработчик) или <literal>1</literal> (предоставленный пользователем обработчик)</seg></seglistitem>
-    <seglistitem><seg>name</seg><seg>Название действующего обработчика вывода или 'default output handler', если не задан</seg></seglistitem>
-    <seglistitem><seg>del</seg><seg>Флаг очистки, установленный <function>ob_start</function></seg></seglistitem>
-   </segmentedlist>
+   </example>
   </para>
   <para>
-   Если функция вызвана с параметром <parameter>full_status</parameter> = &true;,
-   то возвращается массив из элементов уровней активных буферов. В качестве
-   ключа используется уровень вывода, и каждый элемент массива содержит в
-   себе массив информации о статусе одного из активных элементов вывода.
-   <informalexample>
+   <example>
+    <title>Массив, который будет возвращён, если значение параметра <parameter>full_status</parameter> равно &true;</title>
     <screen>
 <![CDATA[
 Array
 (
     [0] => Array
         (
-            [chunk_size] => 0
-            [size] => 40960
-            [block_size] => 10240
-            [type] => 1
-            [status] => 0
             [name] => default output handler
-            [del] => 1
+            [type] => 0
+            [flags] => 112
+            [level] => 1
+            [chunk_size] => 0
+            [buffer_size] => 16384
+            [buffer_used] => 2048
         )
 
     [1] => Array
         (
-            [chunk_size] => 0
-            [size] => 40960
-            [block_size] => 10240
-            [type] => 0
-            [buffer_size] => 0
-            [status] => 0
             [name] => URL-Rewriter
-            [del] => 1
+            [type] => 0
+            [flags] => 112
+            [level] => 2
+            [chunk_size] => 0
+            [buffer_size] => 16384
+            [buffer_used] => 1024
         )
 
 )
 ]]>
     </screen>
-   </informalexample>
-  </para>
-  <para>
-   Полный вывод содержит следующие дополнительные элементы:
-   <segmentedlist>
-    <title>Полные результаты функции <function>ob_get_status</function></title>
-    <segtitle>Ключ</segtitle><segtitle>Значение</segtitle>
-    <seglistitem><seg>chunk_size</seg><seg>Размер порции, установленный <function>ob_start</function></seg></seglistitem>
-    <seglistitem><seg>size</seg><seg>...</seg></seglistitem>
-    <seglistitem><seg>blocksize</seg><seg>...</seg></seglistitem>
-   </segmentedlist>
+    </example>
   </para>
  </refsect1>
 
@@ -122,6 +190,7 @@ Array
    <simplelist>
     <member><function>ob_get_level</function></member>
     <member><function>ob_list_handlers</function></member>
+    <member><function>ob_start</function></member>
    </simplelist>
   </para>
  </refsect1>
