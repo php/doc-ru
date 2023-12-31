@@ -4,7 +4,7 @@
 <refentry xml:id="function.ob-start" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ob_start</refname>
-  <refpurpose>Включение буферизации вывода</refpurpose>
+  <refpurpose>Включает буферизацию вывода</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -22,27 +22,27 @@
   </para>
   <para>
    Содержимое этого внутреннего буфера может быть скопировано в строковую
-   переменную, используя <function>ob_get_contents</function>. Для вывода
-   содержимого внутреннего буфера следует использовать <function>ob_end_flush</function>.
-   В качестве альтернативы можно использовать <function>ob_end_clean</function>
-   для очистки содержимого буфера.
+   переменную функцией <function>ob_get_contents</function>. Для вывода
+   содержимого внутреннего буфера вызывают функцию <function>ob_end_flush</function>.
+   Альтернативный способ очистить содержимое буфера —
+   вызов функции <function>ob_end_clean</function>.
   </para>
   <warning>
    <para>
-    Некоторые веб-серверы (например, Apache) изменяют рабочую директорию скрипта
-    при вызове callback-функции. Вы можете вернуть её назад, используя
-    <literal>chdir(dirname($_SERVER['SCRIPT_FILENAME']))</literal>
-    в callback-функции.
+    Веб-серверы (например, Apache) могут изменить рабочую директорию
+    при вызове callback-функции. Её можно изменить обратно,
+    например, вызвав в callback-функции
+    <literal>chdir(dirname($_SERVER['SCRIPT_FILENAME']))</literal>.
    </para>
   </warning>
   <para>
-   Буферы вывода помещаются в стек, то есть допускается вызов
-   <function>ob_start</function> после вызова другой активной
-   <function>ob_start</function>. При этом необходимо вызывать
-   <function>ob_end_flush</function> соответствующее количество раз.
-   Если активны несколько callback-функций,
-   вывод последовательно фильтруется для
-   каждой из них в порядке вложения.
+   Буферы вывода помещаются в стек, то есть разрешён вызов
+   функции <function>ob_start</function> пока активна другая
+   функция <function>ob_start</function>. Просто нужно убедиться, что
+   функция <function>ob_end_flush</function> вызвана столько же раз.
+   Если активны несколько выходных callback-функций,
+   вывод последовательно фильтруется
+   для каждой из них в порядке вложения.
   </para>
   <para>
    Если буферизация вывода всё ещё активна, когда скрипт завершает работу,
@@ -59,14 +59,15 @@
      <listitem>
       <para>
        Можно задать необязательный параметр <parameter>callback</parameter>.
-       Эта функция принимает строку в виде аргумента и должна также вернуть строку.
-       Она вызывается при сбросе (отправке) или очистке (с помощью
-       <function>ob_flush</function>, <function>ob_clean</function> или подобных функций)
-       или если буфер вывода сбрасывается в браузер по окончанию запроса.
-       При вызове функции <parameter>callback</parameter>, она получает
-       содержимое буфера и, как ожидается, должна вернуть обновлённое содержимое для буфера вывода,
-       которое будет отправлено браузеру.
-       Если <parameter>callback</parameter> не является допустимой функцией, то
+       Эта функция принимает в качестве параметра строку и вернуть также должна строку.
+       Функция будет вызвана при сбросе (отправке) или очистке буфера (функциями
+       <function>ob_flush</function>, <function>ob_clean</function> или похожими)
+       или если буфер вывода сбрасывается в браузер по окончании запроса.
+       При вызове переданной в параметр <parameter>callback</parameter> функции, она получает
+       содержимое выходного буфера в качестве параметра и ожидается,
+       что в качестве результата она вернёт обновлённый буфер вывода,
+       который будет отправлен браузеру.
+       Если <parameter>callback</parameter> окажется недопустимой функцией, то
        эта функция вернёт &false;.
        Описание функции для этого параметра:
       </para>
@@ -96,32 +97,31 @@
        </variablelist>
       </para>
       <para>
-       Если <parameter>callback</parameter> вернёт &false;, то
+       Если параметр <parameter>callback</parameter> вернёт &false;, то
        оригинальная информация отправится в браузер без изменений.
       </para>
       <para>
-       Параметр <parameter>callback</parameter> может быть игнорирован
-       передачей значения &null;.
+       Параметр <parameter>callback</parameter> можно обойти,
+       передав значение &null;.
       </para>
       <para>
-       <function>ob_end_clean</function>, <function>ob_end_flush</function>,
-       <function>ob_clean</function>, <function>ob_flush</function> и
-       <function>ob_start</function> не могут вызываться из callback-функций,
-       так как их поведение непредсказуемо.
-       Если вы хотите удалить содержимое буфера, то
-       верните "" (пустую строку) из callback-функции.
-       Вы также не можете использовать функции буферизации вывода, такие как
+       Функции <function>ob_end_clean</function>, <function>ob_end_flush</function>,
+       <function>ob_clean</function>, <function>ob_flush</function>
+       и <function>ob_start</function> не могут быть вызваны из callback-функций,
+       потому что их поведение непредсказуемо.
+       Если нужно удалить содержимое буфера,
+       то из callback-функции возвращают "" (пустую строку).
+       Нельзя вызывать из callback-функции функции буферизации вывода, например:
        <literal>print_r($expression, true)</literal> или
-       <literal>highlight_file($filename, true)</literal>
-       из callback-функции.
+       <literal>highlight_file($filename, true)</literal>.
       </para>
       <note>
        <para>
-        Функция <function>ob_gzhandler</function> была введена
-        для облегчения отправки gz-кодированных данных браузерам,
-        поддерживающим сжатые веб-страницы. <function>ob_gzhandler</function>
-        определяет тип кодировки содержимого, принимаемый браузером,
-        и возвращает вывод соответствующим образом.
+        Функция <function>ob_gzhandler</function> была введена,
+        чтобы упростить отправку gz-кодированных данных браузерам,
+        поддерживающим сжатые веб-страницы. Функция <function>ob_gzhandler</function>
+        определяет тип кодировки содержимого, принимаемой браузером,
+        и возвращает совместимый вывод.
        </para>
       </note>
      </listitem>
@@ -142,14 +142,14 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>flags</parameter> является битовой маской, которая
-       управляет операциями, которые можно совершать над буфером вывода.
-       По умолчанию она позволяет буферу вывода быть очищенным, сброшенным и удалённым, что
+       Параметр <parameter>flags</parameter> — это битовая маска, которая
+       управляет операциями, которые можно выполнять с буфером вывода.
+       По умолчанию она разрешает буферу вывода быть очищенным, сброшенным и удалённым, что
        равносильно значению
        <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> |
        <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> |
        <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant> или
-       <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant> как сокращение этой комбинации.
+       сокращению этой комбинации <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant>.
       </para>
       <para>
        Каждый флаг управляет доступом к набору функций, как описано ниже:
@@ -165,7 +165,7 @@
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant></entry>
            <entry>
-            <function>ob_clean</function>,
+            Функции <function>ob_clean</function>,
             <function>ob_end_clean</function> и
             <function>ob_get_clean</function>.
            </entry>
@@ -173,7 +173,7 @@
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant></entry>
            <entry>
-            <function>ob_end_flush</function>,
+            Функции <function>ob_end_flush</function>,
             <function>ob_flush</function> и
             <function>ob_get_flush</function>.
            </entry>
@@ -181,7 +181,7 @@
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant></entry>
            <entry>
-            <function>ob_end_clean</function>,
+            Функции <function>ob_end_clean</function>,
             <function>ob_end_flush</function> и
             <function>ob_get_flush</function>.
            </entry>
