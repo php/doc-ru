@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: bfabdf420fa4c710ec5995480dd7cbc17abdbada Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: b2cbcaea5b0e967d2b2cc6bbfa631343e49a7c28 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.assert" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,16 +15,17 @@
    <methodparam choice="opt"><type class="union"><type>Throwable</type><type>string</type><type>null</type></type><parameter>description</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>assert</function> - это не функция, а языковая конструкция.
-   Позволяет определять ожидания: утверждения, которые вступают в силу в средах разработки и тестирования,
+   Функция <function>assert</function> — разрешает определение ожиданий: утверждения,
+   которые вступают в силу
+   в средах разработки и тестирования,
    но оптимизированы так, что в производственной среде имеют нулевую стоимость.
   </para>
   <para>
    Утверждения следует использовать только в качестве отладочной функции.
-   Один из вариантов их использования - проверка на вменяемость предварительных условий,
+   Один из вариантов их использования — проверка на вменяемость предварительных условий,
    которые всегда должны быть &true; и если они не выполняются,
    это указывает на ошибки программирования.
-   Другой случай использования - убедиться в наличии определённых возможностей,
+   Другой случай использования — убедиться в наличии определённых возможностей,
    например, функций модуля или определённых ограничений и возможностей системы.
   </para>
   <para>
@@ -34,9 +35,10 @@
    Как правило, код должен вести себя так, как ожидается, даже если проверка утверждений отключена.
   </para>
   <para>
-   <function>assert</function> проверяет, что ожидание, заданное в параметре <parameter>assertion</parameter>, выполняется.
-   Если нет, и результат будет значение &false;, то будет предпринято соответствующее действие
-   в зависимости от того, как была настроена конструкция <function>assert</function>.
+   Функция <function>assert</function> проверяет, выполняется ли ожидание,
+   заданное в параметре <parameter>assertion</parameter>.
+   Если нет, и в результате вернулось значение &false;,
+   то функция <function>assert</function> выполнит заданное конфигурацией действие.
   </para>
 
   <para>
@@ -75,10 +77,12 @@
        <entry><link linkend="ini.assert.active">assert.active</link></entry>
        <entry>&true;</entry>
        <entry>
-        Если &false;, <function>assert</function> не проверяет ожидание
+        Если &false;, функция <function>assert</function> не проверяет ожидание
         и возвращает &true;, безоговорочно.
        </entry>
-       <entry/>
+       <entry>
+        Устарела с PHP 8.3.0.
+       </entry>
       </row>
       <row>
        <entry><link linkend="ini.assert.callback">assert.callback</link></entry>
@@ -93,6 +97,7 @@
          <methodparam><type>null</type><parameter>assertion</parameter></methodparam>
          <methodparam choice="opt"><type>string</type><parameter>description</parameter></methodparam>
         </methodsynopsis>
+        Устарела с PHP 8.3.0.
        </entry>
        <entry>
         До PHP 8.0.0 сигнатура callback-функции должна быть:
@@ -112,7 +117,9 @@
         Если &true;, будет выброшена ошибка <classname>AssertionError</classname>
         в случае неудачной проверки утверждения.
        </entry>
-       <entry/>
+       <entry>
+        Устарела с PHP 8.3.0.
+       </entry>
       </row>
       <row>
        <entry><link linkend="ini.assert.bail">assert.bail</link></entry>
@@ -120,23 +127,25 @@
        <entry>
         Если &true;, выполнение PHP-скрипта прервётся в случае неудачной проверки утверждении.
        </entry>
-       <entry/>
+       <entry>
+        Устарела с PHP 8.3.0.
+       </entry>
       </row>
       <row>
        <entry><link linkend="ini.assert.warning">assert.warning</link></entry>
        <entry>&true;</entry>
        <entry>
-        Если &true;, будет выдана ошибка уровня <constant>E_WARNING</constant> в случае неудачной проверки утверждения.
-        Эта INI-настройка неэффективна, если включена <link linkend="ini.assert.exception">assert.exception</link>.
+        Если &true;, в случае неудачной проверки утверждения
+        будет выдана ошибка уровня <constant>E_WARNING</constant>.
+        Эта INI-настройка неэффективна, если включена директива <link linkend="ini.assert.exception">assert.exception</link>.
        </entry>
-       <entry/>
+       <entry>
+        Устарела с PHP 8.3.0.
+       </entry>
       </row>
      </tbody>
     </tgroup>
    </table>
-
-   Опции, начинающиеся с <literal>assert.</literal>, могут быть настроены с помощью
-   функции <function>assert_options</function>. Однако это не рекомендуется.
   </para>
  </refsect1>
 
@@ -209,7 +218,19 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &false;, если проверка провалена, &true; в противном случае.
+   Функция <function>assert</function> будет всегда возвращать значение &true;,
+   если истинно хотя бы одно из следующих утверждений:
+  </para>
+  <simplelist>
+   <member><literal>zend.assertions=0</literal></member>
+   <member><literal>zend.assertions=-1</literal></member>
+   <member><literal>assert.exception=1</literal></member>
+   <member><literal>assert.bail=1</literal></member>
+   <member>Объект пользовательского исключения передан в параметр <parameter>description</parameter>.</member>
+  </simplelist>
+  <para>
+   Если ни одно из условий не истинно, функция <function>assert</function> вернёт значение &true;,
+   если параметр <parameter>assertion</parameter> истинен, в противном случае вернёт значение &false;.
   </para>
  </refsect1>
 
@@ -225,6 +246,12 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>8.3.0</entry>
+       <entry>
+        Все INI-настройки <literal>assert.</literal> устарели.
+       </entry>
+      </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
@@ -281,209 +308,99 @@
 
  <refsect1 role="examples">
   &reftitle.examples;
-  <refsect2>
-   <title>Ожидания</title>
    <example>
+    <title>Пример использования функции <function>assert</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-assert(true == false);
+assert(1 > 2);
 echo 'Привет!';
-?>
 ]]>
     </programlisting>
     <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 0,
-     то приведённый выше пример выведет:
+     Если утверждения включены (<link linkend="ini.zend.assertions"><literal>zend.assertions=1</literal></link>),
+     то пример выше выведет:
     </para>
     <screen>
 <![CDATA[
-Привет!
-]]>
-    </screen>
-    <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 1,
-     а <link linkend="ini.assert.exception">assert.exception</link> установить значение 0,
-     то приведённый выше пример выведет:
-    </para>
-    <screen>
-<![CDATA[
-Warning: assert(): assert(true == false) failed in - on line 2
-Привет!
-]]>
-    </screen>
-    <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 1,
-     а <link linkend="ini.assert.exception">assert.exception</link> установить значение 1,
-     то приведённый выше пример выведет:
-    </para>
-    <screen>
-<![CDATA[
-Fatal error: Uncaught AssertionError: assert(true == false) in -:2
+Fatal error: Uncaught AssertionError: assert(1 > 2) in example.php:2
 Stack trace:
-#0 -(2): assert(false, 'assert(true == ...')
+#0 example.php(2): assert(false, 'assert(1 > 2)')
 #1 {main}
-  thrown in - on line 2
+  thrown in example.php on line 2
+]]>
+    </screen>
+    <para>
+     Если утверждения отключены (<literal>zend.assertions=0</literal> or <literal>zend.assertions=-1</literal>),
+     то пример выше выведет:
+    </para>
+    <screen>
+<![CDATA[
+Привет!
 ]]>
     </screen>
    </example>
    <example>
-    <title>Ожидания при использовании пользовательского исключения</title>
+    <title>Пример пользовательского сообщения</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class CustomError extends AssertionError {}
-
-assert(true == false, new CustomError('True не является false!'));
+assert(1 > 2, "Ожидается, что один больше двух");
 echo 'Привет!';
-?>
 ]]>
     </programlisting>
     <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 0,
-     то приведённый выше пример выведет:
+     Если утверждения включены пример выше выведет:
     </para>
     <screen>
 <![CDATA[
-Привет!
-]]>
-    </screen>
-    <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 1,
-     а <link linkend="ini.assert.exception">assert.exception</link> установить значение 0,
-     то приведённый выше пример выведет:
-    </para>
-    <screen>
-<![CDATA[
-Warning: assert(): CustomError: True не является false! in -:4
+Fatal error: Uncaught AssertionError: Ожидается, что один больше двух in example.php:2
 Stack trace:
-#0 {main} failed in - on line 4
-Привет!
+#0 example.php(2): assert(false, 'Expected one to...')
+#1 {main}
+  thrown in example.php on line 2
 ]]>
     </screen>
     <para>
-     Если <link linkend="ini.zend.assertions">zend.assertions</link> установить значение 1,
-     а <link linkend="ini.assert.exception">assert.exception</link> установить значение 1,
-     то приведённый выше пример выведет:
+     Если утверждения выключены, то пример выше выведет:
     </para>
     <screen>
 <![CDATA[
-Fatal error: Uncaught CustomError: True не является false! in -:4
+Привет!
+]]>
+    </screen>
+    </example>
+   <example>
+    <title>Пример использования пользовательского класса исключения</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class ArithmeticAssertionError extends AssertionError {}
+
+assert(1 > 2, new ArithmeticAssertionError("Ожидается, что один больше двух"));
+echo 'Hi!';
+]]>
+    </programlisting>
+    <para>
+     Если утверждения включены, то пример выше выведет:
+    </para>
+    <screen>
+<![CDATA[
+Fatal error: Uncaught ArithmeticAssertionError: Ожидается, что один больше двух in example.php:4
 Stack trace:
 #0 {main}
-  thrown in - on line 4
+  thrown in example.php on line 4
 ]]>
     </screen>
+    <para>
+     Если утверждения выключены, пример выше выведет:
+    </para>
+    <screen>
+<![CDATA[
+Привет!
+]]>
+     </screen>
    </example>
-  </refsect2>
-  <refsect2>
-   <title>Оцениваемые утверждения кода (только для PHP 7)</title>
-
-   <para>
-    При использовании оцениваемых утверждений callback-функции <function>assert</function>
-    могут быть особенно полезны, поскольку код, использованный для утверждения,
-    передаётся callback-функции вместе с информацией о том, где было выполнено утверждение.
-   </para>
-   <para>
-    <example>
-     <title>Обработка неудачной проверки утверждения с помощью пользовательского обработчика</title>
-     <programlisting role="php">
-<![CDATA[
-<?php
-// Активируйте утверждение и отключите error_reporting
-assert_options(ASSERT_ACTIVE, 1);
-assert_options(ASSERT_WARNING, 0);
-assert_options(ASSERT_QUIET_EVAL, 1);
-
-// Создайте функцию-обработчик
-function my_assert_handler($file, $line, $code)
-{
-    echo "<hr>Утверждение не выполнено:
-        Файл '$file'<br />
-        Строка '$line'<br />
-        Код '$code'<br /><hr />";
-}
-
-// Настройте callback-функцию
-assert_options(ASSERT_CALLBACK, 'my_assert_handler');
-
-// Создайте утверждение, которое должно потерпеть неудачу
-$array = [];
-assert('count($array);');
-?>
-]]>
-     </programlisting>
-     &example.outputs.72;
-     <screen>
-<![CDATA[
-Deprecated: assert(): Calling assert() with a string argument is deprecated in test.php on line 21
-<hr>Утверждение не выполнено:
-        Файл 'test.php'<br />
-        Строка '21'<br />
-        Код 'count($array);'<br /><hr />
-]]>
-     </screen>
-     &example.outputs.71;
-     <screen>
-<![CDATA[
-<hr>Утверждение не выполнено:
-        Файл 'test.php'<br />
-        Строка '21'<br />
-        Код 'count($array);'<br /><hr />
-]]>
-     </screen>
-    </example>
-   </para>
-   <para>
-    <example>
-     <title>Использование пользовательского обработчика для вывода описания</title>
-     <programlisting role="php">
-<![CDATA[
-<?php
-// Активируйте утверждение и отключите error_reporting
-assert_options(ASSERT_ACTIVE, 1);
-assert_options(ASSERT_WARNING, 0);
-assert_options(ASSERT_QUIET_EVAL, 1);
-
-// Создайте функцию-обработчик
-function my_assert_handler($file, $line, $code, $desc = null)
-{
-    echo "Утверждение не выполнено в $file:$line: $code";
-    if ($desc) {
-        echo ": $desc";
-    }
-    echo "\n";
-}
-
-// Настройте callback-функцию
-assert_options(ASSERT_CALLBACK, 'my_assert_handler');
-
-// Создайте утверждение, которое должно потерпеть неудачу
-assert('2 < 1');
-assert('2 < 1', 'Два меньше, чем один');
-?>
-]]>
-     </programlisting>
-     &example.outputs.72;
-     <screen>
-<![CDATA[
-Deprecated: assert(): Calling assert() with a string argument is deprecated in test.php on line 21
-Утверждение не выполнено в test.php:21: 2 < 1
-
-Deprecated: assert(): Calling assert() with a string argument is deprecated in test.php on line 22
-Утверждение не выполнено в test.php:22: 2 < 1: Два меньше, чем один
-]]>
-     </screen>
-     &example.outputs.71;
-     <screen>
-<![CDATA[
-Утверждение не выполнено в test.php:21: 2 < 1
-Утверждение не выполнено в test.php:22: 2 < 1: Два меньше, чем один
-]]>
-     </screen>
-    </example>
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1 role="seealso">
