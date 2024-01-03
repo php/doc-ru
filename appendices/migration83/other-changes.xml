@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 307ee0078a4c33f4766e3f467612be7c528327ec Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="migration83.other-changes" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <title>Other Changes</title>
+
+ <sect2 xml:id="migration83.other-changes.core">
+  <title>Core changes</title>
+
+  <sect3 xml:id="migration83.other-changes.core.ffi">
+   <title>FFI</title>
+
+   <para>
+    <methodname>FFI::load</methodname> is now allowed during preloading
+    when <link linkend="ini.opcache.preload-user">opcache.preload_user</link>
+    is the current system user. Previously,
+    calling <methodname>FFI::load</methodname> was not possible
+    during preloading if the
+    <link linkend="ini.opcache.preload-user">opcache.preload_user</link>
+    directive was set.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration83.other-changes.core.fpm">
+   <title>FPM</title>
+
+   <para>
+    FPM CLI test now fails if the socket path is longer than supported by OS.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration83.other-changes.core.opcache">
+   <title>Opcache</title>
+
+   <para>
+    In the CLI and phpdbg SAPIs, preloading does not require the
+    <link linkend="ini.opcache.preload-user">opcache.preload_user</link>
+    directive to be set anymore when running as root.
+    In other SAPIs, this directive is required when running as root because
+    preloading is done before the SAPI switches to an unprivileged user.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration83.other-changes.core.streams">
+   <title>Streams</title>
+
+   <para>
+    Blocking <function>fread</function> on socket connection returns
+    immediately if there are any buffered data instead of waiting for more data.
+   </para>
+
+   <para>
+    A memory stream no longer fails if the seek offset is past the end.
+    Instead, the memory will be increased on the next write and the data between
+    the old end and the offset is filled with zero bytes, similar to how files work.
+   </para>
+
+   <para>
+    <function>stat</function> access operations like
+    <function>file_exists</function> and similar will now use real
+    path instead of the actual stream path. This is consistent with stream
+    opening.
+   </para>
+  </sect3>
+ </sect2>
+
+ <sect2 xml:id="migration83.other-changes.sapi">
+  <title>Changes in SAPI Modules</title>
+
+  <sect3 xml:id="migration83.other-changes.sapi.cli">
+   <title>CLI</title>
+
+   <para>
+    The <constant>STDOUT</constant>, <constant>STDERR</constant> and
+    <constant>STDIN</constant> streams are no longer closed on resource
+    destruction which is mostly when the CLI finishes.
+    It is however still possible to explicitly close those streams using
+   </para>
+
+   <para>
+    The SQLite error code is now passed in the exception error code instead of
+    being included in the error message.
+   </para>
+
+  </sect3>
+ </sect2>
+
+ <sect2 xml:id="migration83.other-changes.ini">
+  <title>Changes to INI File Handling</title>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The <literal>assert.*</literal> INI settings have been deprecated.
+     This comprises the following INI settings:
+     <simplelist>
+      <member><link linkend="ini.assert.active">assert.active</link></member>
+      <member><link linkend="ini.assert.bail">assert.bail</link></member>
+      <member><link linkend="ini.assert.callback">assert.callback</link></member>
+      <member><link linkend="ini.assert.exception">assert.exception</link></member>
+      <member><link linkend="ini.assert.warning">assert.warning</link></member>
+     </simplelist>
+     If the value of the setting is equal to the default value, no deprecation
+     notice is emitted.
+     The <link linkend="ini.zend.assertions">zend.assertions</link> INI setting
+     should be used instead.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <!--<link linkend="ini.zend.max_allowed_stack_size">-->zend.max_allowed_stack_size<!--</link>-->
+    is a new INI directive to set the maximum allowed stack size.
+    Possible values are <literal>0</literal> (detect the process or thread maximum stack size),
+    <literal>-1</literal> (no limit), or a positive number of bytes.
+    The default is <literal>0</literal>.
+    When it is not possible to detect the process or thread maximum stack
+    size, a known system default is used.
+    Setting this value too high has the same effect as disabling the stack size limit.
+    Fibers use
+    <!-- link TODO -->fiber.stack_size<!-- /link -->
+    as maximum allowed stack size.
+    An <classname>Error</classname> is thrown when the process call stack exceeds
+    <!-- link TODO -->zend.max_allowed_stack_size-zend.reserved_stack_size<!-- /link-->
+    bytes, to prevent stack-overflow-induced segmentation faults, with
+    the goal of making debugging easier.
+    The stack size increases during uncontrolled recursions involving internal functions
+    or the magic methods
+    <link linkend="object.tostring">__toString()</link>,
+    <link linkend="object.clone">__clone()</link>,
+    <link linkend="object.sleep">__sleep()</link>,
+    <link linkend="object.destruct">__destruct()</link>.
+    This is not related to stack buffer overflows, and is not a security feature.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     <!--<link linkend="ini.zend.reserved_stack_size">-->zend.reserved_stack_size<!--</link>-->
+     is a new INI directive to set the reserved stack size, in bytes.
+     This is subtracted from the max allowed stack size,
+     as a buffer, when checking the stack size.
+    </para>
+   </listitem>
+   </itemizedlist>
+ </sect2>
+
+ <sect2 xml:id="migration83.other-changes.performance">
+  <title>Performance</title>
+
+  <sect3 xml:id="migration83.other-changes.performance.dom">
+   <title>DOM</title>
+
+   <para>
+    Looping over a <classname>DOMNodeList</classname> now uses caching. Therefore
+    requesting items no longer takes quadratic time by default.
+   </para>
+
+   <para>
+    Getting text content from nodes now avoids an allocation, resulting in a
+    performance gain.
+   </para>
+
+   <para>
+    <methodname>DOMChildNode::remove</methodname> now runs in O(1) performance.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration83.other-changes.performance.standard">
+   <title>Standard</title>
+
+   <para>
+    The <function>file</function> flags error check is now about 7% faster.
+   </para>
+  </sect3>
+
+  <sect3 xml:id="migration83.other-changes.performance.spl">
+   <title>SPL</title>
+
+   <para>
+    <classname>RecursiveDirectoryIterator</classname> now performs less I/O
+    when looping over a directory.
+   </para>
+  </sect3>
+ </sect2>
+
+</sect1>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
