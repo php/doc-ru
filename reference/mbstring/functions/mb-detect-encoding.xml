@@ -4,7 +4,7 @@
 <refentry xml:id="function.mb-detect-encoding" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>mb_detect_encoding</refname>
-  <refpurpose>Определение кодировки символов</refpurpose>
+  <refpurpose>Определяет кодировку символов</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,19 +16,21 @@
    <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Определяет наиболее вероятную кодировку символов для строки (<type>string</type>) <parameter>string</parameter> из
-   упорядоченного списка кандидатов.
+   Определяет наиболее вероятную кодировку символов строки,
+   переданной в параметр <parameter>string</parameter>,
+   проверяя список кандидатов по порядку.
   </para>
   <para>
    Автоматическое определение предполагаемой кодировки символов не может быть полностью надёжным;
    без дополнительной информации это похоже на расшифровку зашифрованной строки без ключа.
-   Всегда предпочтительно использовать индикацию кодировки символов, хранящуюся или передаваемую с данными,
-   такую как HTTP-заголовок "Content-Type".
+   Лучше предпочесть указание кодировки символов, хранящейся или передаваемой с данными,
+   например в HTTP-заголовке Content-Type.
   </para>
   <para>
-   Функция наиболее полезна с многобайтовыми кодировками, когда не все последовательности
-   байтов образуют допустимую строку. Если входная строка содержит такую последовательность, эта кодировка будет отклонена,
-   и будет проверена следующая кодировка.
+   Функция будет полезнее, если вызывать её с многобайтовыми кодировками,
+   поскольку не все последовательности байтов образуют допустимую строку.
+   Если входная строка содержит такую последовательность,
+   кодировка будет отклонена, и будет проверена следующая кодировка.
   </para>
  </refsect1>
 
@@ -48,14 +50,15 @@
      <term><parameter>encodings</parameter></term>
      <listitem>
       <para>
-       Упорядоченный список кодировок символов. Список может быть указан
-       как массив строк или как строка кодировок, разделённых запятыми.
+       Список кодировок символов для проверки в заданном порядке.
+       Список может быть определён как массив строк
+       или как одна строка, разделённая запятыми.
       </para>
       <para>
-       Если <parameter>encodings</parameter> не задан или является &null;,
-       будет использоваться текущий detect_order (установленный с помощью
-       параметра конфигурации <link linkend="ini.mbstring.detect-order">mbstring.detect_order</link>
-       или функции <function>mb_detect_order</function>).
+       Если параметр <parameter>encodings</parameter> не задан или равен &null;,
+       будет выбрана кодировка, установленная в директиве с именем detect_order (устанавливают
+       в директиве <link linkend="ini.mbstring.detect-order">mbstring.detect_order</link> настроек конфигурации
+       или функцией <function>mb_detect_order</function>).
       </para>
      </listitem>
     </varlistentry>
@@ -63,15 +66,18 @@
      <term><parameter>strict</parameter></term>
      <listitem>
       <para>
-       Управляет поведением, когда <parameter>string</parameter>
-       недопустима ни в одной из перечисленных <parameter>encodings</parameter>.
-       Если для <parameter>strict</parameter> установлено значение &false;,
-       будет возвращена наиболее подходящая кодировка;
-       если для <parameter>strict</parameter> установлено значение &true;, будет возвращено &false;.
+       Управляет поведением, когда строка в параметре <parameter>string</parameter>
+       недопустима ни для одной перечисленной в параметре <parameter>encodings</parameter> кодировки.
+       Если параметр <parameter>strict</parameter> установлен в значение &false;,
+       будет возвращена первая совпавшая кодировка;
+       если параметр <parameter>strict</parameter> установлен в значение &true;,
+       будет возвращено значение &false;.
       </para>
       <para>
-       Значение по умолчанию для <parameter>strict</parameter> можно установить с помощью
-       параметра конфигурации <link linkend="ini.mbstring.strict-detection">mbstring.strict_detection</link>.
+       Значение по умолчанию для параметра <parameter>strict</parameter>
+       можно установить в директиве
+       <link linkend="ini.mbstring.strict-detection">mbstring.strict_detection</link>
+       настроек конфигурации.
       </para>
      </listitem>
     </varlistentry>
@@ -82,8 +88,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Название кодировки символов или &false;, если строка недопустима
-   ни в одной из перечисленных кодировок.
+   Возвращает обнаруженную кодировку символов или &false;,
+   если строка недопустима ни для одной из перечисленных кодировок.
   </para>
  </refsect1>
 
@@ -91,27 +97,28 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>mb_detect_encoding</function></title>
+    <title>Пример использования функции <function>mb_detect_encoding</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Определение кодировки с текущим detect_order
+
+// Определение кодировки с текущей detect_order
 echo mb_detect_encoding($str);
 
-// "auto" раскрывается в соответствии с mbstring.language
+// Значение «auto» раскрывается в соответствии с директивой mbstring.language
 echo mb_detect_encoding($str, "auto");
 
-// Зададим список кодировок "encodings" в виде строки
+// Установка параметра «encodings» списком, разделённым запятой
 echo mb_detect_encoding($str, "JIS, eucjp-win, sjis-win");
 
-// Использование массива для задания возможных кодировок "encodings"
+// Установка параметра «encodings» массивом
 $encodings = [
   "ASCII",
   "JIS",
   "EUC-JP"
 ];
 echo mb_detect_encoding($str, $encodings);
-?>
+
 ]]>
     </programlisting>
    </example>
@@ -122,17 +129,18 @@ echo mb_detect_encoding($str, $encodings);
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // 'áéóú' закодирована в ISO-8859-1
 $str = "\xE1\xE9\xF3\xFA";
 
-// Строка недействительна в ASCII или UTF-8, но UTF-8 считается более близким соответствием
+// Строка недействительна для кодировок ASCII или UTF-8, но UTF-8 считается более близким соответствием
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8'], false));
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8'], true));
 
 // Если допустимая кодировка найдена, параметр strict не меняет результат
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8', 'ISO-8859-1'], false));
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8', 'ISO-8859-1'], true));
-?>
+
 ]]>
     </programlisting>
     &example.outputs;
@@ -147,38 +155,39 @@ string(10) "ISO-8859-1"
    </example>
   </para>
   <para>
-   В некоторых случаях одна и та же последовательность байтов может образовывать
-   допустимую строку в нескольких кодировках символов, и невозможно узнать, какая интерпретация предназначалась.
-   Например, среди многих других байтовая последовательность "\xC4\xA2" может быть:
+   Иногда одна и та же последовательность байтов может образовывать
+   допустимую строку в нескольких кодировках символов, и невозможно узнать, какая интерпретация предполагалась.
+   Например, среди многих других байтовая последовательность «\xC4\xA2» может быть:
   </para>
   <para>
    <simplelist>
     <member>
-     "Ä¢" (U+00C4 LATIN CAPITAL LETTER A WITH DIAERESIS с последующим U+00A2 CENT SIGN)
-     закодирована в ISO-8859-1, ISO-8859-15 или Windows-1252
+     "Ä¢" (U+00C4 LATIN CAPITAL LETTER A WITH DIAERESIS с последующим U+00A2 CENT SIGN),
+     закодированная в одной из кодировок — ISO-8859-1, ISO-8859-15 или Windows-1252
     </member>
     <member>
      "ФЂ" (U+0424 CYRILLIC CAPITAL LETTER EF с последующим U+0402 CYRILLIC CAPITAL LETTER
-     DJE) закодирована в ISO-8859-5
+     DJE), закодированная в ISO-8859-5
     </member>
     <member>
-     "Ģ" (U+0122 LATIN CAPITAL LETTER G WITH CEDILLA) закодирована в UTF-8
+     "Ģ" (U+0122 LATIN CAPITAL LETTER G WITH CEDILLA), закодированная в UTF-8
     </member>
    </simplelist>
   </para>
   <para>
    <example>
-    <title>Использование порядка при совпадении нескольких кодировок</title>
+    <title>Действие порядка при совпадении нескольких кодировок</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $str = "\xC4\xA2";
 
-// Строка действительна во всех трех кодировках, поэтому будет возвращена первая из перечисленных кодировок.
+// Строка действительна во всех трех кодировках, поэтому будет возвращена первая из перечисленных кодировок
 var_dump(mb_detect_encoding($str, ['UTF-8', 'ISO-8859-1', 'ISO-8859-5']));
 var_dump(mb_detect_encoding($str, ['ISO-8859-1', 'ISO-8859-5', 'UTF-8']));
 var_dump(mb_detect_encoding($str, ['ISO-8859-5', 'UTF-8', 'ISO-8859-1']));
-?>
+
 ]]>
     </programlisting>
     &example.outputs;
