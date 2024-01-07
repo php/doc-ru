@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6ab6ea465889620fc2a8cdaf7b008cbaed83c523 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 86b976d5afaf037868174fe5c242e886eb69baa4 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ob-get-flush" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ob_get_flush</refname>
-  <refpurpose>Сбрасывает буфер вывода, возвращает его в виде строки и отключает буферизацию вывода</refpurpose>
+  <refpurpose>
+   Сбрасывает (отправляет) возвращённое активным обработчиком вывода значение,
+   возвращает содержимое активного буфера вывода и отключает его
+  </refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,20 +17,23 @@
    <void/>
   </methodsynopsis>
   <para>
-   Функция <function>ob_get_flush</function> сбрасывает буфер вывода, возвращая
-   его содержимое в виде строки, и отключает буферизацию вывода.
+   Функция вызывает обработчик вывода
+   (с флагом <constant>PHP_OUTPUT_HANDLER_FINAL</constant>),
+   сбрасывает (отправляет) возвращённое им значение,
+   возвращает содержимое активного буфера вывода
+   и отключает активный буфер вывода.
   </para>
   <para>
-   Буфер вывода должен запускаться функцией <function>ob_start</function>
-   с флагом <link linkend="constant.php-output-handler-flushable">PHP_OUTPUT_HANDLER_FLUSHABLE</link>.
-   Иначе не сработает функция <function>ob_get_flush</function>.
+   Функция <function>ob_get_flush</function> завершится неудачно
+   без активного буфера вывода, запущенного с флагом
+   <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant>.
   </para>
-  <note>
-   <simpara>
-    Эта функция аналогична функции <function>ob_end_flush</function>
-    за исключением того, что эта функция также возвращает буфер в виде строки.
-   </simpara>
-  </note>
+  <para>
+   Функция <function>ob_get_flush</function> сбросит (отправит)
+   возвращённое обработчиком вывода значение,
+   даже если активный буфер вывода был запущен без флага
+   <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant>.
+  </para>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -38,7 +44,15 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает буфер вывода или &false;, если буферизация не активна.
+   Возвращает содержимое активного буфера вывода при успешном выполнении
+   или &false; при ошибке.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Если функция завершается неудачно, она выдаёт ошибку уровня <constant>E_NOTICE</constant>.
   </para>
  </refsect1>
 
@@ -81,9 +95,11 @@ Array
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member><function>ob_end_clean</function></member>
+    <member><function>ob_start</function></member>
+    <member><function>ob_get_contents</function></member>
+    <member><function>ob_flush</function></member>
     <member><function>ob_end_flush</function></member>
-    <member><function>ob_list_handlers</function></member>
+    <member><function>ob_get_clean</function></member>
    </simplelist>
   </para>
  </refsect1>
