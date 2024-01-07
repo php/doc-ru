@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6ab6ea465889620fc2a8cdaf7b008cbaed83c523 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 86b976d5afaf037868174fe5c242e886eb69baa4 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ob-end-clean">
  <refnamediv>
   <refname>ob_end_clean</refname>
-  <refpurpose>Очищает (стирает) буфер вывода и отключает буферизацию вывода</refpurpose>
+  <refpurpose>Очищает (стирает) содержимое активного буфера вывода и отключает его</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,19 +14,23 @@
    <void/>
   </methodsynopsis>
   <para>
-   Эта функция удаляет содержимое самого верхнего буфера вывода и отключает
-   эту буферизацию. Если с содержимым буфера ещё нужно поработать,
-   то перед вызовом функции <function>ob_end_clean</function>
-   нужно вызвать функцию <function>ob_get_contents</function>,
-   так как всё содержимое буфера удаляется
-   при вызове функции <function>ob_end_clean</function>.
+   Функция вызывает обработчик вывода
+   (с флагами <constant>PHP_OUTPUT_HANDLER_CLEAN</constant>
+   и <constant>PHP_OUTPUT_HANDLER_FINAL</constant>),
+   сбрасывает возвращённое ими значение
+   и содержимое активного буфера вывода,
+   а затем отключает активный буфер вывода.
   </para>
   <para>
-   Буфер вывода должен запускаться функцией
-   <function>ob_start</function> с флагами
-   <link linkend="constant.php-output-handler-cleanable">PHP_OUTPUT_HANDLER_CLEANABLE</link> и
-   <link linkend="constant.php-output-handler-removable">PHP_OUTPUT_HANDLER_REMOVABLE</link>.
-   Иначе не сработает функция <function>ob_end_clean</function>.
+   Функция <function>ob_end_clean</function> завершится неудачно
+   без активного буфера вывода, запущенного с флагом
+   <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant>.
+  </para>
+  <para>
+   Функция <function>ob_end_clean</function>
+   сбросит содержимое активного буфера вывода,
+   даже если она была запущена без флага
+   <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant>.
   </para>
  </refsect1>
 
@@ -38,23 +42,22 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success; Основная причина неудачного завершения работы функции —
-   её вызов без активного буфера или если буфер не может
-   быть удалён (специальный тип буфера).
+   &return.success;
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Если функция завершается ошибкой, возникает ошибка уровня <constant>E_NOTICE</constant>.
+   Если функция завершается неудачно, она выдаёт ошибку уровня <constant>E_NOTICE</constant>.
   </para>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
-   Следующий пример показывает простой способ избавиться от всех выходных буферов:
+   Следующий пример показывает простой способ избавиться
+   содержимого активного буфера вывода:
   </para>
   <para>
    <example>
@@ -78,7 +81,9 @@ ob_end_clean();
    <simplelist>
     <member><function>ob_start</function></member>
     <member><function>ob_get_contents</function></member>
-    <member><function>ob_flush</function></member>
+    <member><function>ob_clean</function></member>
+    <member><function>ob_get_clean</function></member>
+    <member><function>ob_end_flush</function></member>
    </simplelist>
   </para>
  </refsect1>
