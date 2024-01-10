@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 7a7f52a7c3f9d489e67f3d2c57541282531d550c Maintainer: shein Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="random-randomizer.nextfloat" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>Random\Randomizer::nextFloat</refname>
+  <refpurpose>Получает число с плавающей точкой из открытого справа интервала [0.0, 1.0)</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis role="Random\\Randomizer">
+   <modifier>public</modifier> <type>float</type><methodname>Random\Randomizer::nextFloat</methodname>
+   <void/>
+  </methodsynopsis>
+  <para>
+   Возвращает равномерно выбранное, равнораспределённое число с плавающей точкой из открытого справа
+   интервала от <literal>0.0</literal> до <literal>1.0</literal>, но не включая саму единицу.
+  </para>
+
+  <para>
+   Вероятность того, что возвращенное число с плавающей точкой окажется в пределах заданного открытого справа подинтервала
+   пропорциональна размеру подинтервала.
+
+   То есть вероятность того, что число с плавающей точкой будет <emphasis>меньше</emphasis> <literal>0.5</literal>, равна
+   50 %, что равно вероятности того, что число с плавающей точкой будет <emphasis>не менее</emphasis> <literal>0.5</literal>.
+
+   Аналогично, вероятность того, что число с плавающей точкой окажется в пределах открытого справа интервала
+   от <literal>0.2</literal> до <literal>0.25</literal>, не включая последнее значение, —
+   составляет ровно 5 %.
+  </para>
+
+  <para>
+   Это свойство делает метод <methodname>Random\Randomizer::nextFloat</methodname> простым средством
+   для генерации случайного логического значения с заданной вероятностью, проверяя, <emphasis>меньше ли</emphasis>
+   возвращаемое число с плавающей точкой заданной вероятности.
+  </para>
+
+  <note>
+   <para>
+    Область определения возвращаемых методом <methodname>Random\Randomizer::nextFloat</methodname> чисел с плавающей точкой
+    идентична области определения метода, вызванного с аргументами <code>Randomizer::getFloat(0.0, 1.0, IntervalBoundary::ClosedOpen)</code>.
+   </para>
+
+   <para>
+    Внутренняя реализация метода <methodname>Random\Randomizer::nextFloat</methodname>
+    более эффективна.
+   </para>
+  </note>
+
+  <caution>
+   <para>
+    Масштабирование возвращаемого значения до другого интервала через умножение
+    или сложение (т. н. афинное преобразование) иногда приводит к смещению
+    результирующего значения поскольку числа с плавающей точкой не одинаково плотны
+    по числовой прямой. Поскольку не все значения могут быть точно представлены числом с плавающей точкой,
+    результат афинного преобразования иногда возвращает значения за пределами
+    запрошенного интервала из за неявного округления.
+
+    <link linkend="random-randomizer.getfloat.affine-transformation">Подробное объяснение</link>
+    проблем, связанных с афинным преобразованием, дано в документации
+    к методу <methodname>Random\Randomizer::getFloat</methodname>.
+   </para>
+   <para>
+    Для генерации случайного числа с плавающей точкой в произвольном интервале
+    лучше предпочесть метод <methodname>Random\Randomizer::getFloat</methodname>.
+    Для генерации случайного целого числа в произвольном интервале
+    пользуются методом <methodname>Random\Randomizer::getInt</methodname>.
+   </para>
+  </caution>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  &no.function.parameters;
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает равномерно выбранное, равнораспределённое число с плавающей точкой из открытого справа (<literal>IntervalBoundary::ClosedOpen</literal>)
+   интервала [0.0, 1.0).
+
+   Значение <literal>0.0</literal> — возможное возвращаемое значение, значение <literal>1.0</literal> — нет.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <itemizedlist>
+   &random.engineErrors;
+  </itemizedlist>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования метода <methodname>Random\Randomizer::nextFloat</methodname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$r = new \Random\Randomizer();
+
+// Результирующее логическое значение будет истинным с равной вероятностью.
+$chance = 0.5;
+
+$bool = $r->nextFloat() < $chance;
+
+echo ($bool ? "Вы выиграли" : "Вы проиграли"), "\n";
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+You won
+]]>
+   </screen>
+  </example>
+
+  <example>
+   <title>Неправильное масштабирование через аффинное преобразование</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+final class MaxEngine implements Random\Engine {
+    public function generate(): string {
+        return "\xff";
+    }
+}
+
+$randomizer = new \Random\Randomizer(new MaxEngine);
+
+$min = 3.5;
+$max = 4.5;
+
+// НЕ ДЕЛАЙТЕ ЭТОГО:
+//
+// Это выведет значение 4.5, несмотря на выборку метода nextFloat()
+// из открытого справа интервала, который никогда не вернёт значение 1.
+printf("Неправильное масштабирование: %.17g", $randomizer->nextFloat() * ($max - $min) + $min);
+
+// Правильно:
+// $randomizer->getFloat($min, $max, \Random\IntervalBoundary::ClosedOpen);
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Wrong scaling: 4.5
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><methodname>Random\Randomizer::getFloat</methodname></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+<!--Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
