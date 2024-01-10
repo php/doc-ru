@@ -40,6 +40,7 @@
   <programlisting role="php">
 <![CDATA[
 <?php
+
 enum Suit
 {
     case Hearts;
@@ -115,8 +116,8 @@ $a instanceof Suit;  // true
   </para>
 
   <para>
-   Тип варианта без связанных данных называется «Чистый вариант». Перечисление, которое содержит только чистые варианты,
-   называется чистым перечислением.
+   Тип варианта без связанных данных называется «Чистый вариант» (Pure Case). Перечисление, которое содержит только чистые варианты,
+   называется чистым перечислением (Pure Enum).
   </para>
 
   <para>
@@ -132,6 +133,7 @@ $a instanceof Suit;  // true
   <programlisting role="php">
 <![CDATA[
 <?php
+
 print Suit::Spades->name;
 // prints "Spades"
 ?>
@@ -175,14 +177,14 @@ enum Suit: string
   </programlisting>
 
   <para>
-   Вариант со скалярным эквивалентом называется типизированным (Backed Case), поскольку он «подкреплён» более простым значением.
-   Перечисление, у которого все варианты типизированные, называется «типизированным перечислением».
+   Вариант со скалярным эквивалентом называется типизированным (Backed Case), поскольку он «поддержан» более простым значением.
+   Перечисление, у которого все варианты типизированные, называется «типизированным перечислением» (Backed Enum).
    Типизированное перечисление может содержать только типизированные варианты.
    Чистое перечисление может содержать только чистые варианты.
   </para>
 
   <para>
-   Типизированное перечисление может подкрепляться типами <literal>int</literal> или <literal>string</literal>
+   Типизированное перечисление может поддерживаться типами <literal>int</literal> или <literal>string</literal>
    и такое перечисление поддерживает только один тип за раз (то есть нельзя объединять <literal>int|string</literal>).
    Если перечисление помечено как имеющее скалярный эквивалент, тогда все варианты должны иметь определённый явно уникальный скалярный эквивалент.
    Не существует автоматически генерируемых скалярных эквивалентов (например, последовательных целых чисел).
@@ -268,12 +270,10 @@ $record = get_stuff_from_database($id);
 print $record['suit'];
 
 $suit =  Suit::from($record['suit']);
-
 // Недопустимые данные выбросят исключение ValueError: "X" is not a valid scalar value for enum "Suit"
 print $suit->value;
 
 $suit = Suit::tryFrom('A') ?? Suit::Spades;
-
 // Недопустимые данные возвращают значение null, поэтому вместо этого будет использовано Suit::Spades.
 print $suit->value;
 ?>
@@ -290,8 +290,8 @@ print $suit->value;
   <title>Методы перечислений</title>
 
   <para>
-   Перечисления (как чистые перечисления, так и типизированные перечисления) могут содержать методы и могут реализовывать интерфейсы.
-   Если перечисление реализует интерфейс, то любая проверка типа для этого интерфейса также будет принимать все варианты этого перечисления.
+   Перечисления (как чистые, так и типизированные) могут содержать методы и могут реализовывать интерфейсы.
+   Если перечисление реализует интерфейс, то любая проверка типа этого интерфейса также примет и все варианты этого перечисления.
   </para>
 
   <programlisting role="php">
@@ -310,7 +310,7 @@ enum Suit implements Colorful
     case Clubs;
     case Spades;
 
-    // Выполняет интерфейсный контракт.
+    // Выполняет контракт интерфейса.
     public function color(): string
     {
         return match($this) {
@@ -319,14 +319,14 @@ enum Suit implements Colorful
         };
     }
 
-    // Не является частью интерфейса; хорошо.
+    // Не часть интерфейса; хорошо.
     public function shape(): string
     {
         return "Rectangle";
     }
 }
 
-function paint(Colorful $c) { ... }
+function paint(Colorful $c) {}
 
 paint(Suit::Clubs);  // Работает
 
@@ -336,18 +336,19 @@ print Suit::Diamonds->shape(); // выведет "Rectangle"
   </programlisting>
 
   <para>
-   В этом примере у всех четырёх экземпляров <literal>Suit</literal> есть два метода:
+   В этом примере каждый из четырёх экземпляров <literal>Suit</literal> имеет два метода:
    <literal>color()</literal> и <literal>shape()</literal>.
-   Что касается вызывающего кода и проверки типов, они ведут себя точно так же, как и любой другой экземпляр объекта.
+   В вызывающем коде и при проверке типов экземпляры перечисления ведут себя точно так же, как и любой другой экземпляр объекта.
   </para>
 
   <para>
-   В типизированных перечислениях объявление интерфейса идёт после объявления типа.
+   В типизированных перечислениях объявление интерфейса идёт после объявления типа перечисления.
   </para>
 
   <programlisting role="php">
 <![CDATA[
 <?php
+
 interface Colorful
 {
     public function color(): string;
@@ -374,29 +375,31 @@ enum Suit: string implements Colorful
    </programlisting>
 
    <para>
-    Внутри метода определяется переменная <literal>$this</literal>, которая ссылается на экземпляр варианта.
+    Переменная <literal>$this</literal> определена внутри метода и ссылается на экземпляр варианта.
    </para>
 
    <para>
-    Методы могут быть сколь угодно сложными, но на практике обычно возвращают статическое значение
-    или &match; для <literal>$this</literal>,
-    чтобы предоставить разные результаты для разных случаев.
+    Сложность методов в перечислениях не ограничена, но на практике методы перечислений чаще возвращают статическое значение
+    или результат обработки переменной <literal>$this</literal> выражением &match;,
+    чтобы результаты обработки отдельных экземпляров перечисления отличались.
    </para>
 
    <para>
-    Обратите внимание, что в этом случае было бы лучше также определить тип перечисления <literal>SuitColor</literal>
-    со значениями Red и Black и вернуть его вместо этого.
-    Однако это усложнило бы этот пример.
+    Обратите внимание, в этом примере более хорошей практикой построения данных было бы —
+    определить тип перечисления <literal>SuitColor</literal>
+    со значениями Red и Black и возвращать их вместо строковых литералов.
+    Однако это усложнило бы пример.
    </para>
 
    <para>
-    Вышеупомянутая иерархия логически похожа на следующую структуру классов
-    (хотя это не фактический исполняемый код):
+    Иерархия в примере логически похожа на следующую структуру классов
+    (хотя это не настоящий исполняемый код):
    </para>
 
    <programlisting role="php">
 <![CDATA[
 <?php
+
 interface Colorful
 {
     public function color(): string;
@@ -435,8 +438,9 @@ final class Suit implements UnitEnum, Colorful
    </programlisting>
 
    <para>
-    Методы могут быть общедоступными, закрытыми или защищёнными, хотя на практике закрытые и защищённые эквивалентны,
-    поскольку наследование не допускается.
+    В перечислениях разрешено объявлять общедоступные, закрытые и защищённые методы,
+    хотя на практике закрытые и защищённые методы эквивалентны,
+    поскольку наследование не разрешено.
    </para>
 
  </sect1>
@@ -452,6 +456,7 @@ final class Suit implements UnitEnum, Colorful
   <programlisting role="php">
 <![CDATA[
 <?php
+
 enum Size
 {
     case Small;
@@ -492,6 +497,7 @@ enum Size
   <programlisting role="php">
 <![CDATA[
 <?php
+
 enum Size
 {
     case Small;
@@ -518,6 +524,7 @@ enum Size
   <programlisting role="php">
 <![CDATA[
 <?php
+
 interface Colorful
 {
     public function color(): string;
@@ -573,14 +580,15 @@ enum Suit implements Colorful
   <programlisting role="php">
 <![CDATA[
 <?php
+
 // Это полностью законное определение перечисления.
 enum Direction implements ArrayAccess
 {
     case Up;
     case Down;
 
-    public function offsetGet($val) { ... }
-    public function offsetExists($val) { ... }
+    public function offsetGet($val) {}
+    public function offsetExists($val) {}
     public function offsetSet($val) { throw new Exception(); }
     public function offsetUnset($val) { throw new Exception(); }
 }
@@ -653,8 +661,10 @@ $x = Direction::Up['short'];
   <programlisting role="php">
 <![CDATA[
 <?php
+
 $clovers = new Suit();
 // Error: Cannot instantiate enum Suit
+
 $horseshoes = (new ReflectionClass(Suit::class))->newInstanceWithoutConstructor()
 // Error: Cannot instantiate enum Suit
 ?>
@@ -675,6 +685,7 @@ $horseshoes = (new ReflectionClass(Suit::class))->newInstanceWithoutConstructor(
   <programlisting role="php">
 <![CDATA[
 <?php
+
 Suit::cases();
 // Produces: [Suit::Hearts, Suit::Diamonds, Suit::Clubs, Suit::Spades]
 ?>
@@ -699,6 +710,7 @@ Suit::cases();
   <programlisting role="php">
 <![CDATA[
 <?php
+
 Suit::Hearts === unserialize(serialize(Suit::Hearts));
 
 print serialize(Suit::Hearts);
@@ -725,6 +737,7 @@ print serialize(Suit::Hearts);
   <programlisting role="php">
 <![CDATA[
 <?php
+
 enum Foo {
     case Bar;
 }
@@ -788,6 +801,7 @@ function bar(B $b) {
   <programlisting role="php">
 <![CDATA[
 <?php
+
 enum ErrorCode {
     case SOMETHING_BROKE;
 }
@@ -816,6 +830,7 @@ function quux(ErrorCode $errorCode)
   <programlisting role="php">
 <![CDATA[
 <?php
+
 // Экспериментальный код, в котором перечисления не являются конечными.
 // Обратите внимание, что это не будет работать в PHP.
 enum MoreErrorCode extends ErrorCode {
@@ -856,13 +871,14 @@ fot(MoreErrorCode::PEBKAC);
     <programlisting role="php">
 <![CDATA[
 <?php
+
 enum SortOrder
 {
     case Asc;
     case Desc;
 }
 
-function query($fields, $filter, SortOrder $order = SortOrder::Asc) { ... }
+function query($fields, $filter, SortOrder $order = SortOrder::Asc) {}
 ?>
 ]]>
     </programlisting>
@@ -884,6 +900,7 @@ function query($fields, $filter, SortOrder $order = SortOrder::Asc) { ... }
     <programlisting role="php">
 <![CDATA[
 <?php
+
 enum UserStatus: string
 {
     case Pending = 'P';
@@ -922,6 +939,7 @@ enum UserStatus: string
      <programlisting role="php">
 <![CDATA[
 <?php
+
 foreach (UserStatus::cases() as $case) {
     printf('<option value="%s">%s</option>\n', $case->value, $case->label());
 }
