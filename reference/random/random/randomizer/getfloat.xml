@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 07b8fdd1f2f54178f57094c12015f0f66a295901 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="random-randomizer.getfloat" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>Random\Randomizer::getFloat</refname>
+  <refpurpose>Получает равномерно выбранное число с плавающей точкой</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis role="Random\\Randomizer">
+   <modifier>public</modifier> <type>float</type><methodname>Random\Randomizer::getFloat</methodname>
+   <methodparam><type>float</type><parameter>min</parameter></methodparam>
+   <methodparam><type>float</type><parameter>max</parameter></methodparam>
+   <methodparam choice="opt"><type>Random\IntervalBoundary</type><parameter>boundary</parameter><initializer>Random\IntervalBoundary::ClosedOpen</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Возвращает равномерно выбранное, равнораспределённое плавающее число
+   из запрошенного интервала.
+  </para>
+  <para>
+   Из-за ограниченной точности не все вещественные (действительные) числа удаётся точно представить
+   как числа с плавающей точкой.
+
+   Если число невозможно представить точно, оно округляется до ближайшего
+   представимого точно значения.
+
+   Кроме сказанного, числа с плавающей точкой не одинаково плотны по всей числовой строке.
+
+   Поскольку преобразования чисел с плавающей точкой проводятся с двоичной экспонентой,
+   расстояние между двумя соседними числами с плавающей точкой удваивается при каждой степени двойки.
+
+   Говоря иначе: между значениями <literal>1.0</literal> и <literal>2.0</literal> существует такое же количество
+   представимых чисел с плавающей точкой, как и между
+   <literal>2.0</literal> и <literal>4.0</literal>,
+   <literal>4.0</literal> и <literal>8.0</literal>,
+   <literal>8.0</literal> и <literal>16.0</literal> и т. д.
+  </para>
+  <para>
+   Поэтому произвольная выборка случайного числа в пределах запрошенного интервала,
+   например, путём деления двух целых чисел, иногда приводит к смещенному распределению.
+
+   Необходимое округление приведет к тому, что одни числа с плавающей точкой будут
+   возвращаться чаще, чем другие, особенно в районе степеней двойки, когда плотность чисел
+   с плавающей точкой изменится.
+  </para>
+  <para>
+   Метод <methodname>Random\Randomizer::getFloat</methodname> реализует алгоритм,
+   который будет возвращать равномерно выбранное число с плавающей точкой из максимально
+   возможного набора точно представимых и равнораспределённых чисел с плавающей точкой
+   в пределах запрошенного интервала.
+
+   Расстояние между выбираемыми числами с плавающей точкой («размер шага») соответствует
+   расстоянию между числами с плавающей точкой с наименьшей плотностью, т. е. расстоянию
+   между числами с плавающей точкой на границе интервала с большим абсолютным значением.
+
+   То есть не всем представимым числам с плавающей точкой в пределах этого интервала разрешено
+   возвращаться, если интервал пересекает одну или несколько степеней двойки.
+
+   Шаг начнется с границы интервала с большим абсолютным значением,
+   чтобы гарантировать, что шаги совпадают с точно представимыми числами с плавающей точкой.
+  </para>
+  <para>
+   Границы закрытых интервалов всегда будут включены в набор выбираемых плавающих значений.
+
+   Так, если размер интервала не кратен размеру шага и граница с меньшим абсолютным
+   значением — это замкнутая граница, расстояние
+   между этой границей и ближайшим к ней выбираемым числом с плавающей точкой будет меньше размера шага.
+  </para>
+  <caution>
+   <para>
+    Постобработка возвращённых чисел с плавающей точкой, скорее всего, нарушит равномерное равнораспределение,
+    поскольку промежуточные плавающие значения в математической операции
+    неявно округляются. Запрошенный интервал должен как можно точнее соответствовать нужному интервалу,
+    а округление должно выполняться только как явная операция непосредственно перед отображением выбранного числа пользователю.
+   </para>
+  </caution>
+  <refsect2>
+   <title>Объяснение алгоритма с примерами значений</title>
+   <para>
+    Чтобы привести пример работы алгоритма, рассмотрим представление с плавающей точкой,
+    в котором выбрана 3-битная мантисса.
+
+    Это представление способно представлять 8 различных значений с плавающей точкой
+    между последовательными степенями двух.
+
+    То есть между
+    <literal>1.0</literal> и <literal>2.0</literal> все шаги размером <literal>0.125</literal>
+    точно представимы и между <literal>2.0</literal> и <literal>4.0</literal>
+    все шаги размером <literal>0.25</literal> точно представимы.
+
+    В PHP для работы с числами с плавающей точкой выбрана 52-битная мантисса
+    и PHP может представлять 2<superscript>52</superscript>
+    разных значении между каждой степенью двойки.
+
+    Это означает, что
+    <simplelist><!-- This would benefit from type="inline" -->
+     <member><literal>1.0</literal></member>
+     <member><literal>1.125</literal></member>
+     <member><literal>1.25</literal></member>
+     <member><literal>1.375</literal></member>
+     <member><literal>1.5</literal></member>
+     <member><literal>1.625</literal></member>
+     <member><literal>1.75</literal></member>
+     <member><literal>1.875</literal></member>
+     <member><literal>2.0</literal></member>
+     <member><literal>2.25</literal></member>
+     <member><literal>2.5</literal></member>
+     <member><literal>2.75</literal></member>
+     <member><literal>3.0</literal></member>
+     <member><literal>3.25</literal></member>
+     <member><literal>3.5</literal></member>
+     <member><literal>3.75</literal></member>
+     <member><literal>4.0</literal></member>
+    </simplelist>
+    — точно представимые числа с плавающей точкой между <literal>1.0</literal>
+    и <literal>4.0</literal>.
+   </para>
+   <para>
+    Теперь представьте, что выполнен вызов <code>$randomizer-&gt;getFloat(1.625, 2.5, IntervalBoundary::ClosedOpen)</code>,
+    т. е. запрошено случайное число с плавающей точкой, которое начинается с <literal>1.625</literal>
+    и заканчивается <literal>2.5</literal> (не включая последнее).
+
+    Алгоритм сначала определяет размер шага на границе с большим абсолютным значением
+    (<literal>2.5</literal>). Размер шага на этой границе равен <literal>0.25</literal>.
+   </para>
+   <para>
+    Обратите внимание, что размер запрошенного интервала — <literal>0.875</literal>, что
+    что нельзя назвать точным кратным <literal>0.25</literal>.
+
+    Если бы алгоритм начал переходить на нижнюю границу <literal>1.625</literal>,
+    оно бы столкнулся со значением <literal>2.125</literal>, который не совсем представим
+    и будет подвергаться неявному округлению.
+
+    Поэтому алгоритм начинает работу с верхней границы — <literal>2.5</literal>.
+
+    Доступные значения:
+    <simplelist>
+     <member><literal>2.25</literal></member>
+     <member><literal>2.0</literal></member>
+     <member><literal>1.75</literal></member>
+     <member><literal>1.625</literal></member>
+    </simplelist>
+
+    Значение <literal>2.5</literal> не включается, поскольку верхняя граница запрошенного
+    интервала — открытая граница.
+
+    Значение <literal>1.625</literal> включено, даже несмотря на то, что его расстояние до ближайшего значения
+    <literal>1.75</literal> — это <literal>0.125</literal>, который меньше
+    ранее определенного размера шага, равного <literal>0.25</literal>.
+
+    Причина в том, что запрошенный интервал закрывается на нижней границе
+    (<literal>1.625</literal>) и закрытые границы всегда включены.
+
+   </para>
+   <para>
+    Наконец, алгоритм равномерно выбирает одно из четырёх выбираемых значений случайным образом
+    и возвращает его.
+   </para>
+   <refsect3 xml:id="random-randomizer.getfloat.affine-transformation">
+    <title>Почему деление двух целых чисел не работает</title>
+    <para>
+     В предыдущем примере между каждым подынтервалом есть восемь представимых чисел
+     с плавающей точкой, разделённых степенью двойки.
+
+     Чтобы проиллюстрировать, почему деление двух целых чисел не работает для создания
+     случайного числа с плавающей точкой, предположим, что в правом открытом интервале от
+     <literal>0.0</literal> до <literal>1.0</literal> (не включая последнее)
+     есть 16 равнораспределенных чисел с плавающей запятой.
+     Половина из них — это восемь точно представимых значений между
+     от <literal>0.5</literal> до <literal>1.0</literal>, другая половина — это значения между
+     <literal>0.0</literal> и <literal>1.0</literal> с размером
+     шага <literal>0.0625</literal>.
+
+     Их можно легко сгенерировать, разделив случайное целое число от <literal>0</literal>
+     до <literal>15</literal> на <literal>16</literal>, чтобы получить одно из значений:
+
+     <simplelist>
+      <member><literal>0.0</literal></member>
+      <member><literal>0.0625</literal></member>
+      <member><literal>0.125</literal></member>
+      <member><literal>0.1875</literal></member>
+      <member><literal>0.25</literal></member>
+      <member><literal>0.3125</literal></member>
+      <member><literal>0.375</literal></member>
+      <member><literal>0.4375</literal></member>
+      <member><literal>0.5</literal></member>
+      <member><literal>0.5625</literal></member>
+      <member><literal>0.625</literal></member>
+      <member><literal>0.6875</literal></member>
+      <member><literal>0.75</literal></member>
+      <member><literal>0.8125</literal></member>
+      <member><literal>0.875</literal></member>
+      <member><literal>0.9375</literal></member>
+     </simplelist>
+    </para>
+    <para>
+     Это случайное число с плавающей точкой можно масштабировать до интервала с открытым интервалом справа от <literal>1.625</literal>
+     до <literal>2.75</literal> (не включая последнее), умножив его на размер интервала
+     (<literal>0.875</literal>) и добавив минимум <literal>1.625</literal>.
+     Это так называемое аффинное преобразование приведёт к значениям:
+
+     <simplelist>
+      <member><literal>1.625</literal> округляется до <literal>1.625</literal></member>
+      <member><literal>1.679</literal> округляется до <literal>1.625</literal></member>
+      <member><literal>1.734</literal> округляется до <literal>1.75</literal></member>
+      <member><literal>1.789</literal> округляется до <literal>1.75</literal></member>
+      <member><literal>1.843</literal> округляется до <literal>1.875</literal></member>
+      <member><literal>1.898</literal> округляется до <literal>1.875</literal></member>
+      <member><literal>1.953</literal> округляется до <literal>2.0</literal></member>
+      <member><literal>2.007</literal> округляется до <literal>2.0</literal></member>
+      <member><literal>2.062</literal> округляется до <literal>2.0</literal></member>
+      <member><literal>2.117</literal> округляется до <literal>2.0</literal></member>
+      <member><literal>2.171</literal> округляется до <literal>2.25</literal></member>
+      <member><literal>2.226</literal> округляется до <literal>2.25</literal></member>
+      <member><literal>2.281</literal> округляется до <literal>2.25</literal></member>
+      <member><literal>2.335</literal> округляется до <literal>2.25</literal></member>
+      <member><literal>2.390</literal> округляется до <literal>2.5</literal></member>
+      <member><literal>2.445</literal> округляется до <literal>2.5</literal></member>
+     </simplelist>
+
+     Обратите внимание, как будет возвращена верхняя граница <literal>2.5</literal>,
+     несмотря на то, что это открытая граница и, следовательно, исключена.
+
+     Также обратите внимание, что вероятность возвращата значений <literal>2.0</literal>
+     и <literal>2.25</literal> в два раза выше, чем у других значений.
+    </para>
+   </refsect3>
+  </refsect2>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><parameter>min</parameter></term>
+     <listitem>
+      <para>
+       Нижняя граница интервала.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>max</parameter></term>
+     <listitem>
+      <para>
+       Верхняя граница интервала.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>boundary</parameter></term>
+     <listitem>
+      <para>
+       Указывает, являются ли границы интервала возможными возвращаемыми значениями.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <para>
+   Возвращает равномерно выбранное, равнораспределённое число с плавающей точкой из интервала,
+   заданного параметрами <parameter>min</parameter>,
+   <parameter>max</parameter> и <parameter>boundary</parameter>.
+
+   Возможные возвращаемые значения <parameter>min</parameter> и <parameter>max</parameter> зависят
+   от значения параметра <parameter>boundary</parameter>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Если значение <parameter>min</parameter> — не конечное число (как это определяет функция <function>is_finite</function>),
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если значение параметра <parameter>max</parameter> — не конечное число (как это определяет функция <function>is_finite</function>),
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Если запрошенный интервал не содержит значений,
+     будет выброшено исключение <classname>ValueError</classname>.
+    </simpara>
+   </listitem>
+   &random.engineErrors;
+  </itemizedlist>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования метода <methodname>Random\Randomizer::getFloat</methodname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$randomizer = new \Random\Randomizer();
+
+// Обратите внимание, что степень детализации по широте в два раза выше,
+// чем степень детализации долготы.
+//
+// Для широты значение может быть как -90, так и 90.
+// Для долготы значение может быть 180, но не -180, потому что
+// -180 и 180 относятся к одной и той же долготе.
+printf(
+    "Широта: %+.6f Долгота: %+.6f",
+    $randomizer->getFloat(-90, 90, \Random\IntervalBoundary::ClosedClosed),
+    $randomizer->getFloat(-180, 180, \Random\IntervalBoundary::OpenClosed),
+);
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Широта: +69.244304 Долгота: -53.548951
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <para>
+    Этот метод реализует алгоритм γ-секции, опубликованный в статье
+    <link xlink:href="&url.random.gamma-section;">
+     Drawing Random Floating-Point Numbers from an Interval.
+     Frédéric Goualard, ACM Trans. Model. Comput. Simul., 32:3, 2022
+    </link>,
+    чтобы получить нужные поведенческие свойства.
+   </para>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><methodname>Random\Randomizer::nextFloat</methodname></member>
+   <member><methodname>Random\Randomizer::getInt</methodname></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+<!--Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
