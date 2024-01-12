@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 86e6094e86b84a51d00ab217ac50ce8dde33d82a Maintainer: mch Status: ready -->
+<!-- EN-Revision: c2c5f47c53f58b5a50b5cc3c30116cb2aecf2d3c Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <section xml:id="outcontrol.configuration" xmlns="http://docbook.org/ns/docbook">
  &reftitle.runtime;
@@ -19,29 +19,33 @@
     <tbody>
      <row>
       <entry><link linkend="ini.output-buffering">output_buffering</link></entry>
-      <entry>"0"</entry>
+      <entry><literal>"0"</literal></entry>
       <entry>PHP_INI_PERDIR</entry>
       <entry></entry>
      </row>
      <row>
       <entry><link linkend="ini.output-handler">output_handler</link></entry>
-      <entry>NULL</entry>
+      <entry>&null;</entry>
       <entry>PHP_INI_PERDIR</entry>
       <entry></entry>
      </row>
      <row>
       <entry><link linkend="ini.implicit-flush">implicit_flush</link></entry>
-      <entry>"0"</entry>
+      <entry><literal>"0"</literal></entry>
       <entry>PHP_INI_ALL</entry>
       <entry></entry>
      </row>
      <row>
       <entry><link linkend="ini.url-rewriter.tags">url_rewriter.tags</link></entry>
-      <entry>"a=href,area=href,frame=src,form=,fieldset="</entry>
+      <entry><literal>"form="</literal></entry>
       <entry>PHP_INI_ALL</entry>
-      <entry>До PHP 7.1.0 использовалась для установки перезаписи
-       сессии "trans sid". С PHP 7.1.0 используется только
-       <function>output_add_rewrite_var</function>.</entry>
+      <entry>
+       До PHP 7.1.0 эта INI-настройка влияла только на функцию
+       <function>output_add_rewrite_var</function>.
+       До PHP 7.1.0 эта INI-настройка включала поддержку прозрачного идентификатора сеанса
+       (смотрите описание директивы <link linkend="ini.session.trans-sid-tags">session.trans_sid_tags</link>).
+       функцию .
+      </entry>
      </row>
      <row>
       <entry><link linkend="ini.url-rewriter.hosts">url_rewriter.hosts</link></entry>
@@ -66,11 +70,12 @@
     </term>
     <listitem>
      <para>
-      Вы можете разрешить буферизацию вывода для всех файлов, установив эту
-      директиву в 'On'. Если вы хотите ограничить размер буфера до
-      определённого размера, вы можете установить не 'On', а максимальное
-      количество байт в этой директиве (например, output_buffering=4096).
-      Эта директива всегда отключена в PHP-CLI.
+      Чтобы включить буферизацию вывода для всех файлов, нужно установить для этой директивы
+      значение <literal>"On"</literal>.
+      Чтобы ограничить размер буфера, вместо значения <literal>"On"</literal>
+      для этой директивы разрешено указывать число/количество, которое будет соответствовать
+      максимальному количеству разрешённых байтов.
+      Например — <literal>output_buffering=4096</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -82,25 +87,31 @@
     </term>
     <listitem>
      <para>
-      Можно перенаправить весь вывод скрипта в функцию.
-      Например, если в функции <function>mb_output_handler</function>
-      установить значение output_handler, то кодировка символов
-      прозрачно преобразуется в соответствии с указанной кодировкой.
-      Настройка любого обработчика вывода автоматически включает
-      буферизацию вывода.
+      Разрешено перенаправлять вывод скриптов в функцию.
+      Например, если установить в директиве <literal>output_handler</literal>
+      функцию <function>mb_output_handler</function>,
+      кодировка символов будет прозрачно преобразована в заданную кодировку.
+      Настройка любого обработчика вывода автоматически включает буферизацию вывода.
      </para>
      <note>
       <para>
-       Нельзя использовать функцию <function>mb_output_handler</function> вместе> с
-       функцией <function>ob_iconv_handler</function>, и нельзя использовать
-       вместе функцию <function>ob_gzhandler</function> и
-       настройкой <link linkend="ini.zlib.output-compression">zlib.output_compression</link>.
+       Нельзя использовать вместе функции <function>mb_output_handler</function>
+       и <function>ob_iconv_handler</function>,
+       а функцию <function>ob_gzhandler</function>
+       и директиву <link linkend="ini.zlib.output-compression">zlib.output_compression</link>
+       нельзя использовать ни с одним из следующих:
+       функция <function>mb_output_handler</function>,
+       функция <function>ob_gzhandler</function>,
+       директива <link linkend="ini.zlib.output-compression">zlib.output_compression</link>,
+       обработчик «URL-Rewriter»
+       (смотрите описание директивы <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>
+       и функции <function>output_add_rewrite_var</function>).
       </para>
      </note>
      <note>
       <para>
-       Только встроенные функции можно использовать с этой директивой.
-       Для функции, определённой пользователем, вызывают функцию <function>ob_start</function>.
+       Только встроенные функции разрешено использовать с этой директивой.
+       Для пользовательских функций вызывают функцию <function>ob_start</function>.
       </para>
      </note>
     </listitem>
@@ -113,12 +124,12 @@
     </term>
     <listitem>
      <para>
-      &false; по умолчанию. Изменение значения на &true; указывает PHP не сохранять
+      Значение по умолчанию — &false;. Изменение значения на &true; указывает PHP не сохранять
       данные в буфер, а после каждого отправленного блока автоматически
       отправлять данные в выходной слой. Это эквивалентно вызову PHP-функции
-      <function>flush</function> после каждого вызова
-      <function>print</function> или <function>echo</function> для
-      каждого <literal>HTML</literal>-блока.
+      <function>flush</function> после каждого вызова функции вывода
+      (например, <function>print</function> или <function>echo</function>)
+      и каждого <literal>HTML</literal>-блока.
      </para>
      <para>
       При использовании PHP в веб-среде, включение этой опции
@@ -139,20 +150,27 @@
     </term>
     <listitem>
      <simpara>
-      <literal>url_rewriter.tags</literal> определяет, какие HTML-теги
-      будут перезаписаны значениями <function>output_add_rewrite_var</function>.
-      По умолчанию
-      <literal>a=href,area=href,frame=src,input=src,form=</literal>
+      Директива <literal>url_rewriter.tags</literal> определяет HTML-теги и атрибуты,
+      в которых URL-адреса перезаписываются значениями функции <function>output_add_rewrite_var</function>.
+      Значение по умолчанию — <literal>"form="</literal>.
      </simpara>
      <simpara>
-      <literal>form</literal> является специальным тегом. <literal>&lt;input hidden="session_id" name="session_name"&gt;</literal> добавляется как переменная формы.
+      Добавление значения <literal>"form="</literal> или любого атрибута формы (<literal>form</literal>)
+      добавит скрытый элемент <literal>input</literal> к форме (<literal>form</literal>),
+      с артибутом с указанными именем и значением для каждой пары имя-значение, переданной в функцию
+      <function>output_add_rewrite_var</function>.
      </simpara>
+     <caution>
+      <simpara>
+       Если в директиву <literal>url_rewriter.tags</literal> добавить один и тот же тег больше одного раза,
+       при перезаписи URL будет обработано только первое вхождение.
+      </simpara>
+     </caution>
      <note>
       <simpara>
        До PHP 7.1.0 надо было использовать
        <link linkend="ini.url-rewriter.tags">url_rewriter.tags</link>
        для указания <link linkend="ini.session.trans-sid-tags">session.trans_sid_tags</link>.
-       Начиная с PHP 7.1.0, <literal>fieldset</literal> больше не рассматривается как специальный тег.
       </simpara>
      </note>
     </listitem>
@@ -165,11 +183,12 @@
     </term>
     <listitem>
      <simpara>
-      <literal>url_rewriter.hosts</literal> указывает, какие хосты перезаписываются для включения
-      значений <function>output_add_rewrite_var</function>.
-      По умолчанию используется <literal>$_SERVER['HTTP_HOST']</literal>. Несколько хостов можно указать
-      перечислив их через запятую, между хостами не должно быть пробелов. То есть
-      <literal>php.net,wiki.php.net,bugs.php.net</literal>
+      Директива <literal>url_rewriter.hosts</literal> указывает, какие хосты перезаписываются,
+      чтобы включить в них значения функции <function>output_add_rewrite_var</function>.
+      По умолчанию директиве установлено значение <literal>$_SERVER['HTTP_HOST']</literal>.
+      Разрешено указывать несколько хостов,
+      перечислив их через запятую без пробелов.
+      Например, <literal>"php.net,wiki.php.net,bugs.php.net"</literal>.
      </simpara>
     </listitem>
    </varlistentry>
