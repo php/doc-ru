@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ce3a2d381693ccbc10cc4a808c3eb853f3c85c9e Maintainer: shein Status: ready -->
+<!-- EN-Revision: 443d81b33e6537a000cc235c2a11748ba8d56232 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.unserialize" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -17,24 +17,24 @@
    <methodparam choice="opt"><type>array</type><parameter>options</parameter><initializer>[]</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   <function>unserialize</function> принимает одну сериализованную переменную и
-   конвертирует её обратно в значение PHP.
+   Функция <function>unserialize</function> принимает одну сериализованную переменную
+   и конвертирует её обратно в значение PHP.
   </simpara>
   <warning>
    <para>
-    Не передавайте непроверенные пользовательские данные в
-    <function>unserialize</function>, даже если в <parameter>options</parameter>
-    задано <literal>allowed_classes</literal>.
-    Десериализация может создать код, который выполнится при создании объекта или
-    при автоматической загрузке кода, чем могут воспользоваться недобросовестные пользователи.
-    Лучше использовать более безопасные стандартные форматы
-    обмена данными, такие как JSON (с помощью  функций <function>json_decode</function>
-    и <function>json_encode</function>), если вам нужно передать сериализованные данные пользователю.
+    Не рекомендовано передавать ненадёжные пользовательские данные
+    в функцию <function>unserialize</function>, даже если параметру <parameter>options</parameter>
+    задано значение <literal>allowed_classes</literal>.
+    Десериализация умеет создать код, который выполнится при инстанциировании объекта или
+    при автоматической загрузке кода, что могут использовать недобросовестные пользователи.
+    Лучше вызывать более безопасные стандартные форматы
+    обмена данными, например, JSON (функциями <function>json_decode</function>
+    и <function>json_encode</function>), если нужно передать сериализованные данные пользователю.
    </para>
    <para>
-    Если вам нужно десериализовать данные из внешних источников, используйте функцию
-    <function>hash_hmac</function> для проверки этих данных. Убедитесь, что эти данные
-    кроме вас никто не изменял.
+    Когда нужно десериализовать данные из внешних источников, пользуются функцией
+    <function>hash_hmac</function>, чтобы проверить эти данные. Проверяют, чтобы данные
+    не были изменены никем, кроме разработчика.
    </para>
   </warning>
  </refsect1>
@@ -50,22 +50,25 @@
        Сериализованная строка.
       </para>
       <para>
-       Если переменная, требующая десериализации, является объектом, то после успешного
-       восстановления объекта PHP автоматически попытается вызвать магические метод
-       <link linkend="object.unserialize">__unserialize()</link> или <link linkend="object.wakeup">__wakeup()</link> (если он существует).
+       Если переменная, требующая десериализации, — объект, то после успешного
+       восстановления объекта PHP автоматически попытается вызвать магические методы
+       <link linkend="object.unserialize">__unserialize()</link>
+       или <link linkend="object.wakeup">__wakeup()</link> (если они определены).
       </para>
       <para>
        <note>
         <title>Директива unserialize_callback_func</title>
         <para>
-         Существует возможность указать функцию обратного вызова, которая будет вызвана,
-         если в процессе десериализации должен быть проинициализирован неопределённый
-         класс. (для предотвращения получения неполного объекта (<type>object</type>)
-         "__PHP_Incomplete_Class"). Используйте &php.ini;, <function>ini_set</function> или
-         &htaccess; для определения функции <link linkend="ini.unserialize-callback-func">unserialize_callback_func</link>.
-         Данная функция будет вызываться каждый раз, когда должен быть проинициализирован
-         неопределённый класс. Для отключения этой возможности, просто оставьте значение
-         директивы пустым.
+         Разрешено устанавливать callback-функцию, которая будет вызвана,
+         если при десериализации нужно проинициализировать неопределённый
+         класс (чтобы исключить получение неполного объекта (<type>object</type>)
+         «__PHP_Incomplete_Class»). Чтобы определить функцию для директивы
+         <link linkend="ini.unserialize-callback-func">unserialize_callback_func</link>,
+         пользуются файлом &php.ini;, функцией <function>ini_set</function>
+         или файлом &htaccess;.
+         Функция будет вызываться каждый раз, когда должен быть проинициализирован
+         неопределённый класс. Для отключения этого поведения, значение
+         директивы оставляют пустым.
         </para>
        </note>
       </para>
@@ -75,7 +78,8 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Любые опции <function>unserialize</function> в виде ассоциативного массива.
+       Любые опции в виде ассоциативного массива,
+       которые разрешено передавать в функцию <function>unserialize</function>.
       </para>
       <table>
        <title>Корректные опции</title>
@@ -93,15 +97,15 @@
           <entry><type>mixed</type></entry>
           <entry>
            <simpara>
-            Массив имён классов, которые должны быть приняты, &false; для указания не
-            принимать никаких классов или &true; для приёма всех. Если эта опция задана и
-            <function>unserialize</function> обнаружит объект неприемлемого класса, то он
-            не будет принят, а вместо этого инстанцируется как объект класса
+            Либо массив имён классов, которые должны быть приняты, &false; для указания
+            не принимать никаких классов, либо &true;, чтобы принимать все. Если эта опция задана
+            и функция <function>unserialize</function> обнаружит объект неприемлемого класса,
+            то он не будет принят, а вместо этого инстанцируется как объект класса
             <classname>__PHP_Incomplete_Class</classname>.
            </simpara>
            <simpara>
-            Если опция не задана, то она будет считаться установленной в &true;: PHP
-            будет пытаться инстанцировать объекты любого класса.
+            Если опция не задана, будет считаться, что ей задано значение &true;: PHP
+            попытается инстанцировать объекты любого класса.
            </simpara>
           </entry>
          </row>
@@ -110,10 +114,10 @@
           <entry><type>int</type></entry>
           <entry>
            <simpara>
-            Максимальная глубина структур, допустимая при десериализации
+            Максимальная глубина структур, разрешённая при десериализации
             и предназначенная для предотвращения переполнения стека.
             По умолчанию ограничение глубины составляет <literal>4096</literal>
-            и может быть отключено установкой <literal>max_depth</literal> значения <literal>0</literal>.
+            и отключается установкой опции <literal>max_depth</literal> значения <literal>0</literal>.
            </simpara>
           </entry>
          </row>
@@ -129,21 +133,21 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращается преобразованное значение, которое принимает один
+   Возвращает преобразованное значение, которое принимает один
    из типов <type>bool</type>, <type>int</type>,
    <type>float</type>, <type>string</type>,
    <type>array</type> или <type>object</type>.
   </para>
   <para>
-   В случае, если переданная строка не поддаётся десериализации, возвращается &false; и
-   генерируется <constant>E_NOTICE</constant>.
+   Если переданная строка не поддаётся десериализации, возвращает &false;
+   и выдаёт ошибку уровня <constant>E_WARNING</constant>.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Объекты могут выбрасывать <classname>Throwable</classname> в своих обработчиках десериализации.
+   Объектам разрешено выбрасывать исключения <classname>Throwable</classname> в своих обработчиках десериализации.
   </para>
  </refsect1>
 
@@ -159,6 +163,13 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>8.3.0</entry>
+       <entry>
+        Теперь выдаёт ошибку уровня <constant>E_WARNING</constant>, если переданная строка несериализуема;
+        раньше выдавалась ошибка уровня <constant>E_NOTICE</constant>.
+       </entry>
+      </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
@@ -186,28 +197,30 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>unserialize</function></title>
+    <title>Пример использования функции <function>unserialize</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Мы используем функцию unserialize() для загрузки сессионных данных в массив
+
+// Используем функцию unserialize() для загрузки сессионных данных в массив
 // $session_data из строки, извлекаемой из базы данных.
-// Данный пример дополняет пример, описывающий использование serialize().
+// Пример дополняет пример, описывающий вызов функции serialize().
 
 $conn = odbc_connect("webdb", "php", "chicken");
 $stmt = odbc_prepare($conn, "SELECT data FROM sessions WHERE id = ?");
 $sqldata = array($_SERVER['PHP_AUTH_USER']);
 if (!odbc_execute($stmt, $sqldata) || !odbc_fetch_into($stmt, $tmp)) {
-    // если процедура извлечения данных не удалась, то инициализируем пустой массив
+    // Если процедура извлечения данных не удалась, то инициализируем пустой массив
     $session_data = array();
 } else {
-    // сейчас у нас должны быть сериализованные данные в $tmp[0].
+    // Сейчас в элементе $tmp[0] должны быть сериализованные данные.
     $session_data = unserialize($tmp[0]);
     if (!is_array($session_data)) {
-        // что-то пошло не так, инициализируем пустой массив
+        // Что-то пошло не так, инициализируем пустой массив
         $session_data = array();
     }
 }
+
 ?>
 ]]>
     </programlisting>
@@ -215,10 +228,11 @@ if (!odbc_execute($stmt, $sqldata) || !odbc_fetch_into($stmt, $tmp)) {
   </para>
   <para>
    <example>
-    <title>Пример использования unserialize_callback_func</title>
+    <title>Пример использования директивы unserialize_callback_func</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $serialized_object='O:1:"a":1:{s:5:"value";s:3:"100";}';
 
 ini_set('unserialize_callback_func', 'mycallback'); // определяем свою callback-функцию
@@ -226,8 +240,9 @@ ini_set('unserialize_callback_func', 'mycallback'); // определяем св
 function mycallback($classname)
 {
     // просто подключаете файл, содержащий определение класса
-    // $classname указывает, для какого класса требуется определение
+    // переменная $classname указывает, для какого класса требуется определение
 }
+
 ?>
 ]]>
     </programlisting>
@@ -239,11 +254,11 @@ function mycallback($classname)
   &reftitle.notes;
   <warning>
    <para>
-    &false; возвращается как в случае возникновения ошибки, так и в случае, если десериализуется
-    сериализованное значение &false;. Этот особый случай можно отловить, используя
-    сравнение <parameter>data</parameter> со значением
-    <literal>serialize(false)</literal>, или перехватив сгенерированную ошибку
-    <constant>E_NOTICE</constant>.
+    Значение &false; возвращается как в случае ошибки, так и при десериализации
+    сериализованного значения &false;. Этот особый случай можно отловить,
+    сравнив значение параметра <parameter>data</parameter> со значением,
+    которое возвращает вызов <literal>serialize(false)</literal>, или перехватив выданную ошибку
+    уровня <constant>E_NOTICE</constant>.
    </para>
   </warning>
  </refsect1>
