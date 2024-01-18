@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 593ea510e853ff034e03f78a4be0daa41661c9d4 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: e6849e1e63c206f34d25378ea2f1d0bde4e9a396 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.imagecropauto" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>imagecropauto</refname>
-  <refpurpose>Обрезает изображение автоматически, используя один из доступных режимов</refpurpose>
+  <refpurpose>Обрезает изображение автоматически на основе заданного режима</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,8 +17,8 @@
    <methodparam choice="opt"><type>int</type><parameter>color</parameter><initializer>-1</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Автоматически обрезает изображение в соответствии с заданным
-   <parameter>mode</parameter>.
+   Автоматически обрезает изображение на основе заданного
+   режима (<parameter>mode</parameter>).
   </para>
  </refsect1>
 
@@ -38,8 +38,8 @@
        <listitem>
         <simpara>
          То же, что и <constant>IMG_CROP_TRANSPARENT</constant>.
-         До PHP 7.4.0, связанный libgd использовал <constant>IMG_CROP_SIDES</constant>,
-         если изображение не имело прозрачного цвета.
+         До PHP 7.4.0 встроен модуль libgd выбирал режим <constant>IMG_CROP_SIDES</constant>,
+         если у изображения не было прозрачного цвета.
         </simpara>
        </listitem>
       </varlistentry>
@@ -71,7 +71,7 @@
        <term><constant>IMG_CROP_SIDES</constant></term>
        <listitem>
         <simpara>
-         Использует 4 угла изображения, чтобы попытаться обнаружить фон для обрезки.
+         Анализирует 4 угла изображения, чтобы попытаться обнаружить фон для обрезки.
         </simpara>
        </listitem>
       </varlistentry>
@@ -91,18 +91,18 @@
     <term><parameter>threshold</parameter></term>
     <listitem>
      <para>
-      Определяет допуск в процентах, который будет использоваться при сравнении цвета изображения
-      и цвета обрезки. Метод, используемый для расчёта цветовой
-      разницы, основан на цветовом расстоянии в кубе RGB(a).
+      Определяет допуск в процентах, который будет использован при сравнении цвета изображения
+      и цвета обрезки. Метод расчёта цветовой
+      разницы основан на цветовом расстоянии в кубе RGB(a).
      </para>
      <para>
-      Используется только в режиме <constant>IMG_CROP_THRESHOLD</constant>.
+      Учитывается только в режиме <constant>IMG_CROP_THRESHOLD</constant>.
      </para>
      <note>
       <simpara>
-       До PHP 7.4.0 в комплекте libgd использовался несколько иной алгоритм,
-       поэтому один и тот же <parameter>threshold</parameter> давал разные результаты
-       для системного и связанного libgd.
+       До PHP 7.4.0 в модуле libgd работал немного иной алгоритм,
+       поэтому один и тот же порог <parameter>threshold</parameter> давал разные результаты
+       для системного и встроенного модуля libgd.
       </simpara>
      </note>
     </listitem>
@@ -114,7 +114,7 @@
       Либо значение цвета RGB, либо индекс палитры.
      </para>
      <para>
-      Используется только в режиме <constant>IMG_CROP_THRESHOLD</constant>.
+      Учитывается только в режиме <constant>IMG_CROP_THRESHOLD</constant>.
      </para>
     </listitem>
    </varlistentry>
@@ -125,7 +125,7 @@
   &reftitle.returnvalues;
   <para>
    Возвращает объект обрезанного изображения в случае успешного выполнения&return.falseforfailure;.
-   Если полное изображение было обрезано, <function>imagecrop</function> возвращает &false;.
+   Возвращает &false; также и тогда, когда всё изображение было обрезано.
   </para>
  </refsect1>
 
@@ -160,8 +160,8 @@
      <row>
       <entry>7.4.0</entry>
       <entry>
-       Значение по умолчанию <parameter>mode</parameter> было изменено на
-       <constant>IMG_CROP_AUTO</constant>. Ранее значение по умолчанию было
+       Значение режима (<parameter>mode</parameter>) по умолчанию было изменено на
+       <constant>IMG_CROP_AUTO</constant>. Ранее значением по умолчанию было
        <literal>-1</literal>, что соответствует <constant>IMG_CROP_DEFAULT</constant>,
        но передача <literal>-1</literal> теперь устарела.
       </entry>
@@ -177,20 +177,22 @@
    <example>
     <title>Правильная обработка автообрезки</title>
     <para>
-     Как отмечено в разделе возвращаемого значения, <function>imagecropauto</function>
-     возвращает &false;, если все изображение
-     было обрезано. В этом примере у нас есть ресурс изображения
+     Как отмечено в разделе возвращаемого значения, функция <function>imagecropauto</function>
+     возвращает &false;, если всё изображение
+     было обрезано. В этом примере есть ресурс изображения
      <literal>$im</literal>, который должен быть автоматически обрезан, только
-     если есть что обрезать; в противном случае мы хотим перейти к исходному изображению.
+     если есть, что обрезать; иначе нужно перейти к исходному изображению.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $cropped = imagecropauto($im, IMG_CROP_DEFAULT);
 if ($cropped !== false) { // в случае возврата нового объекта изображения
     imagedestroy($im);    // мы уничтожаем исходное изображение
     $im = $cropped;       // и назначаем обрезанное изображение в $im
 }
+
 ?>
 ]]>
     </programlisting>
