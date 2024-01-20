@@ -25,18 +25,18 @@
   </para>
   <note>
    <para>
-    Значения разных типов будут сравниваться в соответствии со <link
-    linkend="language.operators.comparison">стандартными правилами сравнения</link>.
-    К примеру, нечисловая строка (<type>string</type>) будет сравниваться с целым числом
-    (<type>int</type>) так, как будто это <literal>0</literal>, а множество
-    нечисловых строк (<type>string</type>) будут сравниваться алфавитно-цифровым
-    порядком. Выбранное значение будет возвращено без конвертации типа.
+    Значения отличающихся типов будут сравниваться по <link
+    linkend="language.operators.comparison">стандартным правилами сравнения</link>.
+    Наример, нечисловая строка (<type>string</type>) будет сравниваться с целым числом
+    (<type>int</type>) так, как если бы её значение было равно <literal>0</literal>,
+    но нечисловые строки (<type>string</type>) между собой будут сравниваться в алфавитно-цифровом
+    порядке. Возвращаемое значение сохранит исходный тип без преобразования.
    </para>
   </note>
   <caution>
    <simpara>
-    Соблюдают осторожность при передаче аргументов разных типов,
-    поскольку результат функции <function>min</function> может оказаться непредсказуемым.
+    Соблюдают осторожность при передаче аргументов отличающихся типов,
+    поскольку результат функции <function>min</function> будет непредсказуем.
    </simpara>
   </caution>
  </refsect1>
@@ -48,8 +48,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Любое поддающееся <link linkend="language.operators.comparison">сравнению</link>
-       значение.
+       Любое <link linkend="language.operators.comparison">сравнимое</link> значение.
       </para>
      </listitem>
     </varlistentry>
@@ -57,8 +56,7 @@
      <term><parameter>values</parameter></term>
      <listitem>
       <para>
-       Любые поддающиеся <link linkend="language.operators.comparison">сравнению</link>
-       значения.
+       Любые <link linkend="language.operators.comparison">сравнимое</link> значение.
       </para>
      </listitem>
     </varlistentry>
@@ -66,7 +64,7 @@
      <term><parameter>value_array</parameter></term>
      <listitem>
       <para>
-       Массив содержащий значения.
+       Массив значений.
       </para>
      </listitem>
     </varlistentry>
@@ -77,10 +75,10 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция <function>min</function> вернёт значение «наименьшего» из элементов массива, в
-   соответствии со стандартными правилами сравнения. Если несколько разнотипных
-   значений посчитаются идентичными  (например <literal>0</literal> и
-   <literal>'abc'</literal>), функция вернёт первое из них.
+   Функция <function>min</function> вернёт значение параметра,
+   признанного «наименьшим» по стандартным правилам сравнения.
+   Если разнотипные значения оцениваются как равные (например <literal>0</literal>
+   и <literal>«abc»</literal>), функция вернёт первое.
   </para>
  </refsect1>
 
@@ -88,7 +86,7 @@
   &reftitle.errors;
   <para>
    Если передан пустой массив, функция <function>min</function>
-   выбрасывает ошибку <classname>ValueError</classname>.
+   выбрасывает исключение <classname>ValueError</classname>.
   </para>
  </refsect1>
 
@@ -106,16 +104,16 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Функция <function>min</function> в случае возникновения ошибки
-       теперь вызывает ошибку <classname>ValueError</classname>;
-       ранее возвращалось значение &false; и выдавалась ошибка уровня <constant>E_WARNING</constant>.
+       Функция <function>min</function> теперь в случае возникновения ошибки
+       выбрасывает исключение <classname>ValueError</classname>;
+       ранее возвращала значение &false; и выдавала ошибку уровня <constant>E_WARNING</constant>.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
        Поскольку <link linkend="migration80.incompatible.core.string-number-comparision">
-       сравнение строк с числами</link> было изменено,
+       сравнения строк с числами</link> были изменены,
        функция <function>min</function> больше не возвращает
        другое значение в зависимости от порядка аргументов для таких случаев.
       </entry>
@@ -129,36 +127,38 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>min</function></title>
+    <title>Пример использования функции <function>min</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 echo min(2, 3, 1, 6, 7);  // 1
 echo min(array(2, 4, 5)); // 2
 
 // Здесь сравниваются -1 < 0, так что -1 меньше
 echo min('hello', -1);    // -1
 
-// При сравнении массивов, разной длины — min вернёт самый короткий
+// При сравнении массивов, разной длины — функция min вернёт самый короткий
 $val = max(array(2, 2, 2), array(1, 1, 1, 1)); // array(2, 2, 2)
 
-// При указании нескольких массивов, они сравниваются полностью
-// в нашем примере: 2 == 2, но 4 < 5
+// При передаче нескольких массивов, они сравниваются полностью
+// в примере: 2 == 2, но 4 < 5
 $val = min(array(2, 4, 8), array(2, 5, 1)); // array(2, 4, 8)
 
-// При указании массива и не массива,
-// первый никогда не возвращается, т.к. считается самым большим
+// При передаче массива и не массива,
+// первый не возвращается, т. к. считается самым большим
 $val = min('string', array(2, 5, 7), 42);   // string
 
-// Если один из аргументов NULL или будево значение, то сравнение с другими
-// значениями будет происходить по правилу FALSE < TRUE и NULL == FALSE, вне
-// зависимости от того какого типа параметры переданы.
+// Если один из аргументов равен NULL или логическому значению, то сравнение с другими
+// значениями будет происходить по правилу FALSE < TRUE и NULL == FALSE,
+// независимо от того, какого типа параметры переданы.
 // В примере ниже, -10 трактуется как TRUE
 $val = min(-10, FALSE, 10); // FALSE
 $val = min(-10, NULL, 10);  // NULL
 
-// 0 всегда трактуется как FALSE, значит он "меньше чем" TRUE
+// Значение 0 трактуется как FALSE, значит оно «меньше» TRUE
 $val = min(0, TRUE); // 0
+
 ?>
 ]]>
     </programlisting>
