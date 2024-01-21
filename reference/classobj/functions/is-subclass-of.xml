@@ -4,7 +4,7 @@
 <refentry xml:id="function.is-subclass-of" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>is_subclass_of</refname>
-  <refpurpose>Проверяет, содержит ли объект в своём дереве предков указанный класс либо прямо реализует его</refpurpose>
+  <refpurpose>Проверяет, принадлежит ли объект родительскому типу или реализует интерфейс</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,8 +15,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>allow_string</parameter><initializer>&true;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Проверяет, содержит ли объект <parameter>object_or_class</parameter> в своём дереве
-   предков класс <parameter>class</parameter> либо прямо реализует его.
+   Проверяет, принадлежит ли тип объекта или класс <parameter>object_or_class</parameter>
+   родительскому типу объекта <parameter>class</parameter> или реализует интерфейс.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -27,8 +27,8 @@
      <term><parameter>object_or_class</parameter></term>
      <listitem>
       <para>
-       Имя класса или экземпляр объекта. В случае отсутствия такого класса
-       никакой ошибки сгенерировано не будет.
+       Имя класса или экземпляр объекта. Если класс не найден,
+       ошибка не будет выдана.
       </para>
      </listitem>
     </varlistentry>
@@ -36,7 +36,7 @@
      <term><parameter>class</parameter></term>
      <listitem>
       <para>
-       Имя класса
+       Имя класса.
       </para>
      </listitem>
     </varlistentry>
@@ -44,9 +44,11 @@
      <term><parameter>allow_string</parameter></term>
      <listitem>
       <para>
-       Если параметр установлен в false, то не допускается имя класса в виде строки
-       в качестве параметра <parameter>object_or_class</parameter>. Это также предотвращает вызов
-       автозагрузчика, если класс не существует.
+       Если для параметра установлено значение &false;,
+       то функция определит принадлежность типа проверяемого объекта родительскому типу класса,
+       только если в параметр <parameter>object_or_class</parameter>
+       бует передан экземпляр объекта, а не имя класса.
+       Это также предотвратит вызов автозагрузчика, если класс не найден.
       </para>
      </listitem>
     </varlistentry>
@@ -56,9 +58,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Эта функция возвращает &true;, если объект <parameter>object_or_class</parameter>
-   принадлежит к классу, наследующему от <parameter>class</parameter>, иначе
-   она возвращает &false;.
+   Возвращает &true;, если тип объекта или класс <parameter>object_or_class</parameter>
+   принадлежит наследнику класса <parameter>class</parameter> или непосредственно реализует интерфейс,
+   иначе &false;.
   </para>
  </refsect1>
 
@@ -66,43 +68,44 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>is_subclass_of</function></title>
+    <title>Пример использования функции <function>is_subclass_of</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// объявляем класс
+
+// Объявить класс
 class WidgetFactory
 {
   var $oink = 'moo';
 }
 
-// объявляем наследника
+// Объявить наследника
 class WidgetFactory_Child extends WidgetFactory
 {
   var $oink = 'oink';
 }
 
-// создаём новый объект
+// Создать новые объекты
 $WF = new WidgetFactory();
 $WFC = new WidgetFactory_Child();
 
 if (is_subclass_of($WFC, 'WidgetFactory')) {
-  echo "да, \$WFC наследует WidgetFactory\n";
+  echo "Да, объект \$WFC наследует класс WidgetFactory\n";
 } else {
-  echo "нет, \$WFC не наследует WidgetFactory\n";
+  echo "Нет, объект \$WFC не наследует класс WidgetFactory\n";
 }
 
 
 if (is_subclass_of($WF, 'WidgetFactory')) {
-  echo "да, \$WF наследует WidgetFactory\n";
+  echo "Да, объект \$WF наследует класс WidgetFactory\n";
 } else {
-  echo "нет, \$WF не наследует WidgetFactory\n";
+  echo "Нет, объект \$WF не наследует класс WidgetFactory\n";
 }
 
 if (is_subclass_of('WidgetFactory_Child', 'WidgetFactory')) {
-  echo "да, WidgetFactory_Child наследует WidgetFactory\n";
+  echo "Да, класс WidgetFactory_Child наследует класс WidgetFactory\n";
 } else {
-  echo "нет, WidgetFactory_Child не наследует WidgetFactory\n";
+  echo "Нет, класс WidgetFactory_Child не наследует класс WidgetFactory\n";
 }
 ?>
 ]]>
@@ -110,31 +113,32 @@ if (is_subclass_of('WidgetFactory_Child', 'WidgetFactory')) {
     &example.outputs;
     <screen>
 <![CDATA[
-да, $WFC наследует WidgetFactory
-нет, $WF не наследует WidgetFactory
-да, WidgetFactory_Child наследует WidgetFactory
+Да, объект $WFC наследует класс WidgetFactory
+Нет, объект $WF не наследует класс WidgetFactory
+Да, класс WidgetFactory_Child наследует класс WidgetFactory
 ]]>
     </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Пример использования <function>is_subclass_of</function> с интерфейсами</title>
+    <title>Пример использования функции <function>is_subclass_of</function> с интерфейсами</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // Определяем интерфейс
 interface MyInterface
 {
   public function MyFunction();
 }
 
-// Определяем класс с реализацией интерфейса
+// Определяем реализацию интерфейса классом
 class MyClass implements MyInterface
 {
   public function MyFunction()
   {
-    return "MyClass реализует MyInterface!";
+    return "Класс MyClass реализует интерфейс MyInterface!";
   }
 }
 
@@ -143,27 +147,28 @@ $my_object = new MyClass;
 
 // Код ниже работает с PHP 5.3.7
 
-// Проверка с помощью экземпляра объекта
+// Проверяем экземпляр объекта класса
 if (is_subclass_of($my_object, 'MyInterface')) {
-  echo "Да, \$my_object является подклассом MyInterface\n";
+  echo "Да, тип экземпляра объекта \$my_object наследует тип интерфейса MyInterface\n";
 } else {
-  echo "Нет, \$my_object не является подклассом MyInterface\n";
+  echo "Нет, тип экземпляра объекта \$my_object не наследует тип интерфейса MyInterface\n";
 }
 
-// Проверка с помощью имени класса в виде строки
+// Проверяем строку — имя класса
 if (is_subclass_of('MyClass', 'MyInterface')) {
-  echo "Да, MyClass является подклассом MyInterface\n";
+  echo "Да, класс-тип MyClass наследует класс-тип MyInterface\n";
 } else {
-  echo "Нет, MyClass не является подклассом MyInterface\n";
+  echo "Нет, класс-тип MyClass не наследует класс-тип MyInterface\n";
 }
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-Да, $my_object является подклассом MyInterface
-Да, MyClass является подклассом MyInterface
+Да, тип экземпляра объекта $my_object наследует тип интерфейса MyInterface
+Да, класс-тип MyClass наследует класс-тип MyInterface
 ]]>
     </screen>
    </example>
