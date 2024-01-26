@@ -16,7 +16,7 @@
   <title>Какой вывод буферизуется?</title>
   <para>
    Пользовательские буферы вывода PHP после запуска полностью буферизуют вывод
-   до тех пор, пока они не будут выключены или скрипт не завершит работу.
+   до тех пор, пока они не будут отключены или скрипт не завершит работу.
    Вывод в контексте пользовательского буфера вывода PHP —
    это всё что PHP отобразил или отправил обратно в браузер.
    С практической точки зрения, вывод — это данные ненулевой длины, которые:
@@ -26,7 +26,7 @@
   </para>
   <note>
    <simpara>
-    Данные, которые записываются непосредственно в поток вывода (<literal>stdout</literal>)
+    Данные, которые записываются сразу в поток вывода (<literal>stdout</literal>)
     или передаются в функцию SAPI с похожей функциональностью,
     не будут захвачены пользовательскими буферами вывода.
     В это включена
@@ -48,7 +48,7 @@
    Хотя оба могут создавать буферы вывода,
    функция <function>ob_start</function> более гибкая,
    поскольку принимает в качестве обработчиков вывода пользовательские функции
-   также можно установить операции, разрешенные для буфера (сброс, очистка, удаление).
+   и умеет задавать операции, разрешенные для буфера (сброс, очистка, удаление).
    Буферы, запущенные функцией <function>ob_start</function>, будут активны
    с той строки, из которой была вызвана функция,
    тогда как те, которые были запущены
@@ -75,272 +75,272 @@
   </para>
   <note>
    <simpara>
-    While <literal>"URL-Rewriter"</literal> is special
-    in that it only allows up to two instances of it running at any one time,
-    all user-level output buffers use the same underlying buffers
-    used by <function>ob_start</function>
-    with their functionality implemented by a custom output handler function.
-    As such, all of their functionality can be emulated by userland code.
+    Хотя обработчик <literal>«URL-Rewriter»</literal> и выделяется тем, что
+    разрешает запускать одновременно только до двух своих экземпляров,
+    пользовательские буферы вывода работают с теми же базовыми буферами,
+    которые использует функция <function>ob_start</function>,
+    а их функциональность реализована пользовательской функцией обработчика вывода.
+    Поэтому их функциональность в состоянии сымитировать пользовательский код.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Nesting Output Buffers</title>
+  <title>Вложенные буферы вывода</title>
   <para>
-   If there is an output buffer active when a new buffer is started,
-   the new buffer will be nested inside the previously active buffer.
-   The inner buffer will behave the same way regardless whether it is nested
-   but output buffered by it will not be buffered by the outer buffer.
-   Only output flushed by the inner buffer will be buffered by the outer buffer.
+   Если при запуске нового буфера есть активный буфер вывода,
+   новый буфер будет вложен внутрь предыдущего активного буфера.
+   Внутренний буфер будет вести себя так же как и невложенный,
+   но вывод, который он буферизовал, не будет буферизован внешним буфером.
+   Вывод, сброшенный внутренним буфером, будет только буферизован внешним буфером.
   </para>
   <para>
-   Most <literal>ob_<replaceable>*</replaceable></literal> functions only work
-   with the active output buffer (the last one started)
-   therefore only the active buffer can be flushed, cleaned and turned off.
-   The functions that work with other buffers are
-   <function>ob_list_handlers</function>
-   which returns the list of all buffers in use
-   and <function>ob_get_status</function>
-   which can return information on the active buffer only
-   or on all buffers in use.
+   Большинство <literal>ob_<replaceable>*</replaceable></literal>-функций работает
+   только с активным буфером вывода (который запущен последним),
+   поэтому только активный буфер получится сбросить, очистить или отключить.
+   К функциям, работающим с другими буферами, относятся —
+   функция <function>ob_list_handlers</function>,
+   которая возвращает список активных обработчиков вывода,
+   и функция <function>ob_get_status</function>,
+   которая умеет возвращать информацию только об активном буфере
+   или обо всех буферах.
   </para>
   <para>
-   Calling <function>ob_get_level</function>
-   or <function>ob_get_status</function> will return
-   the nesting level of the active output buffer.
+   Вызов функций <function>ob_get_level</function>
+   или <function>ob_get_status</function> вернёт
+   уровень вложенности активного буфера вывода.
   </para>
   <caution>
    <simpara>
-    The value for identical levels between <function>ob_get_level</function>
-    and <function>ob_get_status</function> is off by one.
-    For <function>ob_get_level</function>
-    the first level is <literal>1</literal>,
-    whereas for <function>ob_get_status</function>
-    the first level is <literal>0</literal>.
+    Функции <function>ob_get_level</function> и <function>ob_get_status</function>
+    не одинаково оценивают один и тот же уровень вложенности; значение отклонено на единицу.
+
+    Для функции <function>ob_get_level</function>
+    первый уровень — это <literal>1</literal>.
+    Тогда как для функции <function>ob_get_status</function>
+    первый уровень — это <literal>0</literal>.
    </simpara>
   </caution>
  </section>
 
  <section>
-  <title>Buffer Size</title>
+  <title>Размер буфера</title>
   <para>
-   Buffer sizes are expressed by integers
-   and represent the number of bytes the buffer can store without flushing.
-   When the size of output in the buffer exceeds the size of the buffer,
-   the contents of the buffer are sent to the output handler,
-   its return value is flushed and the buffer is cleared.
+   Размеры буфера выражаются целыми числами
+   и представляют количество байтов, которые буфер в состоянии хранить без сброса.
+   Когда размер вывода в буфере превышает размер буфера,
+   содержимое буфера отправляется в обработчик вывода,
+   возвращаемое обработчиком значение сбрасывается, а буфер очищается.
   </para>
   <para>
-   With the exception of <literal>"URL-Rewriter"</literal>,
-   the size of output buffers can be set when the buffer is started.
-   If set to <literal>0</literal>,
-   the output buffer is only limited by the memory available to PHP.
-   If set to <literal>1</literal>,
-   the buffer is flushed after every block of code producing
-   any non-zero length output.
+   За исключением обработчика перезаписи URL-адресов <literal>«URL-Rewriter»</literal>,
+   размер буферов вывода, если нужно, устанавливают при запуске буфера.
+   Если установлено значение <literal>0</literal>,
+   буфер вывода будет ограничен только размеров доступной PHP памяти.
+   Если установлено значение <literal>1</literal>,
+   буфер будет сбрасываться после кажого блока кода, который даёт вывод ненулевой длины.
   </para>
   <para>
-   The size of output buffers can be retrieved by calling
+   Размер буферов вывода получают вызовом функции
    <function>ob_get_status</function>.
   </para>
   <para>
-   Output buffers started with <function>ob_start</function>
-   will have their buffer sizes set to the integer value passed to
-   the function's second <parameter>chunk_size</parameter> parameter.
-   If omitted, it is set to <literal>0</literal>.
+   Размер буферов вывода, запущенных функцией <function>ob_start</function>,
+   будут равны целочисленному значению, переданному
+   во второй параметр функции <parameter>chunk_size</parameter>.
+   Если параметр не задан, будет установлено значение <literal>0</literal>.
   </para>
   <para>
-   The output buffer started with
-   <link linkend="ini.output-buffering">output_buffering</link>
-   set to <literal>"On"</literal> will have its buffer size set to 0.
-   If set to an integer than buffer size will correspond to that number.
+   Размеру буфера вывода, запущенного
+   директивой <link linkend="ini.output-buffering">output_buffering</link>
+   со значением <literal>«On»</literal>, будет установлено значение 0.
+   Если задано целое число, то размер буфера будет соответствовать этому числу.
   </para>
   <para>
-   <literal>"URL-Rewriter"</literal>'s buffer size is set to <literal>0</literal>,
-   therefore it is only limited by the memory available to PHP.
+   Размеру буфера Обработчик <literal>«URL-Rewriter»</literal> установлено значение <literal>0</literal>,
+   поэтому он ограничен только размеров памяти, доступной PHP.
   </para>
   <para>
-   The size of <literal>zlib</literal>'s output buffer is controlled by the
-   <link linkend="ini.zlib.output-compression">zlib.output_compression</link>
-   &php.ini; setting.
-   If set to <literal>"On"</literal> the buffer size will be
-   <literal>"16K"</literal>/<literal>16384</literal>.
-   If set to an integer then buffer size will correspond to that number in bytes.
-  </para>
- </section>
-
- <section>
-  <title>Operations Allowed On Buffers</title>
-  <para>
-   The operations allowed on buffers can be controlled
-   by passing one of the
-   <link linkend="outcontrol.constants.buffer-control-flags">buffer control flags</link>
-   to <function>ob_start</function>'s third
-   <parameter>flags</parameter> parameter.
-   If omitted, all operations are allowed by default.
-   If <literal>0</literal> is used instead,
-   the buffer cannot be flushed, cleaned or removed
-   but it's contents can still be retrieved.
-  </para>
-  <para>
-   <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> allows
-   <function>ob_clean</function> to clean the contents of the buffer.
-  </para>
-  <warning>
-   <simpara>
-    The absence of the <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> flag
-    will not prevent <function>ob_end_clean</function>
-    or <function>ob_get_clean</function> from clearing the contents of the buffer.
-   </simpara>
-  </warning>
-  <para>
-   <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> allows
-   <function>ob_flush</function> to flush the contents of the buffer.
-  </para>
-  <warning>
-   <simpara>
-    The absence of the <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> flag
-    will not prevent <function>ob_end_flush</function>
-    or <function>ob_get_flush</function> from flushing the contents of the buffer.
-   </simpara>
-  </warning>
-  <para>
-   <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant> allows
-   <function>ob_end_clean</function>, <function>ob_end_flush</function>,
-   <function>ob_get_clean</function> or <function>ob_get_flush</function>
-   to turn off the buffer.
-  </para>
-  <para>
-   <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant>,
-   the combination of the three flags will allow each of the three operations
-   to be performed on the buffer.
+   Размером буфера вывода модуля <literal>zlib</literal> управляет
+   директива <link linkend="ini.zlib.output-compression">zlib.output_compression</link>
+   в файле &php.ini;.
+   Если для директивы задано значение <literal>«On»</literal>, размер буфера
+   будет равен <literal>«16K»</literal>, или <literal>16 384</literal> байтов.
+   Если установлено целое число, то размер буфера будет соответствовать этому числу в байтах.
   </para>
  </section>
 
  <section>
-  <title>Flushing, Accessing And Cleaning Buffer Contents</title>
+  <title>Операции, разрешённые для буферов</title>
   <para>
-   Flushing sends and discards the contents of the active buffer.
-   Output buffers get flushed when the size of the output
-   exceeds the size of the buffer; the script ends or
-   <function>ob_flush</function>, <function>ob_end_flush</function>
-   or <function>ob_get_flush</function> is called.
+   Операциями, разрешенными для буферов, управляют, передавая
+   <link linkend="outcontrol.constants.buffer-control-flags">флаги управления буфером</link>
+   в третий параметр — <parameter>flags</parameter> — функции <function>ob_start</function>.
+   Если параметр не задан, по умолчанию будут разрешены все операции.
+   Если вместо этого задано значение <literal>0</literal>,
+   буфер нельзя будет сбросить, очистить или удалить,
+   но его содержимое по-прежнему будет доступно.
+  </para>
+  <para>
+   Флаг <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> разрешает
+   функции <function>ob_clean</function> очищать содержимое буфера.
+  </para>
+  <warning>
+   <simpara>
+    Отсутствие флага <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant>
+    не помешает функциям <function>ob_end_clean</function>
+    или <function>ob_get_clean</function> очистить содержимое буфера.
+   </simpara>
+  </warning>
+  <para>
+   Флаг <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> разрешает
+   функции <function>ob_flush</function> сбрасывать содержимого буфера.
+  </para>
+  <warning>
+   <simpara>
+    Отсутствие флага <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant>
+    не помешает функциям <function>ob_end_flush</function>
+    или <function>ob_get_flush</function> сбросить содержимое буфера.
+   </simpara>
+  </warning>
+  <para>
+   Флаг <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant> разрешает
+   функциям <function>ob_end_clean</function>, <function>ob_end_flush</function>,
+   <function>ob_get_clean</function> или <function>ob_get_flush</function>
+   отключать буфер.
+  </para>
+  <para>
+   Флаг <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant> —
+   это комбинация трех флагов, которые разрешают каждую из трех операций
+   быть выполненной с буфером.
+  </para>
+ </section>
+
+ <section>
+  <title>Сброс, доступ и очистка содержимого буфера</title>
+  <para>
+   Сброс отправляет и удаляет содержимое активного буфера.
+   Буферы вывода сбрасываются, когда размер вывода
+   превышает размер буфера, скрипт завершает работу
+   или вызываются функции <function>ob_flush</function>, <function>ob_end_flush</function>
+   или <function>ob_get_flush</function>.
   </para>
   <caution>
    <simpara>
-    Calling <function>ob_end_flush</function>
-    or <function>ob_get_flush</function> will turn off the active buffer.
+    Вызов функций <function>ob_end_flush</function>
+    или <function>ob_get_flush</function> отключит активный буфер.
    </simpara>
   </caution>
   <caution>
    <simpara>
-    Flushing buffers will flush the return value of the output handler
-    which can differ from the contents of the buffer.
-    For example, using <function>ob_gzhandler</function> will compress
-    the output and flush the compressed output.
+    Сброс буферов также сбросит возвращаемое обработчиком вывода значение,
+    которое обработчик вывода умеет изменять,
+    и если так, значение будет отличаться от содержимого буфера.
+    Например, передача в обработчик вывода функции <function>ob_gzhandler</function> приведёт
+    к сжатию данных вывода и сбросу сжатого вывода.
    </simpara>
   </caution>
   <para>
-   The contents of the active buffer can be retrieved by calling
-   <function>ob_get_contents</function>, <function>ob_get_clean</function>
-   or <function>ob_get_flush</function>.
+   Содержимое активного буфера получают вызовом
+   функций <function>ob_get_contents</function>, <function>ob_get_clean</function>
+   или <function>ob_get_flush</function>.
   </para>
   <para>
-   If only the length of the buffer's contents are needed,
-   <function>ob_get_length</function> or <function>ob_get_status</function>
-   will return the length of the contents in bytes.
+   Если нужен только размер содержимого буфера,
+   функции <function>ob_get_length</function> или <function>ob_get_status</function>
+   вернут размер содержимого в байтах.
   </para>
   <caution>
    <simpara>
-    Calling <function>ob_get_clean</function>
-    or <function>ob_get_flush</function> will turn off the active buffer
-    after returning the its contents.
+    Вызов функций <function>ob_get_clean</function>
+    или <function>ob_get_flush</function> отключит активный буфер
+    после возврата его содержимого.
    </simpara>
   </caution>
   <para>
-   The contents of the active buffer can be cleaned by calling
+   Содержимое активного буфера очищают вызовом функций
    <function>ob_clean</function>, <function>ob_end_clean</function>
-   or <function>ob_get_clean</function>.
+   или <function>ob_get_clean</function>.
   </para>
   <caution>
    <simpara>
-    Calling <function>ob_end_clean</function>
-    or <function>ob_get_clean</function> will turn off the active buffer.
+    Вызов функций <function>ob_end_clean</function>
+    или <function>ob_get_clean</function> отключит активный буфер вывода.
    </simpara>
   </caution>
  </section>
 
  <section>
-  <title>Turning Buffers Off</title>
+  <title>Отключение буферов</title>
   <para>
-   Output buffers can be turned off by calling
+   Буферы вывода отключают вызовом функций
    <function>ob_end_clean</function>, <function>ob_end_flush</function>,
-   <function>ob_get_flush</function> or <function>ob_get_clean</function>.
+   <function>ob_get_flush</function> или <function>ob_get_clean</function>.
   </para>
   <warning>
    <simpara>
-    Output buffers started without the
-    <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant> flag
-    cannot be turned off and may generate an <constant>E_NOTICE</constant>.
+    Буферы вывода, запущенные без флага
+    <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant>,
+    нельзя отключить, а попытка удалить такие буферы выдаст ошибку уровня <constant>E_NOTICE</constant>.
    </simpara>
   </warning>
   <para>
-   Every output buffer that has not been closed by the end of the script
-   or when <function>exit</function> is called will be flushed
-   and turned off by PHP's shutdown process.
-   The buffers will be flushed and turned off in reverse order
-   of their starting up.
-   The last buffered started will be first,
-   the first buffer started will be last to be flushed and turned off.
+   Каждый буфер вывода, который не был закрыт до конца скрипта
+   или при вызове конструкции <function>exit</function>, будет сброшен
+   и отключён процессом завершения работы PHP.
+   Буферы будут сброшены и отключены
+   в порядке, обратном их запуску.
+   Последний запущенный буфер будет первым,
+   а первый запущенный буфер будет сброшен и отключён в последнюю очередь.
   </para>
   <caution>
    <simpara>
-    If flushing of the buffer's contents is not desired,
-    a custom output handler should be used to prevent flushing during shutdown.
+    Если сброс содержимого буферов не нужен,
+    активируют пользовательский обработчик вывода,
+    чтобы предотвратить сброс при завершении работы.
    </simpara>
   </caution>
  </section>
 
  <section>
-  <title>Output Handlers</title>
+  <title>Обработчики вывода</title>
   <para>
-   Output handlers are <type>callable</type>s associated with output buffers
-   that are invoked by calling <function>ob_clean</function>,
+   Обработчики вывода — это <type>callable</type>-объекты, связанные с буферами вывода,
+   которые запускаются вызовом функций <function>ob_clean</function>,
    <function>ob_flush</function>, <function>ob_end_flush</function>,
    <function>ob_get_flush</function>, <function>ob_end_clean</function>,
-   <function>ob_get_clean</function> or during PHP's shutdown process.
+   <function>ob_get_clean</function> или в течение завершения работы PHP.
   </para>
   <note>
    <simpara>
-    The shutdown process will flush the return value of the handler.
+    Процесс завершения работы сбросит возвращаемое значение обработчика.
    </simpara>
   </note>
   <para>
-   If omitted or &null; when starting the output buffer
-   the internal <literal>"default output handler"</literal> will be used
-   which returns the unmodified contents of the buffer when invoked.
-   Output handlers can be used to return a modified version
-   of the buffer's contents and/or have side-effects (e.g. send headers).
+   Если при запуске буфера вывода обработчик не задан или значение равно &null;,
+   будет активирован внутренний обработчик вывода <literal>«default output handler»</literal>,
+   который при вызове возвращает неизменённое содержимое буфера.
+   Обработчиками вывода пользуются для возврата измененной версии содержимого
+   буфера и (или) или получения побочных эффектов (например, отправки заголовков).
   </para>
   <para>
-   PHP comes with two internal output handlers:
-   <literal>"default output handler"</literal>
-   and <literal>"URL-Rewriter"</literal> (which is integrated into
-   its own output buffer and only up to two instances of it can be started).
+   PHP поставляется с двумя внутренними обработчиками вывода:
+   <literal>«default output handler»</literal>
+   и <literal>«URL-Rewriter»</literal> (в который встроен
+   свой буфер вывода и до двух экземпляров которого разрешено запускать).
   </para>
   <para>
-   The bundled extensions include four additional output handlers:
+   Входящие в комплект модули включают четыре дополнительных обработчика вывода:
    <function>mb_output_handler</function>, <function>ob_gzhandler</function>,
    <function>ob_iconv_handler</function>, <function>ob_tidyhandler</function>.
   </para>
  </section>
 
  <section>
-  <title>Working With Output Handlers</title>
+  <title>Работа с обработчиками вывода</title>
   <para>
-   When invoked, output handlers are passed the contents of the buffer
-   and a bitmask indicating the status of output buffering.
+   При вызове обработчикам вывода передается содержимое буфера
+   и битовая маска, указывающая состояние буферизации вывода.
   </para>
   <para>
    <methodsynopsis>
@@ -362,7 +362,7 @@
      <term><parameter>buffer</parameter></term>
      <listitem>
       <simpara>
-       Contents of the output buffer.
+       Содержимое буфера вывода.
       </simpara>
      </listitem>
     </varlistentry>
@@ -370,10 +370,9 @@
      <term><parameter>phase</parameter></term>
      <listitem>
       <simpara>
-       Bitmask of
+       Битовая маска
        <link linkend="constant.php-output-handler-start">
-        <constant>PHP_OUTPUT_HANDLER_<replaceable>*</replaceable></constant>
-        constants
+        <constant>PHP_OUTPUT_HANDLER_<replaceable>*</replaceable></constant>-констант
        </link>.
       </simpara>
      </listitem>
@@ -382,8 +381,7 @@
   </para>
   <warning>
    <simpara>
-    Calling any of the following functions from within an output handler
-    will result in a fatal error:
+    Вызов следующих функций из обработчика вывода приведёт к фатальной ошибке:
     <function>ob_clean</function>, <function>ob_end_clean</function>,
     <function>ob_end_flush</function>, <function>ob_flush</function>,
     <function>ob_get_clean</function>, <function>ob_get_flush</function>,
@@ -392,44 +390,44 @@
   </warning>
   <note>
    <simpara>
-    If the <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> of a handler is set,
-    the handler will not be invoked by calling
+    Если установлен флаг статуса <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> обработчика,
+    обработчик не будет запущен вызовом функций
     <function>ob_end_clean</function>, <function>ob_end_flush</function>,
     <function>ob_get_clean</function>, <function>ob_get_flush</function>
-    or during PHP's shutdown process.
-    This flag has no effect on when calling <function>ob_clean</function>
-    or <function>ob_flush</function>.
+    или в течение завершения работы PHP.
+    Этот флаг не даёт эффекта при вызове функций <function>ob_clean</function>
+    или <function>ob_flush</function>.
    </simpara>
   </note>
   <note>
    <simpara>
-    The working directory of the script can change inside the shutdown function
-    under some web servers, e.g. Apache or the built-in web server.
+    Функция завершения работы на ряде веб-серверов
+    умеет изменять рабочую директорию скрипта,
+    например на сервере Apache или встроенном веб-сервере.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Flags Passed To Output Handlers</title>
+  <title>Флаги, передаваемые обработчикам вывода</title>
   <para>
-   The bitmask passed to the second <parameter>phase</parameter> parameter
-   of the output handler provides information on the invocation of the handler.
+   Битовая маска, переданная во второй параметр <parameter>phase</parameter>
+   обработчика вывода даёт информацию о вызове обработчика.
   </para>
   <note>
    <simpara>
-    The bitmask can include more than one flag
-    and the bitwise <literal>&amp;</literal> operator should be used
-    to check whether a flag is set.
+    В битовую маску разрешено включать больше одного флага,
+    а для проверки того, установлен ли флаг,
+    указывают побитовый оператор <literal>&amp;</literal>.
    </simpara>
   </note>
   <warning>
    <simpara>
-    The value of <constant>PHP_OUTPUT_HANDLER_WRITE</constant> and its alias
-    <constant>PHP_OUTPUT_HANDLER_CONT</constant> is <literal>0</literal>
-    therefore whether it is set can only be determined
-    by using an
+    Значение флага <constant>PHP_OUTPUT_HANDLER_WRITE</constant> и его псевдонима
+    <constant>PHP_OUTPUT_HANDLER_CONT</constant> равно <literal>0</literal>,
+    поэтому установлено ли оно, определяют только операторами равенства
     <link linkend="language.operators.comparison">equality operator</link>
-    (<literal>==</literal> or <literal>===</literal>).
+    (<literal>==</literal> или <literal>===</literal>).
    </simpara>
   </warning>
   <para>
