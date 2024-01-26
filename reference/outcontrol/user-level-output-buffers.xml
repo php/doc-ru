@@ -431,91 +431,90 @@
    </simpara>
   </warning>
   <para>
-   The following flags are set in a specific phase of the handler's lifecycle:
-   <constant>PHP_OUTPUT_HANDLER_START</constant> is set
-   when a handler is invoked for the first time.
+   PHP устанавливает следующие флаги на конкретном этапе жизненного цикла обработчика:
+   <constant>PHP_OUTPUT_HANDLER_START</constant> —
+   при первом вызове обработчика.
    <constant>PHP_OUTPUT_HANDLER_FINAL</constant>
-   or its alias <constant>PHP_OUTPUT_HANDLER_END</constant>
-   is set when a handler is invoked for the last time,
-   i.e. it is being turned off. This flag is also set
-   when buffers are being turned off by PHP's shutdown process.
+   или его псевдоним <constant>PHP_OUTPUT_HANDLER_END</constant> —
+   при последнем вызове обработчика,
+   т. е. он отключается. PHP также установит этот флаг,
+   когда буферы выключаются процессом завершения работы PHP.
   </para>
   <para>
-   The following flags are set by a specific invocation of the handler:
-   <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> is set
-   when the handler is invoked by calling <function>ob_flush</function>.
+   Конкретный вызов обработчика устанавливает следующие флаги:
+   <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> —
+   при запуске обработчика вызовом функции <function>ob_flush</function>.
    <constant>PHP_OUTPUT_HANDLER_WRITE</constant>
-   or its alias <constant>PHP_OUTPUT_HANDLER_CONT</constant>
-   is set when the size of its contents equals or exceeds the size of the buffer
-   and the handler is invoked while the buffer is being automatically flushed.
-   <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> is set
-   when the handler is invoked by calling <function>ob_clean</function>,
-   <function>ob_end_clean</function> or <function>ob_get_clean</function>.
-   When <function>ob_end_clean</function> or <function>ob_get_clean</function>
-   is called, <constant>PHP_OUTPUT_HANDLER_FINAL</constant> is set as well.
+   или его псевдоним <constant>PHP_OUTPUT_HANDLER_CONT</constant> —
+   когда размер его содержимого равен или превышает размер буфера,
+   а обработчик вызван во время автоматической очистки буфера.
+   <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> —
+   когда обработчик запущен вызовом функций <function>ob_clean</function>,
+   <function>ob_end_clean</function> или <function>ob_get_clean</function>.
+   При вызове функций <function>ob_end_clean</function> или <function>ob_get_clean</function>
+   он также устанавливает флаг <constant>PHP_OUTPUT_HANDLER_FINAL</constant>.
   </para>
   <note>
    <simpara>
-    When <function>ob_end_flush</function> or <function>ob_get_flush</function>
-    is called, <constant>PHP_OUTPUT_HANDLER_FINAL</constant> is set
-    but <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> is not.
+    При вызове функций <function>ob_end_flush</function> или <function>ob_get_flush</function>,
+    флаг <constant>PHP_OUTPUT_HANDLER_FINAL</constant> будет установлен,
+    а флаг <constant>PHP_OUTPUT_HANDLER_FLUSH</constant> — нет.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Output Handler Return Values</title>
+  <title>Возвращаемые значения обработчика вывода</title>
   <para>
-   The return value of the output handler is internally coerced into a string
-   following standard PHP type semantics, with two exceptions:
-   <type>array</type>s and <type>bool</type>eans.
+   Возвращаемое значение обработчика вывода внутренне преобразовываются в строку,
+   следуя стандартной семантике PHP-типов, с двумя исключениями:
+   массивы (<type>array</type>) и логические значения (<type>bool</type>).
   </para>
   <para>
-   Arrays are converted into the string <literal>"Array"</literal>
-   but the <literal>Array to string conversion</literal> warning
-   is not triggered.
+   Массивы преобразовываются в строку <literal>«Array»</literal>,
+   но предупреждение «<literal>Array to string conversion</literal>»
+   не срабатывает.
   </para>
   <para>
-   If the handler returns &false; the contents of the buffer are returned.
-   If the handler returns &true; an empty string is returned.
+   Если обработчик возвращает &false;, возвращается содержимое буфера.
+   Если обработчик возвращает &true;, возвращается пустая строка.
   </para>
   <note>
    <simpara>
-    If a handler returns &false; or throws an exception
-    its <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> status flag is set.
+    Если обработчик возвращает &false; или выбрасывает исключение,
+    PHP устанавливает для него флаг состояния <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Exceptions Thrown In Output Handlers</title>
+  <title>Исключения в обработчиках вывода</title>
   <para>
-   If an uncaught exception is thrown in an output handler
-   the program terminates and the handler is invoked
-   by the shutdown process after which
-   the <literal>"Uncaught Exception"</literal> error message is flushed.
+   Если в обработчике вывода выбрасывается неперехваченное исключение,
+   программа завершается, а процесс завершения работы вызывает обработчик,
+   затем выводится сообщение об ошибке <literal>Uncaught Exception</literal>.
   </para>
   <para>
-   If the uncaught exception is thrown in a handler
-   invoked by <function>ob_flush</function>,
-   <function>ob_end_flush</function> or <function>ob_get_flush</function>,
-   the contents of the buffer are flushed before the error message.
+   Если в обработчике вывода, вызываемом функциями <function>ob_flush</function>,
+   <function>ob_end_flush</function> или <function>ob_get_flush</function>,
+   выбрасывается неперехваченное исключение,
+   содержимое буфера сбрасывается перед сообщением об ошибке.
   </para>
   <para>
-   If an uncaught exception is thrown in an output handler during shutdown,
-   the handler is terminated and neither the contents of the buffer
-   nor the error message is flushed.
+   Если в обработчике вывода неперехваченное исключение выбрасывается при выключении,
+   обработчик завершается, содержимое буфера не сбрасывается
+   и PHP не выдаёт сообщение об ошибке.
   </para>
   <note>
    <simpara>
-    If a handler throws an exception
-    its <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> status flag is set.
+    Если обработчик вывода выбрасывает исключение,
+    PHP устанавливает для него флаг состояния <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Errors Raised In Output Handlers</title>
+  <title>Ошибки в обработчиках вывода</title>
   <para>
    If a non-fatal error is raised in an output handler
    the program continues execution.
