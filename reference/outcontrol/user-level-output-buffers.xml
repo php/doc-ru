@@ -138,7 +138,7 @@
    Если установлено значение <literal>0</literal>,
    буфер вывода будет ограничен только размеров доступной PHP памяти.
    Если установлено значение <literal>1</literal>,
-   буфер будет сбрасываться после кажого блока кода, который даёт вывод ненулевой длины.
+   буфер будет сбрасываться после каждого блока кода, который даёт вывод ненулевой длины.
   </para>
   <para>
    Размер буферов вывода получают вызовом функции
@@ -305,7 +305,7 @@
  <section>
   <title>Обработчики вывода</title>
   <para>
-   Обработчики вывода — это <type>callable</type>-объекты, связанные с буферами вывода,
+   Обработчики вывода — это <type>callable</type>-объекты, связанные с буферами вывода,
    которые запускаются вызовом функций <function>ob_clean</function>,
    <function>ob_flush</function>, <function>ob_end_flush</function>,
    <function>ob_get_flush</function>, <function>ob_end_clean</function>,
@@ -476,12 +476,12 @@
    не срабатывает.
   </para>
   <para>
-   Если обработчик возвращает &false;, возвращается содержимое буфера.
+   Если обработчик  возвращает значение &false;, возвращается содержимое буфера.
    Если обработчик возвращает &true;, возвращается пустая строка.
   </para>
   <note>
    <simpara>
-    Если обработчик возвращает &false; или выбрасывает исключение,
+    Если обработчик  возвращает значение &false; или выбрасывает исключение,
     PHP устанавливает для него флаг состояния <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
    </simpara>
   </note>
@@ -502,8 +502,8 @@
   </para>
   <para>
    Если в обработчике вывода неперехваченное исключение выбрасывается при выключении,
-   обработчик завершается, содержимое буфера не сбрасывается
-   и PHP не выдаёт сообщение об ошибке.
+   обработчик завершается, не сбрасываются ни содержимое буфера,
+   ни сообщение об ошибке.
   </para>
   <note>
    <simpara>
@@ -516,93 +516,94 @@
  <section>
   <title>Ошибки в обработчиках вывода</title>
   <para>
-   If a non-fatal error is raised in an output handler
-   the program continues execution.
+   Если в обработчике вывода выдана неустранимая ошибка,
+   программа продолжает выполняться.
   </para>
   <para>
-   If the non-fatal error is raised in a handler invoked by
+   Если в обработчике, вызываемом функциями
    <function>ob_flush</function>, <function>ob_end_flush</function>
-   or <function>ob_get_flush</function>,
-   the buffer flushes certain data depending on the return value of the handler.
-   If the handler returns &false; the buffer and the error message are flushed.
-   If the returns anything else the handler return value is flushed
-   but not the error message.
+   или <function>ob_get_flush</function>,
+   возникает неустранимая ошибка,
+   буфер сбрасывает данные, которые вернул обработчик.
+   Если обработчик возвращает значение &false;, сбрасываются буфер и сообщение об ошибке.
+   Если возвращает другое значение, возвращаемое обработчиком значение сбрасывается,
+   но не сообщение об ошибке.
   </para>
   <note>
    <simpara>
-    If a handler returns &false;
-    its <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> status flag is set.
+    Если обработчик  возвращает значение &false;
+    PHP устанавливает для него флаг состояния <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
    </simpara>
   </note>
   <para>
-   If a fatal error is raised in an output handler
-   the program terminates and the handler is invoked
-   by the shutdown process after which the error message is flushed.
+   Если в обработчике вывода возникает фатальная ошибка,
+   программа завершается, а процесс завершения работы вызывает обработчик,
+   затем сбрасывается сообщение об ошибке.
   </para>
   <para>
-   If the fatal error is raised in a handler
-   invoked by <function>ob_flush</function>,
-   <function>ob_end_flush</function> or <function>ob_get_flush</function>,
-   the contents of the buffers are flushed before the error message.
+   Если в обработчике вывода, вызываемом функциями <function>ob_flush</function>,
+   <function>ob_end_flush</function> или <function>ob_get_flush</function>,
+   возникает фатальная ошибка возникает,
+   содержимое буферов сбрасывается перед сообщением об ошибке.
   </para>
   <para>
-   If a fatal error is raised in an output handler during shutdown
-   the program terminates without flushing the buffer or the error message.
+   Если в обработчике вывода фатальная ошибка возникает при выключении,
+   программа завершается без сброса буфера или сообщения об ошибке.
   </para>
  </section>
 
  <section>
-  <title>Output In Output Handlers</title>
+  <title>Вывод обработчиков вывода</title>
   <para>
-   In specific circumstances, output produced in the handler is flushed
-   along with the contents of the buffer.
-   This output is not appended to the buffer and is not part of the string
-   returned by <function>ob_get_flush</function>.
+   При конкретных обстоятельствах выходные данные, созданные в обработчике,
+   сбрасываются вместе с содержимым буфера. Этот вывод не добавляется
+   в буфер и не становится строкой,
+   возвращаемой функцией <function>ob_get_flush</function>.
   </para>
   <para>
-   During flush operations (calling <function>ob_flush</function>,
+   Если во время операций сброса (при вызове функций <function>ob_flush</function>,
    <function>ob_end_flush</function>, <function>ob_get_flush</function>
-   and during shutdown)
-   if the return value of a handler is &false;
-   the contents of the buffer are flushed followed by the output.
-   If the handler is not invoked during shutdown
-   the handler throwing an exception or <function>exit</function> being called
-   results in the same behavior.
+   и при завершении работы)
+   возвращаемое значение обработчика равно &false;,
+   содержимое буфера сбрасывается, а затем идёт вывод.
+   Если обработчик не вызывается при завершении работы,
+   то обработчик выбрасывает исключение;
+   вызов конструкции <function>exit</function>
+   ведёт себя так же.
   </para>
   <note>
    <simpara>
-    If a handler returns &false;
-    its <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> status flag is set.
+    Если обработчик  возвращает значение &false;,
+    PHP устанавливает для него флаг состояния <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
    </simpara>
   </note>
  </section>
 
  <section>
-  <title>Output Handler Status Flags</title>
+  <title>Флаги состояния обработчика вывода</title>
   <para>
-   The
-   <link linkend="outcontrol.constants.flags-returned-by-handler">
-    handler status flags
-   </link> of the buffer's <literal>flags</literal> bitmask
-   are set every time to the output handler is invoked
-   and are part of the <literal>flags</literal> returned by
-   <function>ob_get_status</function>.
-   If the handler successfully executes and does not return &false;,
-   <constant>PHP_OUTPUT_HANDLER_STARTED</constant> and
-   <constant>PHP_OUTPUT_HANDLER_PROCESSED</constant> is set.
-   If the handler returns &false; or throws and exception while executing,
-   <constant>PHP_OUTPUT_HANDLER_STARTED</constant> and
-   <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> is set.
+   PHP устанавливает <link linkend="outcontrol.constants.flags-returned-by-handler">
+    флаги состояния обработчика
+   </link> битовой маски флагов (<literal>flags</literal>) буфера
+   каждый раз при вызове обработчика вывода
+   и делает их частью флагов (<literal>flags</literal>), возвращаемых
+   функцией <function>ob_get_status</function>.
+   Если обработчик успешно выполняется и не  возвращает значение &false;,
+   PHP устанавливает флаги состояния <constant>PHP_OUTPUT_HANDLER_STARTED</constant>
+   и <constant>PHP_OUTPUT_HANDLER_PROCESSED</constant>.
+   Если обработчик  возвращает значение &false; или выбрасывает исключение во время работы,
+   PHP устанавливает флаги состояния <constant>PHP_OUTPUT_HANDLER_STARTED</constant>
+   и <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>.
   </para>
   <note>
    <simpara>
-    If the <constant>PHP_OUTPUT_HANDLER_DISABLED</constant> of a handler is set,
-    the handler will not be invoked by calling
+    Если для обработчика установлено значение <constant>PHP_OUTPUT_HANDLER_DISABLED</constant>,
+    обработчик не будет запускаться при вызове функций
     <function>ob_end_clean</function>, <function>ob_end_flush</function>,
     <function>ob_get_clean</function>, <function>ob_get_flush</function>
-    or during PHP's shutdown process.
-    This flag has no effect on when calling <function>ob_clean</function>
-    or <function>ob_flush</function>.
+    или при завершении процесса работы PHP.
+    Этот флаг не даёт эффекта при вызове функций <function>ob_clean</function>
+    или <function>ob_flush</function>.
    </simpara>
   </note>
  </section>
