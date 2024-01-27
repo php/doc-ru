@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 54217f14f9ddeb734c7d439f44ce7491f66cc587 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: ed851c6bbc75edca2706ea43f224278dd0538a6f Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
  <reference xml:id="ref.pdo-mysql" xmlns="http://docbook.org/ns/docbook">
   <?phpdoc extension-membership="bundledexternal" ?>
@@ -10,12 +10,11 @@
    <section xml:id="pdo-mysql.intro">
    &reftitle.intro;
     <para>
-     PDO_MYSQL - это драйвер, реализующий интерфейс <link linkend="intro.pdo">PHP
-     Data Objects (PDO)</link> и предоставляет доступ из PHP к
-     базам данных MySQL.
+     PDO_MYSQL — это драйвер, который реализует интерфейс <link linkend="intro.pdo">PHP
+     Data Objects (PDO)</link> и даёт PHP доступ к базам данных MySQL.
     </para>
     <para>
-     PDO_MYSQL по умолчанию использует эмулированную подготовку.
+     Драйвер PDO_MYSQL по умолчанию использует эмулированную подготовку.
     </para>
 
     <para>
@@ -23,34 +22,40 @@
     </para>
 
     <para>
-     При запуске PHP до версии 7.1.16 или PHP 7.2 до 7.2.4, установите плагин пароля по умолчанию MySQL 8 Server в <emphasis>mysql_native_password</emphasis>,
-     иначе вы увидите ошибки, похожие на
+     При запуске PHP до версии 7.1.16 или PHP с версии 7.2 до версии 7.2.4
+     в качестве плагина шифрования паролей по умолчанию для сервера MySQL 8 устанавливают <emphasis>mysql_native_password</emphasis>,
+     иначе будет выдана ошибка наподобие
      <emphasis>The server requested authentication method unknown to the client [caching_sha2_password]</emphasis>,
-     даже когда <emphasis>caching_sha2_password</emphasis> не используется.
+     даже когда плагин <emphasis>caching_sha2_password</emphasis> не задан.
     </para>
     <para>
-     Это связано с тем, что MySQL 8 по умолчанию использует caching_sha2_password,
-     и плагин не распознается старыми версиями PHP (mysqlnd). Вместо этого измените
-     это, установив
-     <literal>default_authentication_plugin=mysql_native_password</literal> в
-     <filename>my.cnf</filename>. Плагин <emphasis>caching_sha2_password</emphasis>
-     будет поддерживаться в будущей версии PHP. Пока же модуль
-     <link linkend="book.mysql-xdevapi">mysql_xdevapi</link> поддерживает его.
+     Причина этого в том, что на сервере MySQL 8
+     в качестве плагина по умолчанию указан caching_sha2_password,
+     который не распознаётся старыми версиями PHP (модулем mysqlnd).
+     Вместо него в файле конфигурации сервера <filename>my.cnf</filename> указывают —
+     <literal>default_authentication_plugin=mysql_native_password</literal>.
+     Плагин <emphasis>caching_sha2_password</emphasis>
+     получил полную поддержку начиная с PHP 7.4.4. В предыдущих версиях PHP
+     его поддерживает модуль <link linkend="book.mysql-xdevapi">mysql_xdevapi</link>.
     </para>
 
     <warning>
      <para>
-      Осторожно: Некоторые типы MySQL таблиц (механизмы хранения, движков) не поддерживают транзакции.
-      При написании кода с использованием транзакций применительно к таблицам, которые их не
-      поддерживают, MySQL будет считать, что транзакция была начата успешно. Кроме того, выполнение любого
-      DDL-запроса завершит все открытые транзакции, а также выполнит весь стек не завершённых запросов.
+      Осторожно: MySQL-таблицы подсистемы хранения данных не поддерживают транзакции.
+      Если в коде, который работает с транзакционной базой данных,
+      указана неподдерживающая транзакции таблица,
+      MySQL сделает вид, что транзакция успешно начата.
+      И ещё, каждый выполненный DDL-запрос
+      будет неявно фиксировать незавершённые транзакции — то есть завершать открытые транзакции
+      и выполнять стек незавершённых запросов.
      </para>
     </warning>
     <note>
      <para>
-      Драйвер MySQL не поддерживает должным образом <constant>PDO::PARAM_INPUT_OUTPUT</constant> через
-      <methodname>PDOStatement::bindParam</methodname>;
-      хотя параметр можно использовать, он не обновляется (т.е. фактический вывод игнорируется).
+      Драйвер MySQL неправильно обрабатывает бит <constant>PDO::PARAM_INPUT_OUTPUT</constant>
+      в методе <methodname>PDOStatement::bindParam</methodname>;
+      хотя такие параметры и разрешено использовать,
+      они не обновляются (т. е. фактический вывод игнорируется).
      </para>
     </note>
    </section>
@@ -68,13 +73,13 @@
    <refsect1 role="description">
     &reftitle.description;
     <para>
-     Имя источника данных (Data Source Name или DSN) PDO_MYSQL состоит из следующих элементов:
+     Имя источника данных (Data Source Name, или DSN) PDO_MYSQL состоит из следующих элементов:
      <variablelist>
       <varlistentry>
        <term>DSN префикс</term>
        <listitem>
         <para>
-        DSN-префикс - это <userinput>mysql:</userinput>.
+        DSN-префикс — это <userinput>mysql:</userinput>.
         </para>
        </listitem>
       </varlistentry>
@@ -82,7 +87,7 @@
        <term><literal>host</literal></term>
        <listitem>
         <para>
-         Имя хоста, где находится сервер баз данных.
+         Имя хоста сервера баз данных.
         </para>
        </listitem>
       </varlistentry>
@@ -106,7 +111,7 @@
        <term><literal>unix_socket</literal></term>
        <listitem>
         <para>
-         Сокет MySQL Unix (не должен использоваться совместно с <literal>host</literal>
+         Сокет MySQL Unix (нельзя указывать совместно с <literal>host</literal>
          или <literal>port</literal>).
         </para>
        </listitem>
@@ -115,8 +120,8 @@
        <term><literal>charset</literal></term>
        <listitem>
         <para>
-         Кодировка. Смотрите раздел <link linkend="mysqlinfo.concepts.charset">Кодировки</link>
-         для дополнительной информации.
+         Кодировка. Дополнительная информация дана в разделе
+         «<link linkend="mysqlinfo.concepts.charset">Кодировки</link>».
         </para>
        </listitem>
       </varlistentry>
@@ -128,16 +133,16 @@
     &reftitle.examples;
     <para>
      <example>
-      <title>Примеры DSN для PDO_MYSQL</title>
+      <title>Примеры DSN для драйвера PDO_MYSQL</title>
       <para>
-       Следующие примеры показывают использование PDO_MYSQL DSN для
-       соединения с базой данных MySQL:
+       Следующий пример показывает DSN-имя драйвера PDO_MYSQL
+       для соединения с базой данных MySQL:
        <programlisting>
 <![CDATA[
 mysql:host=localhost;dbname=testdb
 ]]>
        </programlisting>
-       Более сложный пример:
+       Более полные примеры:
        <programlisting>
 <![CDATA[
 mysql:host=localhost;port=3307;dbname=testdb
@@ -154,12 +159,12 @@ mysql:unix_socket=/tmp/mysql.sock;dbname=testdb
     <note>
      <title>Только Unix:</title>
      <para>
-      Если имя хоста установлено как <literal>"localhost"</literal>, то соединение происходит
-      через сокет домена. Если PDO_MYSQL скомпилирован с использованием libmysqlclient,
-      то путь к файлу-сокета будет совпадать с путём, по которому скомпилирован libmysqlclient.
-      Если PDO_MYSQL скомпилирован с использованием mysqlnd, значение сокета по умолчанию, может быть
-      выставлено с использованием настройки<link linkend="ini.pdo-mysql.default-socket">
-      pdo_mysql.default_socket</link>.
+      Если имя хоста установлено как <literal>«localhost»</literal>, то соединение выполняется
+      через сокет домена. Если драйвер PDO_MYSQL скомпилирован с модулем libmysqlclient,
+      то файла сокета будет находиться в папке, скомпилированной libmysqlclient.
+      Если PDO_MYSQL скомпилирован с модулем mysqlnd, сокет по умолчанию
+      можно установить через директиву
+      <link linkend="ini.pdo-mysql.default-socket">pdo_mysql.default_socket</link>.
      </para>
    </note>
    </refsect1>
