@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 919c8a799262f08bb0da4b70ab52f07ec670fc17 Maintainer: lex Status: ready -->
+<!-- EN-Revision: b621ab27a9d333285df99a03825b36a87eb67cad Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="eventdnsbase.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -9,7 +9,7 @@
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
-  <methodsynopsis>
+  <constructorsynopsis role="EventDnsBase">
    <modifier>public</modifier>
    <methodname>EventDnsBase::__construct</methodname>
    <methodparam>
@@ -17,12 +17,12 @@
     <parameter>base</parameter>
    </methodparam>
    <methodparam>
-    <type>bool</type>
+    <type class="union"><type>int</type><type>bool</type></type>
     <parameter>initialize</parameter>
    </methodparam>
-  </methodsynopsis>
+  </constructorsynopsis>
   <para>
-   Конструктор объекта EventDnsBase.
+   Создаёт объект EventDnsBase.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -34,7 +34,7 @@
     </term>
     <listitem>
      <para>
-      База событий.
+      База события.
      </para>
     </listitem>
    </varlistentry>
@@ -44,20 +44,99 @@
     </term>
     <listitem>
      <para>
-      Если аргумент <parameter>initialize</parameter> имеет значение &true;,
-      он пытается разумно настроить базу DNS с учётом параметров операционной системы по умолчанию.
-      В противном случае база DNS-событий остаётся пустой, без настроенных серверов имён или параметров.
-      В последнем случае база DNS должна быть настроена вручную,
-      например, с помощью <methodname>EventDnsBase::parseResolvConf</methodname>.
+      Если параметр <parameter>initialize</parameter> равен &true;,
+      он пытается использовать параметры базовой операционной системы по умолчанию
+      для разумной настройки базы DNS.
+      Если он равен &false;, база DNS остаётся ненастроенной,
+      без серверов имён (nameservers) или набора параметров. Если база DNS осталась без параметров
+      её настраивают вручную, например методом
+      <methodname>EventDnsBase::parseResolvConf</methodname>.
+     </para>
+     <para>
+      Если в параметр <parameter>initialize</parameter> передаётся целочисленное значение,
+      разрешено соответствие следующим флагам:
+      <informaltable>
+       <tgroup cols="2">
+        <thead>
+         <row>
+          <entry valign="top">Flag</entry>
+          <entry valign="top">&Description;</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry valign="top"><constant>EventDnsBase::DISABLE_WHEN_INACTIVE</constant></entry>
+          <entry valign="top">
+           Не запрещать выход из цикла событий модуля libevent, когда нет активных DNS-запросов.
+          </entry>
+         </row>
+         <row>
+          <entry valign="top"><constant>EventDnsBase::INITIALIZE_NAMESERVERS</constant></entry>
+          <entry valign="top">
+           Обработать файл <literal>resolv.conf</literal>.
+          </entry>
+         </row>
+         <row>
+          <entry valign="top"><constant>EventDnsBase::NAMESERVERS_NO_DEFAULT</constant></entry>
+          <entry valign="top">
+           Не добавлять сервер имён (nameservers) по умолчанию,
+           если в файле <literal>resolv.conf</literal> нет записи nameserver.
+          </entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </informaltable>
      </para>
     </listitem>
    </varlistentry>
   </variablelist>
  </refsect1>
- <refsect1 role="returnvalues">
-  &reftitle.returnvalues;
+ <refsect1 role="errors">
+  &reftitle.errors;
   <para>
-   Возвращает объект EventDnsBase.
+   Если тип параметра <parameter>initialize</parameter> отличается
+   от пересечения типов <type class="union"><type>int</type><type>bool</type></type>,
+   выбрасывается исключение <exceptionname>TypeError</exceptionname>.
+  </para>
+  <para>
+   Если значение параметра <parameter>initialize</parameter> окажется недопустимым,
+   выбрасывается исключение <exceptionname>EventException</exceptionname>.
+  </para>
+ </refsect1>
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>Событие PECL 3.1.3</entry>
+       <entry>
+        Если тип параметра <parameter>initialize</parameter> отличается
+        от пересечения типов <type class="union"><type>int</type><type>bool</type></type>,
+        выбрасывается исключение <exceptionname>TypeError</exceptionname>.
+       </entry>
+      </row>
+      <row>
+       <entry>Событие PECL 3.1.0RC1</entry>
+       <entry>
+        Тип параметра <parameter>initialize</parameter> изменён с <type>bool</type>
+        на <type>mixed</type>. Разрешено либо значение <type>bool</type> (с сохранением предыдущего смысла),
+        либо константа из следующего списка:
+        <constant>EventDnsBase::DISABLE_WHEN_INACTIVE</constant>,
+        <constant>EventDnsBase::INITIALIZE_NAMESERVERS</constant>,
+        или <constant>EventDnsBase::NAMESERVERS_NO_DEFAULT</constant>.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
   </para>
  </refsect1>
 </refentry>
