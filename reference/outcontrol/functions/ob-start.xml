@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9e0a39029d6e66cd5f7c7e8cfecf76fdb8ad7f49 Maintainer: mch Status: ready -->
+<!-- EN-Revision: e8f4c442c963211fd01031177619c41e220863bc Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ob-start" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,37 +16,21 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция включает буферизацию вывода. Если буферизация вывода активна,
-   никакой вывод скрипта не отправляется (кроме заголовков), а сохраняется во
-   внутреннем буфере.
+   Функция включает буферизацию вывода. Пока буферизация вывода активна,
+   вывод из скрипта не отправляется, вместо этого вывод сохраняется во внутреннем буфере.
+   В разделе «<xref linkend="outcontrol.what-output-is-buffered"/>»
+   рассказано, на какой именно вывод это влияет.
   </para>
-  <para>
-   Содержимое этого внутреннего буфера может быть скопировано в строковую
-   переменную функцией <function>ob_get_contents</function>. Для вывода
-   содержимого внутреннего буфера вызывают функцию <function>ob_end_flush</function>.
-   Альтернативный способ очистить содержимое буфера —
-   вызов функции <function>ob_end_clean</function>.
-  </para>
-  <warning>
-   <para>
-    Веб-серверы (например, Apache) могут изменить рабочую директорию
-    при вызове callback-функции. Её можно изменить обратно,
-    например, вызвав в callback-функции
-    <literal>chdir(dirname($_SERVER['SCRIPT_FILENAME']))</literal>.
-   </para>
-  </warning>
   <para>
    Буферы вывода помещаются в стек, то есть разрешён вызов
-   функции <function>ob_start</function> пока активна другая
-   функция <function>ob_start</function>. Просто нужно убедиться, что
-   функция <function>ob_end_flush</function> вызвана столько же раз.
-   Если активны несколько выходных callback-функций,
-   вывод последовательно фильтруется
-   для каждой из них в порядке вложения.
+   функции <function>ob_start</function> пока активен другой буфер.
+   Если активировано несколько буферов вывода,
+   вывод фильтруется последовательно
+   через каждый из них в порядке вложенности.
+   Подробнее об этом рассказано в разделе «<xref linkend="outcontrol.nesting-output-buffers"/>».
   </para>
   <para>
-   Если буферизация вывода всё ещё активна, когда скрипт завершает работу,
-   PHP автоматически выводит содержимое.
+   Подробное описание буферов вывода дано в разделе <xref linkend="outcontrol.user-level-output-buffers"/>.
   </para>
  </refsect1>
 
@@ -58,18 +42,16 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Можно задать необязательный параметр <parameter>callback</parameter>.
-       Эта функция принимает в качестве параметра строку и вернуть также должна строку.
-       Функция будет вызвана при сбросе (отправке) или очистке буфера (функциями
-       <function>ob_flush</function>, <function>ob_clean</function> или похожими)
-       или если буфер вывода сбрасывается в браузер по окончании запроса.
-       При вызове переданной в параметр <parameter>callback</parameter> функции, она получает
-       содержимое выходного буфера в качестве параметра и ожидается,
-       что в качестве результата она вернёт обновлённый буфер вывода,
-       который будет отправлен браузеру.
-       Если <parameter>callback</parameter> окажется недопустимой функцией, то
-       эта функция вернёт &false;.
-       Описание функции для этого параметра:
+       Можно задать необязательный параметр <parameter>callback</parameter> (<type>callable</type).
+       Чтобы обойти его, передают значение &null;.
+      </para>
+      <para>
+       Параметр <parameter>callback</parameter> вызывается,
+       когда буфер вывода сбрасывается (отправляется), очищается
+       или когда буфер вывода сбрасывается в конце скрипта.
+      </para>
+      <para>
+       Сигнатура <parameter>callback</parameter>-функции:
       </para>
       <para>
        <methodsynopsis>
@@ -90,40 +72,38 @@
          <term><parameter>phase</parameter></term>
          <listitem>
           <simpara>
-           Битовая маска констант <link linkend="outcontrol.constants"><constant>PHP_OUTPUT_HANDLER_*</constant></link>.
+           Битовая маска из семейства констант
+           <link linkend="constant.php-output-handler-start">
+            <constant>PHP_OUTPUT_HANDLER_<replaceable>*</replaceable></constant>
+           </link>.
+           Подробнее о флагах рассказано в разделе
+           «<xref linkend="outcontrol.flags-passed-to-output-handlers"/>».
           </simpara>
          </listitem>
         </varlistentry>
        </variablelist>
       </para>
       <para>
-       Если параметр <parameter>callback</parameter> вернёт &false;, то
-       оригинальная информация отправится в браузер без изменений.
+       Если параметр <parameter>callback</parameter> вернёт &false;,
+       возвращается содержимое буфера.
+       Подробнее об этом рассказано в разделе
+       «<xref linkend="outcontrol.output-handler-return-values"/>».
       </para>
+      <warning>
+       <simpara>
+        Вызов любой из следующих функций из обработчика вывода
+        выдаст фатальную ошибку:
+        <function>ob_clean</function>, <function>ob_end_clean</function>,
+        <function>ob_end_flush</function>, <function>ob_flush</function>,
+        <function>ob_get_clean</function>, <function>ob_get_flush</function>,
+        <function>ob_start</function>.
+       </simpara>
+      </warning>
       <para>
-       Параметр <parameter>callback</parameter> можно обойти,
-       передав значение &null;.
+       Подробнее о <parameter>callback</parameter>-функциях (обработчиках вывода)
+       рассказано в разделах «<xref linkend="outcontrol.output-handlers"/>»
+       и «<xref linkend="outcontrol.working-with-output-handlers"/>».
       </para>
-      <para>
-       Функции <function>ob_end_clean</function>, <function>ob_end_flush</function>,
-       <function>ob_clean</function>, <function>ob_flush</function>
-       и <function>ob_start</function> не могут быть вызваны из callback-функций,
-       потому что их поведение непредсказуемо.
-       Если нужно удалить содержимое буфера,
-       то из callback-функции возвращают "" (пустую строку).
-       Нельзя вызывать из callback-функции функции буферизации вывода, например:
-       <literal>print_r($expression, true)</literal> или
-       <literal>highlight_file($filename, true)</literal>.
-      </para>
-      <note>
-       <para>
-        Функция <function>ob_gzhandler</function> была введена,
-        чтобы упростить отправку gz-кодированных данных браузерам,
-        поддерживающим сжатые веб-страницы. Функция <function>ob_gzhandler</function>
-        определяет тип кодировки содержимого, принимаемой браузером,
-        и возвращает совместимый вывод.
-       </para>
-      </note>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -131,10 +111,12 @@
      <listitem>
       <para>
        Если передан необязательный параметр <parameter>chunk_size</parameter>,
-       то буфер буден сброшен после любого вывода, превышающего или равного
-       по размеру <parameter>chunk_size</parameter>. Значение
-       по умолчанию <literal>0</literal> означает, что функция вывода будет
-       вызвана, когда буфер будет закрыт.
+       буфер будет сброшен после каждого блока кода,
+       размер буфера которого достиг или превысил
+       значение параметра <parameter>chunk_size</parameter>.
+       Значение по умолчанию <literal>0</literal> означает
+       что вывод буферизуется до тех пор, пока буфер не будет выключен.
+       Подробнее об этом рассказано в разделе «<xref linkend="outcontrol.buffer-size"/>».
       </para>
      </listitem>
     </varlistentry>
@@ -143,13 +125,13 @@
      <listitem>
       <para>
        Параметр <parameter>flags</parameter> — это битовая маска, которая
-       управляет операциями, которые можно выполнять с буфером вывода.
-       По умолчанию она разрешает буферу вывода быть очищенным, сброшенным и удалённым, что
-       равносильно значению
-       <constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant> |
-       <constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant> |
-       <constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant> или
-       сокращению этой комбинации <constant>PHP_OUTPUT_HANDLER_STDFLAGS</constant>.
+       управляет операциями, выполняемыми с буфером вывода.
+       По умолчанию разрешены очистка, сброс и удаление буферов вывода,
+       что разрешено устанавливать явно через
+       <link linkend="outcontrol.constants.buffer-control-flags">
+        флаги управления буфером
+       </link>.
+       Подробнее об этом рассказано в разделе «<xref linkend="outcontrol.operations-on-buffers"/>».
       </para>
       <para>
        Каждый флаг управляет доступом к набору функций, как описано ниже:
@@ -165,25 +147,22 @@
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_CLEANABLE</constant></entry>
            <entry>
-            Функции <function>ob_clean</function>,
-            <function>ob_end_clean</function> и
-            <function>ob_get_clean</function>.
+            <function>ob_clean</function>
            </entry>
           </row>
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_FLUSHABLE</constant></entry>
            <entry>
-            Функции <function>ob_end_flush</function>,
-            <function>ob_flush</function> и
-            <function>ob_get_flush</function>.
+            <function>ob_end_flush</function>
            </entry>
           </row>
           <row>
            <entry><constant>PHP_OUTPUT_HANDLER_REMOVABLE</constant></entry>
            <entry>
-            Функции <function>ob_end_clean</function>,
-            <function>ob_end_flush</function> и
-            <function>ob_get_flush</function>.
+            <function>ob_end_clean</function>,
+            <function>ob_end_flush</function>,
+            <function>ob_get_clean</function>,
+            <function>ob_get_flush</function>
            </entry>
           </row>
          </tbody>
