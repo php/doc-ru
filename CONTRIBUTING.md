@@ -225,7 +225,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | `__METHOD__`                    | Магическая константа __METHOD__                                       |
 | `<parameter>foo</parameter>`    | Параметр <parameter>foo</parameter>                                   |
 | `echo`                          | Языковая конструкция echo                                             |
-| Apache                          | SAPI Apache, или Веб-сервер Apache, или Модуль Apache                 |
+| Apache                          | Веб-сервер Apache, или Модуль Apache                                  |
 | Content-Length                  | Заголовок Content-Length                                              |
 | CURLOPT_HEADER                  | Параметр CURLOPT_HEADER                                               |
 | CURLINFO_HTTP_CODE              | Опция CURLINFO_HTTP_CODE                                              |
