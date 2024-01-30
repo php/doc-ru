@@ -207,7 +207,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 - Имена переменных
 - Типы переменных (integer, string, bool, resource)
 
-И другие аббревиатуры названий или имена собственные.
+И другие аббревиатуры или имена собственные.
 
 # Сопроводительные, или уточняющие, слова
 
