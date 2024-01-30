@@ -220,11 +220,11 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 
 | Оригинал                        | Перевод                                                               |
 |---------------------------------|-----------------------------------------------------------------------|
-| `$foo`                          | Переменная $foo                                                       |
-| `$_SERVER`                      | Суперглобальная переменная $_SERVER                                   |
-| `__METHOD__`                    | Магическая константа __METHOD__                                       |
-| `<parameter>foo</parameter>`    | Параметр <parameter>foo</parameter>                                   |
-| `echo`                          | Языковая конструкция echo                                             |
+| `$foo`                          | Переменная `$foo`                                                     |
+| `$_SERVER`                      | Суперглобальная переменная `$_SERVER`                                 |
+| `__METHOD__`                    | Магическая константа `__METHOD__`                                     |
+| `<parameter>foo</parameter>`    | Параметр `<parameter>foo</parameter>`                                 |
+| `echo`                          | Языковая конструкция `echo`                                           |
 | Apache                          | Веб-сервер Apache, или Модуль Apache                                  |
 | Content-Length                  | Заголовок Content-Length                                              |
 | CURLOPT_HEADER                  | Параметр CURLOPT_HEADER                                               |
@@ -232,7 +232,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | SAPI                            | Интерфейс SAPI                                                        |
 | Linux                           | Семейство операционных систем Linux или Linux-системы                 |
 | PHP_VERSION                     | Константа PHP_VERSION                                                 |
-| `var_dump()`                    | Функция var_dump()                                                    |
+| `var_dump()`                      | Функция `var_dump()`                                                |
 
 Одного уточнения хватит, если в предложении или коротком абзаце термин встречается больше одного раза, по смыслу.
 При добавлении уточняющего слова дайте точное определение. Для термина `$_SERVER` доступны
