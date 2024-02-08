@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cbac1ecf71d754707d69bdc344c4031c157eaa54 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 37da852aa1f9b754fed577897efa509ef4d578e5 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.inotify-init" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -10,12 +10,12 @@
  <refsect1 role="description"><!-- {{{ -->
   &reftitle.description;
   <methodsynopsis>
-   <type>resource</type><methodname>inotify_init</methodname>
+   <type class="union"><type>resource</type><type>false</type></type><methodname>inotify_init</methodname>
    <void />
   </methodsynopsis>
   <para>
-   Инициализирует экземпляр inotify для использования в
-   <function>inotify_add_watch</function>
+   Инициализирует экземпляр inotify для работы
+   с функцией <function>inotify_add_watch</function>.
   </para>
  </refsect1><!-- }}} -->
 
@@ -27,7 +27,7 @@
  <refsect1 role="returnvalues"><!-- {{{ -->
   &reftitle.returnvalues;
   <para>
-   Потоковый ресурс или &false;.
+   Возвращает ресурс потока или &false;.
   </para>
  </refsect1><!-- }}} -->
 
@@ -35,43 +35,44 @@
   &reftitle.examples;
   <para>
    <example xml:id="inotify-init.example.basic"><!-- {{{ -->
-    <title>Пример использования inotify</title>
+    <title>Пример использования функции inotify</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // Создаём экземпляр inotify
 $fd = inotify_init();
 
-// Отслеживаем __FILE__ на предмет изменения метаданных (например mtime)
+// Отслеживаем изменение метаданных файла __FILE__ (например, метки mtime)
 $watch_descriptor = inotify_add_watch($fd, __FILE__, IN_ATTRIB);
 
-// создаём событие
+// Генерируем событие
 touch(__FILE__);
 
 // Читаем события
 $events = inotify_read($fd);
 print_r($events);
 
-// Следующие функции позволяют использовать функции inotify без блокировки на inotify_read():
+// Следующие методы разрешают использовать функции объекта inotify без блокировки при чтении событий функцией inotify_read():
 
 // - Используем stream_select() для $fd:
 $read = array($fd);
 $write = null;
 $except = null;
-stream_select($read,$write,$except,0);
+stream_select($read, $write, $except, 0);
 
-// - Используем stream_set_blocking() для $fd
+// - Вызываем функцию stream_set_blocking() для файлового дескриптора $fd
 stream_set_blocking($fd, 0);
-inotify_read($fd); // Не блокируем и возвращаем false если нет ожидающих событий
+inotify_read($fd); // Не блокирует и возвращает false, если нет ожидающих событий
 
-// - Используем inotify_queue_len() для проверки, что очередь событий не пуста
+// - Вызываем функцию inotify_queue_len(), чтобы проверить, не пуста ли очередь событий
 $queue_len = inotify_queue_len($fd); // Если > 0, inotify_read() то не блокируем
 
-// Заканчиваем наблюдать за __FILE__
+// Заканчиваем наблюдение за файлом __FILE__
 inotify_rm_watch($fd, $watch_descriptor);
 
 // Закрываем экземпляр inotify
-// Все не закрытые наблюдатели будут закрыты
+// Это закончит наблюдения
 fclose($fd);
 
 ?>
