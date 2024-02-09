@@ -4,7 +4,7 @@
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.fwrite">
  <refnamediv>
   <refname>fwrite</refname>
-  <refpurpose>Бинарно-безопасная запись в файл</refpurpose>
+  <refpurpose>Записывает данные в файл бинарно-безопасным способом</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,7 +16,7 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>length</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   <function>fwrite</function> записывает содержимое <parameter>data</parameter>
+   Функция <function>fwrite</function> записывает содержимое <parameter>data</parameter>
    в файловый поток <parameter>stream</parameter>.
   </simpara>
  </refsect1>
@@ -35,7 +35,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Записываемая строка.
+       Строка, которую нужно записать.
       </para>
      </listitem>
     </varlistentry>
@@ -43,10 +43,10 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Если параметр <parameter>length</parameter> является целым числом (&integer;), запись
-       остановится после того, как <parameter>length</parameter>
-       байтов будут записаны или будет достигнут конец строки
-       <parameter>data</parameter>, смотря что произойдёт раньше.
+       Функция остановит запись через <parameter>length</parameter>
+       байтов, если значение <parameter>length</parameter> — целое число (&integer;),
+       или когда достигнет конца строки
+       <parameter>data</parameter>, в зависимости от того, что произойдёт раньше.
       </para>
      </listitem>
     </varlistentry>
@@ -57,15 +57,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   <function>fwrite</function> возвращает количество записанных байт&return.falseforfailure;.
+   Функция <function>fwrite</function> возвращает количество
+   записанных байтов&return.falseforfailure;.
   </simpara>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Функция <function>fwrite</function> выдаёт ошибку уровня <constant>E_WARNING</constant>
-   в случае возникновения ошибки.
+   Функция <function>fwrite</function> выдаёт ошибку
+   уровня <constant>E_WARNING</constant> в случае ошибки.
   </para>
  </refsect1>
 
@@ -83,7 +84,7 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>length</parameter> теперь допускает значение &null;.
+       Параметр <parameter>length</parameter> теперь принимает значение &null;.
       </entry>
      </row>
     </tbody>
@@ -95,25 +96,26 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Простой пример использования <function>fwrite</function></title>
+    <title>Простой пример использования функции <function>fwrite</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $filename = 'test.txt';
 $somecontent = "Добавить это к файлу\n";
 
-// Вначале давайте убедимся, что файл существует и доступен для записи.
+// Вначале убедимся, что файл существует и доступен для записи.
 if (is_writable($filename)) {
 
-    // В нашем примере мы открываем $filename в режиме "записи в конец".
-    // Таким образом, смещение установлено в конец файла и
-    // наш $somecontent допишется в конец при использовании fwrite().
+    // В примере мы открываем $filename в режиме «записи в конец».
+    // Поэтому смещение установлено в конец файла и
+    // значение переменной $somecontent допишется в конец файла при вызове функции fwrite().
     if (!$fp = fopen($filename, 'a')) {
          echo "Не могу открыть файл ($filename)";
          exit;
     }
 
-    // Записываем $somecontent в наш открытый файл.
+    // Записываем значение переменной $somecontent в открытый файл.
     if (fwrite($fp, $somecontent) === FALSE) {
         echo "Не могу произвести запись в файл ($filename)";
         exit;
@@ -122,10 +124,10 @@ if (is_writable($filename)) {
     echo "Ура! Записали ($somecontent) в файл ($filename)";
 
     fclose($fp);
-
 } else {
     echo "Файл $filename недоступен для записи";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -137,12 +139,13 @@ if (is_writable($filename)) {
   &reftitle.notes;
   <note>
    <para>
-    Запись в сетевой поток может прекратиться до того, как будут
-    записаны все данные. Это можно контролировать с помощью проверки
-    возвращаемого значения функции <function>fwrite</function>:
+    Запись в сетевой поток может прекратиться до завершения
+    записи строки. Значение, которое возвращает функция
+    <function>fwrite</function>, можно проверить:
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function fwrite_stream($fp, $string) {
     for ($written = 0; $written < strlen($string); $written += $fwrite) {
         $fwrite = fwrite($fp, substr($string, $written));
@@ -152,6 +155,7 @@ function fwrite_stream($fp, $string) {
     }
     return $written;
 }
+
 ?>
 ]]>
     </programlisting>
@@ -160,36 +164,38 @@ function fwrite_stream($fp, $string) {
 
   <note>
    <para>
-    В системах, различающих двоичные и текстовые файлы (к примеру,
-    Windows), файл должен быть открыт используя флаг 'b' в конце
+    В системах, которые различают двоичные и текстовые файлы (например,
+    операционные системы Windows), файл должен быть открыт с флагом «b» в конце
     аргумента mode функции <function>fopen</function>.
    </para>
   </note>
   <note>
    <para>
-    Если дескриптор <parameter>stream</parameter> был открыт функцией
-    <function>fopen</function> в режиме "добавление в конец", то вызовы
-    <function>fwrite</function> будут атомарными (за исключением
-    случая, если размер <parameter>data</parameter> превысит размер
+    Если функция <function>fopen</function> открыла дескриптор
+    <parameter>stream</parameter> в режиме «добавление в конец»,
+    вызовы функции <function>fwrite</function> будут атомарными (если
+    размер <parameter>data</parameter> не превышает размер
     блока файловой системы, на некоторых платформах, и пока файл хранится
-    на локальной файловой системе). То есть нет необходимости блокировать ресурс
-    с помощью <function>flock</function> перед вызовом <function>fwrite</function>,
-    и все данные будут записаны без прерываний.
+    в локальной файловой системе). То есть не нужно блокировать ресурс
+    функцией <function>flock</function> перед вызовом функции <function>fwrite</function>;
+    данные будут записаны без прерываний.
    </para>
   </note>
   <note>
    <para>
     При повторной записи в файловый указатель, данные будут добавлены
-    в конец содержимого файла:
+    в конец файла:
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('data.txt', 'w');
 fwrite($fp, '1');
 fwrite($fp, '23');
 fclose($fp);
 
-// содержимое 'data.txt' теперь 123, а не 23!
+// Теперь файл 'data.txt' содержит 123, а не 23!
+
 ?>
 ]]>
         </programlisting>
