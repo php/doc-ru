@@ -5,42 +5,42 @@
  <title>Установка Nginx 1.4.x на систему Unix</title>
 
  <para>
-  Данная документация описывает процесс установки и настройки PHP с
-  PHP-FPM для Nginx 1.4.x HTTP сервера.
+  Эта документация описывает установку и настройку PHP с
+  менеджером процессов PHP-FPM для HTTP-сервера Nginx 1.4.x.
  </para>
 
  <para>
-  Данное руководство подразумевает, что вы собрали Nginx из исходников, следовательно,
-  все бинарные файлы и файлы конфигурации располагаются в
+  Это краткое руководство предполагает, что Nginx собран из исходного кода
+  и поэтому бинарные файлы и файлы конфигурации лежат в директории
   <literal>/usr/local/nginx</literal>. Если нет, и вы получили Nginx другим способом, тогда,
-  пожалуйста, обратитесь к <link xlink:href="&url.nginx;">Nginx Wiki</link>, чтобы перевести
-  данное руководство для вашей установки.
+  пожалуйста, обратитесь к <link xlink:href="&url.nginx;">Nginx Wiki</link>, чтобы получить
+  похожее на это руководство для вашей установки.
  </para>
 
  <para>
-  Данное руководство охватывает азы настройки Nginx сервера, для обработки PHP приложений
-  и отображения их на порту 80. Рекомендуется изучить документацию Nginx и PHP-FPM, если
-  вы хотите оптимизировать вашу установку за рамками данной документации.
+  В этом кратком руководстве будут рассмотрены основы настройки Nginx-сервера для обработки PHP-приложений
+  и их обслуживания на порту 80. Рекомендовано изучить документацию Nginx и PHP-FPM, если
+  нужно оптимизировать установку за рамками этой документации.
  </para>
 
  <para>
-  Пожалуйста, обратите внимание, что во всей данной документации номера версий были
-  заменены на 'x', чтобы данная документация оставалась корректной в будущем.
-  Пожалуйста, замените 'x' на необходимый вам номер версии.
+  Пожалуйста, обратите внимание, что в этой документации номера версий были
+  заменены на символ «x», чтобы документация оставалась корректной в будущем.
+  Пожалуйста, замените «x» на необходимый номер версии.
  </para>
 
  <orderedlist>
   <listitem>
    <para>
-    Рекомендуется посетить
-    <link xlink:href="&url.nginx.wiki.install;">страницу установки</link> на Nginx Wiki,
-    для информации о получении и установке Nginx.
+    Рекомендовано зайти
+    <link xlink:href="&url.nginx.wiki.install;">на страницу установки</link> Nginx Wiki,
+    чтобы получить и установить HTTP-сервер Nginx на свою систему.
    </para>
   </listitem>
 
   <listitem>
    <para>
-    Получение и распаковка исходники PHP:
+    Распаковать полученный исходный код PHP:
    </para>
 
    <informalexample xml:id="install.unix.nginx.extract.php">
@@ -54,10 +54,11 @@ tar zxf php-x.x.x
 
   <listitem>
    <para>
-    Настройка и сборка PHP. В этом разделе описывается настройка и сборка PHP из
-    исходных кодов.
-    Запустите ./configure --help для получения списка доступных опций. В нашем примере
-    мы сделаем простые настройки с PHP-FPM и поддержкой MySQLi.
+    Настроить и собрать PHP. Здесь вы настраиваете PHP
+    с нужными параметрами.
+    Запустите команду ./configure --help, чтобы получить список доступных опций.
+    В примере будут сделаны простые настройки для включения менеджера процессов PHP-FPM
+    с поддержкой модуля MySQLi.
    </para>
 
    <informalexample xml:id="install.unix.nginx.build.php">
@@ -74,7 +75,7 @@ sudo make install
 
   <listitem>
    <para>
-    Перемещение файлов настройки в нужные директории
+    Переместить файлы конфигурации в правильные места
    </para>
 
    <informalexample xml:id="install.unix.nginx.configure.php">
@@ -90,16 +91,16 @@ cp sapi/fpm/php-fpm /usr/local/bin
 
   <listitem>
    <para>
-    Важно, что мы запрещаем Nginx от отправлять запросы в бэкенд PHP-FPM, если файл не
-    существует, что помогает избежать атаки инъекции скрипта.
+    Важно запретить серверу Nginx передавать запросы в бэкенд менеджера PHP-FPM,
+    если файл не существует, что помогает предотвратить атаки произвольного внедрения скрипта.
    </para>
    <para>
-    Мы может исправить это путём установки директивы
+    Это исправляют установкой для директивы
     <link linkend="ini.cgi.fix-pathinfo">cgi.fix_pathinfo</link>
-    равной <literal>0</literal> в нашем php.ini файле.
+    значения <literal>0</literal> в файле php.ini.
    </para>
    <para>
-    Редактирование php.ini:
+    Отредактировать файл php.ini:
    </para>
 
    <informalexample xml:id="install.unix.nginx.configure.ini">
@@ -111,7 +112,7 @@ vim /usr/local/php/php.ini
    </informalexample>
 
    <para>
-    Найдите опцию <literal>cgi.fix_pathinfo=</literal> и измените её следующим образом:
+    Найти директиву <literal>cgi.fix_pathinfo=</literal> и изменить вот так:
    </para>
 
    <informalexample xml:id="install.unix.nginx.configure.pathinfo">
@@ -125,8 +126,8 @@ cgi.fix_pathinfo=0
 
   <listitem>
    <para>
-    php-fpm.conf должен быть модифицирован, чтобы точно определить, что php-fpm должен
-    работать под пользователем www-data и группой www-data до того, как мы запустим сервис:
+    Файл php-fpm.conf нужно изменить, чтобы указать, что модуль php-fpm должен
+    работать от имени пользователем www-data и группы www-data до того, как мы запустим сервис:
    </para>
 
    <informalexample xml:id="install.unix.nginx.modify.phpfpm">
@@ -138,7 +139,7 @@ vim /usr/local/etc/php-fpm.d/www.conf
    </informalexample>
 
    <para>
-    Найдите и измените следующее:
+    Найти и изменить следующее:
    </para>
 
    <informalexample xml:id="install.unix.nginx.modify.phpfpm.usergroup">
@@ -166,14 +167,14 @@ group = www-data
    </informalexample>
 
    <para>
-    Более в этом руководстве мы не будет касаться настройки php-fpm. Если вам
-    необходимо произвести дополнительные настройки - обратитесь к документации по php-fpm.
+    В этом руководстве другие настройки модуля php-fpm не рассматриваются. Если
+    нужны дополнительные настройки, обратитесь к документации по php-fpm.
    </para>
   </listitem>
 
   <listitem>
    <para>
-    Теперь Nginx должен быть настроен на поддержку выполнения PHP:
+    Настроить Nginx на поддержку обработки PHP-приложений:
    </para>
 
    <informalexample xml:id="install.unix.nginx.configure.nginx">
@@ -185,8 +186,8 @@ vim /usr/local/nginx/conf/nginx.conf
    </informalexample>
 
    <para>
-    Измените блок "location", заданный по умолчанию, так, чтобы
-    можно было обрабатывать .php файлы:
+    Измените блок «location» по умолчанию так, чтобы HTTP-сервер знал,
+    что он должен обслуживать файлы .php:
    </para>
 
    <informalexample xml:id="install.unix.nginx.configure.nginx.location">
@@ -201,7 +202,7 @@ location / {
    </informalexample>
 
    <para>
-    Следующий шаг - убедиться, что .php файлы отправляются в бэкенд PHP-FPM.
+    Следующий шаг — убедиться, что файлы .php передаются в бэкенд PHP-FPM.
     Введите следующее:
    </para>
 
@@ -220,7 +221,7 @@ location ~* \.php$ {
    </informalexample>
 
    <para>
-    Перезапустите Nginx.
+    Перезапустить Nginx.
    </para>
 
    <informalexample xml:id="install.unix.nginx.restart.nginx">
@@ -235,7 +236,7 @@ sudo /usr/local/nginx/sbin/nginx
 
   <listitem>
    <para>
-    Создайте тестовый файл
+    Создайть тестовый файл
    </para>
 
    <informalexample xml:id="install.unix.nginx.test.nginx.php">
@@ -248,17 +249,18 @@ echo "<?php phpinfo(); ?>" >> /usr/local/nginx/html/index.php
    </informalexample>
 
    <para>
-    Теперь откройте в браузере http://localhost. Должна отобразиться информация phpinfo().
+    Теперь откройте в браузере адрес http://localhost.
+    Должна отобразиться информация, которую выводит функция phpinfo().
    </para>
   </listitem>
  </orderedlist>
 
  <para>
-  Следуя вышеуказанным шагам, вы получите рабочий Nginx сервер с
-  поддержкой PHP как модуля <literal>FPM</literal> <literal>SAPI</literal>. Конечно, доступно
-  большое число опций настроек для Nginx и PHP. Для более
-  подробной информации наберите <command>./configure --help</command>
-  в соответствующем дереве исходных кодов.
+  Выполнив описанные шаги, вы получите работающий Nginx-сервер с
+  поддержкой PHP в качестве модуля интерфейса <literal>FPM</literal> <literal>SAPI</literal>.
+  Конечно, для Nginx и PHP доступно больше параметров конфигурации.
+  Наберите в директории с исходным кодом команду <command>./configure --help</command>,
+  чтобы получить больше информации.
  </para>
 
 </sect1>
