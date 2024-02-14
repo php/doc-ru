@@ -4,7 +4,7 @@
 <refentry xml:id="function.urlencode" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>urlencode</refname>
-  <refpurpose>URL-кодирование строки</refpurpose>
+  <refpurpose>URL-кодирует строку</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,8 +14,8 @@
    <methodparam><type>string</type><parameter>string</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция удобна, когда закодированная строка будет использоваться в запросе, как часть URL,
-   в качестве удобного способа передачи переменных на следующую страницу.
+   Функция кодирует строку, которая будет использоваться в части запроса URL-адреса,
+   что упрощает передачу переменных на следующую страницу.
   </para>
  </refsect1>
 
@@ -27,7 +27,7 @@
      <term><parameter>string</parameter></term>
      <listitem>
       <para>
-       Строка, которая должна быть закодирована.
+       Строка, которая будет закодирована.
       </para>
      </listitem>
     </varlistentry>
@@ -38,15 +38,15 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку, в которой все не цифро-буквенные символы, кроме <literal>-_.</literal>
-   должны быть заменены знаком процента (<literal>%</literal>), за которым следует
+   Функция возвращает строку, в которой символы, кроме буквенно-цифровых и <literal>-_.</literal>,
+   были заменены знаком процента (<literal>%</literal>), за которым следует
    два шестнадцатеричных числа, а пробелы закодированы как знак
    сложения (<literal>+</literal>).
    Строка кодируется тем же способом, что и POST-данные веб-формы, то есть по
    типу контента <literal>application/x-www-form-urlencoded</literal>. Это
-   отличается от кодирования по <link xlink:href="&url.rfc;3986">RFC 3986</link>
-   (смотрите <function>rawurlencode</function> ) в том, что по историческим причинам,
-   пробелы кодируются как знак "плюс" (+).
+   отличается от кодирования по стандарту <link xlink:href="&url.rfc;3986">RFC 3986</link>
+   (смотрите описание функции <function>rawurlencode</function> ) тем, что по историческим причинам
+   пробелы кодируются как знак «плюс» (+).
   </para>
  </refsect1>
 
@@ -54,13 +54,15 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>urlencode</function></title>
+    <title>Пример использования функции <function>urlencode</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $userinput = 'Data123!@-_ +';
 echo "Пользовательские данные: $userinput\n";
 echo '<a href="mycgi?foo=', urlencode($userinput), '">';
+
 ?>
 ]]>
     </programlisting>
@@ -75,16 +77,18 @@ echo '<a href="mycgi?foo=', urlencode($userinput), '">';
   </para>
   <para>
    <example>
-    <title>Пример использования <function>urlencode</function> и <function>htmlentities</function></title>
+    <title>Пример использования функций <function>urlencode</function> и <function>htmlentities</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $foo = 'Data123!@-_ +';
-$bar = "Содержимое, отличное от $foo";
+$bar = "Содержание, которое отличается от значения $foo";
 echo "foo: $foo\n";
 echo "bar: $bar\n";
 $query_string = 'foo=' . urlencode($foo) . '&bar=' . urlencode($bar);
 echo '<a href="mycgi?' . htmlentities($query_string) . '">';
+
 ?>
 ]]>
     </programlisting>
@@ -92,7 +96,7 @@ echo '<a href="mycgi?' . htmlentities($query_string) . '">';
     <screen role="html">
 <![CDATA[
 foo: Data123!@-_ +
-bar: Содержимое, отличное от Data123!@-_ +
+bar: Содержание, которое отличается от значения Data123!@-_ +
 <a href="mycgi?foo=Data123%21%40-_+%2B&amp;bar=Not+the+same+content+as+Data123%21%40-_+%2B">
 ]]>
     </screen>
@@ -104,20 +108,20 @@ bar: Содержимое, отличное от Data123!@-_ +
   &reftitle.notes;
   <note>
    <para>
-    Будьте внимательны с переменными, которые могут совпадать с элементами HTML.
-    Такие сущности как &amp;amp, &amp;copy и &amp;pound разбираются браузером и используется
-    как реальная сущность, а не желаемое имя переменной.
-    Это очевидный конфликт, на который W3C указывает в течение многих лет.
-    Смотрите подробности: <link xlink:href="&url.argsep;">&url.argsep;</link>
+    Соблюдают осторожность с переменными, которые совпадают с HTML-сущностями.
+    Мнемоники наподобие &amp;amp, &amp;copy и &amp;pound браузер разбирает и использует
+    как реальные сущности, а не как имя переменной.
+    Это известная проблема, о которой консорциум W3C рассказывает людям много лет.
+    Подробнее рассказано по ссылке: <link xlink:href="&url.argsep;">&url.argsep;</link>
    </para>
    <para>
-    PHP поддерживает изменение разделителя аргументов на рекомендуемый W3C символ
-    "точку с запятой" путём изменения директивы arg_separator в .ini файле.
-    К сожалению, большинство пользовательских приложений не отправляют данные формы в формате
-    с разделителем "точка с запятой". Более переносимый способ решить эту проблему
-    - это использовать  &amp;amp; вместо &amp; в качестве разделителя.
-    Вам не нужно будет для этого изменять PHP-директиву arg_separator.
-    Оставьте разделитель как &amp;, но кодируйте ваши URL с помощью <function>htmlentities</function>
+    PHP поддерживает изменение разделителя аргументов на «точку с запятой»,
+    которую предложил W3C, через ini-директиву arg_separator.
+    К сожалению, бо́льшая часть пользовательских агентов не отправляют данные формы в формате,
+    разделённые «точкой с запятой». Более переносимый способ обойти проблему —
+    использовать разделитель &amp;amp; вместо &amp;.
+    Не нужно для этого изменять PHP-директиву arg_separator.
+    Оставьте разделитель &amp;, но кодируйте URL-адрес функциями <function>htmlentities</function>
     или <function>htmlspecialchars</function>.
    </para>
   </note>
