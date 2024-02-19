@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fbd75a1be53b02f0ad6360ba4cbd455d1fd78026 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 39bb8a868935a56cfce438b0169e13c02c93211c Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-insert" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_insert</refname>
   <refpurpose>
-   Заносит данные из массива в таблицу базы данных
+   Заносит данные массива в таблицу базы данных
   </refpurpose>
  </refnamediv>
 
@@ -19,25 +19,25 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>PGSQL_DML_EXEC</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_insert</function> вставляет записи из массива
+   Функция <function>pg_insert</function> вставляет записи из массива
    <parameter>values</parameter> в таблицу <parameter>table_name</parameter>.
   </para>
   <para>
-   Если <literal>flags</literal> указан,
-   <function>pg_convert</function> применяется к
-   <literal>values</literal> с указанными флагами.
+   Функция <function>pg_convert</function> обработает значения массива <literal>values</literal>
+   с заданными флагами, если установлен параметр <literal>flags</literal>.
   </para>
   <para>
-   По умолчанию <function>pg_insert</function> передаёт необработанные значения.
-   Значения должны быть экранированы или опция <constant>PGSQL_DML_ESCAPE</constant> должна быть
-   указана. <constant>PGSQL_DML_ESCAPE</constant> заключает в кавычки и экранирует
-   параметры/идентификаторы. Поэтому имена таблиц/столбцов становятся
+   По умолчанию функция <function>pg_insert</function> передаёт необработанные значения.
+   Значения нужно экранировать или передавать в параметр <parameter>flags</parameter>
+   флаг <constant>PGSQL_DML_ESCAPE</constant>.
+   Опиция <constant>PGSQL_DML_ESCAPE</constant> закавычивает и экранирует
+   параметры и идентификаторы. Поэтому имена таблиц и столбцов становятся
    чувствительными к регистру.
   </para>
   <para>
-   Обратите внимание, что ни экранирование, ни подготовленный запрос не защитят запрос LIKE,
-   JSON, массив, регулярные выражения и т.д.. Эти параметры должны обрабатываться
-   в соответствии с их контекстами, т.е. следует экранировать/проверять значения.
+   Обратите внимание, что ни экранирование, ни подготовленный запрос не защищают запрос LIKE,
+   JSON, массив, регулярные выражения и т. д. Эти параметры нужно обрабатывать
+   в соответствии с их контекстом, т. е. экранировать или проверять значения.
   </para>
  </refsect1>
 
@@ -64,8 +64,9 @@
      <term><parameter>values</parameter></term>
      <listitem>
       <para>
-       Ассоциативный массив(<type>array</type>), в котором ключи являются названиями колонок
-       таблицы <parameter>table_name</parameter>, а значения - записи, которые необходимо вставить в эти колонки.
+       Ассоциативный массив (<type>array</type>), в котором ключи — названия столбцов
+       таблицы <parameter>table_name</parameter>, а значения — записи,
+       которые нужно вставить в эти колонки.
       </para>
      </listitem>
     </varlistentry>
@@ -79,9 +80,10 @@
        <constant>PGSQL_DML_EXEC</constant>,
        <constant>PGSQL_DML_ASYNC</constant> и
        <constant>PGSQL_DML_STRING</constant>.
-       Если в числе прочих передаётся <constant>PGSQL_DML_STRING</constant> в параметре <parameter>flags</parameter>,
-       функция вернёт строку запроса. Если установлены <constant>PGSQL_DML_NO_CONV</constant>
-       или <constant>PGSQL_DML_ESCAPE</constant>, то функция <function>pg_convert</function> внутренне не вызывается.
+       Функция возвращает строку запроса, если в числе прочих в параметр
+       <parameter>flags</parameter> передают флаг <constant>PGSQL_DML_STRING</constant>.
+       Функция не вызывает функцию <function>pg_convert</function> внутренне, если установлены
+       флаги <constant>PGSQL_DML_NO_CONV</constant> или <constant>PGSQL_DML_ESCAPE</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -92,8 +94,21 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;. Или возвращает строку(<type>string</type>), если <constant>PGSQL_DML_STRING</constant>
-   включена в список параметров аргумента <parameter>flags</parameter>.
+   &return.success;. Или возвращает строку (<type>string</type>), если флаг <constant>PGSQL_DML_STRING</constant>
+   включён в список аргументов параметра <parameter>flags</parameter>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Функция выбрасывает исключение <classname>ValueError</classname>,
+   если заданная таблица недопустима.
+  </para>
+  <para>
+   Функция выбрасывает исключения <classname>ValueError</classname>
+   или <classname>TypeError</classname>, если значение или тип поля
+   не соответствуют правильному типу СУБД PostgreSQL.
   </para>
  </refsect1>
 
@@ -108,6 +123,23 @@
      </row>
     </thead>
     <tbody>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Функция теперь выбрасывает исключение <classname>ValueError</classname>,
+       если заданная таблица недопустима;
+       раньше функция выдавала ошибку уровня <constant>E_WARNING</constant>.
+      </entry>
+     </row>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Функция теперь выбрасывает исключения <classname>ValueError</classname>
+       или <classname>TypeError</classname>, если значение или тип поля
+       не соответствуют правильному типу СУБД PostgreSQL;
+       раньше функция выдавала ошибку уровня <constant>E_WARNING</constant>.
+      </entry>
+     </row>
      &pgsql.changelog.return-result-object;
      &pgsql.changelog.connection-object;
     </tbody>
@@ -119,20 +151,24 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_insert</function></title>
+    <title>Пример использования функции <function>pg_insert</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  $dbconn = pg_connect('dbname=foo');
-  // Это безопасно в некоторой степени, поскольку все значения экранируются.
-  // Однако PostgreSQL поддерживает JSON/массив. Для этих значений это не безопасно
-  // ни с через экранирование, ни с помощью подготовленного запроса.
-  $res = pg_insert($dbconn, 'post_log', $_POST, PGSQL_DML_ESCAPE);
-  if ($res) {
-      echo "Данные из POST успешно внесены в журнал\n";
-  } else {
-      echo "Пользователь прислал неверные данные\n";
-  }
+
+$dbconn = pg_connect('dbname=foo');
+
+// Это безопасно в некоторой степени, поскольку все значения экранируются.
+// Однако СУБД PostgreSQL поддерживает JSON или массив. Для этих значений это не безопасно
+// ни через экранирование, ни с через подготовленный запрос.
+$res = pg_insert($dbconn, 'post_log', $_POST, PGSQL_DML_ESCAPE);
+
+if ($res) {
+    echo "Данные из POST-запроса успешно внесены в журнал\n";
+} else {
+    echo "Пользователь прислал неверные данные\n";
+}
+
 ?>
 ]]>
     </programlisting>
