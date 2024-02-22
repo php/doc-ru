@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: aur Status: ready -->
+<!-- EN-Revision: 39bb8a868935a56cfce438b0169e13c02c93211c Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-convert" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_convert</refname>
   <refpurpose>
-   Преобразовывает значения ассоциативного массива в подходящий для SQL-запросов вид
+   Преобразовывает значения ассоциативного массива в вид, который соответствует SQL-запросам
   </refpurpose>
  </refnamediv>
 
@@ -20,12 +20,13 @@
   </methodsynopsis>
   <para>
    Функция <function>pg_convert</function> проверяет и преобразовывает значения
-   параметра <parameter>values</parameter> в приемлемые для SQL-сервера. Необходимо,
-   чтобы существовала таблица <parameter>table_name</parameter>, а количество
-   колонок в ней должно быть не меньше, чем значений в массиве <parameter>values</parameter>.
+   массива <parameter>values</parameter> в значения, которые соответствуют формату SQL-выражения.
+   Предварительное условие функции <function>pg_convert</function> —
+   таблица <parameter>table_name</parameter> должна существовать, а количество колонок
+   в таблице должно быть не меньше количества значений в массиве <parameter>values</parameter>.
    Имена колонок в таблице <parameter>table_name</parameter> должны совпадать
    с ключами массива <parameter>values</parameter>, типы данных значений массива
-   также должны совпадать с типами данных соответствующих колонок. В случае удачной
+   также должны совпадать с типами данных колонок. В случае удачной
    конвертации функция возвращает массив преобразованных значений, иначе возвращает &false;.
   </para>
   <note>
@@ -67,9 +68,9 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Одна из констант <constant>PGSQL_CONV_IGNORE_DEFAULT</constant>,
+       Одна или комбинация констант <constant>PGSQL_CONV_IGNORE_DEFAULT</constant>,
        <constant>PGSQL_CONV_FORCE_NULL</constant> или
-       <constant>PGSQL_CONV_IGNORE_NOT_NULL</constant>, либо их комбинация.
+       <constant>PGSQL_CONV_IGNORE_NOT_NULL</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -80,7 +81,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Массив (<type>array</type>), содержащий преобразованные данные&return.falseforfailure;.
+   Функция возвращает массив (<type>array</type>),
+   который содержит преобразованные данные&return.falseforfailure;.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Функция выбрасывает исключение <classname>ValueError</classname> или <classname>TypeError</classname>,
+   если значение или тип поля не соответствует правильному типу СУБД PostgreSQL.
   </para>
  </refsect1>
 
@@ -95,6 +105,15 @@
      </row>
     </thead>
     <tbody>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Функция теперь выбрасывает исключение <classname>ValueError</classname>
+       или <classname>TypeError</classname>,
+       если значение или тип поля не соответствуют правильному типу СУБД PostgreSQL;
+       раньше функция выдавала ошибку уровня <constant>E_WARNING</constant>.
+      </entry>
+     </row>
      &pgsql.changelog.connection-object;
     </tbody>
    </tgroup>
@@ -109,15 +128,17 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-  $dbconn = pg_connect('dbname=foo');
 
-  $tmp = array(
-      'author' => 'Joe Thackery',
-      'year' => 2005,
-      'title' => 'My Life, by Joe Thackery'
-  );
+$dbconn = pg_connect('dbname=foo');
 
-  $vals = pg_convert($dbconn, 'authors', $tmp);
+$tmp = array(
+    'author' => 'Joe Thackery',
+    'year' => 2005,
+    'title' => 'My Life, by Joe Thackery'
+);
+
+$vals = pg_convert($dbconn, 'authors', $tmp);
+
 ?>
 ]]>
     </programlisting>

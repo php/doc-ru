@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: mch Status: ready -->
+<!-- EN-Revision: 39bb8a868935a56cfce438b0169e13c02c93211c Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-fetch-object" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -17,15 +17,15 @@
    <methodparam choice="opt"><type>array</type><parameter>constructor_args</parameter><initializer>[]</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_fetch_object</function> возвращает объект, свойства которого
-   соответствуют именам полей выборки. Также функция может создать экземпляр
-   конкретного класса и передать параметры его конструктору.
+   Функция <function>pg_fetch_object</function> возвращает объект, свойства которого
+   соответствуют именам полей выборки. Функция опционально создаёт экземпляр
+   конкретного класса и передаёт параметры конструктору этого класса.
   </para>
   &database.fetch-null;
   <para>
-   По скорости функция идентична <function>pg_fetch_array</function>
-   и немного медленней <function>pg_fetch_row</function>
-   (разница незначительна).
+   По скорости функция идентична функции <function>pg_fetch_array</function>
+   и немного медленней функции <function>pg_fetch_row</function>;
+   разница незначительна.
   </para>
  </refsect1>
 
@@ -43,9 +43,8 @@
      <term><parameter>row</parameter></term>
      <listitem>
       <para>
-       Номер выбираемой из результата запроса строки. Нумерация начинается
-       с нуля. Если аргумент опущен или равен &null;, берётся следующая по
-       очереди строка.
+       Номер строки, которую функция выбирает из результата запроса. Нумерация начинается
+       с нуля. Функция берёт следующую по очереди строку, если аргумент опущен или равен &null;.
       </para>
      </listitem>
     </varlistentry>
@@ -53,7 +52,7 @@
      <term><parameter>class</parameter></term>
       <listitem>
        <para>
-        Имя класса создаваемого и возвращаемого объекта. Если не задано,
+        Имя класса объекта, который создаст и вернёт функция. Если не задано,
         функция создаст экземпляр класса <classname>stdClass</classname>.
        </para>
      </listitem>
@@ -62,8 +61,8 @@
      <term><parameter>constructor_args</parameter></term>
       <listitem>
        <para>
-        Необязательный аргумент. Массив (<type>array</type>) параметров для передачи в конструктор
-        создаваемого объекта (<parameter>class</parameter>).
+        Необязательный массив (<type>array</type>) параметров для передачи в конструктор
+        объекта <parameter>class</parameter>.
        </para>
      </listitem>
     </varlistentry>
@@ -74,14 +73,23 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Объект (<type>object</type>), имена и значения свойств которого соответствуют
-   именам и значениям полей результата запроса. Значения <literal>NULL</literal>
-   базы данных преобразуются в PHP &null;.
+   Функция возвращает объект (<type>object</type>), имена и значения свойств которого соответствуют
+   именам и значениям полей результата запроса. Функция преобразовывает значения <literal>NULL</literal>
+   базы данных в значения PHP &null;.
   </para>
   <para>
-   &false;, когда <parameter>row</parameter> превышает число строк в
-   результате запроса, когда строк в результате не осталось, и при
-   прочих ошибках.
+   Функция возвращает значение &false;, если значение параметра
+   <parameter>row</parameter> превышает число строк в результате запроса,
+   когда строк в результате не осталось, и при прочих ошибках.
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Функция выбросит исключение <classname>ValueError</classname>,
+   если в параметр <parameter>constructor_args</parameter> передали не пустой массив,
+   а у класса нет конструктора.
   </para>
  </refsect1>
 
@@ -96,6 +104,15 @@
      </row>
     </thead>
     <tbody>
+     <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Функция теперь выбрасывает исключение a <classname>ValueError</classname>,
+       если в параметр <parameter>constructor_args</parameter> передали не пустой массив,
+       а у класса нет конструктора;
+       раньше функция выбрасывала исключение <classname>Exception</classname>.
+      </entry>
+     </row>
      &pgsql.changelog.result-object;
     </tbody>
    </tgroup>
@@ -106,7 +123,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_fetch_object</function></title>
+    <title>Пример использования функции <function>pg_fetch_object</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
