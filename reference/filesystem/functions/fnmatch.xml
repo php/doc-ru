@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0c9c2dd669fe9395eaa73d487fbd160f9057429a Maintainer: shein Status: ready -->
+<!-- EN-Revision: 946fbe44b60bd5fdc1d7b7a5f016be670425f5b4 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.fnmatch" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,9 +16,9 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>fnmatch</function> проверяет, совпадает ли переданный параметр
-   <parameter>filename</parameter> с указанным шаблоном подстановок оболочки
-   <parameter>pattern</parameter>.
+   Функция <function>fnmatch</function> проверяет, совпадает ли название файла
+   или строка <parameter>filename</parameter> с шаблоном <parameter>pattern</parameter>,
+   который состоит из подстановочных знаков командной оболочки.
   </para>
  </refsect1>
 
@@ -30,7 +30,80 @@
      <term><parameter>pattern</parameter></term>
      <listitem>
       <para>
-       Шаблон подстановки оболочки операционной системы.
+       Шаблон <parameter>pattern</parameter>, с которым нужно сопоставить. Часто аргумент
+       <parameter>pattern</parameter> будет содержать
+       подстановочные знаки вроде <literal>«?»</literal> и <literal>«*»</literal>.
+       <table>
+        <title>
+         Подстановочные знаки параметра <parameter>pattern</parameter>
+        </title>
+        <tgroup cols="2">
+         <thead>
+          <row>
+           <entry>Подстановочный знак</entry>
+           <entry>&Description;</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry>
+            <literal>?</literal>
+           </entry>
+           <entry>
+            Вопросительный знак будет соответствовать любому отдельному символу.
+            Например, шаблон <literal>«file?.txt»</literal> будет соответствовать названиям
+            файлов <literal>«file1.txt»</literal> и <literal>«fileA.txt»</literal>,
+            но не будет соответствовать названию файла <literal>«file10.txt»</literal>.
+           </entry>
+          </row>
+          <row>
+           <entry>
+            <literal>*</literal>
+           </entry>
+           <entry>
+            Звёздочка будет соответствовать нулю или нескольким символам.
+            Например, шаблон <literal>«foo*.xml»</literal> будет соответствовать названиям файлов
+            <literal>«foo.xml»</literal> или <literal>«foobar.xml»</literal>.
+           </entry>
+          </row>
+          <row>
+           <entry>
+            <literal>[ ]</literal>
+           </entry>
+           <entry>
+            Квадратные скобки создают диапазон кодовых точек кодировки ASCII или набор символов.
+            Например, шаблон <literal>«index.php[45]»</literal> будет соответствовать названиям файлов
+            <literal>«index.php4»</literal> и <literal>«index.php5»</literal>, но не будет
+            соответствовать названию файла <literal>«index.phpt»</literal>.
+            Диапазоны, которыми часто пользуются, — <literal>[0-9]</literal>, <literal>[a-z]</literal>
+            и <literal>[A-Z]</literal>. Разрешено указывать больше одного набора или диапазона одновременно,
+            например <literal>[0-9a-zABC]</literal>.
+           </entry>
+          </row>
+          <row>
+           <entry>
+            <literal>!</literal>
+           </entry>
+           <entry>
+            Восклицательный знак указывают для совпадения с символами,
+            которых нет в квадратных скобках. Например, шаблон <literal>«[!A-Z]*.html»</literal>
+            будет соответствовать названию файла <literal>«demo.html»</literal>,
+            но не будет соответствовать названию <literal>«Demo.html»</literal>.
+           </entry>
+          </row>
+          <row>
+           <entry>
+            <literal>\</literal>
+           </entry>
+           <entry>
+            Обратный слеш экранирует специальные символы.
+            Например, шаблон <literal>«Name\?»</literal> будет соответствовать строке
+            <literal>«Name?»</literal>, не будет соответствовать строке <literal>«Names»</literal>.
+           </entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
       </para>
      </listitem>
     </varlistentry>
@@ -38,17 +111,17 @@
      <term><parameter>filename</parameter></term>
      <listitem>
       <para>
-       Проверяемая строка. Данная функция особенно полезна для имён файлов,
-       но также может быть использована с обычными строками.
+       Проверяемая строка. Функцией часто проверяют имена файлов,
+       но также проверяют строки.
       </para>
       <para>
-       Среднестатистический пользователь знаком с подстановками
-       оболочки, как минимум с самыми простыми из них -
-       <literal>'?'</literal> и <literal>'*'</literal>,
-       так что использование <function>fnmatch</function> вместо
-       <function>preg_match</function> для поиска в пользовательской
-       части сайта может быть намного удобнее для пользователей,
-       не являющихся программистами.
+       Среднеподготовленные посетители сайтов пользуются шаблонами
+       командной оболочки или хотя бы несложными формами
+       подстановок вроде <literal>«?»</literal> и <literal>«*»</literal>.
+       Поэтому для сопоставления поискового выражения, которое
+       в пользовательской части сайта вводят незнакомые с программированием
+       пользователи, вместо функции <function>preg_match</function> лучше пользоваться
+       функцией <function>fnmatch</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -56,13 +129,13 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Значением параметра <parameter>flags</parameter> может быть
-       любая комбинация следующих флагов, объединённых с помощью
-       <link linkend="language.operators.bitwise">бинарного оператора
-        ИЛИ (|)</link>.
+       Параметр <parameter>flags</parameter> принимает
+       комбинации следующих флагов, которые объединяют
+       <link linkend="language.operators.bitwise">двоичным оператором
+       ИЛИ (|)</link>.
        <table>
         <title>
-         Перечень возможных флагов для функции <function>fnmatch</function>
+         Список возможных флагов для функции <function>fnmatch</function>
         </title>
         <tgroup cols="2">
          <thead>
@@ -75,25 +148,25 @@
           <row>
            <entry><constant>FNM_NOESCAPE</constant></entry>
            <entry>
-            Отключить экранирование обратных слешей.
+            Отключить экранирование обратным слешем.
            </entry>
           </row>
           <row>
            <entry><constant>FNM_PATHNAME</constant></entry>
            <entry>
-            Слеш в строке совпадает только со слешем в указанном шаблоне.
+            Слеш в строке совпадает только со слешем в шаблоне.
            </entry>
           </row>
           <row>
            <entry><constant>FNM_PERIOD</constant></entry>
            <entry>
-            Ведущая точка в строке должна точно совпадать с точкой в указанном шаблоне.
+            Ведущая точка в строке должна точно совпадать с точкой в шаблоне.
            </entry>
           </row>
           <row>
            <entry><constant>FNM_CASEFOLD</constant></entry>
            <entry>
-            Совпадение без учёта регистра. Является частью расширения GNU.
+            Совпадение без учёта регистра. Часть расширения GNU.
            </entry>
           </row>
          </tbody>
@@ -109,7 +182,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   При совпадении возвращает &true;, иначе возвращает &false;.
+   Функция возвращает &true; при совпадении, иначе &false;.
   </para>
  </refsect1>
 
@@ -117,13 +190,15 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Проверяет соответствие цвета шаблону подстановки</title>
+    <title>Проверка соответствия названия цвета шаблону подстановки командной оболочки</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 if (fnmatch("*gr[ae]y", $color)) {
-  echo "какая-то форма серого цвета ...";
+    echo "Какая-то форма серого цвета...";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -135,8 +210,8 @@ if (fnmatch("*gr[ae]y", $color)) {
   &reftitle.notes;
   <warning>
    <para>
-    На данный момент эта функция недоступна на POSIX-несовместимых системах,
-    исключая Windows.
+    Функция пока недоступна на POSIX-несовместимых системах,
+    кроме Windows.
    </para>
   </warning>
  </refsect1>
