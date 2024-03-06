@@ -132,6 +132,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Directory                       | Директория                                                            |
 | Download                        | Скачать (не то же, что «загрузить», см. Load)                         |
 | Entry                           | Элемент (существительное, для массивов, списков и прочих структур)    |
+| Expression                      | Выражение                                                             |
 | Extension                       | Модуль                                                                |
 | Features/functionality          | Возможности, функциональность                                         |
 | Fiber                           | Файбер                                                                |
@@ -149,6 +150,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Legacy (system, server)         | Устаревшая система, сервер, протокол                                  |
 | Legacy support                  | Поддержка старых версий                                               |
 | Load                            | Загрузить (не то же, что «скачать», см. Download)                     |
+| Locale                          | Региональные настройки или параметры; локаль                          |
 | Magic quotes                    | «Магические» кавычки                                                  |
 | Magic constants/methods/numbers | «Магические» константы/методы/числа                                   |
 | Multibyte string                | Многобайтовая строка                                                  |
@@ -180,6 +182,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Shared memory                   | Разделяемая память                                                    |
 | SQL query                       | Запрос SQL, SQL-запрос                                                |
 | SQL                             | Структурированный язык запросов                                       |
+| Statement                       | Инструкция                                                            |
 | Throw exception                 | Выбросить исключение                                                  |
 | Timeout                         | Время ожидания                                                        |
 | Timezone, time zone             | Часовой пояс                                                          |
