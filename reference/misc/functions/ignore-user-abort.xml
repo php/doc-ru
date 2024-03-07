@@ -4,7 +4,7 @@
 <refentry xml:id="function.ignore-user-abort" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ignore_user_abort</refname>
-  <refpurpose>Установить, должно ли отключение клиента прерывать выполнение скрипта</refpurpose>
+  <refpurpose>Устанавливает, должно ли отключение клиента прерывать выполнение скрипта</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,12 +14,12 @@
    <methodparam choice="opt"><type class="union"><type>bool</type><type>null</type></type><parameter>enable</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Устанавливает, необходимо ли прерывать работу скрипта при отключении клиента.
+   Функция устанавливает, должно ли отключение клиента приводить к прерыванию скрипта.
   </para>
   <para>
-   При работе с PHP-скриптом в командной строке, когда терминал скрипта
-   отключается без прерывания работы скрипта, скрипт будет остановлен,
-   если параметр <parameter>enable</parameter> не равен &true;
+   Скрипт завершит работу, если для параметра <parameter>enable</parameter>
+   не установили значение &true;, а PHP-скрипт запустили как скрипт командной строки
+   и TTY-терминал скрипта отключился без прерывания работы скрипта.
   </para>
  </refsect1>
 
@@ -31,11 +31,11 @@
      <term><parameter>enable</parameter></term>
      <listitem>
       <para>
-       Если параметр задан и не &null;, то эта функция устанавливает ini-настройку
-       <link linkend="ini.ignore-user-abort">ignore_user_abort</link>,
-       заданным значением параметра <parameter>enable</parameter>.
-       Если же параметр не задан, функция вернёт предыдущее значение опции
-       без его изменения.
+       Функция устанавливает ini-настройку
+       <link linkend="ini.ignore-user-abort">ignore_user_abort</link>
+       значением параметра <parameter>enable</parameter>,
+       если параметр задан и не равен &null;. Функция вернёт предыдущее
+       значение директивы без изменения, если параметр не задали.
       </para>
      </listitem>
     </varlistentry>
@@ -46,7 +46,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает предыдущее значение в виде целого числа.
+   Функция возвращает предыдущее значение директивы в виде целого числа.
   </para>
  </refsect1>
 
@@ -64,7 +64,7 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>enable</parameter> теперь допускает значение null.
+       Параметр <parameter>enable</parameter> теперь принимает значение null.
       </entry>
      </row>
     </tbody>
@@ -76,25 +76,24 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>ignore_user_abort</function></title>
+    <title>Пример использования функции <function>ignore_user_abort</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Игнорирует отключение пользователя и позволяет скрипту
-// быть запущенным постоянно
+
+// Игнорировать прерывания пользователя и разрешить скрипту
+// выполняться постоянно
 ignore_user_abort(true);
 set_time_limit(0);
 
 echo 'Тестирование обработки соединения в PHP';
 
-// Запуск бесконечного цикла,
-// который будет завершён при выходе со страницы,
-// либо при нажатии кнопки "Stop".
-while(1)
-{
+// Запуск бессмысленного цикла,
+// который, как мы надеемся, когда-нибудь заставит нас уйти
+// со страницы или нажать кнопку «Стоп»
+while (1) {
     // Завершено ли соединение?
-    if(connection_status() != CONNECTION_NORMAL)
-    {
+    if (connection_status() != CONNECTION_NORMAL) {
         break;
     }
 
@@ -102,12 +101,13 @@ while(1)
     sleep(10);
 }
 
-// Если скрипт достиг этой строки, то была
-// выполнена функция 'break' из цикла while
+// Если скрипт достиг этой строки, значит, сработала
+// управляющая конструкция break в цикле while
 
-// Здесь можно производить журналирование, либо
-// выполнять другие необходимые операции независимо
-// от браузера.
+// Здесь можно записывать логи или выполнять
+// другие необходимые операции независимо
+// от браузера
+
 ?>
 ]]>
     </programlisting>
@@ -118,10 +118,10 @@ while(1)
  <refsect1 role="notes">
   &reftitle.notes;
   <para>
-   PHP не обнаружит, что пользователь прервал соединение до тех пор, пока не будет
-   произведена попытка отправки информации клиенту. Простое использование
-   выражения echo не гарантирует отправку информации, смотрите функцию
-   <function>flush</function>.
+   PHP не обнаружит, что пользователь прервал соединение, пока скрипт
+   не сделает попытку отправить информацию клиенту. Простое выполнение
+   инструкции echo не гарантирует отправку информации, смотрите описание
+   функции <function>flush</function>.
   </para>
  </refsect1>
 
@@ -132,8 +132,8 @@ while(1)
     <member><function>connection_aborted</function></member>
     <member><function>connection_status</function></member>
     <member>
-     Смотрите <link linkend="features.connection-handling">Управление Соединением</link>
-     для получения более детальной информации по управлению соединениями в PHP.
+     Раздел «<link linkend="features.connection-handling">Управление соединением</link>»
+     подробно рассказывает об управлении соединениями в PHP.
     </member>
    </simplelist>
   </para>
