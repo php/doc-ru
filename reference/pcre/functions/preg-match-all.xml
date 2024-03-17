@@ -18,14 +18,14 @@
    <methodparam choice="opt"><type>int</type><parameter>offset</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Ищет в строке <parameter>subject</parameter> все совпадения с шаблоном
-   <parameter>pattern</parameter> и помещает результат в массив
-   <parameter>matches</parameter> в порядке, определяемом
-   комбинацией флагов <parameter>flags</parameter>.
+   Функция ищет в строке <parameter>subject</parameter> все совпадения с шаблоном
+   регулярного выражения <parameter>pattern</parameter> и помещает результат в массив
+   <parameter>matches</parameter> в порядке, который определяет
+   комбинация флагов <parameter>flags</parameter>.
   </para>
   <para>
-   После обнаружения первого соответствия поиски будут
-   выполняться с конца последнего найденного вхождения.
+   После обнаружения первого соответствия поиски продолжаются
+   с конца последнего совпадения.
   </para>
  </refsect1>
 
@@ -53,8 +53,8 @@
      <term><parameter>matches</parameter></term>
      <listitem>
       <para>
-       Массив совпавших значений, отсортированный в соответствии
-       с параметром <parameter>flags</parameter>.
+       Многомерный массив совпадений, сортировка которого соответствует
+       параметру <parameter>flags</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -62,7 +62,7 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Может быть комбинацией следующих флагов (обратите внимание,
+       В параметр разрешено передавать комбинацию следующих флагов (обратите внимание,
        указывать флаг <constant>PREG_PATTERN_ORDER</constant>
        одновременно с флагом <constant>PREG_SET_ORDER</constant> бессмысленно):
        <variablelist>
@@ -70,20 +70,22 @@
          <term><constant>PREG_PATTERN_ORDER</constant></term>
          <listitem>
           <para>
-           Упорядочивает результаты так, что элемент <varname>$matches[0]</varname>
+           Флаг упорядочивает результаты так, что элемент <varname>$matches[0]</varname>
            содержит массив полных вхождений шаблона, элемент <varname>$matches[1]</varname>
-           содержит массив вхождений первой подмаски и т. д.
+           содержит массив вхождений первого подшаблона в круглых скобках и т. д.
           </para>
           <para>
            <informalexample>
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match_all("|<[^>]+>(.*)</[^>]+>|U",
     "<b>пример: </b><div align=left>это тест</div>",
     $out, PREG_PATTERN_ORDER);
 echo $out[0][0] . ", " . $out[0][1] . "\n";
 echo $out[1][0] . ", " . $out[1][1] . "\n";
+
 ?>
 ]]>
             </programlisting>
@@ -97,22 +99,24 @@ echo $out[1][0] . ", " . $out[1][1] . "\n";
             <para>
              Так, элемент <varname>$out[0]</varname> содержит массив строк,
              которые соответствуют полному шаблону,
-             а элемент <varname>$out[1]</varname> содержит массив строк,
-             которые заключены в теги.
+             а элемент <varname>$out[1]</varname> содержит массив строк в тегах.
             </para>
            </informalexample>
           </para>
           <para>
-           Если шаблон содержит именованные подшаблоны, <varname>$matches</varname>
-           дополнительно будет содержать записи для ключей с именами этих подшаблонов.
+           Массив <varname>$matches</varname> будет дополнительно содержать
+           записи для ключей с именами подшаблонов, если шаблон содержит
+           именованные подшаблоны.
           </para>
           <para>
-           Если шаблон содержит задублированные именованные подшаблоны,
-           то только самый правый подшаблон будет сохранён в элементе <varname>$matches[NAME]</varname>.
+           Функция сохранит в элементе <varname>$matches[NAME]</varname> только
+           самый правый подшаблон, если шаблон содержит повторяющиеся именованные
+           подшаблоны.
            <informalexample>
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match_all(
     '/(?J)(?<match>foo)|(?<match>bar)/',
     'foo bar',
@@ -120,6 +124,7 @@ preg_match_all(
     PREG_PATTERN_ORDER
 );
 print_r($matches['match']);
+
 ?>
 ]]>
             </programlisting>
@@ -141,7 +146,7 @@ Array
          <term><constant>PREG_SET_ORDER</constant></term>
          <listitem>
           <para>
-           Упорядочивает результаты так, что элемент <varname>$matches[0]</varname>
+           Флаг упорядочивает результаты так, что элемент <varname>$matches[0]</varname>
            становится массивом с первым набором вхождений,
            а элемент <varname>$matches[1]</varname> — со вторым набором вхождений
            и т. д.
@@ -149,11 +154,13 @@ Array
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match_all("|<[^>]+>(.*)</[^>]+>|U",
     "<b>пример: </b><div align=\"left\">это тест</div>",
     $out, PREG_SET_ORDER);
 echo $out[0][0] . ", " . $out[0][1] . "\n";
 echo $out[1][0] . ", " . $out[1][1] . "\n";
+
 ?>
 ]]>
             </programlisting>
@@ -172,18 +179,20 @@ echo $out[1][0] . ", " . $out[1][1] . "\n";
          <term><constant>PREG_OFFSET_CAPTURE</constant></term>
          <listitem>
           <para>
-           Если передан этот флаг, для каждой найденной подстроки также будет возвращена
-           её позиция в исходной строке (в байтах). Обратите внимание, что этот флаг
+           С этим флагом для каждой найденной подстроки функция также вернёт
+           позицию подстроки в исходной строке (в байтах). Обратите внимание, что этот флаг
            изменяет массив <parameter>matches</parameter> на многомерный, каждый элемент
-           которого содержит массив, содержащий в индексе с номером <literal>0</literal>
+           которого содержит массив, который содержит в индексе с номером <literal>0</literal>
            найденную подстроку, а смещение этой подстроки в параметре <parameter>subject</parameter> —
            в индексе <literal>1</literal>.
            <informalexample>
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match_all('/(foo)(bar)(baz)/', 'foobarbaz', $matches, PREG_OFFSET_CAPTURE);
 print_r($matches);
+
 ?>
 ]]>
             </programlisting>
@@ -243,8 +252,8 @@ Array
          <term><constant>PREG_UNMATCHED_AS_NULL</constant></term>
          <listitem>
           <para>
-           Если этот флаг передан, несовпадающие подмаски будут представлены
-           значениями &null;; иначе они отображаются в виде пустых строк
+           С этим флагом несовпадающие подмаски функция представит
+           значениями &null;; иначе отобразит в виде пустых строк
            (<type>string</type>).
           </para>
          </listitem>
@@ -252,8 +261,8 @@ Array
        </variablelist>
       </para>
       <para>
-       Если флаг сортировки не передан,
-       будет использован флаг по умолчанию — <constant>PREG_PATTERN_ORDER</constant>.
+       Функция возьмёт флаг по умолчанию — <constant>PREG_PATTERN_ORDER</constant>,
+       если флаг сортировки не передали.
       </para>
      </listitem>
     </varlistentry>
@@ -261,19 +270,18 @@ Array
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Обычно поиск выполняется слева направо, с начала строки. Через
-       необязательный параметр <parameter>offset</parameter> можно указать
-       другую позицию (в байтах), с которой будет начат поиск.
+       Обычно поиск выполняется с начала строки слева направо. Через
+       необязательный параметр <parameter>offset</parameter> указывают
+       другую позицию (в байтах), с которой функция начнёт поиск.
       </para>
       <note>
        <para>
-        Использование параметра <parameter>offset</parameter> не эквивалентно
+        Поведение параметра <parameter>offset</parameter> не эквивалентно
         замене сопоставляемой строки выражением <code>substr($subject, $offset)</code>
         при вызове функции <function>preg_match_all</function>, поскольку
-        шаблон <parameter>pattern</parameter> может содержать такие условия как
+        шаблон <parameter>pattern</parameter> может содержать условия наподобие
         <emphasis>^</emphasis>, <emphasis>$</emphasis> или <emphasis>(?&lt;=x)</emphasis>.
-        Примеры можно посмотреть в описании функции
-        <function>preg_match</function>.
+        Примеры смотрите в описании функции <function>preg_match</function>.
        </para>
       </note>
      </listitem>
@@ -285,8 +293,7 @@ Array
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает количество найденных вхождений шаблона (которое может
-   быть и нулём)&return.falseforfailure;.
+   Функция возвращает количество полных совпадений с шаблоном, включая 0,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -310,8 +317,8 @@ Array
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Теперь для параметра <parameter>$flags</parameter> поддерживается
-        константа <constant>PREG_UNMATCHED_AS_NULL</constant>.
+        Теперь параметр <parameter>$flags</parameter> поддерживает
+        константу <constant>PREG_UNMATCHED_AS_NULL</constant>.
        </entry>
       </row>
      </tbody>
@@ -328,8 +335,13 @@ Array
     <programlisting role="php">
 <![CDATA[
 <?php
-preg_match_all("/\(?  (\d{3})?  \)?  (?(1)  [\-\s] ) \d{3}-\d{4}/x",
-                "Звоните 555-1212 или 1-800-555-1212", $phones);
+
+preg_match_all(
+    "/\(?  (\d{3})?  \)?  (?(1)  [\-\s] ) \d{3}-\d{4}/x",
+    "Звоните 555-1212 или 1-800-555-1212",
+    $phones
+);
+
 ?>
 ]]>
     </programlisting>
@@ -341,10 +353,12 @@ preg_match_all("/\(?  (\d{3})?  \)?  (?(1)  [\-\s] ) \d{3}-\d{4}/x",
     <programlisting role="php">
 <![CDATA[
 <?php
-// Запись \\2 — это пример использования ссылок на подмаски.
-// Она означает необходимость соответствия подстроки строке, захваченной
-// второй подмаской, в нашем примере это ([\w]+).
-// Дополнительный обратный слеш необходим, потому что строка заключена в двойные кавычки.
+
+// Запись \\2 — пример ссылки на подшаблон.
+// Запись говорит инструкции Perl-совместимого регулярного выражения,
+// что оно должно соответствовать набору, который захватили
+// вторые круглые скобки в самом шаблоне, в примере это ([\w]+).
+// Дополнительный обратный слеш требуется, потому что строка в двойных кавычках.
 $html = "<b>полужирный текст</b><a href=howdy.html>нажми</a>";
 
 preg_match_all("/(<([\w]+)[^>]*>)(.*?)(<\/\\2>)/", $html, $matches, PREG_SET_ORDER);
@@ -356,6 +370,7 @@ foreach ($matches as $val) {
     echo "часть 3: " . $val[3] . "\n";
     echo "часть 4: " . $val[4] . "\n\n";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -379,7 +394,7 @@ matched: <a href=hody.html>нажми</a>
   </para>
   <para>
    <example>
-    <title>Использование именованных подмасок</title>
+    <title>Работа с именованными подшаблонами</title>
     <programlisting role="php">
 <![CDATA[
 <?php
