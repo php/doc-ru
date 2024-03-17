@@ -18,8 +18,8 @@
    <methodparam choice="opt"><type>int</type><parameter>offset</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Ищет в заданном тексте <parameter>subject</parameter> совпадения
-   с шаблоном <parameter>pattern</parameter>.
+   Функция ищет в строке <parameter>subject</parameter> совпадения
+   с шаблоном регулярного выражения <parameter>pattern</parameter>.
   </para>
  </refsect1>
 
@@ -31,7 +31,7 @@
      <term><parameter>pattern</parameter></term>
      <listitem>
       <para>
-       Искомый шаблон в виде строки.
+       Шаблон в виде строки для поиска.
       </para>
      </listitem>
     </varlistentry>
@@ -47,12 +47,13 @@
      <term><parameter>matches</parameter></term>
      <listitem>
       <para>
-       В случае, если указан дополнительный параметр
-       <parameter>matches</parameter>, он будет заполнен
-       результатами поиска. Элемент <varname>$matches[0]</varname>
-       будет содержать часть строки, соответствующую вхождению
-       всего шаблона, <varname>$matches[1]</varname> - часть строки,
-       соответствующую первой подмаске и так далее.
+       Функция заполнит параметр <parameter>matches</parameter> результатами поиска,
+       если в функцию передали аргумент для этого параметра.
+       Элемент <varname>$matches[0]</varname> будет содержать текст,
+       который соответствует вхождению полного шаблона, элемент
+       <varname>$matches[1]</varname> будет содержать текст,
+       который соответствует первому захваченному круглыми скобками подшаблону,
+       и так далее.
       </para>
      </listitem>
     </varlistentry>
@@ -66,20 +67,22 @@
          <term><constant>PREG_OFFSET_CAPTURE</constant></term>
          <listitem>
           <para>
-           В случае, если этот флаг указан, для каждой найденной
+           Если этот флаг указали, для каждой найденной
            подстроки будет указана её позиция (в байтах) в исходной строке.
            Необходимо помнить, что этот флаг меняет формат
-           возвращаемого массива <parameter>matches</parameter> в
-           массив, каждый элемент которого содержит массив, содержащий
+           возвращаемого массива <parameter>matches</parameter> на массив,
+           каждый элемент которого содержит массив, который содержит
            в индексе с номером <literal>0</literal> найденную подстроку,
-           а смещение этой подстроки в параметре <parameter>subject</parameter>
-           - в индексе <literal>1</literal>.
+           а смещение этой подстроки в параметре <parameter>subject</parameter> —
+           в индексе <literal>1</literal>.
            <informalexample>
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match('/(foo)(bar)(baz)/', 'foobarbaz', $matches, PREG_OFFSET_CAPTURE);
 print_r($matches);
+
 ?>
 ]]>
             </programlisting>
@@ -123,17 +126,20 @@ Array
          <term><constant>PREG_UNMATCHED_AS_NULL</constant></term>
          <listitem>
           <para>
-           Если этот флаг передан, несовпадающие подмаски будут представлены
-           значениями &null;; в противном случае они отображаются в виде пустых строк
+           Если этот флаг установили, функция заполнит несовпадающие подшаблоны
+           значениями &null;; в противном случае они отображаются как пустые строки
            (<type>string</type>).
            <informalexample>
             <programlisting role="php">
 <![CDATA[
 <?php
+
 preg_match('/(a)(b)*(c)/', 'ac', $matches);
 var_dump($matches);
+
 preg_match('/(a)(b)*(c)/', 'ac', $matches, PREG_UNMATCHED_AS_NULL);
 var_dump($matches);
+
 ?>
 ]]>
             </programlisting>
@@ -174,27 +180,29 @@ array(4) {
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Обычно поиск осуществляется слева направо, с начала строки.
-       Можно использовать дополнительный параметр
-       <parameter>offset</parameter> для указания альтернативной
-       начальной позиции для поиска (в байтах).
+       Обычно поиск идёт с начала строки слева направо.
+       Можно установить дополнительный параметр
+       <parameter>offset</parameter>, чтобы указать альтернативную
+       начальную позиции для поиска (в байтах).
       </para>
       <note>
        <para>
-        Использование параметра <parameter>offset</parameter> не эквивалентно
+        Поведение параметра <parameter>offset</parameter> не эквивалентно
         замене сопоставляемой строки выражением <code>substr($subject, $offset)</code>
         при вызове функции <function>preg_match</function>, поскольку
-        шаблон <parameter>pattern</parameter> может содержать такие условия как
+        шаблон <parameter>pattern</parameter> может содержать условия наподобие
         <emphasis>^</emphasis>, <emphasis>$</emphasis> или <emphasis>(?&lt;=x)</emphasis>.
         Сравните:
         <informalexample>
          <programlisting role="php">
 <![CDATA[
 <?php
+
 $subject = "abcdef";
 $pattern = '/^def/';
 preg_match($pattern, $subject, $matches, PREG_OFFSET_CAPTURE, 3);
 print_r($matches);
+
 ?>
 ]]>
          </programlisting>
@@ -207,15 +215,17 @@ Array
 ]]>
          </screen>
          <para>
-          В то время как этот пример
+          Тогда как этот пример
          </para>
          <programlisting role="php">
 <![CDATA[
 <?php
+
 $subject = "abcdef";
 $pattern = '/^def/';
 preg_match($pattern, substr($subject,3), $matches, PREG_OFFSET_CAPTURE);
 print_r($matches);
+
 ?>
 ]]>
          </programlisting>
@@ -236,9 +246,10 @@ Array
 ]]>
          </screen>
          <para>
-          В качестве альтернативы <function>substr()</function>, используйте
-          утверждение <literal>\G</literal> вместо якоря <literal>^</literal>
-          или модификатор <literal>A</literal>. Оба они работают с параметром <parameter>offset</parameter>.
+          В качестве альтернативы функции <function>substr()</function>
+          вместо якоря <literal>^</literal> записывают утверждение <literal>\G</literal>
+          или модификатор <literal>A</literal>. Они оба работают с параметром
+          <parameter>offset</parameter>.
          </para>
         </informalexample>
        </para>
@@ -252,8 +263,8 @@ Array
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   <function>preg_match</function> возвращает 1, если параметр <parameter>pattern</parameter>
-   соответствует переданному параметру <parameter>subject</parameter>, 0 если нет&return.falseforfailure;.
+   Функция <function>preg_match</function> возвращает 1, если параметр <parameter>pattern</parameter>
+   соответствует переданному параметру <parameter>subject</parameter>, 0, если не соответствует,&return.falseforfailure;.
   </para>
   &return.falseproblem;
  </refsect1>
@@ -296,13 +307,15 @@ Array
     <programlisting role="php">
 <![CDATA[
 <?php
-// Символ "i" после закрывающего ограничителя шаблона означает
-// регистронезависимый поиск.
+
+// Символ "i" после закрывающего разделителя шаблона означает
+// регистронезависимый поиск
 if (preg_match("/php/i", "PHP is the web scripting language of choice.")) {
     echo "Вхождение найдено.";
 } else {
     echo "Вхождение не найдено.";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -314,6 +327,7 @@ if (preg_match("/php/i", "PHP is the web scripting language of choice.")) {
     <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Специальная последовательность \b в шаблоне означает границу слова,
    следовательно, только изолированное вхождение слова 'web' будет
    соответствовать маске, в отличие от "webbing" или "cobweb" */
@@ -328,6 +342,7 @@ if (preg_match("/\bweb\b/i", "PHP is the website scripting language of choice.")
 } else {
     echo "Вхождение не найдено.";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -339,14 +354,16 @@ if (preg_match("/\bweb\b/i", "PHP is the website scripting language of choice.")
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // Извлекаем имя хоста из URL
 preg_match('@^(?:http://)?([^/]+)@i',
     "http://www.php.net/index.html", $matches);
 $host = $matches[1];
 
-// извлекаем две последние части имени хоста
+// Извлекаем две последние части имени хоста
 preg_match('/[^.]+\.[^.]+$/', $host, $matches);
 echo "доменное имя: {$matches[0]}\n";
+
 ?>
 ]]>
     </programlisting>
@@ -398,9 +415,9 @@ Array
   &reftitle.notes;
   <tip>
    <para>
-    Не используйте функцию <function>preg_match</function>, если
+    Не пользуйтесь функцией <function>preg_match</function>, если
     необходимо проверить наличие подстроки в заданной строке.
-    Используйте для этого <function>strpos</function> поскольку она
+    Вызывайте для этого функцию <function>strpos</function>, поскольку она
     выполнят эту задачу гораздо быстрее.
    </para>
   </tip>
