@@ -158,7 +158,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Node                            | Узел                                                                  |
 | Optional                        | Необязательный                                                        |
 | Override                        | Переопределять                                                        |
-| Otherwise                       | В противном случае, иначе                                             |
+| Otherwise                       | В противном случае (только в начале предложения! — прим.), иначе      |
 | On success                      | В случае успешного выполнения                                         |
 | On fail/failure                 | Если возникла ошибка                                                  |
 | Parameter(s)                    | Параметр(ы), аргумент(ы)                                              |
