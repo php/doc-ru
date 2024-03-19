@@ -160,7 +160,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Override                        | Переопределять                                                        |
 | Otherwise                       | В противном случае, иначе                                             |
 | On success                      | В случае успешного выполнения                                         |
-| On fail                         | В случае возникновения ошибки                                         |
+| On fail/failure                 | Если возникла ошибка                                                  |
 | Parameter(s)                    | Параметр(ы), аргумент(ы)                                              |
 | Parser                          | Парсер                                                                |
 | Parsing                         | Разбор (например, разбор строки)                                      |
