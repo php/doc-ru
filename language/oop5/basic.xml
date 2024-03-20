@@ -409,27 +409,31 @@ echo (new DateTime())->format('Y');
   <title>Свойства и методы</title>
   <para>
    Свойства и методы класса живут в отдельных «пространствах имён»,
-   поэтому для свойств и методов допустимо давать одинаковые имена.
-   Ссылки как на свойства, так и на методы имеют одинаковую нотацию, и получается,
-   что получите вы доступ к свойству или же вызовете метод - определяется контекстом
-   использования.
+   поэтому свойства и методы допустимо называть одинаково.
+   У ссылок на свойства и методы одинаковая нотация, и получит
+   ли код доступ к свойству или вызовет метод — зависит только от контекста,
+   т. е. обращаются ли к переменной или вызывают функцию.
   </para>
   <example>
-   <title>Доступ к свойству vs. вызов метода</title>
+   <title>Сравнение доступа к свойству и вызова метода</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class Foo
 {
     public $bar = 'свойство';
 
-    public function bar() {
+    public function bar()
+    {
         return 'метод';
     }
 }
 
 $obj = new Foo();
 echo $obj->bar, PHP_EOL, $obj->bar(), PHP_EOL;
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -441,21 +445,24 @@ echo $obj->bar, PHP_EOL, $obj->bar(), PHP_EOL;
    </screen>
   </example>
   <para>
-   Это означает, что вызвать <link linkend="functions.anonymous">анонимную
-   функцию</link>, присвоенную переменной, напрямую не получится.
-   Вместо этого свойство должно быть назначено, например, переменной.
-   Можно вызвать такое свойство напрямую, заключив его в скобки.
+   Из-за одинаковой нотации прямой вызов <link linkend="functions.anonymous">анонимной
+   функции</link>, которую присвоили переменной, невозможен.
+   Вместо этого свойство вначале присваивают переменной, например.
+   Вызвать же анонимную функцию, которую сохранили в свойстве класса, напрямую получится,
+   если взять свойство в круглые скобки.
   </para>
   <example>
-   <title>Вызов анонимной функции, содержащейся в свойстве</title>
+   <title>Вызов анонимной функции, которую содержит свойство</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class Foo
 {
     public $bar;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->bar = function() {
             return 42;
         };
@@ -465,6 +472,8 @@ class Foo
 $obj = new Foo();
 
 echo ($obj->bar)(), PHP_EOL;
+
+?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -478,23 +487,27 @@ echo ($obj->bar)(), PHP_EOL;
  <sect2 xml:id="language.oop5.basic.extends">
   <!-- TODO Example about class constant redefinition -->
   <!-- TODO Split into it's own page? -->
-  <title>extends</title>
+  <title>Ключевое слово extends</title>
   <para>
-   Класс может наследовать константы, методы и свойства другого класса используя
-   ключевое слово <literal>extends</literal> в его объявлении. Невозможно наследовать несколько
-   классов, один класс может наследовать только один базовый класс.
+   Класс умеет наследовать константы, методы и свойства другого класса через
+   ключевое слово <literal>extends</literal> в объявлении класса.
+   Невозможно наследовать больше одного класса, одному классу разрешено
+   наследовать только один базовый класс.
   </para>
   <para>
-   Наследуемые константы, методы и свойства могут быть переопределены (за исключением
-   случаев, когда метод или константа класса объявлены как <link linkend="language.oop5.final">final</link>)
-   путём объявления их с теми же именами, как и в родительском классе.
-   Существует возможность доступа к переопределённым методам или статическим
-   свойствам путём обращения к ним через
-   <link linkend="language.oop5.paamayim-nekudotayim">parent::</link>
+   Константы, методы и свойства, которые унаследовал класс, разрешается переопределять
+   в дочернем классе путём повторного объявления с таким же именем, которое определили
+   в родительском классе.
+   Метод или константу нельзя переопределить, если в родительском классе метод
+   или константу определили окончательными — с ключевым словом
+   <link linkend="language.oop5.final">final</link>.
+   Доступ к переопределённым методам или статическим свойствам родительского класса
+   получают, когда ссылаются на них через
+   <link linkend="language.oop5.paamayim-nekudotayim">parent::</link>.
   </para>
    <note>
     <simpara>
-     Начиная с PHP 8.1.0, константы можно объявлять окончательными (final).
+     С PHP 8.1.0 константы разрешается объявлять константы окончательными.
     </simpara>
    </note>
   <example>
@@ -502,9 +515,10 @@ echo ($obj->bar)(), PHP_EOL;
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class ExtendClass extends SimpleClass
 {
-    // Переопределение метода родителя
+    // Переопределение родительского метода
     function displayVar()
     {
         echo "Расширенный класс\n";
@@ -514,6 +528,7 @@ class ExtendClass extends SimpleClass
 
 $extended = new ExtendClass();
 $extended->displayVar();
+
 ?>
 ]]>
    </programlisting>
@@ -527,18 +542,21 @@ $extended->displayVar();
   </example>
 
   <sect3 xml:id="language.oop.lsp">
-    <title>Правила совместимости сигнатуры</title>
+    <title>Правила совместимости сигнатур</title>
     <para>
-     При переопределении метода его сигнатура должна быть совместима с родительским методом.
-     В противном случае выдаётся фатальная ошибка или, до PHP 8.0.0,
-     генерируется ошибка уровня <constant>E_WARNING</constant>.
-     Сигнатура является совместимой, если она соответствует правилам <link linkend="language.oop5.variance">контравариантности</link>, делает
-     обязательный параметр необязательным, добавляет только необязательные новые параметры и не ограничивает,
-     а только ослабляет видимость.
-     Это известно как принцип подстановки Барбары Лисков или сокращённо LSP.
-     Правила совместимости не распространяются на <link linkend="language.oop5.decon.constructor">конструктор</link> и
-     сигнатуру <literal>private</literal> методов, они не будут выдавать фатальную ошибку
-     в случае несоответствия сигнатуры.
+     При переопределении метода сигнатура метода должна быть совместима
+     с родительским методом.
+     В противном случае PHP выдаст фатальную ошибку или, до PHP 8.0.0,
+     сгенерирует ошибку уровня <constant>E_WARNING</constant>.
+     Сигнатура совместима, если она соответствует правилам
+     <link linkend="language.oop5.variance">вариантности</link>,
+     делает обязательный параметр необязательным, добавляет только необязательные
+     новые параметры и не ограничивает, а только ослабляет видимость.
+     Эти правила называются принципом подстановки Барбары Лисков, или сокращённо LSP.
+     Правила совместимости не распространяются на
+     <link linkend="language.oop5.decon.constructor">конструктор</link>
+     и сигнатуру <literal>private</literal>-методов, и поэтому они не будут выдавать
+     фатальную ошибку, если сигнатура не соответствует.
     </para>
     <example>
      <title>Совместимость дочерних методов</title>
@@ -548,7 +566,8 @@ $extended->displayVar();
 
 class Base
 {
-    public function foo(int $a) {
+    public function foo(int $a)
+    {
         echo "Допустимо\n";
     }
 }
@@ -573,6 +592,8 @@ $extended1 = new Extend1();
 $extended1->foo();
 $extended2 = new Extend2();
 $extended2->foo(1);
+
+?>
 ]]>
      </programlisting>
      &example.outputs;
@@ -585,7 +606,8 @@ $extended2->foo(1);
     </example>
 
     <para>
-     Следующие примеры демонстрируют, что дочерний метод, который удаляет параметр или делает необязательный
+     На следующих примерах видно, что дочерний метод, который
+     удаляет параметр или делает необязательный
      параметр обязательным, несовместим с родительским методом.
     </para>
     <example>
@@ -596,7 +618,8 @@ $extended2->foo(1);
 
 class Base
 {
-    public function foo(int $a = 5) {
+    public function foo(int $a = 5)
+    {
         echo "Допустимо\n";
     }
 }
@@ -608,6 +631,8 @@ class Extend extends Base
         parent::foo(1);
     }
 }
+
+?>
 ]]>
      </programlisting>
      &example.outputs.8.similar;
@@ -618,14 +643,17 @@ Fatal error: Declaration of Extend::foo() must be compatible with Base::foo(int 
      </screen>
     </example>
     <example>
-     <title>Фатальная ошибка, когда дочерний метод делает необязательный параметр обязательным.</title>
+     <title>
+      Фатальная ошибка, когда дочерний метод делает необязательный параметр обязательным
+     </title>
      <programlisting role="php">
 <![CDATA[
 <?php
 
 class Base
 {
-    public function foo(int $a = 5) {
+    public function foo(int $a = 5)
+    {
         echo "Допустимо\n";
     }
 }
@@ -637,6 +665,8 @@ class Extend extends Base
         parent::foo($a);
     }
 }
+
+?>
 ]]>
      </programlisting>
      &example.outputs.8.similar;
@@ -649,29 +679,36 @@ Fatal error: Declaration of Extend::foo(int $a) must be compatible with Base::fo
 
     <warning>
      <para>
-      Переименование параметра метода в дочернем классе не является
-      несовместимостью сигнатуры. Однако это не рекомендуется, так как приведёт к
-      <classname>Error</classname> во время выполнения, если используются
+      Переименование параметра метода в дочернем классе не относится
+      к несовместимости сигнатуры. Однако это не рекомендуется, поскольку
+      приведёт к исключению <classname>Error</classname> во время выполнения,
+      если передавать
       <link linkend="functions.named-arguments">именованные аргументы</link>.
      </para>
      <example>
-      <title>Ошибка при использовании именованных аргументов и параметров, переименованных в дочернем классе</title>
+      <title>
+       Ошибка передачи именованных аргументов в параметры, которые переменовали в дочернем классе
+      </title>
       <programlisting role="php">
 <![CDATA[
 <?php
 
-class A {
+class A
+{
     public function test($foo, $bar) {}
 }
 
-class B extends A {
+class B extends A
+{
     public function test($a, $b) {}
 }
 
-$obj = new B;
+$obj = new B();
 
-// Передача параметров согласно контракту A::test()
+// Передача параметров согласно контракту метода A::test()
 $obj->test(foo: "foo", bar: "bar"); // ОШИБКА!
+
+?>
 ]]>
       </programlisting>
       &example.outputs.similar;
@@ -689,15 +726,14 @@ Stack trace:
  </sect2>
 
  <sect2 xml:id="language.oop5.basic.class.class">
-  <title>::class</title>
+  <title>Константа ::class</title>
 
   <para>
-   Ключевое слово <literal>class</literal> используется
-   для разрешения имени класса.
-   Чтобы получить полное имя класса <literal>ClassName</literal>,
-   используйте <literal>ClassName::class</literal>.
-   Обычно это довольно полезно при работе с классами, использующими
-   <link linkend="language.namespaces">пространства имён</link>.
+   Ключевым словом <literal>class</literal> также разрешают имя класса.
+   Запись <literal>ClassName::class</literal> вернёт
+   абсолютное имя класса <literal>ClassName</literal>.
+   Это полезно при работе с классами, которые определили
+   <link linkend="language.namespaces">в пространстве имён</link>.
   </para>
   <para>
    <example xml:id="language.oop5.basic.class.class.name">
@@ -705,12 +741,13 @@ Stack trace:
     <programlisting role="php">
 <![CDATA[
 <?php
+
 namespace NS {
-    class ClassName {
-    }
+    class ClassName {}
 
     echo ClassName::class;
 }
+
 ?>
 ]]>
     </programlisting>
@@ -723,17 +760,22 @@ NS\ClassName
    </example>
   </para>
   <note>
-   <para>Разрешение имён класса с использованием <literal>::class</literal> происходит
-    на этапе компиляции. Это означает, что на момент создания строки с именем класса
-    автозагрузки класса не происходит. Как следствие, имена классов раскрываются, даже
-    если класс не существует. Ошибка в этом случае не выдаётся.
+   <para>
+    Разрешение имени класса через конструкцию <literal>::class</literal> —
+    преобразование во время компиляции. Это означает, что в момент, когда
+    компилятор создаёт строку с именем класса, PHP ещё не выполнил
+    автозагрузку класса. Следствием этого становится то, что имена
+    классов разворачиваютсчя, даже если класс не существует. При этом
+    ошибку PHP не выдаёт.
    </para>
    <example xml:id="language.oop5.basic.class.class.fail">
-    <title>Отсутствует разрешение имени класса</title>
+    <title>Разрешение имени несуществующего класса</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 print Does\Not\Exist::class;
+
 ?>
 ]]>
      </programlisting>
@@ -746,21 +788,23 @@ Does\Not\Exist
     </example>
   </note>
   <para>
-   Начиная с PHP 8.0.0, константа <literal>::class</literal> также может использоваться
-   для объектов. Это разрешение происходит во время выполнения, а не во время компиляции.
-   То же самое, что и при вызове <function>get_class</function> для объекта.
+   Начиная с PHP 8.0.0 константу <literal>::class</literal> разрешается указывать
+   на объектах. Это разрешение PHP совершает во время выполнения, а не во время компиляции.
+   Результат аналогичен вызову функции <function>get_class</function> на объекте.
   </para>
   <example xml:id="language.oop5.basic.class.class.object">
    <title>Разрешение имени объекта</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 namespace NS {
-    class ClassName {
-    }
+    class ClassName {}
 }
+
 $c = new ClassName();
 print $c::class;
+
 ?>
 ]]>
     </programlisting>
@@ -775,38 +819,41 @@ NS\ClassName
  <sect2 xml:id="language.oop5.basic.nullsafe">
   <title>Методы и свойства Nullsafe</title>
   <para>
-   Начиная с PHP 8.0.0, к свойствам и методам можно также
-   обращаться с помощью оператора "nullsafe": <literal>?-></literal>.
-   Оператор nullsafe работает так же, как доступ к свойству или методу, как указано выше,
-   за исключением того, что если разыменование объекта выдаёт &null;, то
-   будет возвращён &null;, а не выброшено исключение. Если разыменование является частью цепочки,
-   остальная часть цепочки пропускается.
+   Начиная с PHP 8.0.0 к свойствам и методам можно также
+   обращаться через оператор nullsafe: <literal>?-></literal>.
+   Оператор nullsafe работает так же, как доступ к свойству или методу,
+   как описание рассказывало выше,
+   за исключением того, что если значение разыменовываемого объекта равно &null;,
+   PHP вернёт &null;, а не выбросит исключение. Часть цепочки, которая осталась,
+   пропускается, если разыменование — часть цепочки.
   </para>
   <para>
-   Аналогично заключению каждого обращения в <function>is_null</function>,
-   но более компактный.
+   Результат аналогичен предварительному оборачиванию каждого обращения
+   в функцию <function>is_null</function>, но более компактный.
   </para>
   <para>
    <example>
-    <title>Оператор Nullsafe</title>
+    <title>Пример работы оператора Nullsafe</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Начиная с PHP 8.0.0, эта строка:
+// Начиная с PHP 8.0.0 эта строка:
 $result = $repository?->getUser(5)?->name;
 
-// Эквивалентна следующему блоку кода:
+// эквивалентна следующему блоку кода:
 if (is_null($repository)) {
     $result = null;
 } else {
     $user = $repository->getUser(5);
+
     if (is_null($user)) {
         $result = null;
     } else {
         $result = $user->name;
     }
 }
+
 ?>
 ]]>
     </programlisting>
@@ -814,9 +861,9 @@ if (is_null($repository)) {
   </para>
   <note>
    <para>
-    Оператор nullsafe лучше всего использовать, когда null считается допустимым и ожидаемым
-    значением для возвращаемого свойства или метода. Для индикации ошибки предпочтительнее
-    выбрасывать исключение.
+    Оператором nullsafe лучше пользоваться, когда null рассматривается
+    как допустимое значение, которое, как ожидается, вернёт свойство
+    или метод. Для указания на ошибку лучше выбрасывать исключение.
    </para>
   </note>
  </sect2>
