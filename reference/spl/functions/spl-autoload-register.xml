@@ -5,7 +5,7 @@
  <refnamediv>
   <refname>spl_autoload_register</refname>
   <refpurpose>
-   Регистрирует заданную функцию в качестве реализации метода __autoload()
+   Регистрирует функцию как реализацию функции __autoload()
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -17,23 +17,26 @@
    <methodparam choice="opt"><type>bool</type><parameter>prepend</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Регистрирует функцию __autoload в предоставляемой SPL очереди. В результате очередь будет
-   активирована, даже если ранее она была выключена.
+   Функция регистрирует пользовательскую функцию
+   в очереди __autoload SPL-библиотеки ядра PHP.
+   SPL активирует очередь, если очередь неактивна.
   </para>
   <para>
-   Если в вашем скрипте реализована функция <function>__autoload</function>, её
-   необходимо явно зарегистрировать в очереди __autoload. Это необходимо,
-   т.к. <function>spl_autoload_register</function> полностью заменяет механизм
-   кеширования <function>__autoload</function> функциями
-   <function>spl_autoload</function> и
-   <function>spl_autoload_call</function>.
+   Функцию <function>spl_autoload_register</function> требуется
+   зарегистрировать в очереди __autoload явным образом, если в коде
+   объявили функцию <function>__autoload</function>. Причина требования
+   состоит в том, что функция <function>spl_autoload_register</function>
+   заменит механизм кеширования функции <function>__autoload</function> либо
+   функцией <function>spl_autoload</function>, либо
+   функцией <function>spl_autoload_call</function>.
   </para>
   <para>
-   <function>spl_autoload_register</function> позволяет задать несколько реализаций
-   метода автозагрузки. Она создаёт очередь из
-   функций автозагрузки в порядке их определения в скрипте, тогда как
-   встроенная функция <function>__autoload</function> может иметь
-   только одну реализацию.
+   Функция <function>spl_autoload_register</function> разрешает
+   задавать больше одной функции автозагрузки. Она создаёт очередь
+   функций автозагрузки и выполняет каждую из заданных функций
+   в том порядке, в котором функции автозагрузки определили. Тогда как
+   встроенную функцию <function>__autoload</function> разрешается определять
+   только один раз.
   </para>
  </refsect1>
 
@@ -45,7 +48,9 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Имя функции, реализующей метод <function>spl_autoload</function>. Если &null;, будет зарегистрирована реализация по умолчанию.
+       Функция или название функции автозагрузки для регистрации.
+       PHP зарегистрирует реализацию функции <function>spl_autoload</function> по умолчанию,
+       если значение параметра равно &null;.
       </para>
       <methodsynopsis>
        <type>void</type><methodname><replaceable>callback</replaceable></methodname>
@@ -57,17 +62,17 @@
      <term><parameter>throw</parameter></term>
      <listitem>
       <para>
-       Этот параметр определяет, должна ли
-       <function>spl_autoload_register</function> выбрасывать исключение, если
-       зарегистрировать <parameter>callback</parameter> оказалось
-       невозможным.
+       Этот параметр определяет, будет ли функция
+       <function>spl_autoload_register</function> выбрасывать исключение,
+       когда не удаётся зарегистрировать функцию <parameter>callback</parameter>.
       </para>
       <warning>
        <para>
-        Начиная с PHP 8.0.0 этот параметр игнорируется, а при установке
-        значения &false; будет выдано уведомление. Функция <function>spl_autoload_register</function>
-        теперь всегда будет выбрасывать исключение <classname>TypeError</classname>
-        в случае передачи некорректных аргументов.
+        С PHP 8.0.0 функция игнорирует параметр и выдаёт
+        уведомление, если значение параметра равно &false;. Теперь функция
+        <function>spl_autoload_register</function>
+        будет выбрасывать исключение <classname>TypeError</classname>
+        при каждой передаче некорректных аргументов.
        </para>
       </warning>
      </listitem>
@@ -76,8 +81,9 @@
      <term><parameter>prepend</parameter></term>
      <listitem>
       <para>
-       Если передано значение true, <function>spl_autoload_register</function>
-       поместит указанную функцию в начало очереди вместо добавления в конец.
+       Функция <function>spl_autoload_register</function>
+       добавит автозагрузчик в начало, а не в конец очереди автозагрузки,
+       если передали значение &true;.
       </para>
      </listitem>
     </varlistentry>
@@ -107,7 +113,7 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        <parameter>callback</parameter> теперь допускает значение null.
+        Теперь параметр <parameter>callback</parameter> принимает значение null.
        </entry>
       </row>
      </tbody>
@@ -121,8 +127,8 @@
   <para>
    <example>
     <title>
-     <function>spl_autoload_register</function> как альтернатива функции
-     <function>__autoload</function>
+     Замена функции <function>__autoload</function>
+     функцией <function>spl_autoload_register</function>
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -138,7 +144,7 @@ function my_autoloader($class) {
 
 spl_autoload_register('my_autoloader');
 
-// Можно использовать анонимные функции
+// Можно передавать анонимные функции
 spl_autoload_register(function ($class) {
     include 'classes/' . $class . '.class.php';
 });
@@ -149,8 +155,8 @@ spl_autoload_register(function ($class) {
    </example>
    <example>
     <title>
-     Пример использования <function>spl_autoload_register</function>
-     в случае, если класс не загрузился
+     Пример поведения функции <function>spl_autoload_register</function>
+     в коде, в котором не загрузили класс
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -158,15 +164,17 @@ spl_autoload_register(function ($class) {
 
 namespace Foobar;
 
-class Foo {
-    static public function test($class) {
+class Foo
+{
+    static public function test($class)
+    {
         print '[['. $class .']]';
     }
 }
 
-spl_autoload_register(__NAMESPACE__ .'\Foo::test');
+spl_autoload_register(__NAMESPACE__ . '\Foo::test');
 
-new InexistentClass;
+new InexistentClass();
 
 ?>
 ]]>
@@ -180,7 +188,9 @@ Fatal error: Class 'Foobar\InexistentClass' not found in ...
     </screen>
    </example>
    <example>
-    <title>Идентификатор будет предоставлен без ведущего обратного слеша</title>
+    <title>
+     Идентификаторы передаются в функцию без ведущего обратного слеша
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
