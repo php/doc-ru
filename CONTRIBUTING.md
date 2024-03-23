@@ -168,7 +168,8 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | PCRE                            | Perl-совместимые регулярные выражения                                 |
 | PHP value                       | PHP-значение                                                          |
 | Private                         | Закрытый                                                              |
-| Public                          | Общедоступный                                                         |
+| Protected                       | Защищённый                                                            |
+| Public                          | Общедоступный или открытый                                            |
 | Qualified name                  | Полное имя                                                            |
 | Read-only                       | Доступен только для чтения                                            |
 | Result set                      | Результирующий набор                                                  |
