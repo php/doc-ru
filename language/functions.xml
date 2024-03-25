@@ -1184,87 +1184,98 @@ var_dump(str_contains("foobar", null));
   <title>Анонимные функции</title>
 
   <simpara>
-   Анонимные функции, также известные как замыкания (<literal>closures</literal>),
-   позволяют создавать функции, не имеющие определённых имён.
-   Они наиболее полезны в качестве значений
-   <type>callable</type>-параметров,
-   но также могут иметь и множество других применений.
+   Анонимные функции, которые также знают как замыкания (<literal>closures</literal>) —
+   функции без имени.
+   Анонимные функции вызывают или передают как значения
+   для параметров с типом <type>callable</type>.
   </simpara>
   <simpara>
-   Анонимные функции реализуются с использованием класса <link linkend="class.closure">
-   <classname>Closure</classname></link>.
+   PHP создаёт анонимные функции через класс
+   <link linkend="class.closure"><classname>Closure</classname></link>.
   </simpara>
   <example>
    <title>Пример анонимной функции</title>
    <programlisting role="php">
 <![CDATA[
 <?php
-echo preg_replace_callback('~-([a-z])~', function ($match) {
-    return strtoupper($match[1]);
-}, 'hello-world');
-// выведет helloWorld
+
+echo preg_replace_callback(
+    '~-([a-z])~',
+    function ($match) {
+        return strtoupper($match[1]);
+    },
+    'hello-world'
+);
+// Выведет helloWorld
+
 ?>
 ]]>
    </programlisting>
   </example>
 
   <simpara>
-   Замыкания также могут быть использованы в качестве значений
-   переменных; PHP автоматически преобразовывает такие выражения
-   в экземпляры внутреннего класса <classname>Closure</classname>.
-   Присвоение замыкания переменной использует тот же синтаксис,
-   что и для любого другого присвоения, включая завершающую
-   точку с запятой:
+   Замыкания также присваивают переменным как значения; PHP автоматически
+   преобразовывает такие выражения в экземпляры внутреннего класса
+   <classname>Closure</classname>.
+   Замыкания присваивают переменной тем же синтаксисом,
+   что и для другого присваивания, включая конечную точку с запятой:
   </simpara>
 
   <example>
-   <title>Пример присвоения анонимной функции переменной</title>
+   <title>
+    Пример присваивания анонимной функции как значения переменной
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $greet = function($name) {
     printf("Привет, %s\r\n", $name);
 };
 
 $greet('Мир');
 $greet('PHP');
+
 ?>
 ]]>
    </programlisting>
   </example>
 
   <simpara>
-   Замыкания могут также наследовать переменные из родительской
-   области видимости. Любая подобная переменная должна быть
-   объявлена в конструкции <literal>use</literal>. Начиная с
-   PHP 7.1, эти переменные не должны включать &link.superglobals;,
-   <varname>$this</varname> и переменные с теми же именами, что и
-   параметры функции.
-   Объявление типа возвращаемого значения функции должно быть помещено
-    <emphasis>после</emphasis> конструкции <literal>use</literal>.
+   Замыкания также наследуют переменные из родительской
+   области видимости. Каждая такая переменная должна быть
+   передана в языковую конструкцию <literal>use</literal>. Начиная с
+   PHP 7.1 эти переменные не должны включать &link.superglobals;,
+   переменную <varname>$this</varname> и переменные с именами, которые
+   совпадают с названиями параметров функции.
+   Объявление типа для значения, которое возвращает функция,
+   указывают <emphasis>после</emphasis> конструкции <literal>use</literal>.
   </simpara>
 
   <example>
-   <title>Наследование переменных из родительской области видимости</title>
+   <title>
+    Пример наследования переменных из родительской области видимости
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $message = 'привет';
 
-// Без "use"
+// Без конструкции use
 $example = function () {
     var_dump($message);
 };
 $example();
 
-// Наследуем $message
+// Наследуем переменную $message
 $example = function () use ($message) {
     var_dump($message);
 };
 $example();
 
-// Значение унаследованной переменной задано там, где функция определена,
-// но не там, где вызвана
+// Анонимная функция наследует переменную с тем значением, которое переменная
+// содержала перед определением функции, а не в месте вызова функции
 $message = 'мир';
 $example();
 
@@ -1277,22 +1288,23 @@ $example = function () use (&$message) {
 };
 $example();
 
-// Изменённое в родительской области видимости значение
-// остаётся тем же внутри вызова функции
+// Значение, которое изменили в родительской области видимости,
+// отражается внутри вызова функции
 $message = 'мир';
 echo $example();
 
-// Замыкания могут принимать обычные аргументы
+// Замыкания умеют принимать обычные аргументы
 $example = function ($arg) use ($message) {
     var_dump($arg . ', ' . $message);
 };
 $example("привет");
 
-// Объявление типа возвращаемого значения идет после конструкции use
+// Объявление типа значения, которое вернёт функция, идёт после конструкции use
 $example = function () use ($message): string {
     return "привет, $message";
 };
 var_dump($example());
+
 ?>
 ]]>
    </programlisting>
@@ -1311,18 +1323,18 @@ string(20) "привет, мир"
    </screen>
   </example>
   <para>
-   Начиная с PHP 8.0.0, список наследуемых переменных может завершаться запятой,
-   которая будет проигнорирована.
+   Начиная с PHP 8.0.0 списку переменных, которые функция
+   наследует из области видимости, разрешается включать конечную запятую,
+   которую парсер проигнорирует.
   </para>
   <simpara>
-   Наследование переменных из
-   родительской области видимости <emphasis>не</emphasis> то же
-   самое, что использование глобальных переменных.
+   Наследование переменных из родительской области видимости
+   <emphasis>отличается</emphasis> от наследования глобальных переменных.
    Глобальные переменные существуют в глобальной области видимости,
-   которая не меняется, вне зависимости от того, какая функция
-   выполняется в данный момент. Родительская область видимости —
-   это функция, в которой было объявлено замыкание (не обязательно
-   та же самая, из которой оно было вызвано). Смотрите следующий
+   которая остаётся прежней, какая бы функция ни выполнялась.
+   Родительская область видимости замыкания —
+   функция, в которой объявили замыкание; не обязательно
+   функция, из которой замыкание вызвали. Смотрите следующий
    пример:
   </simpara>
 
@@ -1331,10 +1343,11 @@ string(20) "привет, мир"
    <programlisting role="php">
 <![CDATA[
 <?php
-// Базовая корзина покупок, содержащая список добавленных
+
+// Базовая корзина покупок, которая содержит список
 // продуктов и количество каждого продукта. Включает метод,
-// вычисляющий общую цену элементов корзины с помощью
-// callback-замыкания.
+// который вычисляет общую цену элементов корзины через
+// callback-замыкание
 class Cart
 {
     const PRICE_BUTTER  = 1.00;
@@ -1358,13 +1371,14 @@ class Cart
     {
         $total = 0.00;
 
-        $callback =
-            function ($quantity, $product) use ($tax, &$total)
-            {
-                $pricePerItem = constant(__CLASS__ . "::PRICE_" .
-                    strtoupper($product));
-                $total += ($pricePerItem * $quantity) * ($tax + 1.0);
-            };
+        $callback = function ($quantity, $product) use ($tax, &$total)
+        {
+            $pricePerItem = constant(
+                __CLASS__ . "::PRICE_" . strtoupper($product)
+            );
+
+            $total += ($pricePerItem * $quantity) * ($tax + 1.0);
+        };
 
         array_walk($this->products, $callback);
         return round($total, 2);
@@ -1373,21 +1387,22 @@ class Cart
 
 $my_cart = new Cart;
 
-// Добавляем несколько элементов в корзину
+// Добавляем элементы в корзину
 $my_cart->add('butter', 1);
 $my_cart->add('milk', 3);
 $my_cart->add('eggs', 6);
 
-// Выводим общую сумму с 5% налогом на продажу.
+// Выводим общую сумму с налогом 5 % на продажу
 print $my_cart->getTotal(0.05) . "\n";
-// Результатом будет 54.29
+// Результат будет равен 54.29
+
 ?>
 ]]>
    </programlisting>
   </example>
 
   <example>
-   <title>Автоматическое связывание <literal>$this</literal></title>
+   <title>Автоматическое связывание переменной <literal>$this</literal></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -1402,7 +1417,7 @@ class Test
     }
 }
 
-$object = new Test;
+$object = new Test();
 $function = $object->testing();
 $function();
 
@@ -1418,23 +1433,28 @@ object(Test)#1 (0) {
    </screen>
   </example>
   <para>
-   При объявлении в контексте класса, текущий
-   класс будет автоматически связан с ним, делая <literal>$this</literal>
-   доступным внутри функций класса. Если вы не хотите автоматического
-   связывания с текущим классом, используйте <link
-   linkend="functions.anonymous-functions.static">статические анонимные функции</link>.
+   При объявлении замыкания в контексте класса, текущий
+   класс автоматически связывается с замыканием, а члены функции
+   получают доступ к переменной <literal>$this</literal> в области
+   видимости функции. Определяют
+   <link linkend="functions.anonymous-functions.static">статические анонимные функции</link>,
+   если не требуется автоматическое связывание с текущим классом.
   </para>
 
   <sect2 xml:id="functions.anonymous-functions.static">
    <title>Статические анонимные функции</title>
    <para>
-    Анонимные функции могут быть объявлены статически.
-    Это предотвратит их автоматическое связывание с текущим классом.
-    Объекты также не будут с ними связаны во время выполнения.
+    Анонимные функции разрешается объявлять статически.
+    Это предотвратит автоматическое связывание замыкания
+    с текущим классом. Объекты также не будут с связаны с замыканием
+    во время выполнения.
    </para>
    <para>
     <example>
-     <title>Попытка использовать <literal>$this</literal> в статической анонимной функции</title>
+     <title>
+      Попытка обратиться к переменной <literal>$this</literal>
+      в статической анонимной функции
+     </title>
      <programlisting role="php">
 <![CDATA[
 <?php
@@ -1446,9 +1466,11 @@ class Foo
         $func = static function() {
             var_dump($this);
         };
+
         $func();
     }
 };
+
 new Foo();
 
 ?>
@@ -1466,14 +1488,17 @@ NULL
 
    <para>
     <example>
-     <title>Попытка связать объект со статической анонимной функцией</title>
+     <title>
+      Попытка связать объект со статической анонимной функцией
+     </title>
      <programlisting role="php">
 <![CDATA[
 <?php
 
 $func = static function() {
-    // тело функции
+    // Тело функции
 };
+
 $func = $func->bindTo(new stdClass);
 $func();
 
@@ -1505,8 +1530,8 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
         <entry>7.1.0</entry>
         <entry>
          Анонимные функции не могут замыкаться вокруг &link.superglobals;,
-         <varname>$this</varname> или любой переменной с тем же именем, что
-         и параметр.
+         переменной <varname>$this</varname> или другой переменной
+         с именем, которое совпадает с названием параметра.
         </entry>
        </row>
       </tbody>
@@ -1519,7 +1544,7 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
    &reftitle.notes;
    <note>
     <simpara>
-     Внутри замыканий можно использовать функции
+     Внутри замыканий разрешается вызывать функции
      <function>func_num_args</function>,
      <function>func_get_arg</function> и <function>func_get_args</function>.
     </simpara>
@@ -1541,7 +1566,7 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
   </simpara>
 
   <simpara>
-   Основной вид записи стрелочных функций:
+   Базовая форма записи стрелочных функций:
    <code>fn (argument_list) =&gt; expr</code>.
   </simpara>
 
@@ -1549,20 +1574,22 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
    Стрелочные функции работают так же,
    как <link linkend="functions.anonymous">анонимные функции</link>,
    за исключением того, что доступ к переменным
-   родительской области выполняется автоматически.
+   родительской области стрелочные функции получают автоматически.
   </simpara>
 
   <simpara>
-   Когда стрелочная функция использует переменную,
+   Когда стрелочная функция работает с переменной,
    которую определили в родительской области,
    переменная неявно захватывается по значению.
-   В следующем примере функции <varname>$fn1</varname> и
-   <varname>$fn2</varname> ведут себя одинаково.
+   В следующем примере функции <varname>$fn1</varname>
+   и <varname>$fn2</varname> ведут себя одинаково.
   </simpara>
 
   <para>
    <example>
-    <title>Стрелочные функции захватывают переменные по значению автоматически</title>
+    <title>
+     Стрелочные функции захватывают переменные по значению автоматически
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -1570,7 +1597,8 @@ Warning: Cannot bind an instance to a static closure in %s on line %d
 $y = 1;
 
 $fn1 = fn($x) => $x + $y;
-// эквивалентно использованию $y по значению:
+
+// Эквивалентно получению переменной $y по значению:
 $fn2 = function ($x) use ($y) {
     return $x + $y;
 };
@@ -1593,13 +1621,17 @@ var_export($fn1(3));
   </simpara>
   <para>
    <example>
-    <title>Стрелочные функции захватывают переменные по значению автоматически, даже когда они вложены</title>
+    <title>
+     Стрелочные функции захватывают переменные по значению автоматически,
+     даже когда функции вложены
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $z = 1;
 $fn = fn($x) => fn($y) => $x * $y + $z;
+
 // Выведет 51
 var_export($fn(5)(10));
 
@@ -1609,15 +1641,15 @@ var_export($fn(5)(10));
    </example>
   </para>
   <simpara>
-   Подобно анонимным функциям,
+   Как и в анонимных функциях,
    синтаксис стрелочных функций допускает произвольные сигнатуры функций,
-   включая типы параметров и возвращаемых значений, значения по умолчанию, переменные,
-   а также передачу и возврат по ссылке.
-   Ниже приведены корректные примеры стрелочных функций:
+   включая типы параметров и возвращаемых значений, значения по умолчанию,
+   переменные и передачу и возврат по ссылке.
+   Корректные примеры стрелочных функций:
   </simpara>
   <para>
    <example>
-    <title>Примеры использования стрелочных функций</title>
+    <title>Примеры определения стрелочных функций</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -1635,17 +1667,20 @@ fn($x, ...$rest) => $rest;
    </example>
   </para>
   <simpara>
-   Стрелочные функции используют привязку переменных по значению.
-   Это примерно эквивалентно выполнению <code>use($x)</code> для каждой
-   переменной <varname>$x</varname>, используемой внутри стрелочной функции.
-   Привязка по значению означает, что невозможно изменить какие-либо значения
-   из внешней области.
-   Вместо этого можно использовать <link linkend="functions.anonymous">анонимные функции</link>
-   для привязок по ссылкам.
+   Стрелочные функции привязывают переменные по значению.
+   Это примерно эквивалентно выполнению конструкции <code>use($x)</code>
+   для каждой переменной <varname>$x</varname>, с которой стрелочная функция
+   будет работать внутри.
+   Привязка по значению означает, что внутри стрелочной функции невозможно
+   изменить значения из внешней области видимости.
+   Вместо этого для привязок по ссылкам можно пользоваться
+   <link linkend="functions.anonymous">анонимными функциями</link>.
   </simpara>
   <para>
    <example>
-    <title>Стрелочные функции не умеют изменять значения из внешней области видимости</title>
+    <title>
+     Стрелочные функции не умеют изменять значения из внешней области видимости
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -1676,7 +1711,7 @@ var_export($x);  // Выведет 1
        <row>
         <entry>7.4.0</entry>
         <entry>
-         Стали доступны стрелочные функции.
+         Появились стрелочные функции.
         </entry>
        </row>
       </tbody>
@@ -1689,9 +1724,9 @@ var_export($x);  // Выведет 1
    &reftitle.notes;
    <note>
     <simpara>
-     Можно вызывать функции <function>func_num_args</function>,
-     <function>func_get_arg</function> и <function>func_get_args</function>
-     в стрелочной функции.
+     Разрешается вызывать изнутри стрелочной функции
+     функции <function>func_num_args</function>,
+     <function>func_get_arg</function> и <function>func_get_args</function>.
     </simpara>
    </note>
   </sect2>
@@ -1702,14 +1737,14 @@ var_export($x);  // Выведет 1
 
   <para>
    Синтаксис callable-функций как объектов первого класса
-   представили в PHP 8.1.0 как способ, которым создают
+   представили в PHP 8.1.0 как способ, которым
    <link linkend="functions.anonymous">анонимные функции</link>
-   из <link linkend="language.types.callable">callable-объектов</link>.
+   создают из <link linkend="language.types.callable">callable-объектов</link>.
    Он заменяет существующий синтаксис вызываемых объектов
    со строками и массивами.
    Преимущество синтаксиса состоит в том,
    что он доступен для статического анализа
-   и использует область видимости точки, в которой callable-объект был получен.
+   и использует область видимости точки, в которой получили callable-объект.
   </para>
 
   <para>
@@ -1723,11 +1758,13 @@ var_export($x);  // Выведет 1
 <![CDATA[
 <?php
 
-class Foo {
+class Foo
+{
    public function method() {}
    public static function staticmethod() {}
    public function __invoke() {}
 }
+
 $obj = new Foo();
 $classStr = 'Foo';
 $methodStr = 'method';
@@ -1751,7 +1788,7 @@ $f9 = [Foo::class, 'staticmethod'](...);
 
   <note>
    <para>
-    Многоточие <code>...</code> — часть синтаксиса, а не пропуск.
+    Оператор <code>...</code> — часть синтаксиса, а не пропуск.
    </para>
   </note>
 
@@ -1760,7 +1797,7 @@ $f9 = [Foo::class, 'staticmethod'](...);
    что и у метода <methodname>Closure::fromCallable</methodname>.
    То есть, в отличие от callable-синтаксиса
    со строками и массивами, синтаксис <code>CallableExpr(...)</code>
-   учитывает область видимости в той точке, в которой он создан:
+   учитывает область видимости в той точке, в которой его создали:
    <example>
     <title>
      Сравнение области действия синтаксиса <code>CallableExpr(...)</code>
@@ -1770,30 +1807,40 @@ $f9 = [Foo::class, 'staticmethod'](...);
 <![CDATA[
 <?php
 
-class Foo {
-    public function getPrivateMethod() {
+class Foo
+{
+    public function getPrivateMethod()
+    {
         return [$this, 'privateMethod'];
     }
-    private function privateMethod() {
+
+    private function privateMethod()
+    {
         echo __METHOD__, "\n";
     }
 }
-$foo = new Foo;
+
+$foo = new Foo();
 $privateMethod = $foo->getPrivateMethod();
 $privateMethod();
 // Fatal error: Call to private method Foo::privateMethod() from global scope
 // Причина фатальной ошибки в том, что вызов выполнен за пределами класса Foo, и с этого момента будет проверяться видимость.
 
-class Foo1 {
-    public function getPrivateMethod() {
+class Foo1
+{
+    public function getPrivateMethod()
+    {
         // Использует область видимости, в которой получен callable-объект.
         return $this->privateMethod(...); // Идентично вызову Closure::fromCallable([$this, 'privateMethod']);
     }
-    private function privateMethod() {
+
+    private function privateMethod()
+    {
         echo __METHOD__, "\n";
     }
 }
-$foo1 = new Foo1;
+
+$foo1 = new Foo1();
 $privateMethod = $foo1->getPrivateMethod();
 $privateMethod();  // Foo1::privateMethod
 
@@ -1806,8 +1853,8 @@ $privateMethod();  // Foo1::privateMethod
 
   <note>
    <para>
-    Создание объекта этим синтаксисом (например, <code>new Foo(...)</code>)
-    не поддерживается, поскольку синтаксис <code>new Foo()</code>
+    Создать объект этим синтаксисом (например, <code>new Foo(...)</code>)
+    нельзя, поскольку синтаксис <code>new Foo()</code>
     не признаётся вызовом.
    </para>
   </note>
