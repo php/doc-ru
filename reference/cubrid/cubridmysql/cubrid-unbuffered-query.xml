@@ -4,7 +4,7 @@
 <refentry xml:id="function.cubrid-unbuffered-query" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>cubrid_unbuffered_query</refname>
-  <refpurpose>Выполнение запроса без загрузки результата в память</refpurpose>
+  <refpurpose>Выполняет запрос без загрузки результата в память</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,8 +15,8 @@
    <methodparam choice="opt"><type>resource</type><parameter>conn_identifier</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция выполняет запрос без ожидания его выполнения. Она возвращает значение
-   в процессе создания результирующего набора.
+   Функция выполняет запрос без ожидания результатов выполнения запроса.
+   Функция возвращает значение по мере генерации результирующего набора.
   </para>
  </refsect1>
 
@@ -31,8 +31,9 @@
    <varlistentry>
     <term><parameter>conn_identifier</parameter></term>
     <listitem><para>
-     Идентификатор соединения CUBRID. Если не задано, то будет использовано последнее
-     соединение, возвращённое <function>cubrid_connect</function>.
+     Идентификатор соединения CUBRID.
+     Функция использует последнее соединение, которое вернула функция
+     <function>cubrid_connect</function>, если значение параметра не задали.
      </para></listitem>
    </varlistentry>
   </variablelist>
@@ -42,40 +43,44 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Для SELECT, SHOW, DESCRIBE, EXPLAIN и прочих запросах, возвращающих результирующий
-   набор, <function>cubrid_query</function> возвращает <type>resource</type> в случае
-   успешного выполнения.
+   Для инструкций SELECT, SHOW, DESCRIBE или EXPLAIN
+   в случае успешного выполнения возвращается ресурс идентификатор запроса.
   </para>
   <para>
-   Для операторов SQL другого типа, UPDATE, DELETE, DROP и т.д. возвращает &true; в случае успешного выполнения.
+   Для других типов SQL-инструкций наподобие UPDATE, DELETE, DROP и т.д.
+   функция в случае успешного выполнения возвращает &true;.
   </para>
   <para>
-   &false; в случае возникновения ошибки.
+   Функция возвращает &false;, если возникла ошибка.
   </para>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>cubrid_unbuffered_query</function></title>
+   <title>
+    Пример использования функции <function>cubrid_unbuffered_query</function>
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
-    $link = cubrid_connect("localhost", 30000, "demodb", "dba", "");
-    if (!$link)
-    {
-        die('Не удалось соединиться.');
-    }
-    $query = "select * from code";
-    $result = cubrid_unbuffered_query($query, $link);
 
-    while ($row = cubrid_fetch($result))
-    {
-        var_dump($row);
-    }
+$link = cubrid_connect("localhost", 30000, "demodb", "dba", "");
 
-    cubrid_close_request($result);
-    cubrid_disconnect($link);
+if (!$link) {
+    die('Не удалось соединиться.');
+}
+
+$query = "select * from code";
+$result = cubrid_unbuffered_query($query, $link);
+
+while ($row = cubrid_fetch($result)) {
+    var_dump($row);
+}
+
+cubrid_close_request($result);
+cubrid_disconnect($link);
+
 ?>
 ]]>
    </programlisting>
@@ -86,10 +91,10 @@
   &reftitle.notes;
   <note>
    <para>
-    Преимущества <function>cubrid_unbuffered_query</function> имеют свою цену:
-    вы не сможете использовать <function>cubrid_num_rows</function> и
-    <function>cubrid_data_seek</function> для результирующего набора, возвращённого
-    <function>cubrid_unbuffered_query</function>.
+    У преимуществ функции <function>cubrid_unbuffered_query</function> есть цена:
+    не получится использовать функции <function>cubrid_num_rows</function>
+    и <function>cubrid_data_seek</function> для результирующего набора,
+    который возвращает функция <function>cubrid_unbuffered_query</function>.
    </para>
   </note>
  </refsect1>
