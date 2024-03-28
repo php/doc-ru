@@ -19,18 +19,19 @@
   <para>
    Ряд символов в HTML несёт отдельный смысл и для сохранения значения такие
    символы представляют HTML-сущностями. Функция возвращает строку с этими
-   преобразованиями. Функция же <function>htmlentities</function> преобразовывает
-   все связанные с именованными сущностями входные подстроки.
+   преобразованиями. Вместо этой функции вызывают функцию <function>htmlentities</function>,
+   когда требуется перевести каждую входную подстроку, у которой есть
+   связанная именованная сущность.
   </para>
   <para>
-   Если переданная в эту функцию входная строка и результирующий документ
-   работают с одинаковой кодировкой символов, то этой функции хватит, чтобы подготовить
+   Если у входной строки, которую передали в эту функцию, и результирующего документа
+   одинаковый набор символов, то этой функции хватит, чтобы подготовить
    входные данные для вставки в бо́льшую часть контекстов HTML-документа. Однако, если
-   данные содержат символы, которые не определены в кодировке символов результирующего документа,
-   и надо сохранить эти символы как числовые или именованные сущности,
-   то этой функции и функции <function>htmlentities</function>, которые преобразовывают только
-   подстроки, у которых есть эквивалентные именованные сущности, будет недостаточно.
-   Вместо них пользуются функцией <function>mb_encode_numericentity</function>.
+   данные содержат символы, которые не закодированы в наборе символов результирующего документа,
+   и требуется сохранить эти символы (как числовые или именованные сущности),
+   то как этой функции, так и функции <function>htmlentities</function> (которые
+   преобразовывают только подстроки, у которых есть эквивалентные именованные сущности),
+   будет недостаточно. Вместо них пользуются функцией <function>mb_encode_numericentity</function>.
   </para>
 
   <para>
@@ -50,16 +51,16 @@
       </row>
       <row>
        <entry><literal>&quot;</literal> (двойные кавычки)</entry>
-       <entry><literal>&amp;quot;</literal>, если не установлена <constant>ENT_NOQUOTES</constant></entry>
+       <entry><literal>&amp;quot;</literal>, без флага <constant>ENT_NOQUOTES</constant></entry>
       </row>
       <row>
        <entry><literal>'</literal> (одинарные кавычки)</entry>
        <entry>
         <literal>&amp;#039;</literal> для документов стандарта <constant>ENT_HTML401</constant>
-        или <literal>&amp;apos;</literal> для
-        документов <constant>ENT_XML1</constant>, <constant>ENT_XHTML</constant> или
-        <constant>ENT_HTML5</constant>, но только если установлена
-        константа <constant>ENT_QUOTES</constant>
+        или <literal>&amp;apos;</literal>
+        для документов стандартов <constant>ENT_XML1</constant>, <constant>ENT_XHTML</constant>
+        или <constant>ENT_HTML5</constant>,
+        но только с флагом <constant>ENT_QUOTES</constant>
        </entry>
       </row>
       <row>
@@ -92,12 +93,13 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Битовая маска из нижеуказанных флагов, которые определяют режим обработки
-       кавычек, некорректных кодовых последовательностей
-       и тип документа. По умолчанию установлены флаги
-       <literal>ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401</literal>.
+       Битовая маска из следующих флагов, которые определяют, как обрабатывать кавычки,
+       неправильные последовательности кодовых единиц и тип документа.
+       Флаги по умолчанию: <literal>ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401</literal>.
        <table>
-        <title>Доступные значения параметра <parameter>flags</parameter></title>
+        <title>
+         Доступные значения параметра <parameter>flags</parameter>
+        </title>
         <tgroup cols="2">
          <thead>
           <row>
@@ -108,7 +110,7 @@
          <tbody>
           <row>
            <entry><constant>ENT_COMPAT</constant></entry>
-           <entry>Преобразовывает двойные кавычки, одинарные кавычки не изменяет.</entry>
+           <entry>Преобразовывает двойные кавычки, одинарные кавычки не изменяются.</entry>
           </row>
           <row>
            <entry><constant>ENT_QUOTES</constant></entry>
@@ -121,51 +123,51 @@
           <row>
            <entry><constant>ENT_IGNORE</constant></entry>
            <entry>
-            Без уведомлений отбрасывает некорректные кодовые последовательности вместо возврата пустой строки.
-            <link xlink:href="&url.delete.nonchars;">Из-за последствий для безопасности</link>
-            работать с этим флагом не рекомендуют.
+            Без предупреждения отбрасывает неправильные последовательности кодовых единиц
+            вместо возврата пустой строки. Передача этого флага не рекомендуется,
+            поскольку это <link xlink:href="&url.delete.nonchars;">небезопасно</link>.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_SUBSTITUTE</constant></entry>
            <entry>
-            Вместо возврата пустой строки заменяет некорректные кодовые последовательности
-            символом замены Юникода U+FFFD при работе с кодировкой UTF-8
-            или &amp;#xFFFD; при работе с другой кодировкой.
+            Заменяет неправильные последовательности кодовых единиц символом замены
+            Юникода вместо возврата пустой строки: U+FFFD для строк в кодировке UTF-8
+            и &amp;#FFFD; для строк в других кодировках.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_DISALLOWED</constant></entry>
            <entry>
-            Заменяет неверные коды символов для заданного типа документа символом
-            замены юникода U+FFFD при работе с кодировкой UTF-8 или &amp;#xFFFD;
-            при работе с другой кодировкой, а не оставляет всё как есть. Это
-            может быть полезно, например, чтобы убедиться в формальной правильности
-            XML-документов со встроенным внешним контентом.
+            Заменяет неверные кодовые точки для заданного типа документа символом
+            замены юникода U+FFFD для строк в кодировке UTF-8 или &amp;#FFFD;
+            для строк в других кодировках вместо того, чтобы оставлять всё как есть.
+            Это бывает полезно для правильного оформления XML-документов,
+            в которые встроили внешнее содержимое.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_HTML401</constant></entry>
            <entry>
-            Обработка кода в соответствии со стандартом HTML 4.01.
+            Обрабатывает код по правилам стандарта HTML 4.01.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_XML1</constant></entry>
            <entry>
-            Обработка кода в соответствии со стандартом XML 1.
+            Обрабатывает код по правилам стандарта XML 1.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_XHTML</constant></entry>
            <entry>
-            Обработка кода в соответствии со стандартом XHTML.
+            Обрабатывает код по правилам стандарта XHTML.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_HTML5</constant></entry>
            <entry>
-            Обработка кода в соответствии со стандартом HTML 5.
+            Обрабатывает код по правилам стандарта HTML 5.
            </entry>
           </row>
          </tbody>
@@ -182,12 +184,12 @@
        Для целей этой функции кодировки
        <literal>ISO-8859-1</literal>, <literal>ISO-8859-15</literal>,
        <literal>UTF-8</literal>, <literal>cp866</literal>,
-       <literal>cp1251</literal>, <literal>cp1252</literal> и
-       <literal>KOI8-R</literal> практически эквивалентны, предполагая,
-       что сама строка <parameter>string</parameter> содержит корректные символы
-       в указанной кодировке, то символы, которые изменяет функция
-       <function>htmlspecialchars</function>, останутся на тех же местах
-       во всех этих кодировках.
+       <literal>cp1251</literal>, <literal>cp1252</literal>
+       и <literal>KOI8-R</literal> практически эквивалентны, при условии,
+       что сама строка <parameter>string</parameter> содержит допустимые
+       для заданной кодировки символы, поскольку символы, которые изменяет функция
+       <function>htmlspecialchars</function>, занимают одинаковые позиции
+       в перечисленных кодировках.
       </para>
       &reference.strings.charsets;
      </listitem>
@@ -196,9 +198,9 @@
      <term><parameter>double_encode</parameter></term>
      <listitem>
       <para>
-       Когда параметр <parameter>double_encode</parameter> выключен,
-       PHP не будет кодировать существующие HTML-сущности. По умолчанию функция
-       преобразовывает всё.
+       Когда параметр <parameter>double_encode</parameter> отключён,
+       PHP не будет кодировать существующие HTML-сущности.
+       По умолчанию функция преобразовывает каждый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -212,10 +214,10 @@
    Функция возвращает преобразованную строку (<type>string</type>).
   </para>
   <para>
-   Если входная строка <parameter>string</parameter> содержит
-   недопустимую последовательность символов в пределах кодировки <parameter>encoding</parameter>,
-   вернётся пустая строка, если только не установлены флаги
-   <constant>ENT_IGNORE</constant> или <constant>ENT_SUBSTITUTE</constant>.
+   Функция вернёт пустую строку, если входная строка <parameter>string</parameter>
+   содержит недопустимую для кодировки <parameter>encoding</parameter> последовательность
+   кодовых единиц, если только не установили флаг <constant>ENT_IGNORE</constant>
+   или <constant>ENT_SUBSTITUTE</constant>.
   </para>
  </refsect1>
 
@@ -233,9 +235,10 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Значение параметра <parameter>flags</parameter> по умолчанию
-       изменено с <constant>ENT_COMPAT</constant>
-       на <constant>ENT_QUOTES</constant> | <constant>ENT_SUBSTITUTE</constant> | <constant>ENT_HTML401</constant>.
+       Значение по умолчанию для параметра <parameter>flags</parameter>
+       изменили с <constant>ENT_COMPAT</constant>
+       на <constant>ENT_QUOTES</constant> | <constant>ENT_SUBSTITUTE</constant>
+       | <constant>ENT_HTML401</constant>.
       </entry>
      </row>
     </tbody>
@@ -247,7 +250,9 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>htmlspecialchars</function></title>
+    <title>
+     Пример использования функции <function>htmlspecialchars</function>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -267,52 +272,52 @@ echo $new; // &lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;
   <note>
    <para>
     Обратите внимание, функция выполняет только описанные преобразования.
-    Для преобразования всех символов пользуйтесь функцией
-    <function>htmlentities</function>.
+    Для преобразования всех символов вызывают функцию <function>htmlentities</function>.
    </para>
   </note>
   <note>
    <para>
-    В случае неоднозначного значения <parameter>flags</parameter>,
+    Когда значение параметра <parameter>flags</parameter> неоднозначно,
     функция применяет следующие правила:
    </para>
    <para>
     <itemizedlist>
      <listitem>
       <simpara>
-       Если одновременно отсутствуют флаги <constant>ENT_COMPAT</constant>,
-       <constant>ENT_QUOTES</constant> и <constant>ENT_NOQUOTES</constant>,
-       функция по умолчанию выберет флаг <constant>ENT_NOQUOTES</constant>.
+       Значением по умолчанию становится флаг <constant>ENT_NOQUOTES</constant>,
+       если одновременно отсутствуют флаги <constant>ENT_COMPAT</constant>,
+       <constant>ENT_QUOTES</constant> и <constant>ENT_NOQUOTES</constant>.
       </simpara>
      </listitem>
      <listitem>
       <simpara>
        Если одновременно присутствуют два или более флага <constant>ENT_COMPAT</constant>,
-       <constant>ENT_QUOTES</constant> и <constant>ENT_NOQUOTES</constant>, флаг <constant>ENT_QUOTES</constant>
-       будет иметь больший приоритет. Следующим по приоритету будет флаг <constant>ENT_COMPAT</constant>.
+       <constant>ENT_QUOTES</constant> и <constant>ENT_NOQUOTES</constant>,
+       у флага <constant>ENT_QUOTES</constant> будет больший приоритет.
+       Следующим по приоритету будет флаг <constant>ENT_COMPAT</constant>.
       </simpara>
      </listitem>
      <listitem>
       <simpara>
-       Если нет ни одной из констант <constant>ENT_HTML401</constant>, <constant>ENT_HTML5</constant>,
-       <constant>ENT_XHTML</constant> и <constant>ENT_XML1</constant>, по умолчанию
-       будет выбран флаг <constant>ENT_HTML401</constant>.
+       Флагом по умолчанию становится флаг <constant>ENT_HTML401</constant>,
+       если не установили ни одну из констант <constant>ENT_HTML401</constant>, <constant>ENT_HTML5</constant>,
+       <constant>ENT_XHTML</constant> и <constant>ENT_XML1</constant>.
       </simpara>
      </listitem>
      <listitem>
       <simpara>
-       Если одновременно присутствуют два или более флага <constant>ENT_HTML401</constant>,
+       Если одновременно установили больше одного флага <constant>ENT_HTML401</constant>,
        <constant>ENT_HTML5</constant>, <constant>ENT_XHTML</constant>, <constant>ENT_XML1</constant>,
        приоритет будет таким: <constant>ENT_HTML5</constant>, затем <constant>ENT_XHTML</constant>,
-       <constant>ENT_XML1</constant>, а потом <constant>ENT_HTML401</constant>.
+       <constant>ENT_XML1</constant>, а потом флаг <constant>ENT_HTML401</constant>.
       </simpara>
      </listitem>
      <listitem>
       <simpara>
-       Если одновременно присутствуют два или более флага <constant>ENT_DISALLOWED</constant>,
+       Если одновременно установили больше одного флага <constant>ENT_DISALLOWED</constant>,
        <constant>ENT_IGNORE</constant>, <constant>ENT_SUBSTITUTE</constant>,
        высший приоритет будет у флага <constant>ENT_IGNORE</constant>,
-       а следующий за ним — <constant>ENT_SUBSTITUTE</constant>.
+       а следующий за ним — у флага <constant>ENT_SUBSTITUTE</constant>.
       </simpara>
      </listitem>
     </itemizedlist>
