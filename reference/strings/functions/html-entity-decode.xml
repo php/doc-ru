@@ -16,17 +16,17 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>encoding</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>html_entity_decode</function> противоположна функции
-   <function>htmlentities</function>. Она преобразовывает HTML-сущности в строке
-   <parameter>string</parameter> в символы.
+   Функция <function>html_entity_decode</function> выполняет преобразование
+   обратное функции <function>htmlentities</function>, разница в том, что эта функция
+   наоборот — преобразовывает HTML-сущности в строке <parameter>string</parameter> в символы.
   </para>
   <para>
-   Точнее, эта функция преобразовывает все сущности (включая числовые),
-   которые, во-первых, точно допустимы для типа документа — то есть,
-   для XML эта функция не преобразовывает именованные сущности, которые определены
-   в DTD,
-   а во-вторых, символ или символы которых содержатся в кодировке, которая соответствует выбранной,
-   и разрешены в типе документа. Все другие сущности не изменяются.
+   Точнее, эта функция декодирует сущности (включая числовые),
+   которые а) допускает тип документа — то есть,
+   для XML-документов функция не декодирует именованные сущности, которые определяет
+   схема DTD и б) символ или символы которых входят в кодированный набор символов, который
+   связан с выбранной кодировкой, и которые разрешает выбранный тип документа.
+   Остальные сущности функция не изменяет.
   </para>
  </refsect1>
 
@@ -46,9 +46,9 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Битовая маска, состоящая из одного или более флагов, которые указывают,
-       как обращаться с кавычками и какой тип документа использовать.
-       По умолчанию маска принимает значение <literal>ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401</literal>.
+       Битовая маска из следующих флагов, которые определяют, как обрабатывать кавычки
+       и какой тип документа использовать.
+       Маска по умолчанию: <literal>ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401</literal>.
        <table>
         <title>Константы <parameter>flags</parameter></title>
         <tgroup cols="2">
@@ -61,47 +61,46 @@
          <tbody>
           <row>
            <entry><constant>ENT_COMPAT</constant></entry>
-           <entry>Преобразовываются двойные кавычки, одинарные остаются без изменений.</entry>
+           <entry>Преобразовывает двойные кавычки, одинарные кавычки не изменяются.</entry>
           </row>
           <row>
            <entry><constant>ENT_QUOTES</constant></entry>
-           <entry>Преобразовываются и двойные, и одинарные кавычки.</entry>
+           <entry>Преобразовывает как двойные, так и одинарные кавычки.</entry>
           </row>
           <row>
            <entry><constant>ENT_NOQUOTES</constant></entry>
-           <entry>Оставить как двойные, так и одинарные кавычки без изменений.</entry>
+           <entry>Оставляет без изменения как двойные, так и одинарные кавычки.</entry>
           </row>
           <row>
            <entry><constant>ENT_SUBSTITUTE</constant></entry>
            <entry>
-            Заменяет некорректные кодовые последовательности символом замены
-            Юникода U+FFFD в случае использования UTF-8 и
-            &amp;#FFFD; при выборе другой кодировки, вместо возврата
-            пустой строки.
+            Заменяет неправильные последовательности кодовых единиц символом замены
+            Юникода вместо возврата пустой строки: U+FFFD для строк в кодировке UTF-8
+            и &amp;#FFFD; для строк в других кодировках.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_HTML401</constant></entry>
            <entry>
-            Обрабатывать код как HTML 4.01.
+            Обрабатывает код в соответствии со стандартом HTML 4.01.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_XML1</constant></entry>
            <entry>
-            Обрабатывать код как XML 1.
+            Обрабатывает код по правилам стандарта XML 1.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_XHTML</constant></entry>
            <entry>
-            Обрабатывать код как XHTML.
+            Обрабатывает код по правилам стандарта XHTML.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_HTML5</constant></entry>
            <entry>
-            Обрабатывать код как HTML 5.
+            Обрабатывает код по правилам стандарта HTML 5.
            </entry>
           </row>
          </tbody>
@@ -124,7 +123,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает раскодированную строку.
+   Функция возвращает декодированную строку.
   </para>
  </refsect1>
 
@@ -142,9 +141,10 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Значение по умолчанию параметра <parameter>flags</parameter>
+       Значение по умолчанию для параметра <parameter>flags</parameter>
        изменили с <constant>ENT_COMPAT</constant>
-       на <constant>ENT_QUOTES</constant> | <constant>ENT_SUBSTITUTE</constant> | <constant>ENT_HTML401</constant>.
+       на <constant>ENT_QUOTES</constant> | <constant>ENT_SUBSTITUTE</constant>
+       | <constant>ENT_HTML401</constant>.
       </entry>
      </row>
      <row>
@@ -188,10 +188,10 @@ echo $b; // I'll "walk" the <b>dog</b> now
   &reftitle.notes;
   <note>
    <para>
-    Может показаться странным, что результат вызова
-    функции trim(html_entity_decode('&amp;nbsp;')); — не пустая строка.
-    Причина в том, что элемент «&amp;nbsp;» преобразовывается не в символ
-    с ASCII-кодом 32 (который удаляется функцией <function>trim</function>),
+    Кажется странным, что результатом вызова
+    функции trim(html_entity_decode('&amp;nbsp;')); не становится пустая строка.
+    Причина в том, что сущность «&amp;nbsp;» преобразовывается не в символ
+    с ASCII-кодом 32, который функция <function>trim</function> удаляет,
     а в символ с ASCII-кодом 160 (0xa0) в принимаемой по умолчанию кодировке ISO-8859-1.
    </para>
   </note>
