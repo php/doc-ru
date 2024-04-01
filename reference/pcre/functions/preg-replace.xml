@@ -18,14 +18,14 @@
    <methodparam choice="opt"><type>int</type><parameter role="reference">count</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет поиск совпадений в строке <parameter>subject</parameter> с шаблоном
-   <parameter>pattern</parameter> и заменяет их на
-   <parameter>replacement</parameter>.
+   Функция ищет в строке <parameter>subject</parameter> совпадения
+   с шаблоном <parameter>pattern</parameter> и заменяет совпадения
+   на значение <parameter>replacement</parameter>.
   </para>
   <para>
-   Для соответствия точной строке, а не шаблону, вместо этой функции
-   используйте функцию <function>str_replace</function>
-   или <function>str_ireplace</function>.
+   Вместо этой функции обращаются к функциям <function>str_replace</function>
+   или <function>str_ireplace</function>, чтобы найти соответствие точной
+   строке, а не шаблону.
   </para>
  </refsect1>
 
@@ -37,10 +37,13 @@
      <term><parameter>pattern</parameter></term>
      <listitem>
       <para>
-       Искомый шаблон. Может быть как строкой, так и массивом строк.
+       Искомый шаблон: строка или массив строк.
       </para>
       <para>
-       Также доступны некоторые <link linkend="reference.pcre.pattern.modifiers">модификаторы PCRE</link>.
+       В шаблоне также указывают
+       <link linkend="reference.pcre.pattern.modifiers">
+        модификаторы модуля PCRE
+       </link>.
       </para>
      </listitem>
     </varlistentry>
@@ -48,57 +51,64 @@
      <term><parameter>replacement</parameter></term>
      <listitem>
       <para>
-       Строка или массив строк для замены. Если этот параметр является
-       строкой, а <parameter>pattern</parameter> является массивом,
-       все шаблоны будут заменены этой строкой. Если и
-       <parameter>pattern</parameter> и <parameter>replacement</parameter>
-       являются массивами, каждый элемент <parameter>pattern</parameter> будет
-       заменён соответствующим элементом из <parameter>replacement</parameter>.
-       Если массив <parameter>replacement</parameter> содержит меньше
-       элементов, чем массив <parameter>pattern</parameter>, то все
-       лишние шаблоны из <parameter>pattern</parameter> будут
-       заменены пустыми строками.
+       Строка или массив строк для замены.
+
+       Эта строка заменит каждую подстроку входной строки,
+       которая совпала с шаблоном, если в этот параметр передали строку,
+       а в параметр <parameter>pattern</parameter> — массив.
+
+       Функция заменит каждую подстроку, которая совпала
+       c шаблоном в массиве <parameter>pattern</parameter>,
+       на значение <parameter>replacement</parameter> с тем же смещением, что и у шаблона,
+       если и параметр <parameter>pattern</parameter>,
+       и параметр <parameter>replacement</parameter> — массивы.
+
+       Функция заменит на пустую строку каждую подстроку,
+       которая совпала с лишним шаблоном в массиве <parameter>pattern</parameter>,
+       если массив <parameter>replacement</parameter> содержит
+       меньше элементов, чем массив <parameter>pattern</parameter>.
       </para>
       <para>
-       <parameter>replacement</parameter> может содержать ссылки вида
-       <literal>\<replaceable>n</replaceable></literal>, либо
-       <literal>$<replaceable>n</replaceable></literal>,
-       причём последний вариант предпочтительней. Каждая такая ссылка
-       будет заменена на подстроку, соответствующую
-       <replaceable>n</replaceable>-ой подмаске.
-       <replaceable>n</replaceable> может принимать значения от 0
-       до 99, причём ссылка <literal>\0</literal> (либо
-       <literal>$0</literal>) соответствует вхождению всего шаблона.
-       Подмаски нумеруются слева направо, начиная с единицы.
-       Обратите внимание, что обратные слеши в строке (&string;) литералы могут требовать экранирования.
+       В параметре <parameter>replacement</parameter> разрешается указывать ссылки вида
+       <literal>\<replaceable>n</replaceable></literal>
+       или <literal>$<replaceable>n</replaceable></literal>,
+       причём лучше предпочесть последний вариант. Каждую такую ссылку
+       функция заменит на подстроку, которую захватил
+       <replaceable>n</replaceable>-й подшаблон в круглых скобках.
+
+       Номер группы <replaceable>n</replaceable> принимает значения от 0
+       до 99, причём ссылки <literal>\0</literal> или <literal>$0</literal>
+       соответствует вхождению всего шаблона.
+
+       Открывающие подшаблон скобки нумеруются слева направо, начиная с единицы,
+       и указывают на номер подшаблона захвата.
+
+       Обратите внимание, в отдельных ситуациях обратные слеши в строковых (&string;)
+       литералах требуют экранирования.
       </para>
       <para>
-       При замене по шаблону с использованием ссылок на подмаски
-       может возникнуть ситуация, когда непосредственно за маской
-       следует цифра (например, установка цифры сразу после совпавшей маски).
-       В таком случае нельзя использовать знакомую нотацию вида
-       <literal>\1</literal> для ссылки на подмаски.
-       Запись, например, <literal>\11</literal>, смутит
-       <function>preg_replace</function>, так как она не сможет понять,
-       хотите ли вы использовать ссылку <literal>\1</literal>, за
-       которой следует цифра <literal>1</literal> или же вы хотите
-       просто использовать ссылку <literal>\11</literal>, за которой
-       ничего не следует. Это недоразумение можно устранить, если
-       воспользоваться конструкцией <literal>${1}1</literal>,
-       использующей изолированную ссылку <literal>$1</literal>, и
-       следующую за ней цифру <literal>1</literal>.
+       Когда при работе с шаблоном замены за обратной ссылкой сразу идёт другое число
+       (то есть буквальное число идёт сразу после подстроки, которая совпала с шаблоном),
+       для ссылки на подшаблон нельзя использовать знакомую нотацию вида <literal>\1</literal>.
+       Например, запись <literal>\11</literal> собьёт функцию <function>preg_replace</function>
+       с толку, поскольку функция не знает, требуется ли выбрать первую обратную ссылку <literal>\1</literal>,
+       за которой идёт буквальная цифра <literal>1</literal>,
+       или требуется выбрать одиннадцатую обратную ссылку <literal>\11</literal>,
+       за которой ничего не идёт.
+
+       Решение состоит в том, чтобы использовать конструкцию <literal>${1}1</literal>,
+       которая создаёт изолированную обратную ссылку <literal>$1</literal>,
+       а число <literal>1</literal> оставляет литералом.
       </para>
       <para>
-       При использовании устаревшего модификатора <literal>e</literal> эта
-       функция экранирует некоторые символы (а именно
-       <literal>'</literal>, <literal>"</literal>,
-       <literal>\</literal> и NULL) в строках, замещающих обратные
-       ссылки. Это сделано для удостоверения корректности синтаксиса
-       при использовании обратных ссылок внутри одинарных или двойных
-       кавычек (например, <literal>'strlen(\'$1\')+strlen("$2")'</literal>).
-       Убедитесь, что вы владеете <link linkend="language.types.string">синтаксисом
-       обработки строк</link> PHP для того, чтобы точно осознавать,
-       как будет выглядеть интерпретированная строка.
+       Если в шаблоне указали устаревший модификатор <literal>e</literal>,
+       функция заэкранирует в строках, которыми замещаются обратные ссылки,
+       отдельные символы: <literal>'</literal>, <literal>"</literal>, <literal>\</literal> и NULL.
+       Это гарантирует отсутствие синтаксических ошибок
+       при работе с обратными ссылками внутри одинарных или двойных кавычек:
+       <literal>'strlen(\'$1\')+strlen("$2")'</literal>.
+       Знание <link linkend="language.types.string">синтаксиса записи строк</link>
+       в PHP помогает понять, как интерпретатор будет видеть строку.
       </para>
      </listitem>
     </varlistentry>
@@ -109,14 +119,13 @@
        Строка или массив строк для поиска и замены.
       </para>
       <para>
-       Если <parameter>subject</parameter> является массивом, то
-       поиск с заменой осуществляется для каждого элемента
-       массива <parameter>subject</parameter>, а возвращаемое значение
-       также будет являться массивом.
+       Функция найдёт и заменит каждый элемент массива <parameter>subject</parameter>,
+       а затем вернёт массив,
+       если в параметр <parameter>subject</parameter> передали массив.
       </para>
       <para>
-       Если параметр <parameter>subject</parameter> является ассоциативным массивом,
-       ключи будут сохранены в возвращаемом значении.
+       Функция сохранит ключи в массиве с результатами,
+       если в параметр <parameter>subject</parameter> передали ассоциативный массив.
       </para>
      </listitem>
     </varlistentry>
@@ -124,9 +133,10 @@
      <term><parameter>limit</parameter></term>
      <listitem>
       <para>
-       Максимально возможное количество замен каждого шаблона
+       Максимальное количество замен каждого шаблона
        для каждой строки <parameter>subject</parameter>.
-       По умолчанию равно <literal>-1</literal> (без ограничений).
+       Значение по умолчанию равно <literal>-1</literal> —
+       не ограничивать количество замен.
       </para>
      </listitem>
     </varlistentry>
@@ -134,8 +144,8 @@
      <term><parameter>count</parameter></term>
      <listitem>
       <para>
-       Если указана, то эта переменная будет заполнена количеством
-       произведённых замен.
+       Функция заполнит эту переменную количеством замен, которые она выполнила,
+       если переменную указали.
       </para>
      </listitem>
     </varlistentry>
@@ -146,22 +156,23 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   <function>preg_replace</function> возвращает массив, если
-   параметр <parameter>subject</parameter> является массивом, иначе
-   возвращается строка.
+   Функция <function>preg_replace</function> возвращает массив,
+   если в параметр <parameter>subject</parameter> передали массив,
+   иначе возвращается строка.
   </para>
   <para>
-   Если найдены совпадения, возвращается новая версия <parameter>subject</parameter>,
-   иначе <parameter>subject</parameter> возвращается нетронутым, в
-   случае ошибки возвращается &null;.
+   Функция возвращает новую версию значения <parameter>subject</parameter>,
+   если нашла совпадения,
+   иначе значение <parameter>subject</parameter> возвращается нетронутым.
+   Функция возвращает &null;, если возникла ошибка.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Использование модификатора "\e" является ошибкой; в этом случае
-   выдаётся ошибка уровня <constant>E_WARNING</constant>;.
+   Функция выдаёт ошибку уровня <constant>E_WARNING</constant>,
+   когда в шаблоне указывают модификатор «\e».
   </para>
   &pcre.pattern.warning;
  </refsect1>
@@ -170,14 +181,18 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Использование подмасок, за которыми следует цифра</title>
+    <title>
+     Пример обратных ссылок, за которыми следуют числовые литералы
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $string = 'April 15, 2003';
 $pattern = '/(\w+) (\d+), (\d+)/i';
 $replacement = '${1}1,$3';
 echo preg_replace($pattern, $replacement, $string);
+
 ?>
 ]]>
     </programlisting>
@@ -191,20 +206,27 @@ April1,2003
   </para>
   <para>
    <example>
-    <title>Использование массивов с числовыми индексами в качестве аргументов функции <function>preg_replace</function></title>
+    <title>
+     Пример обработки функцией <function>preg_replace</function> индексных массивов
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $string = 'The quick brown fox jumps over the lazy dog.';
+
 $patterns = array();
 $patterns[0] = '/quick/';
 $patterns[1] = '/brown/';
 $patterns[2] = '/fox/';
+
 $replacements = array();
 $replacements[2] = 'bear';
 $replacements[1] = 'black';
 $replacements[0] = 'slow';
+
 echo preg_replace($patterns, $replacements, $string);
+
 ?>
 ]]>
     </programlisting>
@@ -215,14 +237,16 @@ The bear black slow jumps over the lazy dog.
 ]]>
     </screen>
     <para>
-     Отсортировав по ключам шаблоны и замены, получаем желаемый результат:
+     После сортировки шаблонов и замен по ключам получаем правильный результат:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 ksort($patterns);
 ksort($replacements);
 echo preg_replace($patterns, $replacements, $string);
+
 ?>
 ]]>
     </programlisting>
@@ -236,14 +260,20 @@ The slow black bear jumps over the lazy dog.
   </para>
   <para>
    <example>
-    <title>Замена по нескольким шаблонам</title>
+    <title>Пример замены ряда значений по набору шаблонов</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$patterns = array ('/(19|20)(\d{2})-(\d{1,2})-(\d{1,2})/',
-                   '/^\s*{(\w+)}\s*=/');
-$replace = array ('\3/\4/\1\2', '$\1 =');
+
+$patterns = array(
+    '/(19|20)(\d{2})-(\d{1,2})-(\d{1,2})/',
+    '/^\s*{(\w+)}\s*=/'
+);
+
+$replace = array('\3/\4/\1\2', '$\1 =');
+
 echo preg_replace($patterns, $replace, '{startDate} = 1999-5-27');
+
 ?>
 ]]>
     </programlisting>
@@ -257,17 +287,20 @@ $startDate = 5/27/1999
   </para>
   <para>
    <example>
-    <title>Чистка пробелов</title>
+    <title>Пример удаления пробелов</title>
     <para>
-     Этот пример вычищает лишние пробелы в строке.
+     В этом примере функция удаляет из строки лишние пробелы.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $str = 'foo   o';
 $str = preg_replace('/\s\s+/', ' ', $str);
-// Это теперь будет 'foo o'
+
+// Теперь строка будет выглядеть вот так: 'foo o'
 echo $str;
+
 ?>
 ]]>
     </programlisting>
@@ -275,14 +308,18 @@ echo $str;
   </para>
   <para>
    <example>
-    <title>Использование параметра <parameter>count</parameter></title>
+    <title>
+     Пример с параметром <parameter>count</parameter>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $count = 0;
 
 echo preg_replace(array('/\d/', '/\s/'), '*', 'xp 4 to', -1 , $count);
-echo $count; //3
+echo $count; // 3
+
 ?>
 ]]>
     </programlisting>
@@ -301,35 +338,42 @@ xp***to
   &reftitle.notes;
   <note>
    <para>
-    При использовании массивов в <parameter>pattern</parameter> и
-    <parameter>replacement</parameter>, ключи обрабатываются в том
-    порядке, в котором они находятся в массиве. Этот порядок
-    <emphasis>не всегда</emphasis> совпадает с числовым порядком
-    индексов. Если вы используете индексы для сопоставления
-    друг с другом нужного <parameter>pattern</parameter> и
-    <parameter>replacement</parameter>, то вам необходимо прогнать
-    через функцию <function>ksort</function> оба массива перед
-    использованием <function>preg_replace</function>.
+    Функция обрабатывает ключи в том порядке, в котором ключи появляются в массиве,
+    когда в параметры <parameter>pattern</parameter> и <parameter>replacement</parameter>
+    передают массивы.
+    Порядок ключей в этих массивах — <emphasis>не то же</emphasis>,
+    что порядок числовых индексов.
+    Если индексы требуются, чтобы определить,
+    какой шаблон <parameter>pattern</parameter> требуется заменить
+    какой заменой <parameter>replacement</parameter>,
+    перед тем как вызывать функцию <function>preg_replace</function>,
+    на каждом массиве вызывают функцию <function>ksort</function>.
    </para>
   </note>
   <note>
    <para>
-    Если и <parameter>pattern</parameter> и <parameter>replacement</parameter> являются массивами,
-    правила соответствия будут действовать последовательно.
-    То есть, вторая пара <parameter>pattern</parameter>/<parameter>replacement</parameter> будет работать со строкой,
-    полученной в результате первой пары <parameter>pattern</parameter>/<parameter>replacement</parameter>,
+    Правила сопоставления будут действовать последовательно,
+    если и в параметр <parameter>pattern</parameter>,
+    и в параметр <parameter>replacement</parameter> передали массив.
+    То есть, вторая пара <parameter>pattern</parameter>/<parameter>replacement</parameter>
+    будет работать со строкой, которую функция получила в результате обработки
+    первой пары <parameter>pattern</parameter>/<parameter>replacement</parameter>,
     а не с исходной строкой.
-    Если вы хотите имитировать замену, действующую параллельно, например, поменять местами два значения,
-    замените один шаблон промежуточным заполнителем, а затем в последующей паре замените этот промежуточный заполнитель требуемой заменой.
+    Когда требуется имитировать замену, которая действует параллельно, например,
+    чтобы поменять местами два значения, один шаблон заменяют промежуточным заполнителем,
+    а затем в следующей паре заменяют этот промежуточный заполнитель нужной заменой.
    </para>
    <example>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $p = array('/a/', '/b/', '/c/');
 $r = array('b', 'c', 'd');
+
 print_r(preg_replace($p, $r, 'a'));
-// prints d
+// Выводит: d
+
 ?>
 ]]>
     </programlisting>
