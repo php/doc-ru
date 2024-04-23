@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 301d51acc2b8f54edbbd00ce4fdbbe649e4ae192 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 5152c78db935ea2463e20a01ae0e3f3573314d78 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli-result.fetch-fields" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_result::fetch_fields</refname>
   <refname>mysqli_fetch_fields</refname>
-  <refpurpose>Возвращает массив объектов, представляющих поля результирующего набора</refpurpose>
+  <refpurpose>Возвращает массив объектов, которые представляют поля результирующего набора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -22,8 +22,9 @@
   </methodsynopsis>
 
   <para>
-   Эта функция служит для тех же целей, что и <function>mysqli_fetch_field</function>,
-   с той лишь разницей, что возвращает не один объект для столбца, а массив таких объектов.
+   Метод служит той же цели, что и функция <function>mysqli_fetch_field</function>,
+   с той только разницей, что вместо возврата по одному объекту для каждого поля
+   возвращает столбцы как массив объектов.
   </para>
  </refsect1>
 
@@ -39,10 +40,10 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив объектов, содержащих метаданные полей.
+   Метод возвращает массив объектов, которые содержат информацию об определении полей.
   </para>
-  <para>
-  <table xml:id="mysqli-result.fetch-fields.returnvalues">
+
+  <table>
    <title>Свойства объекта</title>
    <tgroup cols="2">
     <thead>
@@ -58,7 +59,7 @@
      </row>
      <row>
       <entry>orgname</entry>
-      <entry>Исходное имя столбца, если у него есть псевдоним</entry>
+      <entry>Исходное имя столбца, если указали псевдоним</entry>
      </row>
      <row>
       <entry>table</entry>
@@ -66,32 +67,44 @@
      </row>
      <row>
       <entry>orgtable</entry>
-      <entry>Исходное имя таблицы, если есть псевдоним</entry>
+      <entry>Исходное имя таблицы, если указали псевдоним</entry>
+     </row>
+     <row>
+      <entry>def</entry>
+      <entry>Неиспользуемый. Всегда пустая строка</entry>
+     </row>
+     <row>
+      <entry>db</entry>
+      <entry>Имя базы данных</entry>
+     </row>
+     <row>
+      <entry>catalog</entry>
+      <entry>Неиспользуемый. Всегда <literal>«def»</literal></entry>
      </row>
      <row>
       <entry>max_length</entry>
-      <entry>Максимальная ширина поля результирующего набора. Начиная с PHP 8.1, это значение всегда <literal>0</literal>.</entry>
+      <entry>
+       Максимальная ширина поля результирующего набора. Начиная с PHP 8.1 это значение всегда равно <literal>0</literal>
+      </entry>
      </row>
      <row>
       <entry>length</entry>
       <entry>
-       Длина поля в байтах, как она задана при определении таблицы.
-       Обратите внимание, что данная величина (в байтах) может отличаться
-       от величины в символах, указанной в определении поля таблицы, так
-       как в разных кодировках один символ может записываться
-       несколькими байтами. Например, набор символов utf8 имеет 3 байта на символ,
-       таким образом поле VARCHAR(10) в кодировке UTF-8
-       вернёт длину 30 байтов = 10 символов * 3 байта на символ, а для кодировки
-       LATIN1 - длину 10, так как в этой кодировке один символ занимает один байт.
+       Ширина поля в байтах. Для строковых столбцов
+       значение длины зависит от кодировки соединения. Например,
+       если кодировка — <literal>latin1</literal>, однобайтовый набор символов,
+       значение длины для запроса <literal>SELECT 'abc'</literal> равно 3.
+       Если кодировка — <literal>utf8mb4</literal>, многобайтовый набор
+       символов, в котором символы занимают до 4 байтов, значение длины равно 12
       </entry>
      </row>
      <row>
       <entry>charsetnr</entry>
-      <entry>Числовой идентификатор кодировки.</entry>
+      <entry>Номер кодировки для поля</entry>
      </row>
      <row>
       <entry>flags</entry>
-      <entry>Целое число, представляющее битовые флаги для поля.</entry>
+      <entry>Целое число, которое представляет битовые флаги для поля</entry>
      </row>
      <row>
       <entry>type</entry>
@@ -99,12 +112,11 @@
      </row>
      <row>
       <entry>decimals</entry>
-      <entry>Число знаков после запятой (для целочисленных полей)</entry>
+      <entry>Количество десятичных знаков для числовых полей и точность долей секунды для временных полей</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
-  </para>
  </refsect1>
 
  <refsect1 role="examples">
@@ -114,17 +126,17 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $mysqli = new mysqli("127.0.0.1", "root", "foofoo", "sakila");
 
 /* Проверяем соединение */
 if ($mysqli->connect_errno) {
-    printf("Connect failed: %s\n", $mysqli->connect_error);
+    printf("Не удалось подключиться: %s\n", $mysqli->connect_error);
     exit();
 }
 
 foreach (array('latin1', 'utf8') as $charset) {
-
-    // Устанавливаем кодировку для демонстрации её влияния на некоторые
+    // Устанавливаем кодировку, чтобы показать влияние набора символов на некоторые значения (например, длину в байтах)
     $mysqli->set_charset($charset);
 
     $query = "SELECT actor_id, last_name from actor ORDER BY actor_id";
@@ -135,7 +147,7 @@ foreach (array('latin1', 'utf8') as $charset) {
 
     if ($result = $mysqli->query($query)) {
 
-        /* Читаем информацию по всем столбцам */
+        /* Читаем информацию о полях для каждого столбца */
         $finfo = $result->fetch_fields();
 
         foreach ($finfo as $val) {
@@ -151,6 +163,7 @@ foreach (array('latin1', 'utf8') as $charset) {
     }
 }
 $mysqli->close();
+
 ?>
 ]]>
    </programlisting>
@@ -160,17 +173,17 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $link = mysqli_connect("127.0.0.1", "my_user", "my_password", "sakila");
 
 /* Проверяем соединение */
 if (mysqli_connect_errno()) {
-    printf("Connect failed: %s\n", mysqli_connect_error());
+    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
     exit();
 }
 
 foreach (array('latin1', 'utf8') as $charset) {
-
-    // Устанавливаем кодировку для демонстрации её влияния на некоторые
+    // Устанавливаем кодировку, чтобы показать влияние набора символов на некоторые значения (например, длину в байтах)
     mysqli_set_charset($link, $charset);
 
     $query = "SELECT actor_id, last_name from actor ORDER BY actor_id";
@@ -180,8 +193,7 @@ foreach (array('latin1', 'utf8') as $charset) {
     echo "======================\n";
 
     if ($result = mysqli_query($link, $query)) {
-
-        /* Читаем информацию по всем столбцам */
+        /* Читаем информацию о полях для каждого столбца */
         $finfo = mysqli_fetch_fields($result);
 
         foreach ($finfo as $val) {
@@ -198,6 +210,7 @@ foreach (array('latin1', 'utf8') as $charset) {
 }
 
 mysqli_close($link);
+
 ?>
 ]]>
    </programlisting>
