@@ -4,7 +4,7 @@
 <refentry xml:id="function.filter-var" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>filter_var</refname>
-  <refpurpose>Фильтрует переменную с помощью определённого фильтра</refpurpose>
+  <refpurpose>Фильтрует переменную</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -24,8 +24,8 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение переменной для фильтрации. Обратите внимание, что скалярные
-       значения перед фильтрацией <link linkend="language.types.string.casting">преобразуются к строкам</link>.
+       Значение, которое требуется отфильтровать. Обратите внимание, что перед фильтрацией скалярные
+       значения внутренне <link linkend="language.types.string.casting">преобразовываются в строку</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -34,50 +34,62 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Ассоциативный массив параметров либо логическая дизъюнкция (операция
-       ИЛИ) флагов. Если фильтр принимает параметры, флаги могут быть
-       указаны в элементе массива "flags". Для фильтра "callback" должен
-       быть указан тип <type>callable</type>. Фильтр "callback" должен
-       принимать один аргумент, значение для фильтрации, и возвращать
-       значение после фильтрации.
+       Ассоциативный массив параметров или флаги через побитовое ИЛИ.
+       Если фильтр принимает параметры, флаги можно указать
+       в массиве в элементе "flags". Для фильтра "callback" требуется передать
+       значение с типом <type>callable</type>. Фильтр "callback" должен
+       принимать один аргумент, значение для фильтрации и возвращать
+       значение после фильтрации или очистки.
       </para>
       <para>
        <programlisting role="php">
 <![CDATA[
 <?php
-// используйте этот формат для фильтров с дополнительными параметрами
+
+// Формат для фильтров, которые принимают параметры
 $options = array(
     'options' => array(
-        'default' => 3, // значение, возвращаемое, если фильтрация завершилась неудачей
-        // другие параметры
+        'default' => 3, // Значение, которое вернётся при сбое фильтрации
+        // Другие параметры
         'min_range' => 0
     ),
     'flags' => FILTER_FLAG_ALLOW_OCTAL,
 );
+
 $var = filter_var('0755', FILTER_VALIDATE_INT, $options);
 
-// для фильтров, который принимает только флаги, вы можете передать их непосредственно
+// Для фильтров, которые принимают только флаги, флаги разрешается передавать напрямую
 $var = filter_var('oops', FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
 
-// для фильтров, который принимает только флаги, вы также можете передать их как массив
-$var = filter_var('oops', FILTER_VALIDATE_BOOLEAN,
-                  array('flags' => FILTER_NULL_ON_FAILURE));
+// Для фильтров, которые принимает только флаги, флаги также разрешается передавать как массив
+$var = filter_var(
+    'oops',
+    FILTER_VALIDATE_BOOLEAN,
+    array('flags' => FILTER_NULL_ON_FAILURE)
+);
 
-// callback-функция фильтра валидации
+// Callback-функция фильтра валидации
 function foo($value)
 {
     // Ожидаемый формат: Фамилия, Имена
-    if (strpos($value, ", ") === false) return false;
+    if (strpos($value, ", ") === false) {
+        return false;
+    }
+
     list($surname, $givennames) = explode(", ", $value, 2);
+
     $empty = (empty($surname) || empty($givennames));
     $notstrings = (!is_string($surname) || !is_string($givennames));
+
     if ($empty || $notstrings) {
         return false;
     } else {
         return $value;
     }
 }
+
 $var = filter_var('Doe, Jane Sue', FILTER_CALLBACK, array('options' => 'foo'));
+
 ?>
 ]]>
        </programlisting>
@@ -90,8 +102,7 @@ $var = filter_var('Doe, Jane Sue', FILTER_CALLBACK, array('options' => 'foo'));
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает отфильтрованные данные или &false;, если фильтрация
-   завершилась неудачей.
+   Функция возвращает отфильтрованные данные или &false;, если фильтрация не удалась.
   </para>
  </refsect1>
 
@@ -99,12 +110,14 @@ $var = filter_var('Doe, Jane Sue', FILTER_CALLBACK, array('options' => 'foo'));
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>filter_var</function></title>
+    <title>Пример использования функции <function>filter_var</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(filter_var('bob@example.com', FILTER_VALIDATE_EMAIL));
 var_dump(filter_var('http://example.com', FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED));
+
 ?>
 ]]>
     </programlisting>
@@ -131,6 +144,7 @@ $emails = [
 ];
 
 var_dump(filter_var($emails, FILTER_VALIDATE_EMAIL, FILTER_REQUIRE_ARRAY));
+
 ?>
 ]]>
     </programlisting>
