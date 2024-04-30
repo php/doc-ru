@@ -4,7 +4,7 @@
 <refentry xml:id="function.hash-pbkdf2" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>hash_pbkdf2</refname>
-  <refpurpose>Формирования ключа PBKDF2 для заданных входных данных</refpurpose>
+  <refpurpose>Генерирует PBKDF2-ключ на основе исходного пароля</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -29,11 +29,8 @@
      <term><parameter>algo</parameter></term>
      <listitem>
       <para>
-       Имя выбранного хеширующего алгоритма (например,
-       <literal>md5</literal>, <literal>sha256</literal>,
-       <literal>haval160,4</literal> и т.д.)
-       Список поддерживаемых алгоритмов можно посмотреть в описании функции
-       <function>hash_algos</function>.
+       Название выбранного алгоритма хеширования (то есть "md5", "sha256", "haval160,4" и т. д.).
+       Список поддерживаемых алгоритмов даёт описание функции <function>hash_algos</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -41,7 +38,7 @@
      <term><parameter>password</parameter></term>
      <listitem>
       <para>
-       Пароль, используемый для формирования.
+       Пароль для деривации.
       </para>
      </listitem>
     </varlistentry>
@@ -49,7 +46,7 @@
      <term><parameter>salt</parameter></term>
      <listitem>
       <para>
-       Соль, используемая при формировании ключа. Значение необходимо генерировать случайным образом.
+       Соль для формирования ключа. Требуется сгенерировать случайное значение.
       </para>
      </listitem>
     </varlistentry>
@@ -57,7 +54,7 @@
      <term><parameter>iterations</parameter></term>
      <listitem>
       <para>
-       Количество итераций для формирования ключа.
+       Количество внутренних итераций для преобразования исходного пароля в хеш-ключ.
       </para>
      </listitem>
     </varlistentry>
@@ -65,16 +62,15 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Длина генерируемой строки. Если параметр
-       <parameter>binary</parameter> задан как &true;, то этот
-       параметр равен количеству байт в генерируемом ключе. Если
-       <parameter>binary</parameter> установлен как &false;,
-       то длина ключа в байтах будет в два раза меньше, так как каждый
-       байт ключа будет возвращён в виде двух символов
-       шестнадцатеричной системы (0-F).
+       Длина строки вывода. Если параметр
+       <parameter>binary</parameter> задали как &true;, значение этого параметра
+       соответствует длине ключа в байтах, если для параметра
+       <parameter>binary</parameter> установили значение &false; —
+       соответствует удвоенной длине ключа в байтах, поскольку каждый
+       байт ключа возвращается в виде двух шестнадцатеричных символов.
       </para>
       <para>
-       Если задано как <literal>0</literal>, то используется весь вывод
+       Если задали значение <literal>0</literal>, функция вернёт весь вывод
        заданного алгоритма.
       </para>
      </listitem>
@@ -83,9 +79,8 @@
      <term><parameter>binary</parameter></term>
      <listitem>
       <para>
-       Если установлено &true;, то вывод будет представлять из себя
-       необработанные бинарные данные, а если &false;, то вывод будет
-       представлен в виде строки шестнадцатеричных цифр в нижнем регистре.
+       Если значение параметра равно &true;, выводятся необработанные двоичные данные.
+       Если &false; — выводятся шестнадцатеричные строчные буквы в нижнем регистре.
       </para>
      </listitem>
     </varlistentry>
@@ -93,9 +88,8 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Множество опций для различных алгоритмов хеширования.
-       В настоящее время в вариантах MurmurHash поддерживается
-       только параметр <literal>"seed"</literal>.
+       Массив опций для алгоритмов хеширования.
+       Пока вариантами функций хеширования MurmurHash поддерживается только параметр <literal>"seed"</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -106,23 +100,22 @@
  <refsect1 role="returnvalues"><!-- {{{ -->
   &reftitle.returnvalues;
   <para>
-   Возвращаемая строка содержит сформированный ключ в виде
-   строки шестнадцатеричных чисел в нижнем регистре. Но если
-   параметр <parameter>binary</parameter> установлен как &true;,
-   то будут возвращены сырые бинарные данные.
+   Функция возвращает строку, которая содержит сформированный ключ в виде
+   строки шестнадцатеричных чисел в нижнем регистре, если только для параметра
+   <parameter>binary</parameter> не установили значение &true;,
+   тогда возвращаются необработанные двоичные данные.
   </para>
  </refsect1><!-- }}} -->
 
  <refsect1 role="errors"><!-- {{{ -->
   &reftitle.errors;
   <para>
-   Выбрасывается исключение <classname>ValueError</classname>, если
-   заданный алгоритм некорректен, параметр
+   Функция выбрасывает исключение <classname>ValueError</classname>,
+   если алгоритм неизвестен, параметр
    <parameter>iterations</parameter> меньше или равен
    <literal>0</literal>, параметр <parameter>length</parameter>
-   меньше чем <literal>0</literal> или если <parameter>salt</parameter>
-   очень длинный
-   (больше чем <constant>INT_MAX</constant><literal> - 4</literal>).
+   меньше <literal>0</literal> или параметр <parameter>salt</parameter>
+   чрезмерно длинный (больше значения выражения <constant>INT_MAX</constant><literal> - 4</literal>).
   </para>
  </refsect1><!-- }}} -->
 
@@ -141,14 +134,15 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Теперь выбрасывается исключение <classname>ValueError</classname> в случае возникновения ошибки;
-        ранее возвращалось значение &false; и выдавалась ошибка уровня <constant>E_WARNING</constant>.
+        Теперь выбрасывается исключение <classname>ValueError</classname>, если возникла ошибка;
+        раньше функция возвращала &false; и выдавала ошибку уровня <constant>E_WARNING</constant>.
        </entry>
       </row>
       <row>
        <entry>7.2.0</entry>
-       <entry>Запрещено использование некриптографических функций
-        (adler32, crc32, crc32b, fnv132, fnv1a32, fnv164, fnv1a64, joaat).</entry>
+       <entry>
+        Запретили некриптографические хеш-функции (adler32, crc32, crc32b, fnv132, fnv1a32, fnv164, fnv1a64, joaat).
+       </entry>
       </row>
      </tbody>
     </tgroup>
@@ -160,22 +154,25 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример простого использования <function>hash_pbkdf2</function></title>
+    <title>Пример базового использования функции <function>hash_pbkdf2</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $password = "password";
 $iterations = 600000;
 
-// Создание криптографически безопасной случайной соли с помощью random_bytes()
+// Создаём криптографически безопасную случайную соль функцией random_bytes()
 $salt = random_bytes(16);
 
 $hash = hash_pbkdf2("sha256", $password, $salt, $iterations, 20);
 var_dump($hash);
 
-// для необработанного двоичного файла параметр $length должен быть уменьшен вдвое для получения аналогичных результатов
+// Для необработанного двоичного файла параметр $length требуется уменьшить вдвое, чтобы получить аналогичные результаты
 $hash = hash_pbkdf2("sha256", $password, $salt, $iterations, 10, true);
-var_dump(bin2hex($hash));?>
+var_dump(bin2hex($hash));
+
+?>
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -193,10 +190,10 @@ string(20) "120fb6cffcf8b32c43e7"
   &reftitle.notes;
   <caution>
    <para>
-    Метод PBKDF2 может быть использован для хеширования паролей в
-    целях их хранения. Однако стоит помнить, что для этих целей гораздо
-    лучше использовать <function>password_hash</function> или
-    <function>crypt</function> с <constant>CRYPT_BLOWFISH</constant>.
+    Метод PBKDF2 может использовать для хеширования паролей в
+    целях хранения. Однако следует отметить, что функция <function>password_hash</function>
+    или функция <function>crypt</function> с типом хеша <constant>CRYPT_BLOWFISH</constant>
+    лучше для хранения паролей.
    </para>
   </caution>
  </refsect1>
