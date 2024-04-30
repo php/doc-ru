@@ -5,7 +5,7 @@
 <refentry xml:id="function.hash-hkdf" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>hash_hkdf</refname>
-  <refpurpose>Формирования ключа HKDF для заданных входных данных</refpurpose>
+  <refpurpose>Формирует HKDF-ключ из исходного ключа</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -27,12 +27,11 @@
      <term><parameter>algo</parameter></term>
      <listitem>
       <para>
-       Имя выбранного хеширующего алгоритма (например, "sha256", "sha512", "haval160,4" и т.д.)
-       Список поддерживаемых алгоритмов можно посмотреть в описании функции
-       <function>hash_algos</function>.
+       Название выбранного алгоритма хеширования (то есть "md5", "sha256", "haval160,4" и т. д.).
+       Список поддерживаемых алгоритмов даёт описание функции <function>hash_algos</function>.
        <note>
         <para>
-         Не криптографические хеширующие функции не допускаются.
+         Некриптографические хеширующие функции не допускаются.
         </para>
        </note>
       </para>
@@ -42,7 +41,7 @@
      <term><parameter>key</parameter></term>
      <listitem>
       <para>
-       Входные данные (необработанные бинарные данные). Не может быть пустым.
+       Входные данные (необработанные двоичные данные). Нельзя оставлять пустым.
       </para>
      </listitem>
     </varlistentry>
@@ -51,11 +50,11 @@
      <listitem>
       <para>
        Выбранная длина вывода в байтах.
-       Не может быть более чем в 255 раз больше размера выбранной хеширующей функции.
+       Не может превышать размер хеш-функции более чем в 255 раз.
       </para>
       <para>
-       Если <parameter>length</parameter> установлено как <literal>0</literal>, то вывод
-       по длине будет равен размеру выбранной хеширующей функции.
+       Если для параметра <parameter>length</parameter> установили значение <literal>0</literal>,
+       длина вывода по умолчанию будет равна размеру выбранной хеш-функции.
       </para>
      </listitem>
     </varlistentry>
@@ -63,7 +62,7 @@
      <term><parameter>info</parameter></term>
      <listitem>
       <para>
-       Информационная строка, специфичная для приложения/контекста.
+       Информационная строка, специфичная для приложения или контекста.
       </para>
      </listitem>
     </varlistentry>
@@ -71,10 +70,10 @@
      <term><parameter>salt</parameter></term>
      <listitem>
       <para>
-       Соль, используемая при формировании ключа.
+       Соль для формирования ключа.
       </para>
       <para>
-       Хотя и необязательно, но добавление случайной соли значительно улучшает силу HKDF.
+       Хотя добавление произвольной соли необязательно, оно значительно повышает прочность HKDF-ключа.
       </para>
      </listitem>
     </varlistentry>
@@ -85,18 +84,18 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку, содержащую необработанные бинарные данные, представляющие
-   сформированный ключ.
+   Функция возвращает строку, которая содержит необработанное двоичное представление
+   производного ключа (которое также знают как выходной ключевой материал — OKM).
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывается <classname>ValueError</classname>, если параметр <parameter>key</parameter> пуст,
-   в параметре <parameter>algo</parameter> указан неизвестный либо не криптографический
+   Функция выбрасывает исключение <classname>ValueError</classname>, если параметр <parameter>key</parameter> пуст,
+   в параметре <parameter>algo</parameter> указали неизвестный или некриптографический
    алгоритм, параметр <parameter>length</parameter> меньше <literal>0</literal> или
-   очень большой (более чем в 255 раз больше размера хеш-функции).
+   чрезмерно большой (более чем в 255 раз превышает размер хеш-функции).
   </para>
  </refsect1>
 
@@ -115,8 +114,8 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Теперь выбрасывается исключение <classname>ValueError</classname> в случае возникновения ошибки;
-        ранее выдавалась ошибка уровня <constant>E_WARNING</constant> и возвращалось значение &false;.
+        Теперь выбрасывается исключение <classname>ValueError</classname>, если возникла ошибка;
+        раньше выдавалась ошибка уровня <constant>E_WARNING</constant> и возвращалось значение &false;.
        </entry>
       </row>
      </tbody>
@@ -129,26 +128,28 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>hash_hkdf</function></title>
+    <title>Пример использования функции <function>hash_hkdf</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Генерируем случайный ключ и соль для усиления процесса формирования.
+
+// Генерируем случайный ключ и соль для усиления процесса формирования
 $inputKey = random_bytes(32);
 $salt = random_bytes(16);
 
-// Формируем пару разных ключей, используя одни и те же входные данные.
+// Формируем пару разных ключей с одними и теми же входными данными
 $encryptionKey = hash_hkdf('sha256', $inputKey, 32, 'aes-256-encryption', $salt);
 $authenticationKey = hash_hkdf('sha256', $inputKey, 32, 'sha-256-authentication', $salt);
 
 var_dump($encryptionKey !== $authenticationKey); // bool(true)
+
 ?>
 ]]>
     </programlisting>
     <para>
-     В примере выше создана пара разных ключей, подходящих для создания
-     конструкции encrypt-then-HMAC, используя AES-256 и SHA-256 для кодирования и
-     аутентификации соответственно.
+     В приведённом примере создаётся пара отдельных ключей, которые подходят для создания
+     конструкции «зашифровать, затем сформировать ключ HMAC» (encrypt-then-HMAC) через алгоритм
+     AES-256 для шифрования и алгоритм SHA-256 для аутентификации.
     </para>
    </example>
   </para>
