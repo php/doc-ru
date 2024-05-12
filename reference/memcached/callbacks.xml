@@ -3,23 +3,24 @@
 <!-- Reviewed: no -->
 
 <chapter xml:id="memcached.callbacks" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Функции обратного вызова</title>
+ <title>Callback-функции</title>
 
  <section xml:id="memcached.callbacks.result">
-  <title>Функции обратного вызова для результирующего набора</title>
+  <title>Callback-функции для результирующего набора</title>
   <para>
-   <type>callable</type> для результирующего набора вызываются
-   методами <methodname>Memcached::getDelayed</methodname> или
-   <methodname>Memcached::getDelayedBykey</methodname> для каждого
-   элемента из результирующего набора. Функциям обратного вызова
-   передаются объект Memcached и массив с информацией об элементе. Эти
-   функции не должны ничего возвращать.
+   Результирующие <type>callable</type>-объекты вызываются
+   методами <methodname>Memcached::getDelayed</methodname>
+   и <methodname>Memcached::getDelayedBykey</methodname> для каждого
+   элемента результирующего набора. Callback-функции передаётся
+   объект Memcached и массив с информацией об элементе. Callback-функция
+   не должна ничего возвращать.
   </para>
   <example>
-   <title>Пример функции обратного вызова</title>
+   <title>Пример сallback-функции для результирующего набора</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $m = new Memcached();
 $m->addServer('localhost', 11211);
 $items = array(
@@ -34,6 +35,7 @@ function result_cb($memc, $item)
 {
     var_dump($item);
 }
+
 ?>
 ]]>
    </programlisting>
@@ -62,22 +64,22 @@ array(3) {
  </section>
 
  <section xml:id="memcached.callbacks.read-through">
-  <title>Функции обратного вызова сквозного чтения кеша</title>
+  <title>Callback-функции сквозного чтения кеша</title>
   <para>
-   Данные функции вызываются в случае, когда невозможно получить запрошенное значение.
-   В функцию обратного вызова передаётся объект Memcached и запрошенный ключ, а так же
-   передаётся по ссылке переменная для возврата значения. Функция должна вернуть
-   &false; или &true;. Если &true;, то Memcached сохранит полученное значение и вернёт
-   его оригинальной функции. Данные функции обратного вызова используются только с
-   <methodname>Memcached::get</methodname> и
-   <methodname>Memcached::getByKey</methodname>, так как протокол не предоставляет
-   информации о том, какие ключи не найдены, при пакетных запросах.
+   Callback-функции кеша со сквозным чтением вызываются, когда элемент невозможно получить с сервера.
+   В callback-функцию передаётся объект Memcached, запрошенный ключ
+   и переменная значения по ссылке. Callback-функция отвечает значения и возврат значения
+   &true; или &false;. Если callback-функция вернула &true;, Memcached сохранит заполненное значение
+   на сервере и вернёт его оригинальной функции. Только методы <methodname>Memcached::get</methodname>
+   и <methodname>Memcached::getByKey</methodname> поддерживают эти callback-функции,
+   поскольку протокол memcache не даёт информации о том, какие ключи не были найдены в пакетном запросе.
   </para>
   <example>
-   <title>Пример использования</title>
+   <title>Пример callback-функции со сквозным чтением</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $m = new Memcached();
 $m->addServer('localhost', 11211);
 
@@ -86,11 +88,12 @@ $profile_info = $m->get('user:'.$user_id, 'user_info_cb');
 function user_info_cb($memc, $key, &$value)
 {
     $user_id = substr($key, 5);
-    /* ищем необходимые данные в БД */
+    /* Ищем требуемые данные в БД */
     /* ... */
     $value = $profile_info;
     return true;
 }
+
 ?>
 ]]>
    </programlisting>
