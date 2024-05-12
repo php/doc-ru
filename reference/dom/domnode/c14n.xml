@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4f5e2b22575131fa5e9c3004b1c874e1acb06573 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 2a72c95c0a3773a6404d10602005dc453b024843 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="domnode.c14n" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>DOMNode::C14N</refname>
-  <refpurpose>Канонизировать узлы в строку</refpurpose>
+  <refpurpose>Канонизирует узлы в строку</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,7 +17,7 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>nsPrefixes</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Канонизировать узлы в строку
+   Метод канонизирует узлы в строку
   </para>
  </refsect1>
 
@@ -28,8 +28,8 @@
     <term><parameter>exclusive</parameter></term>
     <listitem>
      <para>
-      Включить эксклюзивный разбор только тех узлов, которые совпадают
-      с предоставленными xpath или ns_prefixes.
+      Включает эксклюзивный разбор только тех узлов, которые совпадают
+      с предоставленными xpath-выражениями или ns_prefixes-префиксами.
      </para>
     </listitem>
    </varlistentry>
@@ -43,11 +43,7 @@
    </varlistentry>
    <varlistentry>
     <term><parameter>xpath</parameter></term>
-    <listitem>
-     <para>
-      Массив <literal>xpath</literal> для фильтрации узлов.
-     </para>
-    </listitem>
+    &dom.c14n.xpath_array;
    </varlistentry>
    <varlistentry>
     <term><parameter>nsPrefixes</parameter></term>
@@ -63,7 +59,49 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает канонизированные узлы в виде строки&return.falseforfailure;
+   Метод возвращает канонизированные узлы в виде строки&return.falseforfailure;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример XPath-запроса</title>
+    <para>
+     Пример демонстрирует расширенную канонизацию и фильтрацию узлов через XPath-запрос.
+    </para>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$dom = new DOMDocument();
+$dom->loadXML(<<<XML
+<root xmlns:food="urn:food">
+    <!-- избыточное объявление пространства имен канонизируется -->
+    <food:fruit xmlns:food="urn:food">Яблоко</food:fruit>
+    <food:fruit>Апельсин</food:fruit>
+    <food:fruit>Груша</food:fruit>
+    <!-- затем идут овощи -->
+    <food:vegetable>Латук</food:vegetable>
+</root>
+XML);
+
+echo $dom->C14N(true, false, [
+    "query" => ".//f:fruit|.//f:fruit/text()",
+    "namespaces" => ["f" => "urn:food"],
+]);
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+<food:fruit>Яблоко</food:fruit><food:fruit>Апельсин</food:fruit><food:fruit>Груша</food:fruit>
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
