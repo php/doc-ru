@@ -4,7 +4,7 @@
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.utf8-encode">
  <refnamediv>
   <refname>utf8_encode</refname>
-  <refpurpose>Преобразовывает строку из ISO-8859-1 в UTF-8</refpurpose>
+  <refpurpose>Преобразовывает строку из кодировки ISO-8859-1 в кодировку UTF-8</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -25,22 +25,22 @@
   <note>
    <para>
     Функция не пытается угадать текущую кодировку предоставленной строки, а предполагает,
-    что она закодирована в ISO-8859-1 (также известная как "Latin 1") и преобразует её в UTF-8.
-    Поскольку каждая последовательность байтов является корректной строкой ISO-8859-1,
+    что строку закодировали в кодировке ISO-8859-1 (которую также знают как Latin 1) и преобразовывает строку в кодировку UTF-8.
+    Поскольку каждая последовательность байтов — корректная строка в кодировке ISO-8859-1,
     это никогда не приводит к ошибке, но не приведёт к получению полезной строки,
     если предполагалась другая кодировка.
    </para>
    <para>
     Многие веб-страницы, отмеченные как использующие кодировку
     <literal>ISO-8859-1</literal>, на самом деле используют схожую кодировку
-    <literal>Windows-1252</literal>, и веб-браузеры интерпретируют
+    <literal>Windows-1252</literal>, и браузеры интерпретируют
     страницы <literal>ISO-8859-1</literal> как <literal>Windows-1252</literal>.
-    Однако <literal>Windows-1252</literal> содержит дополнительные печатные
-    символы, такие как знак Евро (<literal>€</literal>) и фигурные кавычки
+    Однако кодировка <literal>Windows-1252</literal> содержит дополнительные печатаемые
+    символы наподобие знака Евро (<literal>€</literal>) и фигурные кавычки
     (<literal>“</literal> <literal>”</literal>) вместо управляющих кодов
-    <literal>ISO-8859-1</literal>. Эта функция не конвертирует такие символы
-    <literal>Windows-1252</literal> корректно. Используйте другую функцию,
-    если нужна конвертация из <literal>Windows-1252</literal>.
+    <literal>ISO-8859-1</literal>. Эта функция не конвертирует такие
+    <literal>Windows-1252</literal>-символы корректно. Если требуется преобразование
+    из кодировки <literal>Windows-1252</literal>, пользуются другой функцией.
    </para>
   </note>
  </refsect1>
@@ -64,7 +64,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку <parameter>string</parameter>, преобразованную в кодировку в UTF-8.
+   Функция возвращает строку <parameter>string</parameter>, которую она преобразовала в кодировку в UTF-8.
   </para>
  </refsect1>
 
@@ -89,8 +89,8 @@
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Функция была перенесена из модуля XML в ядро PHP.
-        В предыдущих версиях она была доступна только при установленном модуле XML.
+        Функция перенесли из модуля XML в ядро PHP.
+        В предыдущих версиях функция была доступна только при установленном модуле XML.
        </entry>
       </row>
      </tbody>
@@ -106,10 +106,12 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
 // Преобразование строки 'Zoë' из ISO 8859-1 в UTF-8
 $iso8859_1_string = "\x5A\x6F\xEB";
 $utf8_string = utf8_encode($iso8859_1_string);
 echo bin2hex($utf8_string), "\n";
+
 ?>
 ]]>
    </programlisting>
@@ -127,27 +129,29 @@ echo bin2hex($utf8_string), "\n";
   <note>
    <title>Устаревание и альтернативы</title>
    <para>
-    Функция <emphasis>устарела</emphasis>, начиная с PHP 8.2.0 и будет удалена в будущей версии.
-    Существующие варианты использования должны быть проверены и заменены подходящими альтернативами.
+    С PHP 8.2.0 функция <emphasis>устарела</emphasis> и её удалят в будущей версии.
+    Требуется проверить и заменить вызовы этой функции в коде альтернативынми функциями.
    </para>
    <para>
-    Аналогичной функциональности можно достичь с помощью функции <function>mb_convert_encoding</function>,
-    которая поддерживает ISO-8859-1 и многие другие кодировки символов.
+    Аналогичную функциональность даёт функция <function>mb_convert_encoding</function>,
+    которая поддерживает кодировку ISO-8859-1 и многие другие кодировки символов.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
-$iso8859_1_string = "\xEB"; // 'ë' (e с диерезисом) в UTF-8
+
+$iso8859_1_string = "\xEB"; // Буква «ë» (e с диерезисом) в кодировке UTF-8
 $utf8_string = mb_convert_encoding($iso8859_1_string, 'UTF-8', 'ISO-8859-1');
 echo bin2hex($utf8_string), "\n";
 
-$iso8859_7_string = "\xEB"; // та же строка в ISO-8859-7 представляет собой 'λ' (греческая строчная лямбда)
+$iso8859_7_string = "\xEB"; // Та же строка в кодировке ISO-8859-7 представляет символ «λ» (греческая строчная лямбда)
 $utf8_string = mb_convert_encoding($iso8859_7_string, 'UTF-8', 'ISO-8859-7');
 echo bin2hex($utf8_string), "\n";
 
-$windows_1252_string = "\x80"; // '€' (Знак евро) в Windows-1252, но не в ISO-8859-1
+$windows_1252_string = "\x80"; // Символ «€» (знак евро) в кодировке Windows-1252, но не в кодировке ISO-8859-1
 $utf8_string = mb_convert_encoding($windows_1252_string, 'UTF-8', 'Windows-1252');
 echo bin2hex($utf8_string), "\n";
+
 ?>
 ]]>
      </programlisting>
@@ -166,11 +170,12 @@ e282ac
     <methodname>UConverter::transcode</methodname> и <function>iconv</function>.
    </para>
    <para>
-    Все следующие варианты дают один и тот же результат:
+    Каждый следующий вариант даёт одинаковый результат:
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
+
 $iso8859_1_string = "\x5A\x6F\xEB"; // 'Zoë' в ISO-8859-1
 
 $utf8_string = utf8_encode($iso8859_1_string);
@@ -184,6 +189,7 @@ echo bin2hex($utf8_string), "\n";
 
 $utf8_string = iconv('ISO-8859-1', 'UTF-8', $iso8859_1_string);
 echo bin2hex($utf8_string), "\n";
+
 ?>
 ]]>
      </programlisting>
