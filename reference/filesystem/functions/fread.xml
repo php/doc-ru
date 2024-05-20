@@ -4,7 +4,7 @@
 <refentry xml:id="function.fread" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>fread</refname>
-  <refpurpose>Бинарно-безопасное чтение файла</refpurpose>
+  <refpurpose>Читает файл в бинарно-безопасном режиме: как последовательность байтов</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,33 +15,33 @@
    <methodparam><type>int</type><parameter>length</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>fread</function> читает до
-   <parameter>length</parameter> байт из файлового указателя
-   <parameter>stream</parameter> и смещает указатель. Чтение останавливается как только
-   было достигнуто одно из следующих условий:
+   Функция <function>fread</function> читает до
+   <parameter>length</parameter> байтов из файлового указателя
+   <parameter>stream</parameter> и смещает указатель. Чтение останавливается, как только
+    выполнилось одно из следующих условий:
    <itemizedlist>
     <listitem>
      <simpara>
-      было прочитано <parameter>length</parameter> байт
+      функция прочитала количество байтов, которое указали в параметре <parameter>length</parameter>
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      достигнут EOF (конец файла)
+      наступило состояние EOF — конец файла
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      стал доступен пакет или истекло <link linkend="function.socket-set-timeout">
-      время ожидания сокета</link> (для сетевых потоков)
+      при чтении сетевых потоков: функция получила доступ к пакету или истекло
+      <link linkend="function.socket-set-timeout">время ожидания сокета</link>
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      если читаемый поток является буферизованным и не представляет
-      собой обычный файл, то за один раз максимум читается
-      количество байт, равное размеру одной порции данных (обычно это 8192),
-      однако, в зависимости от ранее буферизованных данных размер возвращаемых
+      если читается буферизованный поток, который не представляет
+      обычный файл, функция выполняет не больше одного чтения данных,
+      размер которых в байтах равен размеру порции (обычно это 8192);
+      в зависимости от ранее буферизованных данных размер возвращаемых
       данных может быть больше размера одной порции данных.
      </simpara>
     </listitem>
@@ -63,8 +63,8 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       <parameter>length</parameter> указывает размер прочитанных данных
-       в байтах.
+       Параметр <parameter>length</parameter> указывает размер данных в байтах,
+       которые считает функция.
       </para>
      </listitem>
     </varlistentry>
@@ -75,7 +75,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает прочтённую строку&return.falseforfailure;.
+   Функция возвращает прочитанную строку&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -83,15 +83,17 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Простой пример использования <function>fread</function></title>
+    <title>Простой пример использования функции <function>fread</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// получает содержимое файла в строку
+
+// Получаем содержимое файла в строку
 $filename = "/usr/local/something.txt";
 $handle = fopen($filename, "r");
 $contents = fread($handle, filesize($filename));
 fclose($handle);
+
 ?>
 ]]>
     </programlisting>
@@ -99,21 +101,23 @@ fclose($handle);
   </para>
   <para>
    <example>
-    <title>Пример бинарного чтения с помощью <function>fread</function></title>
+    <title>Пример побайтового чтения функцией <function>fread</function></title>
     <warning>
      <para>
-      На системах, которые различают бинарные и текстовые файлы
-      (к примеру, Windows), файл должен быть открыт с использованием
-      флага 'b' в параметре mode функции <function>fopen</function>.
+      В системах, которые различают двоичные и текстовые файлы
+      (например, ОС Windows), файл требуется открывать с включением флага
+      «b» в параметр mode функции <function>fopen</function>.
      </para>
     </warning>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $filename = "c:\\files\\somepic.gif";
 $handle = fopen($filename, "rb");
 $contents = fread($handle, filesize($filename));
 fclose($handle);
+
 ?>
 ]]>
     </programlisting>
@@ -121,31 +125,35 @@ fclose($handle);
   </para>
   <para>
    <example>
-    <title>Примеры удалённого чтения с помощью <function>fread</function></title>
+    <title>Примеры удалённого чтения функцией <function>fread</function></title>
     <warning>
      <para>
-      При чтении чего-либо отличного от локальных файлов, например
-      потоков, возвращаемых при чтении
-      <link linkend="features.remote-files">удалённых файлов</link> или из
+      При чтении не из обычного локального файла, а, например, из потоков,
+      которые возвращаются при чтении
+      <link linkend="features.remote-files">удалённых файлов</link> или функциями
       <function>popen</function> и <function>fsockopen</function>, чтение
-      остановится после того, как пакет станет доступным. Это означает, что
-      вы должны собирать данные вместе по кусочкам, как показано на примере
-      ниже.
+      остановится после получения функцией доступа к пакету. То есть
+      данные лучше собирать порциями, как показывают примеры в следующих
+      параграфах.
      </para>
     </warning>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $handle = fopen("http://www.example.com/", "rb");
 $contents = stream_get_contents($handle);
 fclose($handle);
+
 ?>
 ]]>
     </programlisting>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $handle = fopen("http://www.example.com/", "rb");
+
 if (FALSE === $handle) {
     exit("Не удалось открыть поток по url адресу");
 }
@@ -155,7 +163,9 @@ $contents = '';
 while (!feof($handle)) {
     $contents .= fread($handle, 8192);
 }
+
 fclose($handle);
+
 ?>
 ]]>
     </programlisting>
@@ -167,17 +177,17 @@ fclose($handle);
   &reftitle.notes;
   <note>
    <para>
-    Если вы просто хотите получить содержимое файла в виде строки,
-    используйте <function>file_get_contents</function>, так как
-    эта функция намного производительнее, чем код описанный выше.
+    Когда требуется просто получить содержимое файла в виде строки,
+    вызывают функцию <function>file_get_contents</function>, поскольку
+    её производительность выше, чем у кода в приведённых примерах.
    </para>
   </note>
   <note>
    <para>
-    Учтите, что <function>fread</function> читает, начиная с текущей
-    позиции файлового указателя. Используйте функцию <function>ftell</function>
-    для нахождения текущей позиции указателя и функцию <function>rewind</function>
-    для перемотки позиции указателя в начало.
+    Обратите внимание, функция <function>fread</function> считывает данные
+    с текущей позиции указателя файла. Пользуйтесь функцией <function>ftell</function>,
+    чтобы найти текущую позицию указателя и функцией <function>rewind</function>,
+    чтобы перемотать позицию указателя в начало.
    </para>
   </note>
  </refsect1>
