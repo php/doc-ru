@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fbc6f9055f47d18f8ffb30513b772a32eda1526e Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ldap-bind" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ldap_bind</refname>
-  <refpurpose>Привязать к LDAP директории</refpurpose>
+  <refpurpose>Привязывает к LDAP-каталогу</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -13,10 +13,10 @@
    <type>bool</type><methodname>ldap_bind</methodname>
    <methodparam><type>LDAP\Connection</type><parameter>ldap</parameter></methodparam>
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>dn</parameter><initializer>&null;</initializer></methodparam>
-   <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>password</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><modifier role="attribute">#[\SensitiveParameter]</modifier><type class="union"><type>string</type><type>null</type></type><parameter>password</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Связывает LDAP-директорию с указанным RDN и паролем.
+   Функция связывает LDAP-каталог с указанным RDN-именем и паролем.
   </para>
  </refsect1>
 
@@ -49,9 +49,9 @@
    </variablelist>
   </para>
   <para>
-   Если <parameter>password</parameter> не определён, то будет попытка анонимной привязки.
-   Также для анонимной привязки можно оставить пустым <parameter>dn</parameter>, как определено
-   в https://tools.ietf.org/html/rfc2251#section-4.2.2
+   Если параметр <parameter>password</parameter> не определили или пустой, функция попытается привязать имя и пароль анонимно.
+   Для анонимной привязки также можно оставить пустым параметр <parameter>dn</parameter>, как определяет
+   раздел Authentication and Other Security Services стандарта RFC 2251: https://tools.ietf.org/html/rfc2251#section-4.2.2
   </para>
  </refsect1>
 
@@ -83,31 +83,29 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования привязки LDAP</title>
+    <title>Пример привязки к LDAP-каталогу</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// используется ldap-привязка
-$ldaprdn  = 'uname';     // ldap rdn или dn
-$ldappass = 'password';  // ассоциированный пароль
+// Связываем LDAP-каталог
+$ldaprdn  = 'uname';     //  RDN- или DN-имя LDAP-сервера
+$ldappass = 'password';  // Ассоциированный пароль
 
-// соединение с сервером
+// Соединяемся с сервером
 $ldapconn = ldap_connect("ldap://ldap.example.com")
-    or die("Не могу соединиться с сервером LDAP.");
+    or die("Не могу соединиться с LDAP-сервером.");
 
 if ($ldapconn) {
-
-    // привязка к ldap-серверу
+    // Привязываемся к LDAP-серверу
     $ldapbind = ldap_bind($ldapconn, $ldaprdn, $ldappass);
 
-    // проверка привязки
+    // Проверяем привязку
     if ($ldapbind) {
-        echo "LDAP-привязка успешна...";
+        echo "LDAP-привязка прошла успешна...";
     } else {
         echo "LDAP-привязка не удалась...";
     }
-
 }
 
 ?>
@@ -120,15 +118,14 @@ if ($ldapconn) {
 <![CDATA[
 <?php
 
-//анонимное использование ldap-привязки
+// Анонимная LDAP-привязка
 
-// соединение с сервером ldap
+// Соединяемся с LDAP-сервером
 $ldapconn = ldap_connect("ldap://ldap.example.com")
-    or die("Не могу соединиться с сервером LDAP.");
+    or die("Не могу соединиться с LDAP-сервером.");
 
 if ($ldapconn) {
-
-    // анонимная привязка
+    // Привязываемся анонимно
     $ldapbind = ldap_bind($ldapconn);
 
     if ($ldapbind) {
@@ -136,7 +133,6 @@ if ($ldapconn) {
     } else {
         echo "Анонимная привязка LDAP не удалась...";
     }
-
 }
 
 ?>
