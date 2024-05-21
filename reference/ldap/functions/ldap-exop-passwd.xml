@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b7cbd468cb4c46d55d43a44cade0eb4590d25dea Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ldap-exop-passwd" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -13,12 +13,12 @@
    <type class="union"><type>string</type><type>bool</type></type><methodname>ldap_exop_passwd</methodname>
    <methodparam><type>LDAP\Connection</type><parameter>ldap</parameter></methodparam>
    <methodparam choice="opt"><type>string</type><parameter>user</parameter><initializer>""</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>old_password</parameter><initializer>""</initializer></methodparam>
-   <methodparam choice="opt"><type>string</type><parameter>new_password</parameter><initializer>""</initializer></methodparam>
+   <methodparam choice="opt"><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>old_password</parameter><initializer>""</initializer></methodparam>
+   <methodparam choice="opt"><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>new_password</parameter><initializer>""</initializer></methodparam>
    <methodparam choice="opt"><type>array</type><parameter role="reference">controls</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет расширенную операцию PASSWD.
+   Функция выполняет расширенную операцию PASSWD.
   </para>
  </refsect1>
 
@@ -61,8 +61,8 @@
     <term><parameter>controls</parameter></term>
     <listitem>
      <para>
-      Если задано, то с запросом будет передан запрос парольной политики и это
-      поле будет заполнено массивом <link linkend="ldap.controls">управляющих констант LDAP</link>, возвращённым запросом.
+      Если для параметра задали значение, функция передаст с запросом запрос парольной политики
+      заполнит это поле массивом <link linkend="ldap.controls">управляющих констант LDAP</link>, которые вернул запрос.
      </para>
     </listitem>
    </varlistentry>
@@ -72,8 +72,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает новый пароль, если параметр <parameter>new_password</parameter> не задан,
-   либо задан пустым. Иначе возвращает &true; или &false;, в зависимости от
+   Функция возвращает новый пароль, если параметр <parameter>new_password</parameter> не задали
+   или задали пустым. Иначе функция возвращает &true; или &false;, в зависимости от
    успешности выполнения.
   </para>
  </refsect1>
@@ -95,7 +95,7 @@
       <row>
        <entry>7.3.0</entry>
        <entry>
-        Добавлена поддержка параметра <parameter>controls</parameter>
+        Добавили поддержку параметра <parameter>controls</parameter>
        </entry>
       </row>
      </tbody>
@@ -112,30 +112,32 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-$ds = ldap_connect("localhost");  // предположим, что сервер LDAP запущен локально
+
+$ds = ldap_connect("localhost");  // Предполагается, что LDAP-сервер запустили локально
 
 if ($ds) {
-    // Привязываемся к нужному DN
+    // Привязываемся к нужному DN-имени
     $bind = ldap_bind($ds, "cn=root, o=My Company, c=US", "secret");
     if (!$bind) {
-      echo "Невозможно осуществить привязку LDAP";
+      echo "Невозможно привязаться к LDAP-серверу";
       exit;
     }
 
-    // Используем PASSWD EXOP для смены пароля пользователя на новый случайный
+    // Передаём PASSWD EXOP для смены пароля пользователя на новый случайный
     $genpw = ldap_exop_passwd($ds, "cn=root, o=My Company, c=US", "secret");
     if ($genpw) {
-      // Используем для привязки новый пароль
+      // Задаём для привязки новый пароль
       $bind = ldap_bind($ds, "cn=root, o=My Company, c=US", $genpw);
     }
 
-    // Возвращаем старый пароль "secret"
+    // Возвращаем старый пароль «secret»
     ldap_exop_passwd($ds, "cn=root, o=My Company, c=US", $genpw, "secret");
 
     ldap_close($ds);
 } else {
-    echo "Невозможно соединиться с сервером LDAP";
+    echo "Невозможно соединиться с LDAP-сервером";
 }
+
 ?>
 ]]>
     </programlisting>
