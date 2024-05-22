@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9fc8bcc0836f56a98cf432c8f933e0d96c8d680a Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openssl-encrypt" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -11,9 +11,9 @@
   &reftitle.description;
   <methodsynopsis>
    <type class="union"><type>string</type><type>false</type></type><methodname>openssl_encrypt</methodname>
-   <methodparam><type>string</type><parameter>data</parameter></methodparam>
+   <methodparam><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>data</parameter></methodparam>
    <methodparam><type>string</type><parameter>cipher_algo</parameter></methodparam>
-   <methodparam><type>string</type><parameter>passphrase</parameter></methodparam>
+   <methodparam><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>passphrase</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>options</parameter><initializer>0</initializer></methodparam>
    <methodparam choice="opt"><type>string</type><parameter>iv</parameter><initializer>""</initializer></methodparam>
    <methodparam choice="opt"><type>string</type><parameter role="reference">tag</parameter><initializer>&null;</initializer></methodparam>
@@ -21,8 +21,8 @@
    <methodparam choice="opt"><type>int</type><parameter>tag_length</parameter><initializer>16</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Шифрует данные с заданным шифром и ключом и возвращает необработанную строку, либо
-   строку, закодированную в base64
+   Функция шифрует данные с заданным шифром и ключом и возвращает необработанную строку, либо
+   строку, закодированную в base64.
   </para>
  </refsect1>
 
@@ -106,19 +106,19 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает зашифрованную строку&return.falseforfailure;.
+   Функция возвращает зашифрованную строку&return.falseforfailure;.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выдаёт ошибку уровня <constant>E_WARNING</constant>, если в параметр
-   <parameter>cipher_algo</parameter> передан неизвестный алгоритм шифрования.
+   Функция выдаёт ошибку уровня <constant>E_WARNING</constant>, если в параметр
+   <parameter>cipher_algo</parameter> передали неизвестный алгоритм шифрования.
   </para>
   <para>
-   Выдаёт ошибку уровня <constant>E_WARNING</constant>, если в параметр
-   <parameter>iv</parameter> передано пустое значение.
+   Функция выдаёт ошибку уровня <constant>E_WARNING</constant>, если в параметр
+   <parameter>iv</parameter> передали пустое значение.
   </para>
  </refsect1>
 
@@ -135,7 +135,10 @@
     <tbody>
      <row>
       <entry>7.1.0</entry>
-      <entry>Добавлены параметры <parameter>tag</parameter>, <parameter>aad</parameter> и <parameter>tag_length</parameter>.</entry>
+      <entry>
+       Добавили параметры <parameter>tag</parameter>, <parameter>aad</parameter>
+       и <parameter>tag_length</parameter>.
+      </entry>
      </row>
     </tbody>
    </tgroup>
@@ -151,19 +154,23 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-// $key должен быть сгенерирован заранее криптографически безопасным образом
-// например, с помощью openssl_random_pseudo_bytes
+
+// $key должен быть сгенерирован заранее криптографически безопасным образом,
+// например, функцией openssl_random_pseudo_bytes
 $plaintext = "данные для шифрования";
 $cipher = "aes-128-gcm";
+
 if (in_array($cipher, openssl_get_cipher_methods()))
 {
     $ivlen = openssl_cipher_iv_length($cipher);
     $iv = openssl_random_pseudo_bytes($ivlen);
     $ciphertext = openssl_encrypt($plaintext, $cipher, $key, $options=0, $iv, $tag);
-    // сохраняем $cipher, $iv и $tag для дальнейшей расшифровки
+
+    // Сохраняем $cipher, $iv и $tag для дальнейшей расшифровки
     $original_plaintext = openssl_decrypt($ciphertext, $cipher, $key, $options=0, $iv, $tag);
     echo $original_plaintext."\n";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -174,8 +181,9 @@ if (in_array($cipher, openssl_get_cipher_methods()))
     <programlisting role="php">
 <![CDATA[
 <?php
-// $key должен быть сгенерирован заранее криптографически безопасным образом
-// например, с помощью openssl_random_pseudo_bytes
+
+// $key должен быть сгенерирован заранее криптографически безопасным образом,
+// например, функцией openssl_random_pseudo_bytes
 $plaintext = "данные для шифрования";
 $ivlen = openssl_cipher_iv_length($cipher="AES-128-CBC");
 $iv = openssl_random_pseudo_bytes($ivlen);
@@ -183,7 +191,7 @@ $ciphertext_raw = openssl_encrypt($plaintext, $cipher, $key, $options=OPENSSL_RA
 $hmac = hash_hmac('sha256', $ciphertext_raw, $key, $as_binary=true);
 $ciphertext = base64_encode( $iv.$hmac.$ciphertext_raw );
 
-// расшифровка....
+// Расшифровка....
 $c = base64_decode($ciphertext);
 $ivlen = openssl_cipher_iv_length($cipher="AES-128-CBC");
 $iv = substr($c, 0, $ivlen);
@@ -191,10 +199,12 @@ $hmac = substr($c, $ivlen, $sha2len=32);
 $ciphertext_raw = substr($c, $ivlen+$sha2len);
 $original_plaintext = openssl_decrypt($ciphertext_raw, $cipher, $key, $options=OPENSSL_RAW_DATA, $iv);
 $calcmac = hash_hmac('sha256', $ciphertext_raw, $key, $as_binary=true);
-if (hash_equals($hmac, $calcmac))// сравнение, не подверженное атаке по времени
+
+if (hash_equals($hmac, $calcmac)) // Сравнение, которое не подвержено атаке по времени
 {
     echo $original_plaintext."\n";
 }
+
 ?>
 ]]>
     </programlisting>
