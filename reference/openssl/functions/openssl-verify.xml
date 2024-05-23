@@ -4,7 +4,7 @@
 <refentry xml:id="function.openssl-verify" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>openssl_verify</refname>
-  <refpurpose>Сверка сигнатуры</refpurpose>
+  <refpurpose>Сверяет сигнатуры</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,11 +17,11 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>int</type></type><parameter>algorithm</parameter><initializer><constant>OPENSSL_ALGO_SHA1</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>openssl_verify</function> проверяет, что подпись
-   <parameter>signature</parameter> корректна для данных
+   Функция <function>openssl_verify</function> проверяет, корректна ли подпись
+   <parameter>signature</parameter> для данных
    <parameter>data</parameter> и открытого ключа
    <parameter>public_key</parameter>. Открытый ключ должен соответствовать
-   закрытому ключу, с помощью которого генерировалась подпись.
+   закрытому ключу, с которым генерировалась подпись.
   </para>
  </refsect1>
 
@@ -33,7 +33,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Проверяемые данные
+       Проверяемые данные.
       </para>
      </listitem>
     </varlistentry>
@@ -41,8 +41,8 @@
      <term><parameter>signature</parameter></term>
      <listitem>
       <para>
-       Необработанная бинарная строка, созданная функцией <function>openssl_sign</function> или
-       её аналогом
+       Необработанная двоичная строка, которую создала функция <function>openssl_sign</function>
+       или её аналог.
       </para>
      </listitem>
     </varlistentry>
@@ -50,7 +50,8 @@
      <term><parameter>public_key</parameter></term>
      <listitem>
       <para>
-       Переменная типа <classname>OpenSSLAsymmetricKey</classname>, содержащая ключ, подготовленный <function>openssl_get_publickey</function>
+       Переменная с типом <classname>OpenSSLAsymmetricKey</classname>,
+       которая содержит ключ, который подготовила функция <function>openssl_get_publickey</function>.
       </para>
       <para>
        Строка с ключом в формате <acronym>PEM</acronym>. Примерно такого вида <literal>-----BEGIN PUBLIC KEY-----
@@ -62,10 +63,10 @@
      <term><parameter>algorithm</parameter></term>
      <listitem>
       <para>
-       Целое число, соответствующее одному из <link linkend="openssl.signature-algos">алгоритмов подписи</link>.
+       Целое число, которое соответствует одному из <link linkend="openssl.signature-algos">алгоритмов подписи</link>.
       </para>
       <para>
-       Строка, возвращённая <function>openssl_get_md_methods</function>, например "sha1WithRSAEncryption" или "sha512".
+       Строка, которую вернула функция <function>openssl_get_md_methods</function>, например «sha1WithRSAEncryption» или «sha512».
       </para>
      </listitem>
     </varlistentry>
@@ -76,7 +77,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает 1, если подпись корректная, 0, если нет и -1 или &false; в случае возникновения ошибки.
+   Функция возвращает 1, если подпись корректная, 0, если нет, и -1 или &false;, если возникла ошибка.
   </para>
  </refsect1>
 
@@ -94,9 +95,9 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>public_key</parameter> теперь принимает экземпляр <classname>OpenSSLAsymmetricKey</classname>
+       Параметр <parameter>public_key</parameter> теперь принимает экземпляр класса <classname>OpenSSLAsymmetricKey</classname>
        или <classname>OpenSSLCertificate</classname>;
-       ранее принимался ресурс (&resource;) типа <literal>OpenSSL key</literal> или <literal>OpenSSL X.509</literal>.
+       раньше принимался ресурс (&resource;) с типом <literal>OpenSSL key</literal> или <literal>OpenSSL X.509</literal>.
       </entry>
      </row>
     </tbody>
@@ -108,17 +109,19 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>openssl_verify</function></title>
+    <title>Пример использования функции <function>openssl_verify</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// $data и $signature содержат данные и подпись соответственно
 
-// Извлекает открытый ключ из сертификата и подготавливаем его
+// Переменные $data и $signature содержат данные и подпись
+
+// Извлекаем открытый ключ из сертификата и подготавливаем его
 $pubkeyid = openssl_pkey_get_public("file://src/openssl-0.9.6/demos/sign/cert.pem");
 
 // Проверяем, корректна ли подпись
 $ok = openssl_verify($data, $signature, $pubkeyid);
+
 if ($ok == 1) {
     echo "Подпись корректная";
 } elseif ($ok == 0) {
@@ -126,33 +129,38 @@ if ($ok == 1) {
 } else {
     echo "Произошла какая-то ошибка, печаль :(";
 }
-// Удаляем ключ из памяти
+
+// Высвобождаем ресурсы ключа
 openssl_free_key($pubkeyid);
+
 ?>
 ]]>
     </programlisting>
    </example>
    <example>
-    <title>Пример использования <function>openssl_verify</function></title>
+    <title>Пример использования функции <function>openssl_verify</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-//Данные для генерации подписи
+
+// Данные для генерации подписи
 $data = 'my data';
 
-//Создаём новую пару открытый/закрытый ключ
+// Создаём новую пару открытый и закрытый ключ
 $private_key_res = openssl_pkey_new(array(
     "private_key_bits" => 2048,
     "private_key_type" => OPENSSL_KEYTYPE_RSA,
 ));
+
 $details = openssl_pkey_get_details($private_key_res);
 $public_key_res = openssl_pkey_get_public($details['key']);
 
-//Вычисляем подпись
+// Вычисляем подпись
 openssl_sign($data, $signature, $private_key_res, "sha256WithRSAEncryption");
 
-//Сверяем подпись
+// Сверяем подпись
 $ok = openssl_verify($data, $signature, $public_key_res, OPENSSL_ALGO_SHA256);
+
 if ($ok == 1) {
     echo "корректна";
 } elseif ($ok == 0) {
@@ -160,6 +168,7 @@ if ($ok == 1) {
 } else {
     echo "ошибка: ".openssl_error_string();
 }
+
 ?>
 ]]>
     </programlisting>
