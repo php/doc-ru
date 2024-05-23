@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 497c40ac164d5873fd87f622dfdeb5206392b446 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openssl-sign" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>openssl_sign</refname>
-  <refpurpose>Генерация подписи</refpurpose>
+  <refpurpose>Генерирует подписи</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,10 +17,10 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>int</type></type><parameter>algorithm</parameter><initializer><constant>OPENSSL_ALGO_SHA1</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>openssl_sign</function> вычисляет подпись
-   данных <parameter>data</parameter> путём генерации криптографического
-   цифрового слепка с использованием секретного ключа
-   <parameter>private_key</parameter>. Обратите внимание, что сами данные не шифруются.
+   Функция <function>openssl_sign</function> вычисляет подпись
+   для данных <parameter>data</parameter> путём генерации закрытым ключом
+   <parameter>private_key</parameter> криптографического
+   цифрового слепка. Обратите внимание, что сами данные не шифруются.
   </para>
  </refsect1>
 
@@ -32,7 +32,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Строка данных, для которых вы хотите получить отпечаток
+       Строка данных, для которых требуется получить отпечаток.
       </para>
      </listitem>
     </varlistentry>
@@ -40,8 +40,8 @@
      <term><parameter>signature</parameter></term>
      <listitem>
       <para>
-       Если функция отработает успешно, то подпись будет помещена в переменную,
-       заданную в <parameter>signature</parameter>.
+       В случае успешного выполнения функция поместит подпись в переменную,
+       которую задали в параметре <parameter>signature</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -49,10 +49,11 @@
      <term><parameter>private_key</parameter></term>
      <listitem>
       <para>
-       Идентификатор ключа, типа <classname>OpenSSLAsymmetricKey</classname>, полученный из <function>openssl_get_privatekey</function>
+       Экземпляр класса <classname>OpenSSLAsymmetricKey</classname> — ключ, который вернула
+       функция <function>openssl_get_privatekey</function>.
       </para>
       <para>
-       Строка, представляющая собой ключ в формате <acronym>PEM</acronym>.
+       Строка (<type>string</type>) — ключ в формате <acronym>PEM</acronym>.
       </para>
      </listitem>
     </varlistentry>
@@ -60,11 +61,11 @@
      <term><parameter>algorithm</parameter></term>
      <listitem>
       <para>
-       Целое число, определяющее алгоритм. Смотрите <link linkend="openssl.signature-algos">алгоритмы подписи</link>.
+       Целое число (<type>int</type>) — один <link linkend="openssl.signature-algos">из алгоритмов подписи</link>.
       </para>
       <para>
-       Строка, возвращённая <function>openssl_get_md_methods</function>.
-       Например, "sha256WithRSAEncryption" или "sha384".
+       Строка (<type>string</type>) — корректная строка, которую вернула функция <function>openssl_get_md_methods</function>,
+       например, «sha256WithRSAEncryption» или «sha384».
       </para>
      </listitem>
     </varlistentry>
@@ -93,9 +94,9 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>private_key</parameter> теперь принимает экземпляр <classname>OpenSSLAsymmetricKey</classname>
+       Параметр <parameter>private_key</parameter> теперь принимает экземпляр класса <classname>OpenSSLAsymmetricKey</classname>
        или <classname>OpenSSLCertificate</classname>;
-       ранее принимался ресурс (&resource;) типа <literal>OpenSSL key</literal> или <literal>OpenSSL X.509</literal>.
+       раньше принимался ресурс (&resource;) типа <literal>OpenSSL key</literal> или <literal>OpenSSL X.509</literal>.
       </entry>
      </row>
     </tbody>
@@ -107,11 +108,12 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>openssl_sign</function></title>
+    <title>Пример использования функции <function>openssl_sign</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// $data содержит данные для генерации подписи
+
+// Переменная $data содержит данные для генерации подписи
 
 // Извлекаем секретный ключ из файла и подготавливаем
 $pkeyid = openssl_pkey_get_private("file://src/openssl-0.9.6/demos/sign/key.pem");
@@ -121,15 +123,17 @@ openssl_sign($data, $signature, $pkeyid);
 
 // Высвобождаем ресурс ключа
 openssl_free_key($pkeyid);
+
 ?>
 ]]>
     </programlisting>
    </example>
    <example>
-    <title>Пример использования <function>openssl_sign</function></title>
+    <title>Пример использования функции <function>openssl_sign</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 //Данные для генерации сигнатуры
 $data = 'my data';
 
@@ -138,22 +142,24 @@ $new_key_pair = openssl_pkey_new(array(
     "private_key_bits" => 2048,
     "private_key_type" => OPENSSL_KEYTYPE_RSA,
 ));
+
 openssl_pkey_export($new_key_pair, $private_key_pem);
 
 $details = openssl_pkey_get_details($new_key_pair);
 $public_key_pem = $details['key'];
 
-//Вычисляем подпись
+// Вычисляем подпись
 openssl_sign($data, $signature, $private_key_pem, OPENSSL_ALGO_SHA256);
 
-//Сохраняем
+// Сохраняем
 file_put_contents('private_key.pem', $private_key_pem);
 file_put_contents('public_key.pem', $public_key_pem);
 file_put_contents('signature.dat', $signature);
 
-//Сверяем подпись
+// Сверяем подпись
 $r = openssl_verify($data, $signature, $public_key_pem, "sha256WithRSAEncryption");
 var_dump($r);
+
 ?>
 ]]>
     </programlisting>
