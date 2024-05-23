@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b97a90233ae03784041d9d9d62363eefbe19ff8f Maintainer: lex Status: ready -->
+<!-- EN-Revision: d76a7fe17dd2488e47d664a8ab38e161b13ac843 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.sodium-crypto-pwhash" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>sodium_crypto_pwhash</refname>
-  <refpurpose>Получает ключ из пароля, используя Argon2</refpurpose>
+  <refpurpose>Получает ключ из пароля алгоритмом Argon2</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,21 +12,23 @@
   <methodsynopsis>
    <type>string</type><methodname>sodium_crypto_pwhash</methodname>
    <methodparam><type>int</type><parameter>length</parameter></methodparam>
-   <methodparam><type>string</type><parameter>password</parameter></methodparam>
+   <methodparam><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>password</parameter></methodparam>
    <methodparam><type>string</type><parameter>salt</parameter></methodparam>
    <methodparam><type>int</type><parameter>opslimit</parameter></methodparam>
    <methodparam><type>int</type><parameter>memlimit</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>algo</parameter><initializer><constant>SODIUM_CRYPTO_PWHASH_ALG_DEFAULT</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция предоставляет низкоуровневый доступ к функции crypto_pwhash
-   библиотеки libsodium. Если у вас нет принципиальной необходимости в этой
-   функции, то лучше использовать <function>sodium_crypto_pwhash_str</function> или
+   Функция предоставляет низкоуровневый доступ к функции crypto_pwhash
+   библиотеки libsodium. Если у отсутствует принципиальная необходимость в этой
+   функции, лучше пользоваться функциями <function>sodium_crypto_pwhash_str</function> или
    <function>password_hash</function>.
   </para>
   <para>
-   Распространённая причина использования этой конкретной функции - получить начальные числа для криптографических ключей из пароля и соли,
-   а затем использовать эти начальные числа для генерации фактических ключей, необходимых для некоторых целей (например,
+   Распространённая причина, по которой вызывают эту функцию — получить начальные
+   числа для криптографических ключей из пароля и соли,
+   а затем использовать эти начальные числа для генерации фактических ключей,
+   необходимых для некоторых целей (например, подписать сообщение, как делает функция
    <function>sodium_crypto_sign_detached</function>).
   </para>
 
@@ -39,7 +41,7 @@
     <term><parameter>length</parameter></term>
     <listitem>
      <para>
-      <type>int</type>; Длина создаваемого хеша пароля в байтах.
+      Целое число (<type>int</type>); Длина хеша пароля в байтах.
      </para>
     </listitem>
    </varlistentry>
@@ -47,7 +49,7 @@
     <term><parameter>password</parameter></term>
     <listitem>
      <para>
-      <type>string</type>; Пароль, для которого создаётся хеш.
+      Строка (<type>string</type>); Пароль, для которого функция создаёт хеш.
      </para>
     </listitem>
    </varlistentry>
@@ -79,10 +81,12 @@
     <listitem>
      <para>
       Максимальный объем ОЗУ в байтах, который будет использовать функция.
-      Существуют константы, которые помогут вам выбрать подходящее значение в порядке размера:
+      Выбрать подходящее значение помогают константы в порядке размера:
       <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>,
-      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
-      Как правило, они должны сочетаться с соответствующими значениями <parameter>opslimit</parameter>.
+      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant>
+      и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
+      Как правило, константы должны сочетаться со значениями <parameter>opslimit</parameter>,
+      которым они соответствуют.
      </para>
     </listitem>
    </varlistentry>
@@ -90,7 +94,11 @@
     <term><parameter>algo</parameter></term>
     <listitem>
      <para>
-      <type>int</type> Число, указывающее используемый алгоритм хеширования. По умолчанию задана <constant>SODIUM_CRYPTO_PWHASH_ALG_DEFAULT</constant> (рекомендуемый в настоящее время алгоритм, который может быть изменён с при смене версии libsodium на другую), или явно используя константу <constant>SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13</constant>, представляющую версию алгоритма Argon2id 1.3.
+      Цело число (<type>int</type>), которое указывает алгоритм хеширования.
+      По умолчанию задана константа <constant>SODIUM_CRYPTO_PWHASH_ALG_DEFAULT</constant>
+      (рекомендуемый алгоритм, который изменяется от версии к версии модуля libsodium),
+      или явно задать константу <constant>SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13</constant>,
+      которая представляет версию алгоритма Argon2id 1.3.
      </para>
     </listitem>
    </varlistentry>
@@ -100,25 +108,27 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает захешированный пароль. Возвращаемое значение
-   является бинарной строкой, а не ASCII-представлением и не содержит никакой
-   дополнительной информации о параметрах, с которыми генерировался хеш. Таким образом
-   вам необходимо самим сохранять значения использованных параметров для
-   проверки корректности хеша в будущем. Чтобы всем этим не заниматься - используйте
-   функцию <function>sodium_crypto_pwhash_str</function>.
+   Функция возвращает захешированный пароль. Возвращаемое значение —
+   двоичная строка хеша, а не ASCII-представление, и не содержит
+   дополнительной информации о параметрах, с которыми генерировался хеш, поэтому
+   разработчик сам сохраняет значения параметров для
+   проверки корректности хеша в будущем. Чтобы избежать этого,
+   пользуются функцией <function>sodium_crypto_pwhash_str</function>.
   </para>
  </refsect1>
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>password_hash</function></title>
+    <title>Пример использования функции <function>password_hash</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-//Для дальнейшенй проверки необходимо сохранить соль
+
+// Для будущей проверки нужно сохранить соль
 $salt = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
-// Используем bin2hex для удобочитаемости
+
+// Вызываем функцию bin2hex для удобочитаемости
 echo bin2hex(
     sodium_crypto_pwhash(
         16, // == 128 бит
@@ -129,6 +139,7 @@ echo bin2hex(
         SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
     )
 );
+
 ?>]]>
     </programlisting>
     &example.outputs.similar;
