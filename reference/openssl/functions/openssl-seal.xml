@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d1e3ea622e5d4f542cd36eca59a9f22aa0142633 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openssl-seal" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>openssl_seal</refname>
-  <refpurpose>Запечатать (зашифровать) данные</refpurpose>
+  <refpurpose>Запечатывает (зашифровывает) данные</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,14 +19,14 @@
    <methodparam choice="opt"><type>string</type><parameter role="reference">iv</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>openssl_seal</function> запечатывает (шифрует)
-   <parameter>data</parameter>, используя метод <parameter>cipher_algo</parameter>
-   со сгенерированным случайно секретным ключом. Ключ будет зашифрован
-   каждым открытым ключом, указанном в массиве <parameter>public_key</parameter>,
-   и каждый зашифрованный ключ будет помещён в <parameter>encrypted_keys</parameter>.
-   То есть вы можете разослать запечатанные данные сразу нескольким получателям.
-   Каждый получатель должен получить как запечатанные данные, так и зашифрованный
-   соответствующим открытым ключом ключ для их открытия.
+   Функция <function>openssl_seal</function> запечатывает (шифрует)
+   данные <parameter>data</parameter>, методом <parameter>cipher_algo</parameter>
+   со сгенерированным случайно секретным ключом. Ключ шифруется
+   каждым открытым ключом, который связан с идентификаторами в массиве <parameter>public_key</parameter>,
+   и каждый зашифрованный ключ возвращается в параметре <parameter>encrypted_keys</parameter>.
+   То есть можно разослать запечатанные данные сразу нескольким получателям.
+   Каждый получатель должен получить как запечатанные данные, так и ключ конверта,
+   который зашифровали открытым ключом получателя.
   </para>
  </refsect1>
 
@@ -46,7 +46,7 @@
      <term><parameter>sealed_data</parameter></term>
      <listitem>
       <para>
-       Запечатанные данные.
+       Данные, которые запечатала функция.
       </para>
      </listitem>
     </varlistentry>
@@ -62,7 +62,7 @@
      <term><parameter>public_key</parameter></term>
      <listitem>
       <para>
-       Массив экземпляров <classname>OpenSSLAsymmetricKey</classname>, содержащих открытые ключи.
+       Массив экземпляров класса <classname>OpenSSLAsymmetricKey</classname>, которые содержат открытые ключи.
       </para>
      </listitem>
     </varlistentry>
@@ -73,7 +73,7 @@
        Метод шифрования.
        <caution>
         <simpara>
-         Значение по умолчанию (<literal>'RC4'</literal>) считается небезопасным.
+         Значение по умолчанию (<literal>RC4</literal>) считается небезопасным.
          Настоятельно рекомендуется явно указывать метод безопасного шифрования.
         </simpara>
        </caution>
@@ -95,9 +95,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает длину запечатанных данных или &false;.
-   В случае успешного выполнения в <parameter>sealed_data</parameter> будут содержаться
-   запечатанные данные, а в <parameter>encrypted_keys</parameter> зашифрованные ключи.
+   Функция возвращает длину запечатанных данных или &false;.
+   В случае успешного выполнения параметр <parameter>sealed_data</parameter> будет содержать
+   запечатанные данные, а параметр <parameter>encrypted_keys</parameter> — зашифрованные ключи.
   </para>
  </refsect1>
 
@@ -115,21 +115,21 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>public_key</parameter> теперь принимает массив (&array;) экземпляров
-       <classname>OpenSSLAsymmetricKey</classname>;
-       ранее принимался массив (&array;) ресурсов (&resource;) типа <literal>OpenSSL key</literal>.
+       Параметр <parameter>public_key</parameter> теперь принимает массив (&array;) экземпляров
+       класса <classname>OpenSSLAsymmetricKey</classname>;
+       раньше принимался массив (&array;) ресурсов (&resource;) с типом <literal>OpenSSL key</literal>.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>cipher_algo</parameter> больше не является необязательным параметром.
+       Параметр <parameter>cipher_algo</parameter> теперь обязательный параметр.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>iv</parameter> теперь допускает значение null.
+       Параметр <parameter>iv</parameter> теперь принимает значение null.
       </entry>
      </row>
     </tbody>
@@ -141,40 +141,33 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>openssl_seal</function></title>
+    <title>Пример использования функции <function>openssl_seal</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// $data содержит данные для запечатывания
 
-// извлекаем открытые ключи получателей и подготавливаем их
+// Предполагается, что переменная $data содержит данные, которые необходимо запечатать
+
+// Получаем и подготавливаем открытые ключи для получателей
 $fp = fopen("/src/openssl-0.9.6/demos/maurice/cert.pem", "r");
 $cert = fread($fp, 8192);
 fclose($fp);
 $pk1 = openssl_get_publickey($cert);
-// повторяем для второго получателя
+
+// Повторяем для второго получателя
 $fp = fopen("/src/openssl-0.9.6/demos/sign/cert.pem", "r");
 $cert = fread($fp, 8192);
 fclose($fp);
 $pk2 = openssl_get_publickey($cert);
 
-// задаём метод
-$method = 'AES256';
+// Запечатываем сообщение; только владельцы ключей $pk1 и $pk2 смогут расшифровать запечатанные данные $sealed ключами
+// $ekeys[0] и $ekeys[1]
+openssl_seal($data, $sealed, $ekeys, array($pk1, $pk2));
 
-// генерируем IV
-$ivLength = openssl_cipher_iv_length( $method );
-$iv = openssl_random_pseudo_bytes( $ivLength, $strong );
-if (! $strong) {
- error_log('Инициализирующий вектор может быть не крипографически сильным!');
-}
-
-// запечатываем сообщение, только владельцы $pk1 и $pk2 смогут его распечатать,
-// используя ключи $ekeys[0] и $ekeys[1] соответственно.
-openssl_seal($data, $sealed, $ekeys, array($pk1, $pk2), $method, $iv);
-
-// освобождаем ресурсы ключей
+// Высвобождаем ресурсы ключей
 openssl_free_key($pk1);
 openssl_free_key($pk2);
+
 ?>
 ]]>
     </programlisting>
