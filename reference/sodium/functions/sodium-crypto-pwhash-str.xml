@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5bbdca0c80bcf6f1cf7cd86c8c393488287ffe08 Maintainer: lex Status: ready -->
+<!-- EN-Revision: d76a7fe17dd2488e47d664a8ab38e161b13ac843 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.sodium-crypto-pwhash-str" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>sodium_crypto_pwhash_str</refname>
-  <refpurpose>Получить ASCII-кодированный хеш</refpurpose>
+  <refpurpose>Получает ASCII-кодированный хеш</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>string</type><methodname>sodium_crypto_pwhash_str</methodname>
-   <methodparam><type>string</type><parameter>password</parameter></methodparam>
+   <methodparam><modifier role="attribute">#[\SensitiveParameter]</modifier><type>string</type><parameter>password</parameter></methodparam>
    <methodparam><type>int</type><parameter>opslimit</parameter></methodparam>
    <methodparam><type>int</type><parameter>memlimit</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Использует ресурсоёмкий по ЦПУ и памяти алгоритм хеширования. Соль генерируется случайно.
-   Можно задать ограничения по использованию памяти и ЦПУ. Можно использовать для генерации
-   ASCII-хешей, подходящих для хранения паролей.
+   Функция использует ресурсоёмкий по ЦПУ и памяти алгоритм хешированияа,
+   а также случайно сгенерированную соль и ограничения по памяти и процессору
+   для генерации хэша в кодировке ASCII, который подходит для хранения паролей.
   </para>
  </refsect1>
 
@@ -29,7 +29,7 @@
     <term><parameter>password</parameter></term>
     <listitem>
      <para>
-      <type>string</type>; Пароль, для которого будет генерироваться хеш.
+      Строка (<type>string</type>); пароль, для которого функция сгенерирует хеш.
      </para>
     </listitem>
    </varlistentry>
@@ -37,10 +37,12 @@
     <term><parameter>opslimit</parameter></term>
     <listitem>
      <para>
-      Задаёт ограничение на использование процессорного времени. Чем больше число - тем
-      больше будет нагрузка на процессор при генерации ключа. Также можно использовать
-      предопределённые константы для этого параметра (перечислены в порядке усиления
-      защищённости и потребления ЦПУ): <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE</constant>, <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_SENSITIVE</constant>.
+      Задаёт ограничение на потребление процессорного времени. Увеличение этого числа приведет к тому,
+      что функции потребуется больше циклов ЦП для вычисления ключа. Предел операций на соответствующие
+      значения в зависимости от предполагаемого использования
+      устанавливают константами в порядке силы: <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE</constant>,
+      <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE</constant>
+      и <constant>SODIUM_CRYPTO_PWHASH_OPSLIMIT_SENSITIVE</constant>.
      </para>
     </listitem>
    </varlistentry>
@@ -48,11 +50,12 @@
     <term><parameter>memlimit</parameter></term>
     <listitem>
      <para>
-      Задаёт ограничение на использование памяти в байтах. Можно использовать
-      предопределённые константы для этого параметра (перечислены в порядке усиления
-      защищённости и потребления памяти): <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>, <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant> и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
-      Имеет смысл использовать одинаковые уровни защищённости в
-      memlimit и opslimit.
+      Максимальный объем оперативной памяти в байтах, которую будет использовать функция.
+      В выборе подходящего значения помогают константы в порядке размера:
+      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE</constant>,
+      <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE</constant>
+      и <constant>SODIUM_CRYPTO_PWHASH_MEMLIMIT_SENSITIVE</constant>.
+      Обычно константы должны сочетаться со значениями opslimit, которые им соответствуют.
      </para>
     </listitem>
    </varlistentry>
@@ -62,12 +65,12 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает хеш пароля.
+   Функция возвращает хеш пароля.
   </para>
   <para>
-   Для того, чтобы для одного и того же пароля всегда генерировался один и тот же хеш,
-   необходимо использовать одинаковые значения <parameter>opslimit</parameter> и
-   <parameter>memlimit</parameter>. Так как эти параметры включены в сгенерированный
+   Чтобы для одного и того же пароля каждый раз генерировался один и тот же хеш,
+   устанавливают одинаковые значения параметров <parameter>opslimit</parameter>
+   и <parameter>memlimit</parameter>. Поскольку эти параметры функция включает в сгенерированный
    хеш, функция <function>sodium_crypto_pwhash_str_verify</function> может проверять его
    корректность без необходимости хранить эти параметры отдельно.
   </para>
@@ -77,16 +80,20 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>sodium_crypto_pwhash_str</function></title>
+    <title>Пример использования функции <function>sodium_crypto_pwhash_str</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $password = 'password';
+
 echo sodium_crypto_pwhash_str(
     $password,
     SODIUM_CRYPTO_PWHASH_OPSLIMIT_INTERACTIVE,
     SODIUM_CRYPTO_PWHASH_MEMLIMIT_INTERACTIVE
 );
+
+?>
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -103,11 +110,11 @@ $argon2id$v=19$m=65536,t=2,p=1$oWIfdaXwWwhVmovOBc2NAQ$EbsZ+JnZyyavkafS0hoc4HdaOB
   &reftitle.notes;
   <note>
    <para>
-    Хеши вычисляются с помощью алгоритма Argon2ID, устойчивого для атак стороннего канала
+    Хеши вычисляются алгоритмом Argon2ID, который устойчив к атакам стороннего канала
     и GPU. В отличие от функции <function>password_hash</function>, у этой функции нет
     параметра salt (он генерируется автоматически), а параметры
-    <parameter>opslimit</parameter> и <parameter>memlimit</parameter> являются
-    обязательными.
+    <parameter>opslimit</parameter> и <parameter>memlimit</parameter> —
+    обязательные.
    </para>
   </note>
  </refsect1>
