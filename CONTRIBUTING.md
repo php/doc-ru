@@ -15,7 +15,8 @@
 `strtolower("Alex") === "alex"`, но `strtolower("Алексей") !== "алексей"`.
 
 Заголовок `<title><function>func_name</function> example</title>`
-всегда переводится как `<title>Пример использования <function>func_name</function></title>`.
+переводится как `<title>Пример использования функции <function>func_name</function></title>`
+или `<title>Пример использования метода <function>method_name</function></title>`.
 
 ## Актуализация перевода
 
