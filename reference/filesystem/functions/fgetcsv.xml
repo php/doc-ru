@@ -4,7 +4,7 @@
 <refentry xml:id="function.fgetcsv" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>fgetcsv</refname>
-  <refpurpose>Читает строку из файла и производит разбор данных CSV</refpurpose>
+  <refpurpose>Получает строку из указателя файла и разбирает поля CSV-файла</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -18,10 +18,9 @@
    <methodparam choice="opt"><type>string</type><parameter>escape</parameter><initializer>"\\"</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Данная функция похожа на функцию <function>fgets</function>, с той
-   разницей, что она производит анализ строки на наличие записей
-   в формате <acronym>CSV</acronym> и возвращает найденные поля
-   в качестве массива.
+   Функция похожа на функцию <function>fgets</function>, за исключением того,
+   что функция <function>fgetcsv</function> анализирует строку на наличие полей
+   в формате <acronym>CSV</acronym> и возвращает массив с прочитанными полями.
   </para>
   <note>
    <para>
@@ -40,9 +39,9 @@
      <term><parameter>stream</parameter></term>
      <listitem>
       <para>
-       Корректный файловый указатель на файл, успешно открытый функциями
-       <function>fopen</function>, <function>popen</function> или
-       <function>fsockopen</function>.
+       Корректный указатель на файл, который успешно открыли функции
+       <function>fopen</function>, <function>popen</function>
+       или <function>fsockopen</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -50,14 +49,14 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Должен быть больше самой длинной строки (в символах), найденной в CSV-файле
-       (включая завершающий символ конца строки). В противном случае, строка
-       будет разбита на куски длиной в <parameter>length</parameter> символов,
-       если только место разрыва не будет внутри ограничителей полей (enclosure).
+       Значение параметра устанавливают больше самой длинной строки (в символах), которую функция нашла в CSV-файле
+       (включая завершающий символ конца строки). Иначе функция разобьёт
+       строку на части длиной в <parameter>length</parameter> символов,
+       если только место разделение не появится внутри ограничителя полей.
       </para>
       <para>
-       Отсутствие этого параметра (или установка его в 0 или &null;, начиная с PHP 8.0.0) приведёт к
-       тому, что длина строки будет не ограничена. Это может сказаться на скорости выполнения.
+       Если этот параметр опустили (или начиная с PHP 8.0.0 установили для параметра значение 0 или &null;),
+       функция не будет ограничивать максимальную длину строки, что немного медленнее.
       </para>
      </listitem>
     </varlistentry>
@@ -66,7 +65,7 @@
      <listitem>
       <para>
        Необязательный параметр <parameter>separator</parameter> устанавливает
-       разделитель поля (только один однобайтовый символ).
+       разделитель полей (только один однобайтовый символ).
       </para>
      </listitem>
     </varlistentry>
@@ -84,14 +83,16 @@
      <listitem>
       <para>
        Необязательный параметр <parameter>escape</parameter> устанавливает
-       экранирующий символ (не более одного однобайтового символа).
-       Пустая строка (<literal>""</literal>) отключает проприетарный механизм экранирования.
+       символ экранирования (не более одного однобайтового символа).
+       Пустая строка (<literal>""</literal>) отключает внутренний механизм экранирования.
       </para>
       <note>
        <simpara>
-        Обычно символ <parameter>enclosure</parameter> экранируется внутри поля путём его удваивания; однако, символ <parameter>escape</parameter>
-        в качестве альтернативы. Поэтому значения по умолчанию этих параметров <literal>""</literal> и <literal>\"</literal> имеют одинаковое значение. Помимо разрешения экранировать символ
-        <parameter>enclosure</parameter> символ
+        Обычно символ ограничителя <parameter>enclosure</parameter> экранируется внутри поля путём удвоения;
+        однако, разрешается указывать символ экранирования <parameter>escape</parameter> как альтернативу.
+        Поэтому значения по умолчанию этих параметров <literal>""</literal> и <literal>\"</literal>
+        имеют одинаковое значение. Кроме разрешения экранировать символ ограничителя
+        <parameter>enclosure</parameter> символ экранирования
         <parameter>escape</parameter> не имеет особого смысла; он даже не предназначен для самого экранирования.
        </simpara>
       </note>
@@ -104,7 +105,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает индексированный массив с прочтёнными полями в случае успешного выполнения&return.falseforfailure;.
+   В случае успешного выполнения функция возвращает индексный массив с полями, которые прочитала функция,&return.falseforfailure;.
   </para>
   <note>
    <para>
@@ -131,14 +132,14 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Параметр <parameter>length</parameter> теперь принимает значение &null;.
+        Теперь параметр <parameter>length</parameter> принимает значение &null;.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
         Теперь параметр <parameter>escape</parameter> умеет принимать пустую строку для
-        отключения проприетарного механизма экранирования.
+        отключения встроенного механизма экранирования.
        </entry>
       </row>
      </tbody>
@@ -151,7 +152,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Чтение и вывод на экран содержимого CSV-файла</title>
+    <title>Пример чтения и вывода на экран содержимого CSV-файла</title>
     <programlisting role="php">
 <![CDATA[
 <?php
