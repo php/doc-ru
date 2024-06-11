@@ -4,7 +4,7 @@
 <refentry xml:id="function.stream-filter-register" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>stream_filter_register</refname>
-  <refpurpose>Регистрирует потоковый фильтр, определённый пользователем</refpurpose>
+  <refpurpose>Регистрирует пользовательский фильтр потока</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,9 +14,9 @@
    <methodparam><type>string</type><parameter>class</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>stream_filter_register</function> позволяет вам реализовать
-   собственный фильтр для любого зарегистрированного потока, используемого со всеми другими
-   функциями файловой системы (такими как <function>fopen</function>,
+   Функция <function>stream_filter_register</function> разрешает реализовать
+   собственный фильтр для любого зарегистрированного потока, который используется с другими
+   функциями файловой системы (например, <function>fopen</function>,
    <function>fread</function> и т. д.).
   </para>
  </refsect1>
@@ -37,13 +37,13 @@
      <term><parameter>class</parameter></term>
      <listitem>
       <para>
-       Чтобы реализовать фильтр, вам нужно определить класс как расширение
+       Чтобы реализовать фильтр, необходимо определить класс как расширение
        <classname>php_user_filter</classname> c целым рядом функций-членов. При
-       выполнении операций чтения/записи на потоке, к которому прикреплён ваш фильтр,
-       PHP будет передавать данные через ваш фильтр (и через любые другие фильтры,
+       выполнении операций чтения или записи на потоке, к которому прикреплён пользовательский фильтр,
+       PHP будет передавать данные через пользовательский фильтр (и через любые другие фильтры,
        прикреплённые к потоку), так что данные могут быть изменены как требуется.
-       Вам необходимо реализовать методы точно как описано в <classname>php_user_filter</classname>. Иная
-       реализация приведёт к непредсказуемому поведению.
+       Реализовать методы необходимо точно так, как описывает документация к классу <classname>php_user_filter</classname>,
+       иначе это приведёт к неопределённому поведению.
       </para>
      </listitem>
     </varlistentry>
@@ -57,8 +57,8 @@
    &return.success;
   </para>
   <para>
-   <function>stream_filter_register</function> будет возвращать  &false;, если
-   фильтр с именем <parameter>filter_name</parameter> уже определён.
+   Функция <function>stream_filter_register</function> будет возвращать &false;, если
+   фильтр с именем <parameter>filter_name</parameter> уже определили.
   </para>
  </refsect1>
 
@@ -66,32 +66,37 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Фильтр для перевода букв в верхний регистр в потоке <filename>foo-bar.txt</filename></title>
+    <title>
+     Фильтр для перевода букв в верхний регистр в потоке файла <filename>foo-bar.txt</filename>
+    </title>
     <para>
-     Пример ниже реализует фильтр с названием <literal>strtoupper</literal>
-     на файловом потоке  <filename>foo-bar.txt</filename>, который будет переводить
-     в заглавные все буквы, которые пишутся/читаются из этого потока.
+     Следующий пример реализует фильтр с названием <literal>strtoupper</literal>
+     для потока файла <filename>foo-bar.txt</filename>. Фильтр будет приводить к верхнему регистру
+     каждый буквенный символ, который запишут в поток или прочитают из потока.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-/* Определяем наш класс фильтра */
-class strtoupper_filter extends php_user_filter {
-  function filter($in, $out, &$consumed, $closing)
-  {
-    while ($bucket = stream_bucket_make_writeable($in)) {
-      $bucket->data = strtoupper($bucket->data);
-      $consumed += $bucket->datalen;
-      stream_bucket_append($out, $bucket);
+/* Определяем пользовательский класс фильтра */
+class strtoupper_filter extends php_user_filter
+{
+    function filter($in, $out, &$consumed, $closing)
+    {
+        while ($bucket = stream_bucket_make_writeable($in)) {
+            $bucket->data = strtoupper($bucket->data);
+            $consumed += $bucket->datalen;
+            stream_bucket_append($out, $bucket);
+        }
+
+        return PSFS_PASS_ON;
     }
-    return PSFS_PASS_ON;
-  }
 }
 
-/* Регистрируем наш фильтр в  PHP */
+/* Регистрируем пользовательский фильтр в PHP */
 stream_filter_register("strtoupper", "strtoupper_filter")
-    or die("Не удалось зарегистрировать фильтр");
+    or die("Не удалось зарегистрировать фильтр")
+;
 
 $fp = fopen("foo-bar.txt", "w");
 
@@ -108,7 +113,6 @@ fclose($fp);
  */
 readfile("foo-bar.txt");
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -123,54 +127,59 @@ EASY AS 123
   </para>
   <para>
    <example>
-    <title>Регистрация стандартного фильтра, соответствующего множественным именам фильтров.</title>
+    <title>
+     Пример регистрации стандартного фильтра, который соответствует множественным именам фильтров.
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-/* Определяем наш класс фильтра */
-class string_filter extends php_user_filter {
-  var $mode;
+/* Определяем пользовательский класс фильтра */
+class string_filter extends php_user_filter
+{
+    var $mode;
 
-  function filter($in, $out, &$consumed, $closing)
-  {
-    while ($bucket = stream_bucket_make_writeable($in)) {
-      if ($this->mode == 1) {
-        $bucket->data = strtoupper($bucket->data);
-      } elseif ($this->mode == 0) {
-        $bucket->data = strtolower($bucket->data);
-      }
+    function filter($in, $out, &$consumed, $closing)
+    {
+        while ($bucket = stream_bucket_make_writeable($in)) {
+            if ($this->mode == 1) {
+                $bucket->data = strtoupper($bucket->data);
+            } elseif ($this->mode == 0) {
+                $bucket->data = strtolower($bucket->data);
+            }
 
-      $consumed += $bucket->datalen;
-      stream_bucket_append($out, $bucket);
+            $consumed += $bucket->datalen;
+            stream_bucket_append($out, $bucket);
+        }
+
+        return PSFS_PASS_ON;
     }
-    return PSFS_PASS_ON;
-  }
 
-  function onCreate()
-  {
-    if ($this->filtername == 'str.toupper') {
-      $this->mode = 1;
-    } elseif ($this->filtername == 'str.tolower') {
-      $this->mode = 0;
-    } else {
-      /* Был вызван какой-то другой фильтр str.*,
+    function onCreate()
+    {
+        if ($this->filtername == 'str.toupper') {
+            $this->mode = 1;
+        } elseif ($this->filtername == 'str.tolower') {
+            $this->mode = 0;
+        } else {
+            /* Вызвали какой-то другой фильтр str.*,
          возвращаем ошибку, чтобы  PHP мог продолжить его поиск */
-      return false;
-    }
+            return false;
+        }
 
-    return true;
-  }
+        return true;
+    }
 }
 
-/* Регистрируем наш фильтр в  PHP */
+/* Регистрируем пользовательский фильтр в PHP */
 stream_filter_register("str.*", "string_filter")
-    or die("Не удалось зарегистрировать фильтр");
+    or die("Не удалось зарегистрировать фильтр")
+;
 
 $fp = fopen("foo-bar.txt", "w");
 
 /* Присоединяем зарегистрированный фильтр к только что открытому потоку
-   Мы могли бы использовать здесь  str.tolower */
+   Здесь можно было бы использовать фильтр str.tolower */
 stream_filter_append($fp, "str.toupper");
 
 fwrite($fp, "Line1\n");
@@ -182,6 +191,7 @@ fclose($fp);
 /* Читаем содержимое снова
  */
 readfile("foo-bar.txt");
+
 ?>
 ]]>
     </programlisting>
