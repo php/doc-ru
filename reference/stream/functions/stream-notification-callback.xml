@@ -4,7 +4,7 @@
 <refentry xml:id="function.stream-notification-callback" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>stream_notification_callback</refname>
-  <refpurpose>Callback-функция для параметра контекста <literal>notification</literal></refpurpose>
+  <refpurpose>Играет роль callback-функции для параметра контекста <literal>notification</literal></refpurpose>
  </refnamediv>
 
  <refsect1 role="description"><!-- {{{ -->
@@ -19,14 +19,14 @@
    <methodparam><type>int</type><parameter>bytes_max</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Callback-функция типа <type>callable</type>, используемая
-   <link linkend="context.params.notification">параметром контекста notification</link>,
-   вызываемая во время события.
+   Функция с типом <type>callable</type>, которую передают как аргумент
+   для <link linkend="context.params.notification">контекстного параметра notification</link>,
+   которая вызывается при наступлении события.
   </para>
   <note>
    <para>
-    Это <emphasis>не</emphasis> настоящая функция, а только прототип того, как должна быть
- реализована функция.
+    Это <emphasis>не</emphasis> настоящая функция, а только прототип того, как нужно
+    реализовывать функцию.
    </para>
   </note>
  </refsect1><!-- }}} -->
@@ -39,7 +39,7 @@
      <term><parameter>notification_code</parameter></term>
      <listitem>
       <para>
-       Одна из констант оповещения <constant>STREAM_NOTIFY_*</constant>.
+       Константа оповещения из семейства <constant>STREAM_NOTIFY_*</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -47,7 +47,7 @@
      <term><parameter>severity</parameter></term>
      <listitem>
       <para>
-       Одна из констант оповещения  <constant>STREAM_NOTIFY_SEVERITY_*</constant>.
+       Константа оповещения из семейства <constant>STREAM_NOTIFY_SEVERITY_*</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -55,7 +55,7 @@
      <term><parameter>message</parameter></term>
      <listitem>
       <para>
-       Передаётся, если для события доступно описывающее сообщение.
+       Параметр передаётся, если у события есть доступ к описательному сообщению.
       </para>
      </listitem>
     </varlistentry>
@@ -63,10 +63,10 @@
      <term><parameter>message_code</parameter></term>
      <listitem>
       <para>
-       Передаётся, если для события доступен код описывающего сообщения.
+       Параметр передаётся, если у события есть доступ к описательному коду сообщения.
       </para>
       <para>
-       Значение данной величины зависит от используемой обёртки.
+       Смысл этого значения зависит от обёртки.
       </para>
      </listitem>
     </varlistentry>
@@ -74,8 +74,7 @@
      <term><parameter>bytes_transferred</parameter></term>
      <listitem>
       <para>
-       Если доступно, то параметр <parameter>bytes_transferred</parameter> будет
-    заполнен.
+       Если применимо, то функция заполнит параметр <parameter>bytes_transferred</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -83,8 +82,7 @@
      <term><parameter>bytes_max</parameter></term>
      <listitem>
       <para>
-       Если доступно, то параметр <parameter>bytes_max</parameter> будет
-    заполнен.
+       Если применимо, то функция заполнит параметр <parameter>bytes_max</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -104,13 +102,14 @@
   &reftitle.examples;
   <para>
    <example xml:id="stream-notification-callback.example.basic"><!-- {{{ -->
-    <title>Пример использования <function>stream_notification_callback</function></title>
+    <title>Пример использования функции <function>stream_notification_callback</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
 
-    switch($notification_code) {
+function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max)
+{
+    switch ($notification_code) {
         case STREAM_NOTIFY_RESOLVE:
         case STREAM_NOTIFY_AUTH_REQUIRED:
         case STREAM_NOTIFY_COMPLETED:
@@ -137,7 +136,7 @@ function stream_notification_callback($notification_code, $severity, $message, $
             break;
 
         case STREAM_NOTIFY_PROGRESS:
-            echo "Пошёл прогресс, пока загружено ", $bytes_transferred, " байт";
+            echo "Есть прогресс, функция скачала ", $bytes_transferred, " байтов";
             break;
     }
     echo "\n";
@@ -147,6 +146,8 @@ $ctx = stream_context_create();
 stream_context_set_params($ctx, array("notification" => "stream_notification_callback"));
 
 file_get_contents("http://php.net/contact", false, $ctx);
+
+
 ?>
 ]]>
     </programlisting>
@@ -163,70 +164,79 @@ file_get_contents("http://php.net/contact", false, $ctx);
 Подсоединились...
 Получили размер файла: 4589
 Получили mime-тип файла: text/html;charset=utf-8
-Пошёл прогресс, пока загружено 0 байт
-Пошёл прогресс, пока загружено 0 байт
-Пошёл прогресс, пока загружено 0 байт
-Пошёл прогресс, пока загружено 1440 байт
-Пошёл прогресс, пока загружено 2880 байт
-Пошёл прогресс, пока загружено 4320 байт
-Пошёл прогресс, пока загружено 5760 байт
-Пошёл прогресс, пока загружено 6381 байт
-Пошёл прогресс, пока загружено 7002 байт
+Есть прогресс, функция скачала 0 байтов
+Есть прогресс, функция скачала 0 байтов
+Есть прогресс, функция скачала 0 байтов
+Есть прогресс, функция скачала 1440 байтов
+Есть прогресс, функция скачала 2880 байтов
+Есть прогресс, функция скачала 4320 байтов
+Есть прогресс, функция скачала 5760 байтов
+Есть прогресс, функция скачала 6381 байтов
+Есть прогресс, функция скачала 7002 байтов
 ]]>
     </screen>
    </example><!-- }}} -->
   </para>
   <para>
    <example xml:id="stream-notification-callback.example.download"><!-- {{{ -->
-    <title>Простой индикатор для загрузчика файлов из командной строки</title>
+    <title>Пример простого индикатора для загрузчика файлов из командной строки</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-function usage($argv) {
+
+function usage($argv)
+{
     echo "Использование:\n";
     printf("\tphp %s <http://example.com/file> <localfile>\n", $argv[0]);
     exit(1);
 }
 
-function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
+function stream_notification_callback(
+    $notification_code,
+    $severity,
+    $message,
+    $message_code,
+    $bytes_transferred,
+    $bytes_max,
+) {
     static $filesize = null;
 
-    switch($notification_code) {
-    case STREAM_NOTIFY_RESOLVE:
-    case STREAM_NOTIFY_AUTH_REQUIRED:
-    case STREAM_NOTIFY_COMPLETED:
-    case STREAM_NOTIFY_FAILURE:
-    case STREAM_NOTIFY_AUTH_RESULT:
-        /* Игнорируем */
-        break;
+    switch ($notification_code) {
+        case STREAM_NOTIFY_RESOLVE:
+        case STREAM_NOTIFY_AUTH_REQUIRED:
+        case STREAM_NOTIFY_COMPLETED:
+        case STREAM_NOTIFY_FAILURE:
+        case STREAM_NOTIFY_AUTH_RESULT:
+            /* Игнорируем */
+            break;
 
-    case STREAM_NOTIFY_REDIRECTED:
-        echo "Перенаправлены на: ", $message, "\n";
-        break;
+        case STREAM_NOTIFY_REDIRECTED:
+            echo "Перенаправлены на: ", $message, "\n";
+            break;
 
-    case STREAM_NOTIFY_CONNECT:
-        echo "Подсоединились...\n";
-        break;
+        case STREAM_NOTIFY_CONNECT:
+            echo "Подсоединились...\n";
+            break;
 
-    case STREAM_NOTIFY_FILE_SIZE_IS:
-        $filesize = $bytes_max;
-        echo "Размер файла: ", $filesize, "\n";
-        break;
+        case STREAM_NOTIFY_FILE_SIZE_IS:
+            $filesize = $bytes_max;
+            echo "Размер файла: ", $filesize, "\n";
+            break;
 
-    case STREAM_NOTIFY_MIME_TYPE_IS:
-        echo "Mime-тип файла: ", $message, "\n";
-        break;
+        case STREAM_NOTIFY_MIME_TYPE_IS:
+            echo "Mime-тип файла: ", $message, "\n";
+            break;
 
-    case STREAM_NOTIFY_PROGRESS:
-        if ($bytes_transferred > 0) {
-            if (!isset($filesize)) {
-                printf("\rНеизвестный размер файла.. Закачано %2d Кб..", $bytes_transferred/1024);
-            } else {
-                $length = (int)(($bytes_transferred/$filesize)*100);
-                printf("\r[%-100s] %d%% (%2d/%2d kb)", str_repeat("=", $length). ">", $length, ($bytes_transferred/1024), $filesize/1024);
+        case STREAM_NOTIFY_PROGRESS:
+            if ($bytes_transferred > 0) {
+                if (!isset($filesize)) {
+                    printf("\rНеизвестный размер файла.. Закачано %2d Кб..", $bytes_transferred / 1024);
+                } else {
+                    $length = (int)(($bytes_transferred / $filesize) * 100);
+                    printf("\r[%-100s] %d%% (%2d/%2d kb)", str_repeat("=", $length) . ">", $length, ($bytes_transferred / 1024), $filesize / 1024);
+                }
             }
-        }
-        break;
+            break;
     }
 }
 
@@ -242,13 +252,14 @@ if (is_resource($fp) && file_put_contents($argv[2], $fp)) {
 }
 
 $err = error_get_last();
-echo "\nОшшшшибкка..\n", $err["message"], "\n";
+echo "\nОш-ш-ш-ш-шиб-бка..\n", $err["message"], "\n";
 exit(1);
+
 ?>
 ]]>
     </programlisting>
     <para>
-     Выполнение вышеприведённого примера со следующими опциями:
+     Выполнение приведённого примера со следующими опциями:
      <literal>php -n fetch.php
      http://no2.php.net/get/php-5-LATEST.tar.bz2/from/this/mirror
      php-latest.tar.bz2</literal> выведет что-то похожее на это:
