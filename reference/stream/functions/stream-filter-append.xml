@@ -4,7 +4,7 @@
 <refentry xml:id="function.stream-filter-append" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>stream_filter_append</refname>
-  <refpurpose>Прикрепить фильтр к потоку</refpurpose>
+  <refpurpose>Прикрепляет фильтр к потоку</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -16,8 +16,8 @@
    <methodparam choice="opt"><type>mixed</type><parameter>params</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Добавляет <parameter>filtername</parameter> в список фильтров,
-   прикреплённых к <parameter>stream</parameter>.
+   Функция добавляет фильтр <parameter>filtername</parameter> в список фильтров,
+   прикреплённых к потоку <parameter>stream</parameter>.
   </para>
  </refsect1>
 
@@ -47,14 +47,14 @@
       <para>
        По умолчанию <function>stream_filter_append</function> будет
        прикреплять фильтр к <literal>цепочке фильтров чтения</literal>,
-       если файл был открыт для чтения (т. е. режим файла:
+       если файл открыли для чтения (т. е. режим файла:
        <literal>r</literal>, и/или <literal>+</literal>). Фильтр
        также будет прикреплён к <literal>цепочке фильтров записи</literal>,
-       если файл был открыт для записи (т. е. режим файла:
+       если файл открыли для записи (т. е. режим файла:
        <literal>w</literal>, <literal>a</literal>, и/или <literal>+</literal>).
        Константы <constant>STREAM_FILTER_READ</constant>,
-       <constant>STREAM_FILTER_WRITE</constant> и/или
-       <constant>STREAM_FILTER_ALL</constant> также могут быть переданы в параметре
+       <constant>STREAM_FILTER_WRITE</constant> и (или)
+       <constant>STREAM_FILTER_ALL</constant> также разрешается передавать в параметр
        <parameter>read_write</parameter>, чтобы переопределить это поведение.
       </para>
      </listitem>
@@ -63,10 +63,10 @@
      <term><parameter>params</parameter></term>
      <listitem>
       <para>
-       Этот фильтр будет добавлен с указанными
+       Этот фильтр будет добавлен с параметрами
        <parameter>params</parameter> к <emphasis>концу</emphasis> списка
        и, таким образом, будет вызван последним в списке потоковых операций.
-       Чтобы добавить фильтр в начало списка, используйте
+       Чтобы добавить фильтр в начало списка, вызывают функцию
        <function>stream_filter_prepend</function>.
       </para>
      </listitem>
@@ -78,14 +78,14 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает ресурс в случае успешного выполнения или &false; при неудаче. Ресурс должен быть
-   использован для ссылки на этот экземпляр фильтра во время вызова
-   <function>stream_filter_remove</function>.
+   Функция возвращает ресурс в случае успешного выполнения или &false;, если возникла ошибка.
+   Ресурс можно использовать для ссылки на этот экземпляр фильтра во время вызова
+   функции <function>stream_filter_remove</function>.
   </para>
 
   <para>
-   Вернёт &false;, если <parameter>stream</parameter> не является ресурсом или если
-   <parameter>filtername</parameter> не найден.
+   Функция вернёт &false;, если поток <parameter>stream</parameter> — не ресурс или если
+   функция не нашла фильтр <parameter>filtername</parameter>.
   </para>
  </refsect1>
 
@@ -97,6 +97,7 @@
     <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Открываем тестовый файл для чтения и записи */
 $fp = fopen('test.txt', 'w+');
 
@@ -105,18 +106,18 @@ $fp = fopen('test.txt', 'w+');
  * цепочке фильтров чтения */
 stream_filter_append($fp, "string.rot13", STREAM_FILTER_WRITE);
 
-/* Запишем простую строку в файл
- * она будет преобразована при помощи ROT13
+/* Записываем простую строку в файл,
+ * она будет преобразована через фильтр ROT13
  * на выходе */
 fwrite($fp, "This is a test\n");
 
-/* Назад к началу файла */
+/* Отматываем позицию указателя в начало файла */
 rewind($fp);
 
 /* Прочитаем содержимое файла.
  * Если фильтр также был бы прикреплён к
  * цепочке фильтров чтения, мы бы увидели
- * преобразованный при помощи ROT13 текст в исходном состоянии */
+ * преобразованный фильтром ROT13 текст в исходном состоянии */
 fpassthru($fp);
 
 fclose($fp);
@@ -127,6 +128,7 @@ fclose($fp);
 Guvf vf n grfg
 
  */
+
 ?>
 ]]>
     </programlisting>
@@ -137,17 +139,17 @@ Guvf vf n grfg
  <refsect1 role="notes">
   &reftitle.notes;
   <note>
-   <title>При использовании пользовательских фильтров</title>
+   <title>Передача пользовательских фильтров</title>
    <simpara>
-    Сначала должна быть вызвана функция <function>stream_filter_register</function>
-    для того, чтобы зарегистрировать желаемый пользовательский фильтр на имя <parameter>filtername</parameter>.
+    Сначала требуется вызвать функцию <function>stream_filter_register</function>,
+    чтобы зарегистрировать необходимый пользовательский фильтр для параметра <parameter>filtername</parameter>.
    </simpara>
   </note>
   <note>
    <simpara>
-    Потоковые данные читаются из ресурсов (как локальных, так удалённых) по кускам,
-    и любые невостребованные данные сохраняются во внутренних буферах. Когда новый фильтр
-    добавляется в конец потока, то данные во внутренних буферах обрабатываются
+    Потоковые данные читаются из ресурсов (как локальных, так удалённых) порциями,
+    при этом невостребованные данные сохраняются во внутренних буферах. Когда новый фильтр
+    добавляется в конец потока, данные во внутренних буферах обрабатываются
     через новый фильтр. Это отличается от поведения функции
     <function>stream_filter_prepend</function>.
    </simpara>
@@ -155,9 +157,9 @@ Guvf vf n grfg
   <note>
    <simpara>
     Когда фильтр добавляется для чтения и записи, создаются два экземпляра
-    фильтра. Функция <function>stream_filter_append</function> должна быть вызвана дважды
-    с <constant>STREAM_FILTER_READ</constant> и
-    <constant>STREAM_FILTER_WRITE</constant> чтобы получить оба ресурса фильтра.
+    фильтра. Функцию <function>stream_filter_append</function> необходимо вызвать дважды
+    с флагами <constant>STREAM_FILTER_READ</constant>
+    и <constant>STREAM_FILTER_WRITE</constant>, чтобы получить оба ресурса фильтра.
    </simpara>
   </note>
  </refsect1>
