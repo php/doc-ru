@@ -225,49 +225,49 @@ foreach ($managers as $manager) {
     <title>Массивы</title>
 
     <para>
-     Если массив является <emphasis>упакованным массивом</emphasis> — то есть пустой массив или, если ключи начинаются
-     с 0 и являются последовательными без пробелов: <emphasis>массив BSON</emphasis>.
+     Если массив представляет собой <emphasis>упакованный массив</emphasis> —
+     то есть пустой массив или ключи начинаются
+     с 0 и идут последовательно без пробелов: <emphasis>BSON-массив</emphasis>.
     </para>
 
     <para>
-     Если массив не упакован — то есть имеет ассоциативные (строковые) ключи,
-     ключи не начинаются с 0 или при наличии пробелов:: <emphasis>объект
-     BSON</emphasis>
+     Если массив не упакован — то есть содержит ассоциативные (строковые) ключи,
+     ключи не начинаются с 0 или содержат пробелы:: <emphasis>BSON-объект</emphasis>
     </para>
 
     <para>
      Документ верхнего уровня (корневой), <emphasis>всегда</emphasis> сериализуется,
-     как документ BSON.
+     как BSON-документ.
     </para>
 
     <section>
      <title>Примеры</title>
 
      <para>
-      Сериализация, как массив BSON:
+      Эти массивы сериализуются как BSON-массив:
      </para>
 
      <programlisting role="text">
 <![CDATA[
-[ 8, 5, 2, 3 ] => [ 8, 5, 2, 3 ]
-[ 0 => 4, 1 => 9 ] => [ 4, 9 ]
+[8, 5, 2, 3] => [8, 5, 2, 3]
+[0 => 4, 1 => 9] => [4, 9]
 ]]>
      </programlisting>
 
      <para>
-      Сериализация, как документ BSON:
+      Эти массивы сериализуются как BSON-документ:
      </para>
 
      <programlisting role="text">
 <![CDATA[
-[ 0 => 1, 2 => 8, 3 => 12 ] => { "0" : 1, "2" : 8, "3" : 12 }
-[ "foo" => 42 ] => { "foo" : 42 }
-[ 1 => 9, 0 => 10 ] => { "1" : 9, "0" : 10 }
+[0 => 1, 2 => 8, 3 => 12] => {"0": 1, "2": 8, "3": 12}
+["foo" => 42] => {"foo": 42}
+[1 => 9, 0 => 10] => {"1": 9, "0": 10}
 ]]>
      </programlisting>
 
      <para>
-      Обратите внимание, что пять примеров являются <emphasis>выдержками</emphasis> из полного
+      Обратите внимание, что пять приведённых примеров — <emphasis>выдержки</emphasis> из полного
       документа и представляют только <emphasis>одно</emphasis> значение внутри
       документа.
      </para>
@@ -279,73 +279,72 @@ foreach ($managers as $manager) {
     <title>Объекты</title>
 
      <para>
-      Если объект принадлежит к классу <classname>stdClass</classname>, сериализуйте,
-      как <emphasis>документ BSON</emphasis>.
+      Если объект принадлежит типу <classname>stdClass</classname>, он сериализуется
+      как <emphasis>BSON-документ</emphasis>.
      </para>
 
      <para>
-      Если объект является поддерживаемым классом, который реализует
-      <interfacename>MongoDB\BSON\Type</interfacename>, то используйте
-      логику сериализации BSON для этого конкретного типа.
-      Экземпляры <interfacename>MongoDB\BSON\Type</interfacename> (исключая
-      <interfacename>MongoDB\BSON\Serializable</interfacename> можно
-      сериализовать только, как значение поля документа. Попытка сериализации такого объекта
-      в качестве корневого документа приведёт к выбросу
-      <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>
+      Если объект — поддерживаемый класс, который реализует
+      интерфейс <interfacename>MongoDB\BSON\Type</interfacename>, используется
+      логика сериализации BSON для этого конкретного типа.
+      Экземпляры с типом <interfacename>MongoDB\BSON\Type</interfacename> (исключая
+      тип <interfacename>MongoDB\BSON\Serializable</interfacename>) можно
+      сериализовать только как значение поля документа. Попытка сериализовать такой объект
+      как корневой документ выбросит исключение
+      <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
      </para>
 
      <para>
-      Если объект неизвестного класса реализует интерфейс
-      <interfacename>MongoDB\BSON\Type</interfacename>, выдаётся исключение
-      <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>
+      Если объект принадлежит неизвестному классу, который реализует интерфейс
+      <interfacename>MongoDB\BSON\Type</interfacename>, выбрасывается исключение
+      <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
      </para>
 
      <para>
-      Если объект относится к какому-либо другому классу, без реализации какого-либо специального
-      интерфейса, сериализуйте, как <emphasis>документ BSON</emphasis>. Оставляйте только
-      <emphasis>public</emphasis> свойства и игнорируйте
-      <emphasis>protected</emphasis> и <emphasis>private</emphasis>
-      свойства.
+      Если объект принадлежит какому-либо другому классу без реализации какого-либо специального
+      интерфейса, он сериализуется как <emphasis>BSON-документ</emphasis>. Остаются только
+      открытые (<emphasis>public</emphasis>) свойства, а защищённые (<emphasis>protected</emphasis>)
+      и закрытые (<emphasis>private</emphasis>) свойства игнорируются.
      </para>
 
      <para>
       Если объект принадлежит к классу, который реализует интерфейс
-      <interfacename>MongoDB\BSON\Serializable</interfacename>, вызовите
-      <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname> и используйте
-      возвращённый массив или <classname>stdClass</classname> для сериализации в качестве
-      документа BSON или массива. Тип BSON будет определяться следующим:
+      <interfacename>MongoDB\BSON\Serializable</interfacename>, вызывают
+      метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
+      и сериализуют массив или <classname>stdClass</classname>, которые возвращает метод,
+      как BSON-документ или как BSON-массив. Тип BSON определят следующие условия:
      </para>
 
      <para>
       <orderedlist>
        <listitem>
-        <para>Корневые документы должны быть сериализованы,
-         как документ BSON.
+        <para>Корневые документы требуется сериализовать
+         как BSON-документ.
         </para>
        </listitem>
        <listitem>
         <para>
-         <interfacename>MongoDB\BSON\Persistable</interfacename> объекты должны быть
-         сериализованы, как документ BSON.
+         Объекты с типом <interfacename>MongoDB\BSON\Persistable</interfacename> требуется
+         сериализовать как BSON-документы.
         </para>
        </listitem>
        <listitem>
         <para>
-         Если <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
-         возвращает упакованный массив, сериализуйте его, как массив BSON.
+         Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
+         возвращает упакованный массив, его сериализуют как BSON-массив.
         </para>
        </listitem>
        <listitem>
         <para>
-         Если <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
-         возвращает неупакованный массив или <classname>stdClass</classname>,
-         сериализуйте, как документ BSON.
+         Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
+         возвращает неупакованный массив или объект <classname>stdClass</classname>,
+         его сериализуют как BSON-документ.
         </para>
        </listitem>
        <listitem>
         <para>
-         Если <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
-         не вернул массив или <classname>stdClass</classname>, выдаст исключение
+         Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
+         не вернул массив или объект <classname>stdClass</classname>, выбрасывается исключение
          <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
         </para>
        </listitem>
@@ -353,27 +352,27 @@ foreach ($managers as $manager) {
      </para>
 
      <para>
-      Если объект принадлежит к классу, который реализует интерфейс
+      Если объект принадлежит классу, который реализует интерфейс
       <interfacename>MongoDB\BSON\Persistable</interfacename> (что
-      подразумевает <interfacename>MongoDB\BSON\Serializable</interfacename>), получите
-      свойства аналогично предыдущим абзацам, но
-      <emphasis>также</emphasis> добавьте дополнительное свойство
-      <property>__pclass</property> в качестве Binary значения с подтипом
-      <literal>0x80</literal> и данными, содержащими полное имя класса
-      сериализуемого объекта.
+      подразумевает реализацию метода <interfacename>MongoDB\BSON\Serializable</interfacename>),
+      свойства остаются по аналогии с предыдущими абзацами,
+      но <emphasis>также</emphasis> добавляется дополнительное свойство
+      <property>__pclass</property> в виде Binary-значения с подтипом
+      <literal>0x80</literal> и данными, которые содержат полное имя класса объекта,
+      который сериализуется.
      </para>
 
      <para>
       Свойство <property>__pclass</property> добавляется в массив или
-      объект, возвращаемый
-      <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>, что
-      означает, что оно будет перезаписывать любой ключ/свойство <property>__pclass</property> в
-      возвращаемом значении <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>.
-      Если вы хотите избежать такого поведения и установить собственное значение
-      <property>__pclass</property>, вы <emphasis>не</emphasis> должны
-      реализовывать <interfacename>MongoDB\BSON\Persistable</interfacename> и
-      вместо этого должны реализовывать
-      <interfacename>MongoDB\BSON\Serializable</interfacename> напрямую.
+      объект, который возвращает метод
+      <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>,
+      что означает, что оно перезапишет любой ключ или свойство <property>__pclass</property>
+      в значении, которое возвращает метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>.
+      Если требуется избежать такого поведения и установить собственное значение
+      <property>__pclass</property>, <emphasis>вместо</emphasis>
+      реализации интерфейса <interfacename>MongoDB\BSON\Persistable</interfacename>
+      следует напрямую реализовать интерфейс
+      <interfacename>MongoDB\BSON\Serializable</interfacename>.
      </para>
 
      <section>
@@ -475,13 +474,13 @@ class UpperClass implements MongoDB\BSON\Persistable {
 
    <para>
     Устаревший модуль <code>mongo</code> десериализовывал
-    документы и массивы BSON в PHP-массивы. Хотя с PHP-массивами
+    документы и BSON-массивы в PHP-массивы. Хотя с PHP-массивами
     удобно работать, такое поведение было проблематичным, поскольку разные
     типы BSON могли десериализоваться до одного и того же PHP-значения (например,
     <literal>{"0": "foo"}</literal> и <literal>["foo"]</literal>), что делало
     невозможным определение оригинального BSON-типа. По умолчанию модуль <code>mongodb</code>
-    решает эту проблему и гарантирует, что массивы и документы BSON преобразуются
-    в массивы и объекты PHP соответственно.
+    решает эту проблему и гарантирует, что BSON-массивы преобразуются в PHP-массивы, а BSON-документы
+    в PHP-объекты.
    </para>
 
    <para>
@@ -521,9 +520,9 @@ class UpperClass implements MongoDB\BSON\Persistable {
     Помимо трёх групповых типов, также можно настроить
     определённые поля в документе для сопоставления с типами данных, указанными ниже.
     В качестве примера, следующая карта типов позволяет
-    сопоставить каждый встроенный документ в массиве <literal>"addresses"</literal> с
-    классом <classname>Address</classname>, <emphasis>а</emphasis> каждое
-    поле <literal>"city"</literal> в этих документах с встроенным адресом
+    сопоставить каждый встроенный документ в массиве <literal>«addresses»</literal>
+    с классом <classname>Address</classname>, <emphasis>а</emphasis> каждое
+    поле <literal>«city»</literal> в этих документах с встроенным адресом
     с классом <classname>City</classname>:
 
     <programlisting role="text">
@@ -539,8 +538,8 @@ class UpperClass implements MongoDB\BSON\Persistable {
    </para>
 
    <para>
-    Каждый из этих трёх типов данных, а также сопоставления для конкретных полей
-    могут быть сопоставлены с различными типами PHP. Возможные значения сопоставления:
+    Каждый из этих трёх типов данных, а также сопоставления конкретных полей
+    можно сопоставить с различными типами PHP. Возможные значения сопоставления:
    </para>
 
    <para>
@@ -552,56 +551,55 @@ class UpperClass implements MongoDB\BSON\Persistable {
         <itemizedlist>
          <listitem>
           <para>
-           Массив BSON будет десериализован, как PHP <type>array</type>.
+           BSON-массив будет десериализован, как PHP-массив (<type>array</type>).
           </para>
          </listitem>
          <listitem>
           <para>
-           Документ BSON (корневой или внедрённый) без свойства
+           BSON-документ (корневой или встроенный) без свойства
            <property>__pclass</property>
            <footnote xml:id="mongodb.pclass">
             <para>
              Свойство __pclass считается существующим, только
-             если существует свойство с таким именем, и оно является Binary значением,
+             если существует свойство с таким именем, и оно представляет собой Binary-значение,
              а подтип Binary значения равен 0x80. Если какое-либо из этих трёх
-             условий не выполняется, свойство __pclass не существует и
-             должно рассматриваться, как любое другое обычное свойство.
+             условий не выполняется, свойство __pclass не существует
+             и должно рассматриваться как любое другое обычное свойство.
             </para>
            </footnote>
-           становится объектом PHP <classname>stdClass</classname>, причём каждый
-           ключ документа BSON устанавливается в качестве открытого
-           свойства <classname>stdClass</classname>.
+           становится PHP-объектом <classname>stdClass</classname>, причём каждый
+           ключ документа BSON устанавливается как открытое
+           свойство объекта <classname>stdClass</classname>.
           </para>
          </listitem>
          <listitem>
           <para>
-           Документ BSON (корневой или встроенный) со свойством
-           <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> становится объектом PHP
-           имени класса, как это определено свойством <property>__pclass</property>.
+           BSON-документ (корневой или встроенный) со свойством
+           <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> становится PHP-объектом
+           имени класса, как это определяет свойство <property>__pclass</property>.
           </para>
           <para>
-           Если указанный класс реализует интерфейс
+           Если именованный класс реализует интерфейс
            M<interfacename>MongoDB\BSON\Persistable</interfacename>,
-           то свойства документа BSON, включая свойство
-           <property>__pclass</property>, отправляются в виде ассоциативного
-           массива в функцию
-           <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>
-           для инициализации свойств объекта.
+           то свойства BSON-документа, включая свойство
+           <property>__pclass</property>, отправляются как ассоциативный
+           массив в метод
+           <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>,
+           чтобы инициализировать свойства объекта.
           </para>
           <para>
-           Если названный класс не существует или не реализует интерфейс
+           Если именованный класс не существует или не реализует интерфейс
            <interfacename>MongoDB\BSON\Persistable</interfacename>,
-           будет использоваться <classname>stdClass</classname>, и каждый ключ документа BSON
-           (включая <property>__pclass</property>) будет установлен,
-           как открытое свойство <classname>stdClass</classname>.
+           будет использоваться объект <classname>stdClass</classname>, и каждый ключ BSON-документа
+           (включая свойство <property>__pclass</property>) будет установлен
+           как открытое свойство объекта <classname>stdClass</classname>.
           </para>
           <para>
-           Функциональность <property>__pclass</property> зависит от того, является ли
-           свойство частью извлечённого документа MongoDB. Если вы используете
-           <link linkend="mongodb-driver-query.construct-queryOptions">проекцию</link>
-           при запросе документов, вам нужно включить поле
-           <property>__pclass</property> в проекцию, чтобы эта
-           функция работала.
+           Функциональность свойства <property>__pclass</property> зависит от того, представляет ли
+           собой свойство часть извлечённого документа БД MongoDB. Если при запросе документов
+           используется <link linkend="mongodb-driver-query.construct-queryOptions">проекция</link>,
+           необходимо включить в проекцию поле <property>__pclass</property>,
+           чтобы эта функциональность работала.
           </para>
          </listitem>
         </itemizedlist>
@@ -610,19 +608,19 @@ class UpperClass implements MongoDB\BSON\Persistable {
      </varlistentry>
 
      <varlistentry>
-      <term><literal>"array"</literal></term>
+      <term><literal>«array»</literal></term>
       <listitem>
        <para>
-        Превращает массив BSON или документ BSON в массив PHP. Не будет
-        специальной обработки свойства <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/>,
-        но его можно установить, как элемент в возвращаемом массиве, если он
-        присутствовал в документе BSON.
+        Превращает BSON-массив или BSON-документ в PHP-массив. Специальной обработки
+        свойства <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> не будет,
+        но его можно установить как элемент в возвращаемом массиве, если он
+        содержался в BSON-документе.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>"object"</literal> или <literal>"stdClass"</literal></term>
+      <term><literal>«object»</literal> или <literal>«stdClass»</literal></term>
       <listitem>
        <para>
         Превращает массив BSON или документ BSON в объект
@@ -635,12 +633,12 @@ class UpperClass implements MongoDB\BSON\Persistable {
      </varlistentry>
 
      <varlistentry>
-      <term><literal>"bson"</literal></term>
+      <term><literal>«bson»</literal></term>
       <listitem>
        <para>
-        Превращает BSON массив в <classname>MongoDB\BSON\PackedArray</classname>
-        и BSON документ в <classname>MongoDB\BSON\Document</classname>,
-        независимо от того, есть ли у BSON документа свойство <property>__pclass</property>
+        Превращает BSON-массив в объект <classname>MongoDB\BSON\PackedArray</classname>,
+        а BSON-документ в объект <classname>MongoDB\BSON\Document</classname>,
+        независимо от того, есть ли у BSON-документа свойство <property>__pclass</property>
         <footnoteref linkend="mongodb.pclass"/>.
        </para>
        <note>
@@ -656,32 +654,31 @@ class UpperClass implements MongoDB\BSON\Persistable {
       <term>любая другая строка</term>
       <listitem>
        <para>
-        Определяет имя класса, который должен десериализовать массив
-        BSON или объект BSON. Для объектов BSON, которые содержат свойства
-        <property>__pclass</property>, этот класс будет иметь
-        приоритет.
+        Определяет имя класса, который должен десериализовать BSON-массив
+        или BSON-объект. Для BSON-объектов, которые содержат свойства
+        <property>__pclass</property>, этот класс будет приоритетным.
        </para>
 
        <para>
-        Если названный класс не существует, не является конкретным (то есть является
-        абстрактным или интерфейсом) или не реализует
-        <interfacename>MongoDB\BSON\Unserializable</interfacename>, то выдаётся исключение
+        Если именованный класс не существует, не представляет собой конкретный класс (то есть это
+        абстрактный класс или интерфейс) или не реализует
+        интерфейс <interfacename>MongoDB\BSON\Unserializable</interfacename>, выбрасывается исключение
         <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>.
        </para>
 
        <para>
-        Если объект BSON имеет свойство <property>__pclass</property>, и
+        Если BSON-объект содержит свойство <property>__pclass</property> и
         этот класс существует и реализует
-        <interfacename>MongoDB\BSON\Persistable</interfacename>, он
-        заменит класс, представленный в карте типов.
+        интерфейс <interfacename>MongoDB\BSON\Persistable</interfacename>,
+        он заменит класс, представленный в карте типов.
        </para>
 
        <para>
-        Свойства документа BSON, <emphasis>включая</emphasis>
-        свойство <property>__pclass</property>, если оно существует, будут отправлены
-        в виде ассоциативного массива в функцию
-        <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>
-        для инициализации свойств объекта.
+        Свойства BSON-документа, <emphasis>включая</emphasis>
+        свойство <property>__pclass</property>, если оно существует, отправляются
+        как ассоциативный массив в метод
+        <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>,
+        чтобы инициализировать свойства объекта.
        </para>
       </listitem>
      </varlistentry>
@@ -692,20 +689,20 @@ class UpperClass implements MongoDB\BSON\Persistable {
     <title>TypeMaps</title>
 
      <para>
-      TypeMaps можно установить с помощью метода
+      Функции настройки TypeMaps можно установить методом
       <methodname>MongoDB\Driver\Cursor::setTypeMap</methodname> для объекта
       <classname>MongoDB\Driver\Cursor</classname> или аргумента
-      <literal>$typeMap</literal> в
-      <function>MongoDB\BSON\toPHP</function>,
-      <methodname>MongoDB\BSON\Document::toPHP</methodname> и
-      <methodname>MongoDB\BSON\PackedArray::toPHP</methodname>. Каждый из трёх
+      <literal>$typeMap</literal>
+      в методах <function>MongoDB\BSON\toPHP</function>,
+      <methodname>MongoDB\BSON\Document::toPHP</methodname>
+      и <methodname>MongoDB\BSON\PackedArray::toPHP</methodname>. Каждый из трёх
       классов (<emphasis>root</emphasis>, <emphasis>document</emphasis>, и
-      <emphasis>array</emphasis>) может быть задан индивидуально, в дополнение
+      <emphasis>array</emphasis>) можно задать индивидуально, в дополнение
       к типам полей.
      </para>
 
      <para>
-      Если значение на карте равно <type>NULL</type>, это означает то же самое,
+      Если значение на карте равно <type>NULL</type>, это означает то же,
       что и значение <emphasis>по умолчанию</emphasis> для этого элемента.
      </para>
     </section>
@@ -723,7 +720,7 @@ class UpperClass implements MongoDB\BSON\Persistable {
         <term>MyClass</term>
         <listitem>
          <para>
-          который <emphasis>не</emphasis> реализует интерфейс
+          который <emphasis>не</emphasis> реализует интерфейсы
          </para>
         </listitem>
        </varlistentry>
@@ -731,7 +728,7 @@ class UpperClass implements MongoDB\BSON\Persistable {
         <term>YourClass</term>
         <listitem>
          <para>
-          который реализует
+          который реализует интерфейс
           <interfacename>MongoDB\BSON\Unserializable</interfacename>
          </para>
         </listitem>
@@ -740,7 +737,7 @@ class UpperClass implements MongoDB\BSON\Persistable {
         <term>OurClass</term>
         <listitem>
          <para>
-          который реализует
+          который реализует интерфейс
           <interfacename>MongoDB\BSON\Persistable</interfacename>
          </para>
         </listitem>
@@ -749,7 +746,7 @@ class UpperClass implements MongoDB\BSON\Persistable {
         <term>TheirClass</term>
         <listitem>
          <para>
-          который расширяет OurClass
+          который расширяет класс OurClass
          </para>
         </listitem>
        </varlistentry>
@@ -758,22 +755,23 @@ class UpperClass implements MongoDB\BSON\Persistable {
 
      <para>
       Метод <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>
-      класса YourClass, OurClass, OurClass выполняет итерацию по массиву и устанавливает
-      свойства без изменений. Он <emphasis>также</emphasis> устанавливает для свойства
+      классов YourClass, OurClass, OurClass выполняет итерацию по массиву и устанавливает
+      свойства без изменений. Метод <emphasis>также</emphasis> устанавливает для свойства
       <literal>$unserialized</literal> значение &true;:
 
       <programlisting role="php">
 <![CDATA[
 <?php
 
-function bsonUnserialize( array $map )
+function bsonUnserialize(array $map)
 {
-    foreach ( $map as $k => $value )
-    {
+    foreach ($map as $k => $value) {
         $this->$k = $value;
     }
     $this->unserialized = true;
 }
+
+?>
 ]]>
       </programlisting>
      </para>
@@ -782,29 +780,29 @@ function bsonUnserialize( array $map )
       <programlisting role="text">
 <![CDATA[
 /* typemap: [] (все значения по умолчанию) */
-{ "foo": "yes", "bar" : false }
-  -> stdClass { $foo => 'yes', $bar => false }
+{"foo": "yes", "bar" : false}
+  -> stdClass {$foo => 'yes', $bar => false}
 
-{ "foo": "no", "array" : [ 5, 6 ] }
-  -> stdClass { $foo => 'no', $array => [ 5, 6 ] }
+{"foo": "no", "array" : [ 5, 6 ]}
+  -> stdClass {$foo => 'no', $array => [ 5, 6 ]}
 
-{ "foo": "no", "obj" : { "embedded" : 3.14 } }
-  -> stdClass { $foo => 'no', $obj => stdClass { $embedded => 3.14 } }
+{"foo": "no", "obj" : {"embedded" : 3.14}}
+  -> stdClass {$foo => 'no', $obj => stdClass {$embedded => 3.14}}
 
-{ "foo": "yes", "__pclass": "MyClass" }
-  -> stdClass { $foo => 'yes', $__pclass => 'MyClass' }
+{"foo": "yes", "__pclass": "MyClass"}
+  -> stdClass {$foo => 'yes', $__pclass => 'MyClass'}
 
-{ "foo": "yes", "__pclass": { "$type" : "80", "$binary" : "MyClass" } }
-  -> stdClass { $foo => 'yes', $__pclass => Binary(0x80, 'MyClass') }
+{"foo": "yes", "__pclass": {"$type" : "80", "$binary" : "MyClass"}}
+  -> stdClass {$foo => 'yes', $__pclass => Binary(0x80, 'MyClass')}
 
-{ "foo": "yes", "__pclass": { "$type" : "80", "$binary" : "YourClass") }
-  -> stdClass { $foo => 'yes', $__pclass => Binary(0x80, 'YourClass') }
+{"foo": "yes", "__pclass": {"$type" : "80", "$binary" : "YourClass")}
+  -> stdClass {$foo => 'yes', $__pclass => Binary(0x80, 'YourClass')}
 
-{ "foo": "yes", "__pclass": { "$type" : "80", "$binary" : "OurClass") }
-  -> OurClass { $foo => 'yes', $__pclass => Binary(0x80, 'OurClass'), $unserialized => true }
+{"foo": "yes", "__pclass": {"$type" : "80", "$binary" : "OurClass")}
+  -> OurClass {$foo => 'yes', $__pclass => Binary(0x80, 'OurClass'), $unserialized => true}
 
-{ "foo": "yes", "__pclass": { "$type" : "44", "$binary" : "YourClass") }
-  -> stdClass { $foo => 'yes', $__pclass => Binary(0x44, 'YourClass') }
+{"foo": "yes", "__pclass": {"$type" : "44", "$binary" : "YourClass")}
+  -> stdClass {$foo => 'yes', $__pclass => Binary(0x44, 'YourClass')}
 ]]>
       </programlisting>
      </para>
@@ -813,36 +811,36 @@ function bsonUnserialize( array $map )
       <programlisting role="text">
 <![CDATA[
 /* typemap: [ "root" => "MissingClass" ] */
-{ "foo": "yes" }
+{"foo": "yes"}
   -> MongoDB\Driver\Exception\InvalidArgumentException("MissingClass does not exist")
 
 /* typemap: [ "root" => "MyClass" ] */
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "MyClass" } }
+{"foo": "yes", "__pclass" : {"$type": "80", "$binary": "MyClass"}}
   -> MongoDB\Driver\Exception\InvalidArgumentException("MyClass does not implement Unserializable interface")
 
 /* typemap: [ "root" => "MongoDB\BSON\Unserializable" ] */
-{ "foo": "yes" }
+{"foo": "yes"}
   -> MongoDB\Driver\Exception\InvalidArgumentException("Unserializable is not a concrete class")
 
 /* typemap: [ "root" => "YourClass" ] */
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "MongoDB\BSON\Unserializable" } }
-  -> YourClass { $foo => "yes", $__pclass => Binary(0x80, "MongoDB\BSON\Unserializable"), $unserialized => true }
+{"foo": "yes", "__pclass" : {"$type": "80", "$binary": "MongoDB\BSON\Unserializable"}}
+  -> YourClass {$foo => "yes", $__pclass => Binary(0x80, "MongoDB\BSON\Unserializable"), $unserialized => true}
 
 /* typemap: [ "root" => "YourClass" ] */
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "MyClass" } }
-  -> YourClass { $foo => "yes", $__pclass => Binary(0x80, "MyClass"), $unserialized => true }
+{"foo": "yes", "__pclass" : {"$type": "80", "$binary": "MyClass"}}
+  -> YourClass {$foo => "yes", $__pclass => Binary(0x80, "MyClass"), $unserialized => true}
 
 /* typemap: [ "root" => "YourClass" ] */
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "OurClass" } }
-  -> OurClass { $foo => "yes", $__pclass => Binary(0x80, "OurClass"), $unserialized => true }
+{"foo": "yes", "__pclass" : {"$type": "80", "$binary": "OurClass"}}
+  -> OurClass {$foo => "yes", $__pclass => Binary(0x80, "OurClass"), $unserialized => true}
 
 /* typemap: [ "root" => "YourClass" ] */
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "TheirClass" } }
-  -> TheirClass { $foo => "yes", $__pclass => Binary(0x80, "TheirClass"), $unserialized => true }
+{"foo": "yes", "__pclass" : {"$type": "80", "$binary": "TheirClass"}}
+  -> TheirClass {$foo => "yes", $__pclass => Binary(0x80, "TheirClass"), $unserialized => true}
 
 /* typemap: [ "root" => "OurClass" ] */
-{ foo: "yes", "__pclass" : { "$type": "80", "$binary": "TheirClass" } }
-  -> TheirClass { $foo => "yes", $__pclass => Binary(0x80, "TheirClass"), $unserialized => true }
+{ foo: "yes", "__pclass" : {"$type": "80", "$binary": "TheirClass"}}
+  -> TheirClass {$foo => "yes", $__pclass => Binary(0x80, "TheirClass"), $unserialized => true}
 ]]>
       </programlisting>
      </para>
@@ -851,8 +849,8 @@ function bsonUnserialize( array $map )
       <programlisting role="text">
 <![CDATA[
 /* typemap: [ 'root' => 'YourClass' ] */
-{ foo: "yes", "__pclass" : { "$type": "80", "$binary": "YourClass" } }
-  -> YourClass { $foo => 'yes', $__pclass => Binary(0x80, 'YourClass'), $unserialized => true }
+{foo: "yes", "__pclass": {"$type": "80", "$binary": "YourClass"}}
+  -> YourClass {$foo => 'yes', $__pclass => Binary(0x80, 'YourClass'), $unserialized => true}
 ]]>
       </programlisting>
      </para>
@@ -861,23 +859,23 @@ function bsonUnserialize( array $map )
       <programlisting role="text">
 <![CDATA[
 /* typemap: [ 'root' => 'array', 'document' => 'array' ] */
-{ "foo": "yes", "bar" : false }
-  -> [ "foo" => "yes", "bar" => false ]
+{"foo": "yes", "bar": false}
+  -> ["foo" => "yes", "bar" => false]
 
-{ "foo": "no", "array" : [ 5, 6 ] }
-  -> [ "foo" => "no", "array" => [ 5, 6 ] ]
+{"foo": "no", "array": [5, 6]}
+  -> ["foo" => "no", "array" => [5, 6]]
 
-{ "foo": "no", "obj" : { "embedded" : 3.14 } }
-  -> [ "foo" => "no", "obj" => [ "embedded => 3.14 ] ]
+{"foo": "no", "obj": {"embedded": 3.14}}
+  -> ["foo" => "no", "obj" => ["embedded => 3.14]]
 
-{ "foo": "yes", "__pclass": "MyClass" }
-  -> [ "foo" => "yes", "__pclass" => "MyClass" ]
+{"foo": "yes", "__pclass": "MyClass"}
+  -> ["foo" => "yes", "__pclass" => "MyClass"]
 
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "MyClass" } }
-  -> [ "foo" => "yes", "__pclass" => Binary(0x80, "MyClass") ]
+{"foo": "yes", "__pclass": {"$type": "80", "$binary": "MyClass"}}
+  -> ["foo" => "yes", "__pclass" => Binary(0x80, "MyClass")]
 
-{ "foo": "yes", "__pclass" : { "$type": "80", "$binary": "OurClass" } }
-  -> [ "foo" => "yes", "__pclass" => Binary(0x80, "OurClass") ]
+{"foo": "yes", "__pclass": {"$type": "80", "$binary": "OurClass"}}
+  -> ["foo" => "yes", "__pclass" => Binary(0x80, "OurClass")]
 ]]>
       </programlisting>
      </para>
@@ -885,9 +883,9 @@ function bsonUnserialize( array $map )
      <para>
       <programlisting role="text">
 <![CDATA[
-/* typemap: [ 'root' => 'object', 'document' => 'object' ] */
-{ "foo": "yes", "__pclass": { "$type": "80", "$binary": "MyClass" } }
-  -> stdClass { $foo => "yes", "__pclass" => Binary(0x80, "MyClass") }
+/* typemap: ['root' => 'object', 'document' => 'object'] */
+{"foo": "yes", "__pclass": {"$type": "80", "$binary": "MyClass"}}
+  -> stdClass {$foo => "yes", "__pclass" => Binary(0x80, "MyClass")}
 ]]>
       </programlisting>
      </para>
