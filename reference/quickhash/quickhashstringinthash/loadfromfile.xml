@@ -4,7 +4,7 @@
 <refentry xml:id="quickhashstringinthash.loadfromfile" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>QuickHashStringIntHash::loadFromFile</refname>
-  <refpurpose>Фабричный метод создаёт хеш из файла</refpurpose>
+  <refpurpose>Создаёт хеш из файла</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,15 +19,15 @@
    Этот фабричный метод создаёт новый хеш из файла определения на диске.
    Формат файла состоит из сигнатуры <literal>'QH\0x21\0'</literal>,
    количества элементов в виде 32-битного целого числа со знаком в системном порядке байтов,
-   32-битного целого числа без знака, содержащего количество данных элемента в символах.
-   Данные этого элемента содержат все строки. Далее следует другое32-битное целое число со знаком,
-   содержащее количество списков.
-   После заголовка и строк следуют элементы. Они упорядочены по списку,
-   так что ключи не нужно хешировать, чтобы восстановить хеш.
-   Для каждого списка хранится следующая информация (все как 32-битные целые числа):
-   индекс списка, количество элементов в этом списке, а затем парами по два 32-битных целых числа без знака - элементы,
-   где первый - это индекс в строковом списке, содержащем ключи, а второй - значение.
-   Примером может быть:
+   32-битного целого числа без знака, которое содержит количество следующих за ним данных элемента в символах.
+   Данные этого элемента содержат все строки. Далее следует другое 32-битное целое число со знаком,
+   которое содержит количество списков бакетов.
+   После заголовка и строк следуют элементы. Они упорядочены по списку бакетов,
+   поэтому для восстановления хеша ключи не нужно хешировать.
+   Для каждого списка бакетов хранится следующая информация (все как 32-битные целые числа):
+   индекс списка бакетов, количество элементов в этом списке, а затем парами по два 32-битных целых числа без знака —
+   элементы, где первый — индекс в строковом списке, который содержит ключи, а второй — значение.
+   Пример может выглядеть вот так:
   </para>
   <para>
    <example>
@@ -98,9 +98,9 @@ bucket lists:
      <term><parameter>size</parameter></term>
      <listitem>
       <para>
-       Количество списков, которое необходимо настроить.
-       Переданное число будет автоматически округлено до следующей степени числа 2.
-       Оно также автоматически ограничивается от <literal>4</literal> до <literal>4194304</literal>.
+       Количество списков бакетов для настройки.
+       Метод автоматически округлит заданное число в бо́льшую сторону до следующей степени числа 2.
+       Число также автоматически ограничивается значениями от <literal>4</literal> до <literal>4 194 304</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -109,7 +109,7 @@ bucket lists:
      <listitem>
       <para>
        Те же параметры, которые принимает конструктор класса;
-       за исключением того, что игнорируется параметр <literal>size</literal>.
+       за исключением того, что параметр <literal>size</literal> игнорируется.
        Размер считывается из формата файла (в отличие от классов
        <classname>QuickHashIntHash</classname> и <classname>QuickHashIntStringHash</classname>,
        где он автоматически вычисляется из количества записей в хеше).
@@ -123,7 +123,7 @@ bucket lists:
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает новый объект <classname>QuickHashStringIntHash</classname>.
+   Метод возвращает новый объект <classname>QuickHashStringIntHash</classname>.
   </para>
  </refsect1>
 
@@ -131,21 +131,24 @@ bucket lists:
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>QuickHashStringIntHash::loadFromFile</function></title>
+    <title>Пример использования метода <function>QuickHashStringIntHash::loadFromFile</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$file = dirname( __FILE__ ) . "/simple.hash.string";
+
+$file = dirname(__FILE__) . "/simple.hash.string";
+
 $hash = QuickHashStringIntHash::loadFromFile(
     $file,
     QuickHashStringIntHash::DO_NOT_USE_ZEND_ALLOC
 );
-foreach( range( 0, 0x0f ) as $key )
-{
+
+foreach (range(0, 0x0f) as $key) {
     $i = 48712 + $key * 1631;
-    $k = base_convert( $i, 10, 36 );
-    echo $k, ' => ', $hash->get( $k ), "\n";
+    $k = base_convert($i, 10, 36);
+    echo $k, ' => ', $hash->get($k), "\n";
 }
+
 ?>
 ]]>
     </programlisting>
