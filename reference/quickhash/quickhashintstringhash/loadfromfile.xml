@@ -4,7 +4,7 @@
 <refentry xml:id="quickhashintstringhash.loadfromfile" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>QuickHashIntStringHash::loadFromFile</refname>
-  <refpurpose>Фабричный метод создаёт хеш из файла</refpurpose>
+  <refpurpose>Создаёт хеш из файла</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,13 +19,14 @@
    Этот фабричный метод создаёт новый хеш из файла определения на диске.
    Формат файла состоит из сигнатуры <literal>'QH\0x12\0'</literal>,
    количества элементов в виде 32-битного целого числа со знаком в системном порядке байтов,
-   затем 32-битных целых чисел со знаком, упакованных вместе в системный порядок байтов.
-   Для каждого элемента хеша хранятся два 32-битных целых числа со знаком.
-   Первое из них - ключ, а второе - значение, принадлежащее ключу. Примером может быть:
+   32-битного целого числа без знака, которое содержит количество следующих за ним данных элемента в символах.
+   Данные этого элемента содержат все строки.
+   После заголовка и строк элементы следуют парами из двух 32-битных целых чисел без знака,
+   где первое — ключ, а второе — индекс в строке данных элемента. Примером может выглядеть вот так:
   </para>
   <para>
    <example>
-    <title>Формат файла QuickHash IntString</title>
+    <title>Пример формата файла QuickHash IntString</title>
     <screen>
 <![CDATA[
 00000000  51 48 12 00 02 00 00 00  09 00 00 00 4f 4e 45 00  |QH..........ONE.|
@@ -38,7 +39,7 @@
   </para>
   <para>
    <example>
-    <title>Формат файла QuickHash IntString</title>
+    <title>Пример формата файла QuickHash IntString</title>
     <screen>
 <![CDATA[
 header signature ('QH'; key type: 1; value type: 2; filler: \0x00)
@@ -83,9 +84,9 @@ key/value 2 (key = 3, string index = 4 ("NINE")):
      <term><parameter>size</parameter></term>
      <listitem>
       <para>
-       Количество списков, которое необходимо настроить.
-       Переданное число будет автоматически округлено до следующей степени числа 2.
-       Оно также автоматически ограничивается от <literal>4</literal> до <literal>4194304</literal>.
+       Количество списков бакетов для настройки.
+       Метод автоматически округлит заданное число в бо́льшую сторону до следующей степени числа 2.
+       Число также автоматически ограничивается значениями от <literal>4</literal> до <literal>4 194 304</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -94,9 +95,10 @@ key/value 2 (key = 3, string index = 4 ("NINE")):
      <listitem>
       <para>
        Те же параметры, которые принимает конструктор класса;
-       за исключением того, что игнорируется параметр <literal>size</literal>.
-       Он автоматически вычисляется как количество записей в хеше, округляется до ближайшей степени числа 2
-       с максимальным ограничением <literal>4194304</literal>.
+       за исключением того, что параметр <literal>size</literal> игнорируется.
+       Размер автоматически вычисляется как количество записей в хеше,
+       округляется в бо́льшую сторону до ближайшей степени числа 2
+       с максимальным пределом <literal>4 194 304</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -107,7 +109,7 @@ key/value 2 (key = 3, string index = 4 ("NINE")):
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает новый объект <classname>QuickHashIntStringHash</classname>.
+   Метод возвращает новый объект <classname>QuickHashIntStringHash</classname>.
   </para>
  </refsect1>
 
@@ -115,22 +117,27 @@ key/value 2 (key = 3, string index = 4 ("NINE")):
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>QuickHashIntStringHash::loadFromFile</function></title>
+    <title>Пример использования метода <function>QuickHashIntStringHash::loadFromFile</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$file = dirname( __FILE__ ) . "/simple.string.hash";
+
+$file = dirname(__FILE__) . "/simple.string.hash";
+
 $hash = QuickHashIntStringHash::loadFromFile(
     $file,
     QuickHashIntStringHash::DO_NOT_USE_ZEND_ALLOC
 );
-foreach( range( 0, 0x0f ) as $key )
-{
-    printf( "Ключ %3d (%2x) %s\n",
-        $key, $key,
-        $hash->exists( $key ) ? 'установлен' : 'не установлен'
+
+foreach (range(0, 0x0f) as $key) {
+    printf(
+        "Ключ %3d (%2x) %s\n",
+        $key,
+        $key,
+        $hash->exists($key) ? 'установлен' : 'не установлен'
     );
 }
+
 ?>
 ]]>
     </programlisting>
