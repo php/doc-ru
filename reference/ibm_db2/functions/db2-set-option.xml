@@ -4,7 +4,7 @@
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.db2-set-option">
  <refnamediv>
   <refname>db2_set_option</refname>
-  <refpurpose>Установка опции для соединения или ресурса оператора</refpurpose>
+  <refpurpose>Устанавливает опции для соединения или ресурса запроса</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,8 +15,8 @@
    <methodparam><type>int</type><parameter>type</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Установка опции для соединения или ресурса оператора. Для
-   ресурса результирующего набора опции задавать нельзя.
+   Функция устанавливает опции для ресурса запроса или соединения.
+   Нельзя установить опции для ресурсов наборов результатов.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -27,11 +27,11 @@
      <term><parameter>resource</parameter></term>
      <listitem>
       <para>
-       Корректный ресурс оператора, полученный из
-       <function>db2_prepare</function> или же ресурс
-       соединения, полученный из
-       <function>db2_connect</function> или
-       <function>db2_pconnect</function>.
+       Корректный ресурс запроса, который вернула функция
+       <function>db2_prepare</function> или корректный ресурс
+       соединения, который вернула функция
+       <function>db2_connect</function>
+       или <function>db2_pconnect</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -39,25 +39,22 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Ассоциативный массив, содержащий опции,
-       соответствующие ресурсу. Этот параметр можно
-       использовать для изменения режима автоподтверждения
-       транзакций, типа курсора и задания регистра имён
-       столбцов (нижний, верхний, как есть) в результирующем
-       наборе.
+       Ассоциативный массив, который содержит корректный запрос
+       или опции соединения. Этот параметр
+       изменяет значения автофиксации, типы курсоров (прокручиваемых или прямой)
+       и указывает регистр имён столбцов (нижний, верхний или натуральный), которые будут отображаться
+       в результирующем наборе.
        <variablelist>
         <varlistentry>
          <term><parameter>autocommit</parameter></term>
          <listitem>
           <para>
-           <constant>DB2_AUTOCOMMIT_ON</constant> — включить
-           режим автоподтверждения транзакций для заданного
-           соединения.
+           <constant>DB2_AUTOCOMMIT_ON</constant> — включает
+           режим автопофиксации для ресурса соединения.
           </para>
           <para>
-           <constant>DB2_AUTOCOMMIT_OFF</constant> — отключить
-           режим автоподтверждения транзакций для заданного
-           соединения.
+           <constant>DB2_AUTOCOMMIT_OFF</constant> — отключает
+           режим автопофиксации для ресурса соединения.
           </para>
          </listitem>
         </varlistentry>
@@ -65,15 +62,15 @@
          <term><parameter>cursor</parameter></term>
          <listitem>
           <para>
-           <constant>DB2_FORWARD_ONLY</constant> — задать
-           тип курсора "только вперёд". Это тип по умолчанию
-           и он поддерживается всеми базами данных.
+           <constant>DB2_FORWARD_ONLY</constant> — задаёт
+           тип прямого курсора для ресура запроса. Это тип курсора по умолчанию,
+           который поддерживается всеми серверами баз данных.
           </para>
           <para>
-           <constant>DB2_SCROLLABLE</constant> — задать тип
-           курсора как "перематываемый". Данный тип курсора
-           позволяет получать доступ к произвольным строкам
-           результирующего набора и доступен только для
+           <constant>DB2_SCROLLABLE</constant> — задаёт тип
+           прокручиваемого курсора для ресурса запроса. Прокручиваемые курсоры
+           разрешают получать доступ к произвольным строкам
+           результирующего набора, но поддерживаются только базами данных
            IBM DB2 Universal Database.
           </para>
          </listitem>
@@ -83,22 +80,19 @@
          <listitem>
           <para>
            <constant>DB2_BINARY</constant> — указывает, что
-           бинарные данные будут возвращены как есть. Это
-           режим по умолчанию, он равносилен заданию
-           <literal>ibm_db2.binmode=1</literal> в &php.ini;.
+           функция вернёт двоичные как есть. Это эквивалент установки
+           опции конфигурации <literal>ibm_db2.binmode=1</literal> в файле &php.ini;.
           </para>
           <para>
            <constant>DB2_CONVERT</constant> — указывает, что
-           бинарные данные будут сконвертированы в
-           шестнадцатеричное представление. Равносильно
-           установке <literal>ibm_db2.binmode=2</literal> в
-           файле &php.ini;.
+           функция преобразует двоичные
+           в шестнадцатеричное представление и вернёт как есть. Это эквивалент установки
+           опции конфигурации <literal>ibm_db2.binmode=2</literal> в файле &php.ini;.
           </para>
           <para>
            <constant>DB2_PASSTHRU</constant> — указывает, что
-           двоичные данные будут сконвертированы в
-           &null;. Равносильно заданию
-           <literal>ibm_db2.binmode=3</literal> в файле &php.ini;.
+           функция преобразует двоичные в &null;. Это эквивалент установки
+           опции конфигурации <literal>ibm_db2.binmode=3</literal> в файле &php.ini;.
           </para>
          </listitem>
         </varlistentry>
@@ -107,17 +101,17 @@
          <listitem>
           <para>
            <constant>DB2_CASE_LOWER</constant> — определяет,
-           что имена столбцов будут возвращены в нижнем
+           что имена столбцов будут возвращаться в нижнем
            регистре.
           </para>
           <para>
            <constant>DB2_CASE_UPPER</constant> — определяет,
-           что имена столбцов будут возвращены в верхнем
+           что имена столбцов будут возвращаться в верхнем
            регистре.
           </para>
           <para>
            <constant>DB2_CASE_NATURAL</constant> — определяет,
-           что имена столбцов будут возвращены как есть.
+           что имена столбцов будут возвращаться как есть.
           </para>
          </listitem>
         </varlistentry>
@@ -126,36 +120,36 @@
          <listitem>
           <para>
            <constant>DB2_DEFERRED_PREPARE_ON</constant> -
-           включает отложенную подготовку ресурса оператора.
+           включает отложенную подготовку ресурса запроса.
           </para>
           <para>
            <constant>DB2_DEFERRED_PREPARE_OFF</constant> -
-           выключает отложенную подготовку ресурса оператора.
+           выключает отложенную подготовку ресурса запроса.
           </para>
          </listitem>
         </varlistentry>
        </variablelist>
       </para>
       <para>
-       Следующие новые опции i5/OS доступны в ibm_db2 версии
+       Следующие новые опции ОС i5/OS доступны в модуле ibm_db2 версии
        1.5.1 и выше. Эти опции доступны только если PHP и
-       ibm_db2 запущены на системе i5.
+       модуль ibm_db2 запустили на системе i5.
        <variablelist>
         <varlistentry>
          <term><parameter>i5_fetch_only</parameter></term>
          <listitem>
           <para>
            <literal>DB2_I5_FETCH_ON</literal> — курсоры
-           могут быть только для чтения и не могут
+           доступны только для чтения и не могут
            использоваться для позиционирования при
-           DELETE или UPDATE. Является поведением по
-           умолчанию, только если переменная окружения
+           DELETE или UPDATE. Это значение
+           по умолчанию, только если для переменной окружения
            <literal>SQL_ATTR_FOR_FETCH_ONLY</literal>
-           не установлена в <literal>SQL_FALSE</literal>.
+           не установили значение <literal>SQL_FALSE</literal>.
           </para>
           <para>
            <literal>DB2_I5_FETCH_OFF</literal> — курсоры
-           можно использовать для позиционирования при
+           можно использовать для позиционирования при операциях
            DELETE или UPDATE.
           </para>
          </listitem>
@@ -163,23 +157,22 @@
        </variablelist>
       </para>
       <para>
-       Следующие новые опции доступны в ibm_db2 версии
-       1.8.0 и выше.
+       Следующие новые опции доступны в модуле ibm_db2 версии 1.8.0 и выше.
        <variablelist>
         <varlistentry>
          <term><parameter>rowcount</parameter></term>
          <listitem>
           <para>
-           <literal>DB2_ROWCOUNT_PREFETCH_ON</literal> -
+           <literal>DB2_ROWCOUNT_PREFETCH_ON</literal> —
            клиент может запросить количество строк перед
            извлечением, что означает, что функция
-           <function>db2_num_rows</function> возвратит
+           <function>db2_num_rows</function> вернёт
            количество выбранных строк, даже если
            используется курсор
            <literal>ROLLFORWARD_ONLY</literal>.
           </para>
           <para>
-           <literal>DB2_ROWCOUNT_PREFETCH_OFF</literal> -
+           <literal>DB2_ROWCOUNT_PREFETCH_OFF</literal> —
            клиент не может запросить количество строк перед
            извлечением
           </para>
@@ -188,17 +181,16 @@
        </variablelist>
       </para>
       <para>
-       Следующие новые опции доступны в ibm_db2 версии
-       1.7.0 и выше.
+       Следующие новые опции доступны в модуле ibm_db2 версии 1.7.0 и выше.
        <variablelist>
         <varlistentry>
          <term><parameter>trusted_user</parameter></term>
          <listitem>
           <para>
            Для переведения пользователя в статус доверенного
-           пользователя, укажите идентификатор (строка)
-           доверенного пользователя в качестве значения этого
-           параметра. Эта опция может быть задана только
+           пользователя, указывают идентификатор (строку)
+           доверенного пользователя как значение этого
+           параметра. Эту опцию можно задать только
            для ресурса соединения. Для использования этой
            опции необходимо, чтобы для соединения был
            разрешён доверенный контекст.
@@ -209,27 +201,27 @@
          <term><parameter>trusted_password</parameter></term>
          <listitem>
           <para>
-           Пароль (строка), соответствующий идентификатору
-           пользователя, заданному в trusted_user.
+           Пароль (строка), который соответствует идентификатору
+           пользователя, который задали в trusted_user.
           </para>
          </listitem>
         </varlistentry>
        </variablelist>
       </para>
       <para>
-       Следующие новые опции доступны в ibm_db2 версии
+       Следующие новые опции доступны в модуле ibm_db2 версии
        1.6.0 и выше. Эти опции предоставляют полезную
        информацию, которую можно получить через
-       <function>db2_get_option</function>.
+       функцию <function>db2_get_option</function>.
        <note>
         <para>
-         Если значения каждой опции задано, некоторые
-         серверы могут не суметь обработать все значение и
-         обрежут его.
+         Если значения каждой опции задали, отдельные
+         серверы могут не суметь обработать все значение
+         и обрежут его.
         </para>
         <para>
-         Для уверенности в том, что все опции сконвертированы
-         корректно при передаче на хост, используйте только
+         Чтобы убедиться в том, что каждая опция при передаче на хост
+         преобразовалась корректно, используют только
          символы A-Z, 0-9, подчёркивание(_) и точку (.).
         </para>
        </note>
@@ -239,12 +231,12 @@
          <listitem>
           <para>
            <literal>SQL_ATTR_INFO_USERID</literal> — указатель
-           на символьную строку, кончающуюся null-байтом и
-           содержащую идентификатор пользователя, переданный
+           на символьную строку, которая заканчивается null-байтом
+           и содержит идентификатор пользователя, который передали
            базе данный при соединении.
            <note>
             <para>
-             DB2 для серверов z/OS и OS/390 поддерживает
+             БД DB2 для серверов z/OS и OS/390 поддерживает
              длину вплоть до 16 символов. Идентификатор
              пользователя никак не скомпрометирует
              идентификатор авторизации — это разные сущности.
@@ -264,7 +256,7 @@
            соединении.
            <note>
             <para>
-             DB2 для серверов z/OS и OS/390 поддерживает
+             БД DB2 для серверов z/OS и OS/390 поддерживает
              длину вплоть до 200 символов.
             </para>
            </note>
@@ -282,7 +274,7 @@
            на сервер при соединении.
            <note>
             <para>
-             DB2 для серверов z/OS и OS/390 поддерживает
+             БД DB2 для серверов z/OS и OS/390 поддерживает
              длину вплоть до 32 символов.
             </para>
            </note>
@@ -300,7 +292,7 @@
            на сервер при соединении.
            <note>
             <para>
-             DB2 для серверов z/OS и OS/390 поддерживает
+             БД DB2 для серверов z/OS и OS/390 поддерживает
              длину вплоть до 18 символов.
             </para>
            </note>
@@ -315,15 +307,15 @@
      <term><parameter>type</parameter></term>
      <listitem>
       <para>
-       Целочисленное значение, определяющее тип ресурса,
-       который был передан в функцию.
+       Целочисленное значение, которое определяет тип ресурса,
+       который передали в функцию.
       </para>
       <para>
        <literal>1</literal> — передан ресурс соединения.
       </para>
       <para>
-       Любое другое значение, отличное от <literal>1</literal>
-       означает ресурс оператора.
+       Значение, которое отличается от <literal>1</literal>,
+       означает ресурс запроса.
       </para>
      </listitem>
     </varlistentry>
@@ -332,8 +324,7 @@
   <para>
   </para>
   <para>
-   Следующая таблица показывает, какие параметры совместимы
-   с какими ресурсами:
+   Следующая таблица показывает совместимость параметров с ресурсами:
    <table>
     <title>Матрица ресурс/параметр</title>
     <tgroup cols="5">
@@ -531,10 +522,11 @@
   <para>
 
    <example>
-    <title>Установка одного параметра для ресурса соединения</title>
+    <title>Пример установки одного параметра для ресурса соединения</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -558,14 +550,12 @@ $options = array('autocommit' => DB2_AUTOCOMMIT_ON);
 $result = db2_set_option($conn, $options, 1);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -574,10 +564,11 @@ else
      </example>
 
      <example>
-      <title>Установка нескольких параметров для ресурса соединения</title>
+      <title>Пример установки набора параметров для ресурса соединения</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -595,23 +586,23 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('autocommit' => DB2_AUTOCOMMIT_OFF,
-                    'binmode' => DB2_PASSTHRU,
-              'db2_attr_case' => DB2_CASE_UPPER,
-                     'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'autocommit' => DB2_AUTOCOMMIT_OFF,
+    'binmode' => DB2_PASSTHRU,
+    'db2_attr_case' => DB2_CASE_UPPER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 /* Вызываем функцию */
 $result = db2_set_option($conn, $options, 1);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if ($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -621,10 +612,11 @@ else
 
      <!-- Behaves Incorrectly -->
      <example>
-      <title>Установка нескольких параметров с одним некорректным ключом</title>
+      <title>Пример установки набора параметров с одним некорректным ключом</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -642,23 +634,23 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('autocommit' => DB2_AUTOCOMMIT_OFF,
-             'MY_INVALID_KEY' => DB2_PASSTHRU,
-              'db2_attr_case' => DB2_CASE_UPPER,
-                     'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'autocommit' => DB2_AUTOCOMMIT_OFF,
+    'MY_INVALID_KEY' => DB2_PASSTHRU,
+    'db2_attr_case' => DB2_CASE_UPPER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 /* Вызываем функцию */
 $result = db2_set_option($conn, $options, 1);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if ($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -668,10 +660,11 @@ else
 
      <!-- Behaves Incorrectly -->
      <example>
-      <title>Установка нескольких параметров с одним некорректным значением</title>
+      <title>Пример установки набора параметров с одним некорректным значением</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -689,23 +682,23 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('autocommit' => DB2_AUTOCOMMIT_OFF,
-                    'binmode' => 'INVALID_VALUE',
-              'db2_attr_case' => DB2_CASE_UPPER,
-                     'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'autocommit' => DB2_AUTOCOMMIT_OFF,
+    'binmode' => 'INVALID_VALUE',
+    'db2_attr_case' => DB2_CASE_UPPER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 /* Вызываем функцию */
 $result = db2_set_option($conn, $options, 1);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if ($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -714,10 +707,11 @@ else
      </example>
 
      <example>
-      <title>Setting multiple parameters with a connection resource and the wrong type</title>
+      <title>Пример установки набора параметров с ресурсом подключения и неправильным типом</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -735,23 +729,23 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('autocommit' => DB2_AUTOCOMMIT_OFF,
-                    'binmode' => DB2_PASSTHRU,
-              'db2_attr_case' => DB2_CASE_UPPER,
-                     'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'autocommit' => DB2_AUTOCOMMIT_OFF,
+    'binmode' => DB2_PASSTHRU,
+    'db2_attr_case' => DB2_CASE_UPPER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 /* Вызываем функцию */
 $result = db2_set_option($conn, $options, 2);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if ($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -760,10 +754,11 @@ else
      </example>
 
      <example>
-      <title>Setting multiple parameters with the wrong resource</title>
+      <title>Пример установки набора параметров с неправильным ресурсом</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -781,10 +776,12 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('autocommit' => DB2_AUTOCOMMIT_OFF,
-                    'binmode' => DB2_PASSTHRU,
-              'db2_attr_case' => DB2_CASE_UPPER,
-                     'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'autocommit' => DB2_AUTOCOMMIT_OFF,
+    'binmode' => DB2_PASSTHRU,
+    'db2_attr_case' => DB2_CASE_UPPER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 $stmt = db2_prepare($conn, 'SELECT * FROM EMPLOYEE');
 
@@ -792,14 +789,12 @@ $stmt = db2_prepare($conn, 'SELECT * FROM EMPLOYEE');
 $result = db2_set_option($stmt, $options, 1);
 
 /* Проверяем, все ли опции установились */
-if($result)
-{
-  echo 'Options Set Successfully';
+if ($result) {
+    echo 'Options Set Successfully';
+} else {
+    echo 'Could Not Set Options';
 }
-else
-{
-  echo 'Could Not Set Options';
-}
+
 ?>
 ]]>
        </programlisting>
@@ -808,10 +803,11 @@ else
      </example>
 
      <example>
-      <title>Putting it all together</title>
+      <title>Пример сборки всего этого вместе</title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Параметры соединения с базой данных */
 $database = 'SAMPLE';
 $hostname = 'localhost';
@@ -829,8 +825,10 @@ $conn_string .= "UID=$username;PWD=$password;";
 $conn = db2_connect($conn_string, '', '');
 
 /* Создаём ассоциативный массив опций */
-$options = array('db2_attr_case' => DB2_CASE_LOWER,
-                        'cursor' => DB2_SCROLLABLE);
+$options = array(
+    'db2_attr_case' => DB2_CASE_LOWER,
+    'cursor' => DB2_SCROLLABLE
+);
 
 $stmt = db2_prepare($conn, 'SELECT * FROM EMPLOYEE WHERE EMPNO = ? OR EMPNO = ?');
 
@@ -884,21 +882,26 @@ Array
 )]]></screen>
      </example>
      <example>
-      <title>Курсор i5/OS только для чтения</title>
+      <title>Пример курсора ОС i5/OS только для чтения</title>
       <programlisting role="php">
 <![CDATA[
 <?php
-  $conn = db2_connect("", "", "", array("i5_lib"=>"nobody"));
-  $stmt = db2_prepare($conn, 'select * from names where first = ?');
-  $name = "first2";
-  db2_bind_param($stmt, 1, "name", DB2_PARAM_IN);
-  $options = array("i5_fetch_only"=>DB2_I5_FETCH_ON);
-  db2_set_option($stmt,$options,0);
-  if (db2_execute($stmt)) {
+$conn = db2_connect("", "", "", array("i5_lib" => "nobody"));
+$stmt = db2_prepare($conn, 'select * from names where first = ?');
+$name = "first2";
+
+db2_bind_param($stmt, 1, "name", DB2_PARAM_IN);
+
+$options = array("i5_fetch_only" => DB2_I5_FETCH_ON);
+
+db2_set_option($stmt, $options, 0);
+
+if (db2_execute($stmt)) {
     while ($row = db2_fetch_array($stmt)) {
-      echo "{$row[0]} {$row[1]}";
+        echo "{$row[0]} {$row[1]}";
     }
-  }
+}
+
 ?>
 ]]>
        </programlisting>
