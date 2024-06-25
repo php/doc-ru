@@ -14,7 +14,7 @@
    <methodparam><type>resource</type><parameter>stream</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Проверяет, достигнут ли конец файла.
+   Функция проверяет, наступило ли событие EOF в указателе на файл.
   </para>
  </refsect1>
 
@@ -35,8 +35,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если указатель файла указывает на EOF или
-   произошла ошибка (в том числе превышено время ожидания сокета), иначе возвращает &false;.
+   Функция возвращает &true;, если для файлового указателя наступило событие EOF
+   или возникла ошибка (включая превышение времени ожидания сокета), иначе возвращает &false;.
   </para>
  </refsect1>
 
@@ -44,29 +44,31 @@
   &reftitle.notes;
   <warning>
    <para>
-    Если подключение, открытое при помощи <function>fsockopen</function>,
-    не было закрыто сервером, <function>feof</function> повиснет.
-    Для варианта обхода этого поведения смотрите следующий пример:
+    Если сервер не закрыл подключение, открытое функцией <function>fsockopen</function>,
+    функция <function>feof</function> зависнет.
+    Следующий пример показывает, как этого избежать:
     <example>
      <title>Обработка времени ожидания с функцией <function>feof</function></title>
      <programlisting role="php">
 <![CDATA[
 <?php
-function safe_feof($fp, &$start = NULL) {
- $start = microtime(true);
 
- return feof($fp);
+function safe_feof($fp, &$start = NULL)
+{
+    $start = microtime(true);
+
+    return feof($fp);
 }
 
-/* Предположим, что $fp был ранее открыт с помощью fsockopen() */
+/* Предположим, что файловый указатель $fp уже открыли функцией fsockopen() */
 
 $start = NULL;
 $timeout = ini_get('default_socket_timeout');
 
-while(!safe_feof($fp, $start) && (microtime(true) - $start) < $timeout)
-{
- /* Обработка */
+while (!safe_feof($fp, $start) && (microtime(true) - $start) < $timeout) {
+    /* Обработка */
 }
+
 ?>
 ]]>
      </programlisting>
@@ -75,22 +77,24 @@ while(!safe_feof($fp, $start) && (microtime(true) - $start) < $timeout)
   </warning>
   <warning>
    <para>
-    Если передан неверный файловый указатель, то вы можете получить
-    бесконечный цикл, так как <function>feof</function> не сможет
+    Если передан неверный файловый указатель, можно получить
+    бесконечный цикл, поскольку функция <function>feof</function> не сможет
     вернуть &true;.
     <example>
-     <title>Пример <function>feof</function> с неверным файловым указателем</title>
+     <title>Пример поведения функции <function>feof</function> с неверным файловым указателем</title>
      <programlisting role="php">
 <![CDATA[
 <?php
-// если файл не может быть прочтён или не существует, fopen вернёт FALSE
+
+// Если функция не может прочитать файл или файл не существует, функция fopen вернёт FALSE
 $file = @fopen("no_such_file", "r");
 
-// FALSE от fopen вызовет предупреждение и следующий цикл станет бесконечным
+// Значение FALSE, которое вернула функция fopen, вызовет предупреждение и следующий цикл станет бесконечным
 while (!feof($file)) {
 }
 
 fclose($file);
+
 ?>
 ]]>
      </programlisting>
