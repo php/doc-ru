@@ -4,8 +4,7 @@
 <refentry xml:id="function.socket-getpeername" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>socket_getpeername</refname>
-  <refpurpose>Запрашивает удалённую сторону указанного сокета, в результате может быть
-   возвращён хост/порт или путь в файловой системе Unix, в зависимости от типа сокета</refpurpose>
+  <refpurpose>Опрашивает удалённую сторону сокета</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,8 +16,8 @@
    <methodparam choice="opt"><type>int</type><parameter role="reference">port</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Запрашивает удалённую сторону указанного сокета, в результате может быть возвращён
-   хост/порт или путь в файловой системе Unix, в зависимости от типа сокета.
+   Функция отправляет запрос удалённой стороне заданного сокета, которая возвращает
+   либо хост и порт, либо путь в файловой системе Unix, в зависимости от типа сокета.
   </para>
  </refsect1>
 
@@ -30,7 +29,7 @@
      <term><parameter>socket</parameter></term>
      <listitem>
       <para>
-       Экземпляр <classname>Socket</classname>, созданный при помощи функции
+       Экземпляр <classname>Socket</classname>, который создали функциями
        <function>socket_create</function> или <function>socket_accept</function>.
       </para>
      </listitem>
@@ -39,18 +38,18 @@
      <term><parameter>address</parameter></term>
      <listitem>
       <para>
-       Если заданный сокет имеет тип <constant>AF_INET</constant> или
-       <constant>AF_INET6</constant>, <function>socket_getpeername</function>
-       вернёт удалённый <emphasis>IP-адрес</emphasis> в соответствующем формате (
-       например, <literal>127.0.0.1</literal> или <literal>fe80::1</literal>) в параметре
-       <parameter>address</parameter> и, если необязательный параметр
-       <parameter>port</parameter> присутствует, также связанный порт.
+       Если тип сокета <constant>AF_INET</constant> или <constant>AF_INET6</constant>:
+       функция <function>socket_getpeername</function>
+       заполнит параметр <parameter>address</parameter>
+       значением <emphasis>IP-адреса</emphasis> одноранговых (удалённых) узлов в нотации, которая
+       соответствует версии протокола — <literal>127.0.0.1</literal> или <literal>fe80::1</literal>.
+       Функция также вернёт порт, который связан с адресом, если указали необязательный параметр <parameter>port</parameter>.
       </para>
       <para>
-       Если заданный сокет имеет тип <constant>AF_UNIX</constant>,
-       <function>socket_getpeername</function> вернёт путь в файловой системе Unix
-       (т.е. <literal>/var/run/daemon.sock</literal>) в параметр
-       <parameter>address</parameter>.
+       Если тип сокета <constant>AF_UNIX</constant>:
+       функция <function>socket_getpeername</function> заполнит параметр
+       <parameter>address</parameter> значением пути в файловой системе Unix.
+       Например: <literal>/var/run/daemon.sock</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -58,8 +57,8 @@
      <term><parameter>port</parameter></term>
      <listitem>
       <para>
-       Если указан, то будет содержать порт, связанный с адресом
-       <parameter>address</parameter>.
+       Функция заполнит параметр номером порта, который связан параметром <parameter>address</parameter>,
+       если порт указали.
       </para>
      </listitem>
     </varlistentry>
@@ -70,10 +69,10 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success; <function>socket_getpeername</function> также может вернуть
-   &false;, если сокет иметь тип отличный от <constant>AF_INET</constant>,
-   <constant>AF_INET6</constant> или <constant>AF_UNIX</constant>, в этом случае
-   код последней ошибки сокета <emphasis>НЕ</emphasis> будет обновлён.
+   &return.success; Функция <function>socket_getpeername</function> также может вернуть
+   &false;, если тип сокета не совпадает со значениями <constant>AF_INET</constant>,
+   <constant>AF_INET6</constant> или <constant>AF_UNIX</constant>;
+   код последней ошибки сокета <emphasis>не</emphasis> обновляется, если возник такой случай.
   </para>
  </refsect1>
 
@@ -98,17 +97,16 @@
   &reftitle.notes;
   <note>
    <para>
-    <function>socket_getpeername</function> не должна быть использована с сокетами
-    <constant>AF_UNIX</constant>, созданными при помощи функции <function>socket_accept</function>.
-    Только сокеты, созданные при помощи <function>socket_connect</function> или серверный
-    сокет, к которому применён вызов функции <function>socket_bind</function>, будут
-    возвращать осмысленные значения.
+    Функцию <function>socket_getpeername</function> не следует вызывать
+    с <constant>AF_UNIX</constant>-сокетами, которые создали функцией <function>socket_accept</function>.
+    Возвращать осмысленные значения будут только сокеты, которые создали функцией <function>socket_connect</function>
+    или сокет основного сервера после вызова функции <function>socket_bind</function>.
    </para>
   </note>
   <note>
    <para>
-    Для того, чтобы <function>socket_getpeername</function> вернула осмысленное значение,
-    сокет, к которому она применяется, должен понимать концепцию "равных отношений" (peer).
+    Функция <function>socket_getpeername</function> возвращает осмысленное значение
+    только для тех сокетов, для которых концепция «одноранговых отношений» имеет смысл.
    </para>
   </note>
  </refsect1>
