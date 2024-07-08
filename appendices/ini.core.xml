@@ -487,7 +487,7 @@
    </table>
    <note>
     <para>
-     Использование <link linkend="ini.open-basedir">open_basedir</link>
+     Директива <link linkend="ini.open-basedir">open_basedir</link>
      <emphasis>отключит</emphasis> кеш realpath.
     </para>
    </note>
@@ -1218,74 +1218,71 @@ include_path = ".:${USER}/pear/php"
      </term>
      <listitem>
       <para>
-       Ограничивает указанным деревом каталогов файлы, которые могут быть доступны для
-       PHP, включая сам файл.
+       Ограничивает для PHP доступ к файлам деревом каталогов,
+       включая сам файл.
       </para>
       <para>
-       Когда скрипт пытается получить доступ к файлу, например, с помощью функции
-       <function>fopen</function> или <function>gzopen</function>,
-       проверяется местонахождение файла. Если файл находится вне указанного
-       дерева каталогов, PHP откажется его открывать. Все символические
-       ссылки будут раскрыты, так что с их помощью не удастся обойти это
-       ограничение. Если файл не существует, то символическая ссылка не сможет
-       быть прочитана и имя файла (прочитанное) будет рассматриваться
-       <option>open_basedir</option>.
+       Когда скрипт пытается получить доступ к файловой системе, например через
+       выражение <function>include</function> или функцию <function>fopen</function>,
+       PHP проверяет расположение файла. PHP откажется получать доступ к файлу, когда
+       файл лежит за пределами дерева каталогов. PHP разрешит каждую символическую
+       ссылку, поэтому невозможно обойти ограничение через символическую ссылку.
+       Символическая ссылка не разрешится, если файл не существует, а PHP будет сравнивать имя файла
+       с разрешённым путём <option>open_basedir</option>.
       </para>
       <para>
-       Опция <option>open_basedir</option> может распространяться не только на функции для
-       работы с файловой системой; например, если <literal>MySQL</literal> настроен
-       использовать драйвер <literal>mysqlnd</literal>, то <literal>LOAD DATA INFILE</literal>
-       подпадает под опцию <option>open_basedir</option>.
-       Множество функций PHP также использует <literal>open_basedir</literal>.
+       Опция <option>open_basedir</option> влияет не только на функции
+       для работы с файловой системой; например, если СУБД <literal>MySQL</literal> настроена
+       на работу с драйвером <literal>mysqlnd</literal>, директива <option>open_basedir</option>
+       будет влиять на работу инструкции <literal>LOAD DATA INFILE</literal>.
+       Большая часть расширенной функциональности PHP пользуется директивой <literal>open_basedir</literal>
+       таким способом.
       </para>
       <para>
-       Специальное значение <systemitem class="filesystem">.</systemitem>
-       обозначает, что рабочая директория скрипта будет использована в качестве
-       базовой директории. Однако, это немного опасно, так как текущая директория
-       скрипта может быть легко изменена с помощью <function>chdir</function>.
+       Символ точки <systemitem class="filesystem">.</systemitem> указывает,
+       что PHP будет использовать рабочий каталог скрипта
+       как базовую директорию. Однако это снижает безопасность, поскольку рабочую директорию
+       скрипта легко изменить функцией <function>chdir</function>.
       </para>
       <para>
-       В <filename>httpd.conf</filename>, <option>open_basedir</option> может быть
-       выключена (например, для некоторых виртуальных хостов)
-       <link linkend="configuration.changes.apache">тем же способом</link>, что и любая
-       другая конфигурационная директива: "<literal>php_admin_value open_basedir
-       none</literal>".
+       В файле <filename>httpd.conf</filename> директиву <option>open_basedir</option> можно
+       <link linkend="configuration.changes.apache">отключить</link> (например, для отдельных виртуальных хостов)
+       как и другие конфигурационные директивы: «<literal>php_admin_value open_basedir
+       none</literal>».
       </para>
       <para>
-       В Windows разделяйте директории точкой с запятой. На всех остальных системах,
-       разделяйте директории двоеточием. При работе в качестве модуля Apache, пути
-       <option>open_basedir</option> автоматически наследуются от родительских директорий.
+       В системах под управлением ОС Windows каталоги разделяют точкой с запятой. В остальных системах
+       директории разделяют двоеточием. Когда PHP работает как модуль веб-сервера Apache, пути
+       директивы <option>open_basedir</option> из родительских каталогов теперь автоматически наследуются.
       </para>
       <para>
-       Ограничение, определяемое <option>open_basedir</option> является
-       именем директории, а не префиксом.
+       Ограничение, которое устанавливает директива <option>open_basedir</option>, —
+       имя каталога, а не префикс.
       </para>
       <para>
-       По умолчанию все файлы могут быть открыты.
+       По умолчанию разрешается открывать все файлы.
       </para>
       <note>
        <para>
-        Значение open_basedir можно сделать
-        более строгим во время выполнения скрипта. Это означает, что если
-        open_basedir была установлена в <literal>/www/</literal> в &php.ini;,
-        то скрипт может ужать конфигурацию до
-        <literal>/www/tmp/</literal> во время выполнения с помощью
-        <function>ini_set</function>. При указании нескольких директорий
-        можно использовать константу <constant>PATH_SEPARATOR</constant>
-        в качестве разделителя путей, не зависящего от операционной системы.
+        Значение директивы open_basedir можно сузить во время выполнения скрипта. Это означает, что если
+        в файле &php.ini; для директивы open_basedir установили значение <literal>/www/</literal>,
+        скрипт может сузить конфигурацию директивы до каталога <literal>/www/tmp/</literal> через функцию
+        <function>ini_set</function>. При перечислении ряда каталогов
+        константу <constant>PATH_SEPARATOR</constant> указывают как разделитель путей,
+        который не зависит от операционной системы.
        </para>
       </note>
       <note>
        <para>
-        Использование опции open_basedir установит <link linkend="ini.realpath-cache-size">realpath_cache_size</link>
-        на значение <literal>0</literal> и таким образом <emphasis>отключит</emphasis> кеш realpath.
+        Директива open_basedir установит для директивы <link linkend="ini.realpath-cache-size">realpath_cache_size</link>
+        значение <literal>0</literal>, которое <emphasis>отключит</emphasis> realpath-кеш.
        </para>
       </note>
       <caution>
         <para>
-         <literal>open_basedir</literal> - это просто дополнительная подстраховка,
-         которая никоим образом не является всеобъемлющей
-         и поэтому на неё нельзя полагаться, когда речь идёт о безопасности.
+         Опция конфигурации <literal>open_basedir</literal> — просто дополнительная подстраховка,
+         которая не претендует всесторонность,
+         и поэтому на директиву нельзя полагаться, когда дело касается безопасности.
         </para>
        </caution>
      </listitem>
