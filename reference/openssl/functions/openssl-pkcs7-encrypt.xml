@@ -4,7 +4,7 @@
 <refentry xml:id="function.openssl-pkcs7-encrypt" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>openssl_pkcs7_encrypt</refname>
-  <refpurpose>Шифрует сообщение S/MIME</refpurpose>
+  <refpurpose>Шифрует сообщение по стандарту S/MIME</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,10 +19,10 @@
    <methodparam choice="opt"><type>int</type><parameter>cipher_algo</parameter><initializer><constant>OPENSSL_CIPHER_AES_128_CBC</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>openssl_pkcs7_encrypt</function> читает сообщение из файла
-   <parameter>input_filename</parameter>, шифрует его с помощью 40-битного RC2
-   шифра таким образом, что расшифровать его могут только получатели,
-   указанными в <parameter>certificate</parameter>.
+   Функция <function>openssl_pkcs7_encrypt</function> принимает содержимое файла,
+   название которого указали в параметре <parameter>input_filename</parameter>,
+   и шифрует файл 40-битным шифром RC2, чтобы прочитать файл могли только конкретные получатели,
+   которых указали в сертификате <parameter>certificate</parameter>.
   </para>
  </refsect1>
 
@@ -48,7 +48,7 @@
      <term><parameter>certificate</parameter></term>
      <listitem>
       <para>
-       Массив, либо единичный сертификат X.509.
+       Отдельный сертификат в формате X.509 или массив X.509-сертификатов.
       </para>
      </listitem>
     </varlistentry>
@@ -56,13 +56,13 @@
      <term><parameter>headers</parameter></term>
      <listitem>
       <para>
-       <parameter>headers</parameter> задаётся массивом заголовков,
-       которые будут добавлены в начало сообщения перед шифрованием.
+       Параметр <parameter>headers</parameter> — массив заголовков,
+       которые функция добавит в начало сообщения, которое уже зашифровала.
       </para>
       <para>
-       <parameter>headers</parameter> может быть как ассоциативным массивом,
-       где в качестве ключей используются имена заголовков, либо индексированным
-       массивом, содержащим полные строки заголовков.
+       Заголовки <parameter>headers</parameter> — ассоциативный массив,
+       в котором ключи — имена заголовков, или индексный
+       массив, в котором каждый элемент содержит одну строку заголовка.
       </para>
      </listitem>
     </varlistentry>
@@ -70,8 +70,9 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       <parameter>flags</parameter> используется для настройки процесса шифрования.
-       Смотрите <link linkend="openssl.pkcs7.flags">Константы PKCS7</link>.
+       В необязательном параметре <parameter>flags</parameter> указывают опции, которые
+       влияют на процесс кодирования. Список и описание флагов приводит
+       раздел «<link linkend="openssl.pkcs7.flags">Константы-флаги структур PKCS7</link>».
       </para>
      </listitem>
     </varlistentry>
@@ -79,7 +80,7 @@
      <term><parameter>cipher_algo</parameter></term>
      <listitem>
       <para>
-       Одна из <link linkend="openssl.ciphers">констант шифров</link>.
+       <link linkend="openssl.ciphers">Флаг шифра</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -108,15 +109,16 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Алгоритм шифрования по умолчанию (<parameter>cipher_algo</parameter>) теперь AES-128-CBC (<constant>OPENSSL_CIPHER_AES_128_CBC</constant>).
-       Ранее использовался алгоритм PKCS7/CMS (<constant>OPENSSL_CIPHER_RC2_40</constant>).
+       Алгоритмом шифрования по умолчанию, который принимает параметр <parameter>cipher_algo</parameter>,
+       стал AES-128-CBC — флаг <constant>OPENSSL_CIPHER_AES_128_CBC</constant>.
+       Раньше алгоритмом по умолчанию был PKCS7/CMS — флаг <constant>OPENSSL_CIPHER_RC2_40</constant>.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>certificate</parameter> теперь принимает экземпляр <classname>OpenSSLCertificate</classname>;
-       ранее принимался ресурс (&resource;) типа <literal>OpenSSL X.509 CSR</literal>.
+       Параметр <parameter>certificate</parameter> теперь принимает экземпляр класса <classname>OpenSSLCertificate</classname>;
+       раньше принимался ресурс (&resource;), который принадлежал типу <literal>OpenSSL X.509 CSR</literal>.
       </entry>
      </row>
     </tbody>
@@ -128,41 +130,50 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>openssl_pkcs7_encrypt</function></title>
+    <title>Пример использования функции <function>openssl_pkcs7_encrypt</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Сообщение, которое вы хотите зашифровать и отправить своему секретному
-// агенту с позывным Козодой. У вас есть его сертификат в файле nighthawk.pem
+
+// Сообщение, которое требуется зашифровать и отправить секретному
+// агенту с позывным «Козодой». На локальной машинке отправителя в файле nighthawk.pem лежит сертификат получателя
 $data = <<<EOD
 Козодой,
 
-Совершенно секретно! После прочтения сжечь!
+Совершенно секретно! После прочтения — сжечь!
 
 Враги приближаются! Связной с новым поддельным паспортом
-будет ждать тебя завтра в кафе в 8.30 утра.
+будет ждать тебя завтра в кафе в 8:30 по московскому времени.
 
-Пароль - "У вас ус отклеился!"
-Отзыв - "Это не ус, а борода!"
+Пароль: «У вас ус отклеился!»
+Отзыв: «Это не ус, а борода!»
 
 EOD;
 
-// загружаем ключ
+// Загружаем ключ
 $key = file_get_contents("nighthawk.pem");
 
-// записываем сообщение в файл
+// Записываем сообщение в файл
 $fp = fopen("msg.txt", "w");
 fwrite($fp, $data);
 fclose($fp);
 
-// шифруем
-if (openssl_pkcs7_encrypt("msg.txt", "enc.txt", $key,
-    array("To" => "nighthawk@example.com", // ассоциативный синтаксис
-          "From: HQ <hq@example.com>", // индексированный синтаксис
-          "Subject" => "СРОЧНО!!! ВАЖНО!!!"))) {
-    // сообщение зашифровано - отправляем!!
+// Шифруем сообщение
+if (openssl_pkcs7_encrypt(
+    "msg.txt",
+    "enc.txt",
+    $key,
+    array(
+        "To" => "nighthawk@example.com", // Ассоциативный синтаксис
+        "From: HQ <hq@example.com>", // Индексный синтаксис
+        "Subject" => "Срочно! Важно!"
+    )
+)) {
+    // Сообщение зашифровано, отправляем!
     exec(ini_get("sendmail_path") . " < enc.txt");
 }
+
+
 ?>
 ]]>
     </programlisting>
