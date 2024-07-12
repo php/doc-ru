@@ -20,9 +20,10 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>untrusted_certificates_filename</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>openssl_pkcs7_sign</function> берёт содержимое файла
-   <parameter>input_filename</parameter> и подписывает его с сертификатом
-   <parameter>certificate</parameter> и закрытым ключом <parameter>private_key</parameter>.
+   Функция <function>openssl_pkcs7_sign</function> принимает содержимое файла,
+   название которого указали в параметре <parameter>input_filename</parameter>,
+   а затем подписывает файл сертификатом <parameter>certificate</parameter> и закрытым ключом <parameter>private_key</parameter>,
+   который соответствует сертификату.
   </para>
  </refsect1>
 
@@ -34,7 +35,7 @@
      <term><parameter>input_filename</parameter></term>
      <listitem>
       <para>
-       Файл, который нужно подписать.
+       Файл, который требуется подписать цифровой подписью.
       </para>
      </listitem>
     </varlistentry>
@@ -50,8 +51,8 @@
      <term><parameter>certificate</parameter></term>
      <listitem>
       <para>
-       Сертификат X.509, которым подпишут файл <parameter>input_filename</parameter>.
-       Смотрите <link linkend="openssl.certparams">параметры ключа и сертификата</link>.
+       Сертификат в формате X.509, которым функци подпишет файл <parameter>input_filename</parameter>.
+       Список допустимых значений приводит раздел «<link linkend="openssl.certparams">Параметры ключа и сертификата</link>».
       </para>
      </listitem>
     </varlistentry>
@@ -59,9 +60,9 @@
      <term><parameter>private_key</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>private_key</parameter> задаётся секретным ключом, который соответствует
+       Параметр <parameter>private_key</parameter> — закрытый ключ, который соответствует
        сертификату (<parameter>certificate</parameter>).
-       Смотрите <link linkend="openssl.certparams">параметры открытого и секретного ключа</link>.
+       Список допустимых значений приводит параграф «<link linkend="openssl.certparams">Параметры открытого и закрытого ключа</link>».
       </para>
      </listitem>
     </varlistentry>
@@ -69,10 +70,10 @@
      <term><parameter>headers</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>headers</parameter> задаётся массивом заголовков,
+       Параметр <parameter>headers</parameter> — массив заголовков,
        которые функция добавит в начало данных после подписания (описание
        функции <function>openssl_pkcs7_encrypt</function>
-       даёт дополнительную информацию о формате этого параметра).
+       даёт дополнительную информацию о формате параметра).
       </para>
      </listitem>
     </varlistentry>
@@ -80,8 +81,8 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>flags</parameter> настраивает вывод. Смотрите <link
-       linkend="openssl.pkcs7.flags">константы PKCS7</link>.
+       Параметр <parameter>flags</parameter> настраивает вывод. Смотрите раздел «<link
+       linkend="openssl.pkcs7.flags">Константы-флаги структур PKCS7</link>».
       </para>
      </listitem>
     </varlistentry>
@@ -89,9 +90,10 @@
      <term><parameter>untrusted_certificates_filename</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>untrusted_certificates_filename</parameter> может содержать имя файла,
-       в котором хранятся дополнительные сертификаты для добавления
-       к подписи, например для облегчения верификации подписи разными пользователями.
+       Параметр <parameter>untrusted_certificates_filename</parameter> указывает имя файла,
+       который содержит набор дополнительных сертификатов для добавления
+       к подписи. Например: дополнительные сертификаты передают, чтобы помочь получателю
+       проверить сертификат отправителя.
       </para>
      </listitem>
     </varlistentry>
@@ -120,16 +122,17 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>certificate</parameter> теперь принимает экземпляр <classname>OpenSSLCertificate</classname>;
-       раньше принимался ресурс (&resource;) типа <literal>OpenSSL X.509 CSR</literal>.
+       Параметр <parameter>certificate</parameter> теперь принимает экземпляр класса <classname>OpenSSLCertificate</classname>;
+       раньше принимался ресурс (&resource;), который принадлежит типу <literal>OpenSSL X.509 CSR</literal>.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>private_key</parameter> теперь принимает экземпляр <classname>OpenSSLAsymmetricKey</classname>
+       Параметр <parameter>private_key</parameter> теперь принимает экземпляр класса <classname>OpenSSLAsymmetricKey</classname>
        или <classname>OpenSSLCertificate</classname>;
-       раньше принимался ресурс (&resource;) типа <literal>OpenSSL key</literal> or <literal>OpenSSL X.509 CSR</literal>.
+       раньше принимался ресурс (&resource;), который принадлежит типу <literal>OpenSSL key</literal>
+       или <literal>OpenSSL X.509 CSR</literal>.
       </entry>
      </row>
     </tbody>
@@ -150,7 +153,7 @@
 // проверить отправителя
 $data = <<<EOD
 
-Разрешаю потратить на обед с контрагентом не более 100 000 рублей.
+Разрешаю потратить на обед с контрагентом не более 100 000 ₽.
 
 Ваш директор.
 EOD;
@@ -161,12 +164,18 @@ fwrite($fp, $data);
 fclose($fp);
 
 // Шифруем
-if (openssl_pkcs7_sign("msg.txt", "signed.txt", "file://mycert.pem",
+if (openssl_pkcs7_sign(
+    "msg.txt",
+    "signed.txt",
+    "file://mycert.pem",
     array("file://mycert.pem", "mypassphrase"),
-    array("To" => "joes@example.com", // ассоциативный синтаксис
-          "From: HQ <ceo@example.com>", // индексированный синтаксис
-          "Subject" => "Представительские расходы")
-    )) {
+    array(
+        "To" => "joes@example.com", // Ассоциативный синтаксис
+        "From: HQ <ceo@example.com>", // Индексный синтаксис
+        "Subject" => "Представительские расходы"
+    )
+)) {
+
     // Сообщение подписано, — отправляем!
     exec(ini_get("sendmail_path") . " < signed.txt");
 }
