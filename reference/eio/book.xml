@@ -10,9 +10,9 @@
  <preface xml:id="intro.eio">
   &reftitle.intro;
   <para>
-   Модуль реализует подсистему ввода-вывода POSIX I/O средств <link
-   xlink:href="&url.eio.libeio;">libeio</link> Библиотека C
-   Написана Марком Леманном (Marc Lehmann).
+   Модуль реализует подсистему асинхронного ввода-вывода интерфейса POSIX
+   через библиотеку <link xlink:href="&url.eio.libeio;">libeio</link> языка C,
+   которую написал Марк Леманн (Marc Lehmann).
   </para>
 
   &note.no-windows.extension;
@@ -21,9 +21,9 @@
 
   <warning>
   <simpara>
-  Следует учесть, что каждый запрос выполняется в отдельном потоке,
-  при этом исполнение запросов непрерывно, а их порядок в очереди исполнения
-  непредсказуем. Например, нижеприведённый пример кода неверен.
+  Важно знать, что каждый запрос выполняется в отдельном потоке,
+  и порядок выполнения запросов постоянной очереди
+  непредсказуем. Например, следующий фрагмент кода неверен.
   </simpara>
   </warning>
 
@@ -31,92 +31,109 @@
   <title>Пример неправильных запросов</title>
   <programlisting role="php"><![CDATA[
 <?php
+
 // Запрос на создание символической ссылки $link на файл $filename
 eio_symlink($filename, $link);
 
 // Запрос на переименование файла $filename в $new_filename
 eio_rename($filename, $new_filename);
 
-// Выполнение запросов
+// Обработка запросов
 eio_event_loop();
+
 ?>
 ]]>
    </programlisting>
    </example>
 
-   В приведённом выше примере запрос <function>eio_rename</function> может быть выполнен
-   перед <function>eio_symlink</function>. Правильным решением будет вызов
-   <function>eio_rename</function> callback-функцией в <function>eio_symlink</function>:
+   В приведённом примере запрос функции <function>eio_rename</function> может завершиться
+   раньше функции <function>eio_symlink</function>. Правильным решением будет вызов
+   функции <function>eio_rename</function> в callback-функции, которую передали
+   в функцию <function>eio_symlink</function>:
   <example>
    <title>Создание запроса с использованием callback-функции</title>
    <programlisting role="php"><![CDATA[
 <?php
-function my_symlink_done($filename, $result) {
- // Запрос на переменование $filename в $new_filename
- eio_rename($filename, "/path/to/new-name");
 
- // Выполнение запросов
- eio_event_loop();
+function my_symlink_done($filename, $result)
+{
+    // Запрос на переменование файла $filename в файл $new_filename
+    eio_rename($filename, "/path/to/new-name");
+
+    // Выполнение запросов
+    eio_event_loop();
 }
 
 // Запрос на создание символической ссылки $link на файл $filename
 eio_symlink($filename, $link, EIO_PRI_DEFAULT, "my_symlink_done", $filename);
 
-// Выполнение запросов
+// Обработка запросов
 eio_event_loop();
+
 ?>
 ]]>
    </programlisting>
   </example>
 
-  Альтернативным решением является создание группы запросов:
+  Альтернативное решение — создать группу запросов:
 
   <example>
-   <title>Создание запроса с использованием callback-функции</title>
+   <title>Пример запроса вызова из callback-функции запроса</title>
    <programlisting role="php"><![CDATA[
 <?php
+
 /* Функция вызывается после выполнения группы запросов */
-function my_grp_done($data, $result) {
- // ...
+function my_grp_done($data, $result)
+{
+    // ...
 }
 
-function my_symlink_done($filename, $result) {
- // Создание запроса eio_rename и добавление его в группу
- $req = eio_rename($filename, "/path/to/new-name");
- eio_grp_add($grp, $req);
- // Возможно, вы захотите добавить больше запросов...
+function my_symlink_done($filename, $result)
+{
+    // Создаём запрос функции eio_rename и добавляем запрос в группу
+    $req = eio_rename($filename, "/path/to/new-name");
+    eio_grp_add($grp, $req);
+    // Возможно, потребуется добавить больше запросов…
 }
 
-// Создание группы запросов
+// Создаём группу запросов
 $grp = eio_grp("my_grp_done", "my_grp_data");
 
-// Создание запроса eio_symlink request и добавление в группу
-// Передача $filename в callback-функцию
-$req = eio_symlink($filename, $link,
-  EIO_PRI_DEFAULT, "my_symlink_done", $filename);
+// Создаём запрос функции eio_symlink и добавляем запрос в группу
+// Передаём переменную $filename в callback-функцию
+$req = eio_symlink(
+    $filename,
+    $link,
+    EIO_PRI_DEFAULT,
+    "my_symlink_done",
+    $filename
+);
 eio_grp_add($grp, $req);
 
-// Выполнение запросов
+// Обрабатываем запросы
 eio_event_loop();
+
 ?>
 ]]></programlisting>
   </example>
 
-  Группа - это специальный вид запроса, позволяющий создать набор обычных
-  <emphasis>eio</emphasis>-запросов. Это может быть использовано для создания
-  сложных запросов, открывающих, читающих и закрывающих файл.
+  Группа — вид запроса, который умеет накапливать набор стандартных
+  <emphasis>eio</emphasis>-запросов. Запросы аккумулируют, чтобы создать
+  сложный запрос, который открывает, читает и закрывает файл.
   </para>
   <para>
-  Начиная с версии 0.3.0 alpha, переменная, используемая для внутреннего
-  взаимодействия с libeio, может быть получена функцией
-  <function>eio_get_event_stream</function>. Переменная может быть использована
-  для привязке к циклу обработки, поставляемого сторонним модулем.
-  Возможно организовать простой цикл обработки, где eio и libevent работают совместно.
+  Начиная с версии 0.3.0 alpha переменную для внутреннего
+  взаимодействия с библиотекой libeio получают функцией
+  <function>eio_get_event_stream</function>. Переменную привязывают
+  к циклу обработки событий, который поддерживают другие модули.
+  Можно было бы организовать простой цикл обработки событий, в котором модуль eio и библиотека libevent работают вместе.
   <example>
-   <title>Использование eio совместно с libevent</title>
+   <title>Пример совместной работы модуля eio и библиотеки libevent</title>
    <programlisting role="php"><![CDATA[
 <?php
-function my_eio_poll($fd, $events, $arg) {
+
+function my_eio_poll($fd, $events, $arg)
+{
     /* Некоторые действия с libevent могут быть здесь */
     if (eio_nreqs()) {
         eio_poll();
@@ -124,8 +141,10 @@ function my_eio_poll($fd, $events, $arg) {
     /* .. и здесь */
 }
 
-function my_res_cb($d, $r) {
-    var_dump($r); var_dump($d);
+function my_res_cb($d, $r)
+{
+    var_dump($r);
+    var_dump($d);
 }
 
 $base = event_base_new();
