@@ -5,7 +5,7 @@
 <refentry xml:id="streamwrapper.stream-seek" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>streamWrapper::stream_seek</refname>
-  <refpurpose>Перемещение на заданную позицию в потоке</refpurpose>
+  <refpurpose>Перемещает положение файлового указателя в потоке</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,11 +16,12 @@
    <methodparam><type>int</type><parameter>whence</parameter> <initializer>SEEK_SET</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Этот метод вызывается в процессе выполнения <function>fseek</function>.
+   Метод вызывается в ответ на функцию <function>fseek</function>.
   </para>
   <para>
-   Позицию чтения/записи в потоке необходимо обновлять в соответствии с
-   аргументами <parameter>offset</parameter> и <parameter>whence</parameter>.
+   Позиция потока, с которой данные будут считываться или записываться в поток,
+   обновляется с учётом смещения <parameter>offset</parameter>
+   и значения параметра <parameter>whence</parameter>, от которого отсчитывается смещение.
   </para>
  </refsect1>
 
@@ -32,7 +33,7 @@
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Смещение в потоке, на которое требуется переместиться.
+       Смещение в потоке, на которое переместится указатель.
       </para>
      </listitem>
     </varlistentry>
@@ -40,27 +41,27 @@
      <term><parameter>whence</parameter></term>
      <listitem>
       <para>
-       Возможные значения:
+       Доступные значения:
        <simplelist>
         <member>
-         <constant>SEEK_SET</constant> - Переместиться на позицию
-         <parameter>offset</parameter> байт от начала файла.
+         <constant>SEEK_SET</constant> — Перемещает указатель в положение,
+         равное количеству байтов смещения <parameter>offset</parameter> от начала файла.
         </member>
         <member>
-         <constant>SEEK_CUR</constant> - Переместиться на
-         <parameter>offset</parameter> байт относительно текущей позиции.
+         <constant>SEEK_CUR</constant> — Перемещает указатель вперёд — в положение,
+         равное количеству байтов смещения <parameter>offset</parameter> от текущей позиции.
         </member>
         <member>
-         <constant>SEEK_END</constant> - Переместиться на позицию
-         <parameter>offset</parameter> байт от конца файла.
+         <constant>SEEK_END</constant> — Перемещает указатель в положение за пределами файла,
+         равное количеству байтов смещения <parameter>offset</parameter> от конца файла.
         </member>
        </simplelist>
       </para>
       <note>
        <simpara>
-        Текущая реализация никогда не устанавливает для <parameter>whence</parameter>
-        значение <constant>SEEK_CUR</constant>; вместо этого такие поиски внутренне преобразуются
-        в поиски <constant>SEEK_SET</constant>.
+        Текущая реализация метода не устанавливает для параметра <parameter>whence</parameter>
+        значение <constant>SEEK_CUR</constant>; вместо перемещения указателя от текущей позиции
+        перемещение внутренне преобразовывается в режим <constant>SEEK_SET</constant>.
        </simpara>
       </note>
      </listitem>
@@ -72,7 +73,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если позиция обновлена, &false; в остальных случаях.
+   Метод возвращает &true;, если обновил позицию указателя, иначе &false;.
   </para>
  </refsect1>
 
@@ -80,24 +81,23 @@
   &reftitle.notes;
   <note>
    <para>
-    Если не реализован, в качестве возвращаемого значения принимается &false;.
+    Значение &false; предполагается как значение возврата, если метод не реализовали.
    </para>
   </note>
   <note>
    <para>
-    В случае успешного выполнения
-    <methodname>streamWrapper::stream_tell</methodname> будет вызвана сразу
-    после того, как <methodname>streamWrapper::stream_seek</methodname> отработает.
-    Если выполнение <methodname>streamWrapper::stream_tell</methodname> завершится
-    неудачей, то в вызывающую функцию будет возвращено значение &false;
+    В случае успешного выполнения сразу после вызова метода <methodname>streamWrapper::stream_seek</methodname>
+    вызывается метод <methodname>streamWrapper::stream_tell</methodname>.
+    Значение &false; устанавливается как значение возврата функции, которая вызвала этот метод,
+    если метод <methodname>streamWrapper::stream_tell</methodname> завершится ошибкой.
    </para>
   </note>
   <note>
    <para>
-    Не все операции перемещения в потоке приведут к вызову этой функции. В PHP
-    по умолчанию включена буферизация потоков (смотрите также
-    <function>stream_set_read_buffer</function>), поэтому перемещение
-    в потоке может означать лишь перемещение указателя в буфере.
+    Не каждая операция перемещения указателя в потоке вызывает этот метод.
+    PHP-потоки по умолчанию буферизируют считывание (смотрите также
+    описание функции <function>stream_set_read_buffer</function>), поэтому перемещение указателя
+    иногда завершается простым перемещением указателя буфера.
    </para>
   </note>
  </refsect1><!-- }}} -->
