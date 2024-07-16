@@ -5,14 +5,14 @@
  <title>Callable и callback-функции</title>
 
  <para>
-  Callback-функции разрешено
-  обозначать объявлением типа <type>callable</type>.
+  При объявлении типа для callback-функции
+  разрешается указывать тип <type>callable</type>.
  </para>
 
  <para>
-  Функции вроде <function>call_user_func</function> или
-  <function>usort</function> принимают определённые пользователем
-  callback-функции в качестве параметра. Callback-функциями бывают как простые
+  Функции наподобие <function>call_user_func</function>
+  или <function>usort</function> принимают пользовательские
+  callback-функции как параметры. Callback-функциями бывают как простые
   функции, так и методы объектов, включая статические методы классов.
  </para>
 
@@ -20,88 +20,94 @@
   <title>Передача</title>
 
   <para>
-   PHP-функция передаётся по имени в виде строки. Разрешено передавать
-   любую встроенную или пользовательскую функцию, исключая языковые конструкции:
+   PHP-функция передаётся по имени, как строка. Разрешается использовать
+   встроенные или пользовательские функции, но не языковые конструкции:
    <function>array</function>, <function>echo</function>,
    <function>empty</function>, <function>eval</function>,
    <function>exit</function>, <function>isset</function>,
-   <function>list</function>, <function>print</function> или
-   <function>unset</function>.
+   <function>list</function>, <function>print</function>
+   или <function>unset</function>.
   </para>
 
   <para>
-   Метод созданного объекта (<type>object</type>) передаётся как массив, который
-   в индексе 0 содержит — объект, а в индексе 1 — название метода.
-   Изнутри класса разрешён доступ к закрытым и защищённым методам.
+   Метод экземпляра объекта (<type>object</type>) передаётся как массив, в котором
+   в элементе с индексом 0 содержится объект, а в элементе с индексом 1 — название метода.
+   Доступ к закрытым и защищённым методам разрешается изнутри класса.
   </para>
 
   <para>
-   Статические методы класса тоже передаются — или как массив,
-   в индексе 0 которого вместо передачи объекта указывают название класса,
-   или как строка вида <literal>'ClassName::methodName'</literal>.
+   Статические методы класса передаются как массив,
+   в котором в элементе с индексом 0 вместо передачи объекта указывают название класса,
+   или как строка вида <literal>'ClassName::methodName'</literal>,
+   при этом объект класса не создают.
   </para>
 
   <para>
-   Кроме пользовательских функций, в callback-параметр разрешено передавать
+   Кроме пользовательских функций, в callback-параметр разрешается передавать
    <link linkend="functions.anonymous">анонимные</link>
    и <link linkend="functions.arrow">стрелочные функции</link>.
   </para>
 
   <note>
    <para>
-    Начиная с PHP 8.1.0 анонимные функции разрешено создавать
+    Начиная с PHP 8.1.0 анонимные функции разрешается создавать
     <link linkend="functions.first_class_callable_syntax">синтаксисом callable-объектов первого класса</link>.
    </para>
   </note>
 
   <para>
-   Объекты, которые реализуют магический метод <link linkend="object.invoke">__invoke()</link>,
-   разрешно передавать в callback-параметр.
+   Callback-параметры также принимают объекты,
+   которые реализуют магический метод <link linkend="object.invoke">__invoke()</link>.
   </para>
 
   <para>
    <example>
-    <title>
-     Пример callback-функции
-    </title>
+    <title>Пример использования callback-функции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 // Пример callback-функции
-function my_callback_function() {
+function my_callback_function()
+{
     echo 'Привет, мир!';
 }
 
 // Пример callback-метода
-class MyClass {
-    static function myCallbackMethod() {
+class MyClass
+{
+    static function myCallbackMethod()
+    {
         echo 'Привет, мир!';
     }
 }
 
-// Тип 1: Простой callback
+// Тип 1: Простой вызов callback-функции
 call_user_func('my_callback_function');
 
 // Тип 2: Вызов статического метода класса
 call_user_func(array('MyClass', 'myCallbackMethod'));
 
-// Тип 3: Вызов метода класса
+// Тип 3: Вызов метода объекта класса
 $obj = new MyClass();
 call_user_func(array($obj, 'myCallbackMethod'));
 
 // Тип 4: Вызов статического метода класса
 call_user_func('MyClass::myCallbackMethod');
 
-// Тип 5: Вызов относительного статического метода
-class A {
-    public static function who() {
+// Тип 5: Вызов статического метода родственного класса
+class A
+{
+    public static function who()
+    {
         echo "A\n";
     }
 }
 
-class B extends A {
-    public static function who() {
+class B extends A
+{
+    public static function who()
+    {
         echo "B\n";
     }
 }
@@ -109,8 +115,10 @@ class B extends A {
 call_user_func(array('B', 'parent::who')); // A, устарело, начиная с PHP 8.2.0
 
 // Тип 6: Объекты, которые реализуют магический метод __invoke, разрешено использовать как callable-объекты
-class C {
-    public function __invoke($name) {
+class C
+{
+    public function __invoke($name)
+    {
         echo 'Привет ', $name, "\n";
     }
 }
@@ -126,7 +134,7 @@ call_user_func($c, 'PHP!');
   <para>
    <example>
     <title>
-     Пример передачи замыкания в callback-параметр
+     Пример передачи замыкания (объекта класса Closure) в качестве callback-функции
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -140,8 +148,8 @@ $double = function($a) {
 // Диапазон чисел
 $numbers = range(1, 5);
 
-// Передаём в параметр замыкание в качестве callback-функции
-// для удвоения каждого элемента в созданном выше диапазоне
+// Передаём замыкание как callback-функцию,
+// чтобы удвоить каждый элемент диапазона
 $new_numbers = array_map($double, $numbers);
 
 print implode(' ', $new_numbers);
