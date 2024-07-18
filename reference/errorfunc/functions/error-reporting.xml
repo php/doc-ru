@@ -5,7 +5,7 @@
  <refnamediv>
   <refname>error_reporting</refname>
   <refpurpose>
-   Устанавливает, какие ошибки PHP попадут в отчёт
+   Определяет, о каких PHP-ошибках сообщать
   </refpurpose>
  </refnamediv>
 
@@ -16,13 +16,13 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>error_level</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>error_reporting</function> задаёт значение директивы
-   <link linkend="ini.error-reporting">error_reporting</link> во время работы (выполнения) программы.
-   PHP содержит много уровней ошибок. Через эту функцию
-   задают уровень ошибок на время работы (выполнения) скрипта, которые попадут в отчёт.
-   Если необязательный аргумент <parameter>error_level</parameter> не задан,
-   функция <function>error_reporting</function> вернёт текущее значение уровня
-   протоколирования ошибок.
+   Функция <function>error_reporting</function> устанавливает значение директивы
+   <link linkend="ini.error-reporting">error_reporting</link> во время выполнении PHP-кода.
+   В PHP предусмотрели много уровней ошибок и функция
+   устанавливает этот уровень на время, пока выполняется скрипт.
+   Функция <function>error_reporting</function> просто вернёт текущей уровень
+   сообщений об ошибках, если необязательный
+   параметр <parameter>error_level</parameter> не установили.
   </para>
  </refsect1>
 
@@ -34,15 +34,15 @@
      <term><parameter>error_level</parameter></term>
      <listitem>
       <para>
-       Новое значение уровня
+       Новый уровень сообщений об ошибках, который функция установит для директивы
        <link linkend="ini.error-reporting">error_reporting</link>. Параметр принимает
-       либо битовую маску, либо именованные константы. При указании
-       именованных констант нужно будет следить за совместимостью с новыми
-       версиями PHP. По мере добавления уровней ошибок диапазон целых чисел увеличивается,
-       поэтому старые уровни ошибок на основе целых чисел не всегда будут вести себя предсказуемо.
+       либо битовую маску, либо именованные константы. Лучше предпочесть
+       именованные константы, чтобы поддерживать совместимость кода с будущими версиями языка.
+       Диапазон целых чисел — значений констант — увеличивается, когда разработчики языка добавляют
+       новые уровни ошибок, поэтому старые уровни ошибок, на основе целых чисел, будут вести себя непредсказуемо.
       </para>
       <para>
-       Доступные константы уровней ошибок и их описания приведены в разделе
+       Доступные константы уровней ошибок и значения уровней описывает раздел
        «<link linkend="errorfunc.constants">Предопределённые константы</link>».
       </para>
      </listitem>
@@ -54,14 +54,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает значение директивы <link linkend="ini.error-reporting">error_reporting</link>,
-   которое в ней хранилось <emphasis>до того</emphasis>, как оно
-   было изменено на значение параметра <parameter>error_level</parameter>.
+   Функция возвращает уровень сообщений об ошибках на осное значения
+   директивы <link linkend="ini.error-reporting">error_reporting</link>,
+   которое директива хранила <emphasis>до изменения</emphasis>
+   на уровень <parameter>error_level</parameter>.
   </para>
   <note>
    <simpara>
     Оператор <link linkend="language.operators.errorcontrol">управления ошибками</link>
-    (<literal>@</literal>) изменяет значение параметра <parameter>error_level</parameter> во время обработки ошибки.
+    <literal>@</literal> изменяет уровень <parameter>error_level</parameter>
+    во время обработки ошибки.
    </simpara>
   </note>
  </refsect1>
@@ -80,7 +82,7 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>error_level</parameter> теперь может принимать значение null.
+       Параметр <parameter>error_level</parameter> теперь принимает значение null.
       </entry>
      </row>
     </tbody>
@@ -97,23 +99,23 @@
 <![CDATA[
 <?php
 
-// Выключение протоколирования ошибок
+// Отключить сообщения об ошибках
 error_reporting(0);
 
-// Включать в отчёт простые описания ошибок
+// Сообщать о простых ошибках при запуске
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
-// Включать в отчёт E_NOTICE сообщения (добавятся сообщения о
-// непроинициализированных переменных или ошибках в именах переменных)
+// Сообщения об ошибках уровня E_NOTICE тоже бывают полезны: сообщают о неинициализированных
+// переменных или отлавливают ошибки в именах переменных
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 
-// Добавлять сообщения обо всех ошибках, кроме E_NOTICE
+// Сообщать о каждой ошибке, кроме ошибок уровня E_NOTICE
 error_reporting(E_ALL & ~E_NOTICE);
 
-// Добавлять в отчёт все ошибки PHP
+// Сообщать о каждой PHP-ошибке
 error_reporting(E_ALL);
 
-// Добавлять в отчёт все ошибки PHP
+// Сообщать о каждой PHP-ошибке
 error_reporting(-1);
 
 // То же, что и error_reporting(E_ALL);
@@ -130,9 +132,9 @@ ini_set('error_reporting', E_ALL);
   &reftitle.notes;
   <tip>
    <simpara>
-    Если передать значение <literal>-1</literal>, будут отображаться все возможные
-    ошибки, даже если в новых версиях PHP добавятся уровни или константы.
-    Поведение эквивалентно передаче константы <constant>E_ALL</constant>.
+    Передача значения <literal>-1</literal> покажет каждую возможную ошибку,
+    даже если в будущих версиях языка PHP добавятся новые уровни или константы;
+    поведение эквивалентно передаче константы <constant>E_ALL</constant>.
    </simpara>
   </tip>
  </refsect1>
@@ -145,7 +147,7 @@ ini_set('error_reporting', E_ALL);
     <member>Директива <link linkend="ini.html-errors">html_errors</link></member>
     <member>Директива <link linkend="ini.xmlrpc-errors">xmlrpc_errors</link></member>
     <member>Оператор <link linkend="language.operators.errorcontrol">управления ошибками</link></member>
-    <member>Функция <function>ini_set</function> — Устанавливает значение настройи конфигурации</member>
+    <member>Функция <function>ini_set</function> — Устанавливает значение параметра конфигурации</member>
    </simplelist>
   </para>
  </refsect1>
