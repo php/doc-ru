@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e9214a2619efc5906fab59cd42fb7404c4dc49a5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: af0472588c9f07f2f20533d80dc8b17018b224dd Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="mongodb.tutorial.apm" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Мониторинг производительности приложения (Application Performance Monitoring или APM)</title>
+ <title>Мониторинг производительности приложения (Application Performance Monitoring, или APM)</title>
 
  <para>
-  Модуль содержит API подписчика события, который позволяет приложениям отслеживать команды и внутреннюю активность,
-  которая относится к «<link xlink:href="&url.mongodb.sdam;">Спецификации обнаружения и мониторинга серверов</link>».
-  В этом руководстве будет продемонстрирован мониторинг команд
-  с помощью интерфейса <classname>MongoDB\Driver\Monitoring\CommandSubscriber</classname>.
+  Модуль содержит API-интерфейс подписчика события, который разрешает приложениям отслеживать команды и внутреннюю активность,
+  которая относится к <link xlink:href="&url.mongodb.sdam;">Спецификации обнаружения и мониторинга серверов</link>.
+  Это руководство продемонстрирует мониторинг команд
+  через интерфейс <classname>MongoDB\Driver\Monitoring\CommandSubscriber</classname>.
  </para>
 
  <para>
@@ -22,15 +22,15 @@
  </para>
 
  <para>
-  В данном руководстве вы реализуем подписчика, который создаёт список
-  профилировок всех запросов и среднего времени их исполнения.
+  Руководство реализует подписчика, который создаст список
+  профилировок каждого запроса и среднего времени, которое заняли запросы.
  </para>
 
  <section>
-  <title>Класс подписчик Scaffolding</title>
+  <title>Класс-подписчик Scaffolding</title>
 
   <para>
-   Мы начнём с шаблона для нашего подписчика:
+   Начнём с шаблона для подписчика:
   </para>
 
   <programlisting role="php">
@@ -55,11 +55,11 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
   <title>Регистрация подписчика</title>
 
   <para>
-   Как только объект подписчика создан, необходимо его зарегистрировать
-   в системе мониторинга модуля. Регистрация производится методом
-   <methodname>MongoDB\Driver\Monitoring\addSubscriber</methodname>
-   или <methodname>MongoDB\Driver\Manager::addSubscriber</methodname>
-   для регистрации подписчика глобально или с помощью определённого класса Manager соответственно.
+   Как только объект подписчика создали, подписчика необходимо зарегистрировать
+   в системе мониторинга модуля. Глобально подписчика регистрируют методом
+   <methodname>MongoDB\Driver\Monitoring\addSubscriber</methodname>,
+   а для конкретного объекта класса Manager — методом
+   <methodname>MongoDB\Driver\Manager::addSubscriber</methodname>.
   </para>
 
   <programlisting role="php">
@@ -108,69 +108,65 @@ class QueryTimeCollector implements \MongoDB\Driver\Monitoring\CommandSubscriber
     private $pendingCommands = [];
     private $queryShapeStats = [];
 
-    /* Создаёт форму запроса из аргумента фильтра. В данный момент учитываются
+    /* Создаёт форму запроса из аргумента фильтра. Учитываются
      * только поля верхнего уровня. */
-    private function createQueryShape( array $filter )
+    private function createQueryShape(array $filter)
     {
-        return json_encode( array_keys( $filter ) );
+        return json_encode(array_keys($filter));
     }
 
-    public function commandStarted( \MongoDB\Driver\Monitoring\CommandStartedEvent $event ): void
+    public function commandStarted(\MongoDB\Driver\Monitoring\CommandStartedEvent $event): void
     {
-        if ( array_key_exists( 'find', (array) $event->getCommand() ) )
-        {
-            $queryShape = $this->createQueryShape( (array) $event->getCommand()->filter );
+        if ('find' === $event->getCommandName()) {
+            $queryShape = $this->createQueryShape((array) $event->getCommand()->filter);
             $this->pendingCommands[$event->getRequestId()] = $queryShape;
         }
     }
 
-    public function commandSucceeded( \MongoDB\Driver\Monitoring\CommandSucceededEvent $event ): void
+    public function commandSucceeded(\MongoDB\Driver\Monitoring\CommandSucceededEvent $event): void
     {
         $requestId = $event->getRequestId();
-        if ( array_key_exists( $requestId, $this->pendingCommands ) )
-        {
+        if (array_key_exists($requestId, $this->pendingCommands)) {
             $this->queryShapeStats[$this->pendingCommands[$requestId]]['count']++;
             $this->queryShapeStats[$this->pendingCommands[$requestId]]['duration'] += $event->getDurationMicros();
-            unset( $this->pendingCommands[$requestId] );
+            unset($this->pendingCommands[$requestId]);
         }
     }
 
-    public function commandFailed( \MongoDB\Driver\Monitoring\CommandFailedEvent $event ): void
+    public function commandFailed(\MongoDB\Driver\Monitoring\CommandFailedEvent $event): void
     {
-        if ( array_key_exists( $event->getRequestId(), $this->pendingCommands ) )
-        {
-            unset( $this->pendingCommands[$event->getRequestId()] );
+        if (array_key_exists($event->getRequestId(), $this->pendingCommands)) {
+            unset($this->pendingCommands[$event->getRequestId()]);
         }
     }
 
     public function __destruct()
     {
-        foreach( $this->queryShapeStats as $shape => $stats )
-        {
+        foreach ($this->queryShapeStats as $shape => $stats) {
             echo "Shape: ", $shape, " (", $stats['count'], ")\n  ",
-                $stats['duration'] / $stats['count'], "µs\n\n";
+            $stats['duration'] / $stats['count'], "µs\n\n";
         }
     }
 }
 
-$m = new \MongoDB\Driver\Manager( 'mongodb://localhost:27016' );
+$m = new \MongoDB\Driver\Manager('mongodb://localhost:27016');
 
 /* Добавляем подписчика */
-\MongoDB\Driver\Monitoring\addSubscriber( new QueryTimeCollector() );
+\MongoDB\Driver\Monitoring\addSubscriber(new QueryTimeCollector());
 
 /* Запускаем пачку запросов */
-$query = new \MongoDB\Driver\Query( [
-    'region_slug' => 'scotland-highlands', 'age' => [ '$gte' => 20 ]
-] );
-$cursor = $m->executeQuery( 'dramio.whisky', $query );
+$query = new \MongoDB\Driver\Query([
+    'region_slug' => 'scotland-highlands', 'age' => ['$gte' => 20]
+]);
+$cursor = $m->executeQuery('dramio.whisky', $query);
 
-$query = new \MongoDB\Driver\Query( [
-    'region_slug' => 'scotland-lowlands', 'age' => [ '$gte' => 15 ]
-] );
-$cursor = $m->executeQuery( 'dramio.whisky', $query );
+$query = new \MongoDB\Driver\Query([
+    'region_slug' => 'scotland-lowlands', 'age' => ['$gte' => 15]
+]);
+$cursor = $m->executeQuery('dramio.whisky', $query);
 
-$query = new \MongoDB\Driver\Query( [ 'region_slug' => 'scotland-lowlands' ] );
-$cursor = $m->executeQuery( 'dramio.whisky', $query );
+$query = new \MongoDB\Driver\Query(['region_slug' => 'scotland-lowlands']);
+$cursor = $m->executeQuery('dramio.whisky', $query);
 
 ?>
 ]]>
