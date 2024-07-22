@@ -4,7 +4,7 @@
 <refentry xml:id="function.array-filter" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>array_filter</refname>
-  <refpurpose>Фильтрует элементы массива с помощью callback-функции</refpurpose>
+  <refpurpose>Фильтрует элементы массива через callback-функцию</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,14 +16,15 @@
    <methodparam choice="opt"><type>int</type><parameter>mode</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Обходит каждое значение массива <parameter>array</parameter>,
-   передавая его в <parameter>callback</parameter>-функцию. Если
-   <parameter>callback</parameter>-функция возвращает &true;, данное
-   значение из <parameter>array</parameter> возвращается в результирующий &array;.
+   Функция перебирает массив <parameter>array</parameter>
+   и передаёт каждое значение в <parameter>callback</parameter>-функцию.
+   Текущее значение массива <parameter>array</parameter> копируется в массив (&array;) с результатами,
+   если <parameter>callback</parameter>-функция возвращает &true;.
   </para>
   <para>
-   Ключи массива сохраняются и могут привести к пропускам, если <parameter>array</parameter> был проиндексирован.
-   Результат массива (&array;) можно переиндексировать с помощью функции <function>array_values</function>.
+   Функция сохраняет ключи входного индексного массива <parameter>array</parameter>,
+   поэтому после фильтрации иногда появляются пропуски.
+   Массив (&array;) с результатами переиндексируют функцией <function>array_values</function>.
   </para>
  </refsect1>
 
@@ -36,7 +37,7 @@
      <term><parameter>array</parameter></term>
      <listitem>
       <para>
-       Итерируемый массив
+       Массив, который требуется перебрать.
       </para>
      </listitem>
     </varlistentry>
@@ -45,12 +46,13 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Используемая callback-функция
+       Callback-функция.
       </para>
       <para>
-       Если <parameter>callback</parameter>-функция не передана, все пустые значения
-       массива <parameter>array</parameter> будут удалены. Смотрите <function>empty</function>,
-       чтобы узнать, как PHP определяет пустое значение в этом случае.
+       Функция удалит пустые элементы входного массива <parameter>array</parameter>,
+       если <parameter>callback</parameter>-функцию не передали. Описание
+       языковой конструкции <function>empty</function> рассказывает,
+       как PHP определяет пустые элементы.
       </para>
      </listitem>
     </varlistentry>
@@ -59,18 +61,26 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       Флаг, определяющий, какие аргументы передавать в <parameter>callback</parameter>:
+       Флаг определяет, какие аргументы передавать в <parameter>callback</parameter>-функцию:
        <itemizedlist>
         <listitem>
-         <simpara><constant>ARRAY_FILTER_USE_KEY</constant> - передавать только ключ массива как аргумент для <parameter>callback</parameter> вместо значения</simpara>
+         <simpara>
+          <constant>ARRAY_FILTER_USE_KEY</constant> —
+          вместо значения массива как единственного аргумента
+          <parameter>callback</parameter>-функции передавать только ключ массива.
+         </simpara>
         </listitem>
         <listitem>
-         <simpara><constant>ARRAY_FILTER_USE_BOTH</constant> - передавать и ключ, и значение в <parameter>callback</parameter> вместо только значения</simpara>
+         <simpara>
+          <constant>ARRAY_FILTER_USE_BOTH</constant> —
+          вместо значения массива как единственного аргумента
+          <parameter>callback</parameter>-функции передавать и ключ, и значение массива.
+         </simpara>
         </listitem>
        </itemizedlist>
-       По умолчанию <literal>0</literal>,
-       что означает, что в <parameter>callback</parameter>-функцию будет
-       передаваться только значение в качестве единственного аргумента.
+       Значение по умолчанию равно <literal>0</literal>,
+       с которым в <parameter>callback</parameter>-функцию передаётся
+       только значение массива.
       </para>
      </listitem>
     </varlistentry>
@@ -82,7 +92,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает отфильтрованный массив.
+   Функция возвращает отфильтрованный массив.
   </para>
  </refsect1>
 
@@ -100,7 +110,7 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>callback</parameter> теперь допускает значение null.
+       Параметр <parameter>callback</parameter> теперь принимает значение null.
       </entry>
      </row>
      &array.changelog.by-ref;
@@ -113,19 +123,20 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>array_filter</function></title>
+    <title>Пример использования функции <function>array_filter</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function odd($var)
 {
-    // является ли переданное число нечётным
+    // Функция возвращает информацию о том, нечётно ли входное целое число
     return $var & 1;
 }
 
 function even($var)
 {
-    // является ли переданное число чётным
+    // Функция возвращает информацию о том, чётно ли входное целое число
     return !($var & 1);
 }
 
@@ -134,8 +145,10 @@ $array2 = [6, 7, 8, 9, 10, 11, 12];
 
 echo "Нечётные:\n";
 print_r(array_filter($array1, "odd"));
+
 echo "Чётные:\n";
 print_r(array_filter($array2, "even"));
+
 ?>
 ]]>
     </programlisting>
@@ -161,8 +174,10 @@ Array
     </screen>
    </example>
    <example>
-    <title>Использование <function>array_filter</function> без
-     <parameter>callback</parameter>-функции</title>
+    <title>
+     Пример вызова функции <function>array_filter</function>
+     без аргумента <parameter>callback</parameter>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -178,6 +193,7 @@ $entry = [
 ];
 
 print_r(array_filter($entry));
+
 ?>
 ]]>
     </programlisting>
@@ -193,21 +209,36 @@ Array
     </screen>
    </example>
    <example>
-    <title><function>array_filter</function> с указанным
-     <parameter>mode</parameter></title>
+    <title>
+     Пример вызова функции <function>array_filter</function>
+     с флагом <parameter>mode</parameter>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $arr = ['a' => 1, 'b' => 2, 'c' => 3, 'd' => 4];
 
-var_dump(array_filter($arr, function($k) {
-    return $k == 'b';
-}, ARRAY_FILTER_USE_KEY));
+var_dump(
+    array_filter(
+        $arr,
+        function ($k) {
+            return $k == 'b';
+        },
+        ARRAY_FILTER_USE_KEY
+    )
+);
 
-var_dump(array_filter($arr, function($v, $k) {
-    return $k == 'b' || $v == 4;
-}, ARRAY_FILTER_USE_BOTH));
+var_dump(
+    array_filter(
+        $arr,
+        function ($v, $k) {
+            return $k == 'b' || $v == 4;
+        },
+        ARRAY_FILTER_USE_BOTH
+    )
+);
+
 ?>
 ]]>
     </programlisting>
@@ -234,8 +265,9 @@ array(2) {
   &reftitle.notes;
   <caution>
    <para>
-    Если callback-функция изменяет массив (например, добавляет или
-    удаляет элементы), поведение этой функции неопределённо.
+    Поведение функции будет неопределённым,
+    если callback-функция изменяет массив — добавляет
+    или удаляет элементы.
    </para>
   </caution>
  </refsect1>
