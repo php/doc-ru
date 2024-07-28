@@ -4,7 +4,7 @@
 <refentry xml:id="function.curl-share-setopt" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>curl_share_setopt</refname>
-  <refpurpose>Установить опции разделяемого обработчика cURL</refpurpose>
+  <refpurpose>Устанавливает опции разделяемого cURL-дескриптора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,7 +16,7 @@
    <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Устанавливает опции разделяемого обработчика cURL.
+   Функция устанавливает опции разделяемого дескриптора модуля cURL.
   </para>
 
  </refsect1>
@@ -41,13 +41,13 @@
          <row>
           <entry valign="top"><constant>CURLSHOPT_SHARE</constant></entry>
           <entry valign="top">
-           Задаёт тип данных, которые необходимо разделять.
+           Указывает, данные какого типа будут разделяемыми.
           </entry>
          </row>
          <row>
           <entry valign="top"><constant>CURLSHOPT_UNSHARE</constant></entry>
           <entry valign="top">
-           Задаёт тип данных, которые больше не надо разделять.
+           Указывает, данные какого типа больше не будут разделяемыми.
           </entry>
          </row>
         </tbody>
@@ -78,17 +78,18 @@
          <row>
           <entry valign="top"><constant>CURL_LOCK_DATA_DNS</constant></entry>
           <entry valign="top">
-           Разделяет кеш DNS. Обратите внимание, что если вы используете множественный
-           обработчик cURL, то все добавленные обработчики по умолчанию будут разделять DNS-кеш.
+           Разделяет кеш DNS. Обратите внимание, дескрипторы модуля cURL,
+           которые добавили к одному и тому же мультидескриптору,
+           по умолчанию будут разделять DNS-кеш.
           </entry>
          </row>
          <row>
           <entry valign="top"><constant>CURL_LOCK_DATA_SSL_SESSION</constant></entry>
           <entry valign="top">
-           Разделяет идентификаторы сессии SSL, сокращая время, затрачиваемое на подтверждение (handshake)
-           SSL при повторном соединении к тому же самому серверу. Обратите внимание, что
-           идентификаторы сессии SSL будут по умолчанию переиспользоваться тем же
-           самым обработчиком.
+           Разделяет идентификаторы SSL-сессий. Разделение идентификаторов сессий сокращает время
+           SSL-рукопожатия при повторном подключении к тому же серверу.
+           Обратите внимание, отдельный дескриптор повторно использует свои идентификаторы SSL-сессий
+           по умолчанию.
           </entry>
          </row>
         </tbody>
@@ -128,40 +129,41 @@
   &reftitle.examples;
  <para>
   <example>
-   <title>Пример использования <function>curl_share_setopt</function></title>
+   <title>Пример использования функции <function>curl_share_setopt</function></title>
    <para>
-    В этом примере мы создаём разделяемый обработчик cURL, добавляем в
-    него два обычных обработчика и запускаем их. Они будут использовать одни и
-    те же куки.
+    Пример создаёт разделяемый cURL-дескриптор, добавляет в него
+    два стандартных cURL-дескриптора и запускает их с разделяемыми данными cookie.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-// Создаём разделяемый обработчик и настраиваем его на обмен куками
+
+// Создаём разделяемый дескриптор модуля cURL и настраиваем его на разделение данных cookie
 $sh = curl_share_init();
 curl_share_setopt($sh, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
 
-// Инициализируем первый обработчик cURL и связываем его с разделяемым
+// Инициализируем первый cURL-дескриптор и назначаем ему разделяемый дескриптор
 $ch1 = curl_init("http://example.com/");
 curl_setopt($ch1, CURLOPT_SHARE, $sh);
 
-// Запускаем первый запрос
+// Запускаем первый cURL-дескриптор
 curl_exec($ch1);
 
-// Инициализируем второй обработчик cURL и связываем его с разделяемым
+// Инициализируем второй cURL-дескриптор и назначаем ему разделяемый дескриптор
 $ch2 = curl_init("http://php.net/");
 curl_setopt($ch2, CURLOPT_SHARE, $sh);
 
-// Запускаем второй обработчик.
-//  Ему будут доступны все куки от первого обработчика $ch1
+// Запускаем второй дескриптор.
+// Cookies первого дескриптора $ch1 разделяются со вторым дескриптором $ch2
 curl_exec($ch2);
 
-// Закрываем разделяемый обработчик
+// Закрываем разделяемый дескриптор
 curl_share_close($sh);
 
-// Закрываем оба обычных обработчика
+// Закрываем стандартные дескрипторы
 curl_close($ch1);
 curl_close($ch2);
+
 ?>
 ]]>
     </programlisting>
