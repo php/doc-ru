@@ -4,7 +4,7 @@
 <refentry xml:id="function.curl-share-close" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>curl_share_close</refname>
-  <refpurpose>Закрыть разделяемый обработчик cURL</refpurpose>
+  <refpurpose>Закрывает разделяемый cURL-дескриптор</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,7 +15,8 @@
   </methodsynopsis>
   &note.resource-migration-8.0-dead-function;
   <para>
-   Закрывает разделяемый обработчик cURL и высвобождает все его ресурсы.
+   Функция закрывает разделяемый дескриптор модуля cURL и высвобождает системные ресурсы,
+   которые он занимал.
   </para>
 
  </refsect1>
@@ -55,40 +56,41 @@
   &reftitle.examples;
  <para>
   <example>
-   <title>Пример использования <function>curl_share_setopt</function></title>
+   <title>Пример использования функции <function>curl_share_setopt</function></title>
    <para>
-    В этом примере мы создаём разделяемый обработчик cURL, добавляем в
-    него два простых обработчика и запускаем их. Они будут использовать одни и
-    те же куки.
+    Пример создаёт разделяемый cURL-дескриптор, добавляет
+    в него два простых cURL-дескриптора и запускает их с разделяемыми данными cookie.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-// Создаём разделяемый обработчик и настраиваем его на обмен куками
+
+// Создаём разделяемый дескриптор модуля cURL и настраиваем его на разделение данных cookie
 $sh = curl_share_init();
 curl_share_setopt($sh, CURLSHOPT_SHARE, CURL_LOCK_DATA_COOKIE);
 
-// Инициализируем первый обработчик cURL и связываем его с разделяемым
+// Инициализируем первый cURL-дескриптор и назначаем ему разделяемый дескриптор
 $ch1 = curl_init("http://example.com/");
 curl_setopt($ch1, CURLOPT_SHARE, $sh);
 
 // Запускаем первый запрос
 curl_exec($ch1);
 
-// Инициализируем второй обработчик cURL и связываем его с разделяемым
+// Инициализируем второй cURL-дескриптор и назначаем ему разделяемый дескриптор
 $ch2 = curl_init("http://php.net/");
 curl_setopt($ch2, CURLOPT_SHARE, $sh);
 
-// Запускаем второй обработчик.
-// Ему будут доступны все куки от первого обработчика $ch1
+// Запускаем второй дескриптор.
+// Cookies первого дескриптора $ch1 разделяются со вторым дескриптором $ch2
 curl_exec($ch2);
 
-// Закрываем разделяемый обработчик
+// Закрываем разделяемый дескриптор
 curl_share_close($sh);
 
-// Закрываем оба простых обработчика
+// Закрываем простые дескрипторы
 curl_close($ch1);
 curl_close($ch2);
+
 ?>
 ]]>
     </programlisting>
