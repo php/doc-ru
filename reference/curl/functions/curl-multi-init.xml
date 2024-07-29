@@ -4,7 +4,7 @@
 <refentry xml:id="function.curl-multi-init" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>curl_multi_init</refname>
-  <refpurpose>Создаёт набор cURL-дескрипторов</refpurpose>
+  <refpurpose>Возвращает новый мультидескриптор модуля cURL</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,7 +14,7 @@
    <void/>
   </methodsynopsis>
   <para>
-   Позволяет асинхронную обработку множества cURL-дескрипторов.
+   Функция асинхронно обрабатывает набор cURL-дескрипторов.
   </para>
  </refsect1>
 
@@ -26,7 +26,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает набор cURL-дескрипторов.
+   Функция возвращает набор cURL-дескрипторов.
   </para>
  </refsect1>
 
@@ -44,8 +44,9 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       В случае успешного выполнения возвращает экземпляр <classname>CurlMultiHandle</classname>;
-       раньше, возвращался ресурс (<type>resource</type>).
+       Теперь в случае успешного выполнения функция возвращает
+       экземпляр класса <classname>CurlMultiHandle</classname>;
+       раньше возвращался ресурс (<type>resource</type>).
       </entry>
      </row>
     </tbody>
@@ -57,40 +58,43 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>curl_multi_init</function></title>
+    <title>Пример использования функции <function>curl_multi_init</function></title>
     <para>
-     Этот пример создаст два дескриптора cURL, добавит их в набор
-     дескрипторов, а затем запустит их асинхронно.
+     Пример создаст два cURL-дескриптора, добавит их в мультидескриптор
+     и обработает дескрипторы асинхронно.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём оба ресурса cURL
+
+// Создаём оба cURL-дескриптора
 $ch1 = curl_init();
 $ch2 = curl_init();
 
-// устанавливаем URL и другие соответствующие опции
+// Устанавливаем URL-адрес и другие параметры
 curl_setopt($ch1, CURLOPT_URL, "http://lxr.php.net/");
 curl_setopt($ch1, CURLOPT_HEADER, 0);
+
 curl_setopt($ch2, CURLOPT_URL, "http://www.php.net/");
 curl_setopt($ch2, CURLOPT_HEADER, 0);
 
-//создаём набор дескрипторов cURL
+// Создаём мультидескриптор модуля cURL
 $mh = curl_multi_init();
 
-//добавляем два дескриптора
+// Добавляем два дескриптора в мультидескриптор
 curl_multi_add_handle($mh,$ch1);
 curl_multi_add_handle($mh,$ch2);
 
-//запускаем множественный обработчик
+// Запускаем мультидескриптор
 do {
     $status = curl_multi_exec($mh, $active);
+
     if ($active) {
         curl_multi_select($mh);
     }
 } while ($active && $status == CURLM_OK);
 
-//закрываем все дескрипторы
+// Закрываем дескрипторы
 curl_multi_remove_handle($mh, $ch1);
 curl_multi_remove_handle($mh, $ch2);
 curl_multi_close($mh);
