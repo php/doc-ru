@@ -4,7 +4,7 @@
 <refentry xml:id="function.curl-multi-exec" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>curl_multi_exec</refname>
-  <refpurpose>Запускает подсоединения текущего дескриптора cURL</refpurpose>
+  <refpurpose>Запускает субсоединения текущего cURL-дескриптора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,8 +15,8 @@
    <methodparam><type>int</type><parameter role="reference">still_running</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Обрабатывает каждый дескриптор в стеке. Этот метод может быть вызван вне
-   зависимости от необходимости дескриптора читать или записывать данные.
+   Функция обрабатывает каждый дескриптор в стеке. Функцию разрешается вызывать
+   независимо от того, требуется ли дескриптору читать или записывать данные.
   </para>
  </refsect1>
 
@@ -29,7 +29,7 @@
      <term><parameter>still_running</parameter></term>
      <listitem>
       <para>
-       Ссылка на флаг, указывающий, идут ли ещё какие-либо действия.
+       Ссылка на флаг, который указывает, выполняются ли ещё операции.
       </para>
      </listitem>
     </varlistentry>
@@ -40,13 +40,14 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Код cURL, указанный в <link linkend="curl.constants">предопределённых константах</link> cURL.
+   Функция возвращает код состояния как значение
+   <link linkend="curl.constants">предопределённой константы</link> модуля cURL.
   </para>
   <note>
    <para>
-    Здесь возвращаются ошибки, относящиеся только ко всему стеку.
-    Проблемы всё ещё могут произойти на индивидуальных запросах,
-    даже когда эта функция возвращает <constant>CURLM_OK</constant>.
+    Функция возвращает ошибки, которые относятся только к мультистеку.
+    Даже когда функция возвращает код <constant>CURLM_OK</constant>,
+    ошибки при отдельных передачах не исключаются.
    </para>
   </note>
  </refsect1>
@@ -72,41 +73,44 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>curl_multi_exec</function></title>
+    <title>Пример использования функции <function>curl_multi_exec</function></title>
     <para>
-     Этот пример создаст два дескриптора cURL, добавит их в набор
-     дескрипторов, а затем запустит их асинхронно.
+     Пример создаст два cURL-дескриптора, добавит их в мультидескриптор
+     и обработает дескрипторы асинхронно.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём оба ресурса cURL
+
+// Создаём оба cURL-дескриптора
 $ch1 = curl_init();
 $ch2 = curl_init();
 
-// устанавливаем URL и другие соответствующие опции
+// Устанавливаем URL-адрес и другие параметры
 curl_setopt($ch1, CURLOPT_URL, "http://example.com/");
 curl_setopt($ch1, CURLOPT_HEADER, 0);
+
 curl_setopt($ch2, CURLOPT_URL, "http://www.php.net/");
 curl_setopt($ch2, CURLOPT_HEADER, 0);
 
-//создаём набор дескрипторов cURL
+// Создаём мультидескриптор
 $mh = curl_multi_init();
 
-//добавляем два дескриптора
-curl_multi_add_handle($mh,$ch1);
-curl_multi_add_handle($mh,$ch2);
+// Добавляем два дескриптора в мультидескриптор
+curl_multi_add_handle($mh, $ch1);
+curl_multi_add_handle($mh, $ch2);
 
-//запускаем множественный обработчик
+// Запускаем мультидескриптор
 do {
     $status = curl_multi_exec($mh, $active);
+
     if ($active) {
         // Ждём какое-то время для оживления активности
         curl_multi_select($mh);
     }
 } while ($active && $status == CURLM_OK);
 
-//закрываем дескрипторы
+// Закрываем дескрипторы
 curl_multi_remove_handle($mh, $ch1);
 curl_multi_remove_handle($mh, $ch2);
 curl_multi_close($mh);
