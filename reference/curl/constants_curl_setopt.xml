@@ -791,7 +791,7 @@
    </term>
    <listitem>
     <para>
-     Callback-функция принимает два параметра.
+     Callback-функция, которая принимает два аргумента.
      Первый — cURL-ресурс, второй —
      строка с данными заголовка, которые требуется записать. Записать данные заголовков требуется
      этой функцией обратного вызова. Функция возвращает
@@ -982,7 +982,7 @@
     <para>
      Предполагаемый размер файла в байтах при отправке файла на удалённый сайт.
      Обратите внимание, опция не ограничивает объём данных, которые библиотека libcurl фактически отправляет,
-     поскольку фактический объём передаваемых данных зависит от того, что возвращает callback-функция параметра
+     поскольку фактический объём передаваемых данных зависит от того, что возвращает callback-функция опции
      <constant>CURLOPT_READFUNCTION</constant>.
     </para>
    </listitem>
@@ -1024,7 +1024,8 @@
    </term>
    <listitem>
     <para>
-     Issuer SSL certificate from memory blob.
+     SSL-сертификат издателя из блока памяти, который содержит двоичные данные PEM-сертификата
+     удостоверяющего центра.
      Константа доступна с 8.1.0 и cURL 7.71.0.
     </para>
    </listitem>
@@ -1036,10 +1037,10 @@
    </term>
    <listitem>
     <para>
-     &true; to keep sending the request body if the HTTP code returned is
-     equal to or larger than 300. The default action would be to stop sending
-     and close the stream or connection. Suitable for manual NTLM authentication.
-     Most applications do not need this option.
+     Со значением &true; опция продолжает отправку тела запроса, если HTTP-код возврата
+     равен или больше 300. Действие по умолчанию остановило бы отправку и закрыло
+     поток или соединение. Опцию указывают при ручной NTLM-аутентификации.
+     Большей части приложений опция не требуется.
      Константа доступна с 7.3.0 и cURL 7.51.0
     </para>
    </listitem>
@@ -1051,8 +1052,8 @@
    </term>
    <listitem>
     <para>
-     The password required to use the <constant>CURLOPT_SSLKEY</constant>
-     or <constant>CURLOPT_SSH_PRIVATE_KEYFILE</constant> private key.
+     Пароль, который требуется закрытому ключу в опции <constant>CURLOPT_SSLKEY</constant>
+     или <constant>CURLOPT_SSH_PRIVATE_KEYFILE</constant>.
      Константа доступна с cURL 7.16.1.
     </para>
    </listitem>
@@ -1064,16 +1065,16 @@
    </term>
    <listitem>
     <para>
-     The KRB4 (Kerberos 4) security level. Any of the following values
-     (in order from least to most powerful) are valid:
+     Уровень безопасности KRB4 (сетевой протокол аутентификации Kerberos 4). Опция принимает
+     следующие значения в порядке от наименее к наиболее сильному:
      <literal>"clear"</literal>,
      <literal>"safe"</literal>,
      <literal>"confidential"</literal>,
      <literal>"private".</literal>.
-     If the string does not match one of these,
-     <literal>"private"</literal> is used. Setting this option to &null;
-     will disable KRB4 security. Currently KRB4 security only works
-     with FTP transactions.
+     Опция будет использовать значение <literal>"private"</literal>,
+     если аргумент опции окажется строкой, которая не совпадает со значениями списка.
+     Опция отключит KRB4-безопасность при установке значения &null;. Защита KRB4
+     работает пока только с FTP-транзакциями.
     </para>
    </listitem>
   </varlistentry>
@@ -1084,10 +1085,10 @@
    </term>
    <listitem>
     <para>
-     Can be used to set protocol specific login options, such as the
-     preferred authentication mechanism via "AUTH=NTLM" or "AUTH=*",
-     and should be used in conjunction with the
-     <constant>CURLOPT_USERNAME</constant> option.
+     Устанавливает параметры входа в систему для конкретного протокола, например,
+     указывает предпочтительный механизм аутентификации через "AUTH=NTLM" или "AUTH=*",
+     и работает в связке с опцией
+     <constant>CURLOPT_USERNAME</constant>.
      Константа доступна с 7.0.7 и cURL 7.34.0
     </para>
    </listitem>
@@ -1099,9 +1100,9 @@
    </term>
    <listitem>
     <para>
-     The transfer speed, in bytes per second, that the transfer should be
-     below during the count of <constant>CURLOPT_LOW_SPEED_TIME</constant>
-     seconds before PHP considers the transfer too slow and aborts.
+     PHP посчитает скорость передачи чрезмерно низкой и прервёт передачу, если в течение заданного опцией
+     <constant>CURLOPT_LOW_SPEED_TIME</constant> количества секунд скорость передачи в байтах в секунду
+     будет ниже значения этой опции.
     </para>
    </listitem>
   </varlistentry>
@@ -1112,9 +1113,9 @@
    </term>
    <listitem>
     <para>
-     The number of seconds the transfer speed should be below
-     <constant>CURLOPT_LOW_SPEED_LIMIT</constant> before PHP considers
-     the transfer too slow and aborts.
+     Количество секунд, в течение которых скорость будет ниже значения
+     опции <constant>CURLOPT_LOW_SPEED_LIMIT</constant>, перед тем как PHP посчитает
+     скорость передачи чрезмерно низкой и прервёт передачу.
     </para>
    </listitem>
   </varlistentry>
@@ -1125,6 +1126,10 @@
    </term>
    <listitem>
     <para>
+     При отправке данных больше чем одному получателю cURL по умолчанию прерывает SMTP-диалог, если хотя бы
+     один получатель отправляет ошибку на команду RCPT TO. Эта опция заставляет cURL игнорировать ошибки
+     и продолжать с оставшимися допустимыми получателями. С этим флагом cURL прервёт SMTP-диалог и вернёт ошибку,
+     которую получил от последней команды RCPT TO, если все получатели вызвали ошибку команды RCPT TO.
      Константа доступна с 8.2.0 и cURL 7.69.0
     </para>
    </listitem>
@@ -1136,8 +1141,9 @@
    </term>
    <listitem>
     <para>
-     The maximum idle time allowed for an existing connection to be considered for reuse.
-     Default maximum age is set to <literal>118</literal> seconds.
+     Максимальное время простоя, в течение которого модулю разрешается оценивать существующее соединение
+     как доступное для повторной передачи.
+     По умолчанию максимальный срок равен <literal>118</literal> секундам.
      Константа доступна с 8.2.0 и cURL 7.65.0
     </para>
    </listitem>
@@ -1149,9 +1155,9 @@
    </term>
    <listitem>
     <para>
-     The maximum amount of persistent connections that are allowed.
-     When the limit is reached, the oldest one in the cache is closed
-     to prevent increasing the number of open connections.
+     Максимальное количество постоянных соединений, которое разрешается устанавливать модулю.
+     При достижении предела самое старое соединение в кеше закрывается,
+     чтобы предотвратить увеличение числа открытых соединений.
     </para>
    </listitem>
   </varlistentry>
@@ -1162,11 +1168,11 @@
    </term>
    <listitem>
     <para>
-     The maximum file size in bytes allowed to download. If the file requested is found larger than this value,
-     the transfer will not start and <constant>CURLE_FILESIZE_EXCEEDED</constant> will be returned.
-     The file size is not always known prior to download, and for such files this option has no effect even if
-     the file transfer ends up being larger than this given limit.
-     Константа доступна с 8.2.0 и cURL 7.11.0
+     Максимальный размер файла в байтах, который модулю разрешается скачивать. Передача не начнётся
+     и вернёт значение константы <constant>CURLE_FILESIZE_EXCEEDED</constant>,
+     если размер файла, который запросил дескриптор, окажется больше этого значения.
+     Опция не влияет на скачивание файлов, размер которых модуль не знает до скачивания,
+     даже если в итоге размер файла превысит предел.
     </para>
    </listitem>
   </varlistentry>
@@ -1177,10 +1183,12 @@
    </term>
    <listitem>
     <para>
-     The maximum time in seconds, since the creation of the connection, that is allowed for an existing
-     connection to have for it to be considered for reuse. If a connection is found in the cache that is older
-     than this value, it will instead be closed once any in-progress transfers are complete.
-     Default is 0 seconds, meaning the option is disabled and all connections are eligible for reuse.
+     Максимальное время в секундах с момента установки соединения, в течение которого
+     модулю разрешается оценивать существующее соединение как доступное для повторной передачи.
+     Если модуль обнаружит в кеше соединение старше этого значения,
+     модуль закроет просроченное соединение, как только завершит текущие передачи.
+     Значение по умолчанию, которое равно 0 секунд, отключает опцию и делает каждое соединение
+     доступным для повторной передачи.
      Константа доступна с 8.2.0 и cURL 7.80.0
     </para>
    </listitem>
@@ -1192,11 +1200,11 @@
    </term>
    <listitem>
     <para>
-     The maximum amount of HTTP redirections to follow. Use this option
-     alongside <constant>CURLOPT_FOLLOWLOCATION</constant>.
-     Default value of <literal>20</literal> is set to prevent infinite redirects.
-     Setting to <literal>-1</literal> allows inifinite redirects, and <literal>0</literal>
-     refuses all redirects.
+     Максимальное количество HTTP-перенаправлений, которому разрешается следовать. Опцию
+     указывают вместе с опцией <constant>CURLOPT_FOLLOWLOCATION</constant>.
+     Значение по умолчанию, которое равно <literal>20</literal>, предотвращает бесконечные перенаправления.
+     Установка значения <literal>-1</literal> разрешит бесконечные перенаправления, а значение <literal>0</literal>
+     откажет в перенаправлениях.
     </para>
    </listitem>
   </varlistentry>
@@ -1207,10 +1215,10 @@
    </term>
    <listitem>
     <para>
-     If a download exceeds this speed (counted in bytes per second) on
-     cumulative average during the transfer, the transfer will pause to
-     keep the average rate less than or equal to the parameter value.
-     Defaults to unlimited speed.
+     Если совокупная средняя в течение передачи скорость скачивания превысит это значение в байтах
+     в секунду, то модуль приостановит скачивание,
+     чтобы поддерживать среднюю скорость ниже или равной
+     значению опции. По умолчанию скорость не ограничивается.
      Константа доступна с cURL 7.15.5
     </para>
    </listitem>
@@ -1222,10 +1230,10 @@
    </term>
    <listitem>
     <para>
-     If an upload exceeds this speed (counted in bytes per second) on
-     cumulative average during the transfer, the transfer will pause to
-     keep the average rate less than or equal to the parameter value.
-     Defaults to unlimited speed.
+     Если совокупная средняя в течение передачи скорость отправки данных превысит это значение в байтах
+     в секунду, то модуль приостановит отправку,
+     чтобы поддерживать среднюю скорость ниже или равной
+     значению опции. По умолчанию скорость не ограничивается.
      Константа доступна с cURL 7.15.5
     </para>
    </listitem>
@@ -1248,9 +1256,8 @@
    </term>
    <listitem>
     <para>
-     &true; to be completely silent with regards to
-     the cURL functions.
-     Removed as of cURL 7.15.5; use <constant xmlns="http://docbook.org/ns/docbook">CURLOPT_RETURNTRANSFER</constant> instead.
+     Со значением &true; модуль отключит сообщения функций модуля cURL. Константу удалили с cURL 7.15.5;
+     вместо неё указывают опцию <constant xmlns="http://docbook.org/ns/docbook">CURLOPT_RETURNTRANSFER</constant>.
     </para>
    </listitem>
   </varlistentry>
@@ -1261,9 +1268,9 @@
    </term>
    <listitem>
     <para>
-     &true; to scan the <filename>~/.netrc</filename>
-     file to find a username and password for the remote site that
-     a connection is being established with.
+     Со значением &true; модуль будет сканировать файл <filename>~/.netrc</filename>,
+     чтобы найти имя пользователя и пароль удалённого сайта, с которым устанавливается
+     соединение.
     </para>
    </listitem>
   </varlistentry>
@@ -1274,9 +1281,9 @@
    </term>
    <listitem>
     <para>
-     &true; to exclude the body from the output.
-     Request method is then set to HEAD. Changing this to &false; does
-     not change it to GET.
+     Со значением &true; опция исключает тело ответа из вывода.
+     Затем для HTTP-метода запроса устанавливается значение HEAD. Изменение значения этой опции на &false;
+     не изменяет метод на GET.
     </para>
    </listitem>
   </varlistentry>
@@ -1287,11 +1294,11 @@
    </term>
    <listitem>
     <para>
-     &true; to disable the progress meter for cURL transfers.
+     Значение &true; отключает индикатор прогресса cURL-передачи.
      <note>
       <para>
-       PHP automatically sets this option to &true;, this should only be
-       changed for debugging purposes.
+       PHP автоматически устанавливает опции значение &true;. Значение изменяют только
+       в целях отладки.
       </para>
      </note>
     </para>
@@ -1304,9 +1311,9 @@
    </term>
    <listitem>
     <para>
-     &true; to ignore any cURL function that causes a
-     signal to be sent to the PHP process. This is turned on by default
-     in multi-threaded SAPIs so timeout options can still be used.
+     Со значением &true; опция игнорирует функции модуля cURL, которые вызывают отправку сигнала
+     PHP-процессу. В многопоточных SAPI-интерфейсах опция включается по умолчанию,
+     поэтому по-прежнему разрешается использовать параметры времени ожидания.
      Константа доступна с cURL 7.10.
     </para>
    </listitem>
@@ -1318,11 +1325,11 @@
    </term>
    <listitem>
     <para>
-     A callback accepting three parameters.
-     The first is the cURL resource, the second is a
-     string containing a password prompt, and the third is the maximum
-     password length. Return the string containing the password.
-     Removed as of PHP 7.3.0.
+     Callback-функция, которая принимает три аргумента.
+     Первым идёт cURL-дескриптор, вторым —
+     строка с запросом пароля, третьим —
+     максимальная длина пароля. Функция обратного вызова должна вернуть строку с паролем.
+     Константу удалили с PHP 7.3.0.
     </para>
    </listitem>
   </varlistentry>
@@ -1333,7 +1340,7 @@
    </term>
    <listitem>
     <para>
-     The password to use in authentication.
+     Пароль для аутентификации.
      Константа доступна с cURL 7.19.1.
     </para>
    </listitem>
@@ -1345,7 +1352,7 @@
    </term>
    <listitem>
     <para>
-     &true; to not handle dot dot sequences.
+     Со значением &true; модуль игнорирует обработку последовательностей из двух точек в названиях путей.
      Константа доступна с 7.0.7 и cURL 7.42.0
     </para>
    </listitem>
@@ -1357,11 +1364,10 @@
    </term>
    <listitem>
     <para>
-     Set the pinned public key.
-      The string can be the file name of your pinned public key. The file
-      format expected is "PEM" or "DER". The string can also be any
-      number of base64 encoded sha256 hashes preceded by "sha256//" and
-      separated by ";".
+     Прикрепляет открытый ключ.
+     Строка содержит или название PEM- или DEX-файла с открытым ключом, который прикрепит опция,
+     или разделённые точкой с запятой ";"
+     sha256-хеши с префиксом "sha256//" в кодировке base64.
      Константа доступна с 7.0.7 и cURL 7.39.0
     </para>
    </listitem>
@@ -1373,7 +1379,8 @@
    </term>
    <listitem>
     <para>
-     &true; to wait for pipelining/multiplexing.
+     Значение &true; укажет модулю дождаться соединения, чтобы подтвердить или опровергнуть
+     конвейеризацию или мультиплексирование перед продолжением работы.
      Константа доступна с 7.0.7 и cURL 7.43.0
     </para>
    </listitem>
