@@ -4,7 +4,7 @@
 <refentry xml:id="intlchar.getpropertyvaluename" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>IntlChar::getPropertyValueName</refname>
-  <refpurpose>Получить имя Unicode для значения свойства</refpurpose>
+  <refpurpose>Получает значения свойства Юникода</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,23 +16,32 @@
    <methodparam choice="opt"><type>int</type><parameter>type</parameter><initializer>IntlChar::LONG_PROPERTY_NAME</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает имя свойства Unicode по его значению, как определено в файле PropertyValueAliases.txt.
+   Метод возвращает значение свойства Юникода, как значение указали
+   в файле базы данных Юникода — PropertyValueAliases.txt.
   </para>
   <note>
    <para>
-    Некоторые имена из PropertyValueAliases.txt могут быть извлечены только с помощью
-    <constant>IntlChar::PROPERTY_GENERAL_CATEGORY_MASK</constant>, а не
-    <constant>IntlChar::PROPERTY_GENERAL_CATEGORY</constant>.
-    Включая:
+    Отдельные названия значений свойств из файла PropertyValueAliases.txt извлекаются только
+    через флаг <constant>IntlChar::PROPERTY_GENERAL_CATEGORY_MASK</constant>,
+    а не <constant>IntlChar::PROPERTY_GENERAL_CATEGORY</constant>.
+    К таким значениям относятся следующие категории символов (список приводит короткое и длинное название
+    категории, а также сокращённое описание):
     <simplelist>
-     <member>"C" / "Прочее"</member>
-     <member>"L" / "Буквы"</member>
-     <member>"LC" / "Буквы, имеющие несколько регистров"</member>
-     <member>"M" / "Метки"</member>
-     <member>"N" / "Числа"</member>
-     <member>"P" / "Пунктуация"</member>
-     <member>"S" / "Символы"</member>
-     <member> "Z" / "Разделители"</member>
+     <member>
+      "C" / "Other" — прочие символы (управлящие, форматирования, суррогаты, частные и зарезервированные неназначенные
+      кодовые точки и несимвольные коды)
+     </member>
+     <member>"L" / "Letter" — буквы</member>
+     <member>
+      "LC" / "Cased_Letter" — категория регистровых букв, которая объединяет категории:
+      заглавных букв — Lu, строчных букв — Ll и диграфов с первым заглавным символом — Lt, то есть отдельных одиночных символов,
+      которые состоят из двух символов, из которых первый — заглавный, например Cz [ч] и Sz [ш]
+     </member>
+     <member>"M" / "Mark" — метки</member>
+     <member>"N" / "Number" — числа</member>
+     <member>"P" / "Punctuation" — символы пунктуации</member>
+     <member>"S" / "Symbol" — символы (математические, валют, диакритические и прочие)</member>
+     <member> "Z" / "Separator" — символы-разделители</member>
     </simplelist>
    </para>
   </note>
@@ -46,7 +55,8 @@
     <listitem>
      &intl.property.parameter;
      <para>
-      Если не входит в допустимый диапазон, либо если метод не работает с данным значением, возвращается &false;.
+      Метод вернёт &false;, если свойство выходит за пределы допустимого диапазона
+      или метод не работает с заданным значением.
      </para>
     </listitem>
    </varlistentry>
@@ -54,14 +64,14 @@
     <term><parameter>value</parameter></term>
     <listitem>
      <para>
-      Селектор для значения свойства. Если не входит в допустимый диапазон, то вернётся &false;.
+      Селектор для значения свойства. Метод вернёт &false;, если значение выходит за пределы допустимого диапазона.
      </para>
      <para>
-      В целом, допустимый диапазон лежит в пределах от <literal>0</literal> до некоторого максимума.
-      Есть несколько исключений:
+      Как правило, допустимый диапазон значений лежит в пределах от <literal>0</literal> до некоторого максимума.
+      Отдельные значения составляют ряд исключений:
       <simplelist>
        <member>
-        Значения <constant>IntlChar::PROPERTY_BLOCK</constant> начинаются с не нулевого значения
+        Значения <constant>IntlChar::PROPERTY_BLOCK</constant> начинаются с ненулевого значения
         <constant>IntlChar::BLOCK_CODE_BASIC_LATIN</constant>
        </member>
        <member>
@@ -76,13 +86,13 @@
     <term><parameter>type</parameter></term>
     <listitem>
      <para>
-      Селектор для извлекаемого имени. Если не попадает в диапазон - будет возвращено &false;.
+      Селектор, который определяет, какое имя требуется получить.
+      Метод вернёт &false; для селекторов вне допустимого диапазона.
      </para>
      <para>
-      Все значения имеют длинные имена. Большинство имеют короткие имена, но не все.
-      Unicode позволяет дополнительные имена;
-      Если существуют, они будут возвращены с добавлением 1, 2, и т.д к
-      <constant>IntlChar::LONG_PROPERTY_NAME</constant>.
+      Длинное имя есть у каждого значения. У большей части значений есть короткие имена, но не у каждого.
+      Юникод разрешает дополнительные имена; если значению присвоили короткое название,
+      метод вернёт значение <constant>IntlChar::LONG_PROPERTY_NAME</constant> с добавлением 1, 2 и т. д.
      </para>
     </listitem>
    </varlistentry>
@@ -92,15 +102,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает имена или &false; если <parameter>property</parameter> или
-   <parameter>nameChoice</parameter> выходят за допустимый диапазон.
-   В случае возникновения ошибки возвращает &null;.
+   Метод возвращает имя или &false;, если значение свойства <parameter>property</parameter>
+   или типа имени <parameter>type</parameter> выходит за рамки допустимого диапазона.
+   Метод возвращает &null;, если возникла ошибка.
   </para>
   <para>
-   Если <parameter>type</parameter> возвращает &false;, то все более большие величины
-   <parameter>type</parameter> также вернут &false;, с одним исключением: если &false; вернётся
-   для <constant>IntlChar::SHORT_PROPERTY_NAME</constant>,
-   то <constant>IntlChar::LONG_PROPERTY_NAME</constant> (и выше) всё ещё могут вернуть не &false;.
+   Если тип названия <parameter>type</parameter> возвращает &false;, все бо́льшие значения
+   типа названия <parameter>type</parameter> также вернут &false;, с одним исключением: если
+   для <constant>IntlChar::SHORT_PROPERTY_NAME</constant> вернётся &false;,
+   то <constant>IntlChar::LONG_PROPERTY_NAME</constant> и выше всё ещё смогут вернуть значения,
+   которые будут отличаться от &false;.
   </para>
  </refsect1>
 
@@ -111,10 +122,12 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(IntlChar::getPropertyValueName(IntlChar::PROPERTY_BLOCK, IntlChar::BLOCK_CODE_GREEK));
 var_dump(IntlChar::getPropertyValueName(IntlChar::PROPERTY_BLOCK, IntlChar::BLOCK_CODE_GREEK, IntlChar::SHORT_PROPERTY_NAME));
 var_dump(IntlChar::getPropertyValueName(IntlChar::PROPERTY_BLOCK, IntlChar::BLOCK_CODE_GREEK, IntlChar::LONG_PROPERTY_NAME));
 var_dump(IntlChar::getPropertyValueName(IntlChar::PROPERTY_BLOCK, IntlChar::BLOCK_CODE_GREEK, IntlChar::LONG_PROPERTY_NAME + 1));
+
 ?>
 ]]>
    </programlisting>
