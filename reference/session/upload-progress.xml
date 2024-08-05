@@ -2,124 +2,130 @@
 <!-- EN-Revision: 184f3f7bd45643cb80f828d0bb001991ec3a5fad Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="session.upload-progress" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Отслеживание прогресса загрузки файлов с помощью сессий</title>
+ <title>Отслеживание хода загрузки файлов через сессии</title>
 
  <para>
-  PHP может отслеживать прогресс загрузки отдельных файлов при
-  включённой опции
-  <link linkend="ini.session.upload-progress.enabled">session.upload_progress.enabled</link>.
-  Данная информация не особенно полезна для запроса, непосредственно
-  закачивающего файл, однако, в течение данной загрузки приложение
-  может посылать POST-запросы на отдельную страницу (например,
-  с помощью <acronym>XHR</acronym>) для проверки статуса.
+  PHP умеет отслеживать ход загрузки отдельных файлов, если включить
+  INI-директиву <link linkend="ini.session.upload-progress.enabled">session.upload_progress.enabled</link>.
+  Эта информация не приносит пользы самому запросу на отправку файла,
+  но в течение загрузки приложения сумеет отправить POST-запрос отдельной конечной точке, например
+  через интерфейс <acronym>XHR</acronym>, чтобы проверить статус.
  </para>
  <para>
-  Прогресс закачки будет доступен в суперглобальной переменной
-  <varname>$_SESSION</varname> во время выполнения загрузки, а также при
-  отправке POST-запросом переменной с именем, равным значению опции
+  Ход загрузки будет доступен в суперглобальной переменной
+  <varname>$_SESSION</varname> по мере загрузки файла,
+  и при отправке POST-переменной с тем же именем, которое установили для INI-параметра
   <link linkend="ini.session.upload-progress.name">session.upload_progress.name</link>.
-  Как только PHP обнаружит такой POST-запрос, он создаст массив
-  в <varname>$_SESSION</varname>, ключом которого будет конкатенация
+  Когда PHP обнаруживает такие POST-запросы, он заполняет
+  в переменной <varname>$_SESSION</varname> массив, в котором ключом будет конкатенация
   значений опций
   <link linkend="ini.session.upload-progress.prefix">session.upload_progress.prefix</link>
   и
   <link linkend="ini.session.upload-progress.name">session.upload_progress.name</link>.
-  Ключ обычно можно получить прочитав эти опции, то есть:
+  Ключ обычно получают путём чтения значений этих директив, то есть:
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $key = ini_get("session.upload_progress.prefix") . $_POST[ini_get("session.upload_progress.name")];
 var_dump($_SESSION[$key]);
+
 ?>
 ]]>
    </programlisting>
   </informalexample>
  </para>
  <para>
-  Также возможно <emphasis>отменить</emphasis> загружаемый в данный момент файл,
-  установив ключ <literal>$_SESSION[$key]["cancel_upload"]</literal> в значение &true;.
-  При загрузке нескольких файлов за один раз, это действие отменит
-  только текущий загружаемый файл и все следующие за ним, но не удалит
-  уже успешно загруженные к этому времени файлы.
-  Если закачка была отменена этим способом, то элемент с ключом
-  <literal>error</literal> в массиве <varname>$_FILES</varname>
-  будет установлен в <constant>UPLOAD_ERR_EXTENSION</constant>.
+  Разработчики <emphasis>отменяют</emphasis> текущую загрузку файла через установку
+  для ключа <literal>$_SESSION[$key]["cancel_upload"]</literal> значения &true;, когда требуется.
+  При загрузке набора файлов в одном запросе этот способ отменит
+  только текущую загрузку файла, которая уже началась, и загрузки в очереди,
+  но не удалит загрузки, которые уже завершились.
+  При отмене загрузки таким способом PHP установит элементу массива
+  <varname>$_FILES</varname> с ключом <literal>error</literal>
+  значение константы <constant>UPLOAD_ERR_EXTENSION</constant>.
  </para>
  <para>
-  Опции <link linkend="ini.session.upload-progress.freq">session.upload_progress.freq</link>
+  Директивы <link linkend="ini.session.upload-progress.freq">session.upload_progress.freq</link>
   и <link linkend="ini.session.upload-progress.min-freq">session.upload_progress.min_freq</link>
-  контролируют частоту обновления информации о прогрессе загрузки.
-  При разумных значениях этих двух настроек, накладные расходы данной
-  функции практически неощутимы.
+  определяют, как часто требуется обновлять информацию о ходе загрузки.
+  Накладные расходы на эту функцию не ощущаются при разумных значениях этих настроек.
  </para>
  <para>
   <example>
-   <title>Пример</title>
+   <title>Пример информации</title>
    <para>
     Пример структуры массива прогресса загрузки.
    </para>
    <programlisting role="html" xml:id="session.upload-progress.example-form">
 <![CDATA[
 <form action="upload.php" method="POST" enctype="multipart/form-data">
- <input type="hidden" name="<?php echo ini_get("session.upload_progress.name"); ?>" value="123" />
- <input type="file" name="file1" />
- <input type="file" name="file2" />
- <input type="submit" />
+    <input type="hidden" name="<?php echo ini_get("session.upload_progress.name"); ?>" value="123" />
+    <input type="file" name="file1" />
+    <input type="file" name="file2" />
+    <input type="submit" />
 </form>
 ]]>
    </programlisting>
    <para>
-    Данные в сессии будут выглядеть примерно так:
+    Данные, которых хранятся в сессии, будут выглядеть вот так:
    </para>
    <programlisting role="php" xml:id="session.upload-progress.example-array">
 <![CDATA[
 <?php
+
+<?php
+
 $_SESSION["upload_progress_123"] = array(
- "start_time" => 1234567890,   // Время начала запроса
- "content_length" => 57343257, // Длина содержимого POST
- "bytes_processed" => 453489,  // Количество полученных и обработанных байт
- "done" => false,              // true при завершении обработки POST, успешно или нет
- "files" => array(
-  0 => array(
-   "field_name" => "file1",       // Имя поля <input/>
-   // Следующие 3 элемента аналогичны соответствующим элементам массива $_FILES
-   "name" => "foo.avi",
-   "tmp_name" => "/tmp/phpxxxxxx",
-   "error" => 0,
-   "done" => true,                // True, если обработчик POST закончил обработку данного файла
-   "start_time" => 1234567890,    // Время начала обработки этого файла
-   "bytes_processed" => 57343250, // Число полученных и обработанных байт этого файла
-  ),
-  // И ещё один файл, загрузка которого ещё не закончена в том же запросе
-  1 => array(
-   "field_name" => "file2",
-   "name" => "bar.avi",
-   "tmp_name" => NULL,
-   "error" => 0,
-   "done" => false,
-   "start_time" => 1234567899,
-   "bytes_processed" => 54554,
-  ),
- )
+    "start_time" => 1234567890,   // Время начала запроса
+    "content_length" => 57343257, // Длина содержимого POST-запроса
+    "bytes_processed" => 453489,  // Количество байтов, которые получил и обработал запрос
+    "done" => false,              // После завершения обработки POST-запроса значение изменится на true,
+                                  // независимо от того, успешно или нет завершилась обработка
+    "files" => array(
+        0 => array(
+            "field_name" => "file1",       // Значение атрибута name поля <input/>
+            // Следующие 3 элемента соответствуют элементам суперглобального массива $_FILES
+            "name" => "foo.avi",
+            "tmp_name" => "/tmp/phpxxxxxx",
+            "error" => 0,
+            "done" => true,                // Элемент получает значение true, когда обработчик POST-запроса
+                                           // закончил обработку файла
+            "start_time" => 1234567890,    // Время начала обработки файла
+            "bytes_processed" => 57343250, // Количество байтов, которые запрос получил и обработал для файла
+        ),
+        // Ещё один файл, загрузка которого ещё не закончилась в том же запросе
+        1 => array(
+            "field_name" => "file2",
+            "name" => "bar.avi",
+            "tmp_name" => NULL,
+            "error" => 0,
+            "done" => false,
+            "start_time" => 1234567899,
+            "bytes_processed" => 54554,
+        ),
+    )
 );
+
+?>
 ]]>
    </programlisting>
   </example>
  </para>
  <warning>
   <para>
-   Для успешной работы данной функции необходимо отключить буферизацию запроса веб-сервером.
-   Иначе PHP увидит загрузку файла только когда загрузка полностью завершится.
-   Серверы, такие как например Nginx, буферизуют большие запросы.
+   Для правильной работы требуется отключить буферизацию запросов веб-сервера,
+   иначе PHP увидит загрузку файла только после полной загрузки.
+   Серверы наподобие Nginx буферизуют большие запросы.
   </para>
  </warning>
  <caution>
   <para>
-   Информация о прогрессе загрузки записывается в сессию до того, как будет
-   запущен какой либо скрипт. Поэтому изменение имени сессии с помощью
-   <function>ini_set</function> или <function>session_name</function> выдаст
-   сессию без информации о прогрессе загрузки.
+   Информация о ходе загрузки записывается в сессию перед выполнением
+   скриптов. Поэтому изменение имени сессии через функции
+   <function>ini_set</function> или <function>session_name</function> создаст
+   сессию без информации о ходе загрузки.
   </para>
  </caution>
 </chapter>
