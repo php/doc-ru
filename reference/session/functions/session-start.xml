@@ -4,7 +4,7 @@
 <refentry xml:id="function.session-start" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>session_start</refname>
-  <refpurpose>Стартует новую сессию, либо возобновляет существующую</refpurpose>
+  <refpurpose>Начинает или возобновляет сессию</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,35 +14,35 @@
    <methodparam choice="opt"><type>array</type><parameter>options</parameter><initializer>[]</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>session_start</function> создаёт сессию, либо возобновляет
-   существующую, основываясь на идентификаторе сессии, переданном через
-   GET- или POST-запрос, либо переданный через cookie.
+   Функция <function>session_start</function> создаёт новую сессию или на основе идентификатора сессии,
+   который передали через GET- или POST-запрос либо в блоке данных cookie,
+   возобновляет сессию, которую запустили прежде.
   </para>
   <para>
-   Когда вызвана функция <function>session_start</function> или когда сессия создаётся
-   автоматически, PHP вызовет открытие и чтение обработчиков записи сессии. Это могут
-   быть как встроенные обработчики, так и предоставляемые модулями (например,
-   SQLite или Memcached); или вообще определённый пользователем обработчик, заданный
+   При вызове функции <function>session_start</function> или автозапуске сессии
+   PHP вызовет открытие и чтение обработчиков сохранения сессии. Это будет
+   встроенный обработчик сохранения по умолчанию, обработчик, который установил
+   PHP-модуль наподобие SQLite или Memcached, или пользовательский обработчик, который определили
    функцией <function>session_set_save_handler</function>.
-   Callback-функция чтения извлечёт все существующие данные сессии (сохранённые в
-   специальном сериализованном виде), десериализует их и занесёт в суперглобальный
-   массив $_SESSION, после чего вернёт сохранённые данные обработчику сессий PHP.
+   Callback-функция чтения извлечёт существующие данные сессии, которые PHP хранит
+   в сериализованном виде, и вернёт сохранённые данные обработчику PHP-сессий, который десериализует и занесёт
+   данные в суперглобальный массив $_SESSION.
   </para>
   <para>
-   Для использования именованных сессий, используйте
-   <function>session_name</function> перед
-   <function>session_start</function>.
+   Перед вызовом функции <function>session_start</function>
+   вызывают функцию <function>session_name</function>,
+   чтобы назвать сессию произвольно.
   </para>
   <para>
-   Если разрешена опция <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>,
-   функция <function>session_start</function> регистрирует внутренний обработчик вывода
-   для перезаписи URL.
+   При включённой опции <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>
+   функция <function>session_start</function> зарегистрирует внутренний обработчик вывода
+   для перезаписи URL-адресов.
   </para>
   <para>
-   Если пользователь использует <literal>ob_gzhandler</literal> или что-то подобное
-   совместно с функцией <function>ob_start</function>, порядок функций важен для
-   правильного вывода. К примеру, <literal>ob_gzhandler</literal> должен быть
-   зарегистрирован до старта сессии.
+   Порядок вызова функций играет важную роль для правильного вывода данных при передаче в функцию <function>ob_start</function>
+   обработчика вывода сжатых данных <literal>ob_gzhandler</literal> или похожей callback-функции.
+   Например, обработчик <literal>ob_gzhandler</literal> требуется
+   зарегистрировать до начала сессии.
   </para>
  </refsect1>
 
@@ -53,15 +53,15 @@
     <term><parameter>options</parameter></term>
     <listitem>
      <para>
-      Если задано, то должно быть ассоциативным массивом, переопределяющим
-      текущие <link linkend="session.configuration">директивы конфигурации сессий</link>.
-      Ключи не должны иметь префикса <literal>session.</literal>.
+      Параметр принимает ассоциативный массив опций, которые переопределят
+      текущий набор <link linkend="session.configuration">директив конфигурации сессии</link>.
+      Названия опций требуется указывать без префикса <literal>session.</literal>.
      </para>
      <para>
-      В дополнение к обычному набору конфигурационных директив, может быть
-      добавлена опция <literal>read_and_close</literal>. Если установлена в &true;, то
-      сессия будет закрыта сразу же после прочтения, теоретически позволяя избежать
-      блокировки, если данные сессии не будут изменяться.
+      Стандартный набор директив конфигурации дополняет
+      опция <literal>read_and_close</literal>. Со значением &true; опция
+      сразу закроет сессию, когда обработчик сохранения сессии прочитает данные, что исключит
+      ненужную блокировку, когда данные сессии не изменяются.
      </para>
     </listitem>
    </varlistentry>
@@ -71,7 +71,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает &true;, если сессия успешно стартована, в противном случае &false;.
+   Функция возвращает &true;, если сессия успешно запустилась, иначе &false;.
   </para>
  </refsect1>
 
@@ -90,8 +90,8 @@
       <row>
        <entry>7.1.0</entry>
        <entry>
-        <function>session_start</function> теперь возвращает &false; и больше не
-        инициализирует <varname>$_SESSION</varname>, когда она не смогла запустить сессию.
+        Теперь функция <function>session_start</function> возвращает &false; и больше
+        не инициализирует суперглобальный массив <varname>$_SESSION</varname>, когда не смогла запустить сессию.
        </entry>
       </row>
      </tbody>
@@ -103,7 +103,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <refsect2>
-   <title>Простой пример сессии</title>
+   <title>Базовый пример запуска сессии</title>
 
    <para>
     <example>
@@ -111,33 +111,35 @@
      <programlisting role="php">
 <![CDATA[
 <?php
+
 // page1.php
 
 session_start();
 
 echo 'Добро пожаловать на страницу 1';
 
-$_SESSION['favcolor'] = 'green';
-$_SESSION['animal']   = 'cat';
+$_SESSION['favcolor'] = 'зелёный';
+$_SESSION['animal']   = 'кот';
 $_SESSION['time']     = time();
 
-// Работает, если сессионная cookie принята
+// Работает, если получатель принял сессионный блок данных cookie
 echo '<br /><a href="page2.php">page 2</a>';
 
-// Или можно передать идентификатор сессии, если нужно
+// Или вывод передают вместе с идентификатором сессии, если требуется
 echo '<br /><a href="page2.php?' . SID . '">page 2</a>';
+
 ?>
 ]]>
      </programlisting>
     </example>
    </para>
    <para>
-    После просмотра <filename>page1.php</filename>, вторая страница
-    <filename>page2.php</filename> чудесным образом получит все данные сессии.
-    Читайте раздел <link linkend="ref.session">работа с сессиями</link>,
-    там рассказывается про <link linkend="session.idpassing">передачу
-    идентификаторов сессий</link>. В частности там рассказывается про то, что
-    такое константа <constant>SID</constant>.
+    После просмотра страницы <filename>page1.php</filename> вторая страница —
+    <filename>page2.php</filename> — волшебным образом будет содержать данные сессии.
+    Справочник <link linkend="ref.session">по работе с функциями сессий</link>
+    даёт дополнительную информацию <link linkend="session.idpassing">о передаче идентификатора сессии</link>,
+    включая сведения о том, как работает
+    константа <constant>SID</constant>.
    </para>
    <para>
     <example>
@@ -145,18 +147,20 @@ echo '<br /><a href="page2.php?' . SID . '">page 2</a>';
      <programlisting role="php">
 <![CDATA[
 <?php
+
 // page2.php
 
 session_start();
 
 echo 'Добро пожаловать на страницу 2<br />';
 
-echo $_SESSION['favcolor']; // green
-echo $_SESSION['animal'];   // cat
+echo $_SESSION['favcolor']; // зелёный
+echo $_SESSION['animal'];   // кот
 echo date('Y m d H:i:s', $_SESSION['time']);
 
-// Можете тут использовать идентификатор сессии, как в page1.php
+// В этом месте можно использовать константу SID, как это делал код страницы page1.php
 echo '<br /><a href="page1.php">page 1</a>';
+
 ?>
 ]]>
      </programlisting>
@@ -164,17 +168,19 @@ echo '<br /><a href="page1.php">page 1</a>';
    </para>
   </refsect2>
   <refsect2>
-   <title>Передача опций в <function>session_start</function></title>
+   <title>Пример передачи опций в функцию <function>session_start</function></title>
 
    <example>
     <title>Переопределение времени жизни cookie</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Устанавливаем срок действия cookie одному дню.
+
+// Устанавливаем срок действия cookie равным одному дню
 session_start([
     'cookie_lifetime' => 86400,
 ]);
+
 ?>
 ]]>
     </programlisting>
@@ -185,13 +191,16 @@ session_start([
     <programlisting role="php">
 <![CDATA[
 <?php
-// Если мы знаем, что в сессии не надо ничего изменять,
-// мы можем просто прочитать её переменные и сразу закрыть,
-// чтобы не блокировать файл сессии, который может понадобиться другим сессиям
+
+// Переменные сессии просто считывают и сразу закрывают сессию,
+// если известно, что в сессии не требуется ничего изменять,
+// чтобы не блокировать файл сессии, который потребуется другим скриптам, а с ним и другие страницы
 session_start([
     'cookie_lifetime' => 86400,
     'read_and_close'  => true,
 ]);
+
+?>
 ]]>
     </programlisting>
    </example>
@@ -202,21 +211,21 @@ session_start([
   &reftitle.notes;
   <note>
    <para>
-    Для использования сессий на основе cookie, функция <function>session_start</function>
-    должна быть вызвана перед выводом чего бы то ни было в браузер.
+    Функцию <function>session_start</function> требуется вызывать перед выводом данных в браузер,
+    чтобы работать с сессиями на основе блоков данных cookies.
    </para>
   </note>
   <note>
    <para>
-    Используйте <link linkend="ini.zlib.output-compression">zlib.output_compression</link>
-    вместо <function>ob_gzhandler</function>
+    Вызову функции <function>ob_gzhandler</function>
+    лучше предпочесть включение опции <link linkend="ini.zlib.output-compression">zlib.output_compression</link>.    
    </para>
   </note>
   <note>
    <para>
-    Эта функция отсылает несколько заголовков HTTP, в зависимости от настроек.
-    Смотрите описание функции <function>session_cache_limiter</function> для
-    управления этими заголовками.
+    Функция отправляет ряд HTTP-заголовков, состав которых зависит от настроек.
+    Описание функции <function>session_cache_limiter</function> рассказывает,
+    как настроить состав заголовков, которые отправит функция.
    </para>
   </note>
  </refsect1>
