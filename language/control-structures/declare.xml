@@ -5,9 +5,9 @@
  <title>declare</title>
  <?phpdoc print-version-for="declare"?>
  <para>
-  Конструкция <literal>declare</literal> используется для установки
-  директив исполнения для блока кода. Синтаксис <literal>declare</literal>
-  аналогичен с синтаксисом других конструкций управления выполнением:
+  Конструкция <literal>declare</literal> устанавливает
+  директивы выполнения для блока кода. Синтаксис конструкции <literal>declare</literal>
+  аналогичен синтаксису других конструкций управления потоком:
   <informalexample>
    <programlisting>
 <![CDATA[
@@ -18,61 +18,66 @@ declare (directive)
   </informalexample>
  </para>
  <para>
-  Секция <literal>directive</literal> позволяет установить поведение
+  Часть <literal>directive</literal> разрешает установить поведение
   блока <literal>declare</literal>.
-  В настоящее время распознаются только три директивы:
-  директива <literal>ticks</literal> (Дополнительная информация
-  о директиве <link linkend="control-structures.declare.ticks">ticks</link>
-  доступна ниже), директива <literal>encoding</literal> (Дополнительная информация
-  о директиве <link linkend="control-structures.declare.encoding">encoding</link>
-  доступна ниже) и директива <literal>strict_types</literal> (подробности в разделе про
-  <link linkend="language.types.declarations.strict">строгую типизацию</link> на странице аргументов функции)
+  Пока PHP распознаёт только три директивы:
+  директива <literal>ticks</literal> (дополнительную информацию
+  даёт параграф «<link linkend="control-structures.declare.ticks">Тики</link>»),
+  директива <literal>encoding</literal> (подробнее рассказывает
+  параграф «<link linkend="control-structures.declare.encoding">Кодировка</link>»)
+  и директива <literal>strict_types</literal> (подробности в разделе
+  <link linkend="language.types.declarations.strict">о строгой типизации</link> на странице
+  об объявлении типов).
  </para>
 
  <para>
-  Поскольку директивы обрабатываются при компиляции файла, то только символьные данные
-  могут использоваться как значения директивы. Нельзя использовать переменные и константы.
+  Поскольку директивы обрабатываются при компиляции файла, только литералы
+  разрешается указывать как значения директив. Нельзя указывать переменные и константы.
   Пример:
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 // Правильно:
 declare(ticks=1);
 
 // Недопустимо:
 const TICK_VALUE = 1;
 declare(ticks=TICK_VALUE);
+
 ?>
 ]]>
    </programlisting>
   </informalexample>
  </para>
  <para>
-  Часть <literal>statement</literal> блока <literal>declare</literal>
-  будет выполнена — как выполняется и какие побочные эффекты
-  возникают во время выполнения, может зависеть от директивы, которая установлена в
-  блоке <literal>directive</literal>.
+  PHP выполнит часть <literal>statement</literal> блока <literal>declare</literal> —
+  как PHP выполнит инструкции и какие побочные эффекты
+  возникают во время выполнения, зависит от директивы, которую установили
+  в блоке <literal>directive</literal>.
  </para>
  <para>
-  Конструкция <literal>declare</literal> также может быть использована
-  в глобальной области видимости, влияя на весь следующий за ней код
-  (однако, если файл с <literal>declare</literal> был включён, то она
-  не будет действовать на родительский файл).
+  Конструкцию <literal>declare</literal> разрешается объявлять
+  в глобальной области видимости, чтобы повлиять на весь код за ней
+  (однако, если файл с объявлением конструкции <literal>declare</literal> включили
+  в родительский файл, конструкция не повлияет на родительский файл).
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
-// это то же самое:
 
-// можно так:
+// Это то же самое:
+
+// Конструкцию declare объявляют вот так:
 declare(ticks=1) {
-    // прочие действия
+    // Скрипт записывается внутри блока с фигурными скобками
 }
 
 // или так:
 declare(ticks=1);
-// прочие действия
+// Скрипт записывается после объявления конструкции declare
+
 ?>
 ]]>
    </programlisting>
@@ -81,22 +86,23 @@ declare(ticks=1);
 
  <sect2 xml:id="control-structures.declare.ticks">
   <title>Тики</title>
-  <para>Тик - это событие, которое случается каждые
-   <varname>N</varname> низкоуровневых операций, выполненных
-   парсером внутри блока <literal>declare</literal>.
-   Значение <varname>N</varname> задаётся, используя
-   <code>ticks=<varname>N</varname></code> внутри
-   секции <literal>directive</literal> блока <literal>declare</literal>.
+  <para>
+   Тик — событие, которое возникает каждые
+   <varname>N</varname> низкоуровневых инструкций, которые парсер
+   отмечает как такт и выполняет внутри блока <literal>declare</literal>.
+   Значение <varname>N</varname> указывают
+   как <code>ticks=<varname>N</varname></code> внутри
+   части <literal>directive</literal> блока <literal>declare</literal>.
   </para>
   <para>
-   Не все выражения подсчитываются. Обычно, условные выражения
+   Парсер отмечает как такт не каждую инструкцию. Обычно условные выражения
    и выражения аргументов не подсчитываются.
   </para>
   <para>
-   Событие (или несколько событий), которое возникает на каждом тике
-   определяется, используя <function>register_tick_function</function>.
-   Смотрите пример ниже для дополнительной информации. Имейте в виду,
-   что для одного тика может возникать несколько событий.
+   События, которые возникают на каждом тике,
+   помогает определить функция <function>register_tick_function</function>.
+   Подробности содержит следующий пример. Обратите внимание,
+   что для каждого тика иногда возникает больше одного события.
   </para>
   <para>
    <example>
@@ -107,19 +113,19 @@ declare(ticks=1);
 
 declare(ticks=1);
 
-// Функция, исполняемая при каждом тике
+// Функция, которую PHP будет вызывать при каждом тике
 function tick_handler()
 {
-    echo "Вызывается tick_handler()\n";
+    echo "PHP вызвал функцию tick_handler()\n";
 }
 
-register_tick_function('tick_handler'); // вызывает событие тика
+register_tick_function('tick_handler'); // Вызывает событие тика
 
-$a = 1; // вызывает событие тика
+$a = 1; // Вызывает событие тика
 
 if ($a > 0) {
-    $a += 2; // вызывает событие тика
-    print $a; // вызывает событие тика
+    $a += 2; // Вызывает событие тика
+    print $a; // Вызывает событие тика
 }
 
 ?>
@@ -128,21 +134,24 @@ if ($a > 0) {
    </example>
   </para>
   <simpara>
-   Смотрите также <function>register_tick_function</function> и
-   <function>unregister_tick_function</function>.
+   Смотрите также описание функций <function>register_tick_function</function>
+   и <function>unregister_tick_function</function>.
   </simpara>
  </sect2>
  <sect2 xml:id="control-structures.declare.encoding">
   <title>Кодировка</title>
   <para>
-   Кодировка скрипта может быть указана для каждого скрипта, используя директиву <literal>encoding</literal>.
+   Директива <literal>encoding</literal> умеет указывать кодировку скрипта
+   для каждого отдельного скрипта.
    <example>
-    <title>Определение кодировки для скрипта.</title>
+    <title>Объявление кодировки скрипта</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 declare(encoding='ISO-8859-1');
-// прочий код
+// В этом месте идёт код
+
 ?>
 ]]>
     </programlisting>
@@ -151,14 +160,14 @@ declare(encoding='ISO-8859-1');
 
   <caution>
    <simpara>
-    В сочетании с пространством имён единственно допустимый синтаксис
-    для declare является <literal>declare(encoding='...');</literal> где
-    <literal>...</literal> это значение кодировки. <literal>declare(encoding='...') {}</literal>
-    приведёт к ошибке парсера, если используется вместе с пространством имён.
+    Единственный допустимый синтаксис для конструкции declare
+    в сочетании с пространствами имён выглядит вот так: <literal>declare(encoding='...');</literal>
+    где <literal>...</literal> — значение кодировки. В сочетании с пространствами имён
+    запись <literal>declare(encoding='...') {}</literal> вызовет ошибку парсера.
    </simpara>
   </caution>
   <para>
-   Смотрите также <link linkend="ini.zend.script-encoding">zend.script_encoding</link>.
+   Смотрите также описание директивы <link linkend="ini.zend.script-encoding">zend.script_encoding</link>.
   </para>
  </sect2>
 </sect1>
