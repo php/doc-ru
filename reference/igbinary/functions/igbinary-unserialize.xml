@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 26e26a95fdc3aac9b464068953ea3105dee00f14 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 4150dc92749c177758efe59eab23b6a5d32ffda2 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.igbinary-unserialize" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>igbinary_unserialize</refname>
-  <refpurpose>Создаёт значение PHP из сохранённого представления функцией <function>igbinary_serialize</function></refpurpose>
+  <refpurpose>Создаёт значение PHP из сохранённого функцией <function>igbinary_serialize</function></refpurpose> представления
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,28 +14,28 @@
    <methodparam><type>string</type><parameter>str</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция <function>igbinary_unserialize</function> берёт одну сериализованную переменную из
-   функции <function>igbinary_serialize</function> и преобразовывет её обратно в значение PHP.
+   Функция <function>igbinary_unserialize</function> берёт одну сериализованную переменную
+   из функции <function>igbinary_serialize</function> и преобразовывет её обратно в PHP-значение.
   </simpara>
   <warning>
    <para>
-    Ненадёжные пользовательские входные данные не должны передаваться в <function>igbinary_unserialize</function>.
-    Десериализация может привести к загрузке и выполнению кода из-за создания экземпляра объекта и автозагрузки, тогда злоумышленник может этим воспользоваться.
-    Вместо этого следует использовать безопасный стандартный формат обмена данными, такой как JSON (с помощью функций
-    <function>json_decode</function> и <function>json_encode</function>),
-    если сериализованные данные необходимо передать клиенту.
+    Ненадёжные пользовательские входные данные нельзя передавать в функцию <function>igbinary_unserialize</function>.
+    При десериализации инстанцируются объекты и автоматически загружаются классы, что ведёт к риску загрузки и выполнения кода,
+    чем пользуются злоумышленники. Вместо этого пользуются безопасным стандартным форматом обмена данными
+    наподобие JSON, с которым работают функциями <function>json_decode</function> и <function>json_encode</function>,
+    если сериализованные данные требуется передать клиенту.
    </para>
    <para>
-    Если есть необходимость десериализовать сохранённые извне сериализованные данные,
-    для проверки данных можно использовать функцию <function>hash_hmac</function>.
-    Важно убедиться, что данные никто не подделал.
+    Сериализованные данные внешнего хранилища проверяют функцией <function>hash_hmac</function>,
+    если требуется десериализовать такие данные.
+    Важно убедиться, что никто не подделал данные.
    </para>
   </warning>
   <warning>
    <para>
-    Формат сериализации igbinary не позволяет различать разные ссылочные группы для одного и того же значения.
-    Все ссылки PHP на заданное значение при десериализации обрабатываются как часть одной и той же группы ссылок,
-    даже если при сериализации они были частями разных групп ссылок.
+    Формат сериализации модуля igbinary не различает разные ссылочные группы для одного и того же значения.
+    Каждая PHP-ссылка на заданное значение при десериализации обрабатывается как часть одной и той же группы ссылок,
+    даже если при сериализации ссылка была частью разных групп ссылок.
    </para>
   </warning>
  </refsect1>
@@ -47,24 +47,24 @@
     <term><parameter>str</parameter></term>
     <listitem>
      <para>
-      Сериализованная функцией <function>igbinary_serialize</function> строка.
+      Строка, которую сериализовали функцией <function>igbinary_serialize</function>.
      </para>
      <para>
-      Если десериализуемое значение является объектом (&object;), после успешного восстановления
-      объекта, igbinary автоматически попытается вызвать метод <link linkend="object.unserialize">__unserialize()</link> или
-      <link linkend="object.wakeup">__wakeup()</link> (если таковой существует).
+      После успешного восстановления объекта модуль igbinary автоматически попытается вызвать
+      методы <link linkend="object.unserialize">__unserialize()</link> или <link linkend="object.wakeup">__wakeup()</link>,
+      если десериализуемое значение — объект (&object;) и методы определили в классе.
      </para>
      <para>
       <note>
-       <title>unserialize_callback_func directive</title>
+       <title>
+        Директива
+        <link linkend="ini.unserialize-callback-func">unserialize_callback_func</link>
+       </title>
        <para>
-        Можно установить callback-функцию, которая будет вызываться,
-        если во время десериализации должен быть создан экземпляр неопределённого класса
-        (чтобы предотвратить получение неполного объекта (<type>object</type>) <classname>__PHP_Incomplete_Class</classname>).
-        Для определения <link linkend="ini.unserialize-callback-func">unserialize_callback_func</link> могут использоваться
-        файлы &php.ini;, <function>ini_set</function> или &htaccess;.
-        Каждый раз, когда необходимо создать экземпляр неопределённого класса, callback-функция будет вызываться.
-        Чтобы отключить эту функцию, параметр следует очистить.
+        Callback-функция, которую указали в директиве <link linkend="ini.unserialize-callback-func">unserialize_callback_func</link>,
+        вызывается при десериализации неопределённого класса.
+        PHP создаст объект <classname>__PHP_Incomplete_Class</classname>,
+        если callback-функцию не указали.
        </para>
       </note>
      </para>
@@ -76,20 +76,21 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает преобразованное значение, которое может быть <type>bool</type>,
+   Функция возвращает преобразованное значение с типом <type>bool</type>,
    <type>int</type>, <type>float</type>, <type>string</type>,
    <type>array</type>, <type>object</type> или <type>null</type>.
   </para>
   <para>
-   Если переданная строка не может быть десериализована, возвращается &false; и выдаётся
-   ошибка уровня <constant>E_NOTICE</constant> или <constant>E_WARNING</constant>.
+   Функция возвращает &false; и выдаёт
+   ошибку уровня <constant>E_NOTICE</constant> или <constant>E_WARNING</constant>,
+   если заданную строку невозможно десериализовать.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Объекты могут выбрасывать исключение <classname>Throwable</classname> в своих обработчиках десериализации.
+   Иногда в своих обработчиках десериализации объекты выбрасывают исключение <classname>Throwable</classname>.
   </para>
  </refsect1>
 
@@ -97,7 +98,7 @@
   &reftitle.notes;
   <warning>
    <para>
-    &null; или &false; возвращается как в случае возникновения ошибки, так и при десериализации
+    Значение &null; или &false; возвращается как при ошибке, так и при десериализации
     сериализованного значения &null; или &false;.
     Этот особый случай можно определить, сравнив<parameter>str</parameter> с
     <code>igbinary_serialize(null)</code> или <code>igbinary_serialize(false)</code>
