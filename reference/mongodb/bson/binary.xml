@@ -12,10 +12,10 @@
   <section xml:id="mongodb-bson-binary.intro">
    &reftitle.intro;
    <para>
-    Тип BSON для бинарных данных (т. е. массива байтов). Бинарные значения также
-    имеют подтип, обозначающий, какой тип данных содержится в массиве байт.
-    Подтипы с нуля до 127 предопределены или зарезервированы.
-    Подтипы с 128-255 задаются пользователем.
+    Класс представляет и обрабатывает типы двоичных данных в виде массива байтов для хранения BSON-документа.
+    Бинарные значения хранят подтипы — идентификаторы, которые указывают тип данных в массиве байтов.
+    Подтипы от 0 до 127 предопределили или зарезервировали.
+    Подтипы в диапазоне 128-255 задаются пользователем.
    </para>
   </section>
   <!-- }}} -->
@@ -132,22 +132,22 @@
     <varlistentry xml:id="mongodb-bson-binary.constants.type-generic">
      <term><constant>MongoDB\BSON\Binary::TYPE_GENERIC</constant></term>
      <listitem>
-      <para>Бинарные данные</para>
+      <para>Бинарные данные общего подтипа.</para>
      </listitem>
     </varlistentry>
 
     <varlistentry xml:id="mongodb-bson-binary.constants.type-function">
      <term><constant>MongoDB\BSON\Binary::TYPE_FUNCTION</constant></term>
      <listitem>
-      <para>Функция</para>
+      <para>Функция.</para>
      </listitem>
     </varlistentry>
 
     <varlistentry xml:id="mongodb-bson-binary.constants.type-old-binary">
      <term><constant>MongoDB\BSON\Binary::TYPE_OLD_BINARY</constant></term>
      <listitem>
-      <para>Бинарные данные (константу объявили устаревшей в пользу
-       <constant>MongoDB\BSON\Binary::TYPE_GENERIC</constant>)</para>
+      <para>Бинарные данные общего подтипа (константу объявили устаревшей в пользу
+       <constant>MongoDB\BSON\Binary::TYPE_GENERIC</constant>).</para>
      </listitem>
     </varlistentry>
 
@@ -156,13 +156,14 @@
      <listitem>
       <para>
        Универсальный уникальный идентификатор (константу объявили устаревшей в пользу
-       <constant>MongoDB\BSON\Binary::TYPE_UUID</constant>). При использовании этого
-       типа бинарные данные должны иметь длину 16 байтов.
+       <constant>MongoDB\BSON\Binary::TYPE_UUID</constant>). Обязательное требование
+       к двоичным данным этого типа в объекте Binary — длина составляет 16 байтов.
       </para>
       <para>
-       Исторически другие значения кодированные этим типов, но другими драйверами,
-       базируются на других конвенциях (например, разный тип порядка байт), что делает
-       его непереносимым. PHP-модуль не применяет обработок для кодирования
+       Исторически другие драйверы кодировали значения этого типа
+       по правилам, которые соответствовали внутренним языковым соглашениям
+       (например, с разным порядком байтов), что делает
+       тип непереносимым. PHP-модуль не применяет обработок для кодирования
        или декодирования данных этого типа.
       </para>
      </listitem>
@@ -172,9 +173,9 @@
      <term><constant>MongoDB\BSON\Binary::TYPE_UUID</constant></term>
      <listitem>
       <para>
-       Универсальный уникальный идентификатор. При использовании этого
-       типа бинарные данные должны иметь длину 16 байтов и быть закодированы
-       по правилам стандарта <link xlink:href="&url.rfc;4122">RFC 4122</link>.
+       Универсальный уникальный идентификатор. Обязательное требование
+       к двоичным данным этого типа в объекте Binary — длина составляет 16 байтов
+       и данные закодировали по правилам стандарта <link xlink:href="&url.rfc;4122">RFC 4122</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -182,15 +183,15 @@
     <varlistentry xml:id="mongodb-bson-binary.constants.type-md5">
      <term><constant>MongoDB\BSON\Binary::TYPE_MD5</constant></term>
      <listitem>
-      <para>Хеш MD5. При использовании этого
-       типа, бинарные данные должны быть длиной 16 байт.</para>
+      <para>Хеш в формате MD5. Обязательное требование
+       к двоичным данным этого типа в объекте Binary — длина составляет 16 байтов.</para>
      </listitem>
     </varlistentry>
 
     <varlistentry xml:id="mongodb-bson-binary.constants.type-encrypted">
      <term><constant>MongoDB\BSON\Binary::TYPE_ENCRYPTED</constant></term>
      <listitem>
-      <para>Зашифрованное значение. Этот подтип используется для шифрования на стороне клиента.</para>
+      <para>Зашифрованное значение. Подтип для шифрования на стороне клиента.</para>
      </listitem>
     </varlistentry>
 
@@ -198,7 +199,7 @@
      <term><constant>MongoDB\BSON\Binary::TYPE_COLUMN</constant></term>
      <listitem>
       <para>
-       Данные столбца. Подтип используется для коллекций временных рядов.
+       Данные столбца. Подтип для коллекций временны́х рядов.
       </para>
      </listitem>
     </varlistentry>
@@ -207,8 +208,8 @@
      <term><constant>MongoDB\BSON\Binary::TYPE_SENSITIVE</constant></term>
      <listitem>
       <para>
-       Конфиденциальные данные. Подтип используется для конфиденциальных данных,
-       которые по возможности должны быть исключены из логирования на стороне сервера.
+       Конфиденциальные данные. Подтип для конфиденциальных данных,
+       которые по возможности исключают из логирования на стороне сервера.
       </para>
      </listitem>
     </varlistentry>
@@ -217,8 +218,9 @@
      <term><constant>MongoDB\BSON\Binary::TYPE_USER_DEFINED</constant></term>
      <listitem>
       <para>
-       Пользовательский тип. В то время как типы с 0 по 127 предопределили или
-       зарезервировали, типы со 128 по 255 определяет пользователь и может использовать по своему усмотрению.
+       Пользовательский тип. Поскольку типы с 0 по 127 предопределили
+       или зарезервировали, типы от 128 до 255 определяет пользователь
+       и использует по своему усмотрению.
       </para>
      </listitem>
     </varlistentry>
@@ -242,37 +244,37 @@
        <row>
         <entry>PECL mongodb 1.17.0</entry>
         <entry>
-         Добавлен тип <constant>MongoDB\BSON\Binary::TYPE_SENSITIVE</constant>.
+         Добавили тип <constant>MongoDB\BSON\Binary::TYPE_SENSITIVE</constant>.
         </entry>
        </row>
        <row>
         <entry>PECL mongodb 1.12.0</entry>
         <entry>
          <para>
-          Реализует интерфейс <interfacename>Stringable</interfacename> для PHP 8.0+.
+          Реализовали интерфейс <interfacename>Stringable</interfacename> для PHP 8.0+.
          </para>
          <para>
-          Добавлен тип <constant>MongoDB\BSON\Binary::TYPE_COLUMN</constant>.
+          Добавили тип <constant>MongoDB\BSON\Binary::TYPE_COLUMN</constant>.
          </para>
         </entry>
        </row>
        <row>
         <entry>PECL mongodb 1.7.0</entry>
         <entry>
-         Добавлен тип <constant>MongoDB\BSON\Binary::TYPE_ENCRYPTED</constant>.
+         Добавили тип <constant>MongoDB\BSON\Binary::TYPE_ENCRYPTED</constant>.
         </entry>
        </row>
        <row>
         <entry>PECL mongodb 1.3.0</entry>
         <entry>
-         Реализует интерфейс  <interfacename>MongoDB\BSON\BinaryInterface</interfacename>.
+         Реализовали интерфейс <interfacename>MongoDB\BSON\BinaryInterface</interfacename>.
         </entry>
        </row>
        <row>
         <entry>PECL mongodb 1.2.0</entry>
         <entry>
-         Реализует интерфейсы <interfacename>Serializable</interfacename> и
-         <interfacename>JsonSerializable</interfacename>.
+         Реализовали интерфейсы <interfacename>Serializable</interfacename>
+         и <interfacename>JsonSerializable</interfacename>.
         </entry>
        </row>
       </tbody>
