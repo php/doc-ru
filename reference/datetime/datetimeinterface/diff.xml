@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: dbbcd32d72e4c9af14e9f3b940edbedfb54f965e Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 81908751c5787d433937a548235ca45fe3256841 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetime.diff" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -36,7 +36,7 @@
    <methodparam choice="opt"><type>bool</type><parameter>absolute</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает разницу между двумя объектами <classname>DateTimeInterface</classname>.
+   Метод возвращает разницу между двумя объектами <classname>DateTimeInterface</classname>.
   </para>
  </refsect1>
 
@@ -47,7 +47,7 @@
     <term><parameter>datetime</parameter></term>
     <listitem>
      <para>
-      Дата и время для сравнения.
+      Дата, с которой требуется сравнение.
      </para>
     </listitem>
    </varlistentry>
@@ -55,7 +55,7 @@
     <term><parameter>absolute</parameter></term>
     <listitem>
      <para>
-      Определяет, будет ли интервал принудительно переведен в абсолютную величину.
+      Логическое значение, которое определяет, требуется ли принудительно переводить интервал в абсолютную величину.
      </para>
     </listitem>
    </varlistentry>
@@ -65,30 +65,32 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает объект <classname>DateInterval</classname>, который представляет
+   Метод возвращает объект <classname>DateInterval</classname>, который представляет
    разницу между двумя датами.
   </para>
   <para>
-   Возвращаемое значение более конкретно представляет временной интервал,
-   который при применении к исходному объекту (<parameter>$this</parameter> или <parameter>$originObject</parameter>)
-   приводит к объекту <parameter>$targetObject</parameter>. Этот процесс не всегда
-   обратим.
+   Значение, которое возвращает метод, точнее представляет интервал времени, с которым получают целевой
+   объект <parameter>$targetObject</parameter>, когда применяют интервал
+   к исходному объекту <parameter>$this</parameter> или <parameter>$originObject</parameter>.
+   Процесс получится обратить не каждый раз.
   </para>
   <para>
-   Метод учитывает смену часовых поясов и поэтому может возвращать интервал
+   Метод учитывает смену часовых поясов и поэтому иногда возвращает интервал
    <literal>24 hours and 30 minutes</literal>, как в одном из примеров.
-   Если нужно рассчитывать по абсолютному времени, необходимо сначала преобразовать
-   объекты <parameter>$this</parameter>/<parameter>$baseObject</parameter>
-   и <parameter>$targetObject</parameter> в UTC.
+   Сначала объекты <parameter>$this</parameter> или <parameter>$baseObject</parameter>
+   и <parameter>$targetObject</parameter> преобразовывают к часовому поясу UTC,
+   когда требуется рассчитывать абсолютное время.
   </para>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования метода <methodname>DateTimeInterface::diff</methodname> с диапазоном дат</title>
+   <title>
+    Пример использования метода <methodname>DateTimeInterface::diff</methodname> с диапазоном дат
+   </title>
    <para>
-    Значение, которое возвращает метод, — это точное количество времени, которое необходимо
+    Значение, которое возвращает метод, — точное количество времени, которое требуется
     для перехода от времени объекта <parameter>$this</parameter> ко времени объекта <parameter>$targetObject</parameter>.
     Поэтому сравнение 1 января с 31 декабря возвращает 364 дня, а не 365 дней
     (для невисокосных годов).
@@ -96,10 +98,14 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $originalTime = new DateTimeImmutable("2023-01-01 UTC");
-$targedTime = new DateTimeImmutable("2023-12-31 UTC");
-$interval = $originalTime->diff($targedTime);
+$targetTime = new DateTimeImmutable("2023-12-31 UTC");
+
+$interval = $originalTime->diff($targetTime);
+
 echo "Полных дней: ", $interval->format("%a"), "\n";
+
 ?>
 ]]>
    </programlisting>
@@ -112,15 +118,19 @@ echo "Полных дней: ", $interval->format("%a"), "\n";
   </example>
 
   <example>
-   <title>Пример использования <function>DateTimeImmutable::diff</function></title>
+   <title>Пример использования метода <function>DateTimeImmutable::diff</function></title>
    <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $origin = new DateTimeImmutable('2009-10-11');
 $target = new DateTimeImmutable('2009-10-13');
+
 $interval = $origin->diff($target);
+
 echo $interval->format('%R%a дней');
+
 ?>
 ]]>
    </programlisting>
@@ -128,10 +138,14 @@ echo $interval->format('%R%a дней');
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $origin = date_create('2009-10-11');
 $target = date_create('2009-10-13');
+
 $interval = date_diff($origin, $target);
+
 echo $interval->format('%R%a дней');
+
 ?>
 ]]>
    </programlisting>
@@ -144,14 +158,21 @@ echo $interval->format('%R%a дней');
   </example>
 
   <example>
-   <title>Пример использования <methodname>DateTimeInterface::diff</methodname> во время перехода на летнее время</title>
+   <title>
+    Пример использования метода <methodname>DateTimeInterface::diff</methodname>
+    при переходе на летнее время
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $originalTime = new DateTimeImmutable("2021-10-30 09:00:00 Europe/London");
-$targedTime = new DateTimeImmutable("2021-10-31 08:30:00 Europe/London");
-$interval = $originalTime->diff($targedTime);
+$targetTime = new DateTimeImmutable("2021-10-31 08:30:00 Europe/London");
+
+$interval = $originalTime->diff($targetTime);
+
 echo $interval->format("%H:%I:%S (Полных дней: %a)"), "\n";
+
 ?>
 ]]>
    </programlisting>
@@ -175,12 +196,14 @@ echo $interval->format("%H:%I:%S (Полных дней: %a)"), "\n";
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $date1 = new DateTime("now");
 $date2 = new DateTime("tomorrow");
 
 var_dump($date1 == $date2);
 var_dump($date1 < $date2);
 var_dump($date1 > $date2);
+
 ?>
 ]]>
    </programlisting>
