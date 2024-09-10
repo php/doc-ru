@@ -5,7 +5,9 @@
 <refentry xml:id="function.win32-start-service-ctrl-dispatcher" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>win32_start_service_ctrl_dispatcher</refname>
-  <refpurpose>Добавляет в Диспетчер Служб скрипт, который может быть использован, как служба с заданным именем</refpurpose>
+  <refpurpose>
+   Регистрирует скрипт в Диспетчере управления службами, чтобы он действовал как служба с заданным именем
+  </refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,25 +19,26 @@
   </methodsynopsis>
 
   <para>
-   При запуске с помощью диспетчера служб, процессу службы необходимо
-   сверяться с ним для мониторинга службы и связи с ней.
-   Эта функция выполняет сверку посредством создания потока для обработки
-   низкоуровневой связи с диспетчером служб.
+   При запуске через Диспетчер управления службами (англ. Service Control Manager, SCM)
+   процессу службы требуется «отметиться» в диспетчере, чтобы установить
+   средства мониторинга службы и связи с ней. Функция выполняет такую регистрацию, для чего создаёт поток
+   для обработки низкоуровневой связи с Диспетчером управления службами.
   </para>
   <para>
-   После запуска процесс службы должен осуществить два действия. Первое - сообщить
-   диспетчеру служб, что служба запущена. Это осуществляется путём вызова <function>win32_set_service_status</function>
-   с константой <constant>WIN32_SERVICE_RUNNING</constant>. Если вам необходимо выполнить
-   некий длительный процесс перед запуском службы, то вы можете использовать константу
-   <constant>WIN32_SERVICE_START_PENDING</constant>. Второе - продолжить сверку с диспетчером
-   служб, чтобы определить необходимость отключения. Это осуществляется посредством
-   периодического вызова <function>win32_get_last_control_message</function> и обработки
-   кода возврата соответствующим образом.
+   После запуска процесс службы выполняет два действия. Первое — сообщает
+   Диспетчеру управления службами, что служба запустилась. Для этого вызывают функцию
+   <function>win32_set_service_status</function> с константой <constant>WIN32_SERVICE_RUNNING</constant>.
+   Функцию вызывают с константой <constant>WIN32_SERVICE_START_PENDING</constant>,
+   когда требуется выполнить какой-то длительный процесс до фактического запуска службы.
+   Второе — продолжает «отмечаться» в Диспетчере управления службами, чтобы диспетчер определял,
+   требуется ли прекратить работу службы. Для этого периодически вызывают
+   функцию <function>win32_get_last_control_message</function> и правильно обрабатывают
+   кода возврата.
   </para>
   <caution>
    <para>
-    Начиная с версии 0.2.0, эта функция работает только в "cli" SAPI. В прочих SAPI
-    функция отключена.
+    С версии 0.2.0 функция работает только через SAPI-интерфейс CLI.
+    Через другие SAPI-интерфейсы функция не работает.
    </para>
   </caution>
  </refsect1>
@@ -48,7 +51,7 @@
      <term><parameter>name</parameter></term>
      <listitem>
       <para>
-       Короткое имя службы, как при добавлении с помощью
+       Короткое имя службы, которое зарегистрировали функцией
        <function>win32_create_service</function>.
       </para>
      </listitem>
@@ -57,8 +60,9 @@
      <term><parameter>gracefulMode</parameter></term>
      <listitem>
       <para>
-       &true; для "элегантного" выхода. &false; для выхода с ошибкой. Смотрите
-       <function>win32_set_service_exit_mode</function> для получения подробной информации.
+       Значение &true; указывают для изящного выхода, а значение &false; для выхода с ошибкой.
+       Описание функции <function>win32_set_service_exit_mode</function> даёт больше информации
+       о режимах выхода.
       </para>
          </listitem>
     </varlistentry>
@@ -72,18 +76,19 @@
    &return.void;
   </para>
   <para>
-    До версии 1.0.0, &win32service.noerror.false.error;
+    До версии 1.0.0 &win32service.noerror.false.error;
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   До версии 1.0.0, если SAPI не является <literal>"cli"</literal>, данная функция вызывает ошибку уровня <constant>E_ERROR</constant>.
-   </para>
-  <para>
-   Начиная с версии 1.0.0, выбрасывает исключение
-   <classname>Win32ServiceException</classname>, если SAPI не является <literal>"cli"</literal>
+   До версии 1.0.0 при вызове не через SAPI-интерфейс <literal>CLI</literal>
+   функция выдаёт ошибку уровня <constant>E_ERROR</constant>.
+  </para>
+   <para>
+    С версии 1.0.0 при вызове не через SAPI-интерфейс CLI
+    функция выбрасывает исключение <classname>Win32ServiceException</classname>.
    </para>
  </refsect1>
 
@@ -100,36 +105,36 @@
      </thead>
      <tbody>
       <row>
-       <entry>PECL win32service 1.0.0</entry>
+       <entry>PECL-модуль win32service 1.0.0</entry>
        <entry>
-        Выбрасывает <classname>ValueError</classname> при некорректных данных в параметрах,
-        ранее возвращалось &false;.
+        Функция выбрасывает исключение <classname>ValueError</classname>
+        при недопустимых данных в параметрах, раньше возвращалось &false;.
        </entry>
       </row>
       <row>
-       <entry>PECL win32service 1.0.0</entry>
+       <entry>PECL-модуль win32service 1.0.0</entry>
        <entry>
-        Выбрасывает <classname>Win32ServiceException</classname> в случае возникновения ошибки,
-        ранее возвращался
-        <link xmlns="http://docbook.org/ns/docbook" linkend="win32service.constants.errors">Код ошибки Win32</link>.
+        Функция выбрасывает исключение <classname>Win32ServiceException</classname>, если возникла ошибка,
+        раньше возвращался
+        <link xmlns="http://docbook.org/ns/docbook" linkend="win32service.constants.errors">код ошибки Win32</link>.
        </entry>
       </row>
       <row>
-       <entry>PECL win32service 1.0.0</entry>
+       <entry>PECL-модуль win32service 1.0.0</entry>
        <entry>
-        Тип возвращаемого значения <type>void</type>, ранее был <type>mixed</type>.
+        Тип значения, которое возвращает функция, теперь <type>void</type>, раньше был <type>mixed</type>.
        </entry>
       </row>
       <row>
        <entry>PECL win32service 0.4.0</entry>
        <entry>
-        Добавлен параметр <parameter>gracefulMode</parameter>.
+        Добавили параметр <parameter>gracefulMode</parameter>.
        </entry>
       </row>
       <row>
        <entry>PECL win32service 0.2.0</entry>
        <entry>
-        Эта функция работает только с <literal>"cli"</literal> SAPI.
+        Функция работает только через SAPI-интерфейс <literal>CLI</literal>.
        </entry>
       </row>
      </tbody>
@@ -142,28 +147,29 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример <function>win32_start_service_ctrl_dispatcher</function></title>
+    <title>Пример использования функции <function>win32_start_service_ctrl_dispatcher</function></title>
     <para>
-     Проверьте, запущен ли сервис в диспетчере служб.
+     Проверим, запустили ли сервис в Диспетчере управления службами.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-if (!win32_start_service_ctrl_dispatcher('dummyphp')) {
 
-  die("Я, вероятно, не запущен в диспетчере служб");
+if (!win32_start_service_ctrl_dispatcher('dummyphp')) {
+    die("Меня, вероятно, не запустили в Диспетчере управления службами");
 }
 
 win32_set_service_status(WIN32_SERVICE_START_PENDING);
 
-// Некий длительный процесс для обработки и запуска службы.
+// Какой-то длительный процесс для обработки и запуска службы
 
 win32_set_service_status(WIN32_SERVICE_RUNNING);
 
 while (WIN32_SERVICE_CONTROL_STOP != win32_get_last_control_message()) {
-  # здесь производятся какие-то действия, не занимающие больше чем 30 секунд
-  # перед соответствующим переходом в цикл.
+    # Здесь выполняются какие-то действия, которые не занимают больше 30 секунд
+    # перед переходом в цикл
 }
+
 ?>
 ]]>
     </programlisting>
