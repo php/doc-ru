@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 62126c55f1c6ed444043e7272c4f9e233818a44b Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 8859c8b96cd9e80652813f7bcf561432a5e9f934 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="ffi.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.examples;
  <section xml:id="ffi.examples-basic">
-  <title>Простые примеры использования FFI</title>
+  <title>Базовая работа с модулем FFI</title>
   <para>
-   Перед погружением в детали FFI API, давайте рассмотрим
-   несколько примеров упрощённого использования FFI API
+   Перед погружением в детали API-интерфейса модуля FFI, давайте рассмотрим
+   несколько примеров упрощённой работы API модуля FFI
    в стандартных задачах.
   </para>
   <note>
    <para>
-    Для некоторых из этих примеров понадобится
+    Для ряда этих примеров потребуется
     библиотека <filename>libc.so.6</filename>. Они не будут
-    работать в системах, где её нет.
+    работать в системах, где библиотека недоступна.
    </para>
   </note>
   <para>
@@ -23,12 +23,16 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём объект FFI, загружаем libc и экспортируем функцию printf()
+
+// Создаём объект FFI, загружаем библиотеку libc и экспортируем функцию printf()
 $ffi = FFI::cdef(
-    "int printf(const char *format, ...);", // это стандартная декларация C
-    "libc.so.6");
-// вызываем printf()
+    "int printf(const char *format, ...);", // Это стандартная декларация в языке C
+    "libc.so.6"
+);
+
+// Вызываем функцию printf()
 $ffi->printf("Привет, %s!\n", "мир");
+
 ?>
 ]]>
     </programlisting>
@@ -42,7 +46,8 @@ $ffi->printf("Привет, %s!\n", "мир");
   </para>
   <note>
    <para>
-    Обратите внимание, что для некоторых функций C требуются определённые соглашения о вызовах, например: <literal>__fastcall</literal>,
+    Обратите внимание, что для отдельных функций языка C требуются конкретные
+    соглашения о вызовах, например: <literal>__fastcall</literal>,
     <literal>__stdcall</literal> или <literal>,__vectorcall</literal>.
    </para>
   </note>
@@ -52,9 +57,10 @@ $ffi->printf("Привет, %s!\n", "мир");
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём привязку gettimeofday()
-$ffi = FFI::cdef("
-    typedef unsigned int time_t;
+
+// Создаём привязку gettimeofday()
+$ffi = FFI::cdef(
+    "typedef unsigned int time_t;
     typedef unsigned int suseconds_t;
 
     struct timeval {
@@ -67,17 +73,23 @@ $ffi = FFI::cdef("
         int tz_dsttime;
     };
 
-    int gettimeofday(struct timeval *tv, struct timezone *tz);
-", "libc.so.6");
-// создаём структуры данных C
+    int gettimeofday(struct timeval *tv, struct timezone *tz);",
+    "libc.so.6"
+);
+
+// Создаём структуры данных языка C
 $tv = $ffi->new("struct timeval");
 $tz = $ffi->new("struct timezone");
-// вызываем gettimeofday()
+
+// Вызываем функцию gettimeofday()
 var_dump($ffi->gettimeofday(FFI::addr($tv), FFI::addr($tz)));
-// получаем доступ к полю структуры данных C
+
+// Получаем доступ к полю структуры данных языка C
 var_dump($tv->tv_sec);
-// печатаем всю структуру данных
+
+// Выводим структуру данных
 var_dump($tz);
+
 ?>
 ]]>
     </programlisting>
@@ -102,12 +114,16 @@ object(FFI\CData:struct timezone)#3 (2) {
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём объект FFI, загружаем libc и экспортируем переменную errno
+
+// Создаём FFI-объект, загружаем библиотеку libc и экспортируем переменную errno
 $ffi = FFI::cdef(
-    "int errno;", // это стандартная декларация C
-    "libc.so.6");
-// печатаем errno
+    "int errno;", // Это стандартная декларация в языке C
+    "libc.so.6"
+);
+
+// Выводим значение переменной errno
 var_dump($ffi->errno);
+
 ?>
 ]]>
     </programlisting>
@@ -121,21 +137,23 @@ int(0)
   </para>
   <para>
    <example xml:id="ffi.examples.variable-creating">
-    <title>Создание и модификация переменной C</title>
+    <title>Создание и модификация C-переменной</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём переменную C типа int
+
+// Создаём переменную языка C с типом int
 $x = FFI::new("int");
 var_dump($x->cdata);
 
-// простое присваивание
+// Простое присваивание
 $x->cdata = 5;
 var_dump($x->cdata);
 
-// не простое присвоение
+// Непростое присваивание
 $x->cdata += 2;
 var_dump($x->cdata);
+
 ?>
 ]]>
     </programlisting>
@@ -151,24 +169,30 @@ int(7)
   </para>
   <para>
    <example xml:id="ffi.examples.array">
-    <title>Работа с массивами C</title>
+    <title>Работа с массивами языка C</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// создаём структуру данных
+
+// Создаём структуру данных
 $a = FFI::new("long[1024]");
-// работаем с ней как с обычным массивом PHP
+
+// Работаем с ней как с обычным PHP-массивом
 for ($i = 0; $i < count($a); $i++) {
     $a[$i] = $i;
 }
+
 var_dump($a[25]);
+
 $sum = 0;
 foreach ($a as $n) {
     $sum += $n;
 }
+
 var_dump($sum);
 var_dump(count($a));
 var_dump(FFI::sizeof($a));
+
 ?>
 ]]>
     </programlisting>
@@ -185,10 +209,11 @@ int(8192)
   </para>
   <para>
    <example xml:id="ffi.examples.enum">
-    <title>Работа с перечислениями C</title>
+    <title>Работа с перечислениями языка C</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $a = FFI::cdef('typedef enum _zend_ffi_symbol_kind {
     ZEND_FFI_SYM_TYPE,
     ZEND_FFI_SYM_CONST = 2,
@@ -196,9 +221,11 @@ $a = FFI::cdef('typedef enum _zend_ffi_symbol_kind {
     ZEND_FFI_SYM_FUNC
 } zend_ffi_symbol_kind;
 ');
+
 var_dump($a->ZEND_FFI_SYM_TYPE);
 var_dump($a->ZEND_FFI_SYM_CONST);
 var_dump($a->ZEND_FFI_SYM_VAR);
+
 ?>
 ]]>
      </programlisting>
@@ -217,13 +244,14 @@ int(3)
  <section xml:id="ffi.examples-callback">
   <title>Callback-функции PHP</title>
   <para>
-   Можно присвоить замыкание PHP переменной типа "указатель"
-   (pointer) либо передать его как аргумент функции:
+   Можно присвоить замыкание PHP переменной с типом «указатель» (pointer)
+   или передать замыкание как аргумент функции:
    <example>
-    <title>Присвоение PHP <classname>Closure</classname> указателю функции C</title>
+    <title>Присваивание <classname>Closure</classname> языка PHP указателю функции языка C</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $zend = FFI::cdef("
     typedef int (*zend_write_func_t)(const char *str, size_t str_length);
     extern zend_write_func_t zend_write;
@@ -232,6 +260,7 @@ $zend = FFI::cdef("
 echo "Привет, мир 1!\n";
 
 $orig_zend_write = clone $zend->zend_write;
+
 $zend->zend_write = function($str, $len) {
     global $orig_zend_write;
     $orig_zend_write("{\n\t", 3);
@@ -239,9 +268,11 @@ $zend->zend_write = function($str, $len) {
     $orig_zend_write("}\n", 2);
     return $ret;
 };
+
 echo "Привет, мир 2!\n";
 $zend->zend_write = $orig_zend_write;
 echo "Привет, мир 3!\n";
+
 ?>
 ]]>
     </programlisting>
@@ -256,12 +287,12 @@ echo "Привет, мир 3!\n";
 ]]>
     </screen>
    </example>
-   Хоть это и работает, но данная функциональность
-   поддерживается не на всех платформах libffi, не эффективна
+   Хоть это и работает, но эта функциональность
+   поддерживается не на каждой платформе с библиотекой libffi, не эффективна
    и вызывает утечку ресурсов при завершении запросов.
    <tip>
     <simpara>
-     Поэтому рекомендуется минимизировать использование callback-функций PHP.
+     Поэтому рекомендуют минимизировать использование callback-функций PHP.
     </simpara>
    </tip>
   </para>
@@ -281,8 +312,10 @@ opcache.preload=preload.php
    <programlisting role="php">
 <![CDATA[
 <?php
+
 FFI::load(__DIR__ . "/dummy.h");
 opcache_compile_file(__DIR__ . "/dummy.php");
+
 ?>
 ]]>
    </programlisting>
@@ -299,17 +332,24 @@ int printf(const char *format, ...);
    <programlisting role="php">
 <![CDATA[
 <?php
-final class Dummy {
+
+final class Dummy
+{
     private static $ffi = null;
-    function __construct() {
+
+    function __construct()
+    {
         if (is_null(self::$ffi)) {
             self::$ffi = FFI::scope("DUMMY");
         }
     }
-    function printf($format, ...$args) {
-       return (int)self::$ffi->printf($format, ...$args);
+
+    function printf($format, ...$args)
+    {
+       return (int) self::$ffi->printf($format, ...$args);
     }
 }
+
 ?>
 ]]>
    </programlisting>
@@ -317,8 +357,10 @@ final class Dummy {
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $d = new Dummy();
 $d->printf("Привет, %s!\n", "мир");
+
 ?>
 ]]>
    </programlisting>
