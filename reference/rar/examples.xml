@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 257719873bb67162f68ad4d855d259745b02378b Maintainer: shein Status: ready -->
+<!-- EN-Revision: 8859c8b96cd9e80652813f7bcf561432a5e9f934 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 
 <chapter xml:id="rar.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.examples;
 
  <para>
-  Также смотрите примеры по ссылке <link linkend="wrappers.rar"><literal>rar://</literal> wrapper</link>.
+  Смотрите также примеры по ссылке <link linkend="wrappers.rar">обёртка <literal>rar://</literal></link>.
  </para>
 
  <para>
@@ -17,12 +17,12 @@
 <?php
 
 if (!array_key_exists("i", $_GET) || !is_numeric($_GET["i"]))
-    die("Индекс не указан или не числовой");
+    die("Индекс не указали или не числовой");
 $index = (int) $_GET["i"];
 
 $arch = RarArchive::open("example.rar");
 if ($arch === FALSE)
-    die("Невозможно открыть example.rar");
+    die("Невозможно открыть файл example.rar");
 
 $entries = $arch->getEntries();
 if ($entries === FALSE)
@@ -35,15 +35,16 @@ $orfilename = $entries[$index]->getName(); //Кодировка UTF-8
 
 $filesize = $entries[$index]->getUnpackedSize();
 
-/* Вы можете здесь проверить константу HTTP_IF_MODIFIED_SINCE и сравнить с
- * $entries[$index]->getFileTime(). Также возможно отослать заголовок
- * "Last modified" */
+/** В этом месте доступна проверка константы HTTP_IF_MODIFIED_SINCE и сравнение
+ * со результатом вызова $entries[$index]->getFileTime(). Доступна также отправка заголовока
+ * "Last modified"
+ */
 
 $fp = $entries[$index]->getStream();
 if ($fp === FALSE)
     die("Невозможно открыть файл с индексом $index внутри архива.");
 
-$arch->close(); // Больше не нужен. Поток является независимым
+$arch->close(); // Больше не нужен. Поток независим
 
 function detectUserAgent() {
     if (!array_key_exists('HTTP_USER_AGENT', $_SERVER))
@@ -57,7 +58,7 @@ function detectUserAgent() {
     if (preg_match("@Chrome/@", $uas))
         return "Chrome";
     if (preg_match("@MSIE ([0-9.]+);@", $uas, $matches)) {
-        if (((float)$matches[1]) >= 7.0)
+        if (((float) $matches[1]) >= 7.0)
             return "IE";
     }
 
@@ -66,10 +67,10 @@ function detectUserAgent() {
 
 /*
  * Действуют 3 опции:
- * - Для FF и Opera, с поддержкой RFC 2231, используется этот формат.
- * - Для IE и Chrome, используется attwithfnrawpctenclong
+ * - Для FF и Opera с поддержкой стандарта RFC 2231 пользуются этим форматом
+ * - Для IE и Chrome формат attwithfnrawpctenclong
  *   (http://greenbytes.de/tech/tc2231/#attwithfnrawpctenclong)
- * - Для других браузеров, перекодируется в ISO-8859-1, если возможно
+ * - Для других браузеров перекодируется в набор символов ISO-8859-1, если возможно
  */
 $formatRFC2231 = 'Content-Disposition: attachment; filename*=UTF-8\'\'%s';
 $formatDef = 'Content-Disposition: attachment; filename="%s"';
@@ -94,9 +95,9 @@ switch (detectUserAgent()) {
 }
 
 header(sprintf($format, $orfilename));
-//Невозможна дальнейшая отсылка сообщений об ошибках (заголовки уже отправлены)
+// Невозможна дальнейшая отправка сообщений об ошибках (PHP уже отправил заголовки)
 
-//Замена на реальный content type, возможно определённый по расширению файла
+// Замена на реальный Content-Type, который, возможно, получилось определить по расширению файла
 $contentType = "application/octet-stream";
 header("Content-Type: $contentType");
 
@@ -104,13 +105,16 @@ header("Content-Transfer-Encoding: binary");
 
 header("Content-Length: $filesize");
 
-if ($_SERVER['REQUEST_METHOD'] == "HEAD")
+if ($_SERVER['REQUEST_METHOD'] == "HEAD") {
     die();
+}
 
 while (!feof($fp)) {
     $s = @fread($fp, 8192);
-    if ($s === false)
-        break; //тут бесполезно отправлять сообщения об ошибках
+
+    if ($s === false) {
+        break; // В этом месте бесполезно отправлять сообщения об ошибках
+    }
 
     echo $s;
 }
@@ -150,8 +154,8 @@ rar_close($rar_file);
   </example>
  </para>
  <para>
-  Этот пример открывает RAR-файл и извлекает каждый объект в
-  указанную директорию.
+  Этот пример открывает RAR-файл и извлекает каждый объект
+  в заданную директорию.
  </para>
 
 </chapter>
