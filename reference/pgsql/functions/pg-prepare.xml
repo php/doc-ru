@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: aur Status: ready -->
+<!-- EN-Revision: e50e79746736dbdfbabe9bd3566793b3ddf38f58 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-prepare" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_prepare</refname>
-  <refpurpose> Посылает запрос на создание параметризованного SQL выражения
-  и ждёт его завершения</refpurpose>
+  <refpurpose>
+   Отправляет запрос, чтобы создать параметризованный запрос,
+   и ждёт, пока запрос завершится
+  </refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,31 +19,29 @@
    <methodparam><type>string</type><parameter>query</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_prepare</function> создаёт заготовку SQL выражения на сервере
-   для последующего запуска функциями <function>pg_execute</function>
-   или <function>pg_send_execute</function>. Это позволяет многократно
-   выполнять единожды созданные запросы с различными параметрами.
-   <function>pg_prepare</function> поддерживается PostgreSQL версии 7.4
-   и выше. Функция не будет работать c серверами ранних версий.
+   Функция <function>pg_prepare</function> создаёт на сервере подготовленный запрос,
+   который затем запустит функция <function>pg_execute</function>
+   или <function>pg_send_execute</function>. Функция помогает разбирать
+   и планировать команды только один раз, а не каждый раз при выполнении,
+   а потом многократно выполнять такие команды.
+   Функция <function>pg_prepare</function> поддерживает соединения только с БД PostgreSQL 7.4
+   или новее; функция не будет работать c серверами ранних версий.
   </para>
   <para>
-   Функция создаёт заготовку SQL запроса с названием <parameter>stmtname</parameter>
-   и телом <parameter>query</parameter>, которое должно содержать одно
-   SQL выражение. <parameter>stmtname</parameter> может быть пустой строкой,
-   тогда будет создана безымянная заготовка. Если какая-либо безымянная
-   заготовка уже определена, она будет заменена на новую автоматически.
-   В остальных случаях совпадение имён новой и существующей в данной сессии
-   заготовок приведёт к ошибке. Если в <parameter>query</parameter>
-   будут передаваться параметры, то они заменят псевдопеременные
-   $1, $2 и т.д. при передаче запроса.
+   Функция создает подготовленный запрос с названием <parameter>stmtname</parameter>
+   из строки <parameter>query</parameter>, которая содержит одну команду.
+   Значение параметра <parameter>stmtname</parameter> указывают как пустую строку "",
+   чтобы создать безымянный запрос, который автоматически заменяет предыдущий безымянный запрос;
+   в остальных случаях попытка назвать запрос именем, которое уже определили в текущей сессии,
+   вызовет ошибку. Параметры, которые передали при выполнении запроса,
+   указывают на обозначения $1, $2 и т. д. в запросе <parameter>query</parameter>.
   </para>
   <para>
-   Подобные заготовки запросов также можно делать с помощью SQL-команды
-   <literal>PREPARE</literal> (но <function>pg_prepare</function>
-   более гибкая, так как не требует строгой типизации своих параметров).
-   Важно отметить, что в PHP нет функций для удаления подготовленных
-   SQL-выражений, для этого используйте команду SQL
-   <literal>DEALLOCATE</literal>.
+   Подготовленные для функции <function>pg_prepare</function> запросы создают также SQL-командой
+   <literal>PREPARE</literal>, но функция <function>pg_prepare</function> гибче,
+   поскольку не заставляет указывать типы параметров.
+   Хотя в PHP нет функции для удаления подготовленного запроса,
+   это сделает SQL-команда <literal>DEALLOCATE</literal>.
   </para>
  </refsect1>
 
@@ -59,10 +59,9 @@
      <term><parameter>stmtname</parameter></term>
      <listitem>
       <para>
-       Имя создаваемой заготовки. Должно быть уникальным в пределах сессии.
-       Если задана пустая строка, будет создано безымянное SQL выражение. При
-       этом оно перезапишет уже существующее безымянное выражение,
-       определённое ранее.
+       Уникальное в пределах сессии имя, которым функция назовёт подготовленный запрос.
+       Функция создаст безымянный запрос, который перезапишет предыдущий безымянный запрос
+       текущей сессии, если задали пустую строку "".
       </para>
      </listitem>
     </varlistentry>
@@ -70,10 +69,8 @@
      <term><parameter>query</parameter></term>
      <listitem>
       <para>
-       Параметризованный SQL-запрос. Должен содержать только одно выражение
-       (несколько выражений разделённых точкой с запятой не поддерживаются).
-       Если в запрос будут передаваться параметры, то они заменят
-       псевдопеременные $1, $2 и т.д.
+       Один параметризованный SQL-запрос; несколько запросов через точку с запятой не поддерживаются.
+       Параметры, которые передали, относятся к обозначениям запроса $1, $2 и т. д.
       </para>
      </listitem>
     </varlistentry>
@@ -84,7 +81,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Экземпляр <classname>PgSql\Result</classname> в случае успешного выполнения&return.falseforfailure;.
+   Функция возвращает экземпляр <classname>PgSql\Result</classname> в случае успешного выполнения&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -110,18 +107,19 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_prepare</function></title>
+    <title>Пример подготовки запроса функцией <function>pg_prepare</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // Подключение к базе данных "mary"
 $dbconn = pg_connect("dbname=mary");
 
 // Подготовка запроса
 $result = pg_prepare($dbconn, "my_query", 'SELECT * FROM shops WHERE name = $1');
 
-// Запуск запроса на выполнение. Стоит отметить, что нет необходимости экранировать
-// спецсимволы в строке "Joe's Widgets"
+// Запуск запроса на выполнение. Обратите внимание: спецсимволы в строке "Joe's Widgets"
+// не заэкранированы
 $result = pg_execute($dbconn, "my_query", array("Joe's Widgets"));
 
 // Запуск на выполнение того же запроса, но с другим параметром
