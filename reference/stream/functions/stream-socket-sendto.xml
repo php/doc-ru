@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a1702b5d45ad950c5f7a077878378a37851a2df6 Maintainer: mch Status: ready -->
+<!-- EN-Revision: e50e79746736dbdfbabe9bd3566793b3ddf38f58 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.stream-socket-sendto" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>stream_socket_sendto</refname>
-  <refpurpose>Отправляет сообщение в сокет, независимо от того, подсоединён он или нет </refpurpose>
+  <refpurpose>Отправляет сообщение в сокет, независимо от состояния подключения сокета</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -16,7 +16,7 @@
    <methodparam choice="opt"><type>string</type><parameter>address</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Отправляет указанные данные <parameter>data</parameter> через сокет
+   Функция отправляет данные <parameter>data</parameter> через сокет
    <parameter>socket</parameter>.
   </para>
  </refsect1>
@@ -29,7 +29,7 @@
      <term><parameter>socket</parameter></term>
      <listitem>
       <para>
-       Сокет для отправки данных <parameter>data</parameter>.
+       Сокет, в который требуется отправить данные <parameter>data</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -37,7 +37,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Отправляемые данные.
+       Данные для отправки.
       </para>
      </listitem>
     </varlistentry>
@@ -45,16 +45,16 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Значение параметра  <parameter>flags</parameter> может быть любой
-       из следующих комбинаций:
+       Параметр <parameter>flags</parameter> принимает произвольную комбинацию следующих флагов,
+       которые соединили двоичным оператором ИЛИ — <literal>|</literal>.
        <table>
-        <title>возможные значения для параметра <parameter>flags</parameter></title>
+        <title>Значения флагов, которые принимает параметр <parameter>flags</parameter></title>
         <tgroup cols="2">
          <tbody>
           <row>
            <entry><constant>STREAM_OOB</constant></entry>
            <entry>
-            Обрабатывать OOB (out-of-band, внеполосные) данные.
+            Обрабатывать внеполосные OOB-данные (out-of-band).
            </entry>
           </row>
          </tbody>
@@ -67,11 +67,11 @@
      <term><parameter>address</parameter></term>
      <listitem>
       <para>
-       Адрес, указанный при создании потокового сокета, будет использоваться
-       до тех пор, пока не указан альтернативный адрес в параметре <parameter>address</parameter>.
+       Функция будет использовать адрес, который указали, когда создавали потоковый сокет,
+       до тех пор, пока в параметре <parameter>address</parameter> не указали альтернативный адрес.
       </para>
       <para>
-       Если указан, он должен быть в формате ipv4 или ipv6.
+       Адрес указывают в формате IPv4 или IPv6.
       </para>
      </listitem>
     </varlistentry>
@@ -82,7 +82,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает код результата, как целое число&return.falseforfailure;.
+   Функция возвращает код результата в виде целого числа&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -90,21 +90,23 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>stream_socket_sendto</function></title>
+    <title>Пример отправки сообщения в сокет функцией <function>stream_socket_sendto</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-/* Открыть сокет на 1234-м порту на localhost */
+
+/* Открываем сокет на порте 1234 хоста localhost */
 $socket = stream_socket_client('tcp://127.0.0.1:1234');
 
-/* Отправить обычные данные через обычные каналы. */
-fwrite($socket, "Передача обычных данных.");
+/* Отправляем стандартные данные через стандартные каналы */
+fwrite($socket, "Передача стандартных данных.");
 
-/* Отправляем внеполосные данные. */
+/* Отправляем внеполосные данные */
 stream_socket_sendto($socket, "Внеполосные данные.", STREAM_OOB);
 
-/* Закрыть сокет */
+/* Закрываем сокет */
 fclose($socket);
+
 ?>
 ]]>
     </programlisting>
