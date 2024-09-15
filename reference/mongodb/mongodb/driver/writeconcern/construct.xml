@@ -5,7 +5,7 @@
 <refentry xml:id="mongodb-driver-writeconcern.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>MongoDB\Driver\WriteConcern::__construct</refname>
-  <refpurpose>Создать новый WriteConcern</refpurpose>
+  <refpurpose>Создаёт новый объект WriteConcern</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,8 +17,8 @@
    <methodparam choice="opt"><type class="union"><type>bool</type><type>null</type></type><parameter>journal</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Создаёт новый <classname>MongoDB\Driver\WriteConcern</classname>,
-   который является неизменяемым объектом значения.
+   Метод создаёт новый уровень подтверждения записи <classname>MongoDB\Driver\WriteConcern</classname>
+   как неизменяемый объект значения.
   </para>
  </refsect1>
 
@@ -42,45 +42,47 @@
          <row>
           <entry>1</entry>
           <entry>
-            Требует подтверждение, что операция записи распространилась на
-            автономный <literal>mongod</literal> или на первичный в наборе реплик.
-            Это гарантия записи по умолчанию для MongoDB.
+           Запрашивает подтверждение распространения операции записи
+           в автономный демон <literal>mongod</literal> или на первичный узел в наборе реплик.
+           Это уровень подтверждения записи по умолчанию для БД MongoDB.
           </entry>
          </row>
          <row>
           <entry>0</entry>
           <entry>
-           Не требует подтверждение операции записи. Тем не менее, это может
-           вернуть информацию о исключениях сокета и сетевых ошибках в приложение.
+           Не требует подтверждение операции записи. Однако
+           возвращает приложению информацию об исключениях сокета и сетевых ошибках.
           </entry>
          </row>
          <row>
           <entry>&lt;целое число больше 1&gt;</entry>
           <entry>
-           Числа, превышающие 1 действительны только для набора реплик для запроса
-           подтверждения от указанного количества членов, включая первичный.
+           Числа, которые превышают 1, допустимы только для наборов реплик,
+           чтобы запросить подтверждение записи от первичного узла набора, и такого
+           количества вторичных узлов, которые в сумме с первичным удовлетворят заданному количеству.
           </entry>
          </row>
          <row>
           <entry><constant>MongoDB\Driver\WriteConcern::MAJORITY</constant></entry>
           <entry>
            <para>
-            Требует подтверждения того, что операции записи распространяются
-            на большинство голосующих узлов, включая первичный, и были записаны
-            в журнал на диск для этих узлов.
+            Запрашивает подтверждение распространения операции записи
+            на большинство голосующих узлов, включая первичный, и записались
+            в журнал на диске для этих узлов.
            </para>
            <para>
-            До MongoDB 3.0 это относится к большинству членов набора реплик
-            (а не только к узлам голосования).
+            До MongoDB 3.0 это относилось к большинству членов набора реплик,
+            а не только к узлам голосования.
            </para>
           </entry>
          </row>
          <row>
           <entry>string</entry>
           <entry>
-           Строковое представление интерпретируется как набор тегов.
-           Требует подтверждение, что операция записи распространяется на член
-           набора реплик с указанным тегом.
+           Строковое значение интерпретируется как набор тегов.
+           С таким значением параметра метод запрашивает подтверждение распространения операции записи
+           на членов пользовательского уровня подтверждения записи, который определили в настройках
+           набора реплик и для которого указали набор тегов, которые предварительно закрепили за узлами набора реплик.
           </entry>
          </row>
         </tbody>
@@ -93,22 +95,22 @@
     <term><parameter>wtimeout</parameter></term>
     <listitem>
      <para>
-      Сколько ждать (в миллисекундах) ответа от вторичных узлов перед тем, как выдать ошибку.
+      Сколько ждать ответа от вторичных узлов в миллисекундах перед тем, как выдать ошибку.
      </para>
      <para>
-      <literal>wtimeout</literal> приводит к тому, что операции записи возвращаются
-      с ошибкой (<classname>WriteConcernError</classname>) после указанного
-      периода, даже если требуемая гарантия записи в конечном счёте будет успешной. Когда
-      эти гарантии записи возвращаются, MongoDB не отменяет успешные изменения данных,
-      выполненные до того, как гарантия записи превысила временной лимит <literal>wtimeout</literal>
+      Параметр <literal>wtimeout</literal> заставляет операции записи возвращаться
+      с ошибкой <classname>WriteConcernError</classname> после заданного
+      времени ожидания, даже если уровень подтверждения записи, который запросили, в конечном счёте завершится без ошибки.
+      После возврата этих операций записи БД MongoDB не отменяет удачные изменения данных,
+      которые выполнила до превышения ограничения времени ожидания <literal>wtimeout</literal> уровнем подтверждения записи.
      </para>
      <para>
-      Если указано, <literal>wtimeout</literal> должен быть 64-битным целым числом со знаком,
-      больше или равен нулю.
+      Значение параметра <literal>wtimeout</literal> указывают как 64-битное целое число со знаком,
+      которое больше или равно нулю.
      </para>
      <para>
       <table>
-       <title>Время ожидания гарантии записи</title>
+       <title>Время ожидания уровня подтверждения записи</title>
        <tgroup cols="2">
         <thead>
          <row>
@@ -119,12 +121,12 @@
         <tbody>
          <row>
           <entry>0</entry>
-          <entry>Блокировать бесконечно. Это значение по умолчанию.</entry>
+          <entry>Блокировать на неопределенный срок. Это значение по умолчанию.</entry>
          </row>
          <row>
-          <entry>&lt;целое число больше, чем 0&gt;</entry>
+          <entry>&lt;целое число больше 0&gt;</entry>
           <entry>
-           Миллисекунды до ожидания возврата.
+           Количество миллисекунд ожидания возврата.
           </entry>
          </row>
         </tbody>
@@ -137,7 +139,7 @@
     <term><parameter>journal</parameter></term>
     <listitem>
      <para>
-      Ожидать, пока mongod не применит запись в журнал.
+      Включает ожидание записи данных в журнал на диске процессом mongod.
      </para>
     </listitem>
    </varlistentry>
@@ -148,9 +150,11 @@
   &reftitle.errors;
   <simplelist>
    &mongodb.throws.argumentparsing;
-   <member>При неверном <parameter>w</parameter> или отрицательном <parameter>wtimeout</parameter>
-    или если они больше, чем 32-битное целое число со знаком,
-    выбрасывает <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>
+   <member>
+    Метод выбрасывает исключение <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>,
+    если значение параметра <parameter>w</parameter> недопустимо,
+    или если значение времени ожидания <parameter>wtimeout</parameter> отрицательно
+    или выходит за пределы 32-битного целого числа со знаком.
    </member>
   </simplelist>
  </refsect1>
@@ -168,7 +172,7 @@
      </thead>
      <tbody>
       <row>
-       <entry>PECL mongodb 1.7.0</entry>
+       <entry>PECL-модуль mongodb 1.7.0</entry>
        <entry>
         Параметр <parameter>wTimeout</parameter> теперь принимает 64-битные значения.
        </entry>
@@ -183,7 +187,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>MongoDB\Driver\WriteConcern::__construct</function></title>
+   <title>Пример использования метода <function>MongoDB\Driver\WriteConcern::__construct</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -191,7 +195,8 @@
 /* Запрос подтверждения записи от большинства узлов набора реплик */
 $wc = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 500);
 
-/* Запрос подтверждения записи от узла, настроенного с тегом "MultipleDC" */
+/* Запрос подтверждения записи от узла, для которого настроили пользовательский уровень подтверждения
+    записи, который в настройках набора реплик назвали "MultipleDC" и для которого указали набор тегов */
 $wc = new MongoDB\Driver\WriteConcern("MultipleDC", 500);
 
 ?>
@@ -204,7 +209,7 @@ $wc = new MongoDB\Driver\WriteConcern("MultipleDC", 500);
  <refsect1 role="seealso">
   &reftitle.seealso;
   <simplelist>
-   <member><link xlink:href="&url.mongodb.docs.writeconcern;">Справочная информация по гарантии записи</link></member>
+   <member><link xlink:href="&url.mongodb.docs.writeconcern;">Справочная информация об уровнях подтверждения записи</link></member>
   </simplelist>
  </refsect1>
 
