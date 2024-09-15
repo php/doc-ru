@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a1702b5d45ad950c5f7a077878378a37851a2df6 Maintainer: mch Status: ready -->
+<!-- EN-Revision: e50e79746736dbdfbabe9bd3566793b3ddf38f58 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.stream-socket-recvfrom" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>stream_socket_recvfrom</refname>
-  <refpurpose>Получает данные из сокета, подключённого или нет</refpurpose>
+  <refpurpose>Получает данные из сокета независимо от состояния подключения сокета</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -16,8 +16,8 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter role="reference">address</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>stream_socket_recvfrom</function> принимает
-   данные из удалённого сокета размером до <parameter>length</parameter> байт.
+   Функция <function>stream_socket_recvfrom</function> принимает
+   данные из удалённого сокета размером до <parameter>length</parameter> байтов.
   </para>
  </refsect1>
 
@@ -45,25 +45,25 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Значение параметра <parameter>flags</parameter> может быть любой комбинацией
-       из следующего:
+       Параметр <parameter>flags</parameter> принимает произвольную комбинацию следующих флагов,
+       которые соединили двоичным оператором ИЛИ — <literal>|</literal>.
        <table>
-        <title>Возможные значения для параметра <parameter>flags</parameter></title>
+        <title>Значения флагов, которые принимает параметр <parameter>flags</parameter></title>
         <tgroup cols="2">
          <tbody>
           <row>
            <entry><constant>STREAM_OOB</constant></entry>
            <entry>
-            Обрабатывать данные OOB (<literal>out-of-band</literal>).
+            Обрабатывать внеполосные OOB-данные (<literal>out-of-band</literal>).
            </entry>
           </row>
           <row>
            <entry><constant>STREAM_PEEK</constant></entry>
            <entry>
             Получать данные из сокета, но не расходовать буфер.
-            Последующие вызовы функций <function>fread</function> или
-            <function>stream_socket_recvfrom</function> получат те
-            же самые данные.
+            Очередные вызовы функций <function>fread</function>
+            или <function>stream_socket_recvfrom</function> получат
+            те же самые данные.
            </entry>
           </row>
          </tbody>
@@ -76,8 +76,8 @@
      <term><parameter>address</parameter></term>
      <listitem>
       <para>
-       Если указан параметр <parameter>address</parameter>, он будет заполнен
-       адресом удалённого сокета.
+       Функция заполнит параметр <parameter>address</parameter>
+       адресом удалённого сокета, если в списке аргументов для параметра передали переменную.
       </para>
      </listitem>
     </varlistentry>
@@ -88,7 +88,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает прочитанные данные в виде строки&return.falseforfailure;.
+   Функция возвращает прочитанные данные в виде строки&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -96,28 +96,30 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>stream_socket_recvfrom</function></title>
+    <title>Пример получения данных из сокет функцией <function>stream_socket_recvfrom</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-/* Открывает серверный сокет на 1234-м порту на localhost */
+
+/* Открывает серверный сокет на порте 1234 хоста localhost */
 $server = stream_socket_server('tcp://127.0.0.1:1234');
 
 /* Принимает соединение */
 $socket = stream_socket_accept($server);
 
-/* Получает пакет (обычный размер MTU 1500) OOB-данных */
-echo "Получены данные OOB (Out-Of-Band): '" . stream_socket_recvfrom($socket, 1500, STREAM_OOB) . "'\n";
+/* Получает пакет (стандартный размер MTU 1500) OOB-данных */
+echo "Функция получила OOB-данные (Out-Of-Band): '" . stream_socket_recvfrom($socket, 1500, STREAM_OOB) . "'\n";
 
-/* Получить обычные данные, но не расходовать их. */
+/* Получить обычные данные, но не расходовать их */
 echo "Данные: '" . stream_socket_recvfrom($socket, 1500, STREAM_PEEK) . "'\n";
 
-/* Получить тот же самый пакет снова, но в этот раз удалить его из буфера данных. */
+/* Получить тот же самый пакет снова, но в этот раз удалить его из буфера данных */
 echo "Данные: '" . stream_socket_recvfrom($socket, 1500) . "'\n";
 
 /* Закрыть сокет */
 fclose($socket);
 fclose($server);
+
 ?>
 ]]>
     </programlisting>
@@ -129,17 +131,18 @@ fclose($server);
   &reftitle.notes;
   <note>
    <para>
-    Если получено сообщение длиной больше, чем параметр  <parameter>length</parameter>,
-    лишние байты могут быть пропущены в зависимости от типа сокета,
-    из которого получено сообщение (такого, как  UDP).
+    Функция иногда отбрасывает лишние байты,
+    если получила сообщение, длина которого превышает значение параметра <parameter>length</parameter>.
+    Отбросит ли функция байты, зависит от типа сокета,
+    из которого она получила сообщение (например, UDP).
    </para>
   </note>
   <note>
    <para>
-    Вызовы функции <function>stream_socket_recvfrom</function> на потоках, основанных
-    на сокетах, после вызовов потоковых функций, основанных на буферах (таких как
-    <function>fread</function> или <function>stream_get_line</function>) читают
-    данные непосредственно из сокета и пропускают потоковый буфер.
+    Вызовы функции <function>stream_socket_recvfrom</function> на потоках на основе
+    сокетов после вызовов функций наподобие <function>fread</function>
+    или <function>stream_get_line</function>, которые работают с потоками на основе буферов,
+    считывают данные непосредственно из сокета и пропускают буфер потока.
    </para>
   </note>
  </refsect1>
