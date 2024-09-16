@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0edc11c6c46753ef0b81d0060b925b4f58552996 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 3672010f40d6082dd27ceb19dbd26f0d79ead997 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="function.get-debug-type" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>get_debug_type</refname>
-  <refpurpose>Возвращает имя типа переменной в виде, подходящем для отладки</refpurpose>
+  <refpurpose>Получает название типа переменной так, чтобы значение лучше соответствовало целям отладки</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,15 +15,16 @@
    <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает преобразованное имя переменной PHP <parameter>value</parameter>.
-   Функция преобразует объекты в имя их класса, ресурсы - в имя их типа
-   ресурса, а скалярные значения - в общепринятое имя их типа, которое бы
-   использовалось в объявлении типов.
+   Функция разрешает значение PHP-переменной <parameter>value</parameter>
+   и возвращает название типа значения.
+   Функция разрешает объекты в название класса, ресурсы — в название типа
+   ресурса, а скалярные значения — в общепринятое название типа данных,
+   которое указывают в объявлениях типов.
   </para>
   <para>
-   Функция отличается от <function>gettype</function> тем, что возвращает
-   имена типов, которые больше соответствуют фактическому использованию, а не те,
-   которые присутствуют по историческим причинам.
+   Отличие функции от функции <function>gettype</function> состоит в том,
+   что она возвращает названия типов, которые согласуются с практикой отладки лучше,
+   чем те, которые остаются в языке по историческим причинам.
   </para>
  </refsect1>
 
@@ -35,7 +36,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Переменная, у которой проверяется тип.
+       Переменная, тип которой проверяется.
       </para>
      </listitem>
     </varlistentry>
@@ -46,15 +47,15 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-     Возможные значения для возвращаемой строки:
+     Функция возвращает строку со значением из следующего списка:
 
      <informaltable>
       <tgroup cols="2">
        <thead>
         <row>
-         <entry>Тип + Состояние</entry>
-         <entry>Возвращаемое значение</entry>
-         <entry>Замечания</entry>
+         <entry>Тип + состояние</entry>
+         <entry>Значение возврата</entry>
+         <entry>Примечания</entry>
         </row>
        </thead>
        <tbody>
@@ -66,7 +67,7 @@
          <entry>-</entry>
         </row>
         <row>
-         <entry>Логические значения (true или false)</entry>
+         <entry>Логические значения: true или false</entry>
          <entry>
           <literal>"bool"</literal>
          </entry>
@@ -108,16 +109,16 @@
          <entry>-</entry>
         </row>
         <row>
-         <entry>Ресурсы (закрытые)</entry>
+         <entry>Закрытые ресурсы</entry>
          <entry>
           <literal>"resource (closed)"</literal>
          </entry>
-         <entry>Пример: файловый поток после закрытия с помощью fclose.</entry>
+         <entry>Пример: файловый поток после закрытия функцией fclose.</entry>
         </row>
         <row>
          <entry>Объекты именованных классов</entry>
          <entry>
-          Полное имя класса, включая его пространство имён, например,
+          Полное имя класса с пространством имён, например
           <literal>Foo\Bar</literal>
          </entry>
          <entry>-</entry>
@@ -125,10 +126,11 @@
         <row>
          <entry>Объекты анонимных классов</entry>
          <entry>
-          <literal>"class@anonymous"</literal>
+          <literal>"class@anonymous"</literal>, название родительского класса, если класс расширяет класс,
+          или название интерфейса, если класс реализует интерфейс, например <literal>"Foo\Bar@anonymous"</literal>
          </entry>
          <entry>
-          Анонимные классы - это классы, созданные с использованием синтаксиса
+          Анонимные классы — классы, которые создали синтаксисом
           $x = new class { ... }.
          </entry>
         </row>
@@ -143,10 +145,11 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>get_debug_type</function></title>
+    <title>Пример получения названия типа переменной функцией <function>get_debug_type</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 echo get_debug_type(null) . PHP_EOL;
 echo get_debug_type(true) . PHP_EOL;
 echo get_debug_type(1) . PHP_EOL;
@@ -162,6 +165,14 @@ echo get_debug_type($fp) . PHP_EOL;
 
 echo get_debug_type(new stdClass) . PHP_EOL;
 echo get_debug_type(new class {}) . PHP_EOL;
+
+namespace Foo;
+
+echo get_debug_type(new class implements A {}) . PHP_EOL;
+echo get_debug_type(new class implements A,B {}) . PHP_EOL;
+echo get_debug_type(new class extends C {}) . PHP_EOL;
+echo get_debug_type(new class extends C implements A {}) . PHP_EOL;
+
 ?>
 ]]>
     </programlisting>
@@ -178,6 +189,10 @@ resource (stream)
 resource (closed)
 stdClass
 class@anonymous
+Foo\A@anonymous
+Foo\A@anonymous
+Foo\C@anonymous
+Foo\C@anonymous
 ]]>
     </screen>
    </example>
