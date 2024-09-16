@@ -1,23 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8dcacceecc82fd06ff2f7576a5ef64e2acc62736 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 73789d960f338c138390304c251451851485e7b7 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="mongodb-driver-cursor.getid" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>MongoDB\Driver\Cursor::getId</refname>
-  <refpurpose>Возвращает идентификатор для курсора</refpurpose>
+  <refpurpose>Возвращает идентификатор текущего курсора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>final</modifier> <modifier>public</modifier> <type>MongoDB\Driver\CursorId</type><methodname>MongoDB\Driver\Cursor::getId</methodname>
+   <modifier>final</modifier> <modifier>public</modifier> <type class="union"><type>MongoDB\Driver\CursorId</type><type>MongoDB\BSON\Int64</type></type><methodname>MongoDB\Driver\Cursor::getId</methodname>
    <void />
   </methodsynopsis>
   <para>
-   Возвращает <classname>MongoDB\Driver\CursorId</classname>, связанный с
-   этим курсором. Идентификатор курсора однозначно идентифицирует курсор на сервере.
+   Метод возвращает идентификатор текущего курсора.
+   На сервере каждому курсору присваивается уникальный идентификатор.
   </para>
+  <warning>
+   <para>
+    Возврат объекта <classname>MongoDB\Driver\CursorId</classname> из метода
+    <emphasis>УСТАРЕЛ</emphasis> с версии модуля
+    1.20.0. В версии 2.0 параметр <parameter>asInt64</parameter> удалят,
+    а метод будет возвращать объект
+    <classname>MongoDB\BSON\Int64</classname>.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -28,7 +37,11 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает <classname>MongoDB\Driver\CursorId</classname> для курсора.
+   Метод возвращает идентификатор текущего курсора. Метод вернёт идентификатор
+   как объект <classname>MongoDB\BSON\Int64</classname>, если для параметра
+   <parameter>asInt64</parameter> установили значение &true;,
+   иначе вернёт объект <classname>MongoDB\Driver\CursorId</classname>
+   и выдаст уведомление об устаревании.
   </para>
  </refsect1>
 
@@ -39,29 +52,56 @@
   </simplelist>
  </refsect1>
 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>PECL-модуль mongodb 1.20.0</entry>
+       <entry>
+        Возврат объекта <classname>MongoDB\Driver\CursorId</classname> устарел.
+        Добавили параметр <parameter>asInt64</parameter>, чтобы упростить переход
+        на будущие версии. Идентификатор вернётся как объект <classname>MongoDB\BSON\Int64</classname>,
+        если для параметра <parameter>asInt64</parameter> установили значение &true;.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>MongoDB\Driver\Cursor::getId</function></title>
+   <title>Пример получения идентификатора курсора методом <function>MongoDB\Driver\Cursor::getId</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-/* В этом примере мы добавляем несколько документов в коллекцию и указываем
- * меньший batchSize, чтобы гарантировать, что первая порция содержит только
- * подмножество наших результатов и курсор остаётся открытым на сервере. */
+/** Пример добавляет набор документов в коллекцию и указывает
+ * меньший batchSize, чтобы гарантировать, что первый пакет содержит только
+ * подмножество результатов, а курсор остаётся открытым на сервере
+ */
 $manager = new MongoDB\Driver\Manager("mongodb://localhost:27017");
 $query = new MongoDB\Driver\Query([], ['batchSize' => 2]);
 
-$bulk = new MongoDB\Driver\BulkWrite;
+$bulk = new MongoDB\Driver\BulkWrite();
 $bulk->insert(['x' => 1]);
 $bulk->insert(['x' => 2]);
 $bulk->insert(['x' => 3]);
 $manager->executeBulkWrite('db.collection', $bulk);
 
 $cursor = $manager->executeQuery('db.collection', $query);
-var_dump($cursor->getId());
+var_dump($cursor->getId(true));
 
 ?>
 ]]>
@@ -69,9 +109,9 @@ var_dump($cursor->getId());
    &example.outputs.similar;
    <screen>
 <![CDATA[
-object(MongoDB\Driver\CursorId)#5 (1) {
-  ["id"]=>
-  int(94810124093)
+object(MongoDB\BSON\Int64)#5 (1) {
+  ["integer"]=>
+  string(11) "94810124093"
 }
 ]]>
    </screen>
@@ -83,7 +123,7 @@ object(MongoDB\Driver\CursorId)#5 (1) {
   &reftitle.seealso;
   <simplelist>
    <member><classname>MongoDB\Driver\CursorId</classname></member>
-   <member><function>MongoDB\Driver\CursorId::__toString</function></member>
+   <member><classname>MongoDB\BSON\Int64</classname></member>
   </simplelist>
  </refsect1>
 
