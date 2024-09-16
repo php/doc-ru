@@ -5,7 +5,7 @@
 <refentry xml:id="mongodb-driver-readpreference.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>MongoDB\Driver\ReadPreference::__construct</refname>
-  <refpurpose>Создать новый ReadPreference</refpurpose>
+  <refpurpose>Создаёт новый объект предпочтения чтения ReadPreference</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,8 +17,8 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>options</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Создаёт новый <classname>MongoDB\Driver\ReadPreference</classname>, который
-   является неизменяемым объектом значения.
+   Метод создаёт новый объект <classname>MongoDB\Driver\ReadPreference</classname> —
+   неизменяемый объект значения.
   </para>
  </refsect1>
 
@@ -40,42 +40,42 @@
         </thead>
         <tbody>
          <row>
-          <entry><constant>MongoDB\Driver\ReadPreference::RP_PRIMARY</constant> or <literal>"primary"</literal></entry>
+          <entry><literal>"primary"</literal></entry>
           <entry>
            <para>
-            Все операции считывается из текущего первичного узла набора реплик. Это
-            предпочтение чтения по умолчанию для MongoDB.
+            Операции считываются из текущего первичного узла набора реплик.
+            Это предпочтение чтения по умолчанию для БД MongoDB.
            </para>
           </entry>
          </row>
          <row>
-          <entry><constant>MongoDB\Driver\ReadPreference::RP_PRIMARY_PREFERRED</constant> or <literal>"primaryPreferred"</literal></entry>
+          <entry><literal>"primaryPreferred"</literal></entry>
           <entry>
            <para>
-            В большинстве ситуаций операции считываются из первичного узла, но если он
-            недоступен, операции считываются из вторичных узлов.
+            В большей части случаев операции считываются из первичного узла,
+            но если узел недоступен, операции считываются из вторичных узлов.
            </para>
           </entry>
          </row>
          <row>
-          <entry><constant>MongoDB\Driver\ReadPreference::RP_SECONDARY</constant> или <literal>"secondary"</literal></entry>
+          <entry><literal>"secondary"</literal></entry>
           <entry>
            <para>
-            Все операции считываются из вторичных узлов набора реплик.
+            Операции считываются из вторичных узлов набора реплик.
            </para>
           </entry>
          </row>
          <row>
-          <entry><constant>MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED</constant> или <literal>"secondaryPreferred"</literal></entry>
+          <entry><literal>"secondaryPreferred"</literal></entry>
           <entry>
            <para>
-            В большинстве ситуаций операции считываются из вторичных членов,
+            В большей части случаев операции считываются из вторичных членов,
             но если вторичные члены недоступны, операции считываются из первичного узла.
            </para>
           </entry>
          </row>
          <row>
-          <entry><constant>MongoDB\Driver\ReadPreference::RP_NEAREST</constant> or <literal>"nearest"</literal></entry>
+          <entry><literal>"nearest"</literal></entry>
           <entry>
            <para>
             Операции считываются из члена набора реплик с наименьшей задержкой сети,
@@ -93,23 +93,20 @@
     <term><parameter>tagSets</parameter></term>
     <listitem>
      <para>
-      Наборы тегов позволяют настраивать операции чтения для определённых членов
-      набора реплик. Этот параметр должен быть массивом ассоциативных массивов, каждый
-      из которых содержит ноль или несколько пар ключ-значение. При выборе сервера для
-      операции чтения драйвер пытается выбрать узел, имеющий все теги в наборе
-      (т.е. ассоциативный массив пар ключ-значение). Если выбор не удался,
-      the driver will attempt subsequent sets. Пустой набор тегов
-      (<literal>array()</literal>) будет соответствовать любому узлу и может использоваться
-      как резервный.
+      Наборы тегов разрешают нацеливать операции чтения на конкретных членов
+      набора реплик. Аргумент формируют как массив ассоциативных массивов, каждый
+      из которых содержит ноль или больше пар ключ-значение. Для операции чтения драйвер выбирает
+      сервер, в конфигурации которого узел содержит каждый тег набора —
+      ассоциативного массива пар ключей и значений. Драйвер
+      выполнит попытку со следующими наборами, если не получилось выбрать узел. Пустой набор тегов
+      <literal>array()</literal> совпадёт с любым узлом, его передают как запасной вариант.
      </para>
      <para>
-      Теги не совместимы с режимом
-      <constant>MongoDB\Driver\ReadPreference::RP_PRIMARY</constant>, и,
-      как правило, применяется только при выборе вторичного члена набора для
-      операции чтения. Однако режим
-      <constant>MongoDB\Driver\ReadPreference::RP_NEAREST</constant> в сочетании
-      с набором тегов, выбирает соответствующий член с наименьшей задержкой сети.
-      Этот член может быть первичным или вторичным.
+      Теги несовместимы с режимом <literal>"primary"</literal>, и по ним
+      сервер чаще выбирает только вторичного члена набора для
+      операции чтения. Между тем, при сочетании режима <literal>"nearest"</literal>
+      с набором тегов драйвер выбирает члена с наименьшей задержкой в сети.
+      Тогда членом, которого выберет драйвер, окажется первичный или вторичный узел.
      </para>
     </listitem>
    </varlistentry>
@@ -132,15 +129,21 @@
           <entry>hedge</entry>
           <entry><type class="union"><type>object</type><type>array</type></type></entry>
           <entry>
-           <para>Указывает, использовать ли <link xlink:href="&url.mongodb.docs;core/sharded-cluster-query-router/#mongos-hedged-reads">хеджированные чтения</link>, которые поддерживаются MongoDB 4.4+ для закрытых запросов.</para>
            <para>
-            Хеджированные чтения с сервера доступны для всех неосновных предпочтений чтения
-            и включаются по умолчанию при использовании режима <literal>"nearest"</literal>.
-            Этот параметр позволяет явно разрешить чтение с хеджированием на сервере для
-            неосновных предпочтений чтения, указав
-            <literal>['enabled' => true]</literal>, или явно отключив
-            серверное чтение с хеджированием для предпочтения чтения <literal>"nearest"</literal>,
-            указав <literal>['enabled' => false]</literal>.
+            Определяет, использовать ли
+            <link xlink:href="&url.mongodb.docs;core/sharded-cluster-query-router/#mongos-hedged-reads">
+             хеджированные считывания
+            </link>,
+            которые БД MongoDB 4.4+ поддерживают для шардированных запросов.
+           </para>
+           <para>
+            Хеджированные считывания с сервера доступны для непервичных предпочтений чтения
+            и включаются по умолчанию в режиме <literal>"nearest"</literal>.
+            Через эту опцию явно разрешают серверу считывание с хеджированием
+            для непервичных предпочтений чтения путём установки аргумента
+            <literal>['enabled' => true]</literal> или явно запрещают
+            серверу чтения с хеджированием для предпочтения чтения в режиме <literal>"nearest"</literal>
+            путём установки аргумента <literal>['enabled' => false]</literal>.
            </para>
           </entry>
          </row>
@@ -149,27 +152,27 @@
           <entry><type>int</type></entry>
           <entry>
            <para>
-            Определяет максимальное отставание репликации или "staleness", для чтения из
-            вторичных узлов. Когда оцениваемая staleness вторичных узлов превышает
-            это значение, драйвер прекращает использовать её для операций чтения.
+            Определяет максимальное отставание репликации (англ. staleness) для чтения
+            из вторичных узлов. Когда по оценке клиента отставания репликации вторичных узлов
+            превышает это значение, драйвер прекращает использовать отставание для операций чтения.
            </para>
            <para>
-            Если указано, максимальный staleness должен быть 32-битным числом без знака,
-            большим или равным
+            Максимальное значение отставания репликации указывают как 32-битное целое число со знаком,
+            которое больше или равно значению константы
             <constant>MongoDB\Driver\ReadPreference::SMALLEST_MAX_STALENESS_SECONDS</constant>.
            </para>
            <para>
-            По умолчанию используется
-            <constant>MongoDB\Driver\ReadPreference::NO_MAX_STALENESS</constant>,
-            что означает, что драйвер не будет учитывать отставания вторичных узлов
+            Значение по умолчанию для опции равно значению константы
+            <constant>MongoDB\Driver\ReadPreference::NO_MAX_STALENESS</constant>.
+            При таком значении драйвер не будет учитывать отставания репликаций вторичных узлов
             при выборе направления для операции чтения.
            </para>
            <para>
-            Этот параметр несовместим с режимом
-            <constant>MongoDB\Driver\ReadPreference::RP_PRIMARY</constant>.
-            Указание максимальной staleness также требует, чтобы все экземпляры MongoDB в
-            развёртывании использовали MongoDB 3.4+. Исключение будет выброшено во время
-            выполнения, если экземпляры MongoDB в развёртывании имеют более старую версию.
+            Опция несовместима с режимом <literal>"primary"</literal>.
+            Со значением максимального отставания репликации умеют работать
+            только экземпляры MongoDB с БД MongoDB 3.4+ в развёртывании.
+            Метод выбросит исключение во время выполнения, если версия сервера хотя бы одного
+            экземпляра MongoDB в развёртывании старее.
            </para>
           </entry>
          </row>
@@ -186,9 +189,20 @@
   &reftitle.errors;
   <simplelist>
    &mongodb.throws.argumentparsing;
-   <member>При некорректном <parameter>mode</parameter> выбрасывает <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname></member>
-   <member>Если <parameter>tagSets</parameter> предоставляется как первичное предпочтение чтения или имеет неправильный формат (т.е. не массив из нуля или более документов) выбрасывает <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>.</member>
-   <member>Если опция <literal>"maxStalenessSeconds"</literal> предоставляется для первичного предпочтения чтения или находится вне диапазона, выбрасывает <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>.</member>
+   <member>
+    Метод выбросит исключение <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>
+    при недопустимом значении аргумента <parameter>mode</parameter>.
+   </member>
+   <member>
+    Метод выбросит исключение <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>,
+    если аргумент <parameter>tagSets</parameter> передали для предпочтения чтения первичного узла
+    или аргумент неправильно сформировали — передали не массив из нуля или больше документов.
+   </member>
+   <member>
+    Метод выбросит исключение <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>,
+    если опцию <literal>"maxStalenessSeconds"</literal> передали для предпочтения чтения первичного узла
+    или указали значение за пределами диапазона.
+   </member>
    </simplelist>
  </refsect1>
 
@@ -205,27 +219,34 @@
      </thead>
      <tbody>
       <row>
-       <entry>PECL mongodb 1.8.0</entry>
+       <entry>PECL-модуль mongodb 1.20.0</entry>
        <entry>
-        Добавлен параметр <literal>"hedge"</literal>.
+        Передача целых чисел (<type>int</type>) в аргументе <parameter>mode</parameter>
+        <emphasis>УСТАРЕЛА</emphasis>.
        </entry>
       </row>
       <row>
-       <entry>PECL mongodb 1.3.0</entry>
+       <entry>PECL-модуль mongodb 1.8.0</entry>
+       <entry>
+        Добававили опцию <literal>"hedge"</literal>.
+       </entry>
+      </row>
+      <row>
+       <entry>PECL-модуль mongodb 1.3.0</entry>
        <entry>
         <para>
-         Аргумент <parameter>mode</parameter> теперь принимает строковое значение,
-         которое соответствует URI-опции <literal>"readPreference"</literal> для
-         <function>MongoDB\Driver\Manager::__construct</function>.
+         Параметр <parameter>mode</parameter> теперь принимает строковое значение,
+         которое соответствует URI-опции <literal>"readPreference"</literal>
+         метода <function>MongoDB\Driver\Manager::__construct</function>.
         </para>
        </entry>
       </row>
       <row>
-       <entry>PECL mongodb 1.2.0</entry>
+       <entry>PECL-модуль mongodb 1.2.0</entry>
        <entry>
         <para>
-         Добавлен третий аргумент <parameter>options</parameter>, который поддерживает
-         параметр <literal>"maxStalenessSeconds"</literal>.
+         Добавили в сигнатуру метода третий параметр — <parameter>options</parameter>,
+         который поддерживает опцию <literal>"maxStalenessSeconds"</literal>.
         </para>
        </entry>
       </row>
@@ -238,22 +259,22 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>MongoDB\Driver\ReadPreference::__construct</function></title>
+   <title>Пример создания нового объекта ReadPreference методом <function>MongoDB\Driver\ReadPreference::__construct</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-/* Предпочитать вторичный узел, но в случае отказа отступить к первичному. */
-var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::RP_SECONDARY_PREFERRED));
+/* Предпочитать вторичный узел, но в случае отказа отступить к первичному */
+var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::SECONDARY_PREFERRED));
 
-/* Предпочитать узел в Нью-Йоркском центре обработки данных с минимальной задержкой. */
-var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::RP_NEAREST, [['dc' => 'ny']]));
+/* Предпочитать узел в Нью-Йоркском центре обработки данных с минимальной задержкой */
+var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::NEAREST, [['dc' => 'ny']]));
 
-/* Требуется дополнительный узел, чья задержка репликации находится в пределах двух минут от основного */
-var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::RP_SECONDARY, null, ['maxStalenessSeconds' => 120]));
+/* Требуется дополнительный узел, задержка репликации которого в пределах двух минут от основного */
+var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::SECONDARY, null, ['maxStalenessSeconds' => 120]));
 
-/* Явно включить хеджирование чтения на сервере */
-var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::RP_SECONDARY, null, ['hedge' => ['enabled' => true]]));
+/* Явно разрешить серверу хеджированные считывания */
+var_dump(new MongoDB\Driver\ReadPreference(MongoDB\Driver\ReadPreference::SECONDARY, null, ['hedge' => ['enabled' => true]]));
 
 ?>
 ]]>
