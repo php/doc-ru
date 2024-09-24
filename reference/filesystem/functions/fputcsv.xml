@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 291d60430d25f2b508bebb5720b41cc68f9a6ec1 Maintainer: shein Status: ready -->
+<!-- EN-Revision: cef78b0fbe0fbe02003699b027ab50200097e949 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.fputcsv" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>fputcsv</refname>
-  <refpurpose>Форматирует строку в виде CSV и записывает её в файловый указатель</refpurpose>
+  <refpurpose>Формирует строку в CSV-формате и записывает строку в файловый указатель</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,10 +19,9 @@
    <methodparam choice="opt"><type>string</type><parameter>eol</parameter><initializer>"\n"</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>fputcsv</function> форматирует строку (переданную в
-   виде массива <parameter>fields</parameter>) в виде CSV и
-   записывает её (заканчивая переводом строки) в указанный файл
-   <parameter>stream</parameter>.
+   Функция <function>fputcsv</function> формирует строку в CSV-формате
+   из массива полей <parameter>fields</parameter> и записывает строку,
+   которая завершается переводом строки, в файл <parameter>stream</parameter>.
   </para>
  </refsect1>
 
@@ -48,8 +47,8 @@
      <term><parameter>separator</parameter></term>
      <listitem>
       <para>
-       Дополнительный параметр <parameter>separator</parameter> устанавливает
-       разделитель полей (только один однобайтовый символ).
+       Необязательный параметр <parameter>separator</parameter> устанавливает
+       разделитель полей. Параметр принимает только один однобайтовый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -57,8 +56,8 @@
      <term><parameter>enclosure</parameter></term>
      <listitem>
       <para>
-       Дополнительный параметр <parameter>enclosure</parameter>
-       устанавливает ограничитель полей (только один однобайтовый символ).
+       Необязательный параметр <parameter>enclosure</parameter> устанавливает
+       ограничитель полей. Параметр принимает только один однобайтовый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -66,9 +65,9 @@
      <term><parameter>escape</parameter></term>
      <listitem>
       <para>
-       Необязательный параметр <parameter>escape</parameter>
-       задаёт экранирующий символ (не более одного однобайтового символа).
-       Пустая строка (<literal>""</literal>) отключает проприетарный механизм экранирования.
+       Необязательный параметр <parameter>escape</parameter> устанавливает
+       символ экранирования. Параметр принимает не больше одного однобайтового символа.
+       Пустая строка <literal>""</literal> отключает внутренний механизм экранирования.
       </para>
      </listitem>
     </varlistentry>
@@ -76,18 +75,20 @@
      <term><parameter>eol</parameter></term>
      <listitem>
       <para>
-       Необязательный параметр <parameter>eol</parameter>
-       задаёт настраиваемую последовательность конца строки.
+       Необязательный параметр <parameter>eol</parameter> устанавливает
+       пользовательскую последовательность конца строки.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
+  &warning.csv.escape-parameter;
   <note>
    <para>
-    Если символ <parameter>enclosure</parameter> содержится в поле,
-    он будет экранирован путём его удвоения, если ему не предшествует
-    <parameter>escape</parameter>.
+    Функция заэкранирует символ ограничителя полей путём удвоения,
+    если поле содержит символ ограничителя полей <parameter>enclosure</parameter>,
+    если только перед ограничителем, который функция встретила в поле,
+    не идёт символ экранирования <parameter>escape</parameter>.
    </para>
   </note>
  </refsect1>
@@ -95,7 +96,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает длину записанной строки&return.falseforfailure;.
+   Функция возвращает длину строки, которую записала,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -114,14 +115,14 @@
       <row>
        <entry>8.1.0</entry>
        <entry>
-        Добавлен необязательный параметр <parameter>eol</parameter>.
+        Добавили необязательный параметр <parameter>eol</parameter>.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Теперь параметр <parameter>escape</parameter> может принимать пустую строку для
-        отключения проприетарного механизма экранирования.
+        Теперь параметр <parameter>escape</parameter> принимает пустую строку
+        для отключения внутреннего механизма экранирования.
        </entry>
       </row>
      </tbody>
@@ -134,7 +135,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>fputcsv</function></title>
+    <title>Пример форматирования и записи CSV-строки в файл функцией <function>fputcsv</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -142,7 +143,7 @@
 $list = array (
     array('aaa', 'bbb', 'ccc', 'dddd'),
     array('123', '456', '789'),
-    array('"aaa"', '"bbb"')
+    array('"aaa"', '"bbb"'),
 );
 
 $fp = fopen('file.csv', 'w');
@@ -152,10 +153,13 @@ foreach ($list as $fields) {
 }
 
 fclose($fp);
+
 ?>
 ]]>
     </programlisting>
-    <para>Вышеуказанный пример запишет в файл <literal>file.csv</literal> следующее:</para>
+    <para>
+     Пример запишет в файл <literal>file.csv</literal> следующие строки:
+    </para>
     <screen>
 <![CDATA[
 aaa,bbb,ccc,dddd
