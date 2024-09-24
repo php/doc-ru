@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1f13e161042e2379a5882cf7c09e9002b3281c12 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 0545e305cf06937b14b3f0694d6e716c9881ffd7 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.dbase-get-record-with-names" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,7 +16,7 @@
    <methodparam><type>int</type><parameter>number</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Получает запись из базы данных dBase в виде ассоциативного массива (вместе с
+   Функция получает запись из базы данных dBase в виде ассоциативного массива (вместе с
    именами соответствующих полей).
   </para>
  </refsect1>
@@ -28,7 +28,7 @@
      <term><parameter>database</parameter></term>
      <listitem>
       <para>
-       Ресурс базы данных, возвращаемый функцией <function>dbase_open</function>
+       Ресурс базы данных, который возвращает функция <function>dbase_open</function>
        или <function>dbase_create</function>.
       </para>
      </listitem>
@@ -37,8 +37,8 @@
      <term><parameter>number</parameter></term>
      <listitem>
       <para>
-       Индекс записи (здесь соответствует физическому номеру записи. — прим. перев.)
-       в диапазоне от <literal>1</literal> до <literal>dbase_numrecords($dbase_identifier)</literal>
+       Индекс записи в диапазоне от <literal>1</literal> до значения, которое вернёт вызов
+       <literal>dbase_numrecords($dbase_identifier)</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -48,16 +48,15 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Ассоциативный массив с данными строки. Массив будет содержать ключ
-   <literal>deleted</literal>, который равен 1, если запись помечена на удаление
-   (смотрите описание функции <function>dbase_delete_record</function>).
-   Возвращает и пустые записи.
-   Поэтому этой функцией невозможно извлечь значение или имя
-   поля <literal>delete</literal>.
+   Ассоциативный массив с записью, которую функция получила из БД. Массив также включит ключ
+   с именем <literal>deleted</literal>, значение которого равно 1, если запись пометили для удаления.
+   Подробнее о пометке записи для удаления рассказывает описание функции <function>dbase_delete_record</function>.
+   Поэтому функцией невозможно получить значение поля с именем <literal>delete</literal>.
   </para>
   &dbase.type-conversion;
   <para>
-   В случае возникновения ошибки функция <function>dbase_get_record_with_names</function> возвращает &false;.
+   Функция <function>dbase_get_record_with_names</function> возвращает &false;,
+   если возникла ошибка.
   </para>
  </refsect1>
 
@@ -73,10 +72,10 @@
     </thead>
     <tbody>
      <row>
-      <entry>dbase 7.0.0</entry>
+      <entry>PECL-модуль dbase 7.0.0</entry>
       <entry>
-       Параметр <parameter>database</parameter> теперь имеет тип
-       <type>resource</type>, а не <type>int</type>.
+       Параметр <parameter>database</parameter> теперь принимает аргумент
+       с типом <type>resource</type>, а не <type>int</type>.
       </entry>
      </row>
     </tbody>
@@ -88,27 +87,29 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Список всех зарегистрированных пользователей в базе данных</title>
+    <title>Пример получения списка участников, которых зарегистрировали в базе данных</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// открываем базу в режиме чтения
+
+// Открываем базу в режиме чтения
 $db = dbase_open('/tmp/test.dbf', 0);
 
 if ($db) {
-  $record_numbers = dbase_numrecords($db);
-  for ($i = 1; $i <= $record_numbers; $i++) {
-      $row = dbase_get_record_with_names($db, $i);
-      if ($row['ismember'] == 1) {
-          echo "Member #$i: " . trim($row['name']) . "\n";
-      }
-  }
+    $record_numbers = dbase_numrecords($db);
+    for ($i = 1; $i <= $record_numbers; $i++) {
+        $row = dbase_get_record_with_names($db, $i);
+
+        if ($row['ismember'] == 1) {
+            echo "Member #$i: " . trim($row['name']) . "\n";
+        }
+    }
 }
-// Прим. пер. -
-// к полученным с помощью dbase_get_record_with_names значениям записи
-// обращаемся по имени - $row['ismember'],
-// а в случае с dbase_get_record к значениям записи
-// обращаемся по номеру - $row[4]
+// Прим. пер. —
+// к значениям записи, которую получили функцией dbase_get_record_with_names,
+// обращаются по имени: $row['ismember'],
+// а к значениям записи, которую получили функцией dbase_get_record, —
+// по индексу на основе единицы: $row[4]
 ?>
 ]]>
     </programlisting>
