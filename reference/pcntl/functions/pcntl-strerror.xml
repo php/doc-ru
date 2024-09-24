@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b890f28c0c6d2856eadcdc34b3faf83a846b3d79 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e7dcfdc34279798ad93592ca53978aef5d78996e Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pcntl-strerror" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>pcntl_strerror</refname>
-  <refpurpose>Получить текст ошибки по её коду</refpurpose>
+  <refpurpose>Извлекает сообщение о системной ошибке, которое связано с номером ошибки</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,10 +14,11 @@
    <methodparam><type>int</type><parameter>error_code</parameter></methodparam>
   </methodsynopsis>
   <para>
-
+   Функция возвращает сообщение о системной ошибке, которое связано с кодом ошибки <parameter>error_code</parameter>
+   (<literal>errno</literal>) последней pcntl-функции, которая завершилась ошибкой.
+   Код ошибки <parameter>error_code</parameter> получают
+   функцией <function>pcntl_get_last_error</function>.
   </para>
-
-  &warn.undocumented.func;
 
  </refsect1>
 
@@ -28,7 +29,8 @@
     <term><parameter>error_code</parameter></term>
     <listitem>
      <para>
-
+      Номер ошибки <literal>errno</literal>,
+      который вернула функция <function>pcntl_get_last_error</function>.
      </para>
     </listitem>
    </varlistentry>
@@ -38,8 +40,45 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает описание ошибки.
+   Функция возвращает сообщение об ошибке, как строку.
   </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример извлечения сообщения о системной ошибке функцией <function>pcntl_strerror</function></title>
+   <para>
+    Пример ожидает, пока дочерний процесс изменит состояние,
+    тогда как дочернего процесса не существует,
+    а затем выведет сообщение, которое соответствует номеру ошибки.
+   </para>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$pid = pcntl_wait($status);
+
+if ($pid === -1) {
+    $errno = pcntl_get_last_error();
+    $message = pcntl_strerror($errno);
+
+    fwrite(
+        STDERR,
+        'Функция pcntl_wait завершилась ошибкой с номером ' . $errno . ': ' . $message . PHP_EOL
+    );
+}
+
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Функция pcntl_wait завершилась ошибкой с номером 10: No child processes
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="seealso">
