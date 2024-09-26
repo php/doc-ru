@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 86e6094e86b84a51d00ab217ac50ce8dde33d82a Maintainer: aur Status: ready -->
+<!-- EN-Revision: 0545e305cf06937b14b3f0694d6e716c9881ffd7 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.dbase-replace-record" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,7 +15,7 @@
    <methodparam><type>int</type><parameter>number</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Заменяет данную запись в базе данных на заданные значения.
+   Функция заменяет запись в базе данных заданными данными.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -26,7 +26,7 @@
      <term><parameter>database</parameter></term>
      <listitem>
       <para>
-       Ресурс базы данных, возвращаемый функцией <function>dbase_open</function>
+       Ресурс базы данных, который возвращает функция <function>dbase_open</function>
        или <function>dbase_create</function>.
       </para>
      </listitem>
@@ -35,14 +35,14 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Индексированный массив данных. Количество элементов должно быть равно
-       количеству полей в базе данных, в противном случае вызов
-       <function>dbase_replace_record</function> не удастся.
+       Индексный массив данных. В параметр передают массив, в котором количество элементов
+       равняется количеству полей в базе данных, иначе
+       в функции <function>dbase_replace_record</function> возникает ошибка.
       </para>
       <note>
        <para>
-        Если вы используете в качестве параметра запись, которую вернула <function>dbase_get_record</function>,
-        не забудьте сбросить ключ с именем  <literal>deleted</literal>.
+        При передаче в параметр записи, которую вернула функция <function>dbase_get_record</function>,
+        вначале сбрасывают в записи ключ с именем <literal>deleted</literal> (прим пер. — unset(record['deleted']).
        </para>
       </note>
      </listitem>
@@ -51,8 +51,8 @@
      <term><parameter>number</parameter></term>
      <listitem>
       <para>
-       Целое число, которое может быть в диапазоне от 1 до числа записей в базе данных
-       (которое вернула функция <function>dbase_numrecords</function>).
+       Параметр принимает целое число в диапазоне от 1 до числа записей в базе данных,
+       которое вернула функция <function>dbase_numrecords</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -78,10 +78,10 @@
     </thead>
     <tbody>
      <row>
-      <entry>dbase 7.0.0</entry>
+      <entry>PECL-модуль dbase 7.0.0</entry>
       <entry>
-       Параметр <parameter>database</parameter> теперь имеет тип
-       <type>resource</type> а не <type>int</type>.
+       Параметр <parameter>database</parameter> теперь принимает аргумент
+       с типом <type>resource</type>, а не <type>int</type>.
       </entry>
      </row>
     </tbody>
@@ -93,30 +93,32 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Обновление записи в базе данных</title>
+    <title>Пример обновления записи в базе данных</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// откроем в режиме чтения и записи
+// Открываем БД в режиме чтения и записи
 $db = dbase_open('/tmp/test.dbf', 2);
 
 if ($db) {
-  // получим старую запись
-  $row = dbase_get_record_with_names($db, 1);
+    // Получаем старую запись
+    $row = dbase_get_record_with_names($db, 1);
 
-  // сбросим пометку 'deleted'
-  unset($row['deleted']);
+    // Сбрасываем метку 'deleted'
+    unset($row['deleted']);
 
-  // Установим в поле даты текущую дату
-  $row['date'] = date('Ymd');
+    // Устанавливаем в поле даты текущую дату
+    $row['date'] = date('Ymd');
 
-  // Преобразуем $row в массив
-  $row = array_values($row);
+    // Преобразовываем переменную $row в массив
+    $row = array_values($row);
 
-  // Заменим запись
-  dbase_replace_record($db, $row, 1);
-  dbase_close($db);
+    // Заменяем запись
+    dbase_replace_record($db, $row, 1);
+
+    // Закрываем БД
+    dbase_close($db);
 }
 
 ?>
@@ -130,11 +132,12 @@ if ($db) {
   &reftitle.notes;
    <note>
     <para>
-     При использовании <function>dbase_get_record</function> и <function>dbase_get_record_with_names</function>,
-     поля логического типа возвращаются как целочисленное (<type>int</type>)
-     значение (<literal>0</literal> либо <literal>1</literal>). Если вы собираетесь
-     записывать эти значения обратно, необходимо помнить, что результат станет
-     равным <literal>0</literal>.
+     При получении записей функциями <function>dbase_get_record</function>
+     и <function>dbase_get_record_with_names</function>
+     поле логического типа возвращается как целочисленное (<type>int</type>)
+     значение <literal>0</literal> и <literal>1</literal>. Перед обратной записью
+     целочисленные значения преобразовывают в правильные значения, которые в БД принимает поле логического типа,
+     иначе в БД попадёт значение <literal>0</literal>.
     </para>
    </note>
  </refsect1><!-- }}} -->
