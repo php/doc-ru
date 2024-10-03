@@ -1,4 +1,4 @@
-# Русский перевод документации PHP
+# Русский перевод PHP-документации
 
 [![Telegram](https://img.shields.io/badge/telegram-@php_doc_ru-brightgreen.svg?logo=telegram)](https://t.me/php_doc_ru)
 [![Slack](https://img.shields.io/badge/slack-@ru.php.doc-brightgreen.svg?logo=slack)](https://join.slack.com/t/ruphpdoc/shared_invite/zt-ax1czx68-c3_XSVhsgzYJCOslmwvJkQ)
@@ -9,6 +9,6 @@
 
 ![График](http://doc.php.net/images/revcheck/info_revcheck_php_ru.png "График текущего состояния")
 
-## Помощь
+## Участие в переводе
 
-Если вы хотите поучаствовать в переводе, пожалуйста, ознакомьтесь с [данным руководством](CONTRIBUTING.md).
+Рекомендации по переводу русскоязычной документации даёт [руководство](CONTRIBUTING.md), с которым переводчики знакомятся перед началом участия.
