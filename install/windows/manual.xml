@@ -1,89 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8e732e84a1425cf0ab3a5b0da8fe113c7a6da85e Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 2dbf3d9064d4cb07f0a2f7d06641c877a2e5ed24 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="install.windows.manual" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Самостоятельная установка PHP в Windows</title>
- <sect2>
-  <title>Выберите веб-сервер</title>
-  <sect3>
-   <title>IIS</title>
-   <para>
-    IIS является встроенным в Windows.
-    На сервере Windows используйте Server Manager для добавления роли IIS. Убедитесь, что функция роли CGI включена.
-    На рабочем столе Windows используйте панель "Установка и удаление программ" для добавления IIS.
-    В документации Microsoft есть <link xlink:href="https://docs.microsoft.com/en-us/previous-versions/ms181052(v=vs.80)">подробные инструкции</link>.
-    Для настольных веб-приложений и веб-разработки можно также использовать IIS/Express или рабочий стол PHP.
-    <example>
-     <title>Командная строка для настройки IIS и PHP</title>
-     <programlisting>
-<![CDATA[
+ <title>Ручная установка готовых двоичных файлов</title>
+ <simplesect xml:id="install.windows.requirements" annotations="chunk:false">
+  <title>Требования к установке</title>
+  <simpara>
+   PHP доступен только для 32-битных x86- или 64-битных x64-систем
+   и не работает на Windows RT или Windows на ARM.
+   Начиная с версии 8.3.0 PHP требует Windows 8 или Windows Server 2012.
+   Версии после 7.2.0 требуют Windows 2008 R2 или Windows 7.
+   Версии до 7.2.0 поддерживают Windows 2008 и Vista.
+  </simpara>
 
-@echo off
+  <simpara>
+   PHP требует среду выполнения Visual C (CRT). Многим другим приложениям также требуется
+   эта среда выполнения поэтому её, скорее всего, уже установили, а если нет, —
+   устанавливают пакет Microsoft Visual C++ Redistributable для Visual Studio 2022,
+   который совместим со всеми версиями PHP и доступен для скачивания
+   <link xlink:href="&url.microsoft.visualc.redistr;">на сайте Microsoft</link>.
+  </simpara>
 
-REM download .ZIP file of PHP build from http://windows.php.net/downloads/
+  <simpara>
+   Для работы с x86-сборкой PHP требуется x86-версия CRT
+   и x64-версия CRT для x64-сборок PHP.
+   Установщик выведет сообщение о том, что пакет уже установлен,
+   и не внесёт изменений, если пакет CRT уже установили.
+   Установщик пакета CRT поддерживает переключатели командной строки
+   <option>/quiet</option> и <option>/norestart</option>, поэтому установку
+   получится выполнить через скрипт.
+  </simpara>
+ </simplesect>
 
-REM path to directory you decompressed PHP .ZIP file into (no trailing \)
-set phppath=c:\php
+ <simplesect>
+  <title>Где скачать исполняемые файлы PHP</title>
+  <simpara>
+   Сборки Windows доступны для скачивания
+   <link xlink:href="&url.php.win.downloads;">с сайта PHP для Windows</link>.
+   Каждую сборку оптимизировали техникой PGO (англ. Profile-guided optimization),
+   а QA- и GA-выпуски тщательно протестировали.
+  </simpara>
+ </simplesect>
 
-
-REM Clear current PHP handlers
-%windir%\system32\inetsrv\appcmd clear config /section:system.webServer/fastCGI
-REM The following command will generate an error message if PHP is not installed. This can be ignored.
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /-[name='PHP_via_FastCGI']
-
-REM Set up the PHP handler
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/fastCGI /+[fullPath='%phppath%\php-cgi.exe']
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /+[name='PHP_via_FastCGI',path='*.php',verb='*',modules='FastCgiModule',scriptProcessor='%phppath%\php-cgi.exe',resourceType='Unspecified']
-%windir%\system32\inetsrv\appcmd set config /section:system.webServer/handlers /accessPolicy:Read,Script
-
-REM Configure FastCGI Variables
-%windir%\system32\inetsrv\appcmd set config -section:system.webServer/fastCgi /[fullPath='%phppath%\php-cgi.exe'].instanceMaxRequests:10000
-%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phppath%\php-cgi.exe'].environmentVariables.[name='PHP_FCGI_MAX_REQUESTS',value='10000']"
-%windir%\system32\inetsrv\appcmd.exe set config -section:system.webServer/fastCgi /+"[fullPath='%phppath%\php-cgi.exe'].environmentVariables.[name='PHPRC',value='%phppath%\php.ini']"
-]]>
-     </programlisting>
-    </example>
-   </para>
-  </sect3>
-
-  <sect3>
-   <title>Apache</title>
-   <para>
-    Существует несколько версий Apache2 для Windows.
-    Мы поддерживаем ApacheLounge, но другие варианты включают XAMPP, WampServer и BitNami, которые предоставляют средства автоматической установки.
-    Вы можете использовать mod_php или mod_fastcgi для загрузки PHP на Apache.
-    Если вы используете mod_php, необходимо использовать TS-build Apache, Visual C той же версии и тот же процессор (x86 или x64).
-   </para>
-  </sect3>
- </sect2>
-
- <sect2>
-  <title>Выберите сборку</title>
+ <simplesect xml:id="install.windows.pecl" annotations="chunk:false">
+  <title>Готовые PECL-модули</title>
   <para>
-   Скачайте PHP-релизы с <link xlink:href="http://windows.php.net/download/">http://windows.php.net/download/</link>.
-
-   Все сборки оптимизированы (<abbrev>PGO</abbrev>), а выпуски QA и GA тщательно протестированы.
+   Предварительно собранные для Windows PECL-модули доступны для скачивания
+   <link xlink:href="&url.pecl.windows.releases;">из раздела загрузок
+   модулей PECL на сайте PHP для Windows</link>.
   </para>
   <para>
-   Есть 4 типа сборок PHP:
+   Двоичные файлы недоступны для модулей, которые используют функции, характерные
+   для других систем наподобие Unix или зависят от библиотек,
+   которые недоступны в ОС Windows.
+  </para>
+ </simplesect>
+
+
+ <simplesect>
+  <title>Типы сборок</title>
+  <para>
+   There are four types of PHP builds:
    <itemizedlist spacing="compact">
     <listitem>
-     <para>Thread-Safe(TS) - для одного процесса веб-служб, как Apache с mod_php
+     <para>
+      Потокобезопасная сборка Thread-Safe (TS) — для однопроцессных веб-серверов
+      наподобие Apache с PHP-модулем mod_php.
      </para>
     </listitem>
     <listitem>
-     <para>Non-Thread-Safe(NTS) - для служб IIS и других FastCGI веб-серверов (Apache с mod_fastcgi) рекомендуется и для сценариев командной строки</para>
+     <para>
+      Непотокобезопасная сборка Non-Thread-Safe (NTS) — для веб-сервера IIS и веб-серверов
+      наподобие Apache с модулем mod_fastcgi, которые работают через интерфейс FastCGI.
+      Этот тип сборки рекомендуют для скриптов, которые запускают через интерфейс командной строки.
+     </para>
     </listitem>
     <listitem>
-     <para>для x86 - для 32-разрядной версии</para>
+     <para>
+      Сборка x86 — для 32-битных систем.
+     </para>
     </listitem>
     <listitem>
-     <para>для x64 - для 64-разрядной версии</para>
+     <para>
+      Сборка x64 — для 64-битных систем.
+     </para>
     </listitem>
    </itemizedlist>
   </para>
- </sect2>
-</sect1><!-- Keep this comment at the end of the file
+ </simplesect>
+</sect1>
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
