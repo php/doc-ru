@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fea4357a0ced6a776a2db2ef0d4c09c39ad41ae1 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 5cc10e8d90a9d0cbb35779b60580e772e7d660a1 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.array-replace" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>array_replace</refname>
-  <refpurpose>Заменяет элементы массива элементами других переданных массивов</refpurpose>
+  <refpurpose>Заменяет элементы массива элементами других массивов</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,20 +14,14 @@
    <methodparam rep="repeat"><type>array</type><parameter>replacements</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>array_replace</function> замещает значения массива
-   <parameter>array</parameter> значениями с такими же ключами из
-   других переданных массивов. Если ключ из первого массива присутствует
-   во втором массиве, его значение заменяется на значение из второго массива.
-   Если ключ есть во втором массиве, но отсутствует в первом - он будет создан
-   в первом массиве. Если ключ присутствует только в первом массиве, то
-   сохранится как есть. Если для замены передано несколько массивов, они
-   будут обработаны в порядке передачи и последующие массивы будут
-   перезаписывать значения из предыдущих.
+   Функция <function>array_replace</function> создаёт новый массив и присваивает
+   новому массиву элементы, которые извлекла из каждого ключа каждого входного массива.
+   Функция использует значение из самого правого входного массива,
+   если один и тот же ключ встречается в нескольких входных массивах.
   </para>
   <para>
-   <function>array_replace</function> не рекурсивная: значения первого массива
-   будут заменены вне зависимости от типа значений второго массива, даже если
-   это будут вложенные массивы.
+   Функция <function>array_replace</function> не обрабатывает элементы рекурсивно,
+   а заменяет значение каждого ключа как только встречает ключ в следующем массиве.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -46,8 +40,8 @@
      <term><parameter>replacements</parameter></term>
      <listitem>
       <para>
-       Массивы, из которых будут браться элементы для замены.
-       Значения следующего массива затирают значения предыдущего.
+       Массивы, из которых функция извлечёт элементы.
+       Значения следующего массива перезаписывают значения предыдущего.
       </para>
      </listitem>
     </varlistentry>
@@ -58,7 +52,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив (<type>array</type>).
+   Функция возвращает массив (<type>array</type>).
   </para>
  </refsect1>
 
@@ -66,30 +60,72 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>array_replace</function></title>
+    <title>Пример замены элементов массива элементами других массивов функцией <function>array_replace</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$base = array("orange", "banana", "apple", "raspberry");
-$replacements = array(0 => "pineapple", 4 => "cherry");
-$replacements2 = array(0 => "grape");
+
+$base = array("апельсин", "банан", "яблоко", "малина");
+$replacements = array(0 => "ананас", 4 => "вишня");
+$replacements2 = array(0 => "виноград");
 
 $basket = array_replace($base, $replacements, $replacements2);
-print_r($basket);
+var_dump($basket);
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen role="php">
 <![CDATA[
-Array
-(
-    [0] => grape
-    [1] => banana
-    [2] => apple
-    [3] => raspberry
-    [4] => cherry
-)
+array(5) {
+  [0]=>
+  string(16) "виноград"
+  [1]=>
+  string(10) "банан"
+  [2]=>
+  string(12) "яблоко"
+  [3]=>
+  string(12) "малина"
+  [4]=>
+  string(10) "вишня"
+}
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Пример обработки вложенных массивов</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$base = [ 'цитрусовые' => [ 'апельсин', 'лимон' ], 'семечковые' => [ 'яблоко' ] ];
+$replacements = [ 'цитрусовые' => [ 'грейпфрут' ] ];
+$replacements2 = [ 'цитрусовые' => [ 'кумкват', 'цитрон' ], 'семечковые' => [ 'мушмула' ] ];
+
+$basket = array_replace($base, $replacements, $replacements2);
+var_dump($basket);
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen role="php">
+<![CDATA[
+array(2) {
+  ["цитрусовые"]=>
+  array(2) {
+    [0]=>
+    string(14) "кумкват"
+    [1]=>
+    string(12) "цитрон"
+  }
+  ["семечковые"]=>
+  array(1) {
+    [0]=>
+    string(14) "мушмула"
+  }
+}
 ]]>
     </screen>
    </example>
