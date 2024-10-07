@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 195fde0082f2771a210a2818d3d4fa09c7ee785d Maintainer: aur Status: ready -->
+<!-- EN-Revision: 72605fc9de80bd30f50b112e447326dfe6c2a523 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.parse-url" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>parse_url</refname>
-  <refpurpose>Разбирает URL и возвращает его компоненты</refpurpose>
+  <refpurpose>Разбирает URL-адрес и возвращает компоненты адреса</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,15 +15,25 @@
    <methodparam choice="opt"><type>int</type><parameter>component</parameter><initializer>-1</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция разбирает URL и возвращает ассоциативный массив, содержащий все
-   компоненты URL, которые в нём присутствуют.
-   Элементы массива <emphasis>не будут</emphasis> декодированы как URL.
+   Функция разбирает URL-адрес и возвращает ассоциативный массив, который содержит
+   компоненты URL-адреса, которые адрес представляет.
+   Значения элементов массива <emphasis>не</emphasis> URL-декодируются.
   </para>
   <para>
-   Эта функция <emphasis role="strong">не</emphasis> предназначена для проверки на корректность данного URL,
-   она только разбивает его на нижеперечисленные части. Частичные и недопустимые URL также принимаются,
-   <function> parse_url</function> пытается сделать всё возможное, чтобы разобрать их корректно.
+   Функция <emphasis role="strong">не</emphasis> проверяет корректность URL-адреса,
+   а только разбивает адрес на части. Функция <function> parse_url</function>
+   также принимает неполные и недопустимые URL-адреса
+   и попытается их разобрать.
   </para>
+  <caution>
+   <para>
+    Функция иногда даёт неправильные результаты для относительных или недействительных URL-адресов,
+    и результаты иногда даже не соответствуют стандартному поведению HTTP-клиентов.
+    При разборе URL-адресов из ненадежных входных данных требуется дополнительная проверка
+    наподобие той, которая проводится функцией
+    <function>filter_var</function> с фильтром <constant>FILTER_VALIDATE_URL</constant>.
+   </para>
+  </caution>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -34,7 +44,7 @@
      <term><parameter>url</parameter></term>
      <listitem>
       <para>
-       URL для разбора.
+       URL-адрес, который требуется разобрать.
       </para>
      </listitem>
     </varlistentry>
@@ -44,14 +54,14 @@
      <term><parameter>component</parameter></term>
      <listitem>
       <para>
-       Укажите одну из констант <constant>PHP_URL_SCHEME</constant>,
-       <constant>PHP_URL_HOST</constant>, <constant>PHP_URL_PORT</constant>,
-       <constant>PHP_URL_USER</constant>, <constant>PHP_URL_PASS</constant>,
-       <constant>PHP_URL_PATH</constant>, <constant>PHP_URL_QUERY</constant>
-       или <constant>PHP_URL_FRAGMENT</constant>, чтобы получить только конкретный компонент
-       URL в виде строки (<type>string</type>). Исключением является указание
-       <constant>PHP_URL_PORT</constant>, в этом случае возвращаемое значение
-       будет типа <type>int</type>.
+       Константы из следующего списка помогают получить только конкретный компонент
+       URL-адреса в виде строки (<type>string</type>):
+       <constant>PHP_URL_SCHEME</constant>, <constant>PHP_URL_HOST</constant>,
+       <constant>PHP_URL_PORT</constant>, <constant>PHP_URL_USER</constant>,
+       <constant>PHP_URL_PASS</constant>, <constant>PHP_URL_PATH</constant>,
+       <constant>PHP_URL_QUERY</constant> или <constant>PHP_URL_FRAGMENT</constant>.
+       Исключение — константа <constant>PHP_URL_PORT</constant>, с которой значение
+       возврата будет принадлежать типу <type>int</type>.
       </para>
      </listitem>
     </varlistentry>
@@ -62,16 +72,18 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   При разборе значительно некорректных URL-адресов <function>parse_url</function> может вернуть &false;.
+   При разборе неправильных URL-адресов, в формате которых допустили серьёзные ошибки,
+   функция <function>parse_url</function> иногда возвращает значение &false;.
   </para>
   <para>
-   Если параметр <parameter>component</parameter> будет опущен, функция возвратит
-   ассоциативный массив (<type>array</type>). В массиве будет находиться по крайней мере один элемент.
-   Возможные ключи в этом массиве:
+   Функция вернёт ассоциативный массив (<type>array</type>), если параметр
+   <parameter>component</parameter> опустили. Массив представит по крайней мере один элемент.
+   Ключи, которые будет содержать массив, если функция обнаружит в URL-адресе компоненты,
+   которые соответствуют названиям ключей:
    <itemizedlist>
     <listitem>
      <simpara>
-      <varname remap="structfield">scheme</varname> - например, http
+      <varname remap="structfield">scheme</varname> — схема наподобие <literal>http</literal>
      </simpara>
     </listitem>
     <listitem>
@@ -101,23 +113,25 @@
     </listitem>
     <listitem>
      <simpara>
-      <varname remap="structfield">query</varname> - после знака вопроса <literal>?</literal>
+      <varname remap="structfield">query</varname> — часть адреса после знака вопроса <literal>?</literal>,
+      но до символа решетки
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      <varname remap="structfield">fragment</varname> - после знака решётки <literal>#</literal>
+      <varname remap="structfield">fragment</varname> — часть адреса после символа <literal>#</literal> —
+      идентификатора фрагмента или якоря
      </simpara>
     </listitem>
    </itemizedlist>
   </para>
   <para>
-   Если параметр <parameter>component</parameter> определён,
-   функция <function>parse_url</function> вернёт строку (<type>string</type>)
-   (или число (<type>int</type>), в случае <constant>PHP_URL_PORT</constant>)
-   вместо массива (<type>array</type>).
-   Если запрошенный компонент не существует в данном URL, будет возвращён &null;.
-   Начиная с PHP 8.0.0, <function>parse_url</function> различает отсутствующие и пустые запросы и фрагменты:
+   С параметром <parameter>component</parameter> функция
+   <function>parse_url</function> вернёт вместо массива (<type>array</type>) строку (<type>string</type>),
+   или число (<type>int</type>), если указали константу <constant>PHP_URL_PORT</constant>.
+   Функция вернёт значение &null;, если URL-адрес не содержит компонент, который запросили.
+   Начиная с PHP 8.0.0 функция <function>parse_url</function> различает запросы и фрагменты,
+   которые не содержатся в адресе или оказались пустыми:
   </para>
   <para>
    <informalexample>
@@ -132,11 +146,11 @@ http://example.com/foo?# → query = "",   fragment = ""
    </informalexample>
   </para>
   <para>
-   Ранее во всех случаях запрос и фрагмент были &null;.
+   Раньше в каждом случае запрос и фрагмент равнялись &null;.
   </para>
   <para>
-   Обратите внимание, что управляющие символы (смотрите <function>ctype_cntrl</function>)
-   в компонентах заменяются подчёркиванием (<literal>_</literal>).
+   Обратите внимание, что управляющие символы в компонентах заменяются подчёркиванием — <literal>_</literal>.
+   Подробнее об управляющих символах рассказывает описание функции <function>ctype_cntrl</function>.
   </para>
  </refsect1>
 
@@ -154,8 +168,8 @@ http://example.com/foo?# → query = "",   fragment = ""
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <function>parse_url</function> теперь различает отсутствующие и пустые
-       запросы и фрагменты.
+       Функция <function>parse_url</function> теперь различит запросы и фрагменты,
+       которые не содержатся в адресе или пусты.
       </entry>
      </row>
     </tbody>
@@ -167,10 +181,11 @@ http://example.com/foo?# → query = "",   fragment = ""
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>parse_url</function></title>
+    <title>Пример разбора URL-адреса функцией <function>parse_url</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $url = 'http://username:password@hostname:9090/path?arg=value#anchor';
 
 var_dump(parse_url($url));
@@ -182,6 +197,7 @@ var_dump(parse_url($url, PHP_URL_PORT));
 var_dump(parse_url($url, PHP_URL_PATH));
 var_dump(parse_url($url, PHP_URL_QUERY));
 var_dump(parse_url($url, PHP_URL_FRAGMENT));
+
 ?>
 ]]>
     </programlisting>
@@ -220,14 +236,16 @@ string(6) "anchor"
   </para>
   <para>
    <example>
-    <title>Пример использования <function>parse_url</function> при отсутствии протокола</title>
+    <title>Пример разбора функцией <function>parse_url</function> URL-адреса без схемы</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $url = '//www.example.com/path?googleguy=googley';
 
-// До 5.4.7 в path выводилось "//www.example.com/path"
+// До 5.4.7 функция показывала элемент path как "//www.example.com/path"
 var_dump(parse_url($url));
+
 ?>
 ]]>
     </programlisting>
@@ -250,19 +268,12 @@ array(3) {
 
  <refsect1 role="notes">
   &reftitle.notes;
-  <caution>
-   <para>
-    Функция может выдать некорректные результаты для относительных или недействительных URL-адресов и результаты могут даже не соответствовать общему поведению HTTP-клиентов.
-    Если необходимо проанализировать URL-адреса из ненадёжных входных данных, потребуется дополнительная проверка,
-    например, с помощью <function>filter_var</function> с фильтром <constant>FILTER_VALIDATE_URL</constant>.
-   </para>
-  </caution>
   <note>
    <para>
-    Эта функция предназначена специально для разбора URL-адресов, а не URI.
-    Однако, чтобы соответствовать требованиям обратной совместимости PHP, она делает
-    исключение для протокола file://, в которой допускаются тройные слеши (file:///...).
-    Для любого другого протокола это недопустимо.
+    Функцию разработали только для разбора URL-адресов, а не URI-идентификаторов,
+    но чтобы соответствовать требованиям обратной совместимости PHP, функция делает
+    исключение для схемы <literal>file://</literal>, в которой допускаются тройные слеши —
+    <literal>file:///</literal>. Для любой другой схемы это недопустимо.
    </para>
   </note>
  </refsect1>
@@ -276,7 +287,7 @@ array(3) {
     <member><function>http_build_query</function></member>
     <member><function>dirname</function></member>
     <member><function>basename</function></member>
-    <member><link xlink:href="&url.rfc;3986">RFC 3986</link></member>
+    <member><link xlink:href="&url.rfc;3986">Стандарт RFC 3986</link></member>
    </simplelist>
   </para>
  </refsect1>
