@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d73d69f40ee1a21f1ae6eb9fe19bc6fa53995bf3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 2dbf3d9064d4cb07f0a2f7d06641c877a2e5ed24 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="install.windows.apache2" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Apache 2.x в Microsoft Windows</title>
+ <title>Установка для веб-сервера Apache 2.x в системах Windows</title>
  <para>
-  Этот раздел содержит примечания и подсказки к установке PHP, связанной с
-  Apache 2.x на системах Microsoft Windows.
+  Раздел содержит примечания и подсказки, которые касаются установки PHP
+  для веб-сервера Apache 2.x в системах Microsoft Windows.
  </para>
  <note>
   <para>
@@ -30,27 +30,33 @@
  </para>
 
  <para>
-  Существует три способа настроить PHP для работы с Apache 2.x в Windows.
-  PHP можно запускать как обработчик, как CGI или под FastCGI.
+  Для работы с веб-сервером Apache 2.x в ОС Windows PHP настраивают тремя способами.
+  PHP запускают как обработчик, как CGI-программу или программу, которая работает через FastCGI-интерфейс.
  </para>
 
  &note.apache.slashes;
 
  <sect2 xml:id="install.windows.apache2.module">
-  <title>Установка в качестве обработчика Apache</title>
+  <title>Установка PHP как обработчика Apache</title>
+  <note>
+   <simpara>
+    При работе через SAPI-интерфейс apache2handler устанавливают
+    потокобезопасные версии PHP (англ. TS, Thread Safe).
+   </simpara>
+  </note>
   <para>
-   Чтобы загрузить модуль PHP для Apache 2.x, необходимо вставить следующие
-   строки в файл конфигурации Apache &httpd.conf;:
+   В файл конфигурации веб-сервера Apache &httpd.conf; вставляют
+   следующие строки, чтобы загрузить PHP-модуль для Apache 2.x:
    <example>
-    <title>PHP и Apache 2.x в качестве обработчика</title>
+    <title>PHP и Apache 2.x как обработчик</title>
     <programlisting role="apache-conf">
 <![CDATA[
-# до PHP 8.0.0 имя модуля было php7_module
+# До PHP 8.0.0 модуль назывался php7_module
 LoadModule php_module "c:/php/php8apache2_4.dll"
 <FilesMatch \.php$>
     SetHandler application/x-httpd-php
 </FilesMatch>
-# укажите путь до php.ini
+# Настраиваем путь к файлу php.ini
 PHPIniDir "C:/php"
 ]]>
     </programlisting>
@@ -58,40 +64,42 @@ PHPIniDir "C:/php"
   </para>
   <note>
    <simpara>
-    В приведённых выше примерах необходимо подставить фактический
-    путь к PHP вместо <filename>C:/php/</filename>. Убедитесь, что
-    файл, указанный в директиве <literal>LoadModule</literal>, находился в указанном месте.
-    Используйте <filename>php7apache2_4.dll</filename> для PHP 7 или
-    <filename>php8apache2_4.dll</filename> для PHP 8.
+    В приведённых примерах вместо <filename>C:/php/</filename>
+    подставляют фактический путь к PHP. Убедитесь, что файл,
+    который указали в директиве <literal>LoadModule</literal>, лежит в заданном месте.
+    Для PHP 7 указывают файл <filename>php7apache2_4.dll</filename>
+    или файл <filename>php8apache2_4.dll</filename> для PHP 8.
    </simpara>
   </note>
  </sect2>
 
  <sect2 xml:id="install.windows.apache2.cgi">
-  <title>Запуск PHP как CGI</title>
+  <title>Запуск PHP как CGI-программы</title>
 
   <para>
-   Настоятельно рекомендуется обратиться к
-   <link xlink:href="&url.apache.cgi;">Документации Apache CGI</link>
-   для более полного понимания того, как запускать CGI в Apache.
+   <link xlink:href="&url.apache.cgi;">Документация Apache к CGI-интерфейсу</link>
+   даёт более полное понимание о запуске CGI-скриптов на веб-сервере Apache.
   </para>
 
   <para>
-   Чтобы запустить PHP как CGI, файлы php-cgi должны быть помещены в
-   каталог, обозначенный как каталог CGI с использованием директивы ScriptAlias.
+   PHP-файлы, которые запускаются как CGI-скрипты, располагают в каталоге,
+   который через директиву ScriptAlias назначали как каталог CGI-скриптов,
+   чтобы запускать PHP-скрипты как программу, которая работает по протоколу CGI.
   </para>
 
   <para>
-   Строку <literal>#!</literal> необходимо будет поместить в файлы PHP, которые
-   указывают на расположение бинарного файла PHP:
+   В PHP-файлы потребуется поместить строку <literal>#!</literal>,
+   которая указывает на расположение двоичного файла PHP:
 
    <example>
-    <title>PHP и Apache 2.x как CGI</title>
+    <title>Двоичный файл PHP и взаимодействие с веб-сервером Apache 2.x через CGI-интерфейс</title>
     <programlisting>
 <![CDATA[
 #!C:/php/php.exe
 <?php
-  phpinfo();
+
+phpinfo();
+
 ?>
 ]]>
     </programlisting>
@@ -101,28 +109,29 @@ PHPIniDir "C:/php"
  </sect2>
 
  <sect2 xml:id="install.windows.apache2.fastcgi">
-  <title>Запуск PHP под FastCGI</title>
+  <title>Запуск PHP для работы по протоколу FastCGI</title>
 
   <para>
-   Запуск PHP под FastCGI имеет ряд преимуществ перед запуском как CGI.
-   Настройка таким способом довольно проста:
+   Запуск программ на языке PHP в режиме FastCGI даёт ряд преимуществ
+   перед запуском PHP-программ в режиме CGI.
+   Настройка этого способа несложная:
   </para>
   <para>
-   Загрузите <literal>mod_fcgid</literal> с
+   Скачайте модуль <literal>mod_fcgid</literal> с сайта
    <link xlink:href="&url.apachelounge.download;">&url.apachelounge;</link>.
    Бинарные файлы Win32 доступны для загрузки с этого сайта. Установите модуль
-   в соответствии с прилагаемой к нему инструкцией.
+   по инструкции, которая идёт с файлами.
   </para>
   <para>
-   Настройте свой веб-сервер, как показано ниже, позаботившись о том, чтобы
-   скорректировать все пути в соответствии с тем,
-   как вы провели установку в своей конкретной системе:
+   Настройте веб-сервер как в следующем примере, и внимательно
+   измените пути так, чтобы они соответствовали
+   установке веб-сервера в конкретной системе:
    <example>
     <title>Настройка Apache для запуска PHP как FastCGI</title>
     <programlisting>
 <![CDATA[
 LoadModule fcgid_module modules/mod_fcgid.so
-# Где находится ваш файл php.ini?
+# Где лежит файл php.ini?
 FcgidInitialEnv PHPRC        "c:/php"
 <FilesMatch \.php$>
     SetHandler fcgid-script
@@ -132,7 +141,7 @@ FcgidWrapper "c:/php/php-cgi.exe" .php
     </programlisting>
    </example>
 
-   Файлы с расширением .php теперь будут исполняться обёрткой PHP FastCGI.
+   Файлы с расширением .php теперь будут исполняться FastCGI-обёрткой PHP.
   </para>
  </sect2>
 </sect1><!-- Keep this comment at the end of the file
