@@ -4,7 +4,7 @@
 <refentry xml:id="function.list" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>list</refname>
-  <refpurpose>Присваивает переменным значения похожим на массивы синтаксисом</refpurpose>
+  <refpurpose>Присваивает переменным значения как массиву</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -23,7 +23,7 @@
   <note>
    <para>
     До PHP 7.1.0 конструкция <function>list</function> работала только
-    с индексированными массивами и принимала числовые индексы начиная с 0.
+    с индексными массивами и принимала числовые индексы начиная с 0.
    </para>
   </note>
  </refsect1>
@@ -45,7 +45,7 @@
      <term><parameter>vars</parameter></term>
      <listitem>
       <para>
-       Дополнительные переменные.
+       Остальные переменные.
       </para>
      </listitem>
     </varlistentry>
@@ -55,7 +55,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает присвоенный массив.
+   Функция возвращает массив переменных, которым присвоила значения.
   </para>
  </refsect1>
 
@@ -74,14 +74,14 @@
       <row>
        <entry>7.3.0</entry>
        <entry>
-        Добавлена поддержка присвоения по ссылкам при деструктурировании массива.
+        Добавили поддержку присваивания по ссылкам при деструктуризации массива.
        </entry>
       </row>
       <row>
        <entry>7.1.0</entry>
        <entry>
-        Теперь в конструкции <function>list</function> разрешено задавать ключи. Это разрешает
-        разыменовывать ассоциативные массивы и массивы с индексами не по порядку.
+        Теперь в конструкции <function>list</function> разрешается указывать ключи.
+        Это помогает разыменовывать ассоциативные массивы и массивы с индексами не по порядку.
        </entry>
       </row>
      </tbody>
@@ -94,28 +94,29 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Примеры использования конструкции <function>list</function></title>
+    <title>Примеры присваивания переменным значений конструкцией <function>list</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $info = array('кофе', 'коричневый', 'кофеин');
 
-// Составить список всех переменных
+// Перечисляем переменные
 list($drink, $color, $power) = $info;
 echo "$drink - $color, а $power делает его особенным.\n";
 
-// Составить список только некоторых из них
-list($drink, , $power) = $info;
+// Перечисляем только часть переменных
+list($drink,, $power) = $info;
 echo "В $drink есть $power.\n";
 
-// Или пропустить все, кроме третьей
-list( , , $power) = $info;
+// Пропускаем все переменные, кроме третьей
+list(,, $power) = $info;
 echo "Мне нужен $power!\n";
 
 // Конструкция list() не работает со строками
 list($bar) = "abcde";
 var_dump($bar); // NULL
+
 ?>
 ]]>
     </programlisting>
@@ -123,15 +124,17 @@ var_dump($bar); // NULL
   </para>
   <para>
    <example>
-    <title>Пример использования конструкции <function>list</function></title>
+    <title>Пример присваивания значений переменным конструкцией <function>list</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $result = $pdo->query("SELECT id, name FROM employees");
+
 while (list($id, $name) = $result->fetch(PDO::FETCH_NUM)) {
     echo "id: $id, name: $name\n";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -139,7 +142,7 @@ while (list($id, $name) = $result->fetch(PDO::FETCH_NUM)) {
   </para>
   <para>
    <example>
-    <title>Использование <function>list</function> с индексами массивов</title>
+    <title>Пример работы вложенной конструкции <function>list</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -162,10 +165,13 @@ int(3)
   </para>
   <para>
    <example>
-    <title>Конструкция <function>list</function> и порядок указания индексов</title>
+    <title>
+     Пример поведения конструкции <function>list</function>
+     с определениями порядка индексов
+    </title>
     <simpara>
-     Порядок определения индексов в массиве,
-     с которым будет работать конструкция <function>list</function>,
+     Порядок определения индексов в массиве,
+     который обработает языковая конструкция <function>list</function>,
      неважен.
     </simpara>
     <programlisting role="php">
@@ -174,13 +180,18 @@ int(3)
 
 $foo = array(2 => 'a', 'foo' => 'b', 0 => 'c');
 $foo[1] = 'd';
-list($x, $y, $z) = $foo;
+
+list ($x, $y, $z) = $foo;
+
 var_dump($foo, $x, $y, $z);
+
+?>
 ]]>
     </programlisting>
     <para>
-     Даёт такой вывод (обратите внимание на порядок, в котором элементы
-     сравнивались, и в каком порядке элементы записаны в синтаксисе <function>list</function>):
+     Следующий параграф показывает вывод, который сформирует пример.
+     Обратите внимание на порядок элементов сравнения в массиве
+     и порядок, в котором элементы записали в синтаксисе конструкции <function>list</function>:
     </para>
     <screen>
 <![CDATA[
@@ -203,12 +214,15 @@ string(1) "a"
   </para>
   <para>
    <example>
-    <title><function>list</function> с ключами</title>
+    <title>
+     Пример присваивания значений переменным
+     конструкцией <function>list</function> с указанием ключей
+    </title>
     <simpara>
-     Начиная с PHP 7.1.0 конструкции <function>list</function> разрешено
-     содержать явные ключи, которые указывают как произвольные выражения. Допустимо
-     смешивать строковые и целочисленные ключи; однако элементы с ключами и без
-     ключей смешивать нельзя.
+     Начиная с PHP 7.1.0 конструкции <function>list</function> разрешили
+     содержать явные ключи, которые указывают как произвольные выражения.
+     Конструкция принимает смесь строковых и целочисленных ключей; но нельзя смешивать
+     элементы с ключами и без ключей.
     </simpara>
     <programlisting role="php">
 <![CDATA[
