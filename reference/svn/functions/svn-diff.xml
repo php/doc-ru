@@ -4,7 +4,7 @@
 <refentry xml:id="function.svn-diff" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>svn_diff</refname>
-  <refpurpose>Рекурсивно показывает различия двух файлов</refpurpose>
+  <refpurpose>Рекурсивно сравнивает два файла</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,15 +17,14 @@
    <methodparam><type>int</type><parameter>rev2</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Рекурсивно показывает различия двух файлов <parameter>path1</parameter> и
-   <parameter>path2</parameter>.
+   Функция рекурсивно сравнивает два файла по путям <parameter>path1</parameter>
+   и <parameter>path2</parameter>.
   </para>
   <note>
    <para>
-    Это не инструмент просмотра общих изменений.
-    Могут быть просмотрены различия только локальных файлов,
-    которые находятся в системе контроля версий SVN :
-    для других файлов различия просмотреть не удастся.
+    Функция — не универсальная утилита сравнения файлов.
+    Функция сравнивает только локальные файлы с версиями:
+    сравнение других файлов вызовет ошибку.
    </para>
   </note>
  </refsect1>
@@ -38,15 +37,16 @@
      <term><parameter>path1</parameter></term>
      <listitem>
       <para>
-       Первый путь. Это может быть URL файла/директории в репозитории SVN
-       или путь к локальному файлу/директории.
+       Первый путь к файлу, который требуется сравнить.
+       Параметр принимает URL-адрес файла или директории в SVN-репозитории
+       или путь к локальным файлу или директории.
       </para>
       &svn.relativepath;
       <warning>
        <simpara>
-        Если путь к локальному файлу состоит только из обратных слешей (\),
-        без слеша (/), данному модулю не удастся найти необходимые файлы.
-        Всегда заменяйте все обратные слеши (\) на слеши (/), используя эту функцию.
+        Модуль не найдёт путь, если путь к локальному файлу содержит
+        только обратные слеши (\) и не содержит прямые слеши (/).
+        При работе с функцией каждый обратный слеш (\) заменяют прямым слешем (/).
        </simpara>
       </warning>
      </listitem>
@@ -55,8 +55,8 @@
      <term><parameter>rev1</parameter></term>
      <listitem>
       <para>
-       Номер ревизии первого файла. Используйте константу <constant>SVN_REVISION_HEAD</constant>
-       для задания самой последней ревизии.
+       Номер ревизии первого файла. Последнюю ревизию задают
+       константой <constant>SVN_REVISION_HEAD</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -64,7 +64,7 @@
      <term><parameter>path2</parameter></term>
      <listitem>
       <para>
-       Второй путь к файлу, аналогично <parameter>path1</parameter>
+       Второй путь к файлу по аналогии с параметром <parameter>path1</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -72,7 +72,7 @@
      <term><parameter>rev2</parameter></term>
      <listitem>
       <para>
-       Номер ревизии второго файла, аналогично <parameter>rev1</parameter>.
+       Номер ревизии второго файла по аналогии с параметром <parameter>rev1</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -83,15 +83,15 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает список массивов состоящий из двух потоков:
-   первая - различия файлов; вторая - ошибки.
-   Потоки могут быть прочитаны функцией <function>fread</function>.
-   При ошибке возвращает &false; или &null;.
+   Функция возвращает массив со списком из двух потоков:
+   первый — вывод различий файлов; второй — вывод потока ошибок.
+   Потоки считывают функцией <function>fread</function>.
+   Функция возвращает &false; или &null;, если возникла ошибка.
   </para>
   <para>
-   По умолчанию, вывод различий будет в стандартном формате Subversion,
-   но также может использоваться <link xlink:href="&url.svn.manual.externaldifftools;">
-   внешним инструментом показа различий</link>, в зависимости от настройки Subversion.
+   По умолчанию функция выводит различия в унифицированном пользовательском формате Subversion,
+   но в зависимости от конфигурации иногда сравнивает файлы
+   <link xlink:href="&url.svn.manual.externaldifftools;">внешним движком сравнения</link>.
   </para>
  </refsect1>
 
@@ -132,26 +132,36 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Простой пример</title>
+    <title>Пример базового сравнения файлов</title>
     <para>
-     Пример ниже иллюстрирует простое использование
-     данной функции и получение данных из потока.
+     Пример показывает базовое сравнение файлов функцией и извлечение содержимого из потока.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-list($diff, $errors) = svn_diff(
-    'http://www.example.com/svnroot/trunk/foo', SVN_REVISION_HEAD,
-    'http://www.example.com/svnroot/branches/dev/foo', SVN_REVISION_HEAD
+
+list ($diff, $errors) = svn_diff(
+    'http://www.example.com/svnroot/trunk/foo',
+    SVN_REVISION_HEAD,
+    'http://www.example.com/svnroot/branches/dev/foo',
+    SVN_REVISION_HEAD
 );
-if (!$diff) exit;
-$contents = '';
-while (!feof($diff)) {
-  $contents .= fread($diff, 8192);
+
+if (!$diff) {
+    exit;
 }
+
+$contents = '';
+
+while (!feof($diff)) {
+    $contents .= fread($diff, 8192);
+}
+
 fclose($diff);
 fclose($errors);
+
 var_dump($contents);
+
 ?>
 ]]>
     </programlisting>
@@ -162,26 +172,29 @@ Index: http://www.example.com/svnroot/trunk/foo
 ===================================================================
 --- http://www.example.com/svnroot/trunk/foo        (.../foo) (revision 23)
 +++ http://www.example.com/svnroot/branches/dev/foo (.../foo) (revision 27)
- // остальный вывод diff
+// Остальной вывод diff
 ]]>
     </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Вывод различий между двумя ревизиями одного файла</title>
+    <title>Пример вывода различий между двумя ревизиями одного файла</title>
     <para>
-     Этот пример показывает как реализовать функцию-обёртку,
-     которая позволяет пользователю просматривать различия
-     между двумя ревизиями одного файла, используя внешний путь
-     репозитория (стандартный синтаксис такой реализации несколько избыточен):
+     Пример реализует функцию-обёртку,
+     которая помогает пользователю легко сравнивать
+     две ревизии одного и того же элемента по внешнему пути
+     к репозиторию; синтаксис по умолчанию избыточен:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-function svn_diff_same_item($path, $rev1, $rev2) {
+
+function svn_diff_same_item($path, $rev1, $rev2)
+{
     return svn_diff($path, $rev1, $path, $rev2);
 }
+
 ?>
 ]]>
     </programlisting>
@@ -189,20 +202,23 @@ function svn_diff_same_item($path, $rev1, $rev2) {
   </para>
   <para>
    <example>
-    <title>Более удобный способ вывода различий между двумя файла</title>
+    <title>Пример более удобного способа вывода различий между двумя файла</title>
     <para>
-     Этот пример показывает как реализовать функцию-обёртку для вывода
-     различий между двумя локальными файлами, которая является переносимой
-     и лишена ошибок при работе с функцией <function>realpath</function> и обратным слешем.
+     Пример реализует функцию-обёртку, которая переносимо сравнивает
+     два локальных файла, и компенсирует исправление
+     функции <function>realpath</function> и ошибку с обратными слешами.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-function svn_diff_local($path1, $rev1, $path2, $rev2) {
+
+function svn_diff_local($path1, $rev1, $path2, $rev2)
+{
     $path1 = str_replace('\\', '/', realpath($path1));
     $path2 = str_replace('\\', '/', realpath($path2));
     return svn_diff($path1, $rev1, $path2, $rev2);
 }
+
 ?>
 ]]>
     </programlisting>
@@ -219,7 +235,7 @@ function svn_diff_local($path1, $rev1, $path2, $rev2) {
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member><link xlink:href="&url.svn.manual.diff;">SVN-документация по svn diff</link></member>
+    <member><link xlink:href="&url.svn.manual.diff;">SVN-документация к команде svn diff</link></member>
    </simplelist>
   </para>
  </refsect1>
