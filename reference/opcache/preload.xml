@@ -1,37 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 28529d3539b850e870e3aa97570f4db0e53daa03 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 04d9aded7bbd447523cf038ddf88e6d7f7e43c53 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="opcache.preloading" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Preloading</title>
 
  <para>
-  Начиная с PHP 7.4.0 можно настроить предзагрузку скриптов в opcache в момент старта PHP.
-  Любые функции, классы, интерфейсы или трейты (но не константы) в этих файлах будут глобально доступны для всех запросов без необходимости
-  их явной загрузки. Такая предзагрузка позволяет добиться большего удобства и производительности (потому что код
-  всегда доступен) за счёт использования большего количества памяти. Также, при внесении изменений в предзагруженные
-  скрипты, чтобы эти изменения стали доступны, придётся перезагрузить PHP. Из этого следует, что предзагрузку имеет смысл
-  использовать только в производственном окружении, но не в окружении разработки.
+  Начиная с PHP 7.4.0 разрешили настройку PHP на предварительную загрузку скриптов
+  в память модуля opcache при запуске движка. Доступ к функциям, классам, интерфейсам
+  или трейтам (но не константам) в этих файлах станет глобальным для всех запросов;
+  файлы не потребуется включать явно. Предзагрузка повышает удобство
+  и производительность за счёт постоянной доступности кода для очередных запросов,
+  но увеличивает расход памяти. Одновременно с этим, изменения в предзагруженных скриптах
+  вступят в силу только после перезагрузки PHP-процесса, которая очистит скрипты,
+  которые предварительно загрузили. Поэтому предзагрузку скриптов выполняют
+  только в производственном окружении, а не в среде разработки.
  </para>
 
  <para>
-  Обратите внимание, что баланс повышения производительности и потребления памяти сильно зависит от приложения.
-  «Предзагрузка всего на свете» может быть простейшей стратегией, но совсем не обязательно лучшей. Также,
-  предзагрузка будет работать только в случае, когда PHP работает в режиме обслуживания запросов без перезагрузки.
-  Таким образом, хоть предзагрузку и можно использовать в режиме CLI с включённым opcache, но в большинстве
-  случаев бессмысленно. Исключением является использование предзагрузки с
-  <link linkend="ffi.examples-complete">библиотеками FFI</link>.
+  Баланс между ростом производительности и расходом памяти зависит от приложения.
+  «Предзагрузка каждого файла» выглядит как простейшая стратегия, но такая стратегия полезна не в каждом сценарии.
+  Предзагрузка полезна, только когда процесс не изменяется от запроса к запросу.
+  Поэтому, хотя предзагрузка и работает в CLI-скрипте при включённом модуле opcache,
+  это бесполезно. Исключение — предварительная загрузка
+  <link linkend="ffi.examples-complete">библиотек FFI</link>.
  </para>
 
  <note>
   <para>
-   Предзагрузка не поддерживается в Windows.
+   ОС Windows не поддерживает предзагрузку.
   </para>
  </note>
 
  <para>
-  Настройка предзагрузки состоит из двух этапов и требует включённого opcache.
-  Для начала, настройте <link linkend="ini.opcache.preload">opcache.preload</link>
-  в &php.ini;:
+  Настройка предзагрузки состоит из двух этапов и работает, только если включили модуль opcache.
+  Сначала устанавливают значение для директивы <link linkend="ini.opcache.preload">opcache.preload</link>
+  в файле &php.ini;:
  </para>
 
  <informalexample>
@@ -43,27 +46,32 @@ opcache.preload=preload.php
  </informalexample>
 
  <para>
-  Файл <filename>preload.php</filename> — это обязательный файл, который будет запущен один раз при старте сервера
-  (PHP-FPM, mod_php, etc.) и который загрузит код в постоянную память. В серверах, которые запускаются от имени root
-  перед переключением на непривилегированного пользователя системы или если PHP запускается от имени root (не рекомендуется),
-  значение <link linkend="ini.opcache.preload-user">opcache.preload_user</link> может указывать системного пользователя
-  для запуска предварительной загрузки.
+  Файл <filename>preload.php</filename> — произвольный файл, который запустится один раз при старте сервера
+  в режиме менеджера процессов PHP-FPM, Apache-модуля mod_php и т. д. и загрузит код в постоянную память.
+  На серверах, которые перед переключением на непривилегированного пользователя системы запускаются
+  от имени root-пользователя, или если PHP запускается от имени root, что делать не рекомендуют,
+  пользователя системы для запуска предварительной загрузки указывают в директиве
+  <link linkend="ini.opcache.preload-user">opcache.preload_user</link>.
   Запуск предварительной загрузки от имени root по умолчанию запрещён.
-  Установите <literal>opcache.preload_user=root</literal>, чтобы явно разрешить это.
+  В файле конфигурации PHP устанавливают значение <literal>opcache.preload_user=root</literal>,
+  чтобы явно разрешить такой запуск.
  </para>
 
  <para>
-  В скрипте <filename>preload.php</filename> любой файл, указанный в выражениях <function>include</function>,
-  <function>include_once</function>, <function>require</function>, <function>require_once</function> или
-  <function>opcache_compile_file</function>, будет загружен в постоянную память. В следующем примере
-  будут загружены все файлы <filename>.php</filename> в директории <filename>src</filename>, если они не содержат
-  <literal>Test</literal> в имени.
+  PHP проанализирует и загрузит в постоянную память каждый файл,
+  который указали в выражениях <function>include</function>, <function>include_once</function>,
+  <function>require</function>, <function>require_once</function>
+  или в аргументе функции <function>opcache_compile_file</function> в скрипте <filename>preload.php</filename>.
+  В следующем примере загрузится каждый файл с расширением <filename class="extension">.php</filename>
+  в директории <filename>src</filename>,
+  если файл не содержат в названии части <literal>Test</literal>.
  </para>
 
  <informalexample>
   <programlisting role="php">
 <![CDATA[
 <?php
+
 $directory = new RecursiveDirectoryIterator(__DIR__ . '/src');
 $fullTree = new RecursiveIteratorIterator($directory);
 $phpFiles = new RegexIterator($fullTree, '/.+((?<!Test)+\.php$)/i', RecursiveRegexIterator::GET_MATCH);
@@ -71,36 +79,58 @@ $phpFiles = new RegexIterator($fullTree, '/.+((?<!Test)+\.php$)/i', RecursiveReg
 foreach ($phpFiles as $key => $file) {
     require_once $file[0];
 }
+
 ?>
 ]]>
   </programlisting>
  </informalexample>
 
  <para>
-  И <function>include</function> и <function>opcache_compile_file</function> будут работать, но при этом
-  будут немного по разному обработаны.
+  И выражение <function>include</function>, и функция <function>opcache_compile_file</function>
+  будут работать, но по-разному влияют на обработку кода.
 
   <itemizedlist>
-   <listitem><simpara>Выражение <function>include</function> запустит код из файла, а
-    <function>opcache_compile_file</function> нет. Это повлияет только на условные декларации
-    (функции объявленные в блоках if).</simpara></listitem>
-   <listitem><simpara>Из за того, что <function>include</function> запустит код, вложенные <function>include</function>
-    также будут обработаны и предзагружены.</simpara></listitem>
-   <listitem><simpara>Функция <function>opcache_compile_file</function> может загружать файлы в любом порядке. То есть, если
-    файл <filename>a.php</filename> определяет класс <literal>A</literal> и <filename>b.php</filename> определяет класс
-    <literal>B</literal>, который является наследником <literal>A</literal>, то функция <function>opcache_compile_file</function> может
-    загрузить эти два файла в любом порядке. При использовании выражения <function>include</function>, с другой стороны, файл <filename>a.php</filename>
-    <emphasis>должен быть</emphasis> загружен первым.</simpara></listitem>
-   <listitem><simpara>В любом случае, если какой-то скрипт в последствии запросит включение уже предзагруженного скрипта, то он будет
-    выполнен, но сущности пересоздаваться не будут. Использование выражения <function>include_once</function> не предотвратит повторное
-    включение файла. Может потребоваться загрузить файл снова,
-    чтобы включить в него определённые глобальные константы, поскольку
-    они не обрабатываются предварительной загрузкой.</simpara></listitem>
+   <listitem>
+    <simpara>
+     Выражение <function>include</function> выполнит код в файле,
+     а функция <function>opcache_compile_file</function> — нет,
+     поэтому только выражение включения файлов поддерживает условное объявление,
+     при котором функции объявляют в блоках if.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Поскольку выражение <function>include</function> выполняет код,
+     PHP также разберёт и предзагрузит объявления вложенных файлов,
+     которые включили выражением <function>include</function>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Функция <function>opcache_compile_file</function> загружает файлы в произвольном порядке.
+     Даже если в файле <filename>a.php</filename> определили класс <literal>A</literal>,
+     а в файле <filename>b.php</filename> класс <literal>B</literal>,
+     который наследует класс <literal>A</literal>, это не изменит порядок загрузки файлов
+     и функция <function>opcache_compile_file</function> всё равно загрузит файлы в случайном порядке.
+     А выражение <function>include</function> первым <emphasis>обязательно</emphasis>
+     загрузит файл <filename>a.php</filename>.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     В любом случае, если более поздний скрипт включает файл, который загрузился прежде,
+     то PHP всё равно выполнит содержимое файла, но не переопределит символы, которые в нём определили.
+     Выражение <function>include_once</function> не предотвратит повторное
+     включение файла. Иногда требуется загрузить файл снова, чтобы включить глобальные константы,
+     которые определили в файле, поскольку они не обрабатываются предварительной загрузкой.
+    </simpara>
+   </listitem>
   </itemizedlist>
 
-  Какой подход использовать — зависит от желаемого поведения. Для кода, который использует автозагрузчик, подход с
-  вызовом функции <function>opcache_compile_file</function> даст больше гибкости. С кодом, который будет загружаться вручную,
-  вариант с выражением <function>include</function> может быть более надёжным.
+  Поведение, которое ждут от кода, определяет, какой подход лучше. Для кода, который
+  иначе использовал бы автозагрузчик, функция <function>opcache_compile_file</function>
+  даёт больше гибкости. С кодом, который иначе загружался бы вручную,
+  часто надёжнее выражение <function>include</function>.
  </para>
 
 </chapter>
