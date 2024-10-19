@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6d2f72b0f2d7fbda2e3aa79ab58f190b4cdac867 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 6a52dd81e3f791065b4b65a68d393012a7fdd858 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect2 xml:id="migration70.incompatible.other">
- <title>Прочие изменения, затрагивающие обратную совместимость</title>
+ <title>Прочие изменения, которые затрагивают обратную совместимость</title>
 
  <sect3 xml:id="migration70.incompatible.other.new-by-ref">
-  <title>Новые объекты не могут присваиваться по ссылке</title>
+  <title>Новые объекты нельзя присваивать по ссылке</title>
 
   <para>
-   Результат оператора &new; больше не может быть присвоен
+   Результат оператора &new; больше нельзя присваивать
    переменной по ссылке:
   </para>
 
@@ -16,8 +16,10 @@
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class C {}
 $c =& new C;
+
 ?>
 ]]>
    </programlisting>
@@ -68,9 +70,9 @@ Parse error: syntax error, unexpected 'new' (T_NEW) in /tmp/test.php on line 3
   </itemizedlist>
 
   <para>
-   Более того, следующие имена не должны использоваться.
-   Они не приведут к ошибке в PHP 7.0, но они зарезервированы
-   на будущее и должны считаться устаревшими.
+   Дополнительно к предыдущим именам, следующие имена тоже нельзя использовать.
+   Следующие имена не вызовут ошибку в PHP 7.0, но их зарезервировали
+   на будущее, а от разработчиков требуют считать их устаревшими.
   </para>
 
   <itemizedlist>
@@ -90,11 +92,11 @@ Parse error: syntax error, unexpected 'new' (T_NEW) in /tmp/test.php on line 3
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.php-tags">
-  <title>Удалены PHP-теги ASP и script</title>
+  <title>Удалили PHP-теги ASP и script</title>
 
   <para>
-   Удалена поддержка использования тегов ASP и script для
-   определения кода PHP.
+   Удалили поддержку тегов ASP и script
+   для определения PHP-кода.
   </para>
 
   <table>
@@ -125,30 +127,43 @@ Parse error: syntax error, unexpected 'new' (T_NEW) in /tmp/test.php on line 3
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.incompatible-this">
-  <title>Удалены вызовы из неподходящего контекста</title>
+  <title>Удалили вызовы из неподходящего контекста</title>
 
   <para>
-   <link linkend="migration56.deprecated.incompatible-context">Ранее признанные устаревшими в PHP 5.6</link>
-   статические вызовы нестатических методов из неподходящего
-   контекста теперь приведут к тому, что для вызываемого
-   метода переменная <literal>$this</literal> будет не
-   определена и будет выведено предупреждение.
+   Статические вызовы нестатических методов из неподходящего
+   контекста, <link linkend="migration56.deprecated.incompatible-context">
+    которые признали устаревшими в PHP 5.6
+   </link>,
+   теперь оставят переменную <literal>$this</literal> неопределённой
+   для вызываемого метода и выведут предупреждение.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
-class A {
-    public function test() { var_dump($this); }
+
+class A
+{
+    public function test()
+    {
+        var_dump($this);
+    }
 }
 
-// Обратите вимание: НЕ расширяет класс A
-class B {
-    public function callNonStaticMethodOfA() { A::test(); }
+// Обратите внимание: класс B не расширяет класс A
+class B
+{
+    public function callNonStaticMethodOfA()
+    {
+        A::test();
+    }
 }
 
-(new B)->callNonStaticMethodOfA();
+(new B())
+    ->callNonStaticMethodOfA()
+;
+
 ?>
 ]]>
    </programlisting>
@@ -173,46 +188,48 @@ NULL
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.yield">
-  <title>&yield; теперь право-ассоциативный оператор</title>
+  <title>Ключевое слово &yield; теперь право-ассоциативный оператор</title>
 
   <para>
-   Конструкция &yield; больше не требует оборачивания в скобки
-   и является право-ассоциативным оператором с приоритетом
-   между <literal>print</literal> и <literal>=&gt;</literal>.
-   Это может привести к изменению поведения:
+   Конструкция &yield; больше не требует скобок
+   и изменилась на право-ассоциативный оператор с приоритетом
+   между языковой конструкцией <literal>print</literal> и оператором <literal>=&gt;</literal>.
+   Иногда это изменяет поведение кода:
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 echo yield -1;
-// Ранее интерпретировалось так
+// Раньше интерпретировалось так
 echo (yield) - 1;
 // А теперь так
 echo yield (-1);
 
 yield $foo or die;
-// Ранее интерпретировалось так
+// Раньше интерпретировалось так
 yield ($foo or die);
 // А теперь так
 (yield $foo) or die;
+
 ?>
 ]]>
    </programlisting>
   </informalexample>
 
   <para>
-   Скобки могут быть использованы для устранения неоднозначности в таких случаях.
+   Устранять неоднозначности помогают скобки.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.func-parameters">
-  <title>Функции не могут иметь несколько параметров с одинаковыми именами</title>
+  <title>В функциях нельзя определять параметры с одинаковыми именами</title>
 
   <para>
-   Больше нельзя определить несколько параметров функции с
-   одинаковыми именами. К примеру такая функция выдаст
+   Больше нельзя определить в функции параметры
+   с одинаковыми именами. Следующая функция выдаст
    ошибку уровня <constant>E_COMPILE_ERROR</constant>:
   </para>
 
@@ -220,9 +237,12 @@ yield ($foo or die);
    <programlisting role="php">
 <![CDATA[
 <?php
-function foo($a, $b, $unused, $unused) {
+
+function foo($a, $b, $unused, $unused)
+{
     //
 }
+
 ?>
 ]]>
    </programlisting>
@@ -230,26 +250,30 @@ function foo($a, $b, $unused, $unused) {
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.func-parameter-modified">
-  <title>Функции, работающие с аргументами, теперь возвращают
-   их <emphasis>текущие</emphasis> значения</title>
+  <title>Функции, которые работают с аргументами, теперь возвращают
+   <emphasis>текущие</emphasis> значения аргументов</title>
 
   <para>
-   <function> func_get_arg</function>, <function>func_get_args</function>,
+   Функции <function>func_get_arg</function>, <function>func_get_args</function>,
    <function>debug_backtrace</function> и трассировки исключений
-   возвращают не исходные переданные
-   значения, а текущие значения, которые могут уже быть
-   изменены.
+   возвращают не исходные значения параметров, которые передали в функции в аргументах,
+   а текущие значения параметров, которые к моменту возврата могли изменить значение.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
-function foo($x) {
+
+function foo($x)
+{
     $x++;
     var_dump(func_get_arg(0));
 }
-foo(1);?>
+
+foo(1);
+
+?>
 ]]>
    </programlisting>
    &example.outputs.5;
@@ -268,11 +292,11 @@ foo(1);?>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.multiple-default">
-  <title>Оператор switch больше не может иметь несколько блоков default</title>
+  <title>Для оператора switch больше нельзя указывать больше одного блока default</title>
 
   <para>
-   Больше невозможно задать более одного блока default в
-   операторе switch. К примеру, такая конструкция выдаст
+   В операторе switch больше невозможно задать больше одного
+   блока default. Например, такая конструкция выдаст
    ошибку <constant>E_COMPILE_ERROR</constant>:
   </para>
 
@@ -280,12 +304,14 @@ foo(1);?>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 switch (1) {
     default:
-    break;
+        break;
     default:
-    break;
+        break;
 }
+
 ?>
 ]]>
    </programlisting>
@@ -293,79 +319,79 @@ switch (1) {
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.http-raw-post-data">
-  <title>Удалена <varname>$HTTP_RAW_POST_DATA</varname></title>
+  <title>Удалили элемент суперглобального массива <varname>$HTTP_RAW_POST_DATA</varname></title>
 
   <para>
-   <varname>$HTTP_RAW_POST_DATA</varname> больше не доступен. Вместо него используйте поток
-   <link linkend="wrappers.php.input"><literal>php://input</literal></link>.
+   Переменная <varname>$HTTP_RAW_POST_DATA</varname> больше недоступна. Вместо неё
+   пользуются потоком <link linkend="wrappers.php.input"><literal>php://input</literal></link>.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.ini-comments">
-  <title>Запрещены комментарии <literal>#</literal> в INI-файлах</title>
+  <title>
+   В INI-файлах запретили комментарии,
+   которые начинались с символа <literal>#</literal>
+  </title>
 
   <para>
-   Поддержка префикса комментария <literal>#</literal> в
-   INI-файлах удалена. Используйте префикс <literal>;</literal> вместо него.
-   Это изменение касается как &php.ini;, так и файлов,
-   обрабатываемых функциями
-   <function>parse_ini_file</function> и
-   <function>parse_ini_string</function>.
+   Поддержку префикса комментария <literal>#</literal>
+   в INI-файлах удалили. Вместо него пользуются префиксом <literal>;</literal>.
+   Это изменение касается как файла &php.ini;, так и файлов,
+   которые обрабатываются функциями
+   <function>parse_ini_file</function>
+   и <function>parse_ini_string</function>.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.json-to-jsond">
-  <title>Модуль JSON заменён на JSOND</title>
+  <title>Модуль JSON заменили на JSOND</title>
 
   <para>
-   Модуль JSON заменён на JSOND, что порождает три
-   небольших обратных несовместимости. Первое - числа не
-   должны заканчиваться на точку (то есть <literal>34.</literal>
-   должно быть заменено на <literal>34.0</literal> или
-   <literal>34</literal>). Второе - при использовании научной
-   нотации, экспонента <literal>e</literal> не должна следовать
-   сразу за десятичной точкой (то есть <literal>3.e3</literal> нужно
-   поменять на <literal>3.0e3</literal> или <literal>3e3</literal>).
-   Третье - пустая строка больше не считается за корректный JSON.
+   Модуль JSON заменили на JSOND, что порождает три
+   небольших обратных несовместимости. Первое — числа
+   нельзя заканчивать точкой, значения наподобие <literal>34.</literal>
+   требуется заменить на <literal>34.0</literal> или <literal>34</literal>.
+   Второе — в научной нотации экспоненте <literal>e</literal> нельзя следовать
+   сразу за десятичной точкой, значения наподобие <literal>3.e3</literal>
+   требуется заменить на <literal>3.0e3</literal> или <literal>3e3</literal>.
+   Третье — модуль не считает пустую строку корректным JSON-форматом.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.internal-function-failure-overflow">
-  <title>Ошибки внутренних функций при переполнении </title>
+  <title>Ошибки внутренних функций при переполнении</title>
 
   <para>
-   Ранее встроенные функции могли тихо обрезать числа,
-   полученные при приведении типа float к integer, если float был
-   больше, чем способен вместить integer. Теперь же будет
-   выдаваться ошибка E_WARNING и возвращаться &null;.
+   Раньше встроенные функции иногда без предупреждения обрезали числа,
+   которые получили при приведении значений с типом float к значениям с типом integer,
+   если float-значение оказывалось больше, чем вмещает integer. Теперь функции
+   выдадут ошибку уровня E_WARNING и вернут &null;.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.fixes-custom-session-handler">
-  <title>Исправление для возвращаемых значений пользовательского обработчика сессии</title>
+  <title>Исправление для значений, которые возвращает пользовательский обработчик сессии</title>
 
   <para>
-   Любые предикатные функции, реализованные с помощью
-   пользовательских обработчиков сессии и возвращающие
-   &false; или <literal>-1</literal>, вызовут фатальную ошибку.
-   Если эти функции вернут любое значение, кроме логического,
-   <literal>-1</literal> или <literal>0</literal>, они будут
-   считаться завершёнными с ошибкой и вызовут
-   предупреждение E_WARNING.
+   Предикатные функции, которые реализовали через
+   пользовательские обработчики сессии и которые возвращают
+   значения &false; или <literal>-1</literal>, вызовут фатальную ошибку.
+   Значения вызовут сбой и ошибку уровня E_WARNING, если из этих функций вернётся значение,
+   которое отличается от логического, <literal>-1</literal> или <literal>0</literal>.
   </para>
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.other.sort-order">
   <title>Порядок сортировки одинаковых элементов</title>
   <para>
-   Внутренний алгоритм сортировки был изменён, что может
-   сказаться на отличном от предыдущего отсортированном
-   порядке элементов, определённых как одинаковые.
+   Внутренний алгоритм сортировки улучшили. Изменение алгоритма
+   иногда упорядочивает одинаковые элементы не так,
+   как алгоритм делал это прежде.
   </para>
   <note>
    <para>
     Не полагайтесь на порядок одинаковых элементов, так как
-    он может в любое время измениться.
+    он изменится в любое время.
    </para>
   </note>
  </sect3>
@@ -373,28 +399,38 @@ switch (1) {
  <sect3 xml:id="migration70.incompatible.other.break-continue">
   <title>Изменение порядка обработки операторов break и continue</title>
   <para>
-   Операторы <literal>break</literal> и <literal>continue</literal> вне цикла или
-   управляющей структуры <literal>switch</literal> теперь обрабатываются во время
-   компиляции, а не во время выполнения, как это было ранее, поэтому выдают ошибки
+   Операторы <literal>break</literal> и <literal>continue</literal> за пределами цикла
+   или управляющей структуры <literal>switch</literal> теперь обрабатываются во время
+   компиляции, а не во время выполнения, как это было раньше, поэтому выдают ошибки
+   уровня <constant>E_COMPILE_ERROR</constant>.
+  </para>
+ </sect3>
+ <sect3 xml:id="migration70.incompatible.other.break-continue-constant">
+  <title>Запретили константы как аргументы инструкций break и continue</title>
+  <para>
+   Инструкции <literal>break</literal> и <literal>continue</literal> больше
+   не принимают константу как аргумент и вызывают ошибку
    уровня <constant>E_COMPILE_ERROR</constant>.
   </para>
  </sect3>
 
+
  <sect3 xml:id="migration70.incompatible.other.mhash">
-  <title>Mhash больше не является модулем</title>
+  <title>Mhash больше не модуль</title>
   <para>
-   Модуль Mhash полностью интегрирован в модуль <link
-   linkend="book.hash">Hash</link>. Таким образом, теперь нельзя определить
-   доступность поддержки Mhash с помощью функции <function>extension_loaded</function>;
-   вместо неё используйте <function>function_exists</function>.
-   Кроме того, Mhash больше не будет выводить с помощью
-   <function>get_loaded_extensions</function> и подобных  функций.
+   Модуль Mhash полностью интегрировали в модуль <link
+   linkend="book.hash">Hash</link>. Поэтому больше невозможно определить
+   доступность модуля Mhash функцией <function>extension_loaded</function>;
+   вместо неё пользуются функцией <function>function_exists</function>.
+   Кроме того, функция <function>get_loaded_extensions</function> и функции,
+   которые с ней связаны, больше не сообщают о модуле Mhash.
   </para>
  </sect3>
  <sect3 xml:id="migration70.incompatible.other.declare-ticks">
   <title>declare(ticks)</title>
   <para>
-   Директива <link linkend="control-structures.declare.ticks">declare(ticks)</link> больше не проникает в различные модули компиляции.
+   Директива <link linkend="control-structures.declare.ticks">declare(ticks)</link>
+   больше не проникает в отдельные единицы компиляции.
   </para>
  </sect3>
 </sect2>
