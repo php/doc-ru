@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 082ddc19f53e6e254010de1a1fbbe485ff744ec1 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 216c5dc1ef01b98d6ccafe51056e4df68e77cbf6 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdostatement.execute" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PDOStatement::execute</refname>
   <refpurpose>
-   Запускает подготовленный запрос на выполнение
+   Выполняет подготовленный запрос
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -15,17 +15,25 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>params</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Запускает <link linkend="pdo.prepared-statements">подготовленный запрос</link>.
-   Если запрос содержит маркеры параметров (псевдопеременные), вы должны либо:
+   Метод запускает <link linkend="pdo.prepared-statements">подготовленный запрос</link>.
+   Если подготовленный запрос включает маркеры параметров, или заполнители, требуется:
    <itemizedlist>
     <listitem>
-     <para>вызвать <methodname>PDOStatement::bindParam</methodname> и/или
-    <methodname>PDOStatement::bindValue</methodname>, чтобы связать эти маркеры,
-     соответственно, с переменными или значениями. Связанные переменные передают свои
-     значения как входные данные и получают выходные значения</para>
+     <para>
+      Вызвать метод <methodname>PDOStatement::bindParam</methodname>, чтобы связать маркеры
+      с переменными, или метод <methodname>PDOStatement::bindValue</methodname>,
+      чтобы связать маркеры со значениями. Переменные, которые связали с маркерами,
+      передают свои значения как входные данные метода и получают значения вывода,
+      если метод заполняет переменные аргументов значениями вывода. При возврате
+      значений вывода метод присваивает переменным, которые передали по ссылке,
+      значения параметров, с которым связали маркеры.
+     </para>
     </listitem>
     <listitem>
-     <para>или передать массив значений только на вход</para>
+     <para>
+      или передать массив значений параметров, которые метод только примет как входные значения
+      и не будет заполнять значениями вывода.
+     </para>
     </listitem>
    </itemizedlist>
   </para>
@@ -39,19 +47,20 @@
      <term><parameter>params</parameter></term>
      <listitem>
       <para>
-       Массив значений, содержащий столько элементов, сколько параметров
-       заявлено в SQL-запросе. Все значения будут приняты, как имеющие тип
-       <constant>PDO::PARAM_STR</constant>.
+       Массив значений, в котором количество элементов совпадает
+       с количеством связанных параметров в SQL-запросе, который выполняет метод.
+       Метод обрабатывает каждое значение массива
+       как значение с типом <constant>PDO::PARAM_STR</constant>.
       </para>
       <para>
        Нельзя привязать несколько значений к одному параметру; например, нельзя
-       привязать два значения к именованному параметру в выражении IN().
+       привязать два значения к именованному параметру в условии IN().
       </para>
       <para>
-       Нельзя привязать больше значений, чем заявлено в запросе; если в массиве
-       <parameter>params</parameter> больше элементов, чем заявлено
-       в SQL-запросе методом <methodname>PDO::prepare</methodname>, выполнение
-       запроса завершится неудачей и будет вызвана ошибка.
+       Невозможно привязать больше значений, чем указали в запросе;
+       метод не выполнит запрос и вызовет ошибку,
+       если массив <parameter>params</parameter> содержит больше ключей, чем указали
+       при подготовке SQL-запроса методом <methodname>PDO::prepare</methodname>.
       </para>
      </listitem>
     </varlistentry>
@@ -73,20 +82,28 @@
 
  <refsect1 role="examples">
   &reftitle.examples;
-  <example><title>Выполнение подготовленного запроса с привязкой переменных и значений</title>
+  <example><title>Пример выполнения подготовленного запроса с привязкой переменных и значений</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Выполнение подготовленного запроса с привязкой переменных и значений */
 $calories = 150;
 $colour = 'gre';
-$sth = $dbh->prepare('SELECT name, colour, calories
+
+$sth = $dbh->prepare(
+    'SELECT name, colour, calories
     FROM fruit
-    WHERE calories < :calories AND colour LIKE :colour');
+    WHERE calories < :calories AND colour LIKE :colour'
+);
+
 $sth->bindParam('calories', $calories, PDO::PARAM_INT);
-/* Имена также могут начинаться с двоеточия ":" (необязательно) */
+
+/* Именам разрешают начинаться с двоеточия ":" */
 $sth->bindValue(':colour', "%$colour%");
+
 $sth->execute();
+
 ?>
 ]]>
    </programlisting>
@@ -94,20 +111,27 @@ $sth->execute();
 
   <example>
    <title>
-    Выполнение подготовленного запроса с массивом именованных значений
+    Пример выполнения подготовленного запроса с массивом именованных значений
    </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Выполнение подготовленного запроса с передачей массива входных значений */
 $calories = 150;
 $colour = 'red';
-$sth = $dbh->prepare('SELECT name, colour, calories
+
+$sth = $dbh->prepare(
+    'SELECT name, colour, calories
     FROM fruit
-    WHERE calories < :calories AND colour = :colour');
+    WHERE calories < :calories AND colour = :colour'
+);
+
 $sth->execute(array('calories' => $calories, 'colour' => $colour));
-/* Ключи массива также могут начинаться с двоеточия ":" (необязательно) */
+
+/* Ключи массива также разрешают начинать с двоеточия ":" */
 $sth->execute(array(':calories' => $calories, ':colour' => $colour));
+
 ?>
 ]]>
    </programlisting>
@@ -115,18 +139,24 @@ $sth->execute(array(':calories' => $calories, ':colour' => $colour));
 
   <example>
    <title>
-    Выполнение подготовленного запроса с массивом позиционных значений
+    Пример выполнения подготовленного запроса с массивом позиционных значений
    </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Выполнение подготовленного запроса с передачей массива входных значений */
 $calories = 150;
 $colour = 'red';
-$sth = $dbh->prepare('SELECT name, colour, calories
+
+$sth = $dbh->prepare(
+    'SELECT name, colour, calories
     FROM fruit
-    WHERE calories < ? AND colour = ?');
+    WHERE calories < ? AND colour = ?'
+);
+
 $sth->execute(array($calories, $colour));
+
 ?>
 ]]>
    </programlisting>
@@ -134,20 +164,28 @@ $sth->execute(array($calories, $colour));
 
   <example>
    <title>
-    Выполнение подготовленного запроса с переменными, привязанными к позиционным заполнителям
+    Пример выполнения подготовленного запроса с переменными,
+    которые привязали к позиционным заполнителям
    </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Выполнение подготовленного запроса с привязкой PHP переменных */
 $calories = 150;
 $colour = 'red';
-$sth = $dbh->prepare('SELECT name, colour, calories
+
+$sth = $dbh->prepare(
+    'SELECT name, colour, calories
     FROM fruit
-    WHERE calories < ? AND colour = ?');
+    WHERE calories < ? AND colour = ?'
+);
+
 $sth->bindParam(1, $calories, PDO::PARAM_INT);
 $sth->bindParam(2, $colour, PDO::PARAM_STR, 12);
+
 $sth->execute();
+
 ?>
 ]]>
    </programlisting>
@@ -155,26 +193,29 @@ $sth->execute();
 
    <example>
     <title>
-     Выполнение подготовленного запроса с использованием
-     массива для выражения IN
+     Пример выполнения подготовленного запроса
+     с массивом для условия IN
     </title>
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Выполнение подготовленного запроса с использованием массива для выражения IN */
-$params = array(1, 21, 63, 171);
-/* Создаём строку из знаков вопроса (?) в количестве, равном количеству параметров */
-$place_holders = implode(',', array_fill(0, count($params), '?'));
 
-/*
-    В этом примере подготавливается запрос с достаточным количеством неименованных
-    псевдопеременных (?) для каждого значения из массива $params. Когда запрос будет
-    выполняться, эти знаки вопроса будут заменены на элементы массива. Это не то же
-    самое, что использовать PDOStatement::bindParam(), где привязка осуществляется по
-    ссылке на переменную. PDOStatement::execute() связывает параметры по значению.
-*/
+/* Выполнение подготовленного запроса с массивом для условия IN */
+$params = array(1, 21, 63, 171);
+
+/* Создаём строку из знаков вопроса (?) в количестве, равном количеству параметров */
+$place_holders = '?' . str_repeat(', ?', count($params) - 1);
+
+/**
+ * Пример подготавливает запрос с неименованными заполнителями (?),
+ * количество которых совпадает с количеством значений в массиве $params. При выполнении
+ * запроса метод заменит знаки вопроса элементами массива. Это не то же
+ * самое, что вызывать метод PDOStatement::bindParam(), в котором значения привязываются
+ * по ссылке на переменную. Метод PDOStatement::execute() связывает параметры по значению
+ */
 $sth = $dbh->prepare("SELECT id, name FROM contacts WHERE id IN ($place_holders)");
 $sth->execute($params);
+
 ?>
 ]]>
    </programlisting>
@@ -185,9 +226,9 @@ $sth->execute($params);
   &reftitle.notes;
   <note>
    <para>
-    Для некоторых драйверов необходимо
-    <link linkend="pdostatement.closecursor">закрывать курсор</link>,
-    прежде чем выполнять следующий запрос.
+    Отдельные драйверы требуют
+    <link linkend="pdostatement.closecursor">закрытия курсора</link>
+    перед запуском следующего запроса.
    </para>
   </note>
  </refsect1>
