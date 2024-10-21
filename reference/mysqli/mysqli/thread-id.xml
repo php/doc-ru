@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7e5d0d1bb69180c9de1992edf9613215c975fa57 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 1afd3581fea176162adacef6dd692dfc114410f3 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli.thread-id" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli::$thread_id</refname>
   <refname>mysqli_thread_id</refname>
   <refpurpose>
-   Возвращает ID процесса текущего подключения
+   Возвращает ID потока текущего подключения
   </refpurpose>
  </refnamediv>
 
@@ -20,22 +20,20 @@
    <methodparam><type>mysqli</type><parameter>mysql</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>mysqli_thread_id</function> возвращает ID процесса текущего
-   подключения, который можно завершить функцией
-   <function>mysqli_kill</function>. Если соединение было разорвано и
-   восстановлено функцией <function>mysqli_ping</function>, ID процесса будет
-   уже другим. Поэтому нужно получать этот идентификатор, когда это действительно
-   необходимо.
+   Функция <function>mysqli_thread_id</function> возвращает ID потока
+   текущего подключения. Идентификатор передают в функцию <function>mysqli_kill</function>,
+   чтобы завершить конкретный поток. Повторное подключение функцией
+   <function>mysqli_ping</function>, которое устанавливают после потери соединения,
+   изменит идентификатор потока. Поэтому идентификатор потока получают, когда требуется.
   </para>
   <note>
    <para>
-    ID процесса назначается по принципу подключение-за-подключением.
-    Соответственно, если соединение разорвано и заново установлено, ему будет
-    присвоен новый идентификатор.
+    Идентификатор потока назначается для каждого подключения отдельно.
+    Поэтому после разрыва и повторной установки соединения
+    назначается новый ID.
    </para>
    <para>
-    Для завершения работы запущенного запроса можно использовать SQL-команду
-    <literal>KILL QUERY processid</literal>.
+    Запущенный запрос завершают SQL-командой <literal>KILL QUERY processid</literal>.
    </para>
   </note>
  </refsect1>
@@ -52,40 +50,45 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает ID процесса текущего подключения.
+   Функция возвращает ID потока текущего подключения.
   </para>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <varname>$mysqli-&gt;thread_id</varname></title>
+   <title>
+    Пример получения идентификатора потока текущего соединения
+    методом <varname>$mysqli-&gt;thread_id</varname>
+   </title>
    <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
+/* Проверяем соединение */
 if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+    printf("Возник сбой соединения: %s\n", mysqli_connect_error());
     exit();
 }
 
-/* определяем наш id процесса */
+/* Определяем ID потока */
 $thread_id = $mysqli->thread_id;
 
-/* убиваем соединение */
+/* Завершаем соединение */
 $mysqli->kill($thread_id);
 
-/* тут должна произойти ошибка */
+/* Этот блок кода вызовет ошибку */
 if (!$mysqli->query("CREATE TABLE myCity LIKE City")) {
     printf("Ошибка: %s\n", $mysqli->error);
     exit;
 }
 
-/* закрываем соединение */
+/* Закрываем соединение */
 $mysqli->close();
+
 ?>
 ]]>
    </programlisting>
@@ -93,35 +96,37 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
+/* Проверяем соединение */
 if (mysqli_connect_errno()) {
-    printf("Не удалось подключиться: %s\n", mysqli_connect_error());
+    printf("Возник сбой соединения: %s\n", mysqli_connect_error());
     exit();
 }
 
-/* определяем наш id процесса */
+/* Определяем ID потока */
 $thread_id = mysqli_thread_id($link);
 
-/* убиваем соединение */
+/* Завершаем соединение */
 mysqli_kill($link, $thread_id);
 
-/* тут должна произойти ошибка */
+/* Этот блок кода вызовет ошибку */
 if (!mysqli_query($link, "CREATE TABLE myCity LIKE City")) {
     printf("Ошибка: %s\n", mysqli_error($link));
     exit;
 }
 
-/* закрываем соединение */
+/* Закрываем соединение */
 mysqli_close($link);
+
 ?>
 ]]>
    </programlisting>
    &examples.outputs;
    <screen>
 <![CDATA[
-Ошибка: MySQL server has gone away
+Error: MySQL server has gone away
 ]]>
    </screen>
   </example>
