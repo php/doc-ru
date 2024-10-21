@@ -1,0 +1,525 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: d64e811eac61a5c7c744312d8bc6e2244de81488 Maintainer: malferov Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="migration84.deprecated">
+ <title>Устаревшая функциональность</title>
+
+ <sect2 xml:id="migration84.deprecated.core">
+  <title>Ядро PHP</title>
+
+  <sect3 xml:id="migration84.deprecated.core.implicitly-nullable-parameter">
+   <!-- RFC: https://wiki.php.net/rfc/deprecate-implicitly-nullable-types -->
+   <title>Неявно обнуляемые параметры</title>
+
+   <simpara>
+    Тип параметра неявно расширяется типом <type>null</type>,
+    если значение по умолчанию для параметра равно &null;.
+   </simpara>
+
+   <para>
+    Следующий код:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(T1 $a = null) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    потребуется преобразовать вот так:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(T1|null $a = null) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    или так:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(?T1 $a = null) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+
+   <para>
+    Однако, если за объявлением параметра со значением &null; по умолчанию
+    идёт обязательный параметр:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(T1 $a, T2 $b = null, T3 $c) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    код потребуется преобразовать вот так:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(T1 $a, T2|null $b, T3 $c) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    или так:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function foo(T1 $a, ?T2 $b, T3 $c) {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+    поскольку объявление необязательного параметра перед обязательным устарело.
+   </para>
+  </sect3>
+
+  <sect3>
+   <!-- RFC: https://wiki.php.net/rfc/raising_zero_to_power_of_negative_number -->
+   <title>Возведение нуля в отрицательную степень</title>
+
+   <simpara>
+    Возведение числа <literal>x</literal> в степень отрицательного числа <literal>-p</literal>
+    эквивалентно взятию обратной величины числа <literal>n</literal>, которое получили путём возведения
+    числа <literal>x</literal> в степень, противоположную степени <literal>-p</literal>.
+    При взятии обратной величины числа <literal>n</literal> требуется разделить <literal>1</literal>
+    на результат возведения числа <literal>x</literal> в степень <literal>p</literal> —
+    число, противоположное числу <literal>-p</literal>: <literal>1 / (x ^ p)</literal>,
+    что при возведении числа <literal>0</literal> в степень наподобие <literal>-2</literal> даст:
+    <literal>1 / (0 ^ -2)</literal>, или <literal>1 / 0</literal>.
+    Поэтому возведение числа <literal>0</literal> в отрицательную степень
+    соответствует делению на <literal>0</literal>.
+    Поэтому такое поведение устарело.
+   </simpara>
+
+   <simpara>
+    Изменение касается поведения оператора возведения в степень <literal>**</literal>
+    и функции <function>pow</function>.
+   </simpara>
+
+   <simpara>
+    Следовать семантике стандарта IEEE 754
+    помогает новая функция <function>fpow</function>.
+   </simpara>
+  </sect3>
+
+  <sect3 xml:id="migration84.deprecated.core.underscore-class-name">
+   <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_using_a_single_underscore_as_a_class_name -->
+   <title>Подчёркивание <literal>_</literal> как название класса</title>
+
+   <para>
+    Именование класса символом <literal>_</literal> устарело:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+class _ {}
+
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+
+   <note>
+    <para>
+     Имена классов, которые начинаются с подчёркивания, <emphasis>не</emphasis>
+     устарели:
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+class _MyClass {}
+
+?>
+]]>
+      </programlisting>
+     </informalexample>
+    </para>
+   </note>
+  </sect3>
+
+  <sect3>
+   <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_passing_e_user_error_to_trigger_error -->
+   <title>
+    Вызов функции <function>trigger_error</function>
+    с флагом <constant>E_USER_ERROR</constant>
+   </title>
+
+   <simpara>
+    Вызов функции <function>trigger_error</function>
+    с аргументом <parameter>error_level</parameter>, который
+    равен значению константы <constant>E_USER_ERROR</constant>, устарел.
+   </simpara>
+
+   <simpara>
+    Такие вызовы потребуется заменить выбрасыванием исключения или вызовом
+    языковой конструкции <function>exit</function>, смотря что уместнее.
+   </simpara>
+  </sect3>
+
+  <sect3>
+   <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#remove_e_strict_error_level_and_deprecate_e_strict_constant -->
+   <title>
+    Константа <constant>E_STRICT</constant>
+   </title>
+
+   <simpara>
+    Поскольку уровень ошибки <constant>E_STRICT</constant> удалили,
+    константа устарела.
+   </simpara>
+  </sect3>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.curl">
+  <title>Модуль cURL</title>
+
+  <simpara>
+   Константа <constant>CURLOPT_BINARYTRANSFER</constant> устарела.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.date">
+  <title>Модуль Date</title>
+
+  <simpara>
+   Сигнатура метода <code>DatePeriod::__construct(string $isostr, int $options = 0)</code>
+   устарела.
+   Вместо устаревшего метода рекомендуют пользоваться методом <methodname>DatePeriod::createFromISO8601String</methodname>.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#constants_sunfuncs_ret_string_sunfuncs_ret_double_sunfuncs_ret_timestamp -->
+  <simpara>
+   Константы <constant>SUNFUNCS_RET_TIMESTAMP</constant>,
+   <constant>SUNFUNCS_RET_STRING</constant>
+   и <constant>SUNFUNCS_RET_DOUBLE</constant> устарели.
+   Константы устарели вследствие устаревания функций <function>date_sunset</function>
+   и <function>date_sunrise</function> в PHP 8.1.0.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.dba">
+  <title>Модуль DBA</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_passing_null_and_false_to_dba_key_split -->
+  <simpara>
+   Передача значения &null; или &false; в функцию <function>dba_key_split</function>
+   устарела.
+   При передаче таких значений функция вернёт &false;.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.dom">
+  <title>Модуль DOM</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_dom_php_err_constant -->
+  <simpara>
+   Константа <constant>DOM_PHP_ERR</constant> устарела.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#formally_deprecate_soft-deprecated_domdocument_and_domentity_properties -->
+  <para>
+   Следующие свойства официально устарели:
+   <simplelist>
+    <member><property>DOMDocument::$actualEncoding</property></member>
+    <member><property>DOMDocument::$config</property></member>
+    <member><property>DOMEntity::$actualEncoding</property></member>
+    <member><property>DOMEntity::$encoding</property></member>
+    <member><property>DOMEntity::$version</property></member>
+   </simplelist>
+  </para>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.hash">
+  <title>Модуль Hash</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_passing_incorrect_data_types_for_options_to_exthash_functions -->
+  <simpara>
+   Передача недопустимых параметров в хеш-функции устарела.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.intl">
+  <title>Модуль Intl</title>
+
+  <simpara>
+   Вызов функции <function>intlcal_set</function>
+   и метода <methodname>IntlCalendar::set</methodname>
+   с более чем двумя аргументами устарел.
+   Вместо них рекомендуют пользоваться методом <methodname>IntlCalendar::setDate</methodname>
+   или <methodname>IntlCalendar::setDateTime</methodname>.
+  </simpara>
+
+  <simpara>
+   Вызов функции <function>intlgregcal_create_instance</function>
+   и метода <methodname>IntlGregorianCalendar::__construct</methodname>
+   с более чем двумя аргументами устарел.
+   Вместо них рекомендуют пользоваться методом <methodname>IntlGregorianCalendar::createFromDate</methodname>
+   или <methodname>IntlGregorianCalendar::createFromDateTime</methodname>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.ldap">
+  <title>Модуль LDAP</title>
+
+  <simpara>
+   Вызов функции <function>ldap_connect</function>
+   с более чем двумя аргументами устарел.
+   Вместо неё рекомендуют пользоваться функцией <function>ldap_connect_wallet</function>.
+  </simpara>
+
+  <simpara>
+   Вызов функции <function>ldap_exop</function>
+   с более чем четырьмя аргументами устарел.
+   Вместо неё рекомендуют пользоваться функцией <function>ldap_exop_sync</function>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.mysqli">
+  <title>Модуль MySQLi</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#mysqli_ping_and_mysqliping -->
+  <simpara>
+   Функция <function>mysqli_ping</function>
+   и метод <methodname>mysqli::ping</methodname>
+   устарели, поскольку функцию переподключения удалили в PHP 8.2.0.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_mysqli_kill -->
+  <simpara>
+   Функция <function>mysqli_kill</function>
+   и метод <methodname>mysqli::kill</methodname>
+   устарели.
+   Завершать запущенный запрос помогает SQL-команда <literal>KILL</literal>.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_mysqli_refresh -->
+  <simpara>
+   Функция <function>mysqli_refresh</function>
+   и метод <methodname>mysqli::refresh</methodname>
+   устарели.
+   Очищать кеш БД помогает SQL-команда <literal>FLUSH</literal>.
+   Константы семейства <constant>All MYSQLI_REFRESH_<replaceable>*</replaceable></constant>
+   тоже устарели.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_the_second_parameter_to_mysqli_store_result -->
+  <simpara>
+   Явная передача параметра <parameter>mode</parameter>
+   в функцию <function>mysqli_store_result</function> устарела.
+   Константа <constant>MYSQLI_STORE_RESULT_COPY_DATA</constant> тоже устарела,
+   поскольку работала только вместе с функцией.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.pdo-pgsql">
+  <title>Драйвер PDO_PGSQL</title>
+
+  <simpara>
+   Экранирование знаков вопроса <literal>??</literal> внутри
+   строк, обёрнутых знаками доллара, устарело.
+   Требование экранировать знаки вопроса внутри строк отменили,
+   поскольку драйвер PDO_PGSQL теперь содержит внутренний SQL-парсер
+   с поддержкой оборачивания строк знаками доллара.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.pgsql">
+  <title>Драйвер PGSQL</title>
+
+  <simpara>
+   Сигнатуры функций <function>pg_fetch_result</function>,
+   <function>pg_field_prtlen</function>
+   и <function>pg_field_is_null</function> с двумя параметрами устарели.
+   Вместо сигнатуры с двумя параметрами рекомендуют использовать
+   сигнатуру с тремя параметрами со значением &null; для параметра
+   <parameter>row</parameter>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.random">
+  <title>Модуль Random</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_lcg_value -->
+  <simpara>
+   Функция <function>lcg_value</function> устарела,
+   поскольку часто работала неправильно.
+   Вместо неё рекомендуют использовать метод <methodname>\Random\Randomizer::getFloat</methodname>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.reflection">
+  <title>Модуль Reflection</title>
+
+  <simpara>
+   Вызов метода <methodname>ReflectionMethod::__construct</methodname>
+   с одним аргументом устарел.
+   Вместо него рекомендуют использовать метод <methodname>ReflectionMethod::createFromMethodName</methodname>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.session">
+  <title>Модуль Session</title>
+
+  <simpara>
+   Вызов функции <function>session_set_save_handler</function>
+   с более чем двумя аргументами устарел.
+   Вместо неё рекомендуют использовать сигнатуру с двумя аргументами.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#sessionsid_length_and_sessionsid_bits_per_character -->
+  <simpara>
+   Изменение значения директив
+   <link linkend="ini.session.sid-length"><literal>session.sid_length</literal></link>
+   и <link linkend="ini.session.sid-bits-per-character"><literal>session.sid_bits_per_character</literal></link>
+   в INI-настройках устарело.
+   Вместо изменения значений директив рекомендуют обновить бэкенд хранилища сессий,
+   чтобы он принимал 32-символьные шестнадцатеричные идентификаторы сессий, и прекратить
+   изменение этих INI-параметров.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecate-get-post-sessions -->
+  <simpara>
+   Изменение значения директив
+   <link linkend="ini.session.use-only-cookies"><literal>session.use_only_cookies</literal></link>,
+   <link linkend="ini.session.use-trans-sid"><literal>session.use_trans_sid</literal></link>,
+   <link linkend="ini.session.trans-sid-tags"><literal>session.trans_sid_tags</literal></link>,
+   <link linkend="ini.session.trans-sid-hosts"><literal>session.trans_sid_hosts</literal></link>
+   и <link linkend="ini.session.referer-check"><literal>session.referer_check</literal></link>
+   в INI-настройках устарело.
+   Константа <constant>SID</constant> тоже устарела.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.soap">
+  <title>Модуль SOAP</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_soap_functions_all_constant_and_passing_it_to_soapserveraddfunction -->
+  <simpara>
+   Передача <type>int</type>-значений в аргументах
+   метода <methodname>SoapServer::addFunction</methodname> устарела.
+   Для получения списка, который содержит название каждой PHP-функции,
+   Элементы массива, который возвращает функция <function>get_defined_functions</function>,
+   сводят к одному уровню, когда требуется экспортировать список всех PHP-функций.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_soap_functions_all_constant_and_passing_it_to_soapserveraddfunction -->
+  <simpara>
+   Константа <constant>SOAP_FUNCTIONS_ALL</constant> устарела.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.spl">
+  <title>Модуль SPL</title>
+
+  <simpara>
+   Метод <methodname>SplFixedArray::__wakeup</methodname>
+   устарел, поскольку реализует методы
+   <methodname>SplFixedArray::__serialize</methodname>
+   и <methodname>SplFixedArray::__unserialize</methodname>,
+   которыми рекомендуют заменить устаревший метод.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_proprietary_csv_escaping_mechanism -->
+  <simpara>
+   Значение по умолчанию для параметра <parameter>escape</parameter> в методах
+   <methodname>SplFileObject::setCsvControl</methodname>,
+   <methodname>SplFileObject::fputcsv</methodname>
+   <methodname>SplFileObject::fgetcsv</methodname> устарело.
+   <!-- TODO: Link to named arguments feature -->
+   Значение по умолчанию рекомендуют передавать явно либо позиционно, либо через именованные аргументы.
+   Это не касается методов <methodname>SplFileObject::fputcsv</methodname>
+   и <methodname>SplFileObject::fgetcsv</methodname>,
+   если новое значение по умолчанию установили
+   методом <methodname>SplFileObject::setCsvControl</methodname>.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.standard">
+  <title>Стандартные функции</title>
+
+  <simpara>
+   Сигнатура функции <function>stream_context_set_option</function> с двумя аргументами устарела.
+   Вместо неё рекомендуют пользоваться сигнатурой функции <function>stream_context_set_options</function>
+   с четырьмя аргументами.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#unserialize_s_s_tag -->
+  <simpara>
+   Десериализация строк с тегом <literal>S</literal> в верхнем регистре
+   функцией <function>unserialize</function> устарела.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#deprecate_proprietary_csv_escaping_mechanism -->
+  <simpara>
+   Значение по умолчанию для параметра <parameter>escape</parameter> в функциях
+   <function>fputcsv</function>,
+   <function>fgetcsv</function>
+   и <function>str_getcsv</function>  устарело.
+   <!-- TODO: Link to named arguments feature -->
+   Значение по умолчанию рекомендуют передавать явно либо позиционно, либо через именованные аргументы.
+  </simpara>
+ </sect2>
+
+ <sect2 xml:id="migration84.deprecated.core.xml">
+  <title>Модуль XML</title>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#xml_set_object_and_xml_set_handler_with_string_method_names -->
+  <simpara>
+   Функция <function>xml_set_object</function> устарела.
+  </simpara>
+
+  <!-- RFC: https://wiki.php.net/rfc/deprecations_php_8_4#xml_set_object_and_xml_set_handler_with_string_method_names -->
+  <simpara>
+   Передача в функцию <function>xml_set_<replaceable>*</replaceable></function>
+   строк, которые не принадлежат типу <type>callable</type>,
+   устарела.
+  </simpara>
+ </sect2>
+
+</sect1>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
