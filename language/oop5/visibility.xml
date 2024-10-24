@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f5e5b54129045a7d02c5285a88cea0abff8ffb6f Maintainer: irker Status: ready -->
+<!-- EN-Revision: 7d7b378abd302430b8ce7cedb4b78c7033f5e88c Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.visibility" xmlns="http://docbook.org/ns/docbook">
  <title>Область видимости</title>
@@ -20,8 +20,7 @@
    Свойства, объявленные без явного ключевого слова области видимости,
    определяются как общедоступные (public).
   </para>
-  <para>
-   <example>
+  <example>
     <title>Объявление свойства класса</title>
     <programlisting role="php">
 <![CDATA[
@@ -77,7 +76,120 @@ $obj2->printHello(); // Выводит Public2, Protected2, Undefined
 ]]>
     </programlisting>
    </example>
-  </para>
+  <sect3 xml:id="language.oop5.visibility-members-aviz">
+   <title>Асимметричная область видимости свойств</title>
+   <simpara>
+    Начиная с PHP 8.4, свойства также могут иметь асимметричную область видимости
+    для чтения (<literal>get</literal>) и записи (<literal>set</literal>).
+    В частности, область видимости <literal>set</literal> может быть задана отдельно,
+    при условии, что она такая же или менее строгая, чем область видимости по умолчанию.
+   </simpara>
+   <example>
+    <title>Асимметричная область видимости свойств</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Book
+{
+    public function __construct(
+        public private(set) string $title,
+        public protected(set) string $author,
+        protected private(set) int $pubYear,
+    ) {}
+}
+
+class SpecialBook extends Book
+{
+    public function update(string $author, int $year): void
+    {
+        $this->author = $author; // Всё хорошо
+        $this->pubYear = $year; // Критическая ошибка
+    }
+}
+
+$b = new Book('How to PHP', 'Peter H. Peterson', 2024);
+
+echo $b->title; // Всё хорошо
+echo $b->author; // Всё хорошо
+echo $b->pubYear; // Критическая ошибка
+
+$b->title = 'How not to PHP'; // Критическая ошибка
+$b->author = 'Pedro H. Peterson'; // Критическая ошибка
+$b->pubYear = 2023; // Критическая ошибка
+?>
+]]>
+    </programlisting>
+   </example>
+   <para>Есть несколько предостережений относительно асимметричной области видимости:</para>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Отдельная область видимость <literal>set</literal> может быть только у типизированных свойств.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Область видимости <literal>set</literal> должна быть такой же, как и <literal>get</literal> или более строгой.
+      То есть <code>public protected(set)</code> и <code>protected protected(set)</code> допустимы,
+      но <code>protected public(set)</code> приведёт к синтаксической ошибке.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Если свойство <literal>public</literal>, то основная область видимости может быть опущена.
+      То есть <code>public private(set)</code> и <code>private(set)</code> приведут к одному и тому же результату.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Свойство с областью видимости <literal>private(set)</literal> автоматически становится окончательным (<literal>final</literal>)
+      и не может быть повторно объявлено в дочернем классе.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Получение ссылки на свойство соответствует видимости <literal>set</literal>, а не <literal>get</literal>.
+      Это связано с тем, что ссылка может быть использована для изменения значения свойства.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Аналогично, попытка записи в свойство массива включает в себя как операцию <literal>get</literal>,
+      так и <literal>set</literal>, и поэтому будет следовать области видимости <literal>set</literal>,
+      поскольку она всегда является более строгой.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+   <simpara>
+    При наследовании класса, дочерний класс может переопределить любое свойство, которое не является окончательным (<literal>final</literal>).
+    При этом он может наследовать либо основную видимость, либо видимость <literal>set</literal>, при условии,
+    что новая видимость будет такой же или менее строгой, чем у родительского класса.
+    Однако имейте в виду, что если переопределяется свойство <literal>private</literal>, оно не изменяет родительское свойство,
+    а создаёт новое свойство с другим внутренним именем.
+   </simpara>
+   <example>
+    <title>Наследование свойств с асимметричной областью видимости</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+class Book
+{
+    protected string $title;
+    public protected(set) string $author;
+    protected private(set) int $pubYear;
+}
+
+class SpecialBook extends Book
+{
+    public protected(set) $title; // Всё хорошо, так как чтение менее строгое, а запись – такая же.
+    public string $author; // Всё хорошо, так как чтение такое же, а запись – менее строгая.
+    public protected(set) int $pubYear; // Критическая ошибка. Свойства private(set) являются окончательными.
+}
+?>
+]]>
+    </programlisting>
+   </example>
+  </sect3>
  </sect2>
 
  <sect2 xml:id="language.oop5.visiblity-methods">
@@ -86,8 +198,7 @@ $obj2->printHello(); // Выводит Public2, Protected2, Undefined
    Методы класса могут быть определены как public, private или protected.
    Методы, объявленные без указания области видимости, определяются как public.
   </para>
-  <para>
-   <example>
+  <example>
     <title>Объявление метода</title>
     <programlisting role="php">
 <![CDATA[
@@ -176,8 +287,7 @@ $myFoo->test(); // Bar::testPrivate
 ?>
 ]]>
     </programlisting>
-   </example>
-  </para>
+  </example>
  </sect2>
 
  <sect2 xml:id="language.oop5.visiblity-constants">
@@ -187,8 +297,7 @@ $myFoo->test(); // Bar::testPrivate
    protected. Константы, объявленные без указания области видимости,
    определяются как public.
   </para>
-  <para>
-   <example>
+  <example>
     <title>Объявление констант, начиная с PHP 7.1.0</title>
     <programlisting role="php">
 <![CDATA[
@@ -243,7 +352,6 @@ $myclass2->foo2(); // Выводятся константы public и protected,
 ]]>
     </programlisting>
    </example>
-  </para>
  </sect2>
 
  <sect2 xml:id="language.oop5.visibility-other-objects">
