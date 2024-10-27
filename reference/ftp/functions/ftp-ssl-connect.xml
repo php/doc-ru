@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4d1c34c9b7a30cfc3a59641122c707a2812cfed7 Maintainer: shein Status: ready -->
+<!-- EN-Revision: d7729b69a210d94e178a7ca53bf91cd894dbecf3 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ftp-ssl-connect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ftp_ssl_connect</refname>
-  <refpurpose>Устанавливает соединение с FTP-сервером через SSL</refpurpose>
+  <refpurpose>Устанавливает соединение с FTP-сервером по протоколу SSL</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,27 +15,29 @@
    <methodparam choice="opt"><type>int</type><parameter>timeout</parameter><initializer>90</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>ftp_ssl_connect</function> устанавливает <emphasis>явное</emphasis> SSL соединение
-   с FTP-сервером, заданным аргументом <parameter>hostname</parameter>. Это означает, что
-   <function>ftp_ssl_connect</function> будет успешным даже если сервер не
-   настроен для SSL-FTP, или его сертификат недействителен. Только когда будет вызвана
-   функция <function>ftp_login</function>, клиент пошлёт необходимую команду AUTH FTP,
-   так что в указанных случаях <function>ftp_login</function> завершится ошибкой.
+   Функция <function>ftp_ssl_connect</function> открывает <emphasis>явное</emphasis> SSL-соединение
+   с FTP-сервером, который указали в аргументе <parameter>hostname</parameter>. Подразумевается,
+   что функция <function>ftp_ssl_connect</function> завершит работу без ошибок, даже если сервер
+   не настроили для обработки FTP-подключений по SSL-протоколу. Клиент отправит команду AUTH FTP
+   только при вызове функции <function>ftp_login</function>,
+   поэтому вызов функции <function>ftp_login</function> завершится ошибкой.
+   Соединение, которое установили функцией <function>ftp_ssl_connect</function>,
+   <emphasis>не</emphasis> будет выполнять проверку сертификата узла одноранговой сети.
   </para>
   <note>
-   <title>Почему эта функция может быть не определена</title>
+   <title>Почему функцию определили не в каждой сборке</title>
    <para>
-    До PHP 7.0.0 <function>ftp_ssl_connect</function> была доступна только если PHP был собран с поддержкой <link
-    linkend="ref.openssl">OpenSSL</link>; это означает, что в Windows эта функция не была определена в официальных сборках PHP.
-    Чтобы использовать эту функцию под Windows, вам придётся
-    собрать PHP самостоятельно для включения поддержки OpenSSL.
+    До PHP 7.0.0 доступ к функции <function>ftp_ssl_connect</function> открывался,
+    только если модуль FTP и поддержку модуля <link linkend="ref.openssl">OpenSSL</link>
+    статически встраивали в PHP-сборку;
+    поэтому в официальных PHP-сборках для ОС Windows функция оставалась неопределённой.
+    Приходилось самому компилировать двоичные файлы PHP, чтобы включить поддержку функции в Windows.
    </para>
   </note>
   <note>
    <para>
-    <function>ftp_ssl_connect</function> не предназначена для
-    использования по протоколу sFTP.
-    Для использования sFTP из PHP смотрите функцию <function>ssh2_sftp</function>.
+    Функция <function>ftp_ssl_connect</function> не работает по протоколу sFTP.
+    Информацию о взаимодействии PHP с протоколом sFTP даёт описание функции <function>ssh2_sftp</function>.
    </para>
   </note>
  </refsect1>
@@ -47,8 +49,8 @@
      <term><parameter>hostname</parameter></term>
      <listitem>
       <para>
-       Адрес FTP-сервера. Этот параметр не должен содержать слеши в конце
-       и префикс <literal>ftp://</literal> в начале.
+       Адрес FTP-сервера. Параметру нельзя содержать слешей в конце
+       имени хоста или префикса <literal>ftp://</literal> в начале.
       </para>
      </listitem>
     </varlistentry>
@@ -56,9 +58,9 @@
      <term><parameter>port</parameter></term>
      <listitem>
       <para>
-       Задаёт порт, на котором устанавливается соединение. Если равен нулю
-       или опущен, по умолчанию используется стандартный для протокола FTP -
-       порт 21.
+       Параметр определяет альтернативный порт соединения. По умолчанию функция
+       устанавливает подключение на стандартном для FTP-протокола порте — 21,
+       если аргумент опустили или указали значение <literal>0</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -66,10 +68,10 @@
      <term><parameter>timeout</parameter></term>
      <listitem>
       <para>
-       Задаёт время ожидания для всех операций с этим соединением. По умолчанию
-       время ожидания устанавливается в 90 секунд. Получить и установить значение
-       времени ожидания можно также с помощью функций
-       <function>ftp_set_option</function> и <function>ftp_get_option</function>.
+       Параметр определяет время ожидания для сетевых операций, которые будут использовать подключение.
+       Время ожидания по умолчанию составляет 90 секунд.
+       Функции <function>ftp_set_option</function> и <function>ftp_get_option</function>
+       также умеют изменять и запрашивать время ожидания.
       </para>
      </listitem>
     </varlistentry>
@@ -78,7 +80,9 @@
  </refsect1>
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>Возвращает <classname>FTP\Connection</classname> в случае успешного выполнения&return.falseforfailure;.
+  <para>
+   В случае успешного выполнения функция возвращает
+   объект <classname>FTP\Connection</classname>&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -96,8 +100,8 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Возвращает экземпляр <classname>FTP\Connection</classname>;
-       ранее возвращался ресурс (&resource;).
+       Теперь функция возвращает экземпляр класса <classname>FTP\Connection</classname>;
+       раньше возвращался ресурс (&resource;).
       </entry>
      </row>
     </tbody>
@@ -109,26 +113,29 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>ftp_ssl_connect</function></title>
+    <title>
+     Пример установки SSL-соединения с FTP-сервером функцией <function>ftp_ssl_connect</function>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// установка ssl-соединения
+// Устанавливаем SSL-соединение
 $ftp = ftp_ssl_connect($ftp_server);
 
-// проверка имени пользователя и пароля
+// Проверяем имя пользователя и пароль
 $login_result = ftp_login($ftp, $ftp_user_name, $ftp_user_pass);
 
 if (!$login_result) {
-    // В этом случае PHP уже выбросил сообщение уровня E_WARNING
-    die("can't login");
+    // К этому времени PHP уже выдаст сообщение об ошибке уровня E_WARNING
+    die("Не удалось войти");
 }
 
-echo ftp_pwd($ftp); // /
+echo ftp_pwd($ftp);
 
-// закрытие ssl-соединения
+// Закрываем SSL-соединение
 ftp_close($ftp);
+
 ?>
 ]]>
     </programlisting>
