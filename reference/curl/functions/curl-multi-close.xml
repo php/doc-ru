@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 52dc204a77076e1404257cf39f179882b90b5780 Maintainer: shein Status: ready -->
+<!-- EN-Revision: e59d2eff8265de6b53b5e392a6ea62cec39ef7af Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.curl-multi-close" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>curl_multi_close</refname>
-  <refpurpose>Закрывает набор cURL-дескрипторов</refpurpose>
+  <refpurpose>Удаляет все cURL-дескрипторы из мультидескриптора</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -13,9 +13,13 @@
    <type>void</type><methodname>curl_multi_close</methodname>
    <methodparam><type>CurlMultiHandle</type><parameter>multi_handle</parameter></methodparam>
   </methodsynopsis>
-  &note.resource-migration-8.0-dead-function;
   <para>
-   Закрывает набор дескрипторов cURL.
+   Функция удаляет все дескрипторы <classname>CurlHandle</classname>, которые прикрепили
+   к мультидескриптору <classname>CurlMultiHandle</classname>,
+   как если бы для каждого дескриптора вызвали функцию <function>curl_multi_remove_handle</function>.
+  </para>
+  <para>
+   До PHP 8.0.0 функция также закрывала cURL-ресурс мультидескриптора и делала ресурс неработоспособным.
   </para>
  </refsect1>
 
@@ -50,57 +54,6 @@
     </tbody>
    </tgroup>
   </informaltable>
- </refsect1>
-
- <refsect1 role="examples">
-  &reftitle.examples;
-  <para>
-   <example>
-    <title>Пример использования <function>curl_multi_close</function></title>
-    <para>
-     Этот пример создаст два дескриптора cURL, добавит их в набор
-     дескрипторов, а затем запустит их асинхронно.
-    </para>
-    <programlisting role="php">
-<![CDATA[
-<?php
-// создаём оба ресурса cURL
-$ch1 = curl_init();
-$ch2 = curl_init();
-
-// устанавливаем URL и другие соответствующие опции
-curl_setopt($ch1, CURLOPT_URL, "http://www.example.com/");
-curl_setopt($ch1, CURLOPT_HEADER, 0);
-curl_setopt($ch2, CURLOPT_URL, "http://www.php.net/");
-curl_setopt($ch2, CURLOPT_HEADER, 0);
-
-//создаём набор дескрипторов cURL
-$mh = curl_multi_init();
-
-//добавляем два дескриптора
-curl_multi_add_handle($mh,$ch1);
-curl_multi_add_handle($mh,$ch2);
-
-//запускаем множественный обработчик
-do {
-    $status = curl_multi_exec($mh, $active);
-    if ($active) {
-        curl_multi_select($mh);
-    }
-} while ($active && $status == CURLM_OK);
-
-//закрываем все дескрипторы
-curl_multi_remove_handle($mh, $ch1);
-curl_close($ch1);
-curl_multi_remove_handle($mh, $ch2);
-curl_close($ch2);
-curl_multi_close($mh);
-
-?>
-]]>
-    </programlisting>
-   </example>
-  </para>
  </refsect1>
 
  <refsect1 role="seealso">
