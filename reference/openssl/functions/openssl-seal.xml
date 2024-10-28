@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 110ac43250fdb3531fe26d4d29292e33df7855e8 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openssl-seal" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>openssl_seal</refname>
-  <refpurpose>Запечатывает (зашифровывает) данные</refpurpose>
+  <refpurpose>Запечатывает, или зашифровывает, данные</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,14 +19,14 @@
    <methodparam choice="opt"><type>string</type><parameter role="reference">iv</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>openssl_seal</function> запечатывает (шифрует)
-   данные <parameter>data</parameter>, методом <parameter>cipher_algo</parameter>
-   со сгенерированным случайно секретным ключом. Ключ шифруется
-   каждым открытым ключом, который связан с идентификаторами в массиве <parameter>public_key</parameter>,
-   и каждый зашифрованный ключ возвращается в параметре <parameter>encrypted_keys</parameter>.
-   То есть можно разослать запечатанные данные сразу нескольким получателям.
-   Каждый получатель должен получить как запечатанные данные, так и ключ конверта,
-   который зашифровали открытым ключом получателя.
+   Функция <function>openssl_seal</function> запечатывает, или шифрует, данные <parameter>data</parameter>
+   алгоритмом <parameter>cipher_algo</parameter> со случайно сгенерированным секретным ключом.
+   Затем функция шифрует ключ каждым открытым ключом в массиве <parameter>public_key</parameter>,
+   и каждый зашифрованный ключ конверта возвращается массиве <parameter>encrypted_keys</parameter>.
+   Это помогает отправлять запечатанные данные набору получателей (при условии, что открытые ключи получателей доступны).
+   Каждый получатель получит запечатанные данные и ключ конверта, который функция зашифровала
+   открытым ключом получателя. После чего функция генерирует вектор инициализации
+   (англ. Initialization Vector, IV) и возвращает значение вектора в параметре <parameter>iv</parameter>.
   </para>
  </refsect1>
 
@@ -38,7 +38,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Запечатываемые данные.
+       Данные, которые требуется запечатать.
       </para>
      </listitem>
     </varlistentry>
@@ -62,7 +62,8 @@
      <term><parameter>public_key</parameter></term>
      <listitem>
       <para>
-       Массив экземпляров класса <classname>OpenSSLAsymmetricKey</classname>, которые содержат открытые ключи.
+       Массив экземпляров класса <classname>OpenSSLAsymmetricKey</classname>,
+       которые содержат открытые ключи.
       </para>
      </listitem>
     </varlistentry>
@@ -70,11 +71,12 @@
      <term><parameter>cipher_algo</parameter></term>
      <listitem>
       <para>
-       Метод шифрования.
+       Алгоритм шифрования.
        <caution>
         <simpara>
-         Значение по умолчанию (<literal>RC4</literal>) считается небезопасным.
-         Настоятельно рекомендуется явно указывать метод безопасного шифрования.
+         До PHP 8.0 по умолчанию параметру назначали значение <literal>'RC4'</literal>,
+         которое считают небезопасным. Настоятельно рекомендуют явно указывать безопасный
+         метод шифрования.
         </simpara>
        </caution>
       </para>
@@ -84,7 +86,16 @@
      <term><parameter>iv</parameter></term>
      <listitem>
       <para>
-       Инициализирующий вектор.
+       Вектор инициализации для расшифровки данных <parameter>data</parameter>. Параметр устанавливают,
+       только если методу шифрования требуется вектор инициализации. Значение вектора узнают путём вызова
+       функции <function>openssl_cipher_iv_length</function> с алгоритмом шифрования <parameter>cipher_algo</parameter>.
+      </para>
+      <caution>
+       <simpara>
+        Вектор инициализации невозможно указать явно. Значение, которое установили в параметре,
+        перезаписывается значением, которое функция сгенерировала случайно.
+       </simpara>
+      </caution>
       </para>
      </listitem>
     </varlistentry>
@@ -146,27 +157,20 @@
 <![CDATA[
 <?php
 
-// Предполагается, что переменная $data содержит данные, которые необходимо запечатать
+// Переменная $data содержит данные, которые требуется запечатать
+$data = "test";
 
-// Получаем и подготавливаем открытые ключи для получателей
-$fp = fopen("/src/openssl-0.9.6/demos/maurice/cert.pem", "r");
-$cert = fread($fp, 8192);
-fclose($fp);
-$pk1 = openssl_get_publickey($cert);
+// Получаем и подготавливаем открытые ключи получателей
+$pk1 = openssl_get_publickey("file://cert1.pem");
+$pk2 = openssl_get_publickey("file://cert2.pem");
 
-// Повторяем для второго получателя
-$fp = fopen("/src/openssl-0.9.6/demos/sign/cert.pem", "r");
-$cert = fread($fp, 8192);
-fclose($fp);
-$pk2 = openssl_get_publickey($cert);
-
-// Запечатываем сообщение; только владельцы ключей $pk1 и $pk2 смогут расшифровать запечатанные данные $sealed ключами
-// $ekeys[0] и $ekeys[1]
-openssl_seal($data, $sealed, $ekeys, array($pk1, $pk2));
-
-// Высвобождаем ресурсы ключей
-openssl_free_key($pk1);
-openssl_free_key($pk2);
+// Запечатываем сообщение; только владельцы ключей $pk1 и $pk2 расшифруют
+// запечатанные данные $sealed ключами $ekeys[0] и $ekeys[1]
+if (openssl_seal($data, $sealed, $ekeys, array($pk1, $pk2), 'AES256', $iv) > 0) {
+    // Запечатанные данные $sealed и значения вектора инициализации $iv сохраняют,
+    // чтобы позднее использовать значения при вызове функции openssl_open
+    echo "success\n";
+}
 
 ?>
 ]]>
