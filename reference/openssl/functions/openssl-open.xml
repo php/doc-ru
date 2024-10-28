@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 110ac43250fdb3531fe26d4d29292e33df7855e8 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openssl-open" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -19,14 +19,14 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>iv</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>openssl_open</function> открывает (дешифрует)
-   <parameter>data</parameter>, используя секретный ключ, связанный
-   с идентификатором <parameter>private_key</parameter> и ключ обёртки
-   <parameter>encrypted_key</parameter>, и заполняет
-   <parameter>output</parameter> расшифрованными данными.
-   Ключ обёртки создаётся при запечатывании данных и может использоваться
-   только с одним единственным секретным ключом. Более подробно можно прочитать на
-   странице описания функции <function>openssl_seal</function>.
+   Функция <function>openssl_open</function> открывает, или дешифрует, данные <parameter>data</parameter>
+   ключом конверта, который получает после расшифровки зашифрованного ключа <parameter>encrypted_key</parameter>
+   открытым ключом <parameter>private_key</parameter>. Расшифровать данные
+   функции помогают алгоритм шифрования <parameter>cipher_algo</parameter> и вектор инициализации <parameter>iv</parameter>.
+   Вектор инициализации требуется, только если его запрашивает метод шифрования.
+   Функция заполняет аргумент <parameter>output</parameter> данными, которые расшифровала.
+   Функция генерирует ключ конверта, когда данные запечатали открытым ключом, который
+   связан с закрытым ключом. Подробнее о запечатке, или шифровании, данных рассказывает описание функции <function>openssl_seal</function>.
   </para>
  </refsect1>
 
@@ -38,6 +38,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
+       Запечатанные данные.
       </para>
      </listitem>
     </varlistentry>
@@ -45,8 +46,7 @@
      <term><parameter>output</parameter></term>
      <listitem>
       <para>
-       При удачном завершении, переменная переданная в этом параметре
-       будет содержать открытые данные.
+       Функция заполнит аргумент открытыми данными, если завершит работу без ошибок.
       </para>
      </listitem>
     </varlistentry>
@@ -54,6 +54,7 @@
      <term><parameter>encrypted_key</parameter></term>
      <listitem>
       <para>
+       Симметричный ключ шифрования, который расшифровывают закрытым ключом <parameter>private_key</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -61,6 +62,7 @@
      <term><parameter>private_key</parameter></term>
      <listitem>
       <para>
+       Закрытый ключ для расшифровки зашифрованного ключа <parameter>encrypted_key</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -68,11 +70,12 @@
      <term><parameter>cipher_algo</parameter></term>
      <listitem>
       <para>
-       Метод шифрования.
+       Метод шифрования для расшифровки данных <parameter>data</parameter>.
        <caution>
         <simpara>
-         Значение по умолчанию (<literal>'RC4'</literal>) считается небезопасным.
-         Настоятельно рекомендуется явно указывать метод безопасного шифрования.
+         До PHP 8.0 по умолчанию параметру назначали значение <literal>'RC4'</literal>,
+         которое считают небезопасным. Настоятельно рекомендуют явно указывать безопасный
+         метод шифрования.
         </simpara>
        </caution>
       </para>
@@ -82,7 +85,9 @@
      <term><parameter>iv</parameter></term>
      <listitem>
       <para>
-       Инициализирующий вектор.
+       Вектор инициализации для расшифровки данных <parameter>data</parameter>. Параметр устанавливают,
+       только если методу шифрования требуется вектор инициализации. Значение вектора узнают путём вызова
+       функции <function>openssl_cipher_iv_length</function> с алгоритмом шифрования <parameter>cipher_algo</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -113,13 +118,13 @@
       <entry>
        Параметр <parameter>private_key</parameter> теперь принимает экземпляр <classname>OpenSSLAsymmetricKey</classname>
        или <classname>OpenSSLCertificate</classname>;
-       ранее принимался ресурс (&resource;) типа <literal>OpenSSL key</literal> или <literal>OpenSSL X.509 CSR</literal>.
+       раньше принимался ресурс (&resource;) с типом <literal>OpenSSL key</literal> или <literal>OpenSSL X.509 CSR</literal>.
       </entry>
      </row>
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>cipher_algo</parameter> теперь обязательный.
+       Параметр <parameter>cipher_algo</parameter> теперь обязателен.
       </entry>
      </row>
     </tbody>
@@ -131,28 +136,24 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>openssl_open</function></title>
+    <title>Пример распечатки данных функцией <function>openssl_open</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Предположим, что $sealed и $env_key содержат закрытые данные и
-// ключ обёртки соответственно
 
-// Извлекаем секретный ключ из файла
-$fp = fopen("/src/openssl-0.9.6/demos/sign/key.pem", "r");
-$priv_key = fread($fp, 8192);
-fclose($fp);
-$pkeyid = openssl_get_privatekey($priv_key);
+// Предположим, что переменные $sealed, $env_key и $iv содержат запечатанные данные,
+// ключ конверта и вектор инициализации, которые прислал тот, кто запечатал данные
 
-// расшмфровываем данные и складываем их в $open
-if (openssl_open($sealed, $open, $env_key, $pkeyid)) {
-    echo "Расшифрованные данные: ", $open;
+// Получаем закрытый ключ из файла private_key.pem
+$pkey = openssl_get_privatekey("file://private_key.pem);
+
+// Расшифровываем данные и сохраняем открытые данные в аргументе $open
+if (openssl_open($sealed, $open, $env_key, $pkey, 'AES256', $iv)) {
+    echo "Вот открытые данные: ", $open;
 } else {
-    echo "Что-то пошло не так :(";
+    echo "Не удалось открыть данные";
 }
 
-// Высвобождаем ресурс приватнного ключа
-openssl_free_key($pkeyid);
 ?>
 ]]>
     </programlisting>
