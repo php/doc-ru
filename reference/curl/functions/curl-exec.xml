@@ -4,7 +4,7 @@
 <refentry xml:id="function.curl-exec" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>curl_exec</refname>
-  <refpurpose>Выполняет запрос cURL</refpurpose>
+  <refpurpose>Выполняет сеанс сетевой передачи данных</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,11 +14,11 @@
    <methodparam><type>CurlHandle</type><parameter>handle</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет запрос cURL.
+   Функция выполняет сеанс сетевой передачи данных.
   </para>
   <para>
-   Эта функция должна вызываться после инициализации сеанса и установки всех
-   необходимых параметров.
+   Вызов функции сработает только после инициализации cURL-сеанса и установки
+   параметров сессии.
   </para>
  </refsect1>
 
@@ -34,20 +34,19 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success; Однако, если
-   <link linkend="function.curl-setopt">установлена</link> опция
-   <constant>CURLOPT_RETURNTRANSFER</constant>,
-   при успешном завершении будет возвращён результат, а при
-   неудаче - &false;.
+   В случае успешного выполнения функция сбрасывает результат
+   в стандартный поток вывода <literal>stdout</literal> и возвращает &true;,
+   &return.falseforfailure;.
+   Однако при <link linkend="function.curl-setopt">установке</link> опции
+   <constant>CURLOPT_RETURNTRANSFER</constant>
+   и успешном завершении функция вернёт результат, или &false;, если возникнет ошибка.
   </para>
   &return.falseproblem;
   <note>
    <para>
-    Обратите внимание, что коды состояния ответа,
-    указывающие на ошибки (например, <literal>404 Not found</literal>),
-    не рассматриваются как неудача.
-    Функция <function>curl_getinfo</function>
-    может использоваться для проверки таких ошибок.
+    Обратите внимание, функция не рассматривает как ошибку HTTP-коды статуса ответа
+    наподобие <literal>404 Not found</literal>, которые указывают на ошибки HTTP-запросов.
+    Для проверки таких ошибок вызывают функцию <function>curl_getinfo</function>.
    </para>
   </note>
  </refsect1>
@@ -73,22 +72,24 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Загрузка веб-страницы</title>
+    <title>Пример получения веб-страницы</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// создание нового cURL ресурса
+
+// Инициализируем новый cURL-сеанс
 $ch = curl_init();
 
-// установка URL и других необходимых параметров
+// Устанавливаем URL-адрес и другие параметры сессии
 curl_setopt($ch, CURLOPT_URL, "http://www.example.com/");
 curl_setopt($ch, CURLOPT_HEADER, 0);
 
-// загрузка страницы и выдача её браузеру
+// Захватываем URL-адрес и передаём содержание страницы браузеру
 curl_exec($ch);
 
-// завершение сеанса и освобождение ресурсов
+// Закрываем cURL-сеанс и освобождаем системные ресурсы
 curl_close($ch);
+
 ?>
 ]]>
     </programlisting>
