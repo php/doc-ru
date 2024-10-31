@@ -3,15 +3,15 @@
 <!-- Reviewed: no -->
  <reference xml:id="ref.pdo-mysql" xmlns="http://docbook.org/ns/docbook">
   <?phpdoc extension-membership="bundledexternal" ?>
-  <title>Функции MySQL (PDO_MYSQL)</title>
-  <titleabbrev>MySQL (PDO)</titleabbrev>
+  <title>Драйвер PDO_MYSQL: функции БД MySQL</title>
+  <titleabbrev>MySQL</titleabbrev>
   <partintro>
 
    <section xml:id="pdo-mysql.intro">
    &reftitle.intro;
     <para>
-     PDO_MYSQL — это драйвер, который реализует интерфейс <link linkend="intro.pdo">PHP
-     Data Objects (PDO)</link> и даёт PHP доступ к базам данных MySQL.
+     PDO_MYSQL — драйвер, через который PHP получает доступ к базам данных MySQL.
+     Для этого драйвер реализует интерфейс модуля <link linkend="intro.pdo">PDO</link>.
     </para>
     <para>
      Драйвер PDO_MYSQL по умолчанию использует эмулированную подготовку.
@@ -23,15 +23,15 @@
 
     <para>
      При запуске PHP до версии 7.1.16 или PHP с версии 7.2 до версии 7.2.4
-     в качестве плагина шифрования паролей по умолчанию для сервера MySQL 8 устанавливают <emphasis>mysql_native_password</emphasis>,
-     иначе будет выдана ошибка наподобие
+     в качестве плагина шифрования паролей по умолчанию для сервера MySQL 8 устанавливают
+     <emphasis>mysql_native_password</emphasis>, иначе выдаётся ошибка наподобие
      <emphasis>The server requested authentication method unknown to the client [caching_sha2_password]</emphasis>,
-     даже когда плагин <emphasis>caching_sha2_password</emphasis> не задан.
+     даже когда плагин <emphasis>caching_sha2_password</emphasis> не задали.
     </para>
     <para>
-     Причина этого в том, что на сервере MySQL 8
+     Причина этого состоит в том, что на сервере MySQL 8
      в качестве плагина по умолчанию указан caching_sha2_password,
-     который не распознаётся старыми версиями PHP (модулем mysqlnd).
+     который не распознаётся старыми выпусками PHP (драйвером mysqlnd).
      Вместо него в файле конфигурации сервера <filename>my.cnf</filename> указывают —
      <literal>default_authentication_plugin=mysql_native_password</literal>.
      Плагин <emphasis>caching_sha2_password</emphasis>
@@ -42,10 +42,10 @@
     <warning>
      <para>
       Осторожно: MySQL-таблицы подсистемы хранения данных не поддерживают транзакции.
-      Если в коде, который работает с транзакционной базой данных,
-      указана неподдерживающая транзакции таблица,
-      MySQL сделает вид, что транзакция успешно начата.
-      И ещё, каждый выполненный DDL-запрос
+      БД MySQL сделает вид, что транзакция успешно началась,
+      если в коде, который работает с транзакционной базой данных,
+      указали таблицу, которая не поддерживает транзакции.
+      Кроме того, каждый выполненный DDL-запрос
       будет неявно фиксировать незавершённые транзакции — то есть завершать открытые транзакции
       и выполнять стек незавершённых запросов.
      </para>
@@ -54,7 +54,7 @@
      <para>
       Драйвер MySQL неправильно обрабатывает бит <constant>PDO::PARAM_INPUT_OUTPUT</constant>
       в методе <methodname>PDOStatement::bindParam</methodname>;
-      хотя такие параметры и разрешено использовать,
+      хотя такие параметры и разрешается указывать,
       они не обновляются (т. е. фактический вывод игнорируется).
      </para>
     </note>
@@ -66,20 +66,21 @@
 
   <refentry xml:id="ref.pdo-mysql.connection">
    <refnamediv>
-    <refname>PDO_MYSQL DSN</refname>
+    <refname>DSN-строка подключения через драйвер PDO_MYSQL</refname>
     <refpurpose>Соединение с базой данных MySQL</refpurpose>
    </refnamediv>
 
    <refsect1 role="description">
     &reftitle.description;
     <para>
-     Имя источника данных (Data Source Name, или DSN) PDO_MYSQL состоит из следующих элементов:
+     DSN-строка подключения (англ. сокр.: Data Source Name — имя источника данных)
+     для драйвера PDO_SQLSRV состоит из следующих элементов:
      <variablelist>
       <varlistentry>
-       <term>DSN префикс</term>
+       <term>DSN-префикс</term>
        <listitem>
         <para>
-        DSN-префикс — это <userinput>mysql:</userinput>.
+        DSN-префикс — строка <userinput>mysql:</userinput>.
         </para>
        </listitem>
       </varlistentry>
@@ -111,8 +112,8 @@
        <term><literal>unix_socket</literal></term>
        <listitem>
         <para>
-         Сокет MySQL Unix (нельзя указывать совместно с <literal>host</literal>
-         или <literal>port</literal>).
+         Unix-сокет БД MySQL. Сокет нельзя указывать вместе с аргументом
+         <literal>host</literal> или <literal>port</literal>.
         </para>
        </listitem>
       </varlistentry>
@@ -120,7 +121,7 @@
        <term><literal>charset</literal></term>
        <listitem>
         <para>
-         Кодировка. Дополнительная информация дана в разделе
+         Кодировка. Дополнительную информацию даёт раздел
          «<link linkend="mysqlinfo.concepts.charset">Кодировки</link>».
         </para>
        </listitem>
@@ -133,9 +134,9 @@
     &reftitle.examples;
     <para>
      <example>
-      <title>Примеры DSN для драйвера PDO_MYSQL</title>
+      <title>Примеры DSN-строк подключения через драйвер PDO_MYSQL</title>
       <para>
-       Следующий пример показывает DSN-имя драйвера PDO_MYSQL
+       Следующий пример показывает DSN-строку подключения через драйвер PDO_MYSQL
        для соединения с базой данных MySQL:
        <programlisting>
 <![CDATA[
@@ -159,12 +160,13 @@ mysql:unix_socket=/tmp/mysql.sock;dbname=testdb
     <note>
      <title>Только Unix:</title>
      <para>
-      Если имя хоста установлено как <literal>«localhost»</literal>, то соединение выполняется
-      через сокет домена. Если драйвер PDO_MYSQL скомпилирован с модулем libmysqlclient,
-      то файла сокета будет находиться в папке, скомпилированной libmysqlclient.
-      Если PDO_MYSQL скомпилирован с модулем mysqlnd, сокет по умолчанию
-      можно установить через директиву
-      <link linkend="ini.pdo-mysql.default-socket">pdo_mysql.default_socket</link>.
+      Соединение с сервером выполняется через сокет домена,
+      если имя хоста установили как <literal>"localhost"</literal>.
+      Файла сокета будет лежать в каталоге, в котором скомпилировали клиент libmysqlclient,
+      если драйвер PDO_MYSQL скомпилировали с библиотекой libmysqlclient.
+      Установка сокета по умолчанию будет доступна через директиву
+      <link linkend="ini.pdo-mysql.default-socket">pdo_mysql.default_socket</link>,
+      если драйвер PDO_MYSQL скомпилировали с драйвером mysqlnd.
      </para>
    </note>
    </refsect1>
