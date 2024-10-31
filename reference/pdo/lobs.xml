@@ -3,35 +3,37 @@
 <!-- Reviewed: no -->
 
 <chapter xml:id="pdo.lobs" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Большие объекты (LOB)</title>
+ <title>Большие объекты</title>
  <para>
-   Иногда для работы приложения необходимо хранить "большие" порции данных в базе.
-   Обычно, под большим понимают объем данных "около 4 килобайт или больше", хотя
-   некоторые базы данных могут спокойно обрабатывать до 32 килобайт, прежде чем
-   размер данных становится "большим". Большие объекты могут быть текстовыми или
-   двоичными. PDO позволяет работать с такими объектами путём установки типа данных
-   <constant>PDO::PARAM_LOB</constant> в методах
-   <methodname>PDOStatement::bindParam</methodname> или
-   <methodname>PDOStatement::bindColumn</methodname>.
-   <constant>PDO::PARAM_LOB</constant> сообщает PDO, что нужно пометить эти данные,
-   как поток. И соответственно работать с такими объектами можно, используя
-   <link linkend="ref.stream">API потоков PHP</link>.
+  Иногда для работы приложения требуется хранить «большие» порции данных в базе.
+  Обычно, под большим понимают объем данных «около 4 килобайтов или больше»,
+  хотя отдельные базы данных спокойно обрабатывают до 32 килобайтов, прежде чем
+  размер данных становится «большим». Большие объекты (англ. Large Objects, LOB) бывают
+  текстовыми или двоичными. Модуль PDO разрешает работать с такими объектами путём установки
+  типа данных <constant>PDO::PARAM_LOB</constant> в методах
+  <methodname>PDOStatement::bindParam</methodname>
+  или <methodname>PDOStatement::bindColumn</methodname>.
+  Флаг <constant>PDO::PARAM_LOB</constant> сообщает объекту PDO, что данные требуется
+  отобразить в виде потока, чтобы управлять данными
+  <link linkend="ref.stream">через API-интерфейс PHP-потоков</link>.
  </para>
  <para>
   <example>
-   <title>Вывод изображения, хранящегося в базе данных</title>
+   <title>Вывод изображения, которое хранится в базе данных</title>
    <para>
-    В этом примере переменной $lob задают в соответствие большой объект LOB, а
-    затем отсылают её в браузер с помощью функции
-    <function>fpassthru</function>. Так как LOB представляется в виде потока,
-    с ним могут работать такие функции, как
-    <function>fgets</function>, <function>fread</function> и
-    <function>stream_get_contents</function>.
+    В примере LOB-объект связывают с переменной $lob,
+    а затем отправляют в браузер функцией <function>fpassthru</function>.
+    Поскольку PDO-объект представил LOB-объект как поток,
+    с большим объектом получится работать функциями наподобие
+    <function>fgets</function>, <function>fread</function>
+    и <function>stream_get_contents</function>.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $db = new PDO('odbc:SAMPLE', 'db2inst1', 'ibmdb2');
+
 $stmt = $db->prepare("select contenttype, imagedata from images where id=?");
 $stmt->execute(array($_GET['id']));
 $stmt->bindColumn(1, $type, PDO::PARAM_STR, 256);
@@ -39,7 +41,9 @@ $stmt->bindColumn(2, $lob, PDO::PARAM_LOB);
 $stmt->fetch(PDO::FETCH_BOUND);
 
 header("Content-Type: $type");
+
 fpassthru($lob);
+
 ?>
 ]]>
    </programlisting>
@@ -49,19 +53,21 @@ fpassthru($lob);
   <example>
    <title>Вставка изображения в базу данных</title>
    <para>
-    В этом примере будет открывается файл с изображением, его файловый указатель
-    передаётся PDO, который в свою очередь вставляет изображение в базу в виде LOB.
-    PDO извлечёт содержимое файла и поместит его в базу наиболее эффективным
-    способом.
+    Следующий пример открывает файл и передаёт дескриптор файла в объект PDO
+    для вставки файла в базу данных в виде LOB-объекта. Объект PDO
+    извлечёт содержимое файла и вставит его в базу данных самым
+    эффективным способом.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$db = new PDO('odbc:SAMPLE', 'db2inst1', 'ibmdb2');
-$stmt = $db->prepare("insert into images (id, contenttype, imagedata) values (?, ?, ?)");
-$id = get_new_id(); // какая-то функция для выделения нового ID
 
-// предположим, что мы находимся на странице загрузки файлов на удалённый сервер
+$db = new PDO('odbc:SAMPLE', 'db2inst1', 'ibmdb2');
+
+$stmt = $db->prepare("insert into images (id, contenttype, imagedata) values (?, ?, ?)");
+$id = get_new_id(); // Некоторая функция, которая выделит новый ID
+
+// Предположим, что находимся на странице загрузки файлов на удалённый сервер
 
 $fp = fopen($_FILES['file']['tmp_name'], 'rb');
 
@@ -72,6 +78,7 @@ $stmt->bindParam(3, $fp, PDO::PARAM_LOB);
 $db->beginTransaction();
 $stmt->execute();
 $db->commit();
+
 ?>
 ]]>
    </programlisting>
@@ -81,21 +88,25 @@ $db->commit();
   <example>
    <title>Вставка изображения в базу данных: Oracle</title>
    <para>
-    В случае с базами Oracle требуется несколько иной синтаксис для извлечения
-    содержимого файла и помещения в базу. Также необходимо выполнять вставку
-    в рамках транзакции, иначе вставленный LOB будет зафиксирован в базе с нулевой
-    длиной, так как если не обозначить границы транзакции, изменения будут
-    фиксироваться после каждого выполненного запроса.
+    БД Oracle требует другой синтаксис для извлечения содержимого файла
+    в виде LOB-объекта и вставки большого объекта в базу данных.
+    Вставку больших объектов в БД выполняют в рамках транзакции,
+    иначе БД зафиксирует LOB-объект, который только что вставила, с нулевой длиной —
+    как часть неявной фиксации, которая возникает при выполнении каждого запроса.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$db = new PDO('oci:', 'scott', 'tiger');
-$stmt = $db->prepare("insert into images (id, contenttype, imagedata) " .
-"VALUES (?, ?, EMPTY_BLOB()) RETURNING imagedata INTO ?");
-$id = get_new_id(); // какая-то функция для выделения ID
 
-// предположим, что мы находимся на странице загрузки файлов на удалённый сервер
+$db = new PDO('oci:', 'scott', 'tiger');
+
+$stmt = $db->prepare("insert into images (id, contenttype, imagedata) " .
+"VALUES (?, ?, EMPTY_BLOB()) RETURNING imagedata INTO ?")
+;
+
+$id = get_new_id(); // Некоторая функция, которая выделит новый ID
+
+// Предположим, что находимся на странице загрузки файлов на удалённый сервер
 
 $fp = fopen($_FILES['file']['tmp_name'], 'rb');
 
@@ -106,6 +117,7 @@ $stmt->bindParam(3, $fp, PDO::PARAM_LOB);
 $db->beginTransaction();
 $stmt->execute();
 $db->commit();
+
 ?>
 ]]>
    </programlisting>
