@@ -22,8 +22,8 @@
   или изменяют в первый раз. С точки зрения абстракции ленивые объекты-призраки
   неотличимы от неленивых: с такими объектами работают, не зная, что они ленивые,
   что разрешает коду передавать и обрабатывать такие объекты без знания о лени объектов.
-  Ленивые прокси тоже прозрачны, но когда потребуется отличить один такой объект от другого,
-  соблюдают осторожность, поскольку у прокси-объекта и его реального экземпляра
+  Ленивые прокси тоже прозрачны, но когда потребуется отличить ленивый прокси-объект от реального
+  экземпляра, соблюдают осторожность, поскольку у прокси-объекта и его реального экземпляра
   разные идентификаторы.
  </simpara>
 
@@ -194,112 +194,111 @@ var_dump($post->id);
   </simpara>
 
   <simpara>
-   <emphasis>Lazy proxies</emphasis>, once initialized, act as proxies to
-   a real instance: any operation on an initialized lazy proxy is forwarded
-   to the real instance. The creation of the real instance can be delegated
-   to another party, making this strategy useful in cases where lazy ghosts
-   are unsuitable. Although lazy proxies are nearly as transparent as lazy
-   ghosts, caution is needed when their identity is used, as the proxy and
-   its real instance have distinct identities.
+   <emphasis>Ленивые прокси</emphasis> после инициализации действуют как прокси
+   до реального экземпляра: операции на инициализированном ленивом прокси перенаправляются
+   на реальный экземпляр. Создание реального экземпляра разрешается делегировать другой стороне,
+   что делает эту стратегию полезной, когда ленивые призраки не подходят.
+   Хотя ленивые прокси почти так же прозрачны, как ленивые призраки, потребуется осторожность,
+   когда потребуется отличить ленивый прокси от реального объекта, поскольку у прокси-объекта
+   и его реального экземпляра разные идентификаторы.
   </simpara>
  </sect2>
 
  <sect2 xml:id="language.oop5.lazy-objects.lifecycle">
-  <title>Lifecycle of Lazy Objects</title>
+  <title>Жизненный цикл ленивых объектов</title>
 
   <simpara>
-   Objects can be made lazy at instantiation time using
-   <methodname>ReflectionClass::newLazyGhost</methodname> or
-   <methodname>ReflectionClass::newLazyProxy</methodname>, or after
-   instantiation by using
-   <methodname>ReflectionClass::resetAsLazyGhost</methodname> or
-   <methodname>ReflectionClass::resetAsLazyProxy</methodname>. Following this, a
-   lazy object can become initialized through one of the following operations:
+   Объекты делают ленивыми либо сразу — путём вызова метода
+   <methodname>ReflectionClass::newLazyGhost</methodname>
+   или <methodname>ReflectionClass::newLazyProxy</methodname>,
+   либо создают а затем передают реальный объект в метод
+   <methodname>ReflectionClass::resetAsLazyGhost</methodname>
+   или <methodname>ReflectionClass::resetAsLazyProxy</methodname>. Следующие операции
+   инициализируют ленивый объект:
   </simpara>
 
   <simplelist>
    <member>
-    Interacting with the object in a way that triggers automatic initialization. See
-    <link linkend="language.oop5.lazy-objects.initialization-triggers">Initialization
-    triggers</link>.
+    Взаимодействие с объектом, при котором вызывается автоматическая инициализация.
+    См. «<link linkend="language.oop5.lazy-objects.initialization-triggers">Триггеры инициализации</link>».
    </member>
    <member>
-    Marking all its properties as non-lazy using
-    <methodname>ReflectionProperty::skipLazyInitialization</methodname> or
-    <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
+    Пометка каждого свойства ленивого объекта как неленивое методом
+    <methodname>ReflectionProperty::skipLazyInitialization</methodname>
+    или <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
    </member>
    <member>
-    Calling explicitly <methodname>ReflectionClass::initializeLazyObject</methodname>
-    or <methodname>ReflectionClass::markLazyObjectAsInitialized</methodname>.
+    Явный вызов метода <methodname>ReflectionClass::initializeLazyObject</methodname>
+    или <methodname>ReflectionClass::markLazyObjectAsInitialized</methodname>.
    </member>
   </simplelist>
 
   <simpara>
-   As lazy objects become initialized when all their properties are marked
-   non-lazy, the above methods will not mark an object as lazy if no properties
-   could be marked as lazy.
+   Поскольку ленивые объекты становятся инициализированными,
+   когда каждое свойство ленивого объекта пометили неленивым, приведённые методы не пометят
+   объект как ленивый, если ни одно свойство нельзя пометить ленивым.
   </simpara>
  </sect2>
 
  <sect2 xml:id="language.oop5.lazy-objects.initialization-triggers">
-  <title>Initialization Triggers</title>
+  <title>Триггеры инициализации</title>
 
   <simpara>
-   Lazy objects are designed to be fully transparent to their consumers,
-   so normal operations that observe or modify the object's state will
-   automatically trigger initialization before the operation is performed. This
-   includes, but is not limited to, the following operations:
+   Ленивые объекты спроектировали на 100 % прозрачными для потребителей,
+   поэтому обычные операции, которые отслеживают или изменяют состояние объекта,
+   автоматически инициализируют ленивый обеъект перед выполнением операции.
+   Инициализацию запускает следующий неполный список операций:
   </simpara>
 
   <simplelist>
    <member>
-    Reading or writing a property.
+    Чтение или запись свойства.
    </member>
    <member>
-    Testing if a property is set or unsetting it.
+    Проверка установки свойства или удаление свойства.
    </member>
    <member>
-    Accessing or modifying a property via
+    Доступ к свойству или изменение свойства методами
     <methodname>ReflectionProperty::getValue</methodname>,
     <methodname>ReflectionProperty::getRawValue</methodname>,
-    <methodname>ReflectionProperty::setValue</methodname>,
-    or <methodname>ReflectionProperty::setRawValue</methodname>.
+    <methodname>ReflectionProperty::setValue</methodname>
+    или <methodname>ReflectionProperty::setRawValue</methodname>.
    </member>
    <member>
-    Listing properties with
-    <methodname>ReflectionObject::getProperties</methodname>,
-    <methodname>ReflectionObject::getProperty</methodname>,
-    <function>get_object_vars</function>
+    Получение списка свойств методами
+    <methodname>ReflectionObject::getProperties</methodname>
+    или <methodname>ReflectionObject::getProperty</methodname>,
+    или функцией <function>get_object_vars</function>.
    </member>
    <member>
-    Iterating over properties of an object that does not implement
-    <interfacename>Iterator</interfacename> or
-    <interfacename>IteratorAggregate</interfacename> using
-    <link linkend="control-structures.foreach">foreach</link>.
+    Итерация по свойствам объекта, который не реализует интерфейс
+    <interfacename>Iterator</interfacename>
+    или <interfacename>IteratorAggregate</interfacename>,
+    конструкцией <link linkend="control-structures.foreach">foreach</link>.
    </member>
    <member>
-    Serializing the object with <function>serialize</function>,
-    <function>json_encode</function>, etc.
+    Сериализация ленивого объекта функциями <function>serialize</function>,
+    <function>json_encode</function> или другими.
    </member>
    <member>
-    <link linkend="language.oop5.lazy-objects.cloning">Cloning</link> the
-    object.
+    <link linkend="language.oop5.lazy-objects.cloning">Клонирование</link>
+    ленивого объекта.
    </member>
   </simplelist>
 
   <simpara>
-   Method calls that do not access the object state will not trigger
-   initialization. Similarly, interactions with the object that invoke magic
-   methods or hook functions will not trigger initialization if these methods
-   or functions do not access the object's state.
+   Вызовы методов, которые не обращаются к состоянию объекта, не инициализируют ленивый объект.
+   Аналогично, взаимодействия с объектом, которые вызывают магические методы или функции хука,
+   не инициализируют ленивый объект, если для этих методов или функций не открыт доступ
+   к состоянию объекта.
   </simpara>
 
   <sect3>
-   <title>Non-Triggering Operations</title>
+   <title>Нетриггерные операции</title>
 
    <simpara>
-    The following specific methods or low-level operations allow access or
-    modification of lazy objects without triggering initialization:
+    Следующие специальные методы или низкоуровневые операции получают
+    доступ к ленивым объектам или изменяют ленивые объекты без запуска инициализации:
    </simpara>
 
    <simplelist>
