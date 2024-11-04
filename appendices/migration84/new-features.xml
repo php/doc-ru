@@ -2,47 +2,49 @@
 <!-- EN-Revision: b04b46c9645e966ed1ae37dd41de7be1da9de22e Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration84.new-features">
- <title>New Features</title>
+ <title>Новая функциональность</title>
 
  <!-- TODO: Core features for 8.4 -->
  <sect2 xml:id="migration84.new-features.core">
-  <title>PHP Core</title>
+  <title>Ядро PHP</title>
 
   <!-- RFC: https://wiki.php.net/rfc/property-hooks -->
   <sect3 xml:id="migration84.new-features.core.property-hooks">
-   <title>Property Hooks</title>
+   <title>Хуки для свойств объектов</title>
 
    <simpara>
-    Object properties may now have additional logic associated with their
-    <literal>get</literal> and <literal>set</literal> operations.
-    Depending on the usage, that may or may not make the property virtual,
-    that is, it has no backing value at all.
+    Операциям чтения и записи свойств объектов теперь разрешили добавлять логику поведения.
+    Дополнительную логику добавляют через хук <literal>get</literal>, который срабатывает при чтении свойства,
+    и хук <literal>set</literal>, который срабатывает при записи значения в свойство объекта.
+    Хуки умеют делать свойства виртуальными — без реальных значений.
    </simpara>
 
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Person
 {
-    // A "virtual" property.  It may not be set explicitly.
+    // «Виртуальное» свойство. Невозможно установить значение виртуального свойства явным образом
     public string $fullName {
         get => $this->firstName . ' ' . $this->lastName;
     }
 
-    // All write operations go though this hook, and the result is what is written.
-    // Read access happens normally.
+    // Каждая операция записи значения свойства пройдёт через хук. В свойство в итоге запишется значение, которое вернётся из хука.
+    // Доступ к свойству для чтения значения проходит в стандартном режиме
     public string $firstName {
-        set => ucfirst(strtolower($value));
+        set => mb_ucfirst(strtolower($value));
     }
 
-    // All write operations go through this hook, which has to write to the backing value itself.
-    // Read access happens normally.
+    // Каждая операция записи значения свойства пройдёт через хук, который сам запишет реальное значение свойства.
+    // Доступ к свойству для чтения значения проходит в стандартном режиме
     public string $lastName {
         set {
             if (strlen($value) < 2) {
-                throw new \InvalidArgumentException('Too short');
+                throw new \InvalidArgumentException('Слишком короткая фамилия');
             }
+
             $this->lastName = $value;
         }
     }
@@ -50,10 +52,13 @@ class Person
 
 $p = new Person();
 
-$p->firstName = 'peter';
-print $p->firstName; // Prints "Peter"
-$p->lastName = 'Peterson';
-print $p->fullName; // Prints "Peter Peterson"
+$p->firstName = 'пётр';
+print $p->firstName; // Конструкция выведет "Пётр"
+
+$p->lastName = 'Петров';
+print $p->fullName; // Конструкция выведет "Пётр Петров"
+
+?>
 ]]>
     </programlisting>
    </informalexample>
@@ -61,17 +66,21 @@ print $p->fullName; // Prints "Peter Peterson"
 
   <!-- RFC: https://wiki.php.net/rfc/asymmetric-visibility-v2 -->
   <sect3 xml:id="migration84.new-features.core.asymmetric-property-visibility">
-   <title>Asymmetric Property Visibility</title>
+   <title>Асимметричная видимость свойств объектов</title>
 
    <simpara>
-    Object properties may now have their <literal>set</literal> visibility controlled separately from the <literal>get</literal> visibility.
+    Видимостью свойств объектов для операций записи значения — <literal>set</literal>
+    теперь разрешили управлять отдельно от видимости свойств для операций чтения — <literal>get</literal>.
    </simpara>
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Example
 {
+    // Первый модификатор управляет видимостью свойства для чтения, второй — для записи.
+    // Видимость для чтения нельзя сужать сильнее видимости для записи
     public protected(set) string $name;
 
     public function __construct(string $name)
@@ -79,6 +88,8 @@ class Example
         $this->name = $name;
     }
 }
+
+?>
 ]]>
     </programlisting>
    </informalexample>
@@ -86,21 +97,21 @@ class Example
 
   <!-- RFC: https://wiki.php.net/rfc/lazy-objects -->
   <sect3 xml:id="migration84.new-features.core.lazy-objects">
-   <title>Lazy Objects</title>
+   <title>Ленивые объекты</title>
    <simpara>
-    It is now possible to create objects whose initialization is deferred until
-    they are accessed. Libraries and frameworks can leverage these lazy objects
-    to defer fetching data or dependencies required for initialization.
+    С PHP 8.4.0 разрешили создавать объекты, инициализация которых откладывается
+    до обращения к объекту.
+    За счёт ленивых объектов библиотеки и фреймворки получают доступ к отсрочке
+    получения данных или зависимостей, которые требуются для инициализации.
    </simpara>
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Example
 {
-    public function __construct(private int $data)
-    {
-    }
+    public function __construct(private int $data) {}
 
     // ...
 }
@@ -108,12 +119,15 @@ class Example
 $initializer = static function (Example $ghost): void {
     // Fetch data or dependencies
     $data = ...;
+
     // Initialize
     $ghost->__construct($data);
 };
 
 $reflector = new ReflectionClass(Example::class);
 $object = $reflector->newLazyGhost($initializer);
+
+?>
 ]]>
     </programlisting>
    </informalexample>
@@ -121,75 +135,82 @@ $object = $reflector->newLazyGhost($initializer);
 
   <!-- RFC: https://wiki.php.net/rfc/deprecated_attribute -->
   <sect3 xml:id="migration84.new-features.core.deprecated-attribute">
-   <title><code>#[\Deprecated]</code> attribute</title>
+   <title><code>Атрибут #[\Deprecated]</code></title>
 
    <simpara>
-    The new <classname>Deprecated</classname> attribute can be used to mark functions, methods,
-    and class constants as deprecated. The behavior of functionality deprecated with this
-    attribute matches the behavior of the existing deprecation mechanism for functionality
-    provided by PHP itself. The only exception is that the emitted error code is
-    <constant>E_USER_DEPRECATED</constant> instead of <constant>E_DEPRECATED</constant>.
+    Новый атрибут <classname>Deprecated</classname> помечает функции, методы
+    и константы классов устаревшими. Поведение функциональности, которую пометили устаревшей
+    этим атрибутом, совпадает с поведением механизма устаревания функциональности,
+    которую предоставляет сам PHP. Единственное отличие состоит в том, что вместо кода ошибки
+    <constant>E_DEPRECATED</constant> PHP выдаст ошибку уровня
+    <constant>E_USER_DEPRECATED</constant>.
    </simpara>
 
    <simpara>
-    Existing deprecations in functionality provided by PHP itself have been updated to use
-    the attribute, improving the emitted error messages by including a short explanation.
+    Функциональность самого PHP, которая устарела прежде, обновили
+    и пометили этим атрибутом, что улучшило выдаваемые сообщения об ошибках
+    за счёт включения краткого пояснения.
    </simpara>
   </sect3>
 
   <!-- RFC: https://wiki.php.net/rfc/rfc1867-non-post -->
   <sect3 xml:id="migration84.new-features.core.rfc1867">
-   <title>Parsing RFC1867 (multipart) requests in non-POST HTTP requests</title>
+   <title>
+    Разбор HTTP-запросов, метод которых отличается от POST,
+    при передаче многокомпонентного содержимого по стандарту RFC1867
+   </title>
 
    <!-- TODO: expand? -->
    <simpara>
-    Added <function>request_parse_body</function> function that allows parsing
-    RFC1867 (multipart) requests in non-POST HTTP requests.
+    Для разбора multipart-запросов по протоколу HTTP, которые определяет
+    стандарт RFC1867 (multipart) и метод HTTP-запроса которых отличается от метода POST,
+    добавили функцию <function>request_parse_body</function>.
    </simpara>
   </sect3>
 
   <!-- RFC: https://wiki.php.net/rfc/new_without_parentheses -->
   <sect3 xml:id="migration84.new-features.core.new-chaining">
-   <title>Chaining &new; expressions without parentheses</title>
+   <title>Объединение в цепочку вызовов выражения &new; без круглых скобок</title>
 
    <!-- TODO: expand and examples? -->
    <simpara>
-    New expressions with constructor arguments are now dereferencable, meaning
-    they allow chaining method calls, property accesses, etc. without enclosing
-    the expression in parentheses.
+    Выражениям, которыми создают новый объект с аргументами конструктора, теперь доступно разыменование,
+    поэтому такие выражения разрешают по цепочке вызывать методы, получать доступ к свойствам объекта,
+    и обращаться к другим членам объекта без заключения выражения в круглые скобки.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.new-features.core.debug-weakref">
-   <title>Improved Debugging Info for <classname>WeakReference</classname></title>
+   <title>Улучшение отладочной информации об объектах класса <classname>WeakReference</classname></title>
 
    <!-- TODO: expand and examples? -->
    <simpara>
-    Getting the debug info for <classname>WeakReference</classname> will now
-    also output the object it references, or &null; if the reference is no
-    longer valid.
+    Получение отладочной информации об слабых ссылках, которые представляет класс <classname>WeakReference</classname>,
+    теперь также выведет объект, на который ссылается слабая ссылка, или &null;, если ссылка больше
+    недействительна.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.new-features.core.debug-closure">
-   <title>Improved Debugging Info for <classname>Closure</classname></title>
+   <title>Улучшение отладочной информации об объектах класса <classname>Closure</classname></title>
 
    <!-- TODO: expand and examples? -->
    <simpara>
-    The output of <methodname>Closure::__debugInfo</methodname> now includes
-    the name, file, and line of the <classname>Closure</classname>.
+    Вывод магического метода <methodname>Closure::__debugInfo</methodname> теперь включает
+    название функции или метода, который вернул замыкание <classname>Closure</classname>,
+    а также путь к файлу и строку, на которой определили замыкание.
    </simpara>
   </sect3>
 
   <!-- Is this really a feature? Should this be moved to other changes? -->
   <sect3 xml:id="migration84.new-features.core.multiple-namespaces-symbols">
-   <title>Defining Identical Symbols in Different Namespace Blocks</title>
+   <title>Определение идентичных символов в разных блоках пространства имён</title>
 
    <!-- TODO: expand and examples? -->
    <simpara>
-    Exiting a namespace now clears seen symbols.
-    This allows using a symbol in a namespace block, even if a previous
-    namespace block declared a symbol with the same name.
+    Выход из пространства имён теперь очищает видимые символы.
+    Это разрешает использовать символ в блоке пространства имён, даже если предыдущий блок
+    пространства имён объявил символ с тем же именем.
     <!-- See Zend/tests/use_function/ns_end_resets_seen_symbols_1.phpt. -->
    </simpara>
   </sect3>
@@ -197,43 +218,43 @@ $object = $reflector->newLazyGhost($initializer);
  </sect2>
 
  <sect2 xml:id="migration84.new-features.curl">
-  <title>cURL</title>
+  <title>Модуль cURL</title>
 
   <simpara>
-   <function>curl_version</function> returns an additional
-   <literal>feature_list</literal> value, which is an associative array
-   of all known cURL features, and whether they are supported (&true;)
-   or not (&false;).
+   Функция <function>curl_version</function> возвращает дополнительное
+   значение <literal>feature_list</literal> — ассоциативный массив
+   со списком известных функций cURL, и поддерживаются ли они: &true;, если да,
+   или &false;, если нет.
   </simpara>
 
   <simpara>
-   Added <constant>CURL_HTTP_VERSION_3</constant> and
-   <constant>CURL_HTTP_VERSION_3ONLY</constant> constants (available
-   since libcurl 7.66 and 7.88) as available options for
-   <constant>CURLOPT_HTTP_VERSION</constant>.
+   Добавили константы <constant>CURL_HTTP_VERSION_3</constant>
+   и <constant>CURL_HTTP_VERSION_3ONLY</constant> (доступны
+   с libcurl 7.66 и 7.88) как доступные флаги
+   для опции <constant>CURLOPT_HTTP_VERSION</constant>.
   </simpara>
 
   <simpara>
-   Added <constant>CURLOPT_PREREQFUNCTION</constant> as a cURL option that
-   accepts a <type>callable</type> to be called after the connection is made,
-   but before the request is sent.
-   This callable must return either <constant>CURL_PREREQFUNC_OK</constant> or
-   <constant>CURL_PREREQFUNC_ABORT</constant> to allow or abort the request.
+   Добавили константу <constant>CURLOPT_PREREQFUNCTION</constant> — опция модуля cURL,
+   которая принимает значение с типом <type>callable</type>, которое вызовет после установки соединения,
+   но до отправки запроса. К функции обратного вызова предъявляется требование:
+   вернуть или значение <constant>CURL_PREREQFUNC_OK</constant>, чтобы разрешить,
+   или значение <constant>CURL_PREREQFUNC_ABORT</constant>, чтобы прервать запрос.
   </simpara>
 
   <simpara>
-   Added <constant>CURLOPT_SERVER_RESPONSE_TIMEOUT</constant>,
-   which was formerly known as <constant>CURLOPT_FTP_RESPONSE_TIMEOUT</constant>.
-   Both constants hold the same value.
+   Добавили опцию <constant>CURLOPT_SERVER_RESPONSE_TIMEOUT</constant>,
+   которая заменила опцию с названием <constant>CURLOPT_FTP_RESPONSE_TIMEOUT</constant>.
+   Обе константы содержат одно и то же значение.
   </simpara>
 
   <para>
-   Added <constant>CURLOPT_DEBUGFUNCTION</constant> as a cURL option that
-   accepts a <type>callable</type> that gets called during the request lifetime
-   with the <classname>CurlHandle</classname> object,
-   an integer containing the debug message type, and a string containing the
-   debug message.
-   The debug message type is one of the following constants:
+   Добавили константу <constant>CURLOPT_DEBUGFUNCTION</constant> — опция модуля cURL,
+   которая принимает значение с типом <type>callable</type>. Callback-функция
+   вызывается в течение жизни запроса, который обрабатывается объектом <classname>CurlHandle</classname>.
+   Функция обратного вызова получает целое число, которое содержит тип отладочного сообщения,
+   и строку, которая содержит отладочное сообщение.
+   Тип отладочного сообщения получает значение константы из следующего списка:
    <simplelist>
     <member><constant>CURLINFO_TEXT</constant></member>
     <member><constant>CURLINFO_HEADER_IN</constant></member>
@@ -243,39 +264,39 @@ $object = $reflector->newLazyGhost($initializer);
     <member><constant>CURLINFO_SSL_DATA_IN</constant></member>
     <member><constant>CURLINFO_SSL_DATA_OUT</constant></member>
    </simplelist>
-   Once this option is set, <constant>CURLINFO_HEADER_OUT</constant>
-   must not be set because it uses the same libcurl functionality.
+   При установке отладочной опции нельзя устанавливать параметр <constant>CURLINFO_HEADER_OUT</constant>,
+   потому что параметр использует ту же функциональность библиотеки libcurl.
   </para>
 
   <simpara>
-   The <function>curl_getinfo</function> now returns an additional
-   <literal>posttransfer_time_us</literal> key, containing the number of
-   microseconds from the start until the last byte is sent.
-   When a redirect is followed, the time from each request is added together.
-   This value can also be retrieved by passing
-   <constant>CURLINFO_POSTTRANSFER_TIME_T</constant> to the
-   <function>curl_getinfo</function> <parameter>option</parameter> parameter.
-   This requires libcurl 8.10.0 or later.
+   Функция <function>curl_getinfo</function> теперь возвращает дополнительный
+   ключ <literal>posttransfer_time_us</literal>, который содержит количество
+   микросекунд от начала передачи до отправки последнего байта.
+   При перенаправлениях время каждого запроса суммируется.
+   Это значение также возвращает функция <function>curl_getinfo</function>
+   при вызове с аргументом <constant>CURLINFO_POSTTRANSFER_TIME_T</constant>
+   для параметра <parameter>option</parameter>.
+   Для этого требуется библиотека libcurl 8.10.0 или новее.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.dom">
-  <title>DOM</title>
+  <title>Модуль DOM</title>
 
   <!-- RFC: https://wiki.php.net/rfc/domdocument_html5_parser -->
   <!-- RFC: https://wiki.php.net/rfc/opt_in_dom_spec_compliance -->
   <simpara>
-   Added the <package>Dom</package> namespace with new classes as counterparts
-   to the existing DOM classes (e.g. <classname>Dom\Node</classname> is the new
-   <classname>DOMNode</classname>).
-   These classes are compatible with HTML 5 and are WHATWG spec-compliant;
-   solving long-standing bugs in the DOM extension.
-   The old DOM classes remain available for backwards compatibility.
+   В модуль добавили пространство имён <package>Dom</package> с новыми классами наподобие
+   <classname>Dom\Node</classname>, который работает аналогично прежнему классу
+   <classname>DOMNode</classname>. Новые классы совместимы с языком разметки HTML 5
+   и соответствуют спецификации WHATWG; новые классы
+   решают давние ошибки в модуле DOM.
+   Старые классы модуля DOM остаются доступны в целях сохранения обратной совместимости.
   </simpara>
 
   <para>
-   Added the <methodname>DOMNode::compareDocumentPosition</methodname>
-   with its associated constants:
+   Добавили метод <methodname>DOMNode::compareDocumentPosition</methodname>
+   и связанные с ним константы:
    <simplelist>
     <member><constant>DOMNode::DOCUMENT_POSITION_DISCONNECTED</constant></member>
     <member><constant>DOMNode::DOCUMENT_POSITION_PRECEDING</constant></member>
@@ -288,213 +309,211 @@ $object = $reflector->newLazyGhost($initializer);
 
   <!-- RFC: https://wiki.php.net/rfc/improve_callbacks_dom_and_xsl -->
   <simpara>
-   It is now possible to pass any callable to
-   <methodname>DOMXPath::registerPhpFunctions</methodname>.
+   Метод <methodname>DOMXPath::registerPhpFunctions</methodname> теперь принимает callable-значения.
 
-   Furthermore, with <methodname>DOMXPath::registerPhpFunctionNs</methodname>,
-   callbacks can now be registered that will use native function call syntax
-   rather than using <code>php:function('name')</code>.
+   Кроме того, метод <methodname>DOMXPath::registerPhpFunctionNs</methodname>
+   теперь умеет регистрировать callback-функции, которые будут использовать свой
+   синтаксис вызова функции, а не вызовы вроде <code>php:function('name')</code>.
   </simpara>
  </sect2>
 
  <!-- TODO: Should this be moved to "other changes" in the SAPI section? - Girgias -->
  <sect2 xml:id="migration84.new-features.fpm">
-  <title>FPM</title>
+  <title>Модуль FPM</title>
 
   <simpara>
-   Flushing headers without a body will now succeed.
+   Теперь сброс, или очистка, заголовков без тела выполнится успешно.
    <!-- See GH-12785. -->
   </simpara>
 
   <simpara>
-   Status page has a new field to display a memory peak.
+   На странице статуса появилось новое поле, которое показывает пиковое значение объёма выделяемой памяти.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.intl">
-  <title>Intl</title>
+  <title>Модуль Intl</title>
 
   <simpara>
-   Added the <constant>NumberFormatter::ROUND_HALFODD</constant> to
-   complement the existing <constant>NumberFormatter::ROUND_HALFEVEN</constant>
-   functionality.
+   Добавили режим округления <constant>NumberFormatter::ROUND_HALFODD</constant>,
+   который дополнил режим <constant>NumberFormatter::ROUND_HALFEVEN</constant>,
+   который появился прежде.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.openssl">
-  <title>OpenSSL</title>
+  <title>Модуль OpenSSL</title>
 
   <simpara>
-   Added support for Curve25519 + Curve448 based keys.
-   Specifically x25519, ed25519, x448 and ed448 fields are supported in
+   Добавили поддержку ключей на основе эллиптических кривых Curve25519 + Curve448.
+   В частности, поля x25519, ed25519, x448 и ed448 поддерживаются в функциях
    <function>openssl_pkey_new</function>,
    <function>openssl_pkey_get_details</function>,
-   <function>openssl_sign</function>, and
-   <function>openssl_verify</function> were extended to support those keys.
+   <function>openssl_sign</function>
+   и <function>openssl_verify</function>, которые расширили для поддержки этих ключей.
   </simpara>
 
   <simpara>
-   Implement PASSWORD_ARGON2 password hashing.
-   Requires OpenSSL 3.2 and NTS build.
+   Реализовали хеширование паролей алгоритмом PASSWORD_ARGON2.
+   Для этого требуется модуль OpenSSL 3.2 и NTS-сборка (англ. сокр.: Non-Thread Safe).
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.pcre">
-  <title>PCRE</title>
+  <title>Модуль PCRE</title>
 
   <simpara>
-   The bundled pcre2lib has been updated to version 10.44.
-   As a consequence, LoongArch JIT support has been added, spaces
-   are now allowed between braces in Perl-compatible items, and
-   variable-length lookbehind assertions are now supported.
+   Библиотеку pcre2lib, которая поставляется в комплекте с PHP, обновили до версии 10.44.
+   Поэтому добавили поддержку JIT-компилятором процессорной архитектуры LoongArch,
+   в Perl-совместимых элементах между фигурными скобками разрешили пробелы
+   и теперь поддерживаются ретроспективные проверки переменной длины.
   </simpara>
 
   <simpara>
-   With pcre2lib version 10.44, the maximum length of named capture groups
-   has changed from <literal>32</literal> to <literal>128</literal>.
+   В библиотеке pcre2lib версии 10.44 максимальную длину меток именованных групп захвата
+   изменили с <literal>32</literal> до <literal>128</literal> символов.
   </simpara>
 
   <simpara>
-   Added support for the <literal>r</literal> (PCRE2_EXTRA_CASELESS_RESTRICT)
-   modifier, as well as the <literal>(?r)</literal> mode modifier.
-   When enabled along with the case-insensitive modifier (<literal>i</literal>),
-   the expression locks out mixing of ASCII and non-ASCII characters.
+   Добавили поддержку модификатора <literal>r</literal> (PCRE2_EXTRA_CASELESS_RESTRICT)
+   и модификатора режима <literal>(?r)</literal>.
+   При включении вместе с модификатором (<literal>i</literal>), который включает регистронезависимый поиск,
+   выражение блокирует смешивание ASCII-символов и символов, которые не входят в кодировку ASCII.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.pdo">
-  <title>PDO</title>
+  <title>Модуль PDO</title>
 
   <!-- RFC: https://wiki.php.net/rfc/pdo_driver_specific_subclasses -->
   <simpara>
-   Added support for driver-specific subclasses.
-   This RFC adds subclasses for PDO in order to better support
-   database-specific functionalities.
-   The new classes are instantiatable either via calling the
-   <methodname>PDO::connect</methodname> method or by instantiating an instance
-   of the driver-specific subclass directly.
+   Добавили подклассы, характерные для драйверов.
+   Новые классы модуля PDO улучшают поддержку функциональности,
+   характерной для конкретных баз данных.
+   Новые классы создают или путём вызова метода <methodname>PDO::connect</methodname>,
+   или создают экземпляр конкретного подкласса конкретного драйвера.
   </simpara>
 
   <!-- RFC: https://wiki.php.net/rfc/pdo_driver_specific_parsers -->
   <para>
-   Added support for driver specific SQL parsers.
-   The default parser supports:
+   Добавили ​​поддержку SQL-парсеров, характерных для конкретных драйверов.
+   Парсер по умолчанию поддерживает:
    <simplelist>
     <member>
-     single and double-quoted literals, with doubling as escaping mechanism
+     литералы в одинарных и двойных кавычках с удвоением в качестве механизма экранирования
     </member>
     <member>
-     two-dashes and non-nested C-style comments
+     комментарии, которые начинаются с двух дефисов, и невложенные комментарии в стиле языка C
     </member>
    </simplelist>
   </para>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.pdo-mysql">
-  <title>PDO_MYSQL</title>
+  <title>Драйвер PDO_MYSQL</title>
 
   <!-- RFC: https://wiki.php.net/rfc/pdo_driver_specific_parsers -->
   <para>
-   Added a custom parser supporting:
+   Добавили пользовательский парсер, который поддерживает:
    <simplelist>
     <member>
-     single and double-quoted literals, with doubling and backslash as escaping
-     mechanism
+     литералы в одинарных и двойных кавычках с удвоением и обратным слешем
+     в качестве механизма экранирования
     </member>
     <member>
-     backtick literal identifiers and with doubling as escaping mechanism
+     литеральные идентификаторы с обратными машинописными апострофами, или обратными кавычками,
+     с удвоением в качестве механизма экранирования
     </member>
     <member>
-     two dashes followed by at least 1 whitespace, non-nested C-style comments,
-     and hash-comments
+     комментарии, которые начинаются с двух дефисов, за которыми следует как минимум один пробел,
+     невложенные комментарии в стиле языка C и комментарии, которые начинаются с символа решётки
     </member>
    </simplelist>
   </para>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.pdo-pgsql">
-  <title>PDO_PGSQL</title>
+  <title>Драйвер PDO_PGSQL</title>
 
   <!-- RFC: https://wiki.php.net/rfc/pdo_driver_specific_parsers -->
   <para>
-   Added a custom parser supporting:
+   Добавили парсера, который поддерживает:
    <simplelist>
     <member>
-     single and double-quoted literals, with doubling as escaping mechanism
+     литералы в одинарных и двойных кавычках с удвоением в качестве механизма экранирования
     </member>
     <member>
-     C-style "escape" string literals (<literal>E'string'</literal>)
+     «экранирование» строковых литералов в стиле языка C: <literal>E'string'</literal>
     </member>
     <member>
-     dollar-quoted string literals
+     строковые литералы между знаками долларов
     </member>
     <member>
-     two-dashes and C-style comments (non-nested)
+     Комментарии, которые начинаются с двух дефисов, и невложенные комментарии в стиле языка C
     </member>
     <member>
-     support for <literal>??</literal> as escape sequence for the
-     <literal>?</literal> operator
+     поддержку последовательности символов <literal>??</literal> как последовательности,
+     которой экранируется оператор <literal>?</literal>
     </member>
    </simplelist>
   </para>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.pdo-sqlite">
-  <title>PDO_SQLITE</title>
+  <title>Драйвер PDO_SQLITE</title>
 
   <!-- RFC: https://wiki.php.net/rfc/pdo_driver_specific_parsers -->
   <para>
-   Added a custom parser supporting:
+   Добавили пользовательский парсер, который поддерживает:
    <simplelist>
     <member>
-     single, double-quoted, and backtick literals, with doubling as
-     escaping mechanism
+     литералы в одинарных, двойных и обратных кавычках с удвоением в качестве
+     механизма экранирования
     </member>
     <member>
-     square brackets quoting for identifiers
+     идентификаторы в квадратных скобках
     </member>
     <member>
-     two-dashes and C-style comments (non-nested)
+     Комментарии, которые начинаются с двух дефисов, и невложенные комментарии в стиле языка C
     </member>
    </simplelist>
   </para>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.phar">
-  <title>Phar</title>
+  <title>Модуль Phar</title>
 
   <simpara>
-   Added support for the Unix timestamp extension for Zip archives.
+   Добавили поддержку модуля меток времени Unix для Zip-архивов.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.readfile">
-  <title>Readfile</title>
+  <title>Модуль Readfile</title>
 
   <simpara>
-   Added ability to change the <literal>.php_history</literal> path through
-   the <envar>PHP_HISTFILE</envar> environment variable.
+   Добавили поддержку изменения пути <literal>.php_history</literal>
+   через переменную окружения <envar>PHP_HISTFILE</envar>.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.reflection">
-  <title>Reflection</title>
+  <title>Модуль Reflection</title>
 
   <simpara>
-   <classname>ReflectionAttribute</classname> now contains a
-   <property>name</property> property to improve the debugging experience.
+   Класс <classname>ReflectionAttribute</classname> теперь содержит
+   свойство <property>name</property>, чтобы улучшить опыт отладки.
   </simpara>
 
   <simpara>
-   <methodname>ReflectionClassConstant::__toString</methodname> and
-   <methodname>ReflectionProperty::__toString</methodname> now returns the
-   attached doc comments.
+   Методы <methodname>ReflectionClassConstant::__toString</methodname>
+   и <methodname>ReflectionProperty::__toString</methodname> теперь возвращают
+   комментарии, которые прикрепили к документу.
   </simpara>
 
   <!-- RFC: https://wiki.php.net/rfc/lazy-objects -->
   <para>
-   Multiple new methods and constants which are related to the lazy objects
-   feature have been added:
+   Добавили новые методы и константы ленивых объектов:
 
    <simplelist>
     <member>
@@ -538,68 +557,69 @@ $object = $reflector->newLazyGhost($initializer);
  </sect2>
 
  <sect2 xml:id="migration84.new-features.soap">
-  <title>SOAP</title>
+  <title>Модуль SOAP</title>
 
   <simpara>
-   Added support for clark notation for namespaces in class map.
-   It is now possible to specify entries in a class map with clark notation
-   to resolve a type with a specific namespace to a specific class.
-   For example: <code>'{http://example.com}foo' => 'FooClass'</code>.
+   Добавили поддержку нотации Кларка для пространств имён в карте классов.
+
+   В карте классов теперь разрешается указывать записи в нотации Кларка,
+   чтобы тип с конкретным пространством имён разрешался в конкретным класс.
+   Например: <code>'{http://example.com}foo' => 'FooClass'</code>.
   </simpara>
 
   <simpara>
-   Instances of <interfacename>DateTimeInterface</interfacename> that are
-   passed to <literal>xsd:datetime</literal> or similar elements are now
-   serialized as such instead of being serialized as an empty string.
+   Экземпляры интерфейса <interfacename>DateTimeInterface</interfacename>, которые
+   передали в <literal>xsd:datetime</literal> или похожие элементы, теперь
+   сериализуются как таковые, а не как пустая строка.
   </simpara>
 
   <simpara>
-   Session persistence now works with a shared session module.
+   Сохранение сессий теперь работает с общим модулем сессий.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.standard">
-  <title>Standard</title>
+  <title>Стандартные модули</title>
 
   <!-- RFC: https://wiki.php.net/rfc/correctly_name_the_rounding_mode_and_make_it_an_enum -->
   <simpara>
    <!-- Should this use <enumname> -->
-   Added a new <classname>RoundingMode</classname> enum with clearer naming
-   and improved discoverability compared to the
-   <constant>PHP_ROUND_<replaceable>*</replaceable></constant> constants.
-   Moreover, four new rounding modes were added which are only available via
-   the new <classname>RoundingMode</classname> enum.
+   Добавили новое перечисление <classname>RoundingMode</classname> с понятными названиями
+   и улучшенной по сравнению с константами семейства
+   <constant>PHP_ROUND_<replaceable>*</replaceable></constant> обнаруживаемостью.
+   Более того, добавили четыре новых режима округления,
+   которые доступны только через новое перечисление <classname>RoundingMode</classname>.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.xsl">
-  <title>XSL</title>
+  <title>Модуль XSL</title>
 
   <simpara>
-   It is now possible to use parameters that contain both single and double
-   quotes.
+   Разрешили параметры, которые содержат как одинарные, так и двойные кавычки.
   </simpara>
 
   <!-- RFC: https://wiki.php.net/rfc/improve_callbacks_dom_and_xsl -->
   <simpara>
-   It is now possible to pass any callable to
-   <methodname>XSLTProcessor::registerPhpFunctions</methodname>.
+   В метод <methodname>XSLTProcessor::registerPhpFunctions</methodname>
+   разрешили передавать callable-значения не только в виде строк или массивов,
+   но и в других форматах, которые поддерживает PHP.
    <!-- TODO Mention XSLTProcessor::registerPHPFunctionNS ? -->
   </simpara>
 
   <simpara>
-   Added <property>XSLTProcessor::$maxTemplateDepth</property> and
-   <property>XSLTProcessor::$maxTemplateVars</property>
-   to control the recursion depth of XSL template evaluation.
+   Добавили свойства <property>XSLTProcessor::$maxTemplateDepth</property>
+   и <property>XSLTProcessor::$maxTemplateVars</property>
+   для управления глубиной рекурсии при оценке XSL-шаблона.
   </simpara>
  </sect2>
 
  <sect2 xml:id="migration84.new-features.zip">
-  <title>Zip</title>
+  <title>Модуль Zip</title>
 
   <simpara>
-   Added the <constant>ZipArchive::ER_TRUNCATED_ZIP</constant>
-   constant, which was added in libzip 1.11.
+   Добавили константу <constant>ZipArchive::ER_TRUNCATED_ZIP</constant>,
+   которую прежде добавили в библиотеку libzip 1.11.
   </simpara>
  </sect2>
 
