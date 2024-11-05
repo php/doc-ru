@@ -6,17 +6,17 @@
 
  <simpara>
   Ленивый объект — объект, инициализация которого откладывается до тех пор,
-  пока не начнёт отслеживаться или не изменится состояние объекта. Отдельне примеры работы с ленивыми объетами включают:
+  пока объект не начнёт отслеживаться или не изменится состояние объекта. Отдельне примеры работы с ленивыми объетами включают:
   а) компоненты внедрения зависимостей, которые предоставляют отложенные слжубы, которые инициализируются на 100 %
-  только когда требуется б) <acronym>ORM</acronym>-инструменты, которые предоставляют ленивые объекты,
-  которые гидрируют себя из значениями из базы данных только при обращении к ORM-объекту или в) JSON-парсер, который
-  задерживает разбор до тех пор, пока к элементам не обратятся.
+  только когда требуются б) <acronym>ORM</acronym>-инструменты, которые предоставляют ленивые объекты,
+  которые гидрируются значениями из базы данных только при обращении к ORM-объекту или в) JSON-парсер, который
+  откладывает разбор до тех пор, пока к элементам не обратятся.
  </simpara>
 
  <simpara>
-  Поддерживаются две стратегии ленивых объектов: Объекты-призраки (англ. Ghost Objects)
+  Поддерживаются две стратегии ленивых объектов: объекты-призраки (англ. Ghost Objects)
   и виртуальные прокси (англ. Virtual Proxies), которые здесь и дальше будем называть
-  &quot;ленивые призраки&quot; и &quot;ленивые прокси&quot;.
+  «ленивые призраки» и «ленивые прокси».
   В обеих стратегиях ленивый объект прикрепляется к инициализатору или фабрике,
   которая вызывается автоматически, когда состояние объекта начинают отслеживать
   или изменяют в первый раз. С точки зрения абстракции ленивые объекты-призраки
@@ -40,9 +40,9 @@
   </simpara>
 
   <simpara>
-   Оба метода принимают функцию, которая вызывается, когда требуется инициализация объекта.
-   Ожидаемое поведение функции зависит от стратегии, как описывает справочная документация
-   для каждого метода.
+   Оба метода принимают callback-функцию, которая вызывается, когда требуется инициализация объекта.
+   Поведение, которого ждут от функции обратного вызова, меняется, и зависит от стратегии. Стратегии описывает
+   справочная документация к методам.
   </simpara>
 
   <example>
@@ -61,7 +61,7 @@ class Example
 
 $reflector = new ReflectionClass(Example::class);
 $lazyObject = $reflector->newLazyGhost(function (Example $object) {
-    // Инициализируем объект на месте
+    // Инициализируем объект позже, на месте — по требованию
     $object->__construct(1);
 });
 
@@ -132,10 +132,10 @@ int(1)
   </example>
 
   <simpara>
-   Доступ к свойствам ленивого объекта запускает его инициализацию,
-   в том числе через класс <classname>ReflectionProperty</classname>.
-   Однако отдельные свойства иногда требуется знать заранее и не должны
-   вызывать инициализацию при доступе:
+   Доступ к свойствам ленивого объекта запускает инициализацию ленивого объекта,
+   включая доступ через класс <classname>ReflectionProperty</classname>.
+   Однако отдельные свойства иногда известны заранее и требуется сделать так,
+   чтобы они не вызывали инициализацию при доступе:
   </simpara>
 
   <example>
@@ -160,9 +160,10 @@ $post = $reflector->newLazyGhost(function ($post) {
     $post->__construct($data['id'], $data['title'], $data['content']);
 });
 
-// Без этой строки следующий вызов метода ReflectionProperty::setValue()
+// Без этой строки вызов метода ReflectionProperty::setValue(), который идёт следующим,
 // запустит инициализацию
 $reflector->getProperty('id')->skipLazyInitialization($post);
+
 $reflector->getProperty('id')->setValue($post, 123);
 
 // Альтернативный способ установки значения свойства без запуска ленивой инициализации
@@ -179,7 +180,7 @@ var_dump($post->id);
   <simpara>
    Методы <methodname>ReflectionProperty::skipLazyInitialization</methodname>
    и <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>
-   предлагают способы обхода ленивой инициализации при доступе к свойству.
+   предлагают способы обхода инициализации ленивых объектов при доступе к свойству.
   </simpara>
  </sect2>
 
@@ -187,7 +188,7 @@ var_dump($post->id);
   <title>О стратегиях ленивых объектов</title>
 
   <simpara>
-   <emphasis>Ленивые призраки</emphasis> — объекты, которые инициализируются на месте
+   <emphasis>Ленивые призраки</emphasis> — объекты, которые инициализируются на месте,
    и после инициализации неотличимы от объекта, который никогда не был ленивым.
    Стратегию применяют, когда контролируют как создание экземпляра, так и инициализацию объекта,
    что делает стратегию непригодной, если хотя бы один из этих процессов управляется другой стороной.
@@ -303,146 +304,143 @@ var_dump($post->id);
 
    <simplelist>
     <member>
-     Marking properties as non-lazy with
-     <methodname>ReflectionProperty::skipLazyInitialization</methodname> or
-     <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
+     Пометка свойств неленивыми методом
+     <methodname>ReflectionProperty::skipLazyInitialization</methodname>
+     или <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
     </member>
     <member>
-     Retrieving the internal representation of properties using
-     <function>get_mangled_object_vars</function> or by
-     <link linkend="language.types.array.casting">casting the object to an
-     array</link>.
+     Получение внутреннего представления свойств
+     функцией <function>get_mangled_object_vars</function>
+     или через <link linkend="language.types.array.casting">приведение объекта к массиву</link>.
     </member>
     <member>
-     Using <function>serialize</function> when
-     <constant>ReflectionClass::SKIP_INITIALIZATION_ON_SERIALIZE</constant>
-     is set, unless
-     <link linkend="object.serialize">__serialize()</link> or
-     <link linkend="object.sleep">__sleep()</link> trigger initialization.
+     Вызов функции <function>serialize</function> при установке флага
+     <constant>ReflectionClass::SKIP_INITIALIZATION_ON_SERIALIZE</constant>,
+     если только функция
+     <link linkend="object.serialize">__serialize()</link>
+     или <link linkend="object.sleep">__sleep()</link> не запустила инициализацию.
     </member>
     <member>
-     Calling to <methodname>ReflectionObject::__toString</methodname>.
+     Вызов магического метода <methodname>ReflectionObject::__toString</methodname>.
     </member>
     <member>
-     Using <function>var_dump</function> or
-     <function>debug_zval_dump</function>, unless
-     <link linkend="object.debuginfo">__debugInfo()</link> triggers
-     initialization.
+     Вызов функции <function>var_dump</function>
+     или <function>debug_zval_dump</function>, если только магический метод
+     <link linkend="object.debuginfo">__debugInfo()</link> не запустил
+     инициализацию.
     </member>
    </simplelist>
   </sect3>
  </sect2>
 
  <sect2 xml:id="language.oop5.lazy-objects.initialization-sequence">
-  <title>Initialization Sequence</title>
+  <title>Последовательность инициализации</title>
 
   <simpara>
-   This section outlines the sequence of operations performed when
-   initialization is triggered, based on the strategy in use.
+   Раздел описывает характерные для стратегий последовательности операций,
+   которые выполняются при запуске инициализации.
   </simpara>
 
   <sect3>
-   <title>Ghost Objects</title>
+   <title>Объекты-призраки</title>
    <simplelist>
     <member>
-     The object is marked as non-lazy.
+     Ленивый призрак помечается как неленивый.
     </member>
     <member>
-     Properties not initialized with
-     <methodname>ReflectionProperty::skipLazyInitialization</methodname> or
-     <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>
-     are set to their default values, if any. At this stage, the object
-     resembles one created with
+     Свойствам, которые не инициализировали методом
+     <methodname>ReflectionProperty::skipLazyInitialization</methodname>
+     или <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>,
+     устанавливаются значения по умолчанию, если такие определили в классе. На этом этапе объект
+     напоминает объект, который создали методом
      <methodname>ReflectionClass::newInstanceWithoutConstructor</methodname>,
-     except for already initialized properties.
+     за исключением свойств, которые уже инициализировались.
     </member>
     <member>
-     The initializer function is then called with the object as its first
-     parameter. The function is expected, but not required, to initialize
-     the object state, and must return &null; or no value. The object is no
-     longer lazy at this point, so the function can access its properties
-     directly.
+     Затем вызывается callback-функция инициализатора с объектом в качестве первого аргумента.
+     Ожидается, что функция обратного вызова — хотя это и не обязательно —
+     инициализирует состояние объекта и вернёт &null; или не вернёт никакого значения.
+     На этом этапе объект перестаёт быть ленивым, поэтому функция получает прямой доступ
+     к свойствам реального объекта.
     </member>
    </simplelist>
    <simpara>
-    After initialization, the object is indistinguishable from an object that
-    was never lazy.
+    После инициализации объект неотличим от объекта, который никогда не был ленивым.
    </simpara>
   </sect3>
 
   <sect3>
-   <title>Proxy Objects</title>
+   <title>Объекты-прокси</title>
    <simplelist>
     <member>
-     The object is marked as non-lazy.
+     Ленивый прокси помечается как неленивый.
     </member>
     <member>
-     Unlike ghost objects, the properties of the object are not modified at
-     this stage.
+     В отличие от ленивых призраков, свойства ленивых прокси на этом этапе не изменяются.
     </member>
     <member>
-     The factory function is called with the object as its first parameter and
-     must return a non-lazy instance of a compatible class (see
-     <methodname>ReflectionClass::newLazyProxy</methodname>).
+     Фабричная callback-функция вызывается с объектом в качестве первого аргумента
+     и возвращает неленивый экземпляр совместимого класса. Смотрите описание
+     метода <methodname>ReflectionClass::newLazyProxy</methodname>.
     </member>
     <member>
-     The returned instance is referred to as the <emphasis>real
-     instance</emphasis> and is attached to the proxy.
+     Экземпляр, который вернула функция обратного вызова, называется
+     <emphasis>реальным экземпляром</emphasis> и прикрепляется к прокси.
     </member>
     <member>
-     The proxy's property values are discarded as though
-     <function>unset</function> was called.
+     Значения свойств ленивого прокси отбрасываются так, как если бы вызвали
+     языковую конструкцию <function>unset</function>.
     </member>
    </simplelist>
    <simpara>
-    After initialization, accessing any property on the proxy will
-    yield the same result as accessing the corresponding property on
-    the real instance; all property accesses on the proxy are forwarded
-    to the real instance, including declared, dynamic, non-existing, or
-    properties marked with
-    <methodname>ReflectionProperty::skipLazyInitialization</methodname> or
-    <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
+    После инициализации доступ к свойствам объекта-прокси даст тот же результат,
+    что и доступ к тому же свойству реального экземпляра; обращения к свойствам
+    объекта-прокси перенаправляются на реальный экземпляр, включая объявленные,
+    динамические, несуществующие свойства или свойства, которые пометили методом
+    <methodname>ReflectionProperty::skipLazyInitialization</methodname>
+    или <methodname>ReflectionProperty::setRawValueWithoutLazyInitialization</methodname>.
    </simpara>
    <simpara>
-    The proxy object itself is <emphasis>not</emphasis> replaced or substituted
-    for the real instance.
+    Сам объект-прокси не заменяется и <emphasis>не</emphasis> подменяет собой
+    реальный экземпляр.
    </simpara>
    <simpara>
-    While the factory receives the proxy as its first parameter, it is
-    not expected to modify it (modifications are allowed but will be lost
-    during the final initialization step). However, the proxy can be used
-    for decisions based on the values of initialized properties, the class,
-    the object itself, or its identity. For instance, the initializer might
-    use an initialized property's value when creating the real instance.
+    Хотя фабрика получает прокси как первый аргумент, ожидается, что фабричная функция
+    не станет изменять объект-прокси. Изменения разрашаются, но потеряются на заключительном
+    этапе инициализации. Однако прокси иногда помогает принимать решения
+    на основе значений инициализированных свойств, класса, самого объекта или его идентификатора.
+    Например, инициализатор создаёт реальный экземпляр на основе значения инициализированного
+    свойства.
    </simpara>
   </sect3>
 
   <sect3>
-   <title>Common Behavior</title>
+   <title>Общее поведение</title>
 
    <simpara>
-    The scope and <varname>$this</varname> context of the initializer or factory
-    function remains unchanged, and usual visibility constraints apply.
+    Область действия и контекст переменной <varname>$this</varname> инициализатора или фабричной
+    функции остаются неизменными, и применяются стандартные ограничения видимости.
    </simpara>
 
    <simpara>
-    After successful initialization, the initializer or factory function
-    is no longer referenced by the object and may be released if it has no
-    other references.
+    После успешной инициализации объект больше не ссылается на инициализатор
+    или фабричную функцию и доступен для освобождения, если на объект не осталось
+    других ссылок.
    </simpara>
 
    <simpara>
-    If the initializer throws an exception, the object state is reverted to its
-    pre-initialization state and the object is marked as lazy again. In other
-    words, all effects on the object itself are reverted. Other side effects,
-    such as effects on other objects, are not reverted. This prevents
-    exposing a partially initialized instance in case of failure.
+    Состояние объекта возвращается к состоянию до инициализации,
+    а объект снова помечается как ленивый, если инициализатор генерирует исключение.
+    Другими словами, каждое воздействие на сам объект отменяется.
+    Другие побочные эффекты наподобие воздействия на другие объекты не отменяются.
+    Это предотвращает предоставление частично инициализированного экземпляра
+    при ошибке.
    </simpara>
   </sect3>
  </sect2>
 
  <sect2 xml:id="language.oop5.lazy-objects.cloning">
-  <title>Cloning</title>
+  <title>Клонирование</title>
 
   <simpara>
    <link linkend="language.oop5.cloning">Cloning</link>
