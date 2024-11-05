@@ -2,267 +2,267 @@
 <!-- EN-Revision: b1b039696eedcc82e9c1144eeecbfc0a8a1b3859 Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration84.other-changes">
- <title>Other Changes</title>
+ <title>Другие изменения</title>
 
  <sect2 xml:id="migration84.other-changes.core">
-  <title>Core changes</title>
+  <title>Изменения в ядре</title>
 
   <sect3 xml:id="migration84.other-changes.core.closures">
-   <title>Closures</title>
+   <title>Замыкания</title>
 
    <simpara>
-    Closure names have been adjusted to include the parent function's name
-    and the line of definition to make them easier to distinguish, for example
-    within stack traces.
+    Названия замыканий изменили так, чтобы имена включали название родительской функции
+    и строку, в которой определили замыкание, что помогает различать замыкания
+    в трассировках стека или другом месте вывода отладочной информации.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.core.fibers">
-   <title>Fibers</title>
+   <title>Файберы</title>
 
    <simpara>
-    Fiber switching during destructor execution is now allowed. It was previously
-    blocked due to conflicts with garbage collection.
+    Переключение файберов теперь разрешили при запуске деструктора. Раньше переключение
+    файбров блокировали из-за конфликтов со сборщиком мусора.
    </simpara>
 
    <simpara>
-    Destructors may now be executed in a separate Fiber:
+    Деструкторы теперь разрешается выполнять в отдельном файбере:
    </simpara>
 
    <simpara>
-    When garbage collection is triggered in a Fiber,
-    destructors called by the GC are executed in a separate Fiber:
-    the gc_destructor_fiber.
-    If this Fiber suspends, a new one is created to execute the remaining
-    destructors.
-    The previous gc_destructor_fiber is not referenced anymore by the GC
-    and may be collected if it's not referenced anywhere else.
-    Objects whose destructor is suspended will not be collected until the
-    destructor returns or the <classname>Fiber</classname> is collected.
+    Когда в файбере запускается сборка мусора,
+    деструкторы, которые вызвал сборщик мусора, выполняются в отдельном файбере:
+    gc_destructor_fiber.
+    Для выполнения оставшихся деструкторов создаётся новый файбер,
+    если этот файбер приостанавливается.
+    Сборщик мусора больше не ссылается на предыдущий файбер gc_destructor_fiber,
+    поэтому файбер доступен для сборки, раз ссылок на него не осталось.
+    Сборщик мусора не соберёт объекты, деструктор которых приостановился,
+    до тех пор, пока деструктор не вернется или пока сборщик мусора не уничтожит файбер.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.core.output">
-   <title>Output Handlers</title>
+   <title>Обработчики вывода</title>
 
    <simpara>
-    Output handler status flags passed to the <parameter>flags</parameter>
-    parameter of <function>ob_start</function> are now cleared.
+    Флаги статуса обработчика вывода, которые передали в параметр <parameter>flags</parameter>
+    функции <function>ob_start</function>, теперь очищаются.
    </simpara>
 
    <simpara>
-    <function>output_add_rewrite_var</function> now uses
+    Функция <function>output_add_rewrite_var</function> для выбора хостов, которые перезапишутся,
+    теперь руководствуется значением директивы
     <link linkend="ini.url-rewriter.hosts"><literal>url_rewriter.hosts</literal></link>
-    instead of
-    <link linkend="ini.session.trans-sid-hosts"><literal>session.trans_sid_hosts</literal></link>
-    for selecting hosts that will be rewritten.
+    вместо директивы
+    <link linkend="ini.session.trans-sid-hosts"><literal>session.trans_sid_hosts</literal></link>.
    </simpara>
   </sect3>
  </sect2>
 
  <sect2 xml:id="migration84.other-changes.sapi">
-  <title>Changes in SAPI Modules</title>
+  <title>Изменения в SAPI-модулях</title>
 
   <sect3 xml:id="migration84.other-changes.sapi.apache">
    <title>apache2handler</title>
 
    <simpara>
-    Support for EOL Apache 2.0 and 2.2 has been removed.
-    Minimum required Apache version is now 2.4.
+    Из-за окончания жизненного цикла удалили поддержку веб-серверов Apache 2.0 и 2.2.
+    Теперь требуется версия Apache не ниже 2.4.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.sapi.cli">
-   <title>CLI</title>
+   <title>Модуль CLI</title>
 
    <simpara>
-    The builtin server looks for an index file recursively by traversing parent
-    directories in case the specified file cannot be located.
-    This process was previously skipped if the path looked like it was
-    referring to a file, i.e. if the last path component contained a period.
-    In that case, a 404 error was returned.
-    The behavior has been changed to look for an index file in all cases.
+    Встроенный сервер ищет индексный файл рекурсивно путём обхода родительских каталогов,
+    когда не находит файл.
+    Раньше этот процесс пропускался, если путь выглядел так, как будто ссылается на файл,
+    т. е. если последний компонент пути содержал точку.
+    Тогда возвращалась ошибка 404.
+    Поведение изменили для поиска индексного файла во всех случаях.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.sapi.fpm">
-   <title>FPM</title>
+   <title>Модуль FPM</title>
 
    <simpara>
     <!-- TODO Does this need a link? -->
-    The <filename>/dev/poll</filename> <literal>events.mechanism</literal>
-    setting for Solaris/Illumos had been retired.
+    Настройку <literal>events.mechanism</literal> в файле <filename>/dev/poll</filename>
+    для ОС Solaris/Illumos удалили.
    </simpara>
   </sect3>
  </sect2>
 
  <sect2 xml:id="migration84.other-changes.functions">
-  <title>Changed Functions</title>
+  <title>Изменённые функции</title>
 
   <sect3 xml:id="migration84.other-changes.functions.core">
-   <title>Core</title>
+   <title>Ядро</title>
 
    <simpara>
-    <function>trigger_error</function> and <function>user_error</function>
-    now have a return type of <type>true</type> instead of <type>bool</type>.
+    Функции <function>trigger_error</function> и <function>user_error</function>
+    теперь возвращают конкретное логическое значение <type>true</type> вместо общего <type>bool</type>.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.dom">
-   <title>DOM</title>
+   <title>Модуль DOM</title>
 
    <simpara>
-    <methodname>DOMDocument::registerNodeClass</methodname>
-    now has a tentative return type of <type>true</type> instead of
-    <type>bool</type>.
-    It could only ever return &true; in practice.
+    В Методе <methodname>DOMDocument::registerNodeClass</methodname>
+    предварительный тип возврата определили как <type>true</type>
+    вместо прежнего <type>bool</type>,
+    поскольку на практике метод возвращал только &true;.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.hash">
-   <title>Hash</title>
+   <title>Модуль Hash</title>
 
    <simpara>
-    <function>hash_update</function>
-    now has a tentative return type of <type>true</type> instead of
-    <type>bool</type>.
-    It could only ever return &true; in practice.
+    В функции <function>hash_update</function>
+    предварительный тип возврата теперь <type>true</type> вместо
+    прежнего <type>bool</type>,
+    поскольку на практике метод возвращал только &true;.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.intl">
-   <title>Intl</title>
+   <title>Модуль Intl</title>
 
    <simpara>
-    <constant>NumberFormatter::ROUND_TOWARD_ZERO</constant> and
-    <constant>NumberFormatter::ROUND_AWAY_FROM_ZERO</constant>
-    have been added as aliases for
-    <constant>NumberFormatter::ROUND_DOWN</constant> and
-    <constant>NumberFormatter::ROUND_UP</constant>
-    to be consistent with the new
-    <constant>PHP_ROUND_<replaceable>*</replaceable></constant> modes.
+    Константы <constant>NumberFormatter::ROUND_TOWARD_ZERO</constant>
+    и <constant>NumberFormatter::ROUND_AWAY_FROM_ZERO</constant>
+    добавили как синонимы констант
+    <constant>NumberFormatter::ROUND_DOWN</constant>
+    и <constant>NumberFormatter::ROUND_UP</constant>
+    для согласованности с семейством режимов
+    <constant>PHP_ROUND_<replaceable>*</replaceable></constant>.
    </simpara>
 
    <simpara>
-    <methodname>ResourceBundle::get</methodname>
+    Метод <methodname>ResourceBundle::get</methodname>
     <!-- TODO Use a proper union type for the return type -->
-    now has a tentative return type of <literal>ResourceBundle|array|string|int|null</literal>.
+    получил предварительный тип возврата <literal>ResourceBundle|array|string|int|null</literal>.
    </simpara>
 
    <simpara>
-    The <function>idn_to_ascii</function> and <function>idn_to_utf8</function>
-    functions now always throw <exceptionname>ValueError</exceptionname>s
-    if the <parameter>domain</parameter> name is empty or too long.
+    Функции <function>idn_to_ascii</function> и <function>idn_to_utf8</function>
+    теперь выбрасывают ошибки <exceptionname>ValueError</exceptionname> при каждом вызове,
+    если имя в параметре <parameter>domain</parameter> оказалось пустым или слишком длинным.
    </simpara>
 
    <simpara>
-    The <function>idn_to_ascii</function> and <function>idn_to_utf8</function>
-    functions now always throw <exceptionname>ValueError</exceptionname>
-    if the <parameter>variant</parameter> parameter is not
+    Функции <function>idn_to_ascii</function> и <function>idn_to_utf8</function>
+    теперь выбрасывают ошибку <exceptionname>ValueError</exceptionname> при каждом вызове,
+    если значение аргумента <parameter>variant</parameter> не равно
     <constant>INTL_IDNA_VARIANT_UTS46</constant>.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.libxml">
-   <title>LibXML</title>
+   <title>Модуль LibXML</title>
 
    <simpara>
-    <function>libxml_set_streams_context</function> now immediately throws a
-    <exceptionname>TypeError</exceptionname> when a non-stream-context
-    resource is passed to the function,
-    instead of throwing later when the stream context is used.
+    Функция <function>libxml_set_streams_context</function> теперь сразу выбрасывает ошибку
+    <exceptionname>TypeError</exceptionname>, когда в функцию передают ресурс, который
+    не относится к контексту потока,
+    вместо того, чтобы выбрасывать ошибку позже, когда появляется потоковый контекст.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.mbstring">
-   <title>MBString</title>
+   <title>Модуль MBString</title>
 
    <simpara>
-    The behavior of <function>mb_strcut</function> is more consistent
-    now on invalid UTF-8 and UTF-16 strings.
-    There is no behavioural change for valid UTF-8 and UTF-16 strings.
+    Поведение функции <function>mb_strcut</function> теперь лучше согласуется
+    с недопустимыми для кодировок UTF-8 и UTF-16 строками.
+    Для допустимых для кодировок UTF-8 и UTF-16 строк поведение не изменилось.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.odbc">
-   <title>ODBC</title>
+   <title>Модуль ODBC</title>
 
    <simpara>
-    The <parameter>row</parameter> of
+    Разработчики изменили значение по умолчанию для параметра <parameter>row</parameter> в функциях
     <function>odbc_fetch_object</function>,
-    <function>odbc_fetch_array</function>, and
-    <function>odbc_fetch_into</function> now have a default value of &null;,
-    consistent with <function>odbc_fetch_row</function>.
-    Previously, the default values were
+    <function>odbc_fetch_array</function>
+    и <function>odbc_fetch_into</function>, теперь значение равно &null;,
+    что согласуется в функцией <function>odbc_fetch_row</function>.
+    Предыдущие значения по умолчанию равнялись
     <literal>-1</literal>,
-    <literal>-1</literal>,
-    and <literal>0</literal>,
-    respectively.
+    <literal>-1</literal>
+    и <literal>0</literal> соответственно.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.openssl">
-   <title>OpenSSL</title>
+   <title>Модуль OpenSSL</title>
 
    <simpara>
-    The <parameter>extra_attributes</parameter> in
-    <function>openssl_csr_new</function> sets the <acronym>CSR</acronym>
-    attributes instead of subject DN, which incorrectly done previously.
+    Параметр <parameter>extra_attributes</parameter> в функции <function>openssl_csr_new</function>
+    вместо DN-имени (англ. сокр.: Distinguished Name — уникальное имя) субъекта
+    устанавливает атрибут <acronym>CSR</acronym>; раньше функция делала это неправильно.
    </simpara>
 
    <simpara>
-    The <parameter>dn</parameter> in
-    <function>openssl_csr_new</function> allows setting an <type>array</type>
-    of values for a single entry.
+    Параметр <parameter>dn</parameter> в функции
+    <function>openssl_csr_new</function> разрешает устанавливать массив (<type>array</type>)
+    значений для одной записи.
    </simpara>
 
    <simpara>
-    New <parameter>serial_hex</parameter> added to
-    <function>openssl_csr_sign</function> to allow setting serial numbers
-    in the hexadecimal format.
+    В функцию <function>openssl_csr_sign</function> добавили
+    новый параметр <parameter>serial_hex</parameter>,
+    который разрешает устанавливать серийные номера
+    в шестнадцатеричном формате.
    </simpara>
 
    <simpara>
-    Parsing ASN.1 UTCTime with <function>openssl_x509_parse</function>
-    fails if seconds are omitted for OpenSSL version below 3.2
-    (<literal>-1</literal> is returned for such fields).
-    OpenSSL version above 3.3 did not load such certificates already.
+    Разбор значений даты и времени в формате UTCTime языка ASN.1 функцией <function>openssl_x509_parse</function>
+    завершится ошибкой, если секунды опустили для версии модуля OpenSSL ниже 3.2 (для таких полей
+    возвращает значение <literal>-1</literal>).
+    Версия OpenSSL выше 3.3 уже не загружала такие сертификаты.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.pdo">
-   <title>PDO</title>
+   <title>Модуль PDO</title>
 
    <simpara>
-    It is now possible to fetch the value of the
-    <constant>PDO::ATTR_STRINGIFY_FETCHES</constant> attribute with
+    Получить значение атрибута <constant>PDO::ATTR_STRINGIFY_FETCHES</constant>
+    теперь возможно методом
     <methodname>PDO::getAttribute</methodname>.
    </simpara>
 
    <simpara>
-    A new <constant>PDO::PGSQL_ATTR_RESULT_MEMORY_SIZE</constant>
-    has been added to retrieve the memory usage of query results with
-    <methodname>PDO::getAttribute</methodname> for drivers that support it.
+    Добавили новую константу <constant>PDO::PGSQL_ATTR_RESULT_MEMORY_SIZE</constant>,
+    чтобы получать данные о потреблении памяти результатами запросов
+    методом <methodname>PDO::getAttribute</methodname> для драйверов, которые поддерживают метод.
    </simpara>
   </sect3>
 
   <sect3 xml:id="migration84.other-changes.functions.pdo-firebird">
-   <title>PDO_FIREBIRD</title>
+   <title>Драйвер PDO_FIREBIRD</title>
 
    <simpara>
-    It is now possible to fetch the value of the
+    Значения атрибутов
     <!-- TODO Is this a class constant of the driver class? -->
     <constant>FB_ATTR_DATE_FORMAT</constant>,
-    <constant>FB_ATTR_TIME_FORMAT</constant>,
-    <constant>FB_ATTR_TIMESTAMP_FORMAT</constant>,
-    attributes with
+    <constant>FB_ATTR_TIME_FORMAT</constant>
+    и <constant>FB_ATTR_TIMESTAMP_FORMAT</constant>
+    теперь возможно получать методом
     <!-- TODO Only for the specific driver class? -->
     <methodname>PDO::getAttribute</methodname>.
    </simpara>
 
    <para>
-    Added new attributes to specify transaction isolation level and access mode.
-    Five constants relating to this functionality have been added:
+    Добавили новые атрибуты, которые указывают уровень изоляции транзакции и режим доступа.
+    Добавили пять констант, которые относятся к этой функциональности:
 
     <simplelist>
      <member><constant>Pdo\Firebird::TRANSACTION_ISOLATION_LEVEL</constant></member>
@@ -274,8 +274,8 @@
    </para>
 
    <simpara>
-    When using persistent connections, there is now a liveliness check in the
-    constructor.
+    Конструкторе теперь проверяет работоспособность подключений
+    при работе с постоянными соединениями.
    </simpara>
 
    <simpara>
