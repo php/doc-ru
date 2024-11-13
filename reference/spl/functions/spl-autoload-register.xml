@@ -4,9 +4,7 @@
 <refentry xml:id="function.spl-autoload-register" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>spl_autoload_register</refname>
-  <refpurpose>
-   Регистрирует функцию как реализацию функции __autoload()
-  </refpurpose>
+  <refpurpose>Регистрирует функцию автозагрузки классов</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -17,26 +15,31 @@
    <methodparam choice="opt"><type>bool</type><parameter>prepend</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция регистрирует пользовательскую функцию
-   в очереди __autoload SPL-библиотеки ядра PHP.
-   Библиотека SPL активирует очередь, если очередь не активировали раньше.
+   Функция регистрирует в очереди __autoload, которую предоставляет библиотека SPL (англ.
+   сокр.: Standard PHP Library — стандартная библиотека ядра PHP), стандартную или пользовательскую
+   функцию автозагрузки классов. Функция активирует очередь функций-автозагрузчиков,
+   если очередь ещё не активировали.
   </para>
   <para>
-   Функцию <function>__autoload</function> требуется
-   зарегистрировать в очереди __autoload явным образом, если
-   эту функцию объявили в коде. Причина требования
-   состоит в том, что при вызове функции <function>spl_autoload_register</function>
-   PHP заменит в кеше движка функцию <function>__autoload</function>
-   либо функцией <function>spl_autoload</function>,
-   либо функцией <function>spl_autoload_call</function>.
+   До PHP 8.0.0 функция <function>__autoload</function> автоматически запускалась
+   при попытке создать экземпляр класса, который ещё не загрузили,
+   если функцию определяли в коде.
+   Вызов функции <function>spl_autoload_register</function>
+   заменял в кеше движка автовызов функции <function>__autoload</function>
+   либо вызовом функции <function>spl_autoload</function>,
+   либо вызовом функции <function>spl_autoload_call</function>, в зависимости от версии PHP.
+   Поэтому функцию <function>__autoload</function>
+   требовалось явно регистрировать в очереди функций-автозагрузчиков,
+   иначе после регистрации стандартного или пользовательского автозагрузчика
+   функция не вызывалась.
   </para>
   <para>
    Функция <function>spl_autoload_register</function> разрешает
-   задавать больше одной функции автозагрузки. Она создаёт очередь
-   функций автозагрузки и выполняет каждую из заданных функций
-   в том порядке, в котором функции автозагрузки определили. Тогда как
-   встроенную функцию <function>__autoload</function> разрешается определять
-   только один раз.
+   регистрировать больше одной функции автозагрузки, тогда как функцию
+   <function>__autoload</function> разрешалось определять только один раз.
+   Функция регистрации автозагрузчиков создаёт очередь функций,
+   которые загружают классы автоматически, и запускает каждый
+   автозагрузчик в том порядке, в котором функции автозагрузки зарегистрировали.
   </para>
  </refsect1>
 
@@ -48,8 +51,9 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Функция или название функции автозагрузки для регистрации.
-       PHP зарегистрирует базовую реализацию функции <function>spl_autoload</function>,
+       Строка с названием функции или анонимная функция, которую функция зарегистрирует
+       как автозагрузчик классов.
+       Функция зарегистрирует как автозагрузчик классов функцию <function>spl_autoload</function>,
        если значение параметра равно &null;.
       </para>
       <methodsynopsis>
@@ -62,17 +66,17 @@
      <term><parameter>throw</parameter></term>
      <listitem>
       <para>
-       Этот параметр определяет, будет ли функция
-       <function>spl_autoload_register</function> выбрасывать исключение,
-       когда не удаётся зарегистрировать функцию <parameter>callback</parameter>.
+       Параметр определяет, выбросит ли функция
+       <function>spl_autoload_register</function> исключение,
+       когда не получается зарегистрировать <parameter>callback</parameter>-функцию.
       </para>
       <warning>
        <para>
-        С PHP 8.0.0 функция игнорирует параметр, и выдаёт
-        уведомление, если значение параметра равно &false;. Теперь
+        Начиная с PHP 8.0.0 функция игнорирует параметр. Функция выдаст
+        уведомление, если для параметра установили значение &false;.
+        При передаче аргументов недопустимого типа
         функция <function>spl_autoload_register</function>
-        будет выбрасывать исключение <classname>TypeError</classname>
-        при каждой передаче некорректных аргументов.
+        теперь выбрасывает ошибку <classname>TypeError</classname>.
        </para>
       </warning>
      </listitem>
@@ -81,9 +85,8 @@
      <term><parameter>prepend</parameter></term>
      <listitem>
       <para>
-       Функция <function>spl_autoload_register</function>
-       добавит автозагрузчик в начало, а не в конец очереди автозагрузки,
-       если передали значение &true;.
+       При передаче значения &true; функция <function>spl_autoload_register</function>
+       добавит автозагрузчик в начало, а не в конец очереди автозагрузки.
       </para>
      </listitem>
     </varlistentry>
@@ -134,17 +137,20 @@
 <![CDATA[
 <?php
 
-// function __autoload($class) {
+// function __autoload($class)
+// {
 //     include 'classes/' . $class . '.class.php';
 // }
 
-function my_autoloader($class) {
+function my_autoloader($class)
+{
     include 'classes/' . $class . '.class.php';
 }
 
+// Функция принимает для регистрации автозагрузчиков названия функций...
 spl_autoload_register('my_autoloader');
 
-// Разрешается передавать анонимные функции
+// ...и анонимные функции
 spl_autoload_register(function ($class) {
     include 'classes/' . $class . '.class.php';
 });
@@ -155,8 +161,8 @@ spl_autoload_register(function ($class) {
    </example>
    <example>
     <title>
-     Пример поведения функции <function>spl_autoload_register</function>
-     в коде, в котором не загрузили класс
+     Пример регистрации функцией <function>spl_autoload_register</function> автозагрузчика,
+     который не загрузил класс
     </title>
     <programlisting role="php">
 <![CDATA[
