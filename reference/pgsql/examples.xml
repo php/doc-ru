@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- EN-Revision: cffb5f52894aa8a29109e3802e2257c56b51bcb6 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
-
 <chapter xml:id="pgsql.examples" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.examples;
  <section xml:id="pgsql.examples-basic">
-  <title>Базовое использование</title>
+  <title>Основы взаимодействия с БД PostgreSQL</title>
   <para>
-   Этот простой пример показывает как выполнить соединение с БД,
-   отправить запрос, вывести его результат и закрыть соединение с PostgreSQL.
+   Простой пример, который показывает, как подключиться к БД,
+   выполнить запрос, вывести строки с результатами запроса и закрыть соединение с БД PostgreSQL.
    <example>
     <title>Пример работы с модулем PostgreSQL</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Соединение, выбор базы данных
+
+// Подключение к СУБД и выбор базы данных
 $dbconn = pg_connect("host=localhost dbname=publishing user=www password=foo")
-    or die('Не удалось соединиться: ' . pg_last_error());
+    or die('Не удалось соединиться: ' . pg_last_error())
+;
 
 // Выполнение SQL-запроса
 $query = 'SELECT * FROM authors';
 $result = pg_query($query) or die('Ошибка запроса: ' . pg_last_error());
 
-// Вывод результатов в HTML
+// Вывод результатов в виде HTML-разметки
 echo "<table>\n";
 while ($line = pg_fetch_array($result, null, PGSQL_ASSOC)) {
     echo "\t<tr>\n";
@@ -38,6 +39,7 @@ pg_free_result($result);
 
 // Закрытие соединения
 pg_close($dbconn);
+
 ?>
 ]]>
     </programlisting>
@@ -46,72 +48,76 @@ pg_close($dbconn);
  </section>
 
  <section xml:id="pgsql.examples-queries">
-  <title>Базовое использование</title>
+  <title>Пользовательские функции взаимодействия с БД PostgreSQL</title>
   <para>
-   Эти примеры содержат пользовательские функции, аналогичные
-   устаревшим функциям MySQL.
+   Пример содержит пользовательские функции, аналогичные
+   устаревшим функциям БД MySQL.
 
    <example>
-    <title>Пример использования пользовательских функций PostgreSQL</title>
+    <title>Пример пользовательских функций для работы с БД PostgreSQL</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Эта функция необходима, так как соединение PostgreSQL связывает базу данных.
+
+// Функция потребуется, поскольку PostgreSQL-соединение связывает базу данных
 function pg_list_dbs($db)
 {
     assert(is_resource($db));
+
     $query = '
 SELECT
- d.datname as "Name",
- u.usename as "Owner",
- pg_encoding_to_char(d.encoding) as "Encoding"
+   d.datname as "Name",
+   u.usename as "Owner",
+   pg_encoding_to_char(d.encoding) as "Encoding"
 FROM
- pg_database d LEFT JOIN pg_user u ON d.datdba = u.usesysid
+   pg_database d LEFT JOIN pg_user u ON d.datdba = u.usesysid
 ORDER BY 1;
 ';
     return pg_query($db, $query);
 }
 
-// Список таблиц.
+// Список таблиц
 function pg_list_tables($db)
 {
     assert(is_resource($db));
+
     $query = "
 SELECT
- c.relname as \"Name\",
- CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' END as \"Type\",
-  u.usename as \"Owner\"
+   c.relname as \"Name\",
+   CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' END as \"Type\",
+   u.usename as \"Owner\"
 FROM
- pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid
+   pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid
 WHERE
- c.relkind IN ('r','v','S','')
- AND c.relname !~ '^pg_'
+   c.relkind IN ('r','v','S','')
+   AND c.relname !~ '^pg_'
 ORDER BY 1;
 ";
     return pg_query($db, $query);
 }
 
-// Смотрите также pg_meta_data(). Возвращает определение поля в виде массива.
+// Смотрите также описание функции pg_meta_data(). Функция возвращает определение поля в виде массива
 function pg_list_fields($db, $table)
 {
     assert(is_resource($db));
     $query = "
 SELECT
- a.attname,
- format_type(a.atttypid, a.atttypmod),
- a.attnotnull,
- a.atthasdef,
- a.attnum
+   a.attname,
+   format_type(a.atttypid, a.atttypmod),
+   a.attnotnull,
+   a.atthasdef,
+   a.attnum
 FROM
- pg_class c,
- pg_attribute a
+   pg_class c,
+   pg_attribute a
 WHERE
- c.relname = '".$table."'
- AND a.attnum > 0 AND a.attrelid = c.oid
+   c.relname = '".$table."'
+   AND a.attnum > 0 AND a.attrelid = c.oid
 ORDER BY a.attnum;
 ";
     return pg_query($db, $query);
 }
+
 ?>
 ]]>
     </programlisting>
