@@ -4,7 +4,7 @@
 <refentry xml:id="reflectionfunctionabstract.getclosurecalledclass" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>ReflectionFunctionAbstract::getClosureCalledClass</refname>
-  <refpurpose>Возвращает класс, соответствующий static:: внутри замыкания</refpurpose>
+  <refpurpose>Возвращает класс, который соответствует разрешению static:: внутри замыкания</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,9 +14,9 @@
    <void/>
   </methodsynopsis>
   <simpara>
-   Возвращает класс в виде <classname>ReflectionClass</classname>,
-   который соответствует <literal>static::</literal> внутри
-   <classname>Closure</classname>.
+   Метод возвращает объект рефлексии <classname>ReflectionClass</classname> для класса,
+   который соответствует статическому разрешению названия класса вызовом <literal>static::</literal>
+   внутри объекта <classname>Closure</classname>.
   </simpara>
  </refsect1>
 
@@ -28,10 +28,10 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Метод возвращает класс в виде <classname>ReflectionClass</classname>,
-   который соответствует <literal>static::</literal> внутри <classname>Closure</classname>.
-   Если функция не является замыканием или имеет глобальную область видимости,
-   вместо неё возвращается &null;.
+   Метод возвращает объект рефлексии класса — <classname>ReflectionClass</classname>,
+   который соответствует представлению <literal>static::</literal> внутри объекта <classname>Closure</classname>.
+   Метод вернёт &null; вместо объекта рефлексии класса,
+   если функция не принадлежит типу замыкания или ограничивается глобальной областью видимости.
   </simpara>
  </refsect1>
 
@@ -39,35 +39,35 @@
   &reftitle.examples;
   <example>
    <title>
-    Пример, демонстрирующий разницу между
+    Пример разницы в значениях возврата методов
     <methodname>ReflectionFunctionAbstract::getClosureCalledClass</methodname>,
     <methodname>ReflectionFunctionAbstract::getClosureScopeClass</methodname>
     и <methodname>ReflectionFunctionAbstract::getClosureThis</methodname>
-    с помощью метода экземпляра:
+    при отражении замыкания, которому доступен контекст объекта
    </title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-class A {
-    public function getClosure() {
+class A
+{
+    public function getClosure()
+    {
         var_dump(self::class, static::class);
-        return function () {
 
-        };
+        return function() {};
     }
 }
 
-class B extends A {
-
-}
+class B extends A {}
 
 $b = new B();
 $c = $b->getClosure();
 $r = new ReflectionFunction($c);
-var_dump($r->getClosureThis()); // $this === $b
-var_dump($r->getClosureScopeClass()); // self::class
-var_dump($r->getClosureCalledClass()); // static::class
+
+var_dump($r->getClosureThis()); // Выводит $this === $b, поскольку замыкание захватывает контекст объекта
+var_dump($r->getClosureScopeClass()); // Соответствует вызову self::class внутри замыкания
+var_dump($r->getClosureCalledClass()); // Соответствует вызову static::class внутри замыкания
 
 ?>
 ]]>
@@ -92,35 +92,35 @@ object(ReflectionClass)#4 (1) {
   </example>
   <example>
    <title>
-    Пример, демонстрирующий разницу между
+    Пример разницы в значениях возврата методов
     <methodname>ReflectionFunctionAbstract::getClosureCalledClass</methodname>,
     <methodname>ReflectionFunctionAbstract::getClosureScopeClass</methodname>
     и <methodname>ReflectionFunctionAbstract::getClosureThis</methodname>
-    со статическим методом:
+    при отражении статического замыкания без доступа к контексту объекта
    </title>
    <programlisting role="php">
     <![CDATA[
 <?php
 
-class A {
-    public function getClosure() {
+class A
+{
+    public function getClosure()
+    {
         var_dump(self::class, static::class);
-        return static function () {
 
-        };
+        return static function() {};
     }
 }
 
-class B extends A {
-
-}
+class B extends A {}
 
 $b = new B();
 $c = $b->getClosure();
 $r = new ReflectionFunction($c);
-var_dump($r->getClosureThis()); // NULL
-var_dump($r->getClosureScopeClass()); // self::class
-var_dump($r->getClosureCalledClass()); // static::class
+
+var_dump($r->getClosureThis()); // Выводит NULL, поскольку у замыкания нет доступа к псевдопеременной $this
+var_dump($r->getClosureScopeClass()); // Соответствует вызову self::class внутри статического замыкания
+var_dump($r->getClosureCalledClass()); // Соответствует вызову static::class внутри статического замыкания
 
 ?>
 ]]>
