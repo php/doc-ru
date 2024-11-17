@@ -326,7 +326,7 @@ enum Suit implements Colorful
     // Выполняет контракт интерфейса.
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             Suit::Hearts, Suit::Diamonds => 'Красный',
             Suit::Clubs, Suit::Spades => 'Чёрный'
         };
@@ -380,7 +380,7 @@ enum Suit: string implements Colorful
     // Выполняет интерфейсный контракт.
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             Suit::Hearts, Suit::Diamonds => 'Красный',
             Suit::Clubs, Suit::Spades => 'Чёрный'
         };
@@ -432,7 +432,7 @@ final class Suit implements UnitEnum, Colorful
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             Suit::Hearts, Suit::Diamonds => 'Красный',
             Suit::Clubs, Suit::Spades => 'Чёрный'
         };
@@ -565,7 +565,7 @@ enum Suit implements Colorful
 
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             Suit::Hearts, Suit::Diamonds => 'Красный',
             Suit::Clubs, Suit::Spades => 'Чёрный',
         };
@@ -774,11 +774,13 @@ print serialize(Suit::Hearts);
 <![CDATA[
 <?php
 
-enum Foo {
+enum Foo
+{
     case Bar;
 }
 
-enum Baz: int {
+enum Baz: int
+{
     case Beep = 5;
 }
 
@@ -802,10 +804,10 @@ Baz Enum:int {
 
  <sect1 xml:id="language.enumerations.object-differences.inheritance">
 
-  <title>Почему перечисления не расширяемы</title>
+  <title>Почему перечисления нерасширяемы</title>
 
   <simpara>
-   Для методов классов объявлены контракты:
+   В классах обязательства по контрактам берут на себя методы:
   </simpara>
 
   <programlisting role="php">
@@ -817,21 +819,23 @@ class B extends A {}
 
 function foo(A $a) {}
 
-function bar(B $b) {
+function bar(B $b)
+{
     foo($b);
 }
+
 ?>
 ]]>
   </programlisting>
 
   <simpara>
-   Этот код безопасен для типов, поскольку класс B выполняет контракт класса A,
-   и, за счёт магии ковариантности и контравариантности, ожидания
-   в отношении методов будут оправданы, за исключением исключений.
+   Приведённый пример кода безопасен с точки зрения типов, поскольку класс B следует контракту класса A.
+   Следование одного класса контракту другого порождает магию ко- и контравариантности. Поэтому ожидания,
+   которые возникают в отношении методов, сохранятся, кроме исключений.
   </simpara>
 
   <simpara>
-   У перечислений есть контракты на их варианты, а не методы:
+   В перечислениях обязательства по контрактам берут на себя варианты, а не методы:
   </simpara>
 
   <programlisting role="php">
@@ -845,10 +849,10 @@ enum ErrorCode
 
 function quux(ErrorCode $errorCode)
 {
-    // Кажется, что этот код охватывает все варианты
+    // Кажется, что код охватывает все варианты перечисления
     match ($errorCode) {
         ErrorCode::SOMETHING_BROKE => true,
-    }
+    };
 }
 
 ?>
@@ -856,26 +860,27 @@ function quux(ErrorCode $errorCode)
   </programlisting>
 
   <simpara>
-   Проведя статический анализ выражения &match; в функции <code>quux</code>,
-   легко понять, что охвачен каждый вариант перечисления ErrorCode.
+   Статический анализ выражения &match; в функции <code>quux</code>
+   показывает, что проверяется каждый вариант перечисления ErrorCode.
   </simpara>
 
   <simpara>
-   Но представьте, что было бы разрешено расширять перечисления:
+   Но представьте, что перечисления разрешили бы расширять:
   </simpara>
 
   <programlisting role="php">
 <![CDATA[
 <?php
 
-// Экспериментальный код, в котором перечисления не конечно.
-// Обратите внимание, что это не будет работать в PHP.
+// Код мысленного эксперимента, в котором перечисления не окончательны.
+// Обратите внимание, что это не будет работать в PHP
 enum MoreErrorCode extends ErrorCode
 {
     case PEBKAC;
 }
 
-function fot(MoreErrorCode $errorCode) {
+function fot(MoreErrorCode $errorCode)
+{
     quux($errorCode);
 }
 
@@ -886,17 +891,18 @@ fot(MoreErrorCode::PEBKAC);
   </programlisting>
 
   <simpara>
-   Следуя стандартным правилам наследования, класс, расширяющий другой класс,
+   По стандартным правилам наследования класс-наследник
    пройдёт проверку типа.
   </simpara>
 
   <simpara>
-   Проблема состоит в том, что выражение &match; в функции <code>quux()</code> уже не покрывает все случаи.
-   Поскольку оно не знает о варианте <code>MoreErrorCode::PEBKAC</code>, выражение &match; выбросит исключение.
+   Проблема состояла бы в том, что выражение &match; в функции <code>quux()</code> уже не покрывало бы каждый
+   вариант перечисления. И поскольку выражение проверки не знает о варианте <code>MoreErrorCode::PEBKAC</code>,
+   сопоставление выбросит исключение.
   </simpara>
 
   <simpara>
-   Поэтому перечисления окончательны и их не разрешено расширять.
+   Поэтому перечисления окончательны и их нельзя расширять.
   </simpara>
  </sect1>
 
@@ -920,15 +926,16 @@ function query($fields, $filter, SortOrder $order = SortOrder::Asc)
 {
      /* ... */
 }
+
 ?>
 ]]>
     </programlisting>
     <para>
-     Функция <literal>query()</literal> теперь может безопасно работать,
-     зная, что параметр <literal>$order</literal> гарантированно будет либо вариантом <literal>SortOrder::Asc</literal>,
+     Функция <literal>query()</literal> теперь безопасно продолжает работу,
+     поскольку параметр <literal>$order</literal> гарантирует, что аргумент будет либо вариантом <literal>SortOrder::Asc</literal>,
      либо вариантом <literal>SortOrder::Desc</literal>.
-     Любое другое значение привело бы к исключению <classname>TypeError</classname>,
-     поэтому проверка ошибок или тестирование не нужны.
+     Другое значение привело бы к исключению <classname>TypeError</classname>,
+     поэтому функция обойдётся без проверки ошибок или тестирования.
     </para>
    </example>
   </para>
@@ -951,7 +958,7 @@ enum UserStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             static::Pending => 'В ожидании',
             static::Active => 'Активный',
             static::Suspended => 'Приостановленный',
@@ -959,22 +966,24 @@ enum UserStatus: string
         };
     }
 }
+
 ?>
 ]]>
      </programlisting>
 
      <para>
-      В этом примере статус пользователя может быть исключительно одним из следующих вариантов:
+      В этом примере статус пользователя ограничивается единственным значением и только из следующих вариантов:
       <literal>UserStatus::Pending</literal>,
       <literal>UserStatus::Active</literal>, <literal>UserStatus::Suspended</literal>
       или <literal>UserStatus::CanceledByUser</literal>.
-      Функция может ввести параметр <literal>UserStatus</literal> и затем принять только эти четыре значения, точка.
+      Определение в сигнатуре функции параметра с типом <literal>UserStatus</literal>
+      разрешит функции принимать только эти четыре значения, точка.
      </para>
 
      <para>
-      У всех четырёх значений есть метод <literal>label()</literal>, который возвращает удобочитаемую строку.
-      Эта строка не зависит от скалярной эквивалентной строки "machine name", которую можно использовать,
-      например, в поле базы данных или значении выпадающего списка HTML.
+      Каждому из четырёх значений доступен метод <literal>label()</literal>, который возвращает строку, удобную для чтения человеком.
+      Эта строка не зависит от строки со скалярным эквивалентом «машинного имени», который, например,
+      хранят в поле базы данных или выводят как значение элемента выпадающего списка в HTML-форме.
      </para>
 
      <programlisting role="php">
@@ -982,8 +991,13 @@ enum UserStatus: string
 <?php
 
 foreach (UserStatus::cases() as $case) {
-    printf('<option value="%s">%s</option>\n', $case->value, $case->label());
+    printf(
+        "<option value=\"%s\">%s</option>\n",
+        $case->value,
+        $case->label()
+    );
 }
+
 ?>
 ]]>
      </programlisting>
