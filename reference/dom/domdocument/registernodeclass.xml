@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: bb47f4433ac38d890373169666e82609d2ab0848 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 0e2dfef689e3b40b8a826a0f64ba741863ee8c2a Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="domdocument.registernodeclass" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>DOMDocument::registerNodeClass</refname>
   <refpurpose>
-   Регистрация расширенного класса, используемого для создания типа базового узла
+   Регистрирует производный пользовательский класс, через который создаётся тип базового узла
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis role="DOMDocument">
-   <modifier>public</modifier> <type>bool</type><methodname>DOMDocument::registerNodeClass</methodname>
+   <modifier>public</modifier> <type>true</type><methodname>DOMDocument::registerNodeClass</methodname>
    <methodparam><type>string</type><parameter>baseClass</parameter></methodparam>
    <methodparam><type class="union"><type>string</type><type>null</type></type><parameter>extendedClass</parameter></methodparam>
   </methodsynopsis>
 
   <para>
-   Этот метод позволяет зарегистрировать свой собственный расширенный
-   класс DOM, который будет использоваться впоследствии модулем PHP DOM.
+   Метод регистрирует пользовательский класс, который расширяет класс PHP-модуля DOM
+   и который модуль затем будет использовать, чтобы создавать базовые узлы документа.
   </para>
   <para>
-   Этот метод не является частью стандарта DOM.
+   Метод не входит в DOM-стандарт.
   </para>
   <caution>
    <simpara>
-    Конструктор объектов зарегистрированных классов узлов не вызывается.
+    Конструктор объектов классов узлов, которые зарегистрировали методом, не вызывается.
    </simpara>
   </caution>
  </refsect1>
@@ -38,8 +38,8 @@
      <term><parameter>baseClass</parameter></term>
      <listitem>
       <para>
-       Класс DOM, который вы хотите расширить. Список таких классов можно увидеть
-       во <link linkend="book.dom">введении</link>.
+       Класс модуля DOM, который требуется расширить. Список классов модуля содержит
+       <link linkend="book.dom">введение</link> к главе об объектной модели документов.
       </para>
      </listitem>
     </varlistentry>
@@ -47,9 +47,9 @@
      <term><parameter>extendedClass</parameter></term>
      <listitem>
       <para>
-       Имя расширенного класса. Если передать &null;, будут удалены все
-       ранее зарегистрированные классы, расширяющие базовый класс
-       <parameter>baseClass</parameter>.
+       Название пользовательского производного класса. Метод удалит классы,
+       которые прежде зарегистрировали как расширение базового класса <parameter>baseClass</parameter>,
+       если передать значение &null;.
       </para>
      </listitem>
     </varlistentry>
@@ -60,8 +60,31 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
+   &return.true.always;
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Метод <methodname>DOMDocument::registerNodeClass</methodname>
+       теперь предварительно возвращает значение <type>true</type>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
@@ -75,28 +98,33 @@
 <![CDATA[
 <?php
 
-class myElement extends DOMElement {
-   function appendElement($name) {
-      return $this->appendChild(new myElement($name));
-   }
+class myElement extends DOMElement
+{
+    function appendElement($name)
+    {
+        return $this->appendChild(new myElement($name));
+    }
 }
 
-class myDocument extends DOMDocument {
-   function setRoot($name) {
-      return $this->appendChild(new myElement($name));
-   }
+class myDocument extends DOMDocument
+{
+    function setRoot($name)
+    {
+        return $this->appendChild(new myElement($name));
+    }
 }
 
 $doc = new myDocument();
 $doc->registerNodeClass('DOMElement', 'myElement');
 
-// С этих пор добавление одного элемента к другому
-// требует всего одного вызова метода!
+// С этого момента добавление одного элемента к другому
+// требует только одного вызова метода!
 $root = $doc->setRoot('root');
 $child = $root->appendElement('child');
 $child->setAttribute('foo', 'bar');
 
 echo $doc->saveXML();
+
 
 ?>
 ]]>
@@ -118,21 +146,26 @@ echo $doc->saveXML();
     <programlisting role="php">
 <![CDATA[
 <?php
-class myElement extends DOMElement {
-    public function __toString() {
+
+class myElement extends DOMElement
+{
+    public function __toString()
+    {
         return $this->nodeValue;
     }
 }
 
-$doc = new DOMDocument;
+$doc = new DOMDocument();
 $doc->loadXML("<root><element><child>text in child</child></element></root>");
+
 $doc->registerNodeClass("DOMElement", "myElement");
 
 $element = $doc->getElementsByTagName("child")->item(0);
 var_dump(get_class($element));
 
-// Воспользуемся __toString методом..
+// Наконец оценим пользу, которую приносит магический метод __toString
 echo $element;
+
 ?>
 ]]>
     </programlisting>
@@ -151,50 +184,49 @@ text in child
      Получение имени документа владельца
     </title>
     <para>
-     Когда создаётся экземпляр расширенного класса
-     <classname>DOMDocument</classname>, свойство
-     <varname>ownerDocument</varname> будет ссылаться на создаваемый объект.
-     Однако если удалить все ссылки на этот класс, он будет уничтожен,
-     а вместо него будет создан новый объект <classname>DOMDocument</classname>.
-     По этой причине вы можете использовать функцию <function>DOMDocument::registerNodeClass</function>
-     применительно к объекту <classname>DOMDocument</classname>.
+     Свойство <varname>ownerDocument</varname> ссылается на экземпляр пользовательского класса,
+     когда создают пользовательский документ <classname>DOMDocument</classname>.
+     Модуль уничтожит объект пользовательского документа и создаст вместо него
+     новый экземпляр класса <classname>DOMDocument</classname>, если удалить все ссылки на пользовательский документ.
+     Поэтому модуль разрешает регистрировать методом <function>DOMDocument::registerNodeClass</function>
+     пользовательские типы документов, которые расширяют класс <classname>DOMDocument</classname>.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-class MyDOMDocument extends DOMDocument {
-}
 
-class MyOtherDOMDocument extends DOMDocument {
-}
+class MyDOMDocument extends DOMDocument {}
 
-// Создаём MyDOMDocument с некоторым XML-содержимым
-$doc = new MyDOMDocument;
+class MyOtherDOMDocument extends DOMDocument {}
+
+// Создаём объект MyDOMDocument с XML-содержимым
+$doc = new MyDOMDocument();
 $doc->loadXML("<root><element><child>text in child</child></element></root>");
 
 $child = $doc->getElementsByTagName("child")->item(0);
 
-// Текущий владелец узла - MyDOMDocument
+// Текущий владелец узла — объект MyDOMDocument
 var_dump(get_class($child->ownerDocument));
 
-// Уничтожаем MyDOMDocument
+// Вызов уничтожит объект MyDOMDocument
 unset($doc);
 
-// И создаём новый экземпляр DOMDocument
+// И создаст новый экземпляр класса DOMDocument
 var_dump(get_class($child->ownerDocument));
 
-// Импортируем узел из MyDOMDocument
-$newdoc = new MyOtherDOMDocument;
+// Импортируем узел из объекта MyDOMDocument
+$newdoc = new MyOtherDOMDocument();
 $child = $newdoc->importNode($child);
 
-// Регистрируем пользовательский DOMDocument
+// Регистрируем пользовательский класс DOMDocument
 $newdoc->registerNodeClass("DOMDocument", "MyOtherDOMDocument");
 
 var_dump(get_class($child->ownerDocument));
 unset($doc);
 
-// Новый владелец узла изменился на MyOtherDOMDocument
+// Модуль создал новый объект MyOtherDOMDocument
 var_dump(get_class($child->ownerDocument));
+
 ?>
 ]]>
     </programlisting>
@@ -214,15 +246,16 @@ string(18) "MyOtherDOMDocument"
     <title>Пользовательские объекты временны</title>
     <caution>
      <simpara>
-      Объекты зарегистрированных классов узлов являются временными, т.е. они
-      уничтожаются, когда на них больше не ссылаются из кода PHP и воссоздаются
-      при повторном извлечении. Это означает, что значения настраиваемых свойств будут
-      потеряны после восстановления.
+      Объекты классов, которые регистрируют для узлов этим методом, хранятся временно —
+      объекты уничтожаются, когда в PHP-коде не остаётся ссылок на эти объекты, и воссоздаются
+      при повторном извлечении. Поэтому значения пользовательских свойств
+      теряются после воссоздания объекта документа.
      </simpara>
     </caution>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class MyDOMElement extends DOMElement
 {
     public $myProp = 'значение по умолчанию';
@@ -238,7 +271,9 @@ $doc->appendChild($node);
 echo $doc->childNodes[0]->myProp, PHP_EOL;
 unset($node);
 echo $doc->childNodes[0]->myProp, PHP_EOL;
-?>]]>
+
+?>
+]]>
     </programlisting>
     &example.outputs;
     <screen role="xml">
