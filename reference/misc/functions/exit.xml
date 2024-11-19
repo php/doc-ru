@@ -1,115 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 86e6094e86b84a51d00ab217ac50ce8dde33d82a Maintainer: bfl Status: ready -->
+<!-- EN-Revision: 2aaaf1967f2510471b694daf8e41a419fc98b751 Maintainer: bfl Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.exit" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>exit</refname>
-  <refpurpose>Выводит сообщение и прекращает выполнение текущего скрипта</refpurpose>
+  <refpurpose>Завершает выполнение текущего скрипта с кодом состояния или сообщением</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>void</type><methodname>exit</methodname>
-   <methodparam choice="opt"><type>string</type><parameter>status</parameter></methodparam>
+   <type>never</type><methodname>exit</methodname>
+   <methodparam choice="opt"><type class="union"><type>string</type><type>int</type></type><parameter>status</parameter><initializer>0</initializer></methodparam
   </methodsynopsis>
-  <methodsynopsis>
-   <type>void</type><methodname>exit</methodname>
-   <methodparam><type>int</type><parameter>status</parameter></methodparam>
-  </methodsynopsis>
-  <para>
-   Прекращает выполнение скрипта.
-   <link linkend="function.register-shutdown-function">Функции отключения</link>
+  <simpara>
+   Функция завершает выполнение скрипта.
+   <link linkend="function.register-shutdown-function">Функции завершения работы скрипта</link>
    и <link linkend="language.oop5.decon.destructor">деструкторы объекта</link>
-   будут запущены, даже если была вызвана конструкция <literal>exit</literal>.
-  </para>
-  <para>
-   <literal>exit</literal> — это конструкция языка, и она может быть вызвана
-   без круглых скобок, если не передаётся параметр <parameter>status</parameter>.
-  </para>
+   выполнятся, даже если вызвали функцию <literal>exit</literal>.
+   Однако блоки &finally; не выполнятся.
+  </simpara>
+  <simpara>
+   Код выхода <literal>0</literal> указывает, что программа успешно выполнила
+   задания.
+   Другое значение указывает на ошибку, которая возникла при выполнении программы.
+  </simpara>
+  <simpara>
+   Функция <function>exit</function> не похожа на другие функции,
+   поскольку в парсере для неё выделили отдельный токен,
+   поэтому функцию разрешается вызывать без круглых скобок — как инструкцию
+   завершения скрипта с кодом статуса по умолчанию.
+  </simpara>
+  <caution>
+   <simpara>
+    Функцию невозможно отключить или создать в пространстве имён функцию, которая затеняет
+    глобальную функцию <function>exit</function>.
+   </simpara>
+  </caution>
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
-  <para>
-   <variablelist>
-    <varlistentry>
-     <term><parameter>status</parameter></term>
-     <listitem>
-      <para>
-       Если <parameter>status</parameter> задан в виде строки, то эта
-       конструкция выведет содержимое <parameter>status</parameter> перед выходом.
-      </para>
-      <para>
-       Если <parameter>status</parameter> задан в виде целого числа (<type>int</type>),
-       то это значение будет использовано как статус выхода и не будет выведено.
-       Статусы выхода должны быть в диапазоне от 0 до 254, статус выхода 255 зарезервирован
-       PHP и не должен использоваться. Статус выхода 0 указывают для успешного
-       завершения программы.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><parameter>status</parameter></term>
+    <listitem>
+     <simpara>
+      Функция выведет значение параметра <parameter>status</parameter> непосредственно перед выходом,
+      если в аргументе <parameter>status</parameter> передали строку.
+      Значение кода выхода, которое возвращает PHP, равно <literal>0</literal>.
+     </simpara>
+     <para>
+      PHP вернёт код выхода, который указали в аргументе <parameter>status</parameter>,
+      если в параметр <parameter>status</parameter> передали значение с типом <type>int</type>.
+      <note>
+       <simpara>
+        Параметр принимает коды выхода в диапазоне от <literal>0</literal> до <literal>254</literal>,
+        код выхода <literal>255</literal> зарезервировали для PHP, поэтому этот код нельзя указывать.
+       </simpara>
+      </note>
+     </para>
+     <warning>
+      <simpara>
+       До PHP 8.4.0 языковая конструкция <function>exit</function> не следовала стандартной
+       <link linkend="language.types.type-juggling.function">семантике жонглирования типами</link>
+       и не учитывала декларацию
+       <link linkend="language.types.declarations.strict"><literal>strict_types</literal></link>.
+      </simpara>
+      <simpara>
+       Значения, которые не принадлежали типу <type>int</type>, приводились к типу <type>string</type>,
+       включая значения с типом <type>resource</type> и <type>array</type>.
+       С PHP 8.4.0 функция следует стандартной семантике жонглирования типами и выбрасывает
+       ошибку <exceptionname>TypeError</exceptionname> при передаче недопустимых значений.
+      </simpara>
+     </warning>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   &return.void;
-  </para>
+  <simpara>
+   Функция не возвращает значение, поскольку завершает выполнение PHP-скрипта.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Языковая конструкция <function>exit</function> стала полноценной функцией,
+       поэтому функция следует
+       <link linkend="language.types.type-juggling.function">семантике жонглирования типами</link>,
+       на неё влияет декларация
+       <link linkend="language.types.declarations.strict"><literal>strict_types</literal></link>,
+       функцию разрешили вызывать с именованными аргументами и быть
+       <link linkend="functions.variable-functions">функцией переменной</link>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
-  <para>
-   <example>
-    <title>Пример использования языковой конструкции <literal>exit</literal></title>
-    <programlisting role="php">
+  <example>
+   <title>Базовый пример завершения скрипта функцией <function>exit</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+// Стандартный выход из программы
+exit();
+exit(0);
+
+// Выход из программы с кодом ошибки
+exit(1);
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>Пример выхода из программы функцией <function>exit</function> со строкой (<type>string</type>)</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
 $filename = '/path/to/data-file';
+
 $file = fopen($filename, 'r')
-    or exit("Невозможно открыть файл ($filename)");
+    or exit("невозможно открыть файл ($filename)")
+;
 
 ?>
 ]]>
-    </programlisting>
-   </example>
-  </para>
-  <para>
-   <example>
-    <title>Пример использования конструкции <literal>exit</literal> со статусом выхода</title>
-    <programlisting role="php">
+   </programlisting>
+  </example>
+  <example>
+   <title>Функции завершения скрипта и деструкторы выполняются независимо</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
-// обычный выход из программы
-exit;
-exit();
-exit(0);
-
-// выход с кодом ошибки
-exit(1);
-exit(0376); // восьмеричный
-
-?>
-]]>
-    </programlisting>
-   </example>
-  </para>
-  <para>
-   <example>
-    <title>Функции выключения и деструкторы выполняются независимо</title>
-    <programlisting role="php">
-<![CDATA[
-<?php
 class Foo
 {
     public function __destruct()
     {
-        echo 'Деинициализировать: ' . __METHOD__ . '()' . PHP_EOL;
+        echo 'Деструктор: ' . __METHOD__ . '()' . PHP_EOL;
     }
 }
 
@@ -122,40 +172,54 @@ $foo = new Foo();
 register_shutdown_function('shutdown');
 
 exit();
-echo 'Эта строка не будет выведена.';
+echo 'Эта строка не выведется.';
+
 ?>
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
- Завершить: shutdown()
- Деинициализировать: Foo::__destruct()
+Shutdown: shutdown()
+Destruct: Foo::__destruct()
 ]]>
-    </screen>
-   </example>
-  </para>
+   </screen>
+  </example>
+  <example>
+   <title>Пример выполнения <function>exit</function> как инструкции</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+// Стандартный выход из программы с кодом выхода 0
+exit;
+
+?>
+]]>
+   </programlisting>
+  </example>
  </refsect1>
 
  <refsect1 role="notes">
   &reftitle.notes;
 
-  &note.language-construct;
-
-  <note>
-   <para>
-    Эта языковая конструкция эквивалентна конструкции <function>die</function>.
-   </para>
-  </note>
+  <warning>
+   <simpara>
+    До PHP 8.4.0 <function>exit</function> была языковой конструкцией,
+    а не функцией, поэтому ее невозможно было вызывать как
+    <link linkend="functions.variable-functions">функцию переменной</link>
+    или <link linkend="functions.named-arguments">с именованным аргументом</link>.
+   </simpara>
+  </warning>
  </refsect1>
 
  <refsect1 role="seealso">
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>register_shutdown_function</function></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><function>register_shutdown_function</function></member>
+   <member><link linkend="function.register-shutdown-function">Функции завершения работы скрипта</link></member>
+   <member><link linkend="language.oop5.decon.destructor">Деструкторы объектов</link></member>
+  </simplelist>
  </refsect1>
 
 </refentry>
