@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8f9ebc8686e881bee5cc68828a004b722c62bc3b Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 03db4883c52dfbe6be059d915a159e3a1dd9e7cb Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.php-uname" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>php_uname</refname>
   <refpurpose>
-   Возвращает информацию об операционной системе, на которой запущен PHP
+   Возвращает информацию об операционной системе, в которой работает PHP
   </refpurpose>
  </refnamediv>
 
@@ -16,18 +16,17 @@
    <methodparam choice="opt"><type>string</type><parameter>mode</parameter><initializer>"a"</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>php_uname</function> возвращает описание операционной системы,
-   на которой запущен PHP. Это та же строка, с которой начинается вывод
-   <function>phpinfo</function>. Для вывода названия операционной системы
-   также можно использовать константу <constant>PHP_OS</constant>, но имейте в виду,
-   что эта константа содержит название операционной системы, на которой
-   PHP был собран (<emphasis>built</emphasis>).
+   Функция <function>php_uname</function> возвращает описание операционной системы,
+   в которой запустили PHP. Это та же строка, с которой начинается вывод
+   функции <function>phpinfo</function>. Для вывода только названия операционной системы
+   указывают константу <constant>PHP_OS</constant>. Обратите внимание,
+   эта константа содержит название операционной системы, в которой
+   <emphasis>собрали</emphasis> PHP.
   </para>
   <para>
-   На некоторых старых UNIX-платформах получить информацию о текущей ОС
-   может оказаться невозможным. В таких случаях функция выдаст название
-   ОС, на которой PHP был собран. Такое случается, когда библиотека,
-   которой пользуется uname(), недоступна или работает некорректно.
+   На отдельных старых UNIX-платформах функция иногда не определяет текущую ОС
+   и тогда возвращает ОС, в которой собрали PHP. Такое бывает, только если библиотечный
+   вызов функции uname() не существует или не работает.
   </para>
  </refsect1>
 
@@ -39,42 +38,49 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       <parameter>mode</parameter> - одиночный символ, определяющий,
-       какая информация будет выводиться:
+       <parameter>mode</parameter> — один символ, который определяет,
+       какая информация возвращается:
        <itemizedlist>
         <listitem>
-         <simpara>
-          <literal>'a'</literal>: По умолчанию. Содержит все режимы в
-          следующей последовательности <literal>"s n r v m"</literal>.
-         </simpara>
+         <para>
+          <literal>'a'</literal>: Значение по умолчанию.
+          В этом режиме функция возвращает ту же информацию, что и отдельные режимы, разделённые пробелом.
+          <simplelist type="inline">
+           <member><literal>'s'</literal></member>
+           <member><literal>'n'</literal></member>
+           <member><literal>'r'</literal></member>
+           <member><literal>'v'</literal></member>
+           <member><literal>'m'</literal></member>
+          </simplelist>.
+         </para>
         </listitem>
         <listitem>
          <simpara>
-          <literal>'s'</literal>: Название операционной системы, например,
+          <literal>'s'</literal>: Название операционной системы, например
            <literal>FreeBSD</literal>.
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          <literal>'n'</literal>: Имя хоста, например,
+          <literal>'n'</literal>: Имя хоста, например
           <literal>localhost.example.com</literal>.
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          <literal>'r'</literal>: Номер релиза, например,
+          <literal>'r'</literal>: Номер релиза, например
           <literal>5.1.2-RELEASE</literal>.
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          <literal>'v'</literal>: Информация о версии. Может сильно
-          различаться в разных ОС.
+          <literal>'v'</literal>: Информация о версии.
+          Сильно различается в зависимости от операционной системы.
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          <literal>'m'</literal>: Архитектура процессора, например,
+          <literal>'m'</literal>: Архитектура процессора, например
           <literal>i386</literal>.
          </simpara>
         </listitem>
@@ -89,18 +95,42 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает описание ОС в виде строки.
+   Функция возвращает описание ОС в виде строки.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Функция выбрасывает ошибку <classname>ValueError</classname>,
+       если указали недопустимый режим <parameter>mode</parameter>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Несколько примеров использования <function>php_uname</function></title>
+    <title>Примеры получения информации об операционной системе функцией <function>php_uname</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 echo php_uname();
 echo PHP_OS;
 
@@ -127,13 +157,15 @@ if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
    </example>
   </para>
   <para>
-   Ниже приведено несколько <link linkend="language.constants.predefined">
-   Предопределённых PHP-констант</link>, которые могут оказаться полезными:
+   В языке также предопределили ряд
+   <link linkend="language.constants.predefined">PHP-констант</link>,
+   которые связаны с работой функции:
    <example>
-    <title>Некоторые константы OS</title>
+    <title>Пример констант, которые связаны с ОС</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // *nix
 echo DIRECTORY_SEPARATOR; // /
 echo PHP_SHLIB_SUFFIX;    // so
@@ -143,6 +175,7 @@ echo PATH_SEPARATOR;      // :
 echo DIRECTORY_SEPARATOR; // \
 echo PHP_SHLIB_SUFFIX;    // dll
 echo PATH_SEPARATOR;      // ;
+
 ?>
 ]]>
     </programlisting>
