@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cef78b0fbe0fbe02003699b027ab50200097e949 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 73007ad9889ca2a3d85b0a710b55deb44ac370cc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.fgetcsv" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>fgetcsv</refname>
-  <refpurpose>Получает строку из указателя файла и разбирает поля CSV-файла</refpurpose>
+  <refpurpose>Получает строку из файлового указателя и разбирает по CSV-полям</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -23,11 +23,11 @@
    в формате <acronym>CSV</acronym> и возвращает массив с прочитанными полями.
   </para>
   <note>
-   <para>
-    Функция учитывает настройки локали. Если значение константы
-    <constant>LC_CTYPE</constant> равно, например, <literal>en_US.UTF-8</literal>,
-    функция может неправильно прочитать файлы в однобайтовой кодировке.
-   </para>
+   <simpara>
+    Функция учитывает региональный настройки. Поэтому функция иногда неправильно разбирает
+    данные в отдельных однобайтовых кодировках, если значение константы
+    <constant>LC_CTYPE</constant> равно <literal>en_US.UTF-8</literal>.
+   </simpara>
   </note>
  </refsect1>
 
@@ -49,14 +49,14 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Значение параметра устанавливают больше самой длинной строки (в символах), которую функция нашла в CSV-файле
-       (включая завершающий символ конца строки). Иначе функция разобьёт
-       строку на части длиной в <parameter>length</parameter> символов,
-       если только место разделение не появится внутри ограничителя полей.
+       Для параметра <parameter>length</parameter> устанавливают значение,
+       которое больше самой длинной строки в CSV-файле, иначе строка разбивается на части заданной длины,
+       если только место разделения не встретится внутри символов-ограничителей.
+       Длина строк измеряется в символах с учётом символов конца строки, которыми завершаются строки.
       </para>
       <para>
-       Если этот параметр опустили (или начиная с PHP 8.0.0 установили для параметра значение 0 или &null;),
-       функция не будет ограничивать максимальную длину строки, что немного медленнее.
+       Функция снимет ограничение на длину строки, но замедлит работу,
+       если параметр пропустили или начиная с PHP 8.0.0 установили для параметра значение 0 или &null;.
       </para>
      </listitem>
     </varlistentry>
@@ -65,7 +65,7 @@
      <listitem>
       <para>
        Необязательный параметр <parameter>separator</parameter> устанавливает
-       разделитель полей (только один однобайтовый символ).
+       символ-разделитель полей и принимает только один однобайтовый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -74,7 +74,7 @@
      <listitem>
       <para>
        Необязательный параметр <parameter>enclosure</parameter> устанавливает
-       символ ограничителя поля (только один однобайтовый символ).
+       символ-ограничитель значения поля и принимает только один однобайтовый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -83,19 +83,27 @@
      <listitem>
       <para>
        Необязательный параметр <parameter>escape</parameter> устанавливает
-       символ экранирования (не более одного однобайтового символа).
-       Пустая строка (<literal>""</literal>) отключает внутренний механизм экранирования.
+       символ экранирования и принимает не больше одного однобайтового символа.
+       Пустая строка <literal>""</literal> отключает внутренний механизм экранирования.
       </para>
       <note>
        <simpara>
-        Обычно символ ограничителя <parameter>enclosure</parameter> экранируется внутри поля путём удвоения;
-        однако, разрешается указывать символ экранирования <parameter>escape</parameter> как альтернативу.
-        Поэтому значения по умолчанию этих параметров <literal>""</literal> и <literal>\"</literal>
-        имеют одинаковое значение. Кроме разрешения экранировать символ ограничителя
-        <parameter>enclosure</parameter> символ экранирования
-        <parameter>escape</parameter> не имеет особого смысла; он даже не предназначен для самого экранирования.
+        Обычно символ ограничителя значений — <parameter>enclosure</parameter> экранируется внутри поля путём удвоения;
+        однако как альтернативу разрешается использовать символ экранирования <parameter>escape</parameter>.
+        Поэтому для стандартных значений параметра смысл значений <literal>""</literal> и <literal>\"</literal>
+        одинаков. Символ экранирования — <parameter>escape</parameter> не несёт отдельного смысла,
+        кроме экранирования символа ограничителя значений — <parameter>enclosure</parameter>;
+        он даже не экранирует сам себя.
        </simpara>
       </note>
+      <warning>
+       <simpara>
+        Начиная с PHP 8.4.0 полагаться на значение по умолчанию,
+        которое содержит параметр <parameter>escape</parameter>, не рекомендуют.
+        Значение потребуется указать явно, позиционно
+        или как <link linkend="functions.named-arguments">именованный аргумент</link>.
+       </simpara>
+      </warning>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -106,16 +114,30 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения функция возвращает индексный массив с полями, которые прочитала функция,&return.falseforfailure;.
+   В случае успешного выполнения функция возвращает индексный массив с полями,
+   которые прочитала из файла,&return.falseforfailure;.
   </para>
   <note>
    <para>
-    Функция возвращает пустую строку CSV-файла как массив,
-    который содержит единственный элемент <type>null</type>, ошибки
-    в этом случае не возникнет.
+    Пустую строку в CSV-файле функция возвращает как массив
+    с единственным элементом <type>null</type>
+    и не рассматривает как ошибку.
    </para>
   </note>
   &note.line-endings;
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если аргументы для разделителя полей <parameter>separator</parameter> или ограничителя значений <parameter>enclosure</parameter>
+   содержат значение короче одного байта.
+  </simpara>
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если длина значения аргумента <parameter>escape</parameter> не равна одному байту или передали пустую строку.
+  </simpara>
  </refsect1>
 
  <refsect1 role="changelog">
@@ -131,16 +153,23 @@
      </thead>
      <tbody>
       <row>
+       <entry>8.4.0</entry>
+       <entry>
+        Вызов функции без явной передачи значения в параметр <parameter>escape</parameter>
+        устарел.
+       </entry>
+      </row>
+      <row>
        <entry>8.0.0</entry>
        <entry>
-        Теперь параметр <parameter>length</parameter> принимает значение &null;.
+        Параметр <parameter>length</parameter> теперь принимает значение &null;.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Теперь параметр <parameter>escape</parameter> умеет принимать пустую строку для
-        отключения встроенного механизма экранирования.
+        Параметр <parameter>escape</parameter> теперь также принимает пустую строку
+        для отключения встроенного механизма экранирования.
        </entry>
       </row>
      </tbody>
@@ -153,7 +182,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример чтения и вывода на экран содержимого CSV-файла</title>
+    <title>Пример считывания и вывода на экран содержимого CSV-файла</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -163,10 +192,11 @@ $row = 1;
 if (($handle = fopen("test.csv", "r")) !== FALSE) {
     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
         $num = count($data);
+
         echo "<p> $num полей в строке $row: <br /></p>\n";
         $row++;
 
-        for ($c=0; $c < $num; $c++) {
+        for ($c = 0; $c < $num; $c++) {
             echo $data[$c] . "<br />\n";
         }
     }
@@ -183,15 +213,17 @@ if (($handle = fopen("test.csv", "r")) !== FALSE) {
 
  <refsect1 role="seealso">
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>str_getcsv</function></member>
-    <member><function>explode</function></member>
-    <member><function>file</function></member>
-    <member><function>pack</function></member>
-    <member><function>fputcsv</function></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><function>fputcsv</function></member>
+   <member><function>str_getcsv</function></member>
+   <member><methodname>SplFileObject::fgetcsv</methodname></member>
+   <member><methodname>SplFileObject::fputcsv</methodname></member>
+   <member><methodname>SplFileObject::setCsvControl</methodname></member>
+   <member><methodname>SplFileObject::getCsvControl</methodname></member>
+   <member><function>explode</function></member>
+   <member><function>file</function></member>
+   <member><function>pack</function></member>
+  </simplelist>
  </refsect1>
 
 </refentry>
