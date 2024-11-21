@@ -1,0 +1,573 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 2e7c00fd314a708ecbd495ef7cc9ae8c8462c33c Maintainer: malferov Status: ready -->
+<!-- Reviewed: no -->
+<!-- $Revision$ -->
+<sect1 xml:id="language.oop5.property-hooks" xmlns="http://docbook.org/ns/docbook">
+ <title>Property Hooks</title>
+
+ <simpara>
+  Хуки свойств, которые в ряде других языков ещё называются «аксессорами свойств», представляют
+  способ перехвата и переопределения поведения объектов при чтении и записи свойства.
+  Функциональность хуков преследует две цели:
+ </simpara>
+ <orderedlist>
+  <listitem>
+   <simpara>
+    Записывать и считывать значения свойств объектов напрямую, без методов получения и установки свойств,
+    оставляя при этом открытым добавление дополнительного поведения в будущем.
+    Это делает шаблонные геттеры и сеттеры ненужными,
+    даже без хуков.
+   </simpara>
+  </listitem>
+  <listitem>
+   <simpara>
+    Получать доступ к свойствам объекта
+    без непосредственного хранения значений свойств.
+   </simpara>
+  </listitem>
+ </orderedlist>
+ <simpara>
+  Свойствам доступны два хука: <literal>get</literal> и <literal>set</literal>.
+  Хуки разрешают переопределять поведение чтения и записи свойства.
+ </simpara>
+ <simpara>
+  Классы поддерживают «реальные» и «виртуальные» свойства.
+  Реальное свойство — то, которое хранит действительное значение.
+  Свойства без хуков — реальные.
+  Виртуальное свойство — то, для которого объявили хуки и эти хуки не взаимодействуют с самим свойством.
+  Хуки виртуальных свойств — практически то же самое, что и методы,
+  и объект не занимает места в памяти для хранения значения такого свойства.
+ </simpara>
+ <simpara>
+  Хуки свойств несовместимы с <literal>readonly</literal>-свойствами.
+  Свойствам устанавливают <link linkend="language.oop5.visibility-members-aviz">асимметричную область видимости</link>,
+  когда в дополнение к изменению поведения, которое вносят хуки <literal>get</literal> и <literal>set</literal>,
+  требуется ограничить доступ к операциям чтения или записи.
+ </simpara>
+ <sect2>
+  <title>Базовый синтаксис хуков</title>
+  <simpara>
+   Общий синтаксис объявления хука следующий.
+  </simpara>
+  <example>
+   <title>Пример полной версии объявления хуков для свойств</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Example
+{
+    private bool $modified = false;
+
+    public string $foo = 'default value' {
+        get {
+            if ($this->modified) {
+                return $this->foo . ' (modified)';
+            }
+
+            return $this->foo;
+        }
+
+        set(string $value) {
+            $this->foo = strtolower($value);
+            $this->modified = true;
+        }
+    }
+}
+
+$example = new Example();
+$example->foo = 'changed';
+print $example->foo;
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Свойство <varname>$foo</varname> заканчивается фигурными скобками <literal>{}</literal>, а не точкой с запятой.
+   Это указывает на то, что для свойства определили хуки.
+   Определили оба хука, и <literal>get</literal>, и <literal>set</literal>,
+   хотя разрешается определять только один или другой.
+   Обоим хуках определили тела, которые также обозначили фигурными скобками <literal>{}</literal>.
+   В теле разрешается записывать произвольный код.
+  </simpara>
+  <simpara>
+   Хук <literal>set</literal> дополнительно разрешает указывать тип и название входящего значения,
+   тем же синтаксисом, которым в методах объявляют параметры.
+   Тип значения указывается либо с ограничением как у типа свойства,
+   либо <link linkend="language.oop5.variance.contravariance">контравариантным</link> к значению —
+   с более широким, или слабым, ограничением.
+   Например, для свойства с типом <type>string</type>
+   в хуке <literal>set</literal> разрешается определять параметр, который принимает типы
+   <type class="union"><type>string</type><type>Stringable</type></type>,
+   но не только тип <type>array</type>.
+  </simpara>
+  <simpara>
+   По крайней мере один хук ссылается на само свойство <code>$this->foo</code>.
+   Поэтому свойство будет «реальным».
+   При вызове <code>$example->foo = 'changed'</code>
+   строка вначале приводится к нижнему регистру, затем сохраняется как реальное значение.
+   При чтении свойства сохранённое значение разрешается условно дополнить новым текстом.
+  </simpara>
+  <simpara>
+   Для обработки частых случаев предусмотрели ряд версий сокращенного синтаксиса.
+  </simpara>
+  <simpara>
+   Фигурные скобки <literal>{}</literal> опускают и заменяют стрелочным выражением,
+   если хук <literal>get</literal> состоит из одного выражения.
+  </simpara>
+  <example>
+   <title>Пример свойства с хуком get из одного выражения</title>
+   <simpara>
+    Этот пример эквивалентен предыдущему.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Example
+{
+    private bool $modified = false;
+
+    public string $foo = 'default value' {
+        get => $this->foo . ($this->modified ? ' (modified)' : '');
+
+        set(string $value) {
+            $this->foo = strtolower($value);
+            $this->modified = true;
+        }
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Параметр разрешается опустить, если тип параметра в хуке <literal>set</literal> совпадает
+   с типом свойства, что встречается часто.
+   Тогда значению для установки автоматически присваивается имя <varname>$value</varname>.
+  </simpara>
+  <example>
+   <title>Пример установки значения по умолчанию для свойства</title>
+   <simpara>
+    Этот пример эквивалентен предыдущему.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Example
+{
+    private bool $modified = false;
+
+    public string $foo = 'default value' {
+        get => $this->foo . ($this->modified ? ' (modified)' : '');
+
+        set {
+            $this->foo = strtolower($value);
+            $this->modified = true;
+        }
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Хук <literal>set</literal> также можно упростить до выражения со стрелкой,
+   если хук только устанавливает изменённую версию значения аргумента.
+   Значение, которое вычислит выражение, установится как реальное значение свойства.
+  </simpara>
+  <example>
+   <title>Пример установки значения свойства выражением в хуке set</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Example
+{
+    public string $foo = 'default value' {
+        get => $this->foo . ($this->modified ? ' (modified)' : '');
+        set => strtolower($value);
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Этот пример не эквивалентен предыдущему,
+   поскольку он не изменяет значение свойства <code>$this->modified</code>, как предыдущий пример.
+   В теле хука set пользуются версией синтаксиса с фигурными скобками, когда требуется указать больше одной инструкции.
+  </simpara>
+  <simpara>
+   В свойствах разрешается реализовывать ноль, один или оба хука в зависимости от ситуации.
+   Сокращённые версии синтаксиса хуков не зависят одна от другой.
+   Поэтому допустимы и короткий синтаксис хука get с длинным синтаксисом хука set,
+   и короткий синтаксис хука set с явным типом параметра, и другие комбинации.
+  </simpara>
+  <simpara>
+   Пропуск хука <literal>get</literal> или <literal>set</literal> в реальном свойстве означает,
+   что чтение или запись поведут себя по умолчанию.
+  </simpara>
+ </sect2>
+ <sect2 xml:id="language.oop5.property-hooks.virtual">
+  <title>Виртуальные свойства</title>
+  <simpara>
+   Виртуальными называются свойства без реальных значений.
+   Свойство станет виртуальным, если ни хук <literal>get</literal>,
+   ни хук <literal>set</literal> не ссылаются на само свойство точным синтаксисом.
+   Так, свойство с именем <code>$foo</code>, хук которого содержит ссылку на само свойство <code>$this->foo</code>, будет реальным.
+   Но свойство в следующем примере не относится к реальным и вызовет ошибку:
+  </simpara>
+  <example>
+   <title>Пример недопустимого виртуального свойства</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Example
+{
+    public string $foo {
+        get {
+            $temp = __PROPERTY__;
+            return $this->$temp; // Инструкция return не ссылается на реальное свойство $this->foo, поэтому это не считается
+        }
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Попытка выполнить с виртуальным свойством операцию, для которой не объявили хук,
+   вызовет ошибку, поскольку поведение по умолчанию для такой операции останется неопределённым.
+   Виртуальные свойства не занимают места в памяти объекта.
+   Виртуальные свойства помогают создавать «производные» свойства
+   наподобие комбинации значений двух других свойств.
+  </simpara>
+  <example>
+   <title>Пример виртуального свойства</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+readonly class Rectangle
+{
+    // Виртуальное свойство
+    public int $area {
+        get => $this->h * $this->w;
+    }
+
+    public function __construct(public int $h, public int $w) {}
+}
+
+$s = new Rectangle(4, 5);
+print $s->area; // Выводит 20
+$s->area = 30; // Ошибка, поскольку для свойства не определили комбинацию записи
+
+?>
+]]>
+   </programlisting>
+  </example>
+  <simpara>
+   Для виртуального свойства разрешается определять оба хука, как <literal>get</literal>, так и <literal>set</literal>.
+  </simpara>
+ </sect2>
+ <sect2>
+  <title>Об области видимости</title>
+  <simpara>
+   Хуки работают в области видимости объекта, который модифицируется.
+   Поэтому хукам доступны открытые, защищённые и закрытые методы и свойства объекта,
+   включая свойства со своими хуками.
+   Доступ к другому свойству из хука не обходит хуки, которые определили для другого свойства.
+  </simpara>
+  <simpara>
+   Следствие этого состоит в том, что нетривиальным хукам доступен
+   вызов метода произвольной сложности, если потребуется.
+  </simpara>
+  <example>
+   <title>Пример вызова метода из хука</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Person
+{
+    public string $phone {
+        set => $this->sanitizePhone($value);
+    }
+
+    private function sanitizePhone(string $value): string
+    {
+        $value = ltrim($value, '+');
+        $value = ltrim($value, '1');
+
+        if (!preg_match('/\d\d\d\-\d\d\d\-\d\d\d\d/', $value)) {
+            throw new \InvalidArgumentException();
+        }
+
+        return $value;
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+ <sect2>
+  <title>Ссылки</title>
+  <simpara>
+   Поскольку хуки перехватывают процесс чтения и записи свойств,
+   они вызывают проблемы при получении ссылки на свойство или при косвенной модификации,
+   например, <code>$this->arrayProp['key'] = 'value';</code>.
+   Это связано с тем, что попытка изменения значения по ссылке обойдет хук set,
+   если его определили.
+  </simpara>
+  <simpara>
+   В редких случаях, когда требуется получить ссылку на свойство,
+   для которого определили хуки, перед хуком <literal>get</literal> разрешается добавлять префикс <literal>&amp;</literal>,
+   чтобы заставить хук возвращать значение по ссылке.
+   Определение <literal>get</literal> и <literal>&amp;get</literal>
+   для одного и того же свойства вызовет синтаксическую ошибку.
+  </simpara>
+  <simpara>
+   Нельзя определять одновременно хуки <literal>&amp;get</literal> и <literal>set</literal> для реального свойства.
+   Как уже отмечалось, запись в значение, которое возвращается по ссылке, обойдет хук <literal>set</literal>.
+   Виртуальные свойства не хранят обязательного общего значения, которое хуки разделяют между собой,
+   поэтому хуки для чтения свойства разрешается определять с возвратом по значению или по ссылке.
+  </simpara>
+  <simpara>
+   Значения в индекс свойства-массива также неявно записываются по ссылке.
+   Поэтому запись в свойство с реальным массивом и хуками разрешается,
+   если только в свойстве определили единственный хук <literal>&amp;get</literal>.
+   В виртуальном свойстве запись в массив, который возвращает хук <literal>get</literal>
+   или <literal>&amp;get</literal>, возможна, но повлияет ли это
+   на объект, зависит от реализации хука.
+  </simpara>
+  <simpara>
+   Перезапись самого свойства массива возможна и ведёт себя как и другие свойства.
+   Только работа с элементами массива требует осторожности.
+  </simpara>
+ </sect2>
+ <sect2>
+  <title>Наследование</title>
+  <sect3>
+   <title>Окончательные хуки</title>
+   <simpara>
+    Хуки разрешается также объявлять окончательными через ключевое слово <link linkend="language.oop5.final">final</link>,
+    тогда хуки нельзя переопределять.
+   </simpara>
+   <example>
+    <title>Пример с окончательными хуками</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class User
+{
+    public string $username {
+        final set => strtolower($value);
+    }
+}
+
+class Manager extends User
+{
+    public string $username {
+        // Это возможно
+        get => strtoupper($this->username);
+
+        // Но это недопустимо, поскольку хук set окончателен в родительском элементе
+        set => strtoupper($value);
+    }
+}
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <simpara>
+    Свойство тоже возможно объявить окончательным через ключевое слово <link linkend="language.oop5.final">final</link>.
+    Окончательное свойство нельзя повторно объявлять в дочернем классе,
+    что исключает изменение хуков или ослабление доступа к операциям хуков.
+   </simpara>
+   <simpara>
+    Объявление окончательных хуков для окончательных свойств избыточно,
+    и без предупреждения проигнорируется.
+    Это то же поведение, что и у окончательных методов.
+   </simpara>
+   <simpara>
+    В дочернем классе разрешается определять или переопределять отдельные хуки для свойства
+    путём переопределения свойства и только тех хуков, которые классу требуется переопределить.
+    В дочернем классе также возможно добавить хуки к свойству, для которого хуки не определили прежде.
+    Практически, это то же самое, как если бы хуки были методами.
+   </simpara>
+   <example>
+    <title>Наследование хуков</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class Point
+{
+    public int $x;
+    public int $y;
+}
+
+class PositivePoint extends Point
+{
+    public int $x {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException('Too small');
+            }
+
+            $this->x = $value;
+        }
+    }
+}
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <simpara>
+    Каждый хук переопределяет родительские реализации независимо друг от друга.
+    Значения по умолчанию, которые установили для свойств, удалятся и потребуется объявить значение заново,
+    если дочерний класс добавляет хуки.
+    Это согласуется с тем, как наследование работает в свойствах без хуков.
+   </simpara>
+  </sect3>
+  <sect3>
+   <title>Доступ к родительским хукам</title>
+   <simpara>
+    Хук в дочернем классе получает доступ к свойству родительского класса
+    через ключевое слово <code>parent::$prop</code>, за которым следует хук, к которому требуется доступ.
+    Например, <code>parent::$propName::get()</code>.
+    Это читается как «получить доступ к свойству <varname>prop</varname>, которое определили
+    в родительском классе, а затем выполнить операцию get», или операцию set, в зависимости от ситуации.
+   </simpara>
+   <simpara>
+    Хук родительского класса игнорируется, если доступ не получают таким способом.
+    Такое поведение согласуется с тем, как работают методы.
+    Такой синтаксис также открывает доступ к хранилищу родительского класса, если в классе содержится такое хранилище.
+    Чтение или запись поведут себя по умолчанию, если в родительском свойстве нет хука.
+    Хукам нельзя получать доступ к другим хукам, за исключением своих хуков в родительских классах.
+   </simpara>
+   <simpara>
+    Перепишем уже приведённый пример эффективнее.
+   </simpara>
+   <example>
+    <title>Parent hook access (set)</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class Point
+{
+    public int $x;
+    public int $y;
+}
+
+class PositivePoint extends Point
+{
+    public int $x {
+        set {
+            if ($value < 0) {
+                throw new \InvalidArgumentException('Too small');
+            }
+
+            $this->x = $value;
+        }
+    }
+}
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <simpara>
+    Пример переопределения только хука get:
+   </simpara>
+   <example>
+    <title>Доступ к родительскому хуку (get)</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class Strings
+{
+    public string $val;
+}
+
+class CaseFoldingStrings extends Strings
+{
+    public bool $uppercase = true;
+
+    public string $val {
+        get => $this->uppercase
+            ? strtoupper(parent::$val::get())
+            : strtolower(parent::$val::get())
+        ;
+    }
+}
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </sect3>
+ </sect2>
+ <sect2>
+  <title>Сериализация</title>
+  <simpara>
+   В PHP предусмотрели ряд способов сериализовать объект в производственной среде
+   или в целях отладки.
+   Поведение хуков зависит от сценария.
+   В одних случаях берётся необработанное реальное значение свойства,
+   а хуки обходятся.
+   В других свойство свойство считывается или записывается «через» хук,
+   как и другие стандартные операции чтения и записи.
+  </simpara>
+  <simplelist>
+   <member>Функция <function>var_dump</function>: берёт необработанное значение</member>
+   <member>Функция <function>serialize</function>: берёт необработанное значение</member>
+   <member>Функция <function>unserialize</function>: берёт необработанное значение</member>
+   <member>
+     Магические методы <code>__serialize()</code> и <code>__unserialize()</code>:
+     реализуют пользовательскую логику с хуками чтения или записи
+   </member>
+   <member>Приведение массива: берёт необработанное значение</member>
+   <member>Функция <function>var_export</function>: задействует хук get</member>
+   <member>Функция <function>json_encode</function>: задействует хук get</member>
+   <member>Интерфейс JsonSerializable: реализует пользовательскую логику с хуком get</member>
+   <member>Функция <function>get_object_vars</function>: задействует хук get</member>
+   <member>Функция <function>get_mangled_object_vars</function>: берёт необработанное значение</member>
+  </simplelist>
+ </sect2>
+</sect1>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
