@@ -5,52 +5,53 @@
  <title>Ковариантность и контравариантность</title>
 
  <para>
-  В PHP 7.2.0 была добавлена частичная контравариантность путём устранения ограничений типа
-  для параметров в дочернем методе. Начиная с PHP 7.4.0, добавлена полная поддержка
+  В PHP 7.2.0 путём снятия ограничений типа для параметров в дочернем методе
+  добавили частичную контравариантность. Начиная с PHP 7.4.0 добавили полную поддержку
   ковариантности и контравариантности.
  </para>
 
  <para>
-  Ковариантность позволяет дочернему методу возвращать более конкретный тип,
-  чем тип возвращаемого значения его родительского метода. В то время как контравариантность
-  позволяет типу параметра в дочернем методе быть менее специфичным, чем в родительском.
+  Ковариантность разрешает дочернему методу возвращать более конкретный тип,
+  чем тип значения возврата родительского метода. В то время как контравариантность
+  разрешает сделать тип параметра в дочернем методе менее специфичным, чем в родительском.
  </para>
 
  <para>
-  Объявление типа считается более конкретным в следующем случае:
+  Объявление типа считают более конкретным в следующем случае:
   <itemizedlist>
    <listitem>
     <simpara>
-     Удалено <link linkend="language.types.type-system.composite.union">объединение типов</link>
+     Удалили тип <link linkend="language.types.type-system.composite.union">из объединения типов</link>
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Добавлено
-     <link linkend="language.types.type-system.composite.intersection">пересечение типов</link>
+     Добавили тип
+     <link linkend="language.types.type-system.composite.intersection">к пересечению типов</link>
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     Тип класса изменяется на тип дочернего класса
+     Тип класса изменили на тип дочернего класса
     </simpara>
    </listitem>
    <listitem>
     <simpara>
-     <type>iterable</type> изменён на массив (<type>array</type>) или <classname>Traversable</classname>
+     Тип <type>iterable</type> изменили на тип <type>array</type> или <classname>Traversable</classname>
     </simpara>
    </listitem>
   </itemizedlist>
 
-  В противном случае класс типа считается менее конкретным.
+  Класс типа считают менее конкретным, если верно обратное.
  </para>
 
  <sect2 xml:id="language.oop5.variance.covariance">
   <title>Ковариантность</title>
 
   <para>
-   Чтобы проиллюстрировать, как работает ковариантность, создадим простой абстрактный родительский класс <varname>Animal</varname>.
-   <varname>Animal</varname> будет расширен за счёт дочерних классов
+   Создадим простой абстрактный родительский класс <varname>Animal</varname>,
+   чтобы проиллюстрировать работу ковариантности.
+   Класс <varname>Animal</varname> расширяется дочерними классами
    <varname>Cat</varname> и <varname>Dog</varname>.
   </para>
 
@@ -86,13 +87,16 @@ class Cat extends Animal
         echo $this->name . " мяукает";
     }
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
 
   <para>
-   Обратите внимание, что в примере нет методов, которые возвращают значения. Будет добавлено несколько фабрик,
-   которые возвращают новый объект типа класса <varname>Animal</varname>, <varname>Cat</varname> или <varname>Dog</varname>.
+   Обратите внимание, пример не содержит методов, которые возвращают значения. Добавим ряд фабрик,
+   которые возвращают новый объект с типом класса <varname>Animal</varname>,
+   <varname>Cat</varname> или <varname>Dog</varname>.
   </para>
 
   <informalexample>
@@ -107,7 +111,7 @@ interface AnimalShelter
 
 class CatShelter implements AnimalShelter
 {
-    public function adopt(string $name): Cat // Возвращаем класс Cat вместо Animal
+    public function adopt(string $name): Cat // Возвращаем тип Cat вместо типа Animal
     {
         return new Cat($name);
     }
@@ -115,18 +119,20 @@ class CatShelter implements AnimalShelter
 
 class DogShelter implements AnimalShelter
 {
-    public function adopt(string $name): Dog // Возвращаем класс Dog вместо Animal
+    public function adopt(string $name): Dog // Возвращаем тип Dog вместо типа Animal
     {
         return new Dog($name);
     }
 }
 
-$kitty = (new CatShelter)->adopt("Рыжик");
+$kitty = (new CatShelter())->adopt("Рыжик");
 $kitty->speak();
 echo "\n";
 
-$doggy = (new DogShelter)->adopt("Бобик");
+$doggy = (new DogShelter())->adopt("Бобик");
 $doggy->speak();
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -143,11 +149,10 @@ $doggy->speak();
   <title>Контравариантность</title>
 
   <para>
-   В продолжение предыдущего примера, где мы
-   использовали классы <varname>Animal</varname>,
-   <varname>Cat</varname> и <varname>Dog</varname>, мы
-   введём новые классы <varname>Food</varname> и <varname>AnimalFood</varname> и добавим в абстрактный класс
-   <varname>Animal</varname> новый метод
+   В продолжение предыдущего примера с классами <varname>Animal</varname>,
+   <varname>Cat</varname> и <varname>Dog</varname>
+   введём новые классы — <varname>Food</varname> и <varname>AnimalFood</varname>,
+   и добавим в абстрактный класс <varname>Animal</varname> новый метод
    <varname>eat(AnimalFood $food)</varname>.
   </para>
 
@@ -174,15 +179,16 @@ abstract class Animal
         echo $this->name . " ест " . get_class($food);
     }
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
 
   <para>
-   Чтобы увидеть суть контравариантности, мы переопределим метод
-   <varname>eat</varname> класса <varname>Dog</varname> таким
-   образом, чтобы он мог принимать любой объект класса
-   <varname>Food</varname>. Класс <varname>Cat</varname> оставим
+   Переопределим метод <varname>eat</varname> в классе <varname>Dog</varname> так,
+   чтобы метод принимал любой объект с типом <varname>Food</varname>,
+   чтобы увидеть суть контравариантности. Класс <varname>Cat</varname> оставим
    без изменений.
   </para>
 
@@ -193,10 +199,13 @@ abstract class Animal
 
 class Dog extends Animal
 {
-    public function eat(Food $food) {
+    public function eat(Food $food)
+    {
         echo $this->name . " ест " . get_class($food);
     }
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
@@ -210,14 +219,16 @@ class Dog extends Animal
 <![CDATA[
 <?php
 
-$kitty = (new CatShelter)->adopt("Рыжик");
+$kitty = (new CatShelter())->adopt("Рыжик");
 $catFood = new AnimalFood();
 $kitty->eat($catFood);
 echo "\n";
 
-$doggy = (new DogShelter)->adopt("Бобик");
+$doggy = (new DogShelter())->adopt("Бобик");
 $banana = new Food();
 $doggy->eat($banana);
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -229,9 +240,8 @@ $doggy->eat($banana);
    </screen>
 
    <para>
-    Но что случится, если <varname>$kitty</varname> попробует
-    съесть (<methodname>eat</methodname>) банан
-    (<varname>$banana</varname>)?
+    Но что произойдёт, если кошка <varname>$kitty</varname> попробует
+    методом <methodname>eat</methodname> съесть банан <varname>$banana</varname>?
    </para>
 
    <programlisting role="php">
