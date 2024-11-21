@@ -4,29 +4,31 @@
 <sect1 xml:id="language.oop5.visibility" xmlns="http://docbook.org/ns/docbook">
  <title>Область видимости</title>
  <para>
-  Область видимости свойства, метода или константы (начиная c PHP 7.1.0) определяют,
-  добавляя перед объявлением ключевое слово: <literal>public</literal>,
-  <literal>protected</literal> или <literal>private</literal>. Доступ к свойствам
-  и методам класса, объявленным как public (общедоступный), разрешён отовсюду.
-  Модификатор protected (защищённый) разрешает доступ самому классу, наследующим его классам и родительским классам.
-  Модификатор private (закрытый) ограничивает область видимости так, что только класс,
-  где объявлен сам элемент, имеет к нему доступ.
+  Область видимости свойства, метода или начиная c PHP 7.1.0 константы определяют
+  путём добавления перед объявлением ключевого слова: <literal>public</literal>,
+  <literal>protected</literal> или <literal>private</literal>. Доступ к общедоступным членам класса,
+  — которые объявили с ключевым словом public, — разрешается из любой области видимости.
+  Доступ к защищённым членам класса, которые объявили с ключевым словом protected, — возможен только
+  внутри самого класса, и в производных классах-наследниках или родительских классах.
+  Доступ к закрытым членам класса, — которые объявили с ключевым словом private, — открывается
+  только для самого класса, в котором их определили.
  </para>
 
  <sect2 xml:id="language.oop5.visibility-members">
   <title>Область видимости свойства</title>
   <para>
-   Свойства класса могут быть определены как public, private или protected.
-   Свойства, объявленные без явного ключевого слова области видимости,
-   определяются как общедоступные (public).
+   Свойства класса разрешается определять как открытые — public, защищённые — protected или закрытые — private.
+   Свойства, которые объявили без явного ключевого слова области видимости,
+   определяются как открытые, как будто свойство объявили с ключевым словом public.
   </para>
   <example>
     <title>Объявление свойства класса</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 /**
- * Определение MyClass
+ * Определение класса MyClass
  */
 class MyClass
 {
@@ -44,9 +46,9 @@ class MyClass
 
 $obj = new MyClass();
 echo $obj->public; // Работает
-echo $obj->protected; // Неисправимая ошибка
-echo $obj->private; // Неисправимая ошибка
-$obj->printHello(); // Выводит Public, Protected и Private
+echo $obj->protected; // Фатальная ошибка
+echo $obj->private; // Фатальная ошибка
+$obj->printHello(); // Выводит 'Public', 'Protected' и 'Private'
 
 
 /**
@@ -54,7 +56,7 @@ $obj->printHello(); // Выводит Public, Protected и Private
  */
 class MyClass2 extends MyClass
 {
-    // Мы можем переопределить общедоступные и защищённые свойства, но не закрытые
+    // Разрешается переопределять открытые и защищённые свойства, но не закрытые
     public $public = 'Public2';
     protected $protected = 'Protected2';
 
@@ -68,9 +70,9 @@ class MyClass2 extends MyClass
 
 $obj2 = new MyClass2();
 echo $obj2->public; // Работает
-echo $obj2->private; // Неопределён
-echo $obj2->protected; // Неисправимая ошибка
-$obj2->printHello(); // Выводит Public2, Protected2, Undefined
+echo $obj2->protected; // Фатальная ошибка
+echo $obj2->private; // Предупреждение о неопределённом свойстве
+$obj2->printHello(); // Выводит 'Public2', 'Protected2' и предупреждение о неопределённом свойстве
 
 ?>
 ]]>
@@ -79,16 +81,19 @@ $obj2->printHello(); // Выводит Public2, Protected2, Undefined
   <sect3 xml:id="language.oop5.visibility-members-aviz">
    <title>Асимметричная область видимости свойств</title>
    <simpara>
-    Начиная с PHP 8.4, свойства также могут иметь асимметричную область видимости
-    для чтения (<literal>get</literal>) и записи (<literal>set</literal>).
-    В частности, область видимости <literal>set</literal> может быть задана отдельно,
-    при условии, что она такая же или менее строгая, чем область видимости по умолчанию.
+    Начиная с PHP 8.4 область видимости свойств разрешили также устанавливать асимметрично —
+    отдельно для чтения и записи. Видимость свойства для записи определяют инструкцией
+    <literal>(set)</literal>, которую указывают сразу после модификатора видимости,
+    тогда как инструкцию <literal>(get)</literal> после модификатора видимости для чтения не указывают, а подразумевают.
+    Область видимости <literal>set</literal> разрешается указывать отдельно,
+    если только она не слабее области видимости по умолчанию.
    </simpara>
    <example>
-    <title>Асимметричная область видимости свойств</title>
+    <title>Пример асимметричной установки области видимости свойств</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Book
 {
     public function __construct(
@@ -116,62 +121,68 @@ echo $b->pubYear; // Критическая ошибка
 $b->title = 'How not to PHP'; // Критическая ошибка
 $b->author = 'Pedro H. Peterson'; // Критическая ошибка
 $b->pubYear = 2023; // Критическая ошибка
+
 ?>
 ]]>
     </programlisting>
    </example>
-   <para>Есть несколько предостережений относительно асимметричной области видимости:</para>
+   <para>Относительно асимметричной области видимости определили ряд условий:</para>
    <itemizedlist>
     <listitem>
      <simpara>
-      Отдельная область видимость <literal>set</literal> может быть только у типизированных свойств.
+      Отдельную область видимости <literal>set</literal> разрешается устанавливать только типизированным свойствам.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Область видимости <literal>set</literal> должна быть такой же, как и <literal>get</literal> или более строгой.
-      То есть <code>public protected(set)</code> и <code>protected protected(set)</code> допустимы,
-      но <code>protected public(set)</code> приведёт к синтаксической ошибке.
+      Ограничение области видимости <literal>set</literal> должно быть как у области видимости <literal>get</literal>
+      или сильнее. Так, сочетания модификаторов <code>public protected(set)</code> и <code>protected protected(set)</code>
+      разрешаются, но более слабое условие области видимости для записи наподобие <code>protected public(set)</code>
+      вызовет синтаксическую ошибку.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Если свойство <literal>public</literal>, то основная область видимости может быть опущена.
-      То есть <code>public private(set)</code> и <code>private(set)</code> приведут к одному и тому же результату.
+      Область видимости для чтения открытых свойств разрешается пропускать и не указывать модификатор <literal>public</literal>.
+      Поэтому определения <code>public private(set)</code> и <code>private(set)</code>
+      установят свойству одни и те же области видимости.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
       Свойство с областью видимости <literal>private(set)</literal> автоматически становится окончательным (<literal>final</literal>)
-      и не может быть повторно объявлено в дочернем классе.
+      и его нельзя повторно объявить в дочернем классе.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Получение ссылки на свойство соответствует видимости <literal>set</literal>, а не <literal>get</literal>.
-      Это связано с тем, что ссылка может быть использована для изменения значения свойства.
+      Получение ссылки на свойство подчиняется видимости <literal>set</literal>, а не <literal>get</literal>.
+      Это связано с тем, что ссылка разрешает изменять значение свойства.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Аналогично, попытка записи в свойство массива включает в себя как операцию <literal>get</literal>,
-      так и <literal>set</literal>, и поэтому будет следовать области видимости <literal>set</literal>,
-      поскольку она всегда является более строгой.
+      Аналогично, попытка записи в массив, который содержится в свойстве,
+      включает в себя как внутреннюю операцию чтения — <literal>get</literal>,
+      так и операцию записи — <literal>set</literal>, и поэтому подчиниться области видимости <literal>set</literal>,
+      поскольку ограничение области видимости для записи сильнее.
      </simpara>
     </listitem>
    </itemizedlist>
    <simpara>
-    При наследовании класса, дочерний класс может переопределить любое свойство, которое не является окончательным (<literal>final</literal>).
-    При этом он может наследовать либо основную видимость, либо видимость <literal>set</literal>, при условии,
-    что новая видимость будет такой же или менее строгой, чем у родительского класса.
-    Однако имейте в виду, что если переопределяется свойство <literal>private</literal>, оно не изменяет родительское свойство,
-    а создаёт новое свойство с другим внутренним именем.
+    При наследовании класса дочернему классу доступно переопределение свойств родительского класса,
+    которые не обозначили окончательными ключевым словом <literal>final</literal>.
+    При этом дочернему классу разрешается ослабить либо основную видимость — для чтения, либо видимость <literal>set</literal>,
+    если только новая видимость останется такой же или станет слабее, чем у родительского класса.
+    Однако имейте в виду, что при переопределении свойства с модификатором <literal>private</literal>,
+    новая область видимости не изменяет видимость родительского свойства, а создаёт новое свойство с другим внутренним именем.
    </simpara>
    <example>
     <title>Наследование свойств с асимметричной областью видимости</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Book
 {
     protected string $title;
@@ -181,10 +192,11 @@ class Book
 
 class SpecialBook extends Book
 {
-    public protected(set) $title; // Всё хорошо, так как чтение менее строгое, а запись – такая же.
-    public string $author; // Всё хорошо, так как чтение такое же, а запись – менее строгая.
-    public protected(set) int $pubYear; // Критическая ошибка. Свойства private(set) являются окончательными.
+    public protected(set) $title; // Всё хорошо, поскольку ограничение на чтение слабее, а на запись – такое же
+    public string $author; // Всё хорошо, поскольку ограничение на чтение такое же, а на запись – слабее
+    public protected(set) int $pubYear; // Критическая ошибка. Свойства с видимостью private(set) — окончательны!
 }
+
 ?>
 ]]>
     </programlisting>
@@ -195,8 +207,9 @@ class SpecialBook extends Book
  <sect2 xml:id="language.oop5.visiblity-methods">
   <title>Область видимости метода</title>
   <para>
-   Методы класса могут быть определены как public, private или protected.
-   Методы, объявленные без указания области видимости, определяются как public.
+   Методы класса разрешается определять как открытые — public, защищённые — protected или закрытые — private.
+   Методы, которые объявили без явного ключевого слова области видимости,
+   определяются как открытые, как будто метод объявили с ключевым словом public.
   </para>
   <example>
     <title>Объявление метода</title>
@@ -204,21 +217,21 @@ class SpecialBook extends Book
 <![CDATA[
 <?php
 /**
- * Определение MyClass
+ * Определение класса MyClass
  */
 class MyClass
 {
     // Объявление общедоступного конструктора
-    public function __construct() { }
+    public function __construct() {}
 
     // Объявление общедоступного метода
-    public function MyPublic() { }
+    public function MyPublic() {}
 
     // Объявление защищённого метода
-    protected function MyProtected() { }
+    protected function MyProtected() {}
 
     // Объявление закрытого метода
-    private function MyPrivate() { }
+    private function MyPrivate() {}
 
     // Это общедоступный метод
     function Foo()
@@ -229,15 +242,15 @@ class MyClass
     }
 }
 
-$myclass = new MyClass;
+$myclass = new MyClass();
 $myclass->MyPublic(); // Работает
-$myclass->MyProtected(); // Неисправимая ошибка
-$myclass->MyPrivate(); // Неисправимая ошибка
-$myclass->Foo(); // Работает общедоступный, защищённый и закрытый
+$myclass->MyProtected(); // Фатальная ошибка
+$myclass->MyPrivate(); // Фатальная ошибка
+$myclass->Foo(); // Общедоступный, защищённый и закрытый методы работают
 
 
 /**
- * Определение MyClass2
+ * Определение класса MyClass2
  */
 class MyClass2 extends MyClass
 {
@@ -246,37 +259,42 @@ class MyClass2 extends MyClass
     {
         $this->MyPublic();
         $this->MyProtected();
-        $this->MyPrivate(); // Неисправимая ошибка
+        $this->MyPrivate(); // Фатальная ошибка
     }
 }
 
 $myclass2 = new MyClass2;
 $myclass2->MyPublic(); // Работает
-$myclass2->Foo2(); // Работает общедоступный и защищённый, закрытый не работает
+$myclass2->Foo2(); // Общедоступный и защищённый методы работают, закрытый — не работает
 
 class Bar
 {
-    public function test() {
+    public function test()
+    {
         $this->testPrivate();
         $this->testPublic();
     }
 
-    public function testPublic() {
+    public function testPublic()
+    {
         echo "Bar::testPublic\n";
     }
 
-    private function testPrivate() {
+    private function testPrivate()
+    {
         echo "Bar::testPrivate\n";
     }
 }
 
 class Foo extends Bar
 {
-    public function testPublic() {
+    public function testPublic()
+    {
         echo "Foo::testPublic\n";
     }
 
-    private function testPrivate() {
+    private function testPrivate()
+    {
         echo "Foo::testPrivate\n";
     }
 }
@@ -284,6 +302,7 @@ class Foo extends Bar
 $myFoo = new Foo();
 $myFoo->test(); // Bar::testPrivate
                 // Foo::testPublic
+
 ?>
 ]]>
     </programlisting>
@@ -293,12 +312,13 @@ $myFoo->test(); // Bar::testPrivate
  <sect2 xml:id="language.oop5.visiblity-constants">
   <title>Область видимости констант</title>
   <para>
-   Начиная с PHP 7.1.0, константы класса могут быть определены как public, private или
-   protected. Константы, объявленные без указания области видимости,
-   определяются как public.
+   Начиная с PHP 7.1.0 константы класса разрешается определять как открытые — public,
+   защищённые — protected или закрытые — private.
+   Константы, которые объявили без явного ключевого слова области видимости,
+   определяются как открытые, как будто константу объявили с ключевым словом public.
   </para>
   <example>
-    <title>Объявление констант, начиная с PHP 7.1.0</title>
+    <title>Пример объявления констант с PHP 7.1.0</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -326,9 +346,9 @@ class MyClass
 
 $myclass = new MyClass();
 MyClass::MY_PUBLIC; // Работает
-MyClass::MY_PROTECTED; // Неисправимая ошибка
-MyClass::MY_PRIVATE; // Неисправимая ошибка
-$myclass->foo(); // Выводятся константы public, protected и private
+MyClass::MY_PROTECTED; // Фатальная ошибка
+MyClass::MY_PRIVATE; // Фатальная ошибка
+$myclass->foo(); // Выводятся константы с модификаторами public, protected и private
 
 
 /**
@@ -341,13 +361,13 @@ class MyClass2 extends MyClass
     {
         echo self::MY_PUBLIC;
         echo self::MY_PROTECTED;
-        echo self::MY_PRIVATE; // Неисправимая ошибка
+        echo self::MY_PRIVATE; // Фатальная ошибка
     }
 }
 
 $myclass2 = new MyClass2;
 echo MyClass2::MY_PUBLIC; // Работает
-$myclass2->foo2(); // Выводятся константы public и protected, но не private
+$myclass2->foo2(); // Выводятся константы с модификаторами public и protected, но не с модификатором private
 ?>
 ]]>
     </programlisting>
@@ -357,15 +377,16 @@ $myclass2->foo2(); // Выводятся константы public и protected,
  <sect2 xml:id="language.oop5.visibility-other-objects">
   <title>Видимость из других объектов</title>
   <para>
-   Объекты, которые имеют общий тип (наследуются от одного класса), имеют доступ к элементам с модификаторами
-   private и protected друг друга, даже если не являются одним и тем же экземпляром.
-   Это объясняется тем, что реализация видимости элементов известна внутри этих объектов.
+   Объектам одного и того же типа доступны защищённые и закрытые члены класса
+   друг друга, даже если это разные экземпляры.
+   Это связано с тем, что внутри таких объектов уже известны конкретные детали реализации.
   </para>
   <example>
-   <title>Доступ к элементам с модификатором private из объектов одного типа</title>
+   <title>Доступ к закрытым членам объекта того же типа</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class Test
 {
     private $foo;
@@ -382,11 +403,11 @@ class Test
 
     public function baz(Test $other)
     {
-        // Мы можем изменить закрытое свойство:
+        // Закрытое свойство доступно для изменения:
         $other->foo = 'привет';
         var_dump($other->foo);
 
-        // Мы также можем вызвать закрытый метод:
+        // Закрытый метод также доступен для вызова:
         $other->bar();
     }
 }
@@ -394,6 +415,7 @@ class Test
 $test = new Test('test');
 
 $test->baz(new Test('other'));
+
 ?>
 ]]>
    </programlisting>
