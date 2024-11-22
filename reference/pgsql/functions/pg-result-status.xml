@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: aur Status: ready -->
+<!-- EN-Revision: 3c6c95fcfd7d9eaa603df40327693ea8dff89d53 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-result-status" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_result_status</refname>
   <refpurpose>
-   Возвращает состояние результата запроса
+   Возвращает статус результата запроса
   </refpurpose>
  </refnamediv>
 
@@ -17,9 +17,9 @@
    <methodparam choice="opt"><type>int</type><parameter>mode</parameter><initializer><constant>PGSQL_STATUS_LONG</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_result_status</function> возвращает текущее состояние
-   экземпляра <classname>PgSql\Result</classname>, либо тег завершения сервером работы с
-   с этим ресурсом.
+   Функция <function>pg_result_status</function> возвращает текущий статус
+   экземпляра <classname>PgSql\Result</classname> или тег завершения PostgreSQL-команды,
+   который связан с результатом.
   </para>
  </refsect1>
 
@@ -37,11 +37,12 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       Принимает одно из двух значений:
-       <constant>PGSQL_STATUS_LONG</constant> для получения числового обозначения
-       состояния <parameter>result</parameter>, либо
-       <constant>PGSQL_STATUS_STRING</constant> для получения тэга состояния в виде
-       строки. По умолчанию используется <constant>PGSQL_STATUS_LONG</constant>.
+       Параметр принимает значение
+       <constant>PGSQL_STATUS_LONG</constant> для возврата числового статуса,
+       который содержится в объекте с результатами запроса и который передали в аргументе <parameter>result</parameter>,
+       или значение <constant>PGSQL_STATUS_STRING</constant> для возврата тега команды
+       из того же объекта с результатами запроса — <parameter>result</parameter>.
+       Значение по умолчанию равно <constant>PGSQL_STATUS_LONG</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -52,17 +53,18 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Если в качестве аргумента передаётся <constant>PGSQL_STATUS_LONG</constant>,
-   то возвращается одна из перечисленных констант:
+   При передаче в аргументе константы <constant>PGSQL_STATUS_LONG</constant>
+   функция возвращает константу из следующего списка:
    <constant>PGSQL_EMPTY_QUERY</constant>,
    <constant>PGSQL_COMMAND_OK</constant>,
    <constant>PGSQL_TUPLES_OK</constant>,
+   <constant>PGSQL_TUPLES_CHUNK</constant>,
    <constant>PGSQL_COPY_OUT</constant>,
    <constant>PGSQL_COPY_IN</constant>,
    <constant>PGSQL_BAD_RESPONSE</constant>,
    <constant>PGSQL_NONFATAL_ERROR</constant>,
    <constant>PGSQL_FATAL_ERROR</constant>.
-   В противном случае функция вернёт строковое представление состояния
+   В остальных случаях функция вернёт строковое представление состояния
    результата запроса.
   </para>
  </refsect1>
@@ -88,7 +90,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_result_status</function></title>
+    <title>Пример возврата статуса результата запроса функцией <function>pg_result_status</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -103,10 +105,11 @@ $result = pg_query($conn, "COPY authors FROM STDIN;");
 $status = pg_result_status($result);
 
 // Разбираем полученные данные
-if ($status == PGSQL_COPY_IN)
+if ($status == PGSQL_COPY_IN) {
    echo "Copy began.";
-else
+} else {
    echo "Copy failed.";
+}
 
 ?>
 ]]>
