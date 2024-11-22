@@ -5,7 +5,7 @@
  <refnamediv>
   <refname>pg_get_result</refname>
   <refpurpose>
-   Получение результата асинхронного запроса
+   Получает результат асинхронного запроса
   </refpurpose>
  </refnamediv>
 
@@ -16,14 +16,15 @@
    <methodparam><type>PgSql\Connection</type><parameter>connection</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_get_result</function> получает экземпляр <classname>PgSql\Result</classname> из асинхронного
-   запроса, запущенного функциями <function>pg_send_query</function>,
+   Функция <function>pg_get_result</function> получает экземпляр класса <classname>PgSql\Result</classname> из асинхронного
+   запроса, который выполняют функциями <function>pg_send_query</function>,
    <function>pg_send_query_params</function> или <function>pg_send_execute</function>.
   </para>
-  <para><function>pg_send_query</function> и другие функции, посылающие
-   асинхронные запросы, может посылать сразу несколько запросов на сервер.
-   Функция <function>pg_get_result</function> получит результаты всех
-   запросов по очереди.
+  <para>
+   Функция <function>pg_send_query</function> и другие функции, которые отправляют
+   асинхронные запросы, умеет отправлять на сервер серию запросов один за другим,
+   а функция <function>pg_get_result</function> получает результаты каждого
+   запроса по очереди.
   </para>
  </refsect1>
 
@@ -44,7 +45,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-  Экземпляр <classname>PgSql\Result</classname>, либо &false;, когда доступных результатов больше нет.
+  Функция возвращает экземпляр класса <classname>PgSql\Result</classname>, или &false;,
+  если доступных результатов не осталось.
   </para>
  </refsect1>
 
@@ -70,36 +72,38 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_get_result</function></title>
+    <title>Пример получения результата асинхронного запроса функцией <function>pg_get_result</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  $dbconn = pg_connect("dbname=publisher") or die("Невозможно соединиться с сервером");
 
-  if (!pg_connection_busy($dbconn)) {
-      pg_send_query($dbconn, "select * from authors; select count(*) from authors;");
-  }
+$dbconn = pg_connect("dbname=publisher") or die("Невозможно соединиться с сервером");
 
-  $res1 = pg_get_result($dbconn);
-  echo "Первый вызов pg_get_result(): $res1\n";
-  $rows1 = pg_num_rows($res1);
-  echo "$res1 имеет $rows1 записей\n\n";
+if (!pg_connection_busy($dbconn)) {
+    pg_send_query($dbconn, "SELECT * FROM authors; SELECT count(*) FROM authors;");
+}
 
-  $res2 = pg_get_result($dbconn);
-  echo "Второй вызов pg_get_result(): $res2\n";
-  $rows2 = pg_num_rows($res2);
-  echo "$res2 имеет $rows2 записей\n";
+$res1 = pg_get_result($dbconn);
+echo "Первый вызов функции pg_get_result(): $res1\n";
+$rows1 = pg_num_rows($res1);
+echo "$res1 содержит $rows1 записей\n\n";
+
+$res2 = pg_get_result($dbconn);
+echo "Второй вызов функции pg_get_result(): $res2\n";
+$rows2 = pg_num_rows($res2);
+echo "$res2 содержит $rows2 записей\n";
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-Первый вызов pg_get_result(): Resource id #3
-Resource id #3 имеет 3 записей
+Первый вызов функции pg_get_result(): Resource id #3
+Resource id #3 содержит 3 записей
 
-Второй вызов pg_get_result(): Resource id #4
-Resource id #4 имеет 1 записей
+Второй вызов функции pg_get_result(): Resource id #4
+Resource id #4 содержит 1 записей
 ]]>
     </screen>
    </example>
