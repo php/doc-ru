@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 83a17a7324c2597bd6385148abf19f76127229f5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 31b6ff768992a82022aade13880c595e19e054ba Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.is-callable" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>is_callable</refname>
   <refpurpose>
-   Проверяет, что значение может быть вызвано как функция в текущей области видимости
+   Проверяет, доступно ли значение для вызова как функция в текущей области видимости
   </refpurpose>
  </refnamediv>
 
@@ -18,7 +18,8 @@
    <methodparam choice="opt"><type>string</type><parameter role="reference">callable_name</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Проверяет, что значение является <type>callable</type>.
+   Функция проверяет, принадлежит ли значени типу <type>callable</type>,
+   или доступно ли значение для вызова как функция.
   </para>
  </refsect1>
 
@@ -30,7 +31,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение для проверки
+       Значение, которое требуется проверить.
       </para>
      </listitem>
     </varlistentry>
@@ -38,12 +39,12 @@
      <term><parameter>syntax_only</parameter></term>
      <listitem>
       <para>
-       Если равен &true;, функция только проверяет, что
-       <parameter>value</parameter> может быть функцией или методом. В этом случае
-       будут отклоняться переменные, которые не являются ни строкой, ни массивом c корректной
-       структурой для использования в качестве callback-функции. Корректная структура
-       массива предполагает наличие только двух элементов, первый из которых - объект
-       или строка, а второй - только строка.
+       Со значением &true; функция проверяет только то,
+       могло бы значение <parameter>value</parameter> быть функцией или методом.
+       Функция отклонит только простые нестроковые переменные или массив с недопустимой
+       для callback-функции структурой. Корректная структура массива для вызова как callaback-функции
+       предполагает только два элемента, первый из которых — объект или строка,
+       а второй — строка.
       </para>
      </listitem>
     </varlistentry>
@@ -51,10 +52,10 @@
      <term><parameter>callable_name</parameter></term>
      <listitem>
       <para>
-       Получает "вызываемое имя". В примере ниже это
-       "someClass::someMethod". Следует иметь в виду, что хотя запись
-       someClass::SomeMethod() означает вызываемый статический
-       метод, это не так.
+       Аргумент получает значение «вызываемого имени». В следующем примере
+       это "someClass::someMethod". Однако обратите внимание, что хотя
+       вызываемое имя someClass::SomeMethod() предполагает вызов статического метода,
+       метод не статический.
       </para>
      </listitem>
     </varlistentry>
@@ -65,8 +66,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если <parameter>value</parameter> может быть вызвана, или &false;
-   в противном случае.
+   Функция возвращает &true;, если аргумент <parameter>value</parameter> вызывается как функция,
+   иначе возвращает &false;.
   </para>
  </refsect1>
 
@@ -74,20 +75,19 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>is_callable</function></title>
+    <title>Пример проверки вызываемости значения функцией <function>is_callable</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-//  Как проверить переменную, чтобы узнать, может ли она быть вызвана
-//  как функция.
+
+// Как проверить, доступна ли переменная для вызова
+// как функция
 
 //
-//  Простая переменная, содержащая имя функции
+// Простая переменная с названием функции
 //
 
-function someFunction()
-{
-}
+function someFunction() {}
 
 $functionVariable = 'someFunction';
 
@@ -96,34 +96,31 @@ var_dump(is_callable($functionVariable, false, $callable_name));  // bool(true)
 echo $callable_name, "\n";  // someFunction
 
 //
-//  Массив, содержащий метод класса
+// Массив с методом объекта
 //
 
-class someClass {
-
-  function someMethod()
-  {
-  }
-
+class someClass
+{
+    function someMethod() {}
 }
 
 $anObject = new someClass();
 
-$methodVariable = array($anObject, 'someMethod');
+$methodVariable = [$anObject, 'someMethod'];
 
-var_dump(is_callable($methodVariable, true, $callable_name));  //  bool(true)
+var_dump(is_callable($methodVariable, true, $callable_name)); // bool(true)
 
-echo $callable_name, "\n";  //  someClass::someMethod
+echo $callable_name, "\n";  // someClass::someMethod
 
 ?>
 ]]>
     </programlisting>
    </example>
    <example>
-    <title><function>is_callable</function> и конструкторы</title>
+    <title>Функция <function>is_callable</function> и конструкторы</title>
     <simpara>
-     Функция <function>is_callable</function> не считает конструкторы
-     за callable.
+     Функция <function>is_callable</function> сообщает, что конструкторы
+     невызываемы.
     </simpara>
     <programlisting role="php">
 <![CDATA[
@@ -132,13 +129,16 @@ echo $callable_name, "\n";  //  someClass::someMethod
 class Foo
 {
     public function __construct() {}
+
     public function foo() {}
 }
 
 var_dump(
-    is_callable(array('Foo', '__construct')),
-    is_callable(array('Foo', 'foo'))
+    is_callable(['Foo', '__construct']),
+    is_callable(['Foo', 'foo'])
 );
+
+?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -156,17 +156,18 @@ bool(false)
   &reftitle.notes;
   <simplelist>
    <member>
-    Объект всегда является callable, если он реализует <link linkend="object.invoke">__invoke()</link>, и этот метод доступен в текущей области видимости.
+    Объект вызываем, если реализует метод <link linkend="object.invoke">__invoke()</link>
+    и этот метод доступен в текущей области видимости.
    </member>
    <member>
-    Имя класса является callable, если оно реализует <link linkend="object.callstatic">__callStatic()</link>
+    Имя класса вызываемо, если оно реализует метод <link linkend="object.callstatic">__callStatic()</link>
    </member>
    <member>
-    Если объект реализует <link linkend="object.call">__call()</link>, тогда эта функция вернёт &true; для любого метода этого объекта,
-    даже если метод не определён.
+    Функция вернёт &true; для произвольного метода объекта, который реализует метод <link linkend="object.call">__call()</link>,
+    даже если метод не определили в классе.
    </member>
    <member>
-    Функция может запускать автозагрузку, если вызывается с именем класса.
+    Функция запускает автозагрузку класса, если вызывается с именем класса.
    </member>
   </simplelist>
  </refsect1>
