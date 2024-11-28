@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a9edd62d087ab1eb6292c795b7256e14ff9f1234 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: a058684525563674d49fcfce7ce22d1183ee0a31 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.anonymous" xmlns="http://docbook.org/ns/docbook">
  <title>Анонимные классы</title>
 
  <para>
-  Анонимные классы полезны, когда нужно создать простые, одноразовые объекты.
+  Анонимные классы приносят пользу, когда требуется создать простые одноразовые объекты.
  </para>
 
  <informalexample>
@@ -13,7 +13,7 @@
 <![CDATA[
 <?php
 
-// Использование явного класса
+// Явный класс
 class Logger
 {
     public function log($msg)
@@ -24,20 +24,22 @@ class Logger
 
 $util->setLogger(new Logger());
 
-// Использование анонимного класса
+// Анонимный класс
 $util->setLogger(new class {
     public function log($msg)
     {
         echo $msg;
     }
 });
+
+?>
 ]]>
   </programlisting>
  </informalexample>
 
  <para>
-  Они могут передавать аргументы в конструкторы, расширять другие классы,
-  реализовывать интерфейсы и использовать трейты как обычный класс:
+  Анонимные классы по аналогии с обычными классами умеют передавать аргументы
+  в свои конструкторы, расширять другие классы, реализовывать интерфейсы и использовать трейты:
  </para>
 
  <informalexample>
@@ -59,6 +61,8 @@ var_dump(new class(10) extends SomeClass implements SomeInterface {
 
     use SomeTrait;
 });
+
+?>
 ]]>
   </programlisting>
   &example.outputs;
@@ -73,11 +77,12 @@ object(class@anonymous)#1 (1) {
  </informalexample>
 
  <para>
-  Вложение анонимного класса в другой класс не даёт ему доступ к закрытым
-  или защищённым методам и свойствам этого внешнего класса. Для того,
-  чтобы использовать защищённые свойства и методы внешнего класса, анонимный
-  класс может расширить внешний класс. Чтобы использовать закрытые
-  свойства внешнего класса в анонимном классе, их нужно передать в конструктор:
+  Вложение анонимного класса в другой класс не даёт вложенному классу доступ к закрытым
+  или защищённым методам и свойствам внешнего класса.
+  Анонимному классу потребуется расширить внешний класс,
+  чтобы использовать защищённые свойства и методы внешнего класса. Закрытые свойства
+  внешнего класса потребуется передать в конструктор анонимного класса,
+  чтобы использовать закрытые свойства в анонимном классе:
  </para>
 
  <informalexample>
@@ -124,14 +129,15 @@ echo (new Outer)->func2()->func3();
   </screen>
  </informalexample>
  <para>
-  Все объекты, созданные одним и тем же объявлением анонимного класса, являются
-  экземплярами этого самого класса.
+  Объекты, которые создаёт одно и то же объявление анонимного класса,
+  относятся к экземплярам одного и того же класса.
  </para>
 
  <informalexample>
   <programlisting role="php">
 <![CDATA[
 <?php
+
 function anonymous_class()
 {
     return new class {};
@@ -141,7 +147,10 @@ if (get_class(anonymous_class()) === get_class(anonymous_class())) {
     echo 'Тот же класс';
 } else {
     echo 'Другой класс';
-}]]>
+}
+
+?>
+]]>
  </programlisting>
  &example.outputs;
  <screen>
@@ -153,15 +162,18 @@ if (get_class(anonymous_class()) === get_class(anonymous_class())) {
 
  <note>
   <para>
-   Обратите внимание, что анонимным классам присваиваются имена движком PHP,
-   как показано в примере ниже. Это имя следует рассматривать как особенность
-   реализации, на которую не следует полагаться.
+   Обратите внимание, что движок присваивает анонимным классам названия,
+   как показывает следующий пример. Это название рекомендуют рассматривать только как деталь
+   реализации, и лучше на него не полагаться.
   </para>
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 echo get_class(new class {});
+
+?>
 ]]>
   </programlisting>
   &example.outputs.similar;
@@ -172,7 +184,36 @@ class@anonymous/in/oNi1A0x7f8636ad2021
    </screen>
   </informalexample>
  </note>
-</sect1><!-- Keep this comment at the end of the file
+
+ <sect2 xml:id="language.oop5.anonymous.readonly">
+  <title>Анонимные классы только для чтения</title>
+  <simpara>
+   Начиная с PHP 8.3.0 к анонимным классам разрешили применять
+   модификатор <literal>readonly</literal>.
+  </simpara>
+  <example xml:id="language.oop5.anonymous.readonly.example">
+   <title>Пример определения анонимного класса только для чтения</title>
+   <programlisting role="php">
+    <![CDATA[
+<?php
+
+// Определяем анонимный класс доступным только для чтения и передаём как аргумент
+$util->setLogger(new readonly class('[DEBUG]') {
+    public function __construct(private string $prefix) {}
+
+    public function log($msg)
+    {
+        echo $this->prefix . ' ' . $msg;
+    }
+});
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+</sect1>
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
