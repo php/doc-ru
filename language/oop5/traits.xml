@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7341710fa635b4a969bc855a1e4619cdfa6b63f1 Maintainer: mch Status: ready -->
+<!-- EN-Revision: c1c803cf6a83feb30a444c90787c88cd1946e3f6 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.traits" xmlns="http://docbook.org/ns/docbook">
  <title>Трейты</title>
@@ -334,7 +334,7 @@ class MyClass2
    при внедрении одного или нескольких трейтов в определении трейта.
   </para>
   <example xml:id="language.oop5.traits.composition.ex1">
-   <title>Пример трейтов, которые составили из трейтов</title>
+   <title>Пример трейтов, которые состоят из трейтов</title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -509,6 +509,18 @@ Example::doSomething();
   </example>
   <example xml:id="language.oop5.traits.static.ex3">
    <title>Статические свойства</title>
+    <caution>
+     <simpara>
+      До PHP 8.3.0 статические свойства, которые определяли в трейте,
+      были общими для классов единой иерархии наследования, в которые внедрялся трейт.
+      Дочерние классы, в которые трейт внедрялся явно, продолжали наследовать статическое свойство
+      из родительского класса, а не получали своё статическое свойство из трейта.
+      Начиная с PHP 8.3.0 каждый класс в иерархии наследования, в который трейт внедрили явно,
+      получает свою копию статического свойства, поэтому статическое свойство трейта,
+      который внедрили в дочерний класс, теперь переопределяет статическое свойство, которое дочерний класс
+      унаследовал из родительского.
+     </simpara>
+    </caution>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -645,6 +657,50 @@ class ConstantsExample
     use ConstantsTrait;
 
     public const FLAG_IMMUTABLE = 5; // Фатальная ошибка
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+
+ <sect2 xml:id="language.oop5.traits.final-methods">
+  <title>Окончательные методы</title>
+  <simpara>
+   Начиная с PHP 8.3.0 модификатор <link linkend="language.oop5.final">final</link>
+   разрешили применять к методам, которые внедряются из трейтов. При внедрении трейта
+   в класс метод определяют окончательными тем же синтаксисом, которым модифицируют видимость
+   методов трейтов.
+  </simpara>
+  <example xml:id="language.oop5.traits.final-methods.example">
+   <title>
+    Определение метода окончательным
+    путём добавления модификатора <literal>final</literal> при внедрении трейта
+   </title>
+   <programlisting role="php">
+    <![CDATA[
+<?php
+
+trait CommonTrait
+{
+    public function method()
+    {
+        echo 'Привет';
+    }
+}
+
+class FinalExampleA
+{
+    use CommonTrait {
+        CommonTrait::method as final; // Начиная с PHP 8.3.0 модификатор final
+                                      // запретит переопределять метод в дочерних классах
+    }
+}
+
+class FinalExampleB extends FinalExampleA
+{
+    public function method() {} // Fatal error: Cannot override final method FinalExampleA::method()
 }
 
 ?>
