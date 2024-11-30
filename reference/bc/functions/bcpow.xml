@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 23f5599c8cc2713e7a4fdc29d8cceab66c341c48 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: e333514f66ae32a3468e05dbe64f55f01ff9451e Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.bcpow" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>bcpow</refname>
   <refpurpose>
-   Возведение в степень чисел с произвольной точностью
+   Возводит в степень число произвольной точности
   </refpurpose>
  </refnamediv>
 
@@ -18,7 +18,7 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>scale</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Возводит <parameter>num</parameter> в степень
+   Функция возводит число <parameter>num</parameter> в степень
    <parameter>exponent</parameter>.
   </para>
  </refsect1>
@@ -39,9 +39,9 @@
      <term><parameter>exponent</parameter></term>
      <listitem>
       <para>
-       Степень в виде строки. Если степень не целое, то она обрезается до целого.
-       Корректные значения степени зависят от используемой платформы, но это как минимум
-       значения от <literal>-2147483648</literal> до <literal>2147483647</literal>.
+       Показатель степени без дробной части, в виде строки.
+       Допустимый диапазон показателя степени зависит от платформы, но лежит
+       по крайней мере в пределах значений <literal>-2147483648</literal> и <literal>2147483647</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -53,8 +53,31 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат в виде строки.
+   Функция возвращает результат в виде строки.
   </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname> в следующих случаях:
+   <simplelist>
+    <member>
+     Аргумент числа <parameter>num</parameter> или показателя степени <parameter>exponent</parameter> оказался строкой,
+     которую сформировали неправильно с точки зрения допустимого формата числовых строк в модуле BCMath
+    </member>
+    <member>
+     Значение аргумента <parameter>scale</parameter> выходит за пределы допустимого диапазона
+    </member>
+    <member>
+     Показатель степени <parameter>exponent</parameter> содержит дробную часть
+    </member>
+   </simplelist>
+  </para>
+  <simpara>
+   Функция выбрасывает исключение <exceptionname>DivisionByZeroError</exceptionname>, если число <parameter>num</parameter>
+   равно <literal>0</literal>, а показатель степени <parameter>exponent</parameter> содержит отрицательное значение.
+  </simpara>
  </refsect1>
 
  <refsect1 role="changelog"><!-- {{{ -->
@@ -68,11 +91,25 @@
      </row>
     </thead>
     <tbody>
+    <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Раньше при возведении нуля в отрицательную степень возвращалось значение 0,
+       теперь выбрасывают исключение <exceptionname>DivisionByZeroError</exceptionname>.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь не усекает показатель степени, а выбрасывает исключение <exceptionname>ValueError</exceptionname>,
+       когда показатель степени <parameter>exponent</parameter> содержит дробную часть.
+      </entry>
+     </row>
      <row>
       <entry>7.3.0</entry>
       <entry>
-       Теперь <function>bcpow</function> возвращает числа с заданной точностью.
-       Раньше завершающие нули в дробной части числа отбрасывались.
+       Функция <function>bcpow</function> теперь возвращает числа с заданной точностью.
+       Раньше нули в конце дробной части числа отбрасывались.
       </entry>
      </row>
     </tbody>
@@ -83,7 +120,10 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>bcpow</function></title>
+   <title>
+    Пример возведения числа произвольной точности
+    в степень произвольной точности функцией <function>bcpow</function>
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -100,17 +140,19 @@ echo bcpow('4.2', '3', 2); // 74.08
   &reftitle.notes;
   <note>
    <para>
-    До PHP 7.3.0 <function>bcpow</function> могла вернуть результат с меньшим числом цифр
-    после десятичной точки, чем указано в аргументе
-    <parameter>scale</parameter>. Так происходило, только когда результату не
-    требуется вся точность, предоставленная в <parameter>scale</parameter>.
+    До PHP 7.3.0 функция <function>bcpow</function> иногда возвращала результат с меньшим количеством цифр
+    после десятичной точки, чем указали в аргументе <parameter>scale</parameter>.
+    Функция усекала дробную часть, только когда результат не требовал всей точности,
+    которую разрешал параметр <parameter>scale</parameter>.
     Например:
     <example>
-     <title>Пример уменьшения точности в <function>bcpow</function></title>
+     <title>Пример усечения точности функцией <function>bcpow</function></title>
      <programlisting role="php">
 <![CDATA[
 <?php
-echo bcpow('5', '2', 2);     // выдаст "25", вместо "25.00"
+
+echo bcpow('5', '2', 2);     // Выдаст "25", а не "25.00"
+
 ?>
 ]]>
      </programlisting>
