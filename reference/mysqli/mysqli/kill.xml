@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7ce9e1661da0479fe49641e3da2c2761cf029d5c Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 9b1673cf114a1e10c4563ab9223cb56aed552b89 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli.kill" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli::kill</refname>
   <refname>mysqli_kill</refname>
   <refpurpose>
-   Запрос для сервера завершить выполнение процесса MySQL
+   Просит сервер завершить MySQL-поток
   </refpurpose>
  </refnamediv>
 
@@ -18,24 +18,24 @@
   &reftitle.description;
   <para>&style.oop;</para>
   <methodsynopsis role="mysqli">
+   <modifier role="attribute">#[\Deprecated]</modifier>
    <modifier>public</modifier> <type>bool</type><methodname>mysqli::kill</methodname>
    <methodparam><type>int</type><parameter>process_id</parameter></methodparam>
   </methodsynopsis>
   <para>&style.procedural;</para>
   <methodsynopsis>
+   <modifier role="attribute">#[\Deprecated]</modifier>
    <type>bool</type><methodname>mysqli_kill</methodname>
    <methodparam><type>mysqli</type><parameter>mysql</parameter></methodparam>
    <methodparam><type>int</type><parameter>process_id</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция используется, чтобы отправить на сервер команду завершить MySQL
-   процесс заданный параметром <parameter>process_id</parameter>. Значение этого
-   параметра должно быть получено с помощью функции
-   <function>mysqli_thread_id</function>.
+   Функция отправляет на сервер запрос на завершение MySQL-потока
+   с идентификатором, который указали в аргументе <parameter>process_id</parameter>.
+   Значение идентификатора получают функцией <function>mysqli_thread_id</function>.
   </para>
   <para>
-   Для завершения работы текущего запроса используйте SQL команду
-   <literal>KILL QUERY processid</literal>.
+   Работу текущего запроса останавливают SQL-командой <literal>KILL QUERY processid</literal>.
   </para>
  </refsect1>
 
@@ -74,9 +74,9 @@
      <row>
       <entry>8.4.0</entry>
       <entry>
-       Оба метода <methodname>mysqli::kill</methodname> и
-       <function>mysqli_kill</function> устарели.
-       Вместо них используйте SQL-команды <literal>KILL</literal>.
+       Метод <methodname>mysqli::kill</methodname>
+       и функция <function>mysqli_kill</function> устарели.
+       Вместо них рекомендуют выполнять SQL-команду <literal>KILL</literal>.
       </entry>
      </row>
     </tbody>
@@ -87,33 +87,35 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <methodname>mysqli::kill</methodname></title>
+   <title>Пример уничтожения потока методом <methodname>mysqli::kill</methodname></title>
    <para>&style.oop;</para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $mysqli = new mysqli("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
+/* Проверка соединения */
 if (mysqli_connect_errno()) {
     printf("Не удалось подключиться: %s\n", mysqli_connect_error());
     exit();
 }
 
-/* определим id нашего процесса */
+/* Определение id процесса */
 $thread_id = $mysqli->thread_id;
 
-/* убиваем соединение */
+/* Убиваем соединение */
 $mysqli->kill($thread_id);
 
-/* здесь должна произойти ошибка */
+/* Это вызовет ошибку */
 if (!$mysqli->query("CREATE TABLE myCity LIKE City")) {
     printf("Ошибка: %s\n", $mysqli->error);
     exit;
 }
 
-/* закрываем соединение */
+/* Закрываем соединение */
 $mysqli->close();
+
 ?>
 ]]>
    </programlisting>
@@ -121,28 +123,30 @@ $mysqli->close();
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $link = mysqli_connect("localhost", "my_user", "my_password", "world");
 
-/* проверка соединения */
+/* Проверка соединения */
 if (mysqli_connect_errno()) {
     printf("Не удалось подключиться: %s\n", mysqli_connect_error());
     exit();
 }
 
-/* определим id нашего процесса */
+/* Опредеение id процесса */
 $thread_id = mysqli_thread_id($link);
 
-/* убиваем соединение */
+/* Убиваем соединение */
 mysqli_kill($link, $thread_id);
 
-/* здесь должна произойти ошибка */
+/* Это вызовет ошибку */
 if (!mysqli_query($link, "CREATE TABLE myCity LIKE City")) {
     printf("Ошибка: %s\n", mysqli_error($link));
     exit;
 }
 
-/* закрываем соединение */
+/* Закрываем соединение */
 mysqli_close($link);
+
 ?>
 ]]>
    </programlisting>
