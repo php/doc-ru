@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cbac1ecf71d754707d69bdc344c4031c157eaa54 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: ddb05f8827151e25dd1c3e058f95f6c024bc881b Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.bcpowmod" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>bcpowmod</refname>
   <refpurpose>
-   Возводит одно число в степень другого и возвращает остаток от деления
-   результата на третье число
+   Возводит число произвольной точности в степень и возвращает
+   остаток от деления степени числа на абсолютное значение третьего аргумента
   </refpurpose>
  </refnamediv>
 
@@ -20,10 +20,9 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>scale</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Используйте метод быстрого возведения числа
-   <parameter>num</parameter> в степень
-   <parameter>exponent</parameter> и получения остатка от деления на
-   <parameter>modulus</parameter>.
+   Функция возводит число <parameter>num</parameter>
+   в степень <parameter>exponent</parameter> методом быстрого возведения в степень
+   и возвращает остаток от деления степени числа на модуль числа в аргументе <parameter>modulus</parameter>.
   </para>
  </refsect1>
 
@@ -35,7 +34,7 @@
      <term><parameter>num</parameter></term>
      <listitem>
       <para>
-       Основание степени в виде строки, содержащее целое число.
+       Основание степени в виде строки с целым числом.
       </para>
      </listitem>
     </varlistentry>
@@ -43,7 +42,7 @@
      <term><parameter>exponent</parameter></term>
      <listitem>
       <para>
-       Показатель степени в виде строки, содержащее неотрицательное целое число.
+       Показатель степени в виде строки с неотрицательным целым числом.
       </para>
      </listitem>
     </varlistentry>
@@ -51,7 +50,7 @@
      <term><parameter>modulus</parameter></term>
      <listitem>
       <para>
-       Модуль в виде строки, содержащий целое число.
+       Модуль в виде строки с целым числом.
       </para>
      </listitem>
     </varlistentry>
@@ -63,10 +62,35 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат в виде строки или &false;, если
-   <parameter>modulus</parameter> равен <literal>0</literal> или
-   <parameter>exponent</parameter> отрицательна.
+   Функция возвращает результат в виде строки.
   </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname> в следующих случаях:
+   <simplelist>
+    <member>
+     Значение аргумента <parameter>num</parameter>, <parameter>exponent</parameter> или <parameter>modulus</parameter>
+     оказалось строкой, которую сформировали неправильно с точки зрения допустимого формата числовых строк в модуле BCMath
+    </member>
+    <member>
+     Значение аргумента <parameter>num</parameter>, <parameter>exponent</parameter> или <parameter>modulus</parameter>
+     содержит дробную часть
+    </member>
+    <member>
+     В аргументе <parameter>exponent</parameter> передали отрицательное значение
+    </member>
+    <member>
+     Значение аргумента <parameter>scale</parameter> выходит за пределы допустимого диапазона
+    </member>
+   </simplelist>
+  </para>
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>DivisionByZeroError</exceptionname>,
+   если значение аргумента <parameter>modulus</parameter> равняется <literal>0</literal>
+  </simpara>
  </refsect1>
 
  <refsect1 role="changelog">
@@ -83,7 +107,21 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>scale</parameter> теперь допускает значение null.
+       Параметр <parameter>scale</parameter> теперь принимает значение &null;.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname> вместо возврата значения &false;,
+       если показатель степени <parameter>exponent</parameter> оказался отрицательным значением.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Деление на <literal>0</literal> теперь выбрасывает ошибку <exceptionname>DivisionByZeroError</exceptionname>
+       вместо возврата значения &false;.
       </entry>
      </row>
     </tbody>
@@ -95,17 +133,18 @@
   &reftitle.examples;
   <para>
    Следующие выражения дают одинаковый результат. Однако функция
-   <function>bcpowmod</function> работает быстрее и может принимать большие
+   <function>bcpowmod</function> работает быстрее и принимает бо́льшие
    значения аргументов.
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $a = bcpowmod($x, $y, $mod);
 
 $b = bcmod(bcpow($x, $y), $mod);
 
-// $a == $b.
+// $a == $b
 
 ?>
 ]]>
@@ -118,8 +157,8 @@ $b = bcmod(bcpow($x, $y), $mod);
   &reftitle.notes;
   <note>
    <para>
-    Так как этот метод использует операцию деления по модулю, отрицательные
-    числа могут давать неожидаемый результат.
+    Поскольку функция выполняет операцию взятия остатка, отрицательные
+    числа иногда дают неожиданные результаты.
    </para>
   </note>
  </refsect1>
