@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 31b6ff768992a82022aade13880c595e19e054ba Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 4806183da465f81cd39158d03df4c4d8aa7df6aa Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.is-callable" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -18,8 +18,8 @@
    <methodparam choice="opt"><type>string</type><parameter role="reference">callable_name</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция проверяет, принадлежит ли значение типу <type>callable</type>,
-   или доступно ли значение для вызова как функция.
+   Функция проверяет, принадлежит ли значение <parameter>value</parameter> типу <type>callable</type>,
+   или что значение доступно для вызова функцией <function>call_user_func</function>.
   </para>
  </refsect1>
 
@@ -41,8 +41,9 @@
       <para>
        Со значением &true; функция проверяет только то,
        могло бы значение <parameter>value</parameter> быть функцией или методом.
-       Функция отклонит только простые нестроковые переменные или массив, структура которого
-       не соответствует синтаксису callable-выражения для передачи callback-функции.
+       Функция считает доступными для вызова только объекты, в классе которых реализовали магический метод
+       <link linkend="object.invoke">__invoke</link>, строки, которые содержат возможное название функции,
+       и массив, структура которого соответствует синтаксису callable-выражения для передачи callback-функции.
        Корректная структура массива для передачи callback-функции
        предполагает только два элемента, первый из которых — объект или строка,
        а второй — строка.
@@ -53,9 +54,9 @@
      <term><parameter>callable_name</parameter></term>
      <listitem>
       <para>
-       Аргумент получает значение «вызываемого имени». В следующем примере
-       это "someClass::someMethod". Однако обратите внимание, что хотя
-       вызываемое имя someClass::SomeMethod() предполагает вызов статического метода,
+       Аргумент получает значение «вызываемого имени» наподобие <literal>"SomeClass::someMethod"</literal>.
+       Однако обратите внимание, что хотя
+       вызываемое имя <literal>SomeClass::someMethod()</literal> предполагает вызов статического метода,
        метод не статический.
       </para>
      </listitem>
@@ -76,46 +77,59 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример проверки вызываемости значения функцией <function>is_callable</function></title>
+    <title>Пример проверки доступности строки для вызова как функции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-
-// Как проверить, доступна ли переменная для вызова
-// как функция
-
-//
-// Простая переменная с названием функции
-//
 
 function someFunction() {}
 
 $functionVariable = 'someFunction';
 
-var_dump(is_callable($functionVariable, false, $callable_name));  // bool(true)
+var_dump(is_callable($functionVariable, false, $callable_name));
 
-echo $callable_name, "\n";  // someFunction
-
-//
-// Массив с методом объекта
-//
-
-class someClass
-{
-    function someMethod() {}
-}
-
-$anObject = new someClass();
-
-$methodVariable = [$anObject, 'someMethod'];
-
-var_dump(is_callable($methodVariable, true, $callable_name)); // bool(true)
-
-echo $callable_name, "\n";  // someClass::someMethod
+var_dump($callable_name);
 
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+bool(true)
+string(12) "someFunction"
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Пример проверки доступности массива для вызова как метода</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+class SomeClass
+{
+    function someMethod() {}
+}
+
+$anObject = new SomeClass();
+
+$methodVariable = [$anObject, 'someMethod'];
+
+var_dump(is_callable($methodVariable, true, $callable_name));
+
+var_dump($callable_name);
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+bool(true)
+string(21) "SomeClass::someMethod"
+]]>
+    </screen>
    </example>
    <example>
     <title>Функция <function>is_callable</function> и конструкторы</title>
@@ -157,18 +171,18 @@ bool(false)
   &reftitle.notes;
   <simplelist>
    <member>
-    Объект вызываем, если реализует метод <link linkend="object.invoke">__invoke()</link>
+    Объект вызываем, если класс объекта реализует магический метод <link linkend="object.invoke">__invoke()</link>
     и этот метод доступен в текущей области видимости.
    </member>
    <member>
-    Имя класса вызываемо, если оно реализует метод <link linkend="object.callstatic">__callStatic()</link>
+    Имя класса вызываемо, если класс реализует метод <link linkend="object.callstatic">__callStatic()</link>
    </member>
    <member>
     Функция вернёт &true; для произвольного метода объекта, который реализует метод <link linkend="object.call">__call()</link>,
     даже если метод не определили в классе.
    </member>
    <member>
-    Функция запускает автозагрузку класса, если вызывается с именем класса.
+    Функция запускает автозагрузку класса, если вызывается с названием класса.
    </member>
   </simplelist>
  </refsect1>
@@ -177,6 +191,7 @@ bool(false)
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member><function>call_user_func</function></member>
     <member><function>function_exists</function></member>
     <member><function>method_exists</function></member>
    </simplelist>
