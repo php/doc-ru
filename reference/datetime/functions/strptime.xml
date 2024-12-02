@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5c951013ca04161992efed8b86fb40f55669958e Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 9b1673cf114a1e10c4563ab9223cb56aed552b89 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.strptime" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>strptime</refname>
   <refpurpose>
-   Разбирает строку даты/времени, сгенерированную функцией
-   <function>strftime</function>
+   Разбирает строку даты и времени, которую сгенерировала функция <function>strftime</function>
   </refpurpose>
  </refnamediv>
 
@@ -17,18 +16,19 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
+   <modifier role="attribute">#[\Deprecated]</modifier>
    <type class="union"><type>array</type><type>false</type></type><methodname>strptime</methodname>
    <methodparam><type>string</type><parameter>timestamp</parameter></methodparam>
    <methodparam><type>string</type><parameter>format</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>strptime</function> возвращает массив с данными разбора
-   строки <parameter>timestamp</parameter>, либо &false; в случае возникновения ошибки.
+   Функция <function>strptime</function> возвращает массив с данными разбора
+   строки <parameter>timestamp</parameter>, или &false;, если возникла ошибка.
   </para>
   <para>
-   Названия месяцев и недель, а также другие названия, зависящие от
-   языка, соответствуют текущим настройкам местоположения, установленным
-   посредством <function>setlocale</function> (<constant>LC_TIME</constant>).
+   Названия месяцев и дней недели, и другие строки, которые зависят
+   от языка, соответствуют текущим региональным настройкам, которые установили
+   функцией <function>setlocale</function> (см. описание константы <constant>LC_TIME</constant>).
   </para>
  </refsect1>
 
@@ -40,8 +40,8 @@
      <term><parameter>timestamp</parameter> (<type>string</type>)</term>
      <listitem>
       <para>
-       Строка для разбора (например, строковый результат выполнения функции
-       <function>strftime</function>).
+       Строка наподобие той, которую возвращает функция <function>strftime</function>
+       и которую требуется разобрать.
       </para>
      </listitem>
     </varlistentry>
@@ -49,17 +49,16 @@
      <term><parameter>format</parameter> (<type>string</type>)</term>
      <listitem>
       <para>
-       Формат строки <parameter>timestamp</parameter> (например, формат,
-       используемый в функции <function>strftime</function>). Следует
-       обратить внимание на тот факт, что не все возможности форматирования
-       используемые в <function>strftime</function> будут обрабатываться в
-       <function>strptime</function>; набор поддерживаемых символов
-       форматирования зависит от ОС и используемой С-библиотеки.
+       Формат строки <parameter>timestamp</parameter> наподобие того,
+       с которым работает функция <function>strftime</function>. Обратите внимание,
+       отдельные параметры форматирования, которые доступны функции
+       <function>strftime</function>, не влияют на форматирование
+       функцией <function>strptime</function>; набор поддерживаемых символов
+       форматирования зависит от ОС и С-библиотеки.
       </para>
       <para>
-       За дополнительной информацией о возможностях форматирования
-       обращайтесь на страницу описания функции
-       <function>strftime</function>.
+       Подробнее о параметрах форматирования
+       рассказывает описание функции <function>strftime</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -70,13 +69,13 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив&return.falseforfailure;.
+   Функция возвращает массив&return.falseforfailure;.
   </para>
 
   <para>
    <table>
     <title>
-     Список элементов возвращаемого массива
+     Список элементов, которые возвращаются в массиве
     </title>
     <tgroup cols="2">
      <thead>
@@ -127,8 +126,8 @@
       <row>
        <entry><literal>"unparsed"</literal></entry>
        <entry>
-        Часть <parameter>timestamp</parameter>, которую не удалось
-        распознать в соответствии с <parameter>format</parameter>
+        Часть метки <parameter>timestamp</parameter>, которую не удалось
+        распознать в строке формата <parameter>format</parameter>
        </entry>
       </row>
      </tbody>
@@ -153,9 +152,10 @@
       <row>
        <entry>8.1.0</entry>
        <entry>
-        Функция объявлена устаревшей.
-        Вместо неё используйте <function>date_parse_from_format</function> (для синтаксического анализа, не зависящего от языкового стандарта)
-        или <methodname>IntlDateFormatter::parse</methodname> (для синтаксического анализа, зависящего от языкового стандарта).
+        Функция устарела.
+        Вместо неё рекомендуют пользоваться функцией <function>date_parse_from_format</function>,
+        чтобы разобрать дату и время независимо от региональных настроек,
+        или методом <methodname>IntlDateFormatter::parse</methodname>, чтобы разбор зависел от локали.
        </entry>
       </row>
      </tbody>
@@ -168,16 +168,18 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>strptime</function></title>
+    <title>Пример разбора даты и времени функцией <function>strptime</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $format = '%d/%m/%Y %H:%M:%S';
 $strf = strftime($format);
 
 echo "$strf\n";
 
 print_r(strptime($strf, $format));
+
 ?>
 ]]>
     </programlisting>
@@ -209,18 +211,17 @@ Array
     &note.no-windows;
     <note>
      <para>
-      В действительности эта функция вызывает библиотечную функцию
-      <literal>strptime()</literal>. В различных ОС поведение функции
-      может сильно различаться. Функция <function>date_parse_from_format</function>
-      лишена этого недостатка и рекомендована к использованию.
+      Внутренне эта функция вызывает функцию <literal>strptime()</literal>
+      системной библиотеки на языке C. Поведение функции в одной операционной системе
+      иногда значительно отличается от поведения в другой. Функция <function>date_parse_from_format</function>
+      лишена этого недостатка, поэтому рекомендуют вызывать её.
      </para>
     </note>
     <note>
      <para>
-      <literal>"tm_sec"</literal> включает несколько секунд високосного года
-      (на данный момент до 2-х в год). Для получения дополнительной информации
-      о високосных секундах читайте <link
-      xlink:href="&url.wiki.leap-seconds;">статью на википедии</link>.
+      Элемент <literal>"tm_sec"</literal> включает високосные секунды — до двух в год.
+      Подробнее о високосных секунды рассказывает статья
+      <link xlink:href="&url.wiki.leap-seconds;">о високосной секунде</link> на сайте Википедии.
      </para>
     </note>
    </refsect1>
