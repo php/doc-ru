@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f03806fcd8fe03a0501bd40b6e3939ff6589a1d2 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: c8ba91f7e546462dc66c2a11a7eab6f55c93915b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="phardata.decompressfiles" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PharData::decompressFiles</refname>
-  <refpurpose>Распаковать все файлы в текущем zip-архиве</refpurpose>
+  <refpurpose>Распаковывает все файлы в текущем zip-архиве</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis role="PharData">
-   <modifier>public</modifier> <type>bool</type><methodname>PharData::decompressFiles</methodname>
+   <modifier>public</modifier> <type>true</type><methodname>PharData::decompressFiles</methodname>
    <void/>
   </methodsynopsis>
   &phar.write;
 
   <para>
-   Для tar-архивов данный метод выбросит исключение
-   <classname>BadMethodCallException</classname>, так как сжатие отдельных файлов
-   в tar-архиве не поддерживается форматом файла. Используйте
-   <function>PharData::compress</function> для сжатия всего tar-архива.
+   При распаковке файлов в tar-архиве метод выбрасывает исключение
+   <classname>BadMethodCallException</classname>, поскольку сжатие отдельных файлов
+   в tar-архиве не поддерживается форматом файла. Для сжатия tar-архива
+   пользуются методом <function>PharData::compress</function>.
   </para>
   <para>
-   Для Zip-архивов этот метод распакует все файлы по указанному пути.
-   Для корректной работы требуются включённые модули
-   <link linkend="ref.zlib">zlib</link>  или <link linkend="ref.bzip2">bzip2</link>, в зависимости
-   от типа сжатия.
+   В zip-архиве метод распаковывает все файлы.
+   Для сжатия файлов методом bzip2 или zlib потребуется включить модуль,
+   который соответствует формату сжатия, — <link linkend="ref.bzip2">bzip2</link>
+   или <link linkend="ref.zlib">zlib</link>.
   </para>
  </refsect1>
 
@@ -37,16 +37,17 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
+   &return.true.always;
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывает исключение <classname>BadMethodCallException</classname>, если отсутствует
-   необходимый модуль <link linkend="ref.zlib">zlib</link> или
-   <link linkend="ref.bzip2">bzip2</link>.
+   Метод выбрасывает исключение <classname>BadMethodCallException</classname>,
+   если модуль <link linkend="ref.zlib">zlib</link> недоступен,
+   или если хотя бы один файл сжат методом bzip2, а модуль <link linkend="ref.bzip2">bzip2</link>
+   не включили.
   </para>
  </refsect1>
 
@@ -54,13 +55,16 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>PharData::decompressFiles</function></title>
+    <title>Пример распаковки всех файло в zip-архиве методом <function>PharData::decompressFiles</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $p = new PharData('/path/to/my.zip');
+
 $p['myfile.txt'] = 'hi';
 $p['myfile2.txt'] = 'hi';
+
 $p->compressFiles(Phar::GZ);
 foreach ($p as $file) {
     var_dump($file->getFileName());
@@ -68,6 +72,7 @@ foreach ($p as $file) {
     var_dump($file->isCompressed(Phar::BZ2));
     var_dump($file->isCompressed(Phar::GZ));
 }
+
 $p->decompressFiles();
 foreach ($p as $file) {
     var_dump($file->getFileName());
@@ -75,6 +80,7 @@ foreach ($p as $file) {
     var_dump($file->isCompressed(Phar::BZ2));
     var_dump($file->isCompressed(Phar::GZ));
 }
+
 ?>
 ]]>
     </programlisting>

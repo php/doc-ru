@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: bd1ae73f4a88404c9a3015940c66a85aaeec5889 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: c8ba91f7e546462dc66c2a11a7eab6f55c93915b Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="dateinterval.createfromdatestring" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -13,7 +13,7 @@
   &reftitle.description;
   <para>&style.oop;</para>
   <methodsynopsis role="DateInterval">
-   <modifier>public</modifier> <modifier>static</modifier> <type class="union"><type>DateInterval</type><type>false</type></type><methodname>DateInterval::createFromDateString</methodname>
+   <modifier>public</modifier> <modifier>static</modifier> <type>DateInterval</type><methodname>DateInterval::createFromDateString</methodname>
    <methodparam><type>string</type><parameter>datetime</parameter></methodparam>
   </methodsynopsis>
   <para>&style.procedural;</para>
@@ -22,9 +22,9 @@
    <methodparam><type>string</type><parameter>datetime</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Использует парсер даты/времени, используемый в конструкторе
-   <classname>DateTimeImmutable</classname> для создания объекта <classname>DateInterval</classname>
-   из относительных частей разобранной строки.
+   Метод использует парсеры даты и времени, которые в конструкторе класса
+   <classname>DateTimeImmutable</classname> создают интервал <classname>DateInterval</classname>
+   из обозначений времени в относительном формате.
   </para>
  </refsect1>
 
@@ -36,12 +36,16 @@
      <term><parameter>datetime</parameter></term>
      <listitem>
       <para>
-       Дата, состоящая из относительных временных фрагментов. В частности, для создания объекта DateInterval
-       из частей, записанных в <link linkend="datetime.formats.relative">относительном формате</link>,
-       который поддерживается парсером в функциях <classname>DateTimeImmutable</classname>, <classname>DateTime</classname> и <function>strtotime</function>.
+       Дата из обозначений времени в относительном формате.
+       Метод создаёт интервал DateInterval из фрагментов времени
+       <link linkend="datetime.formats.relative">в относительном формате</link>,
+       который поддерживается парсером классов <classname>DateTimeImmutable</classname>,
+       <classname>DateTime</classname> и функции <function>strtotime</function>
       </para>
       <para>
-       Чтобы использовать строку в формате ISO-8601, например <literal>P7D</literal>, необходимо использовать конструктор.
+       В отличие от конструктора класса DateInterval,
+       метод не поддерживает интервалы в формате <literal>P7D</literal>,
+       спецификацию которого определяет стандарт ISO-8601.
       </para>
      </listitem>
     </varlistentry>
@@ -52,7 +56,17 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает новый объект класса <classname>DateInterval</classname> в случае успешного выполнения&return.falseforfailure;.
+   Метод возвращает новый экземпляр класса <classname>DateInterval</classname>, если выполнился успешно.
+   &return.falseforfailure.style.procedural;
+  </para>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <para>
+   Только для объектно-ориентированного API-интерфейса: Метод выбрасывает исключение
+   <exceptionname>DateMalformedStringException</exceptionname>,
+   если передали недопустимую строку с датой и временем.
   </para>
  </refsect1>
 
@@ -68,10 +82,21 @@
     </thead>
     <tbody>
      <row>
+      <entry>8.3.0</entry>
+      <entry>
+       Метод <methodname>DateInterval::createFromDateString</methodname> теперь выбрасывает
+       исключение <exceptionname>DateMalformedStringException</exceptionname>,
+       если передали строку в недопустимом формате. Раньше метод возвращал значение <literal>false</literal>
+       и выдавал предупреждение.
+       Функция <function>date_interval_create_from_date_string</function>
+       не изменилась.
+      </entry>
+     </row>
+     <row>
       <entry>8.2.0</entry>
       <entry>
-       Только свойства <literal>from_string</literal> и <literal>date_string</literal>
-       будут видны при создании объекта <classname>DateInterval</classname> с помощью этого метода.
+       Объект интервала <classname>DateInterval</classname>, который создаётся этим методом,
+       показывает только свойства <literal>from_string</literal> и <literal>date_string</literal>.
       </entry>
      </row>
     </tbody>
@@ -83,11 +108,12 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Анализ и разбор временных интервалов</title>
+    <title>Пример разбора допустимых интервалов времени</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Интервалы в каждом примере эквивалентны.
+
+// Интервалы в каждом примере эквивалентны
 $i = new DateInterval('P1D');
 $i = DateInterval::createFromDateString('1 day');
 
@@ -108,6 +134,7 @@ $i = DateInterval::createFromDateString('1 day + 12 hours');
 
 $i = new DateInterval('PT3600S');
 $i = DateInterval::createFromDateString('3600 seconds');
+
 ?>
 ]]>
     </programlisting>
@@ -120,11 +147,13 @@ $i = DateInterval::createFromDateString('3600 seconds');
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $i = DateInterval::createFromDateString('62 weeks + 1 day + 2 weeks + 2 hours + 70 minutes');
 echo $i->format('%d %h %i'), "\n";
 
 $i = DateInterval::createFromDateString('1 year - 10 days');
 echo $i->format('%y %d'), "\n";
+
 ?>
 ]]>
     </programlisting>
@@ -138,15 +167,18 @@ echo $i->format('%y %d'), "\n";
 
   <para>
    <example>
-    <title>Разбор специальных относительных временных интервалов</title>
+    <title>Разбор относительных интервалов времени</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $i = DateInterval::createFromDateString('last day of next month');
 var_dump($i);
 
 $i = DateInterval::createFromDateString('last weekday');
 var_dump($i);
+
+?>
 ]]>
     </programlisting>
     &example.outputs.82;

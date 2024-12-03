@@ -1,33 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 772cf37c3f2e1a1f4ba9fa552ac7fcfd78453f13 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: c8ba91f7e546462dc66c2a11a7eab6f55c93915b Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli-driver.report-mode" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli_driver::$report_mode</refname>
   <refname>mysqli_report</refname>
-  <refpurpose>Устанавливает режим отчёта об ошибках mysqli</refpurpose>
+  <refpurpose>Устанавливает режим сообщений об ошибках модулем mysqli</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <para>&style.oop;</para>
   <fieldsynopsis>
-   <type>int</type><varname linkend="mysqli-driver.report-mode">mysqli_driver->report_mode</varname>
+   <type>int</type><varname linkend="mysqli-driver.report-mode">mysqli_driver-&gt;report_mode</varname>
   </fieldsynopsis>
   <para>&style.procedural;</para>
   <methodsynopsis>
-   <type>bool</type><methodname>mysqli_report</methodname>
+   <type>true</type><methodname>mysqli_report</methodname>
    <methodparam><type>int</type><parameter>flags</parameter></methodparam>
   </methodsynopsis>
   <para>
-   В зависимости от флагов, функция устанавливает режим отчёта об ошибках mysqli
-   на исключение, предупреждение или отсутствие.
-   Если установлено значение <constant>MYSQLI_REPORT_ALL</constant> или <constant>MYSQLI_REPORT_INDEX</constant>,
-   функция также будет информировать о запросах, которые не используют индекс (или используют неверный индекс).
+   В зависимости от флагов функция устанавливает в модуле mysqli
+   режим сообщений об ошибках на уровень исключения, предупреждения или отключает сообщения об ошибках.
+   Со значениями <constant>MYSQLI_REPORT_ALL</constant> или <constant>MYSQLI_REPORT_INDEX</constant>
+   функция также будет информировать о запросах, в которых не указали индекс или указали неверный индекс.
   </para>
   <para>
-   Начиная с PHP 8.1.0, по умолчанию установлено значение <literal>MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT</literal>.
-   Ранее оно было <constant>MYSQLI_REPORT_OFF</constant>.
+   Начиная с PHP 8.1.0 режим сообщений об ошибках по умолчанию равен побитовой маске
+   <literal>MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT</literal>.
+   Раньше значением по умолчанию был режим <constant>MYSQLI_REPORT_OFF</constant>.
   </para>
  </refsect1>
 
@@ -40,7 +41,7 @@
      <listitem>
       <para>
        <table xml:id="mysqli-driver.report-mode.parameters">
-        <title>Поддерживаемые флаги</title>
+        <title>Флаги, которые поддерживает функция</title>
         <tgroup cols="2">
          <thead>
           <row>
@@ -51,29 +52,30 @@
          <tbody>
           <row>
            <entry><constant>MYSQLI_REPORT_OFF</constant></entry>
-           <entry>Отключить протоколирование</entry>
+           <entry>Отключить сообщения об ошибках</entry>
           </row>
           <row>
            <entry><constant>MYSQLI_REPORT_ERROR</constant></entry>
-           <entry>Заносить в протокол ошибки вызовов функций mysqli</entry>
+           <entry>Сообщить об ошибках при вызовах функций модуля mysqli</entry>
           </row>
           <row>
            <entry><constant>MYSQLI_REPORT_STRICT</constant></entry>
            <entry>
-            Вместо сообщений об ошибках выбрасывать исключение
+            Вместо предупреждений выбрасывать при ошибках исключение
             <classname>mysqli_sql_exception</classname>
            </entry>
           </row>
           <row>
            <entry><constant>MYSQLI_REPORT_INDEX</constant></entry>
            <entry>
-            Заносить в протокол факты использования в запросах неверного индекса
-            (или когда индекс не используется вообще)
+            Сообщить, если в запросе не указали индекс или указали неверный индекс
            </entry>
           </row>
           <row>
            <entry><constant>MYSQLI_REPORT_ALL</constant></entry>
-           <entry>Включить все настройки (заносить в протокол все события)</entry>
+           <entry>
+            Установить каждый параметр и сообщать обо всех ошибках
+           </entry>
           </row>
          </tbody>
         </tgroup>
@@ -88,7 +90,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;.
+   &return.true.always;
   </para>
  </refsect1>
 
@@ -106,8 +108,9 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Теперь по умолчанию установлено значение <literal>MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT</literal>.
-       Ранее оно было <constant>MYSQLI_REPORT_OFF</constant>.
+       Для режима сообщений об ошибках значение по умолчанию теперь равно
+       <literal>MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT</literal>.
+       Раньше значением по умолчанию было <constant>MYSQLI_REPORT_OFF</constant>.
       </entry>
      </row>
     </tbody>
@@ -123,22 +126,24 @@
 <![CDATA[
 <?php
 
-/* включение протоколирования */
+/* Включаем сообщения об ошибках */
 $driver = new mysqli_driver();
 $driver->report_mode = MYSQLI_REPORT_ALL;
 
 try {
-    /* если получится подключится, будет выброшено исключение mysqli_sql_exception */
+    /* Функция выбросит исключение mysqli_sql_exception, если не получится подключиться */
     $mysqli = new mysqli("localhost", "my_user", "my_password", "my_db");
 
-    /* этот запрос должен сообщить об ошибке */
+    /* Этот запрос сообщит об ошибке */
     $result = $mysqli->query("SELECT Name FROM Nonexistingtable WHERE population > 50000");
 
-    /* этот запрос должен сообщить о неверном индексе, если у столбца population нет индекса */
+    /* Этот запрос сообщит о неверном индексе, если для столбца population не создали индекс */
     $result = $mysqli->query("SELECT Name FROM City WHERE population > 50000");
 } catch (mysqli_sql_exception $e) {
     error_log($e->__toString());
 }
+
+?>
 ]]>
 
    </programlisting>
@@ -149,21 +154,23 @@ try {
 <![CDATA[
 <?php
 
-/* включение протоколирования */
+/* Включаем сообщения об ошибках */
 mysqli_report(MYSQLI_REPORT_ALL);
 
 try {
-    /* Если соединение завершилось с ошибкой, будет выброшено исключение mysqli_sql_exception */
+    /* Функция выбросит исключение mysqli_sql_exception, если не получится подключиться */
     $link = mysqli_connect("localhost", "my_user", "my_password", "my_db");
 
-    /* этот запрос должен сообщить об ошибке */
+    /* Этот запрос сообщит об ошибке */
     $result = mysqli_query($link, "SELECT Name FROM Nonexistingtable WHERE population > 50000");
 
-    /* этот запрос должен сообщить о неверном индексе, если у столбца population нет индекса */
+    /* Этот запрос сообщит о неверном индексе, если для столбца population не создали индекс */
     $result = mysqli_query($link, "SELECT Name FROM City WHERE population > 50000");
 } catch (mysqli_sql_exception $e) {
     error_log($e->__toString());
 }
+
+?>
 ]]>
    </programlisting>
   </example>
@@ -173,21 +180,23 @@ try {
 <![CDATA[
 <?php
 
-/* включение протоколирования */
+/* Включаем сообщения об ошибках */
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 try {
-    /* если получится подключится, будет выброшено исключение mysqli_sql_exception */
+    /* Функция выбросит исключение mysqli_sql_exception, если не получится подключиться */
     $mysqli = new mysqli("localhost", "my_user", "my_password", "my_db");
 
-    /* этот запрос должен сообщить об ошибке */
+    /* Этот запрос сообщит об ошибке */
     $result = $mysqli->query("SELECT Name FROM Nonexistingtable WHERE population > 50000");
 
-    /* это НЕ БУДЕТ сообщать об ошибках, даже если индекс недоступен */
+    /* Этот запрос не сообщит об ошибках, даже если индекс недоступен */
     $result = $mysqli->query("SELECT Name FROM City WHERE population > 50000");
 } catch (mysqli_sql_exception $e) {
     error_log($e->__toString());
 }
+
+?>
 ]]>
    </programlisting>
   </example>

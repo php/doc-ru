@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f03806fcd8fe03a0501bd40b6e3939ff6589a1d2 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: c8ba91f7e546462dc66c2a11a7eab6f55c93915b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pharfileinfo.decompress" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PharFileInfo::decompress</refname>
-  <refpurpose>Разжимает текущий файл</refpurpose>
+  <refpurpose>Распаковывает Phar-файл в phar-архиве</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis role="PharFileInfo">
-   <modifier>public</modifier> <type>bool</type><methodname>PharFileInfo::decompress</methodname>
+   <modifier>public</modifier> <type>true</type><methodname>PharFileInfo::decompress</methodname>
    <void/>
   </methodsynopsis>
 
   <para>
-   Этот метод разжимает файл внутри phar-архива. В зависимости от того, каким
-   методом файл был сжат, необходимо наличие модулей
-   <link linkend="ref.bzip2">bzip2</link> или <link linkend="ref.zlib">zlib</link>.
-   Так как эта функциональность изменяет phar-архив, необходимо, чтобы опция
-   <link linkend="ini.phar.readonly">phar.readonly</link> была отключена, иначе
-   внести изменения в архив <classname>Phar</classname> не получится.
-   На архивы <classname>PharData</classname> ограничение на запись не распространяется.
+   Метод распаковывает файл в phar-архиве. Для работы функции потребуется включить
+   модуль <link linkend="ref.bzip2">bzip2</link> или <link linkend="ref.zlib">zlib</link>,
+   в зависимости от метода сжатия файла внутри архива. Как и с остальными функциями, которые изменяют
+   содержимое phar-архива, для распаковки файла в <classname>Phar</classname>-архиве потребуется отключить
+   INI-переменную <link linkend="ini.phar.readonly">phar.readonly</link>;
+   директива не ограничивает обработку архивов, с которыми работает класс
+   <classname>PharData</classname>.
   </para>
  </refsect1>
 
@@ -32,17 +32,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
+   &return.true.always;
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывает исключение <classname>BadMethodCallException</classname>, если
-   опция <link linkend="ini.phar.readonly">phar.readonly</link> включена, либо соответствующий
-   модуль <link linkend="ref.bzip2">bzip2</link>/<link linkend="ref.zlib">zlib</link>
-   недоступен.
+   Метод выбрасывает исключение <classname>BadMethodCallException</classname>,
+   если INI-переменная <link linkend="ini.phar.readonly">phar.readonly</link> включена,
+   или если модуль <link linkend="ref.bzip2">bzip2</link> или <link linkend="ref.zlib">zlib</link> недоступен.
   </para>
  </refsect1>
 
@@ -50,21 +49,26 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>PharFileInfo::decompress</function></title>
+    <title>Пример распаковки файла в phar-архиве методом <function>PharFileInfo::decompress</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 try {
     $p = new Phar('/path/to/my.phar', 0, 'my.phar');
+
     $p['myfile.txt'] = 'hi';
     $file = $p['myfile.txt'];
+
     $file->compress(Phar::GZ);
     var_dump($file->isCompressed());
+
     $p['myfile.txt']->decompress();
     var_dump($file->isCompressed());
 } catch (Exception $e) {
-    echo 'Не удалось создать/изменить my.phar: ', $e;
+    echo 'При попытке создать или модифицировать файл my.phar возникла ошибка: ', $e;
 }
+
 ?>
 ]]>
     </programlisting>
