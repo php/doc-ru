@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f03806fcd8fe03a0501bd40b6e3939ff6589a1d2 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: c8ba91f7e546462dc66c2a11a7eab6f55c93915b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="phardata.copy" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>PharData::copy</refname>
-  <refpurpose>Скопировать файл из tar/zip-архива в новый файл внутри него же</refpurpose>
+  <refpurpose>Копирует файл внутри tar- или zip-архива в новый файл внутри того же архива</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis role="PharData">
-   <modifier>public</modifier> <type>bool</type><methodname>PharData::copy</methodname>
+   <modifier>public</modifier> <type>true</type><methodname>PharData::copy</methodname>
    <methodparam><type>string</type><parameter>from</parameter></methodparam>
    <methodparam><type>string</type><parameter>to</parameter></methodparam>
   </methodsynopsis>
 
   <para>
-   Копирует файл из tar/zip-архива в новый файл внутри него же.
-   Это объектно-ориентированная альтернатива для <function>copy</function> с
-   потоковой обёрткой phar.
+   Метод копирует файл из tar- или zip-архива в новый файл внутри того же архива.
+   Это объектно-ориентированная альтернатива функции <function>copy</function>
+   с обёрткой потока phar.
   </para>
  </refsect1>
 
@@ -47,17 +47,18 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true; в случае успешного выполнения. Но лучше использовать механизм перехвата исключений для контроля успешности.
+   &return.true.always;
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывает исключение <classname>UnexpectedValueException</classname>, если копируемый
-   файл не отсутствует, новый файл уже существует, запись запрещена или возникли проблемы
-   с открытием чтением исходного файла. В случае проблем с записью на диск бросается
-   исключение <classname>PharException</classname>.
+   Метод выбрасывает исключение <classname>UnexpectedValueException</classname>,
+   если исходный файл не существует, целевой файл уже существует, доступ на запись
+   запретили, если хотя бы один файл невозможно открыть или невозможно прочитать исходный файл,
+   или выбрасывает исключение <classname>PharException</classname>,
+   если в phar-файл невозможно записать изменения.
   </para>
  </refsect1>
 
@@ -65,29 +66,34 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>PharData::copy</function></title>
+    <title>Пример копирования файла внутри tar- или zip-архива методом <function>PharData::copy</function></title>
     <para>
-     В примере показано использование <function>PharData::copy</function> и
-     аналог с использованием потоковой обёртки. Главное различие между
-     этими подходами - обработка ошибок. Все методы PharData выбрасывают исключения,
-     тогда как потоковые обёртки используют функцию <function>trigger_error</function>.
+     Пример показывает работу метода <function>PharData::copy</function>
+     и эквивалентной ему по функциональности обёртки потока для решения одной
+     и той же задачи. Основная разница между подходами состоит
+     в обработке ошибок. Методы класса PharData выбрасывают исключения, а обёртка потока
+     использует функцию <function>trigger_error</function>.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 try {
     $phar = new PharData('myphar.tar');
-    $phar['a'] = 'hi';
+
+    $phar['a'] = 'привет';
     $phar->copy('a', 'b');
-    echo $phar['b']; // выводит "phar://myphar.tar/b"
+
+    echo $phar['b']; // Выведет "phar://myphar.tar/b"
 } catch (Exception $e) {
     // Обработка ошибок
 }
 
-// Аналог с использованием потоковых обёрток.
-// В случае проблем вместо исключения вызывается ошибка уровня E_WARNINGS
+// Обёртка потока эквивалентна приведённому коду.
+// Вместо исключения срабатывает ошибка уровня E_WARNING
 copy('phar://myphar.tar/a', 'phar//myphar.tar/c');
-echo file_get_contents('phar://myphar.tar/c'); // выводит "hi"
+echo file_get_contents('phar://myphar.tar/c'); // Выведет "привет"
+
 ?>
 ]]>
     </programlisting>
