@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 6fadea3dfa2365f52bcb4146e955e4a4baa5ab82 Maintainer: zors1 Status: ready -->
+<!-- EN-Revision: ed1aff13602c94f86344bdd7c4fbc31f5a71bf84 Maintainer: zors1 Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="function.odbc-execute" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>odbc_execute</refname>
@@ -12,11 +11,11 @@
   &reftitle.description;
   <methodsynopsis>
    <type>bool</type><methodname>odbc_execute</methodname>
-   <methodparam><type>resource</type><parameter>statement</parameter></methodparam>
+   <methodparam><type>Odbc\Result</type><parameter>statement</parameter></methodparam>
    <methodparam choice="opt"><type>array</type><parameter>params</parameter><initializer>[]</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Выполняет запрос, подготовленный <function>odbc_prepare</function>.
+   Функция выполняет запрос, который подготовили функцией <function>odbc_prepare</function>.
   </para>
  </refsect1>
 
@@ -28,8 +27,7 @@
      <term><parameter>statement</parameter></term>
      <listitem>
       <para>
-       Ресурс (<type>resource</type>) с идентификатором результата из
-       <function>odbc_prepare</function>.
+       &odbc.result.object; из функции <function>odbc_prepare</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -37,23 +35,22 @@
      <term><parameter>params</parameter></term>
      <listitem>
       <para>
-       Параметры в <parameter>params</parameter> заменят псевдопеременные
-       подготовленном запросе по порядку. Элементы этого массива будут
-       преобразованы в строки при вызове этой функции.
+       Заполнители в подготовленном запросе по порядку заменятся параметрами, которые передали
+       в аргументе <parameter>params</parameter>. Элементы этого массива преобразуются
+       в строки при вызове функции.
       </para>
       <para>
-       Любые параметры в <parameter>params</parameter>, заключённые в одинарные
-       кавычки, будут восприниматься как имя файла для чтения и отправки на
-       сервер базы данных в качестве данных для соответствующей псевдопеременной.
+       Параметры в одинарных кавычках в аргументе <parameter>params</parameter>
+       функция воспринимает как название файла для считывания и отправки
+       на сервер базы данных в качестве данных для заполнителя.
       </para>
       <simpara>
-       Если необходимо сохранить строку, которая на самом деле начинается и
-       заканчивается одинарными кавычками, нужно добавить пробел или другой
-       символ, не являющийся одинарной кавычкой, в начало или конец параметра, что
-       предотвратит использование параметра в качестве имени файла. Если этот
-       вариант не подходит, необходимо использовать другой механизм для хранения
-       строки, например, выполнение запроса напрямую с помощью
-       <function>odbc_exec</function>.
+       Для сохранения строки, которая начинается и заканчивается самими одинарными кавычками,
+       потребуется обернуть параметр пробелами или другими символами, которые отличаются
+       от одинарных кавычек, что предотвратит восприятие параметра как название файла.
+       Строку сохраняют через другой механизм, например
+       отправляют прямой запрос функцией <function>odbc_exec</function>,
+       если невозможно обернуть параметр другими символами.
       </simpara>
      </listitem>
     </varlistentry>
@@ -68,32 +65,59 @@
   </para>
  </refsect1>
 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     &odbc.changelog.result-return;
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Параметр <parameter>flags</parameter> удалили.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>odbc_execute</function> и <function>odbc_prepare</function></title>
+    <title>Пример выполнения запроса функциями <function>odbc_execute</function> и <function>odbc_prepare</function></title>
     <para>
-     В данном коде <varname>$success</varname> будет иметь значение &true;,
-     только если все три параметра myproc присутствуют в массиве параметров:
+     В следующем примере переменной <varname>$success</varname> присвоится значение &true;,
+     только если каждый из трёх параметров в списке параметров для выполнения хранимой процедуры myproc
+     относится ко входному in-параметру:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $a = 1;
 $b = 2;
 $c = 3;
+
 $stmt    = odbc_prepare($conn, 'CALL myproc(?,?,?)');
 $success = odbc_execute($stmt, array($a, $b, $c));
+
 ?>
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
-   Если нужно вызвать хранимую процедуру с использованием параметров INOUT или
-   OUT, рекомендуется использовать собственный модуль для вашей базы данных
-   (например, <link linkend="ref.oci8">oci8</link> для Oracle).
+   Для вызова хранимой процедуры с inout- или out-параметрами
+   лучше использовать родной модуль базы данных
+   наподобие модуля <link linkend="ref.oci8">oci8</link> для СУБД Oracle.
   </para>
  </refsect1>
 
