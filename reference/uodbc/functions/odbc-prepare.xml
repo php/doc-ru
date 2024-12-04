@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 902c2b77f827e8d0ecccf4f62fb90065d2f6ef79 Maintainer: zors1 Status: ready -->
+<!-- EN-Revision: ed1aff13602c94f86344bdd7c4fbc31f5a71bf84 Maintainer: zors1 Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="function.odbc-prepare" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>odbc_prepare</refname>
@@ -11,20 +10,19 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type class="union"><type>resource</type><type>false</type></type><methodname>odbc_prepare</methodname>
-   <methodparam><type>resource</type><parameter>odbc</parameter></methodparam>
+   <type class="union"><type>Odbc\Result</type><type>false</type></type><methodname>odbc_prepare</methodname>
+   <methodparam><type>Odbc\Connection</type><parameter>odbc</parameter></methodparam>
    <methodparam><type>string</type><parameter>query</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Подготавливает запрос к выполнению. Идентификатор результата может быть
-   использован позже для выполнения запроса с помощью
-   <function>odbc_execute</function>.
+   Функция подготавливает запрос к выполнению. &odbc.result.object; затем
+   передают в функцию <function>odbc_execute</function> для выполнения запроса.
   </para>
   <para>
-   Некоторые базы данных (например, IBM DB2, MS SQL Server и Oracle)
-   поддерживают хранимые процедуры, которые принимают параметры типа IN,
-   INOUT и OUT, как определено в спецификации ODBC. Однако драйвер Unified ODBC
-   в настоящее время поддерживает только параметры типа IN для хранимых процедур.
+   Отдельные базы данных наподобие IBM DB2, MS SQL Server и Oracle
+   поддерживают хранимые процедуры, которые принимают in-, inout- и out-параметры,
+   как определяет спецификация протокола ODBC. Однако драйвер Unified ODBC
+   пока поддерживает для хранимых процедур только in-параметры.
   </para>
  </refsect1>
 
@@ -53,37 +51,63 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает идентификатор результата ODBC, если SQL-команда была успешно
-   подготовлена. В случае возникновения ошибки возвращает &false;.
+   &odbc.result.object-return;, если подготовка SQL-команды выполнилась
+   успешно. Функция возвращает значение &false;, если возникла ошибка.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     &odbc.changelog.connection-param;
+     &odbc.changelog.result-return;
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>odbc_execute</function> и <function>odbc_prepare</function></title>
+    <title>
+     Пример подготовки запроса к выполнению функциями
+     <function>odbc_execute</function> и <function>odbc_prepare</function>
+    </title>
     <para>
-     В данном коде значение <varname>$success</varname> будет равно &true;,
-     только если все три параметра myproc являются параметрами IN:
+     В следующем примере переменной <varname>$success</varname> присвоится значение &true;,
+     только если каждый из трёх параметров в списке параметров для выполнения хранимой процедуры myproc
+     относится ко входному in-параметру, — передаётся в процедуру по значению:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $a = 1;
 $b = 2;
 $c = 3;
-$stmt    = odbc_prepare($conn, 'CALL myproc(?,?,?)');
+
+$stmt    = odbc_prepare($conn, 'CALL myproc(?, ?, ?)');
 $success = odbc_execute($stmt, array($a, $b, $c));
+
 ?>
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
-   Если нужно вызвать хранимую процедуру с использованием параметров INOUT или
-   OUT, рекомендуется использовать собственный модуль для вашей базы данных
-   (например, <link linkend="ref.oci8">oci8</link> для Oracle).
+   Для вызова хранимой процедуры с inout-параметром, который передаётся по ссылке,
+   или с out-параметром, который возвращается из процедуры по значению,
+   лучше отправить запрос через родной модуль базы данных
+   наподобие модуля <link linkend="ref.oci8">oci8</link> для СУБД Oracle.
   </para>
  </refsect1>
 

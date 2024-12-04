@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 902c2b77f827e8d0ecccf4f62fb90065d2f6ef79 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: ed1aff13602c94f86344bdd7c4fbc31f5a71bf84 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.odbc-connect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>odbc_connect</refname>
-  <refpurpose>Соединяет с источником данных</refpurpose>
+  <refpurpose>Соединяется с источником данных</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type class="union"><type>resource</type><type>false</type></type><methodname>odbc_connect</methodname>
+   <type class="union"><type>Odbc\Connection</type><type>false</type></type><methodname>odbc_connect</methodname>
    <methodparam><type>string</type><parameter>dsn</parameter></methodparam>
    <methodparam><type>string</type><parameter>user</parameter></methodparam>
    <methodparam><type>string</type><parameter>password</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>cursor_option</parameter><initializer><constant>SQL_CUR_USE_DRIVER</constant></initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Идентификатор соединения, возвращаемый этой функцией, необходим для других
-   ODBC-функций. Вы можете держать одновременно открытыми несколько соединений.
+   Идентификатор соединения, который возвращает функция, потребуется другим
+   ODBC-функциям. Разрешается открывать несколько соединений одновременно,
+   если коннектор установил соединение с разными базами данных или разными учётными данными.
   </simpara>
   <simpara>
-   Некоторые ODBC-драйверы, выполняющие сложные хранимые процедуры, могут обрываться с
-   ошибкой типа: "Cannot open a cursor on a stored procedure that has anything other than a single
-   select statement in it". Использование SQL_CUR_USE_ODBC поможет избежать появления этой
-   ошибки. Также некоторые драйверы не поддерживают необязательный параметр row_number
-   в <function>odbc_fetch_row</function>. SQL_CUR_USE_ODBC также может помочь в этом
-   случае.
+   Отдельные ODBC-драйверы, которые выполняют сложные хранимые процедуры, иногда
+   завершаются ошибкой наподобие: "Cannot open a cursor on a stored procedure that has anything other than a single
+   select statement in it" («Невозможно открыть курсор в хранимой процедуре, которая содержит другие команды,
+   кроме одной команды SELECT»). Тип курсора SQL_CUR_USE_ODBC помогает избегать появления этой
+   ошибки. Отдельные драйверы также не поддерживают необязательный параметр row_number
+   в функции <function>odbc_fetch_row</function>. Курсор SQL_CUR_USE_ODBC также иногда помогает в похожих случаях.
   </simpara>
  </refsect1>
 
@@ -38,8 +39,8 @@
      <term><parameter>dsn</parameter></term>
      <listitem>
       <para>
-       Database Source Name (DSN) для соединения. В качестве альтернативы можно
-       производить соединение и без DSN.
+       Имя источника базы данных (англ. Database Source Name, DSN) для соединения.
+       Альтернативно функция работает и со строкой соединения без DSN-имени.
       </para>
      </listitem>
     </varlistentry>
@@ -63,12 +64,12 @@
      <term><parameter>cursor_option</parameter></term>
      <listitem>
       <para>
-       Устанавливает тип используемого курсора для соединения.
-       Обычно этот параметр не нужен, но может оказаться полезным
-       для обхода проблем с некоторыми драйверами ODBC.
+       Устанавливает тип курсора для соединения.
+       Обычно этот параметр не требуется, но иногда становится полезным
+       для обхода проблем с отдельными ODBC-драйверами.
       </para>
       <simpara>
-       Следующие константы определены для типа курсора:
+       Для типа курсора определили следующие константы:
       </simpara>
       <para>
        <itemizedlist>
@@ -98,29 +99,56 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает соединение ODBC&return.falseforfailure;.
+   Функция возвращает ODBC-соединение&return.falseforfailure;.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     &odbc.changelog.connection-return;
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Соединения без DSN</title>
+    <title>Пример соединения без DSN-строки подключения</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Microsoft SQL Server используя SQL Native Client 10.0 ODBC Driver - позволяет соединяться
-// с SQL 7, 2000, 2005 и 2008
-$connection = odbc_connect("Driver={SQL Server Native Client 10.0};Server=$server;Database=$database;", $user, $password);
 
-// Microsoft Access
+// Microsoft SQL Server, который работает через драйвер SQL Native Client 10.0 ODBC Driver, разрешает соединяться
+// с серверами SQL 7, 2000, 2005 и 2008
+$connection = odbc_connect(
+    "Driver={SQL Server Native Client 10.0};Server=$server;Database=$database;",
+    $user,
+    $password
+);
+
+// Соединение с источником данных Microsoft Access
 $connection = odbc_connect("Driver={Microsoft Access Driver (*.mdb)};Dbq=$mdbFilename", $user, $password);
 
-// Microsoft Excel
+// Соединение с источником данных Microsoft Excel
 $excelFile = realpath('C:/ExcelData.xls');
 $excelDir = dirname($excelFile);
-$connection = odbc_connect("Driver={Microsoft Excel Driver (*.xls)};DriverId=790;Dbq=$excelFile;DefaultDir=$excelDir" , '', '');
+$connection = odbc_connect(
+    "Driver={Microsoft Excel Driver (*.xls)};DriverId=790;Dbq=$excelFile;DefaultDir=$excelDir",
+    '',
+    ''
+);
+
 ?>
 ]]>
     </programlisting>
