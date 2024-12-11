@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: de9c65c91ff1710d8b2d2ec955caea0162679305 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 53054bf8decc8648cf2e90a493692a161e2371af Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.filter-var-array" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>filter_var_array</refname>
   <refpurpose>Принимает несколько переменных и, при необходимости, фильтрует их</refpurpose>
  </refnamediv>
+
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
@@ -14,54 +15,64 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>int</type></type><parameter>options</parameter><initializer><constant>FILTER_DEFAULT</constant></initializer></methodparam>
    <methodparam choice="opt"><type>bool</type><parameter>add_empty</parameter><initializer>&true;</initializer></methodparam>
   </methodsynopsis>
-  <para>
-   Эта функция полезна для получения множества переменных без
-   многократного вызова функции <function>filter_var</function>.
-  </para>
+  <simpara>
+   Фильтр значений ассоциативного массива (&array;) с использованием
+   фильтров проверки (<constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>),
+   очистки (<constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>)
+   или пользовательских фильтров.
+  </simpara>
  </refsect1>
+
  <refsect1 role="parameters">
   &reftitle.parameters;
-  <para>
-   <variablelist>
-    <varlistentry>
-     <term><parameter>array</parameter></term>
-     <listitem>
-      <para>
-       Массив со строковыми ключами, содержащий данные для фильтрации.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>options</parameter></term>
-     <listitem>
-      <para>
-       Массив, определяющий параметры. Допустимый ключ - строка <type>string</type>,
-       содержащая имя переменной, а допустимое значение - <link linkend="filter.filters">тип фильтра</link>,
-       или массив (<type>array</type>), при необходимости определяющий фильтр, флаги и
-       параметры. Если значение является массивом, допустимыми ключами являются
-       <literal>filter</literal>, который определяет <link linkend="filter.filters">тип фильтра</link>,
-       <literal>flags</literal>, который определяет любые флаги, применяемые к
-       фильтру, и <literal>options</literal>, который определяет любые параметры,
-       применяемые к фильтру. Смотрите пример ниже для лучшего понимания.
-      </para>
-      <para>
-       Этот параметр также может быть целым числом, содержащим <link
-       linkend="filter.constants">предопределённую константу фильтра</link>. Затем все значения во
-       входном массиве фильтруются этим фильтром.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>add_empty</parameter></term>
-     <listitem>
-      <para>
-       Добавляет в результат отсутствующие ключи со значением &null;.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><parameter>array</parameter></term>
+    <listitem>
+     <simpara>
+      Ассоциативный массив (&array;), содержащий данные для фильтрации.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>options</parameter></term>
+    <listitem>
+     <simpara>
+      Либо ассоциативный массив (<type>array</type>) опций, либо фильтр,
+      применяемый к каждой записи, который может быть либо фильтром проверки с использованием одной из констант
+      <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
+      либо фильтром очистки с использованием одной из констант
+      <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>.
+     </simpara>
+     <simpara>
+      Массив опций – это ассоциативный массив, в котором ключ соответствует ключу
+      в массиве данных параметра <parameter>array</parameter>,
+      а связанное с ним значение – это либо фильтр, который нужно применить к этой записи,
+      либо ассоциативный массив, описывающий, как и какой фильтр должен быть применён к этой записи.
+     </simpara>
+     <simpara>
+      Ассоциативный массив, описывающий применение фильтра, должен содержать ключ <literal>'filter'</literal>,
+      ассоциированным значением которого является применяемый фильтр,
+      который может быть одной из констант <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
+      <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>,
+      <constant>FILTER_UNSAFE_RAW</constant> или <constant>FILTER_CALLBACK</constant>.
+      Дополнительно может содержать ключ <literal>'flags'</literal>, задающий флаги,
+      которые применяются к фильтру и ключ <literal>'options'</literal>,
+      задающий любые опции, которые применяются к фильтру.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>add_empty</parameter></term>
+    <listitem>
+     <para>
+      Добавить отсутствующие ключи в виде &null; в возвращаемое значение.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
+
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
@@ -80,37 +91,40 @@
 <![CDATA[
 <?php
 
-$data = array(
-    'product_id'    => 'libgd<script>',
-    'component'     => '10',
-    'versions'      => '2.0.33',
-    'testscalar'    => array('2', '23', '10', '12'),
-    'testarray'     => '2',
-);
+$data = [
+    'product_id' => 'libgd<script>',
+    'component'  => '10',
+    'versions'   => '2.0.33',
+    'testscalar' => ['2', '23', '10', '12'],
+    'testarray'  => '2',
+];
 
-$args = array(
+$filters = [
     'product_id'   => FILTER_SANITIZE_ENCODED,
-    'component'    => array('filter'    => FILTER_VALIDATE_INT,
-                            'flags'     => FILTER_FORCE_ARRAY,
-                            'options'   => array('min_range' => 1, 'max_range' => 10)
-                           ),
-    'versions'     => FILTER_SANITIZE_ENCODED,
+    'component'    => [
+        'filter'   => FILTER_VALIDATE_INT,
+        'flags'    => FILTER_FORCE_ARRAY,
+        'options'  => [
+            'min_range' => 1,
+            'max_range' => 10,
+        ],
+    ],
+    'versions'     => [
+        'filter' => FILTER_SANITIZE_ENCODED
+    ],
+    'testscalar'   => [
+        'filter' => FILTER_VALIDATE_INT,
+        'flags'  => FILTER_REQUIRE_SCALAR,
+    ],
+    'testarray'    => [
+        'filter' => FILTER_VALIDATE_INT,
+        'flags'  => FILTER_FORCE_ARRAY,
+    ],
     'doesnotexist' => FILTER_VALIDATE_INT,
-    'testscalar'   => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_REQUIRE_SCALAR,
-                           ),
-    'testarray'    => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_FORCE_ARRAY,
-                           )
+];
 
-);
+var_dump(filter_var_array($data, $filters));
 
-$myinputs = filter_var_array($data, $args);
-
-var_dump($myinputs);
-echo "\n";
 ?>
 ]]>
     </programlisting>
@@ -119,16 +133,14 @@ echo "\n";
 <![CDATA[
 array(6) {
   ["product_id"]=>
-    string(17) "libgd%3Cscript%3E"
+  string(17) "libgd%3Cscript%3E"
   ["component"]=>
   array(1) {
     [0]=>
     int(10)
   }
   ["versions"]=>
-    string(6) "2.0.33"
-  ["doesnotexist"]=>
-  NULL
+  string(6) "2.0.33"
   ["testscalar"]=>
   bool(false)
   ["testarray"]=>
@@ -136,6 +148,8 @@ array(6) {
     [0]=>
     int(2)
   }
+  ["doesnotexist"]=>
+  NULL
 }
 ]]>
     </screen>
@@ -145,14 +159,19 @@ array(6) {
 
  <refsect1 role="seealso">
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>filter_input_array</function></member>
-    <member><function>filter_var</function></member>
-    <member><function>filter_input</function></member>
-    <member><xref linkend="filter.filters"/></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><function>filter_input_array</function></member>
+   <member><function>filter_var</function></member>
+   <member><function>filter_input</function></member>
+   <member>
+    Фильтры проверки:
+    <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>
+   </member>
+   <member>
+    Фильтры очистки:
+    <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>
+   </member>
+  </simplelist>
  </refsect1>
 
 </refentry>
