@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 9ec2c28f9400490fe1b70fb88e50e23de97905f1 Maintainer: sergey Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="pdo-pgsql.setnoticecallback" xmlns="http://docbook.org/ns/docbook">
+ <refnamediv>
+  <refname>Pdo\Pgsql::setNoticeCallback</refname>
+  <refpurpose>Устанавливает callback-функцию для обработки уведомлений и предупреждений</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis role="Pdo\\Pgsql">
+   <modifier>public</modifier> <type>void</type><methodname>Pdo\Pgsql::setNoticeCallback</methodname>
+   <methodparam><type class="union"><type>callable</type><type>null</type></type><parameter>callback</parameter></methodparam>
+  </methodsynopsis>
+  <simpara>
+   Устанавливает callback-функцию для обработки уведомлений и предупреждений.
+   Сюда входят сообщения, выдаваемые самим PostgreSQL, а также сообщения,
+   выдаваемые пользовательскими SQL-функциями с помощью <literal>RAISE</literal>.
+   Обратите внимание, что фактическое получение сообщений зависит
+   от настройки <literal>client_min_messages</literal>.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>callback</parameter></term>
+    <listitem>
+     <simpara>
+      Если указано значение &null;, обработчик сбрасывается в состояние по умолчанию.
+     </simpara>
+     <para>
+      В противном случае обработчик представляет собой callback-функцию со следующей сигнатурой:
+      <methodsynopsis>
+       <type>void</type><methodname><replaceable>handler</replaceable></methodname>
+       <methodparam><type>string</type><parameter>message</parameter></methodparam>
+      </methodsynopsis>
+      <variablelist role="function_parameters">
+       <varlistentry>
+        <term><parameter>message</parameter></term>
+        <listitem>
+         <simpara>
+          Сообщение, сгенерированное бэкендом.
+         </simpara>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <simpara>
+   &return.void;
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="pdo-pgsql.setnoticecallback.example.basic">
+   <title>Пример использования метода <methodname>Pdo\Pgsql::setNoticeCallback</methodname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$pdo = new Pdo\Pgsql('pgsql:dbname=test host=localhost', $user, $pass);
+
+$pdo->exec('CREATE TABLE parent(id int primary key)');
+$pdo->exec('CREATE TABLE child(id int references parent)');
+
+$pdo->setNoticeCallback(function ($message) {
+    echo $message;
+});
+
+$pdo->exec('TRUNCATE parent CASCADE');
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+NOTICE:  truncate cascades to table "child"
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
