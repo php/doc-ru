@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c1c803cf6a83feb30a444c90787c88cd1946e3f6 Maintainer: mch Status: ready -->
+<!-- EN-Revision: b5f0c19bec9f70f1cbdc1480b3f3c92c608489d1 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.traits" xmlns="http://docbook.org/ns/docbook">
  <title>Трейты</title>
@@ -30,27 +30,46 @@
 <![CDATA[
 <?php
 
-trait ezcReflectionReturnInfo
-{
-    function getReturnType() { /*1*/ }
-    function getReturnDescription() { /*2*/ }
+trait TraitA {
+    public function sayHello()
+    {
+        echo 'Hello';
+    }
 }
 
-class ezcReflectionMethod extends ReflectionMethod
-{
-    use ezcReflectionReturnInfo;
-    /* ... */
+trait TraitB {
+    public function sayWorld()
+    {
+        echo 'World';
+    }
 }
 
-class ezcReflectionFunction extends ReflectionFunction
+class MyHelloWorld
 {
-    use ezcReflectionReturnInfo;
-    /* ... */
+    use TraitA, TraitB; // Класс разрешает внедрять несколько трейтов
+
+    public function sayHelloWorld()
+    {
+        $this->sayHello();
+        echo ' ';
+
+        $this->sayWorld();
+        echo "!\n";
+    }
 }
+
+$myHelloWorld = new MyHelloWorld();
+$myHelloWorld->sayHelloWorld();
 
 ?>
 ]]>
   </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Hello World!
+]]>
+    </screen>
  </example>
 
  <sect2 xml:id="language.oop5.traits.precedence">
@@ -475,13 +494,21 @@ class C2
 }
 
 $o = new C1();
-$o->inc(); // echo 1
+$o->inc();
+
 $p = new C2();
-$p->inc(); // echo 1
+$p->inc();
 
 ?>
 ]]>
    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+1
+1
+]]>
+    </screen>
   </example>
   <example xml:id="language.oop5.traits.static.ex2">
    <title>Статические методы</title>
@@ -493,7 +520,7 @@ trait StaticExample
 {
     public static function doSomething()
     {
-        echo 'Делаем что-нибудь';
+        return 'Делаем что-нибудь';
     }
 }
 
@@ -502,45 +529,67 @@ class Example
     use StaticExample;
 }
 
-Example::doSomething();
+echo Example::doSomething();
 
 ?>
 ]]>
    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Doing something
+]]>
+    </screen>
   </example>
   <example xml:id="language.oop5.traits.static.ex3">
    <title>Статические свойства</title>
     <caution>
      <simpara>
-      До PHP 8.3.0 статические свойства, которые определяли в трейте,
-      были общими для классов единой иерархии наследования, в которые внедрялся трейт.
-      Дочерние классы, в которые трейт внедрялся явно, продолжали наследовать статическое свойство
-      из родительского класса, а не получали своё статическое свойство из трейта.
-      Начиная с PHP 8.3.0 каждый класс в иерархии наследования, в который трейт внедрили явно,
-      получает свою копию статического свойства, поскольку статическое свойство трейта,
-      который внедрили в дочерний класс, теперь переопределяет статическое свойство, которое дочерний класс
-      унаследовал из родительского.
+      До PHP 8.3.0 дочерние классы наследовали статические свойства, которые родительские классы
+      получали из трейта, даже если трейт явно внедрялся в дочерний класс.
+      Начиная с PHP 8.3.0 статическое свойство трейта переопределяет в дочернем классе статическое свойство,
+      которое дочерний класс унаследовал из родительского.
      </simpara>
     </caution>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-trait StaticExample
+trait T
 {
-    public static $static = 'foo';
+    public static $counter = 1;
 }
 
-class Example
+class A
 {
-    use StaticExample;
+    use T;
+
+    public static function incrementCounter()
+    {
+        static::$counter++;
+    }
 }
 
-echo Example::$static;
+class B extends A
+{
+    use T;
+}
+
+A::incrementCounter();
+
+echo A::$counter, "\n";
+echo B::$counter, "\n";
 
 ?>
 ]]>
   </programlisting>
+    &example.outputs.83;
+    <screen>
+<![CDATA[
+2
+1
+]]>
+    </screen>
  </example>
  </sect2>
 
@@ -630,11 +679,17 @@ class ConstantsExample
 }
 
 $example = new ConstantsExample;
-echo $example::FLAG_MUTABLE; // 1
+echo $example::FLAG_MUTABLE;
 
 ?>
 ]]>
    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+1
+]]>
+    </screen>
   </example>
   <para>
    В классе нельзя определять константу с названием как у константы трейта,
@@ -669,10 +724,12 @@ class ConstantsExample
  <sect2 xml:id="language.oop5.traits.final-methods">
   <title>Окончательные методы</title>
   <simpara>
-   Начиная с PHP 8.3.0 модификатор <link linkend="language.oop5.final">final</link>
-   разрешили применять к методам, которые внедряются из трейтов. При внедрении трейта
-   в класс метод определяют окончательными тем же синтаксисом, которым модифицируют видимость
-   методов трейтов.
+   Начиная с PHP 8.3.0 методы, которые импортировали из трейтов,
+   разрешили делать окончательными через оператор <literal>as</literal>
+   и модификатор <link linkend="language.oop5.final">final</link>.
+   Определение метода трейта окончательным запрещает дочерним классам
+   переопределять метод. Но самому классу, в который импортировали трейт
+   и в котором сделали метод окончательным, по-прежнему доступно переопределение метода.
   </simpara>
   <example xml:id="language.oop5.traits.final-methods.example">
    <title>
@@ -701,12 +758,18 @@ class FinalExampleA
 
 class FinalExampleB extends FinalExampleA
 {
-    public function method() {} // Fatal error: Cannot override final method FinalExampleA::method()
+    public function method() {}
 }
 
 ?>
 ]]>
    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+Fatal error: Cannot override final method FinalExampleA::method() in ...
+]]>
+    </screen>
   </example>
  </sect2>
 
