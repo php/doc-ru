@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b34210e11d0922cb14a134e244cb5846a3d2ac67 Maintainer: malferov Status: ready -->
+<!-- EN-Revision: c925e1a0ce0659ee1c12d80f9a4a58b10cc4222f Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.property-hooks" xmlns="http://docbook.org/ns/docbook">
  <title>Хуки свойств</title>
@@ -213,6 +213,73 @@ class Example
    Пропуск хука <literal>get</literal> или <literal>set</literal> в реальном свойстве означает,
    что чтение или запись поведут себя по умолчанию.
   </simpara>
+  <note>
+   <simpara>
+    PHP разрешает определять хуки
+    <link linkend="language.oop5.decon.constructor.promotion">при продвижении параметров конструктора до свойств класса</link>.
+    При этом в конструктор потребуется передать значения, которые
+    совпадают с типом свойства, независимо от типа,
+    который разрешает хук <literal>set</literal>.
+   </simpara>
+   <simpara>
+    Посмотрим на следующий пример:
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+class Example
+{
+    public function __construct(
+        public private(set) DateTimeInterface $created {
+            set (string|DateTimeInterface $value) {
+                if (is_string($value)) {
+                    $value = new DateTimeImmutable($value);
+                }
+
+                $this->created = $value;
+            }
+        },
+    ) {}
+}
+]]>
+   </programlisting>
+   <simpara>
+    Внутренне движок разберёт этот код так:
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+class Example
+{
+    public private(set) DateTimeInterface $created {
+        set (string|DateTimeInterface $value) {
+            if (is_string($value)) {
+                $value = new DateTimeImmutable($value);
+            }
+
+            $this->created = $value;
+        }
+    }
+
+    public function __construct(
+        DateTimeInterface $created,
+    ) {
+        $this->created = $created;
+    }
+}
+]]>
+   </programlisting>
+   <simpara>
+    Установка свойства в классе, вне передачи аргументов в конструктор,
+    разрешит значения с типом <type>string</type> или <interfacename>DateTimeInterface</interfacename>,
+    но конструктор разрешит только тип <interfacename>DateTimeInterface</interfacename>.
+    Причина этого состоит в том, что тип <interfacename>DateTimeInterface</interfacename>, который определяет свойство,
+    внутри сигнатуры конструктора определяет тип параметра, независимо от того,
+    что разрешает хук <literal>set</literal>.
+   </simpara>
+   <simpara>
+    Нельзя продвигать параметры конструктора до свойств класса,
+    если от конструктора требуется такое поведение.
+   </simpara>
+  </note>
  </sect2>
  <sect2 xml:id="language.oop5.property-hooks.virtual">
   <title>Виртуальные свойства</title>
