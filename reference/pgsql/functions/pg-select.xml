@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2fa74a5512c0a7d3eabe39b1060646fc32f253f5 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 18aa2012f6fa1e5b09733147e02911d16e06d4a1 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-select" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,39 +15,39 @@
    <type class="union"><type>array</type><type>string</type><type>false</type></type><methodname>pg_select</methodname>
    <methodparam><type>PgSql\Connection</type><parameter>connection</parameter></methodparam>
    <methodparam><type>string</type><parameter>table_name</parameter></methodparam>
-   <methodparam><type>array</type><parameter>conditions</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter>conditions</parameter><initializer>[]</initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer><constant>PGSQL_DML_EXEC</constant></initializer></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>mode</parameter><initializer><constant>PGSQL_ASSOC</constant></initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_select</function> выбирает записи из базы данных,
-   удовлетворяющие условиям <literal>field=&gt;value</literal>, заданным
-   в массиве <parameter>conditions</parameter>.
+   Функция <function>pg_select</function> выбирает из базы данных записи,
+   которые удовлетворяют условиям <literal>field=&gt;value</literal>
+   в массиве <parameter>conditions</parameter>. Функция вернёт массив записей,
+   поля которых удовлетворяют условиям <parameter>conditions</parameter>.
   </para>
   <para>
-   Если задан параметр <parameter>flags</parameter>, то к массиву
-   <parameter>conditions</parameter> будет применена функция
-   <function>pg_convert</function> с параметрами, заданными в
-   качестве аргумента.
+   При установке параметра <parameter>flags</parameter>
+   функция применит к каждому условию в массиве <parameter>conditions</parameter>
+   функцию <function>pg_convert</function> с этими флагами.
   </para>
   <para>
-   Если задан параметр <parameter>mode</parameter>,
-   возвращаемое значение будет в виде массива
-   при <constant>PGSQL_NUM</constant>, ассоциативного массива
-   при <constant>PGSQL_ASSOC</constant> (по умолчанию)
-   или и того, и другого при <constant>PGSQL_BOTH</constant>.
+   При установке для параметра <parameter>mode</parameter>
+   режима <constant>PGSQL_NUM</constant> функция вернёт значение в форме индексного массива,
+   в режиме по умолчанию <constant>PGSQL_ASSOC</constant> возвращается ассоциативный массив,
+   а в режиме <constant>PGSQL_BOTH</constant> функция возвращает значения полей и с целочисленными,
+   и со строковыми ключами.
   </para>
   <para>
-   По умолчанию <function>pg_insert</function> передаёт необработанные значения.
-   Значения должны быть экранированы или опция PGSQL_DML_ESCAPE должна быть
-   указана. PGSQL_DML_ESCAPE заключает в кавычки и экранирует
-   параметры/идентификаторы. Поэтому имена таблиц/столбцов становятся
+   По умолчанию функция <function>pg_insert</function> передаёт необработанные значения.
+   Значения потребуется заэкранировать или указать опцию PGSQL_DML_ESCAPE.
+   Опция PGSQL_DML_ESCAPE берёт в кавычки и экранирует
+   параметры или идентификаторы. Поэтому названия таблиц и столбцов становятся
    чувствительными к регистру.
   </para>
   <para>
    Обратите внимание, что ни экранирование, ни подготовленный запрос не защитят запрос LIKE,
-   JSON, массив, регулярные выражения и т.д.. Эти параметры должны обрабатываться
-   в соответствии с их контекстами, т.е. следует экранировать/проверять значения.
+   JSON, массив, регулярные выражения и т. д. Эти параметры потребуется обработать
+   в соответствии с их контекстом — заэкранировать или проверить значения.
   </para>
  </refsect1>
 
@@ -65,7 +65,7 @@
      <term><parameter>table_name</parameter></term>
      <listitem>
       <para>
-       Название таблицы, из которой выбираются данные.
+       Название таблицы, из которой требуется выбрать данные.
       </para>
      </listitem>
     </varlistentry>
@@ -73,9 +73,10 @@
      <term><parameter>conditions</parameter></term>
      <listitem>
       <para>
-       Массив (<type>array</type>), ключи которого соответствуют именам колонок таблицы
-       <parameter>table_name</parameter>. Будут выбраны только те строки,
-       значения полей которых совпадут со значениями массива.
+       Массив (<type>array</type>), ключи которого соответствуют названиям полей таблицы
+       <parameter>table_name</parameter>, а значения — условиям извлечения строк.
+       Начиная с PHP 8.4.0 при передаче пустого массива функция не применяет условия.
+       Раньше при передаче пустого массива <parameter>conditions</parameter> функция завершалась ошибкой.
       </para>
      </listitem>
     </varlistentry>
@@ -83,15 +84,15 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Одна из констант <constant>PGSQL_CONV_FORCE_NULL</constant>,
+       Параметр принимает произвольное сочетание следующих констант: <constant>PGSQL_CONV_FORCE_NULL</constant>,
        <constant>PGSQL_DML_NO_CONV</constant>,
        <constant>PGSQL_DML_ESCAPE</constant>,
        <constant>PGSQL_DML_EXEC</constant>,
        <constant>PGSQL_DML_ASYNC</constant>,
-       <constant>PGSQL_DML_STRING</constant> или их комбинация.
-       Если <parameter>flags</parameter> содержит
-       <constant>PGSQL_DML_STRING</constant>, функция вернёт строку. Если установлены <constant>PGSQL_DML_NO_CONV</constant>
-       или <constant>PGSQL_DML_ESCAPE</constant>, то функция <function>pg_convert</function> внутренне не вызывается.
+       <constant>PGSQL_DML_STRING</constant>.
+       Функция вернёт строку запроса, если в списке флагов <parameter>flags</parameter> содержится
+       флаг <constant>PGSQL_DML_STRING</constant>. При установке флага <constant>PGSQL_DML_NO_CONV</constant>
+       или <constant>PGSQL_DML_ESCAPE</constant> функция <function>pg_convert</function> внутренне не вызывается.
       </para>
      </listitem>
     </varlistentry>
@@ -99,14 +100,14 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       Одна из констант <constant>PGSQL_ASSOC</constant>,
-       <constant>PGSQL_NUM</constant> или
-       <constant>PGSQL_BOTH</constant>.
-       Если установлено значение <constant>PGSQL_ASSOC</constant>, возвращаемое значение
-       будет ассоциативным массивом (<type>array</type>),
-       при <constant>PGSQL_NUM</constant> возвращаемое значение будет массивом (<type>array</type>),
-       а при <constant>PGSQL_BOTH</constant> возвращаемое значение будет и ассоциативным
-       и числовым индексированным массивом (<type>array</type>).
+       Константа <constant>PGSQL_ASSOC</constant>,
+       <constant>PGSQL_NUM</constant>
+       или <constant>PGSQL_BOTH</constant>.
+       В режиме <constant>PGSQL_ASSOC</constant> функция возвращает
+       ассоциативный массив,
+       в режиме <constant>PGSQL_NUM</constant> возвращается индексный массив,
+       а в режиме <constant>PGSQL_BOTH</constant> функция вернёт значения
+       и с ассоциативным, и числовым ключом.
       </para>
      </listitem>
     </varlistentry>
@@ -117,9 +118,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку (<type>string</type>), если <parameter>flags</parameter>
-   содержит <constant>PGSQL_DML_STRING</constant>,
-   в противном случае в случае успешного выполнения функция возвращает массив (<type>array</type>)&return.falseforfailure;.
+   Функция возвращает значение с типом <type>string</type>, если аргумент <parameter>flags</parameter>
+   содержит флаг <constant>PGSQL_DML_STRING</constant>,
+   в остальных случаях функция возвращает значение с типом <type>array</type>, если выполнилась успешно,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -135,11 +136,17 @@
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>8.4.0</entry>
+       <entry>
+        Параметр <parameter>conditions</parameter> стал необязательным.
+       </entry>
+      </row>
       &pgsql.changelog.connection-object;
       <row>
        <entry>7.1.0</entry>
        <entry>
-        Добавлен параметр <parameter>mode</parameter>.
+        Добавили параметр <parameter>mode</parameter>.
        </entry>
       </row>
      </tbody>
@@ -152,21 +159,25 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_select</function></title>
+    <title>Пример выборки записей функцией <function>pg_select</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  $db = pg_connect('dbname=foo');
-  // Это безопасно в некоторой степени, поскольку все значения экранируются.
-  // Однако PostgreSQL поддерживает JSON/массив. Для этих значений это не безопасно
-  // ни с через экранирование, ни с помощью подготовленного запроса.
-  $rec = pg_select($db, 'post_log', $_POST);
-  if ($rec) {
-      echo "Records selected\n";
-      var_dump($rec);
-  } else {
-      echo "Должно быть переданы неверные данные\n";
-  }
+
+$db = pg_connect('dbname=foo');
+
+// Отчасти это безопасно, поскольку значения экранируются.
+// Однако СУБД PostgreSQL поддерживает типы JSON и массив. Для таких значений это небезопасно
+// ни с экранированием, ни в подготовленном запросе
+$rec = pg_select($db, 'post_log', $_POST);
+
+if ($rec) {
+    echo "Функция выбрала следующие записи\n";
+    var_dump($rec);
+} else {
+    echo "Пользователь, должно быть, отправил неверные данные\n";
+}
+
 ?>
 ]]>
     </programlisting>
