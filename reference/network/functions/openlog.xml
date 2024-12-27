@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: db22a7cfcbc3af221f67e228336ac3e2d62aaf2c Maintainer: bfl Status: ready -->
+<!-- EN-Revision: 35ca7f1087870c6023ef7a3dd0248501741c8194 Maintainer: bfl Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.openlog" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -19,7 +19,9 @@
    Функция <function>openlog</function> открывает соединение к системному журналу для программы.
   </para>
   <para>
-   Использование <function>openlog</function> не является обязательным. Эта функция при необходимости будет вызвана  функцией <function>syslog</function> автоматически, при этом параметр <parameter>prefix</parameter> будет по умолчанию равен &false;.
+   Вызов функции <function>openlog</function> необязателен.
+   Функция вызовется функцией <function>syslog</function> автоматически, если потребуется,
+   при этом параметр <parameter>prefix</parameter> по умолчанию будет равен пустой строке.
   </para>
  </refsect1>
 
@@ -39,47 +41,15 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Аргумент <parameter>flags</parameter> используется для указания используемых опций журналирования при создании записи журнала.
-       <table>
-        <title>Опции <function>openlog</function></title>
-        <tgroup cols="2">
-         <thead>
-          <row>
-           <entry>Константа</entry>
-           <entry>Описание</entry>
-          </row>
-         </thead>
-         <tbody>
-          <row>
-           <entry><constant>LOG_CONS</constant></entry>
-           <entry>
-            если при отправке данных системному журналу происходит ошибка, перевести вывод непосредственно в системную консоль
-           </entry>
-          </row>
-          <row>
-           <entry><constant>LOG_NDELAY</constant></entry>
-           <entry>
-            открыть соединение с журналом без задержки
-           </entry>
-          </row>
-          <row>
-           <entry><constant>LOG_ODELAY</constant></entry>
-           <entry>
-            (по умолчанию) отложить открытие соединения до вывода первого сообщения в журнал
-           </entry>
-          </row>
-          <row>
-           <entry><constant>LOG_PERROR</constant></entry>
-           <entry>выводить вместе со стандартной ошибкой сообщение журнала</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_PID</constant></entry>
-           <entry>добавить PID к каждому сообщению</entry>
-          </row>
-         </tbody>
-        </tgroup>
-       </table>
-       Можно использовать одну или сразу несколько опций. При использовании нескольких опций необходимо разделять их <literal>OR</literal>, к примеру, для открытия соединения без задержки, записи в консоль и включения PID в каждое из сообщений, необходима следующая комбинация опций: <literal>LOG_CONS | LOG_NDELAY | LOG_PID</literal>
+       Битовая маска из следующих констант:
+       <simplelist>
+        <member><constant>LOG_CONS</constant></member>
+        <member><constant>LOG_NDELAY</constant></member>
+        <member><constant>LOG_ODELAY</constant></member>
+        <member><constant>LOG_NOWAIT</constant></member>
+        <member><constant>LOG_PERROR</constant></member>
+        <member><constant>LOG_PID</constant></member>
+       </simplelist>
       </para>
      </listitem>
     </varlistentry>
@@ -87,77 +57,30 @@
      <term><parameter>facility</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>facility</parameter> используется для определения типа программы, создавшей сообщение журнала. Это позволяет определить (в конфигурации syslog) как будут обработаны сообщения журнала, поступающие из разных объектов.
-       <table>
-        <title>Типы программ <function>openlog</function></title>
-        <tgroup cols="2">
-         <thead>
-          <row>
-           <entry>Константа</entry>
-           <entry>Описание</entry>
-          </row>
-         </thead>
-         <tbody>
-          <row>
-           <entry><constant>LOG_AUTH</constant></entry>
-           <entry>
-            сообщения по безопасности/авторизации (необходимо взамен
-            использовать <constant>LOG_AUTHPRIV</constant>
-            в системах, где эта константа предопределена)
-           </entry>
-          </row>
-          <row>
-           <entry><constant>LOG_AUTHPRIV</constant></entry>
-           <entry>сообщения по безопасности/авторизации (частное)</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_CRON</constant></entry>
-           <entry>планировщик задач (cron и at)</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_DAEMON</constant></entry>
-           <entry>другие системные службы</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_KERN</constant></entry>
-           <entry>сообщения ядра</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_LOCAL0</constant> ... <constant>LOG_LOCAL7</constant></entry>
-           <entry>зарезервированы для локального использования, недоступны в Windows</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_LPR</constant></entry>
-           <entry>подсистема печати LPR</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_MAIL</constant></entry>
-           <entry>почтовая подсистема</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_NEWS</constant></entry>
-           <entry>подсистема новостей USENET</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_SYSLOG</constant></entry>
-           <entry>внутренние сообщения syslogd</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_USER</constant></entry>
-           <entry>общие сообщения на уровне пользователя</entry>
-          </row>
-          <row>
-           <entry><constant>LOG_UUCP</constant></entry>
-           <entry>подсистема UUCP</entry>
-          </row>
-         </tbody>
-        </tgroup>
-       </table>
+       Аргумент <parameter>facility</parameter> указывает тип программы,
+       которая зарегистрировала сообщение журнала.
+       Это разрешает указать в файле конфигурации, что сообщения от разных объектов
+       будут обрабатываться по-разному.
+       Параметр принимает значение в виде константы из следующего списка:
+       <simplelist>
+        <member><constant>LOG_AUTH</constant></member>
+        <member><constant>LOG_AUTHPRIV</constant></member>
+        <member><constant>LOG_CRON</constant></member>
+        <member><constant>LOG_DAEMON</constant></member>
+        <member><constant>LOG_KERN</constant></member>
+        <member><constant>LOG_LOCAL<replaceable>[0-7]</replaceable></constant></member>
+        <member><constant>LOG_LPR</constant></member>
+        <member><constant>LOG_MAIL</constant></member>
+        <member><constant>LOG_NEWS</constant></member>
+        <member><constant>LOG_SYSLOG</constant></member>
+        <member><constant>LOG_USER</constant></member>
+        <member><constant>LOG_UUCP</constant></member>
+       </simplelist>
       </para>
       <note>
-       <para>
-        <constant>LOG_USER</constant> - единственный верный тип журналирования в операционных системах Windows
-       </para>
+       <simpara>
+        Системы Windows игнорируют этот параметр.
+       </simpara>
       </note>
      </listitem>
     </varlistentry>
@@ -186,7 +109,7 @@
      <row>
       <entry>8.2.0</entry>
       <entry>
-       Теперь функция каждый раз возвращает &true;. Раньше функция возвращала &false;, если возникла ошибка.
+       Теперь функция при кажом вызове возвращает &true;. Раньше функция возвращала &false;, если возникла ошибка.
       </entry>
      </row>
     </tbody>
