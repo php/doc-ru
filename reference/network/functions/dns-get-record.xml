@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7be2426e49ee1c9131866f20b67a48aaea0a642a Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 35ca7f1087870c6023ef7a3dd0248501741c8194 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.dns-get-record" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -33,20 +33,19 @@
      <term><parameter>hostname</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>hostname</parameter> должен быть корректным DNS-именем
+       Параметр <parameter>hostname</parameter> принимает допустимые значения DNS-имён
        наподобие <literal>www.example.com</literal>.
-       Обратное разрешение имён хостов выполняют с помощью
-       нотации <literal>in-addr.arpa</literal>, однако, для этой цели лучше
+       Обратное разрешение имён хостов выполняют
+       в нотации <literal>in-addr.arpa</literal>, но для этой цели лучше
        пользоваться функцией <function>gethostbyaddr</function>.
       </para>
       <note>
        <para>
-        В соответствии со стандартами DNS, адреса электронной почты задаются в
-        формате <literal>user.host</literal> (например,
-        <literal>hostmaster.example.com</literal> в отличие от
-        <literal>hostmaster@example.com</literal>), поэтому будьте внимательны
-        и дополнительно проверьте это значение, прежде чем использовать его в таких
-        функциях, как <function>mail</function>.
+        По DNS-стандартам адреса электронной почты указывают
+        в формате <literal>user.host</literal>, поэтому вместо <literal>hostmaster@example.com</literal>)
+        передают <literal>hostmaster.example.com</literal>. Обязательно
+        проверьте значение и если потребуется измените адрес, прежде чем передавать его
+        в функции наподобие <function>mail</function>.
        </para>
       </note>
      </listitem>
@@ -55,40 +54,18 @@
      <term><parameter>type</parameter></term>
      <listitem>
       <para>
-       По умолчанию <function>dns_get_record</function> будет искать все возможные
-       записи, соответствующие заданному имени хоста
-       <parameter>hostname</parameter>. Чтобы сузить круг поиска, можно задать
-       необязательный параметр <parameter>type</parameter>. Этот параметр может
-       принимать следующие значения:
-       <constant>DNS_A</constant>, <constant>DNS_CNAME</constant>,
-       <constant>DNS_HINFO</constant>, <constant>DNS_CAA</constant>,
-       <constant>DNS_MX</constant>, <constant>DNS_NS</constant>,
-       <constant>DNS_PTR</constant>, <constant>DNS_SOA</constant>,
-       <constant>DNS_TXT</constant>, <constant>DNS_AAAA</constant>,
-       <constant>DNS_SRV</constant>, <constant>DNS_NAPTR</constant>,
-       <constant>DNS_A6</constant>, <constant>DNS_ALL</constant>
-       или <constant>DNS_ANY</constant>.
+       По умолчанию функция <function>dns_get_record</function> будет искать любые
+       записи ресурсов, которые связаны именем хоста
+       <parameter>hostname</parameter>. Константы семейства <constant>DNS_<replaceable>*</replaceable></constant>
+       помогают сузить запрос.
       </para>
-      <note>
-       <para>
-        Из-за неоднозначного поведения libresolv на разных платформах,
-        <constant>DNS_ANY</constant> может вернуть не все записи, более медленный
-        <constant>DNS_ALL</constant> вернёт все записи надёжнее.
-       </para>
-      </note>
-      <note>
-       <para>
-        Windows: <constant>DNS_CAA</constant> не поддерживается.
-        Поддержка <constant>DNS_A6</constant> не реализована.
-       </para>
-      </note>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>authoritative_name_servers</parameter></term>
      <listitem>
       <para>
-       Передаётся по ссылке и, если передан, будет заполняться ресурсными
+       Аргумент передаётся по ссылке и при передаче заполняется ресурсными
        записями для <emphasis>удостоверяющих серверов имён</emphasis>
        (Authoritative Name Servers).
       </para>
@@ -108,10 +85,10 @@
      <term><parameter>raw</parameter></term>
      <listitem>
       <para>
-       <parameter>type</parameter> будет интерпретирован, как необработанный идентификатор типа DNS
-       (нельзя использовать константы <literal>DNS_*</literal>).
-       Возвращаемое значение будет содержать ключ <literal>data</literal>, который
-       необходимо проанализировать вручную.
+       Функция интерпретирует параметр <parameter>type</parameter> как необработанный идентификатор типа DNS;
+       в параметр нельзя передавать константы семейства <constant>DNS_<replaceable>*</replaceable></constant>.
+       Значение возврата будет содержать ключ <literal>data</literal>, который
+       потребуется проанализировать вручную.
       </para>
      </listitem>
     </varlistentry>
@@ -138,32 +115,33 @@
       <row>
        <entry>host</entry>
        <entry>
-        Запись в пространстве имён DNS, на которую ссылается оставшаяся часть
-        данных.
+        Запись в пространстве имён DNS, к которой относятся остальные связанные
+        данные.
        </entry>
       </row>
       <row>
        <entry>class</entry>
        <entry>
         Функция <function>dns_get_record</function> возвращает только записи класса
-        Internet, соответственно этот параметр всегда будет принимать значение
+        Internet, поэтому этот параметр возвращает только записи класса
         <literal>IN</literal>.
        </entry>
       </row>
       <row>
        <entry>type</entry>
        <entry>
-        Строка, которая содержит тип записи. Дополнительные атрибуты также будут
-        содержаться в результирующем массиве в зависимости от типа. По одному вложенному
-        массиву на каждый тип. Смотрите таблицу ниже.
+        Строка, которая содержит тип записи. Дополнительные атрибуты тоже будут
+        содержаться в результирующем массиве в зависимости от значения типа.
+        Смотрите таблицу ниже.
        </entry>
       </row>
       <row>
        <entry>ttl</entry>
        <entry>
-        Время жизни (<literal>"Time To Live"</literal>) оставшееся для этой записи.
-        Это <emphasis>не</emphasis> исходное ttl записи. Оно равно исходному
-        за вычетом времени прошедшего с момента отправки запроса на сервер.
+        Атрибут <literal>"Time To Live"</literal> содержит значение времени жизни, которое осталось для записи.
+        Это значение <emphasis>не</emphasis> совпадёт с исходным ttl-значением записи.
+        Значение атрибута равно исходному времени жизни за вычетом времени,
+        которое прошло с момента отправки запроса на сервер.
        </entry>
       </row>
      </tbody>
@@ -172,7 +150,7 @@
   </para>
   <para>
    <table>
-    <title>Другие ключи ассоциативного массива, соответствующие типу 'type'</title>
+    <title>Другие ключи в ассоциативных массивах, которые зависят от значения параметра <parameter>type</parameter></title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -200,15 +178,15 @@
       <row>
        <entry><literal>CNAME</literal></entry>
        <entry>
-        <literal>target</literal>: FQDN места расположения в пространстве имён
+        <literal>target</literal>: FQDN-имя места расположения в пространстве имён
         DNS, на которое указывает запись.
        </entry>
       </row>
       <row>
        <entry><literal>NS</literal></entry>
        <entry>
-        <literal>target</literal>: FQDN имя сервера, который является авторитетным
-        для этого имени хоста.
+        <literal>target</literal>: FQDN-имя авторитетного
+        для имени хоста сервера имён.
        </entry>
       </row>
       <row>
@@ -221,65 +199,65 @@
       <row>
        <entry><literal>TXT</literal></entry>
        <entry>
-        <literal>txt</literal>: Строка данных, связанных с этой записью.
+        <literal>txt</literal>: Строка данных, которые связаны с записью.
        </entry>
       </row>
       <row>
        <entry><literal>HINFO</literal></entry>
        <entry>
-        <literal>cpu</literal>: число IANA, обозначающее модель процессора
-        компьютера, на который указывает эта запись.
-        <literal>os</literal>: число IANA, обозначающее операционную систему
-        компьютера, на который указывает эта запись.
-        Смотрите дополнительно IANA <link xlink:href="&url.iana.system-names;"><literal>Operating
-        System Names</literal></link>.
+        <literal>cpu</literal>: число IANA, которое обозначает модель процессора
+        компьютера, на который указывает запись.
+        <literal>os</literal>: число IANA, которое обозначает операционную систему
+        компьютера, на который указывает запись.
+        Смотрите дополнительно реестр названий операционных систем <link xlink:href="&url.iana.system-names;"><literal>Operating
+        System Names</literal></link> администрации адресного интернет-пространства IANA.
        </entry>
       </row>
       <row>
        <entry><literal>CAA</literal></entry>
        <entry>
-        <literal>flags</literal>: Однобайтовое битовое поле; в текущий момент
-        определён только бит номер 0, называющийся 'critical'; другие биты зарезервированы
-        и должны игнорироваться.
+        <literal>flags</literal>: Однобайтовое битовое поле; пока
+        определили только бит с номером 0, который называется 'critical'; другие биты зарезервировали
+        и игнорируются.
         <literal>tag</literal>: Имя тега CAA (буквенно-числовая строка ASCII).
-        <literal>value</literal>: Значение тега CAA (бинарная строка, можно использовать
+        <literal>value</literal>: Значение тега CAA (бинарная строка, допускаются
         подформаты).
-        Более подробно читайте тут: <link xlink:href="&url.rfc;6844">RFC 6844</link>
+        Дополнительную информацию даёт стандарт <link xlink:href="&url.rfc;6844">RFC 6844</link>.
        </entry>
       </row>
       <row>
        <entry><literal>SOA</literal></entry>
        <entry>
-        <literal>mname</literal>: FQDN изначального компьютера, с которого
+        <literal>mname</literal>: FQDN-имя изначального компьютера, с которого
         получены ресурсные записи.
         <literal>rname</literal>: Адрес электронной почты администратора домена.
         <literal>serial</literal>: Порядковый номер этой ревизии запрашиваемого
         домена.
-        <literal>refresh</literal>: Интервал времени (в секундах), который
-        должны использовать вторичные сервера при обновлении удалённых копий
+        <literal>refresh</literal>: Интервал времени в секундах, который
+        должны использовать вторичные серверы при обновлении удалённых копий
         этого домена.
-        <literal>retry</literal>: Время ожидания (в секундах) после неудачного
+        <literal>retry</literal>: Время ожидания в секундах после неудачного
         обновления до следующей попытки.
-        <literal>expire</literal>: Максимальное время (в секундах), в течение
+        <literal>expire</literal>: Максимальное время в секундах, в течение
         которого вторичный DNS-сервер должен держать в памяти данные удалённых
         копий доменной зоны, прежде чем ответить отказом, когда не удаётся обновить
         данные.
-        <literal>minimum-ttl</literal>: Минимальное время (в секундах), в течение
+        <literal>minimum-ttl</literal>: Минимальное время в секундах, в течение
         которого клиент может работать с текущим DNS-разрешением, прежде чем ему
-        придётся повторно запрашивать это разрешение. Значение может быть замещено
+        придётся повторно запрашивать это разрешение. Значение иногда замещается
         отдельными ресурсными записями.
        </entry>
       </row>
       <row>
        <entry><literal>AAAA</literal></entry>
        <entry>
-        <literal>ipv6</literal>: адрес IPv6
+        <literal>ipv6</literal>: IPv6-адрес
        </entry>
       </row>
       <row>
        <entry><literal>A6</literal></entry>
        <entry>
-        <literal>masklen</literal>: Длина (в битах), которую нужно унаследовать
+        <literal>masklen</literal>: Длина в битах, которую нужно унаследовать
         от целевого адреса <parameter>chain</parameter>.
         <literal>ipv6</literal>: Адрес для этой конкретной записи, который нужно
         объединить с <parameter>chain</parameter>.
@@ -297,17 +275,17 @@
         <parameter>targets</parameter> должен выбираться случайно.
         <literal>target</literal> и <literal>port</literal>: имя хоста и номер
         порта, на котором можно найти запрошенную службу.
-        Дополнительную информацию можно получить по ссылке: <link xlink:href="&url.rfc;2782">RFC 2782</link>
+        Дополнительную информацию даёт стандарт <link xlink:href="&url.rfc;2782">RFC 2782</link>
        </entry>
       </row>
       <row>
        <entry><literal>NAPTR</literal></entry>
        <entry>
-        <literal>order</literal> и <literal>pref</literal>: Эквивалентны
-        <parameter>pri</parameter> и <parameter>weight</parameter> приведённым выше.
-        <literal>flags</literal>, <literal>services</literal>,
+        <literal>order</literal> и <literal>pref</literal>: Значения эквивалентны
+        приведённым столбцам <parameter>pri</parameter> и <parameter>weight</parameter>.
+        Столбцы <literal>flags</literal>, <literal>services</literal>,
         <literal>regex</literal> и <literal>replacement</literal>: Параметры,
-        определённые в <link xlink:href="&url.rfc;2915">RFC 2915</link>.
+        которые определили в стандарте <link xlink:href="&url.rfc;2915">RFC 2915</link>.
        </entry>
       </row>
      </tbody>
@@ -331,7 +309,7 @@
       <row>
        <entry>7.0.16, 7.1.2</entry>
        <entry>
-        Добавлена поддержка записей типа CAA.
+        Добавили поддержку записей типа CAA.
        </entry>
       </row>
      </tbody>
@@ -344,7 +322,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>dns_get_record</function></title>
+    <title>Пример получения записей функцией <function>dns_get_record</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -384,22 +362,22 @@ Array
     </screen>
    </example>
    <example>
-    <title>Использование <function>dns_get_record</function> с DNS_ANY</title>
+    <title>Пример получения записей с типом DNS_ANY функцией <function>dns_get_record</function></title>
     <para>
-     Так как довольно часто требуется определить IP-адрес почтового сервера,
-     после того как запись MX была разрешена, <function>dns_get_record</function> возвращает массив
-     <parameter>additional_records</parameter> с соответствующими записями. Массив
+     Поскольку часто требуется определить IP-адрес почтового сервера,
+     после разрешения MX-записи функция <function>dns_get_record</function> возвращает массив
+     <parameter>additional_records</parameter> с записями, которые соответствуют серверам. Массив
      <parameter>authoritative_name_servers</parameter> будет содержать список удостоверяющих
      DNS-серверов.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
-/* Отправим "ANY" запрос к php.net,
+/* Запросим запись с типом "ANY" для хоста php.net,
    создадим массивы $authns и $addtl,
-   в которые будут помещён список серверов
+   в которые функция поместит список серверов
    имён и дополнительные записи,
-   соответствующие этим серверам
+   которые соответствуют этим серверам
 */
 $result = dns_get_record("php.net", DNS_ANY, $authns, $addtl);
 echo "Результат = ";
@@ -408,6 +386,7 @@ echo "Удостоверяющие серверы = ";
 print_r($authns);
 echo "Дополнительные записи = ";
 print_r($addtl);
+
 ?>
 ]]>
     </programlisting>
