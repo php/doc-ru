@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4b4292baf79bb650763e8230dbb254ee59d5ce80 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 74ba8fee2972b6ba4f955392d760dea54e757a95 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="features.commandline" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Работа с PHP из командной строки</title>
@@ -183,12 +183,35 @@
             и <emphasis>argv</emphasis> (массив текущих аргументов).
            </para>
            <para>
-            При использовании &cli; <acronym>SAPI</acronym>
+            При работе в &cli; <acronym>SAPI</acronym>
             переменные <varname>$argc</varname> и <varname>$argv</varname>
             автоматически заполняются соответствующими значениями. Эти
             значения можно также найти в массиве <varname>$_SERVER</varname>,
             например: <varname>$_SERVER['argv']</varname>.
            </para>
+          <warning>
+           <para>
+            Переменные <varname>$argv</varname> и <varname>$_SERVER['argv']</varname>
+            не относятся к надёжному признаку запуска скрипта
+            из командной строки, поскольку при включённой директиве <link linkend="ini.register-argc-argv">register_argc_argv</link>
+            переменные могли установить в других контекстах.
+            Вместого этого проверяют значение, которое вернула
+            функция <function>php_sapi_name</function>.
+            <informalexample>
+             <programlisting role="php">
+<![CDATA[
+<?php
+
+if (php_sapi_name() === 'cli') {
+    echo "Код запускается из командной строки!\n";
+}
+
+?>
+]]>
+             </programlisting>
+            </informalexample>
+           </para>
+          </warning>
           </entry>
          </row>
          <row>
@@ -196,8 +219,8 @@
           <entry>&false;</entry>
           <entry>
            <para>
-            Несмотря на то, что эта опция &php.ini; жёстко установлена в &false;,
-            функции <link linkend="book.outcontrol">буферизации вывода</link> всё ещё
+            Хотя для этой опции файла &php.ini; жёстко установили значение &false;,
+            функции <link linkend="book.outcontrol">буферизации вывода</link> по-прежнему
             доступны.
            </para>
           </entry>
@@ -217,8 +240,8 @@
      </para>
      <note>
       <para>
-       Эти директивы не могут быть инициализированы другими значениями
-       из конфигурационного файла &php.ini; или любого другого (в случае, если он указан).
+       Эти директивы нельзя инициализировать другими значениями
+       из конфигурационного файла &php.ini; или любого другого, если другой файл указали.
        Это ограничение связано с тем, что значения применяются
        после обработки конфигурационных файлов. Тем не менее, эти значения
        могут быть изменены во время работы скрипта (хотя это не имеет особого смысла
@@ -228,8 +251,8 @@
      <note>
       <para>
        Рекомендуется установить опцию
-       <link linkend="ini.ignore-user-abort">ignore_user_abort</link> для
-       скриптов, используемых из командной строки. За подробностями
+       <link linkend="ini.ignore-user-abort">ignore_user_abort</link>
+       для скриптов, используемых из командной строки. За подробностями
        обращайтесь к функции <function>ignore_user_abort</function>.
       </para>
      </note>
@@ -237,9 +260,9 @@
 
     <listitem>
      <para>
-      Для облегчения работы в окружении оболочки было определено
-      некоторое количество констант для
-      <link linkend="features.commandline.io-streams">потоков ввода-вывода</link>.
+      Для облегчения работы в окружении оболочки определили
+      несколько констант
+      для <link linkend="features.commandline.io-streams">потоков ввода-вывода</link>.
      </para>
     </listitem>
 
@@ -250,18 +273,20 @@
      </para>
      <example>
       <title>
-       Пример, демонстрирующий разницу с <acronym>CGI</acronym> <acronym>SAPI</acronym>:
+       Пример, который показывает разницу с <acronym>CGI</acronym>-режимом <acronym>SAPI</acronym>-интерфейса:
       </title>
       <programlisting role="php">
 <![CDATA[
 <?php
+
 // Простейший тестовый скрипт под названием test.php
 echo getcwd(), "\n";
+
 ?>
 ]]>
       </programlisting>
       <para>
-       В случае, если используется <acronym>CGI</acronym>-версия, результат работы будет следующим:
+       При работе в <acronym>CGI</acronym>-режиме результат работы будет таким:
       </para>
       <screen>
 <![CDATA[
@@ -277,7 +302,7 @@ $ php -q another_directory/test.php
        текущую директорию на директорию исполняемого скрипта.
       </para>
       <para>
-       Использование &cli.sapi; даёт другой результат:
+       Работа через &cli.sapi; даёт другой результат:
       </para>
       <screen>
 <![CDATA[
@@ -294,10 +319,9 @@ $ php -f another_directory/test.php
      </example>
      <note>
       <para>
-       <acronym>CGI</acronym> <acronym>SAPI</acronym> позволяет
-       получить аналогичное &cli.sapi; поведение в случае
-       использования ключа <option>-C</option>
-       при запуске из командной строки.
+       При запуске из командной строки с ключом <option>-C</option>
+       <acronym>CGI</acronym>-режим <acronym>SAPI</acronym>-интерфейса разрешает
+       получить поведение, которое аналогично поведению при работе через &cli.sapi;.
       </para>
      </note>
     </listitem>
@@ -312,8 +336,8 @@ $ php -f another_directory/test.php
   <titleabbrev>Опции</titleabbrev>
 
   <para>
-   Список опций командной строки, предоставляемых PHP,
-   могут быть получены в любой момент, запустив PHP с ключом <option>-h</option>:
+   Список опций командной строки, которые предоставляет PHP,
+   доступны для получения в любой момент при запуске PHP с ключом <option>-h</option>:
    <screen>
 <![CDATA[
 Usage: php [options] [-f] <file> [--] [args...]
@@ -362,7 +386,7 @@ Usage: php [options] [-f] <file> [--] [args...]
 
   <para>
    <table>
-    <title>Опции, доступные из командной строки</title>
+    <title>Опции, которые доступны из командной строки</title>
     <tgroup cols="2">
      <thead>
       <row>
