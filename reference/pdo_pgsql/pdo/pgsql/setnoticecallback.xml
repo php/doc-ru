@@ -4,7 +4,7 @@
 <refentry xml:id="pdo-pgsql.setnoticecallback" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Pdo\Pgsql::setNoticeCallback</refname>
-  <refpurpose>Устанавливает callback-функцию для обработки уведомлений и предупреждений</refpurpose>
+  <refpurpose>Устанавливает callback-функцию для обработки уведомлений и предупреждений бэкенда</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,11 +14,11 @@
    <methodparam><type class="union"><type>callable</type><type>null</type></type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Устанавливает callback-функцию для обработки уведомлений и предупреждений.
-   Сюда входят сообщения, выдаваемые самим PostgreSQL, а также сообщения,
-   выдаваемые пользовательскими SQL-функциями с помощью <literal>RAISE</literal>.
+   Метод устанавливает callback-функцию для обработки сообщений с уведомлениями и предупреждениями, которые генерирует бэкенд.
+   К этим сообщениям относятся уведомления и предупреждения, которые выдаёт сама СУБД PostgreSQL,
+   и сообщения, которые выдают пользовательские SQL-функции через команду <literal>RAISE</literal>.
    Обратите внимание, что фактическое получение сообщений зависит
-   от настройки <literal>client_min_messages</literal>.
+   от параметра <literal>client_min_messages</literal> в настройках бэкенда.
   </simpara>
  </refsect1>
 
@@ -29,10 +29,10 @@
     <term><parameter>callback</parameter></term>
     <listitem>
      <simpara>
-      Если указано значение &null;, обработчик сбрасывается в состояние по умолчанию.
+      При передаче значения &null; обработчик сбрасывается в состояние по умолчанию.
      </simpara>
      <para>
-      В противном случае обработчик представляет собой callback-функцию со следующей сигнатурой:
+      В остальных случаях обработчиком будет callback-функция со следующей сигнатурой:
       <methodsynopsis>
        <type>void</type><methodname><replaceable>handler</replaceable></methodname>
        <methodparam><type>string</type><parameter>message</parameter></methodparam>
@@ -42,7 +42,7 @@
         <term><parameter>message</parameter></term>
         <listitem>
          <simpara>
-          Сообщение, сгенерированное бэкендом.
+          Сообщение, которое сгенерировал бэкенд.
          </simpara>
         </listitem>
        </varlistentry>
@@ -63,10 +63,14 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example xml:id="pdo-pgsql.setnoticecallback.example.basic">
-   <title>Пример использования метода <methodname>Pdo\Pgsql::setNoticeCallback</methodname></title>
+   <title>
+    Пример установки функции обратного вызова для обработки уведомлений
+    и предупреждений бэкенда методом <methodname>Pdo\Pgsql::setNoticeCallback</methodname>
+   </title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $pdo = new Pdo\Pgsql('pgsql:dbname=test host=localhost', $user, $pass);
 
 $pdo->exec('CREATE TABLE parent(id int primary key)');
@@ -77,6 +81,7 @@ $pdo->setNoticeCallback(function ($message) {
 });
 
 $pdo->exec('TRUNCATE parent CASCADE');
+
 ?>
 ]]>
    </programlisting>
