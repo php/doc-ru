@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 960d50e1dafc7e385fdf1d2d5d2152fc564fb905 Maintainer: aur Status: ready -->
+<!-- EN-Revision: 256782d03224fa268ebf0111ce5f6bbf27897ab3 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="xsltprocessor.transformtodoc" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -14,8 +14,8 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>returnClass</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Преобразовывает исходный узел в документ (например, в объект <classname>DOMDocument</classname>),
-   применяя таблицу стилей, заданную методом
+   Метод преобразовывает исходный узел в документ, например в объект <classname>DOMDocument</classname>,
+   применяя таблицу стилей, которую задали методом
    <function>XSLTProcessor::importStylesheet</function>.
   </para>
  </refsect1>
@@ -27,9 +27,9 @@
      <term><parameter>document</parameter></term>
      <listitem>
       <para>
-       Объект класса <classname>DOMDocument</classname>,
-       объект класса <classname>SimpleXMLElement</classname> или libxml-совместимый объект,
-       который будет преобразован.
+       Объект, который требуется преобразовать. Параметр принимает объект
+       класса <classname>Dom\Document</classname>, <classname>DOMDocument</classname>,
+       <classname>SimpleXMLElement</classname> или объект, который совместим с библиотекой libxml.
       </para>
      </listitem>
     </varlistentry>
@@ -37,10 +37,10 @@
      <term><parameter>returnClass</parameter></term>
      <listitem>
       <para>
-       Через этот необязательный параметр можно установить класс объекта,
-       который вернёт <methodname>XSLTProcessor::transformToDoc</methodname>.
-       Этот класс должен либо расширять, либо быть объектом того же класса,
-       который передан в параметр <parameter>document</parameter>.
+       Через этот необязательный параметр устанавливают класс объекта,
+       который вернёт метод <methodname>XSLTProcessor::transformToDoc</methodname>.
+       В параметр передают название класса, который либо расширяет, либо принадлежит тому же классу,
+       который передали в параметр <parameter>document</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -50,28 +50,51 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результирующий документ или &false; в случае возникновения ошибки.
+   Метод возвращает результирующий документ или &false;, если возникла ошибка.
   </para>
  </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Добавили поддержку объектов класса <classname>Dom\Document</classname>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Преобразование в DOMDocument</title>
+    <title>Пример преобразования узла в объект класса <classname>DOMDocument</classname></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Загрузка исходного XML
-$xml = new DOMDocument;
+// Загрузка исходного XML-документа
+$xml = new DOMDocument();
 $xml->load('collection.xml');
 
-$xsl = new DOMDocument;
+$xsl = new DOMDocument();
 $xsl->load('collection.xsl');
 
 // Настройка преобразования
-$proc = new XSLTProcessor;
-$proc->importStyleSheet($xsl); // добавление стилей xsl
+$proc = new XSLTProcessor();
+$proc->importStyleSheet($xsl); // Добавление XSL-стилей
 
 echo trim($proc->transformToDoc($xml)->firstChild->wholeText);
 
@@ -81,12 +104,38 @@ echo trim($proc->transformToDoc($xml)->firstChild->wholeText);
     &example.outputs;
     <screen>
 <![CDATA[
-Hey! Welcome to Nicolas Eliaszewicz's sweet CD collection!
+Привет! Добро пожаловать в замечательную коллекцию компакт-дисков Николаса Элиашевича!
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Пример преобразования узла в объект класса <classname>Dom\Document</classname></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$xml = Dom\XMLDocument::createFromFile('collection.xml');
+$xsl = Dom\XMLDocument::createFromFile('collection.xsl');
+
+// Настройка преобразования
+$proc = new XSLTProcessor();
+$proc->importStyleSheet($xsl); // Прикрепление XSL-правил
+
+echo trim($proc->transformToDoc($xml)->firstChild->wholeText);
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Привет! Добро пожаловать в замечательную коллекцию компакт-дисков Николаса Элиашевича!
 ]]>
     </screen>
    </example>
   </para>
  </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
