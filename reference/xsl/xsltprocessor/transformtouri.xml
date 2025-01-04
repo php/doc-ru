@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5d95b4bb24353111b02874a24af2dc39e3c8a9de Maintainer: aur Status: ready -->
+<!-- EN-Revision: 256782d03224fa268ebf0111ce5f6bbf27897ab3 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="xsltprocessor.transformtouri" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>XSLTProcessor::transformToUri</refname>
-  <refpurpose>Преобразовывает в URI</refpurpose>
+  <refpurpose>Преобразовывает в URI-идентификатор</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,7 +14,7 @@
    <methodparam><type>string</type><parameter>uri</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Преобразовывает исходный узел в URI, применяя таблицу стилей, которая установлена методом
+   Метод преобразовывает исходный узел в URI-идентификатор, применяя таблицу стилей, которую установили методом
    <function>XSLTProcessor::importStylesheet</function>.
   </para>
  </refsect1>
@@ -26,7 +26,9 @@
      <term><parameter>document</parameter></term>
      <listitem>
       <para>
-       Преобразуемый объект <classname>DOMDocument</classname> или <classname>SimpleXMLElement</classname>.
+       Объект, который требуется преобразовать. Параметр принимает объект
+       класса <classname>Dom\Document</classname>, <classname>DOMDocument</classname>,
+       <classname>SimpleXMLElement</classname> или объект, который совместим с библиотекой libxml.
       </para>
      </listitem>
     </varlistentry>
@@ -34,38 +36,82 @@
      <term><parameter>uri</parameter></term>
      <listitem>
       <para>
-        Целевой URI для преобразования.
+        Целевой URI-идентификатор для преобразования.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
+
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает количество записанных байтов, либо &false; в случае возникновения ошибки.
+   Метод возвращает количество байтов, которое записал, или &false;, если возникла ошибка.
   </para>
  </refsect1>
+
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Добавили поддержку объектов класса <classname>Dom\Document</classname>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Преобразование в HTML файл</title>
+    <title>Пример преобразования узла в HTML-файл</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Загрузка источника XML
-$xml = new DOMDocument;
+// Загрузка источника XML-данных
+$xml = new DOMDocument();
 $xml->load('collection.xml');
 
-$xsl = new DOMDocument;
+$xsl = new DOMDocument();
 $xsl->load('collection.xsl');
 
 // Настройка преобразования
 $proc = new XSLTProcessor;
-$proc->importStyleSheet($xsl); // добавление стилей xsl
+$proc->importStyleSheet($xsl); // Добавление XSL-стилей
+
+$proc->transformToURI($xml, 'file:///tmp/out.html');
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>Пример преобразования узла в HTML-файл из объекта класса <classname>Dom\Document</classname></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$xml = Dom\XMLDocument::createFromFile('collection.xml');
+$xsl = Dom\XMLDocument::createFromFile('collection.xsl');
+
+// Настройка преобразования
+$proc = new XSLTProcessor();
+$proc->importStyleSheet($xsl); // Прикрепление XSL-правил
 
 $proc->transformToURI($xml, 'file:///tmp/out.html');
 
@@ -75,6 +121,7 @@ $proc->transformToURI($xml, 'file:///tmp/out.html');
    </example>
   </para>
  </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
