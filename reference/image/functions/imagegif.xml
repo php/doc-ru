@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 213fbd9440a224f9c1da4942c85124ce0c120c52 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 9960a09a5705102bf4dd0ce63e03d9ec716d0015 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.imagegif" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -14,15 +14,17 @@
    <methodparam choice="opt"><type class="union"><type>resource</type><type>string</type><type>null</type></type><parameter>file</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>imagegif</function> создаёт <acronym>GIF</acronym> файл <parameter>file</parameter> из изображения
-   <parameter>image</parameter>. Аргумент <parameter>image</parameter> возвращается
-   функциями <function>imagecreate</function> или
+   Функция <function>imagegif</function> создаёт изображение в формате <acronym>GIF</acronym>
+   в файле или ресурсе потока, который указали в аргументе <parameter>file</parameter>.
+   Функция берёт за основу изображение <parameter>image</parameter>.
+   Аргумент <parameter>image</parameter> — изображение, которое возвращает
+   функция <function>imagecreate</function> или функции семейства
    <literal>imagecreatefrom*</literal>.
   </para>
   <para>
-   Файл будет иметь формат <acronym>GIF87a</acronym>, если изображение не было
-   сделано прозрачным функцией <function>imagecolortransparent</function>.
-   В этом случае форматом файла будет <acronym>GIF89a</acronym>.
+   Функция создаст файл в формате <acronym>GIF87a</acronym>, если только изображение
+   не сделали прозрачным функцией <function>imagecolortransparent</function>,
+   тогда функция создаст изображение в формате <acronym>GIF89a</acronym>.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -68,47 +70,46 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Вывод изображения, используя <function>imagegif</function></title>
+    <title>Пример вывода изображения функцией <function>imagegif</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 // Создание изображения
 $im = imagecreatetruecolor(100, 100);
 
 // Создание белого фона
 imagefilledrectangle($im, 0, 0, 99, 99, 0xFFFFFF);
 
-// Рисование текста на изображении
+// Отрисовка текста на изображении
 imagestring($im, 3, 40, 20, 'GD библиотека', 0xFFBA00);
 
-// Вывод изображения в броузер
+// Вывод изображения в браузер
 header('Content-Type: image/gif');
 
 imagegif($im);
-imagedestroy($im);
+
 ?>
 ]]>
     </programlisting>
    </example>
    <example>
     <title>
-     Преобразование PNG в GIF, используя <function>imagegif</function>
+     Пример преобразования PNG-изображения в формат GIF функцией <function>imagegif</function>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Загрузка PNG
+// Загрузка PNG-файла
 $png = imagecreatefrompng('./php.png');
 
-// Сохранение как GIF
+// Сохранение файла в формате GIF
 imagegif($png, './php.gif');
 
-// Освобождение памяти
-imagedestroy($png);
+// Готово
+echo 'Преобразование PNG-файла в GIF-файл завершилось успешно!';
 
-// готово
-echo 'Преобразование PNG в GIF успешно завершено!';
 ?>
 ]]>
     </programlisting>
@@ -119,62 +120,45 @@ echo 'Преобразование PNG в GIF успешно завершено!
   &reftitle.notes;
   <note>
    <para>
-    Следующий пример кода позволит вам писать PHP приложения, которые будут проще
-    портироваться на разные системы. В нем используется автоопределение типа
-    GD поддержки доступной в данный момент. Замените строки:
+    Следующий фрагмент кода помогает писать переносимые PHP-приложения
+    и автоматически определяет доступный тип GD-изображения. Замените строки
     <literal>header ("Content-Type: image/gif"); imagegif ($im);</literal>
-    на более переносимые:
+    на более гибкую последовательность:
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
+
 // Создание нового изображения
 $im = imagecreatetruecolor(100, 100);
 
 // Какие-либо операции с изображением
 
 // Обработка вывода
-if(function_exists('imagegif'))
-{
-    // для GIF
+if (function_exists('imagegif')) {
+    // Для GIF-файлов
     header('Content-Type: image/gif');
 
     imagegif($im);
-}
-elseif(function_exists('imagejpeg'))
-{
-    // для JPEG
+} elseif (function_exists('imagejpeg')) {
+    // Для JPEG-файлов
     header('Content-Type: image/jpeg');
 
     imagejpeg($im, NULL, 100);
-}
-elseif(function_exists('imagepng'))
-{
-    // для PNG
+} elseif (function_exists('imagepng')) {
+    // Для PNG-файлов
     header('Content-Type: image/png');
 
     imagepng($im);
-}
-elseif(function_exists('imagewbmp'))
-{
-    // для WBMP
+} elseif (function_exists('imagewbmp')) {
+    // Для WBMP-файлов
     header('Content-Type: image/vnd.wap.wbmp');
 
     imagewbmp($im);
-}
-else
-{
-    imagedestroy($im);
-
-    die('В этом PHP сервере нет поддержки изображений');
+} else {
+    die('На этом PHP-сервере нет поддержки изображений');
 }
 
-// Если не поддерживается ни один из форматов
-// освободим память
-if($im)
-{
-    imagedestroy($im);
-}
 ?>
 ]]>
      </programlisting>
@@ -183,22 +167,19 @@ if($im)
   </note>
   <note>
    <para>
-    Вы можете использовать функцию
-    <function>imagetypes</function>
-    для проверки, какие форматы поддерживаются:
+    Проверить поддержку формата помогает функция <function>imagetypes</function>:
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
-if(imagetypes() & IMG_GIF)
-{
+
+if (imagetypes() & IMG_GIF) {
     header('Content-Type: image/gif');
     imagegif($im);
+} elseif (imagetypes() & IMG_JPG) {
+    /* ... и т. д. */
 }
-elseif(imagetypes() & IMG_JPG)
-{
-    /* ... и т.д. */
-}
+
 ?>
 ]]>
      </programlisting>
