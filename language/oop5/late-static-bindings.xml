@@ -1,69 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9ee9eccf455188ab6eb352194eb6f9eb99e15606 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 009f215fc983eeded6161676bcffdd8cf3b6b080 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.late-static-bindings" xmlns="http://docbook.org/ns/docbook">
  <title>Позднее статическое связывание</title>
  <para>
-  PHP реализует функцию, называемую позднее статическое
-  связывание, которая может быть использована для того, чтобы получить ссылку на
-  вызываемый класс в контексте статического наследования.
+  Позднее статическое связывание в PHP — механизм, который разрешает ссылаться
+  на класс вызова в контексте статического наследования.
  </para>
 
  <para>
-  Если говорить более точно, позднее статическое связывание сохраняет имя класса
-  указанного в последнем "неперенаправленном вызове". В случае статических
-  вызовов это явно указанный класс (обычно слева от оператора
-  <link linkend="language.oop5.paamayim-nekudotayim"><literal>::</literal></link>);
-  в случае не статических вызовов это класс объекта. "Перенаправленный вызов" - это
-  статический вызов, начинающийся с <literal>self::</literal>, <literal>parent::</literal>,
-  <literal>static::</literal>, или, если двигаться вверх по иерархии классов,
-  <function>forward_static_call</function>.
-  <!-- технически, static:: может быть не перенаправленным, но это не имеет значения -->
+  Точнее, позднее статическое связывание сохраняет класс,
+  название которого указали в последнем «неперенаправленном вызове». При вызове статических
+  методов это тот класс, название которого явно указали слева от оператора
+  <link linkend="language.oop5.paamayim-nekudotayim"><literal>::</literal></link>;
+  при нестатических вызовах это класс объекта. «Перенаправленным вызовом» называется
+  статический вызов через конструкции <literal>self::</literal>, <literal>parent::</literal>,
+  <literal>static::</literal> или через функцию <function>forward_static_call</function>
+  при движении вверх по иерархии классов.
+  <!-- технически вызов через конструкцию static:: иногда не относится к перенаправленным, но это не относится к делу -->
 
-  Функция <function>get_called_class</function> может быть использована для
-  получения строки с именем вызванного класса, а <literal>static::</literal>
-  представляет её область действия.
+  Строку с названием класса вызова получают функцией <function>get_called_class</function>,
+  а конструкция <literal>static::</literal> вводит область действия вызываемого класса.
  </para>
 
  <para>
-  Само название "позднее статическое связывание" отражает в себе внутреннюю
-  реализацию этой особенности. "Позднее связывание" отражает тот факт, что
-  обращения через <literal>static::</literal> не будут вычисляться по отношению
-  к классу, в котором вызываемый метод определён, а будут вычисляться на основе
-  информации в ходе исполнения.
+  Природа названия «позднее статическое связывание» возникает из внутренней
+  логики работы языка. Связывание называется «поздним», потому что конструкция <literal>static::</literal>
+  разрешается не в тот класс, в котором определили метод,
+  а вычисляется на основе информации в ходе исполнения программы.
 
-  Также эта особенность была названа "статическое связывание" потому, что она
-  может быть использована (но не обязательно) в статических методах.
+  Связывание также назвали «статическим», поскольку
+  этот механизм в числе прочего умеет вызывать статические методы.
  </para>
 
  <sect2 xml:id="language.oop5.late-static-bindings.self">
-  <title>Ограничения <literal>self::</literal></title>
+  <title>Ограничения конструкции <literal>self::</literal></title>
   <para>
-   Статические ссылки на текущий класс, такие как <literal>self::</literal>
-   или <literal>__CLASS__</literal>, вычисляются используя класс,
-   к которому эта функция принадлежит, как и в том месте, где она была определена:
+   Статические ссылки на текущий класс наподобие конструкции <literal>self::</literal>
+   или константы <literal>__CLASS__</literal> разрешаются в класс,
+   которому принадлежит функция, — в котором функцию определили:
   </para>
   <example>
-   <title>Использование <literal>self::</literal></title>
+   <title>Пример обращения к члену класса через конструкцию <literal>self::</literal></title>
    <programlisting role="php">
 <![CDATA[
 <?php
-class A {
-    public static function who() {
+
+class A
+{
+    public static function who()
+    {
         echo __CLASS__;
     }
-    public static function test() {
+
+    public static function test()
+    {
         self::who();
     }
 }
 
-class B extends A {
-    public static function who() {
+class B extends A
+{
+    public static function who()
+    {
         echo __CLASS__;
     }
 }
 
 B::test();
+
 ?>
 ]]>
     </programlisting>
@@ -78,38 +83,46 @@ A
   </sect2>
 
   <sect2 xml:id="language.oop5.late-static-bindings.usage">
-   <title>Использование позднего статического связывания</title>
+   <title>Пример позднего статического связывания</title>
 
    <para>
-    Позднее статическое связывание пытается устранить это ограничение, предоставляя
-    ключевое слово, которое ссылается на класс, вызванный непосредственно в
-    ходе выполнения. Попросту говоря, ключевое слово, которое позволит вам
-    ссылаться на <literal>B</literal> из <literal>test()</literal> в
-    предыдущем примере. Было решено не вводить новое ключевое слово, а
-    использовать <literal>static</literal>, которое уже зарезервировано.
+    Позднее статическое связывание стремится устранить это ограничение и вводит
+    ключевое слово для ссылки на класс, который изначально вызвали
+    в ходе исполнения программы. По сути, это ключевое слово, которое в предыдущем примере
+    разрешило бы ссылаться на класс <literal>B</literal> из метода <literal>test()</literal>.
+    Вместо введения нового ключевого слова для позднего статического связывания разработчики языка выбрали
+    ключевое слово <literal>static</literal>, которое зарезервировали прежде.
    </para>
 
    <example>
-    <title>Простое использование <literal>static::</literal></title>
+    <title>Пример позднего статического связывания через конструкцию <literal>static::</literal></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class A {
-    public static function who() {
+
+class A
+{
+    public static function who()
+    {
         echo __CLASS__;
     }
-    public static function test() {
-        static::who(); // Здесь действует позднее статическое связывание
+
+    public static function test()
+    {
+        static::who(); // В этом месте появляется позднее статическое связывание
     }
 }
 
-class B extends A {
-    public static function who() {
+class B extends A
+{
+    public static function who()
+    {
         echo __CLASS__;
     }
 }
 
 B::test();
+
 ?>
 ]]>
     </programlisting>
@@ -122,99 +135,122 @@ B
    </example>
    <note>
     <para>
-     В нестатическом контексте вызванным классом будет тот, к которому
-     относится экземпляр объекта. Поскольку <literal>$this-></literal>
-     будет пытаться вызывать закрытые методы из той же области действия,
-     использование <literal>static::</literal> может дать разные результаты.
-     Другое отличие в том, что <literal>static::</literal> может ссылаться
-     только на статические поля класса.
+     В нестатическом контексте классом вызова будет класс
+     экземпляра объекта. Обращение через конструкцию <literal>$this-></literal>
+     попытается вызывать закрытые методы из той же области действия,
+     тогда как результат конструкции <literal>static::</literal> зависит от контекста вызова.
+     Другое отличие состоит в том, что обращение через конструкцию <literal>static::</literal>
+     умеет ссылаться только на статические элементы класса.
     </para>
    </note>
    <example>
-    <title>Использование <literal>static::</literal> в нестатическом контексте</title>
+    <title>Пример ссылки через конструкцию <literal>static::</literal> в нестатическом контексте</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class A {
-    private function foo() {
-        echo "success!\n";
+
+class A
+{
+    private function foo()
+    {
+        echo "Success!\n";
     }
-    public function test() {
+
+    public function test()
+    {
         $this->foo();
         static::foo();
     }
 }
 
-class B extends A {
-   /* foo() будет скопирован в В, следовательно его область действия по прежнему А,
-      и вызов будет успешным */
+class B extends A
+{
+    /* Метод foo() скопируется в класс В из класса A, поэтому областью действия метода
+      по-прежнему будет класс А, и вызов будет успешным */
 }
 
-class C extends A {
-    private function foo() {
-        /* исходный метод заменён; область действия нового метода - С */
+class C extends A
+{
+    private function foo()
+    {
+        /* Этот метод заменил собой исходный; область действия нового метода — класс С */
     }
 }
 
 $b = new B();
 $b->test();
+
 $c = new C();
-$c->test();   // потерпит ошибку
+try {
+    $c->test();
+} catch (Error $e) {
+    echo $e->getMessage();
+}
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-success!
-success!
-success!
-
-
-Fatal error:  Call to private method C::foo() from context 'A' in /tmp/test.php on line 9
+Success!
+Success!
+Success!
+Call to private method C::foo() from scope A
 ]]>
     </screen>
    </example>
    <note>
     <para>
-     Разрешающая область позднего статического связывания будет
-     фиксирована вычисляющем её статическим вызовом. С другой стороны,
-     статические вызовы с использованием таких директив как <literal>parent::</literal>
-     или <literal>self::</literal> перенаправляют информацию вызова.
+     Разрешение поздних статических связок останавливается на статическом вызове по полному названию класса,
+     без попытки перенаправить вызов в класс, в котором сделали последний неперенаправленный вызов. Между тем,
+     статические вызовы через конструкции <literal>parent::</literal>
+     или <literal>self::</literal> перенаправляют информацию о вызове.
     </para>
     <example>
-     <title>Перенаправленные и неперенаправленные вызовы</title>
+     <title>Пример перенаправленных и неперенаправленных вызовов</title>
      <programlisting role="php">
 <![CDATA[
 <?php
-class A {
-    public static function foo() {
+
+class A
+{
+    public static function foo()
+    {
         static::who();
     }
 
-    public static function who() {
-        echo __CLASS__."\n";
+    public static function who()
+    {
+        echo __CLASS__ . "\n";
     }
 }
 
-class B extends A {
-    public static function test() {
+class B extends A
+{
+    public static function test()
+    {
         A::foo();
         parent::foo();
         self::foo();
     }
 
-    public static function who() {
-        echo __CLASS__."\n";
+    public static function who()
+    {
+        echo __CLASS__ . "\n";
     }
 }
-class C extends B {
-    public static function who() {
-        echo __CLASS__."\n";
+
+class C extends B
+{
+    public static function who()
+    {
+        echo __CLASS__ . "\n";
     }
 }
 
 C::test();
+
 ?>
 ]]>
      </programlisting>
