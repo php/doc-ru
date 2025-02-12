@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ada1d79de35239334b68d0120b011530e31244ff Maintainer: tmn Status: ready -->
+<!-- EN-Revision: b1116af46680f7baf89c46610430a3b63ce9a1f0 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <section xml:id="info.configuration" xmlns="http://docbook.org/ns/docbook">
  &reftitle.runtime;
@@ -21,7 +21,9 @@
       <entry><link linkend="ini.assert.active">assert.active</link></entry>
       <entry>"1"</entry>
       <entry><constant>INI_ALL</constant></entry>
-      <entry>Устарело с PHP 8.3.0</entry>
+      <entry>
+       Устарело с PHP 8.3.0
+      </entry>
      </row>
      <row>
       <entry><link linkend="ini.assert.bail">assert.bail</link></entry>
@@ -91,6 +93,24 @@
       <entry>"1"</entry>
       <entry><constant>INI_ALL</constant></entry>
       <entry></entry>
+     </row>
+     <row>
+      <entry><link linkend="ini.zend.max-allowed-stack-size">zend.max_allowed_stack_size</link></entry>
+      <entry>"0"</entry>
+      <entry><constant>INI_SYSTEM</constant></entry>
+      <entry>Доступна с PHP 8.3.0.</entry>
+     </row>
+     <row>
+      <entry><link linkend="ini.zend.reserved-stack-size">zend.reserved_stack_size</link></entry>
+      <entry>"0"</entry>
+      <entry><constant>INI_SYSTEM</constant></entry>
+      <entry>Доступна с PHP 8.3.0.</entry>
+     </row>
+     <row>
+      <entry><link linkend="ini.fiber.stack-size">fiber.stack_size</link></entry>
+      <entry></entry>
+      <entry><constant>INI_ALL</constant></entry>
+      <entry>Доступна с PHP 8.1.0.</entry>
      </row>
     </tbody>
    </tgroup>
@@ -293,6 +313,105 @@
     <listitem>
      <para>
       Включает или отключает сборщик циклических ссылок.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry xml:id="ini.zend.max-allowed-stack-size">
+    <term>
+     <parameter>zend.max_allowed_stack_size</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Максимальное пространство стека, которое операционная система позволяет занимать программе.
+      Попытка занять больше места, чем позволяет операционная система, обычно приводит
+      к жёсткому аварийному завершению работы, при этом отладочная информация будет недоступна.
+      Чтобы облегчить отладку, движок выбрасывает ошибку <classname>Error</classname> до того,
+      как это произойдёт (когда программа использует более
+      <link linkend="ini.zend.max-allowed-stack-size">zend.max_allowed_stack_size</link>-<link linkend="ini.zend.reserved-stack-size">zend.reserved_stack_size</link>
+      байт стека).
+     </para>
+     <para>
+      Рекурсия в пользовательском коде не занимает место в стеке.
+      Однако внутренние функции и магические методы потребляют его.
+      Очень глубокая рекурсия с участием этих функций может привести к тому,
+      что программа исчерпает всё доступное место в стеке.
+     </para>
+     <para>
+      Для этого параметра возможны следующие значения:
+      <simplelist>
+       <member>
+        <literal>0</literal>:
+        Автоматическое определение максимального пространства стека,
+        которое операционная система позволяет занимать программе.
+        Значение используется по умолчанию.
+        Если определение невозможно, используется известное системное значение по умолчанию.
+       </member>
+       <member>
+        <literal>-1</literal>: Отключает проверку размера стека в движке.
+       </member>
+       <member>
+        Положительное целое число: Фиксированный размер в байтах.
+        Слишком большое значение приведёт к тому же,
+        что и отключение проверки размера стека.
+       </member>
+      </simplelist>
+     </para>
+     <para>
+      Поскольку размер стека <link linkend="language.fibers">файберов</link> определяется
+      значением <link linkend="ini.fiber.stack-size">fiber.stack_size</link>,
+      значение этого параметра используется вместо <link linkend="ini.zend.max-allowed-stack-size">zend.max_allowed_stack_size</link>
+      при проверке использования стека во время выполнения файбера.
+     </para>
+     <note>
+      <para>
+       Это не связано с переполнениями стека <emphasis>буфера</emphasis>
+       и не является функцией безопасности.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry xml:id="ini.zend.reserved-stack-size">
+    <term>
+     <parameter>zend.reserved_stack_size</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Зарезервированный размер стека, в байтах.
+      Значение вычитается из
+      <link linkend="ini.zend.max-allowed-stack-size">максимально допустимого размера стека</link>,
+      в качестве буфера, при проверке размера стека.
+     </para>
+     <para>
+      Для этого параметра возможны следующие значения:
+      <simplelist>
+       <member>
+        <literal>0</literal>: Автоматическое определение разумного размера.
+       </member>
+       <member>
+        Положительное целое число: Фиксированный размер в байтах.
+       </member>
+      </simplelist>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry xml:id="ini.fiber.stack-size">
+    <term>
+     <parameter>fiber.stack_size</parameter>
+     <type>int</type>
+    </term>
+    <listitem>
+     <para>
+      Размер стека в байтах, выделенный для каждого
+      <link linkend="language.fibers">файбера</link>.
+     </para>
+     <para>
+      Значение по умолчанию - 1 Мбайт на системах с размером указателя
+      менее 8 байт или 2 Мбайт в противном случае.
      </para>
     </listitem>
    </varlistentry>
