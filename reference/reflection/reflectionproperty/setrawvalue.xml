@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e0e74c05cb704b614ff6925552884fbffb26bb53 Maintainer: malferov Status: ready -->
+<!-- EN-Revision: 49ef347a18b037370b6bd8e690096270f1780153 Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionproperty.setrawvalue" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -83,16 +83,34 @@ $example = new Example();
 $rClass = new \ReflectionClass(Example::class);
 $rProp = $rClass->getProperty('age');
 
-// Такие доступ к свойству и вызов метода пройдут через хук set и выбросят исключение
-$example->age = -2;
-$rProp->setValue($example, -2);
+// Следующие попытки установить значение свойству пройдут через хук set и выбросят исключение
+try {
+    $example->age = -2;
+} catch (InvalidArgumentException) {
+    echo "При установке свойству значения -2 хук выбросил исключение InvalidArgumentException\n";
+}
+
+try {
+    $rProp->setValue($example, -2);
+} catch (InvalidArgumentException) {
+    echo "При установке значения -2 методом ReflectionProperty::setValue() хук выбросил исключение InvalidArgumentException\n";
+}
 
 // Но такой вызов установит свойству $age значение -2 без ошибки
 $rProp->setRawValue($example, -2);
+echo $example->age;
 
 ?>
 ]]>
    </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+При установке свойству значения -2 хук выбросил исключение InvalidArgumentException
+При установке значения -2 методом ReflectionProperty::setValue() хук выбросил исключение InvalidArgumentException
+-2
+]]>
+   </screen>
   </example>
  </refsect1>
 
