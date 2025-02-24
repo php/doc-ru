@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 21e1338e9721534c00085ff3cff25e2dd2e84dc9 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 01904e809eaf0aa60e7ce0524400ddd5681c9541 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="domxpath.query" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>DOMXPath::query</refname>
   <refpurpose>
-   Оценивает XPath-выражение
+   Вычисляет XPath-выражение
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -28,7 +28,7 @@
      <term><parameter>expression</parameter></term>
      <listitem>
       <para>
-       Выражение XPath, которое требуется выполнить.
+       Выражение в формате XPath, которое требуется выполнить.
       </para>
      </listitem>
     </varlistentry>
@@ -36,7 +36,7 @@
      <term><parameter>contextNode</parameter></term>
      <listitem>
       <para>
-       Дополнительный параметр <parameter>contextNode</parameter>
+       Необязательный параметр <parameter>contextNode</parameter>
        указывают для выполнения относительных XPath-запросов.
        По умолчанию запросы выполняются относительно корневого элемента.
       </para>
@@ -49,24 +49,54 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Метод возвращает объект <classname>DOMNodeList</classname>, который содержит узлы,
+   Метод возвращает объект <classname>DOMNodeList</classname> с узлами,
    которые соответствуют XPath-выражению <parameter>expression</parameter>.
    Выражение, которое не возвращает узлы, вернёт пустой объект
    <classname>DOMNodeList</classname>.
   </para>
   <para>
-   Метод <methodname>DOMXPath::query</methodname> вернёт &false;,
-   если выражение <parameter>expression</parameter> построили неправильно
-   или аргумент <parameter>contextNode</parameter> содержит неверное значение.
+   Метод <methodname>DOMXPath::query</methodname> возвращает значение &false;,
+   если выражение <parameter>expression</parameter> сформировали неправильно
+   или в параметр <parameter>contextNode</parameter> передали недопустимый узел.
   </para>
  </refsect1>
+
+ <refsect1 role="errors" xml:id="domxpath.query..errors">
+  &reftitle.errors;
+  <simpara>
+   При работе с выражением, в котором вызывают PHP-функции обратного вызова,
+   возникают следующие ошибки:
+  </simpara>
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Метод выбрасывает ошибку <exceptionname>Error</exceptionname>,
+     если в выражении вызвали PHP-функцию обратного вызова, но ни одной callback-функции не регистрировали,
+     или если callback-функцию с таким названием не зарегистрировали.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Метод выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+     если при вызове функции из XPath-выражения синтаксисом <literal>php:function</literal>
+     вместо строкового названия обработчика передают значение другого типа.
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Метод выбрасывает ошибку <exceptionname>Error</exceptionname>,
+     если callback-функция вместо DOM-объекта возвращает значение другого типа.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </refsect1
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
     <title>
-     Пример получения списка книг на английском
+     Пример получения списка книг на английском языке
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -125,7 +155,7 @@ $query = 'row/entry[. = "en"]';
 $entries = $xpath->query($query, $tbody);
 
 foreach ($entries as $entry) {
-    echo "Найдена книга {$entry->previousSibling->previousSibling->nodeValue}," .
+    echo "Метод нашёл книгу {$entry->previousSibling->previousSibling->nodeValue}," .
          " автор {$entry->previousSibling->nodeValue}\n"
     ;
 }
