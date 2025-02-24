@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4d8af0862acd95744e96db9e611a9e6c1b02521e Maintainer: aur Status: ready -->
+<!-- EN-Revision: 01904e809eaf0aa60e7ce0524400ddd5681c9541 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="xsltprocessor.registerphpfunctions" xmlns="http://docbook.org/ns/docbook">
+<refentry xml:id="xsltprocessor.registerphpfunctions" xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude">
  <refnamediv>
   <refname>XSLTProcessor::registerPHPFunctions</refname>
-  <refpurpose>Включает способность PHP-функций работать как XSLT-функции</refpurpose>
+  <refpurpose>Разрешает вызывать PHP-функции как XSLT-функции</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -13,7 +13,7 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>string</type><type>null</type></type><parameter>functions</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Метод делает PHP-функции доступными в качестве XSLT-функции в таблицах стилей XSL.
+   Метод разрешает вызывать PHP-функции как XSLT-функции в таблицах стилей в формате XSL.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -24,20 +24,21 @@
      <term><parameter>functions</parameter></term>
      <listitem>
       <para>
-       Параметр разрешает вызов из XSLT-структуры только отдельных функций.
+       Параметр разрешает вызывать из XSLT-структуры только конкретные функции.
       </para>
       <para>
-       Параметр принимает одно из следующих значений:
-       название функции в виде значения с типом <type>string</type>,
-       индексный массив (<type>array</type>) с названиями функций
-       или ассоциативный массив (<type>array</type>) с названиями функций в ключах
-       и значениями с типом <type>callable</type> в значениях, которые связаны с ключами.
+       Параметр принимает значения следующих типов:
+       <type>string</type> — название функции, <type>array</type> — индексный массив с названиями функций
+       или <type>array</type> — ассоциативный массив с названиями функций в ключах
+       и <type>callable</type>-выражениями в значениях.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
+
+ <xi:include xpointer="domxpath.registerphpfunctions..errors" />
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
@@ -57,12 +58,13 @@
      </row>
     </thead>
     <tbody>
+     <xi:include xpointer="domxpath.registerphpfunctions..changelog.errors" />
      <row>
       <entry>8.4.0</entry>
       <entry>
-       В элементах массива (<type>array</type>) для параметра <parameter>functions</parameter>
-       теперь возможно указывать значения с типом <type>callable</type>
-       для вызова callback-функций.
+       Параметр <parameter>functions</parameter> теперь принимает <type>callable</type>-выражения,
+       когда набор callback-функций, доступных для вызова из XSLT-структур,
+       ограничивают путём передачи массива (<type>array</type>).
       </entry>
      </row>
     </tbody>
@@ -75,7 +77,10 @@
   <para>
    <example>
     <title>Пример простого вызова PHP-функции из таблицы стилей</title>
-    <programlisting role="php"><![CDATA[<?php
+    <programlisting role="php">
+<![CDATA[
+<?php
+
 $xml = <<<EOB
 <allusers>
  <user>
@@ -86,6 +91,7 @@ $xml = <<<EOB
  </user>
 </allusers>
 EOB;
+
 $xsl = <<<EOB
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0"
@@ -107,8 +113,10 @@ $xsl = <<<EOB
  </xsl:template>
 </xsl:stylesheet>
 EOB;
+
 $xmldoc = new DOMDocument();
 $xmldoc->loadXML($xml);
+
 $xsldoc = new DOMDocument();
 $xsldoc->loadXML($xsl);
 
@@ -116,7 +124,9 @@ $proc = new XSLTProcessor();
 $proc->registerPHPFunctions();
 $proc->importStyleSheet($xsldoc);
 echo $proc->transformToXML($xmldoc);
-?>]]></programlisting>
+
+?>
+]]></programlisting>
     </example>
   </para>
  </refsect1>
