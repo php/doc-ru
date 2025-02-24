@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2bd9a67c8c6c5961189f868364837a5c3ba7e063 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 01904e809eaf0aa60e7ce0524400ddd5681c9541 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="domxpath.registerphpfunctions" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>DOMXPath::registerPhpFunctions</refname>
   <refpurpose>
-   Регистрация PHP-функций как функций XPath
+   Регистрирует PHP-функции как XPath-функции
   </refpurpose>
  </refnamediv>
 
@@ -16,7 +16,7 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>array</type><type>null</type></type><parameter>restrict</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Этот метод позволяет использовать PHP-функции в выражениях XPath.
+   Метод разрешает вызывать PHP-функции в XPath-выражениях.
   </para>
 
  </refsect1>
@@ -29,14 +29,14 @@
      <term><parameter>restrict</parameter></term>
      <listitem>
       <para>
-       Используйте этот параметр, чтобы разрешить использование
-       только определённых функций в выражениях XPath.
+       Параметр разрешает вызывать в XPath-выражениях
+       только конкретные функции.
       </para>
       <para>
-       Параметр может быть одним из следующих типов:
-       строка (<type>string</type>) (имя функции), индексированный массив (<type>array</type>) имён функций
-       или ассоциативный массив (<type>array</type>), ключами которого являются имена функций,
-       а значениями – замыкание (<type>callable</type>).
+       Параметр принимает значения следующих типов:
+       <type>string</type> — название функции, <type>array</type> — индексный массив с названиями функций
+       или <type>array</type> — ассоциативный массив с названиями функций в ключах
+       и <type>callable</type>-выражениями в значениях.
       </para>
      </listitem>
     </varlistentry>
@@ -51,6 +51,25 @@
   </para>
  </refsect1>
 
+ <refsect1 role="errors" xml:id="domxpath.registerphpfunctions..errors">
+  &reftitle.errors;
+  <itemizedlist>
+   <listitem>
+    <simpara>
+     Метод выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+     если название callback-функции недопустимо.
+    </simpara>
+   </listitem>
+   &dom.errors.compliant.common;
+   <listitem>
+    <simpara>
+     Метод выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+     если значение для обратного вызова не принадлежит типу callable.
+    </simpara>
+   </listitem>
+  </itemizedlist>
+ </refsect1>
+
  <refsect1 role="changelog">
   &reftitle.changelog;
   <informaltable>
@@ -62,12 +81,21 @@
      </row>
     </thead>
     <tbody>
+     <row xml:id="domxpath.registerphpfunctions..changelog.errors">
+      <entry>8.4.0</entry>
+      <entry>
+       При передаче недопустимых названий callback-функций метод теперь выбрасывает
+       ошибку <exceptionname>ValueError</exceptionname>.
+       При передаче значений, которые не принадлежат типу callable, метод теперь выбрасывает
+       ошибку <exceptionname>TypeError</exceptionname>.
+      </entry>
+     </row>
      <row>
       <entry>8.4.0</entry>
       <entry>
-       Теперь можно использовать замыкание (<type>callable</type>)
-       для callback-функций при использовании параметра <parameter>restrict</parameter>
-       с записями в виде массива (<type>array</type>).
+       Параметр <parameter>restrict</parameter> теперь принимает <type>callable</type>-выражения,
+       когда набор callback-функций, доступных для вызова из XPath-выражений,
+       ограничивают путём передачи массива (<type>array</type>).
       </entry>
      </row>
     </tbody>
@@ -78,8 +106,8 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
-   В следующих примерах используется файл <filename>book.xml</filename>, который
-   содержит следующее:
+   Примеры на этой странице работают с файлом <filename>book.xml</filename>,
+   который содержит следующее:
   </para>
   <para>
    <example>
@@ -108,25 +136,29 @@
   </para>
   <para>
    <example>
-    <title><methodname>DOMXPath::registerPHPFunctions</methodname> с <literal>php:functionString</literal></title>
+    <title>
+     Пример регистрации PHP-функции как XPath-функции методом <methodname>DOMXPath::registerPhpFunctions</methodname>
+     и вызова функции через синтаксис <literal>php:functionString</literal>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$doc = new DOMDocument;
+
+$doc = new DOMDocument();
 $doc->load('book.xml');
 
 $xpath = new DOMXPath($doc);
 
-// Регистрация PHP: пространство имён (обязательно)
+// Обязательная регистрация пространства имён с префиксом 'php'
 $xpath->registerNamespace("php", "http://php.net/xpath");
 
-// Регистрация функций PHP (без ограничений)
-$xpath->registerPHPFunctions();
+// Регистрация PHP-функций без установки ограничений
+$xpath->registerPhpFunctions();
 
-// Вызов функции substr для названия книги
+// Вызов функции substr на названии книги
 $nodes = $xpath->query('//book[php:functionString("substr", title, 0, 3) = "PHP"]');
 
-echo "Найдены {$nodes->length} книги, начинающиеся с 'PHP':\n";
+echo "Метод нашёл {$nodes->length} книги, название которых начинается с 'PHP':\n";
 foreach ($nodes as $node) {
     $title  = $node->getElementsByTagName("title")->item(0)->nodeValue;
     $author = $node->getElementsByTagName("author")->item(0)->nodeValue;
@@ -139,7 +171,7 @@ foreach ($nodes as $node) {
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Найдены 2 книги, начинающиеся с 'PHP':
+Метод нашёл 2 книги, название которых начинается с 'PHP':
 PHP Basics автора Jim Smith
 PHP Secrets автора Jenny Smythe
 ]]>
@@ -148,29 +180,33 @@ PHP Secrets автора Jenny Smythe
   </para>
   <para>
    <example>
-    <title><methodname>DOMXPath::registerPHPFunctions</methodname> с <literal>php:function</literal></title>
+    <title>
+     Пример регистрации PHP-функции как XPath-функции методом <methodname>DOMXPath::registerPhpFunctions</methodname>
+     и вызова функции через синтаксис <literal>php:function</literal>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$doc = new DOMDocument;
+
+$doc = new DOMDocument();
 $doc->load('book.xml');
 
 $xpath = new DOMXPath($doc);
 
-// Регистрация PHP: пространство имён (обязательно)
+// Обязательная регистрация пространства имён с префиксом 'php'
 $xpath->registerNamespace("php", "http://php.net/xpath");
 
-// Регистрация PHP-функций (только has_multiple)
-$xpath->registerPHPFunctions("has_multiple");
+// Регистрация PHP-функций с установкой ограничения только на доступ к функции has_multiple
+$xpath->registerPhpFunctions("has_multiple");
 
 function has_multiple($nodes) {
-    // Возвращает true, если более одного автора
+    // Функция возвращает true, если список узлов содержит больше одного автора
     return count($nodes) > 1;
 }
-// Фильтрация книг с двумя и более авторами
+// Фильтрация книг, которые вышли в соавторстве
 $books = $xpath->query('//book[php:function("has_multiple", author)]');
 
-echo "Книги с двумя и более авторами:\n";
+echo "Книги, которые написали два или больше автора:\n";
 foreach ($books as $book) {
     echo $book->getElementsByTagName("title")->item(0)->nodeValue . "\n";
 }
@@ -181,7 +217,7 @@ foreach ($books as $book) {
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Книги с двумя и более авторами:
+Книги, которые написали два или больше автора:
 PHP Basics
 ]]>
     </screen>
@@ -189,25 +225,29 @@ PHP Basics
   </para>
   <para>
    <example>
-    <title>Пример использования метода <methodname>DOMXPath::registerPHPFunctions</methodname> с замыканием (<type>callable</type>)</title>
+    <title>
+     Пример регистрации анонимной PHP-функции как XPath-функции методом <methodname>DOMXPath::registerPhpFunctions</methodname>
+     с установкой ограничения через массив <type>callable</type>-значений
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$doc = new DOMDocument;
+
+$doc = new DOMDocument();
 $doc->load('book.xml');
 
 $xpath = new DOMXPath($doc);
 
-// Регистрация PHP: пространство имён (обязательно)
+// Обязательная регистрация пространства имён с префиксом 'php'
 $xpath->registerNamespace("php", "http://php.net/xpath");
 
-// Регистрация PHP-функций (только has_multiple)
-$xpath->registerPHPFunctions(["has_multiple" => fn ($nodes) => count($nodes) > 1]);
+// Регистрация PHP-функций с установкой ограничения только на доступ к функции has_multiple
+$xpath->registerPhpFunctions(["has_multiple" => fn ($nodes) => count($nodes) > 1]);
 
-// Фильтрация книг с двумя и более авторами
+// Фильтрация книг, которые вышли в соавторстве
 $books = $xpath->query('//book[php:function("has_multiple", author)]');
 
-echo "Книги с двумя и более авторами:\n";
+echo "Книги, которые написали два или больше автора:\n";
 foreach ($books as $book) {
     echo $book->getElementsByTagName("title")->item(0)->nodeValue . "\n";
 }
@@ -218,7 +258,7 @@ foreach ($books as $book) {
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Книги с двумя и более авторами:
+Книги, которые написали два или больше автора:
 PHP Basics
 ]]>
     </screen>
