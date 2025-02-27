@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8d1a5d2d15df15cc5cbc7f96cdc083b8fe49366e Maintainer: lex Status: ready -->
+<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration74.new-features" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Новые возможности</title>
@@ -16,17 +16,20 @@
      <programlisting role="php">
 <![CDATA[
 <?php
-class User {
+
+class User
+{
     public int $id;
     public string $name;
 }
+
 ?>
 ]]>
      </programlisting>
     </informalexample>
-    В приведённом примере выше показано, что <literal>$user->id</literal> можно
-    присвоить только значения типа <type>int</type>, когда как <literal>$user->name</literal>
-    - исключительно значения типа <type>string</type>.
+    Приведённый пример показывает, что свойству <literal>$user->id</literal> получится
+    присвоить только значения с типом <type>int</type>, тогда как свойству <literal>$user->name</literal> —
+    только значения с типом <type>string</type>.
    </para>
   </sect3>
 
@@ -34,15 +37,17 @@ class User {
    <title>Стрелочные функции</title>
 
    <para>
-    <link linkend="functions.arrow">Стрелочные функции</link> - это сокращённая запись для определения функций
+    <link linkend="functions.arrow">Стрелочные функции</link> — сокращённая запись для определения функций
     с неявной привязкой родительской области видимости по значению.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
+
 $factor = 10;
-$nums = array_map(fn($n) => $n * $factor, [1, 2, 3, 4]);
+$nums = array_map(fn ($n) => $n * $factor, [1, 2, 3, 4]);
 // $nums = array(10, 20, 30, 40);
+
 ?>
 ]]>
      </programlisting>
@@ -59,22 +64,27 @@ $nums = array_map(fn($n) => $n * $factor, [1, 2, 3, 4]);
      <programlisting role="php">
 <![CDATA[
 <?php
+
 class A {}
 class B extends A {}
 
-class Producer {
+class Producer
+{
     public function method(): A {}
 }
-class ChildProducer extends Producer {
+
+class ChildProducer extends Producer
+{
     public function method(): B {}
 }
+
 ?>
 ]]>
      </programlisting>
     </informalexample>
-    Полная поддержка вариантности доступна только при использовании автозагрузки. Внутри
-    одного файла могут быть только нециклические ссылки, поскольку все классы должны быть определены, перед тем
-    как на них ссылаться.
+    Полная поддержка вариантности доступна только при автозагрузке классов.
+    Нельзя ссылаться на типы циклически внутри одного файла, поскольку при ссылке
+    на класс, который пока недоступен, возникает фатальная ошибка.
    </para>
   </sect3>
 
@@ -86,11 +96,14 @@ class ChildProducer extends Producer {
      <programlisting role="php">
 <![CDATA[
 <?php
+
 $array['key'] ??= computeDefault();
-// примерно то же самое
+
+// Предыдущая проверка на null с присваиванием — примерно то же, что:
 if (!isset($array['key'])) {
     $array['key'] = computeDefault();
 }
+
 ?>
 ]]>
      </programlisting>
@@ -106,9 +119,12 @@ if (!isset($array['key'])) {
      <programlisting role="php">
 <![CDATA[
 <?php
+
 $parts = ['apple', 'pear'];
+
 $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
 // ['banana', 'orange', 'apple', 'pear', 'watermelon'];
+
 ?>
 ]]>
      </programlisting>
@@ -120,15 +136,17 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
    <title>Разделитель в числовых литералах</title>
 
    <para>
-    Теперь в числовых литералах между знаками могут быть символы подчёркивания.
+    Между знаками числовых литералов теперь допускаются символы подчёркивания.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
+
 6.674_083e-11; // число с плавающей точкой
 299_792_458;   // десятичное число
 0xCAFE_F00D;   // шестнадцатеричное число
 0b0101_1111;   // двоичное число
+
 ?>
 ]]>
      </programlisting>
@@ -140,67 +158,67 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
    <title>Слабые ссылки</title>
 
    <para>
-    <link linkend="class.weakreference">Слабые ссылки</link> позволяют программисту сохранить ссылку на объект,
-    которая не помешает сборщику мусора удалить этот объект.
+    <link linkend="class.weakreference">Слабые ссылки</link> разрешают программисту хранить ссылку на объект,
+    которая не препятствует уничтожению объекта сборщиком мусора, когда ссылок на объект не осталось.
    </para>
   </sect3>
 
   <sect3 xml:id="migration74.new-features.core.tostring-exceptions">
-   <title>Обработка исключений из метода __toString()</title>
+   <title>Исключения в магическом методе __toString()</title>
 
    <para>
-    Выбрасывание исключений из метода <link linkend="object.tostring">__toString()</link>
-    теперь разрешено. Ранее это приводило к фатальной ошибке. Существующие
-    отлавливаемые фатальные ошибки при преобразовании объекта в строку будут доступны
-    в виде исключений класса <classname>Error</classname>.
+    В магическом методе <link linkend="object.tostring">__toString()</link> разрешили
+    выбрасывать исключения. Раньше это вызывало фатальную ошибку. Существующие
+    отлавливаемые фатальные ошибки при преобразовании объекта в строку преобразовали
+    в исключения класса <classname>Error</classname>.
    </para>
   </sect3>
 
  </sect2>
 
  <sect2 xml:id="migration74.new-features.curl">
-  <title>CURL</title>
+  <title>Модуль cURL</title>
 
   <para>
-   Помимо обычных имён файлов, класс <classname>CURLFile</classname> теперь поддерживает
-   потоковые обёртки, если модуль был собран с версией libcurl &gt;= 7.56.0.
+   В дополнение к станадртным названиям файлов класс <classname>CURLFile</classname> теперь поддерживает
+   потоковые обёртки, если модуль собрали с библиотекой libcurl &gt;= 7.56.0.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.filter">
-  <title>Фильтрация</title>
+  <title>Модуль Filter</title>
 
   <para>
    Фильтр <constant>FILTER_VALIDATE_FLOAT</constant> теперь поддерживает
    параметры <literal>min_range</literal> и <literal>max_range</literal>,
-   с тем же смыслом, что и для <constant>FILTER_VALIDATE_INT</constant>.
+   с тем же смыслом, что и фильтр <constant>FILTER_VALIDATE_INT</constant>.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.ffi">
-  <title>FFI</title>
+  <title>Модуль FFI</title>
 
   <para>
-   FFI - новый модуль, который предлагает простой способ вызова
-   встроенных функций, доступа к встроенным переменным,
-   а также создавать или обращаться к структурам данных в библиотеках на языке Си.
+   FFI — новый модуль, который предлагает простой способ вызова
+   библиотечных функций, доступа к встроенным переменным
+   и способ создавать или обращаться к структурам данных, которые определили в библиотеках на языке Си.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.gd">
-  <title>GD</title>
+  <title>Модуль GD</title>
 
   <para>
-   Добавлена константа <constant>IMG_FILTER_SCATTER</constant> для применения рассеивающегося фильтра к изображениям.
+   Добавили константу <constant>IMG_FILTER_SCATTER</constant> для применения рассеивающегося фильтра к изображениям.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.hash">
-  <title>Хеширование</title>
+  <title>Модуль Hash</title>
 
   <para>
-   Добавлен хеш <literal>crc32c</literal>, использующий полином Кастаноли.
-   Эта реализация алгоритма CRC32 используется системами хранения, такими как iSCSI, SCTP, Btrfs и ext4.
+   Добавили поддержку алгоритма <literal>crc32c</literal>, который вычисляет «хеш» на основе полинома Кастаноли.
+   С этой реализацией алгоритма CRC32 работают системы хранения наподобие iSCSI, SCTP, Btrfs и ext4.
   </para>
  </sect2>
 
@@ -208,22 +226,22 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
   <title>Многобайтовые строки</title>
 
   <para>
-   Добавлена функция <function>mb_str_split</function>, которая выполняет,
-   то же, что и <function>str_split</function>, но работает
+   Добавили функцию <function>mb_str_split</function>, которая выполняет
+   то же, что и функция <function>str_split</function>, но работает
    с кодовыми точками, а не с байтами.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.opcache">
-  <title>OPcache</title>
+  <title>Модуль OPcache</title>
 
   <para>
-   Добавлена поддержка <link linkend="opcache.preloading">предварительной загрузки кода</link>.
+   Добавили поддержку <link linkend="opcache.preloading">предварительной загрузки кода</link>.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.pcre">
-  <title>Регулярные выражения (совместимые с Perl)</title>
+  <title>Регулярные выражения, совместимые с синтаксисом языка Perl</title>
 
   <para>
    Функции <function>preg_replace_callback</function> и <function>preg_replace_callback_array</function>
@@ -234,42 +252,43 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
  </sect2>
 
  <sect2 xml:id="migration74.new-features.pdo">
-  <title>PDO</title>
+  <title>Модуль PDO</title>
 
   <para>
-   Имя пользователя и пароль теперь можно указать как часть DSN для
-   драйверов mysql, mssql, sybase, dblib, firebird и oci. Ранее поддержка этого
-   была только для драйвера pgsql. Если имя пользователя/пароль указаны
-   и в конструкторе и в DSN, то конструктор будет иметь приоритет.
+   Имя пользователя и пароль как часть DSN-строки разрешили указывать
+   для драйверов mysql, mssql, sybase, dblib, firebird и oci. Раньше это поддерживалось
+   только для драйвера pgsql. Конструктор будет приоритетнее,
+   если имя пользователя с паролем указали и в конструкторе, и в DSN-строке.
   </para>
   <para>
-   Также теперь можно экранировать вопросительные знаки в SQL-запросах, чтобы
-   они не воспринимались как именованные параметры.
-   Использование <literal>??</literal> отправит один знак вопроса в базу данных,
-   и, например, в случае использования PostgreSQL, будет использован оператор
-   проверки существования ключа в JSON (<literal>?</literal>).
+   В SQL-запросах разрешили экранировать вопросительные знаки, чтобы
+   они не воспринимались как заполнители параметров.
+   Запись <literal>??</literal> отправит один знак вопроса в базу данных,
+   и разрешит, например при работе с СУБД PostgreSQL, указывать оператор <literal>?</literal>,
+   чтобы проверить, содержит ли столбец JSON конкретный ключ.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.pdo_oci">
-  <title>PDO_OCI</title>
+  <title>Драйвер PDO_OCI</title>
 
   <para>
-   Для данного драйвера теперь доступен метод <methodname>PDOStatement::getColumnMeta</methodname>.
+   Для драйвера теперь доступен метод <methodname>PDOStatement::getColumnMeta</methodname>.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.pdo_sqlite">
-  <title>PDO_SQLite</title>
+  <title>Драйвер PDO_SQLite</title>
 
   <para>
-   Выражение <literal>PDOStatement::getAttribute(PDO::SQLITE_ATTR_READONLY_STATEMENT)</literal>
-   позволяет проверить, доступен ли подготовленный запрос только для чтения,
-   т.е. не изменяет ли он базу данных.
+   Вызов <literal>PDOStatement::getAttribute(PDO::SQLITE_ATTR_READONLY_STATEMENT)</literal>
+   проверит, доступен ли подготовленный запрос только для чтения,
+   т. е. не изменяет ли запрос базу данных.
   </para>
   <para>
-   <literal>PDO::setAttribute(PDO::SQLITE_ATTR_EXTENDED_RESULT_CODES, true)</literal>
-   позволяет использовать расширенные коды результата SQLite3 в <function>PDOStatement::errorInfo</function>.
+   При установке <literal>PDO::setAttribute(PDO::SQLITE_ATTR_EXTENDED_RESULT_CODES, true)</literal>
+   методы <function>PDO::errorInfo</function> и <function>PDOStatement::errorInfo</function>
+   возвращают расширенные коды ошибок СУБД SQLite3.
   </para>
  </sect2>
 
@@ -277,21 +296,21 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
   <title>SQLite3</title>
 
   <para>
-   Добавлен метод <methodname>SQLite3::lastExtendedErrorCode</methodname>
-   для получения последнего расширенного кода результата.
+   Добавили метод <methodname>SQLite3::lastExtendedErrorCode</methodname>,
+   который получает последний расширенный код ошибки.
   </para>
   <para>
-   Добавлен метод <literal>SQLite3::enableExtendedResultCodes($enable = true)</literal>,
+   Добавили метод <literal>SQLite3::enableExtendedResultCodes($enable = true)</literal>,
    который заставит метод <methodname>SQLite3::lastErrorCode</methodname>
-   возвращать расширенные коды результаты.
+   возвращать расширенные коды ошибок.
   </para>
  </sect2>
 
  <sect2 xml:id="migration74.new-features.standard">
-  <title>Стандартное</title>
+  <title>Стандартные функции языка</title>
 
   <sect3 xml:id="migration74.new-features.standard.strip-tags">
-   <title>strip_tags() с массивом имён тегов</title>
+   <title>Функция strip_tags() с массивом имён тегов</title>
    <para>
     Функция <function>strip_tags</function> теперь также принимает массив разрешённых тегов:
     вместо <literal>strip_tags($str, '&lt;a&gt;&lt;p&gt;')</literal>
@@ -302,24 +321,26 @@ $fruits = ['banana', 'orange', ...$parts, 'watermelon'];
   <sect3 xml:id="migration74.new-features.standard.magic-serialize">
    <title>Пользовательская сериализация объектов</title>
    <para>
-    Добавлен новый механизм сериализации пользовательских объектов, использующий
-    два новых магических метода: <literal>__serialize</literal>
+    Добавили новый механизм сериализации пользовательских объектов
+    через два новых магических метода: <literal>__serialize</literal>
     и <literal>__unserialize</literal>.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
-// Возвращает массив, содержащий все необходимое состояние объекта.
-public function __serialize(): array;
 
-// Восстанавливает состояние объекта из указанного массива данных.
-public function __unserialize(array $data): void;
+// Метод возвращает массив с данными для сохранения целостного состояния объекта
+public function __serialize(): array {}
+
+// Восстанавливает состояние объекта из массива данных
+public function __unserialize(array $data): void {}
+
 ?>
 ]]>
      </programlisting>
     </informalexample>
     Новый механизм сериализации заменяет интерфейс <interfacename>Serializable</interfacename>,
-    который в будущем будет объявлен устаревшим.
+    который в будущем объявят устаревшим.
    </para>
   </sect3>
 
@@ -327,23 +348,25 @@ public function __unserialize(array $data): void;
    <title>Функции слияния массивов без аргументов</title>
    <para>
     Функции <function>array_merge</function> и <function>array_merge_recursive</function>
-    теперь могут вызываться без каких-либо аргументов, и тогда они возвратят пустой массив.
-    Это полезно в сочетании с оператором расширения, например, <literal>array_merge(...$arrays)</literal>.
+    стали поддерживать вызов без аргументов. При вызове без аргументов функции возвращают пустой массив.
+    Функции также полезно вызывать с распаковкой аргумента spread-оператором: <literal>array_merge(...$arrays)</literal>.
    </para>
   </sect3>
 
   <sect3 xml:id="migration74.new-features.standard.proc-open">
    <title>Функция <function>proc_open</function></title>
    <para>
-    <function>proc_open</function> теперь принимает массив вместо
-    строки для выполнения команды. В этом случае процесс будет открыт
-    напрямую (без командной оболочки), а PHP экранирует
-    любой необходимый аргумент.
+    Функция <function>proc_open</function> теперь принимает массив вместо
+    строки для выполнения команды. При таком вызове процесс открывается
+    напрямую, без командной оболочки, а PHP экранирует
+    аргументы, если потребуется.
     <informalexample>
      <programlisting role="php">
 <![CDATA[
 <?php
+
 proc_open(['php', '-r', 'echo "Привет, мир\n";'], $descriptors, $pipes);
+
 ?>
 ]]>
      </programlisting>
@@ -356,10 +379,13 @@ proc_open(['php', '-r', 'echo "Привет, мир\n";'], $descriptors, $pipes)
      <programlisting role="php">
 <![CDATA[
 <?php
+
 // То же самое, что и 2>&1 в командной оболочке
 proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['redirect', 1]], $pipes);
+
 // То же самое, что и 2>/dev/null или 2>nul в командной оболочке
 proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['null']], $pipes);
+
 ?>
 ]]>
      </programlisting>
@@ -368,10 +394,10 @@ proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['null']], $pipes);
   </sect3>
 
   <sect3 xml:id="migration74.new-features.standard.sodium-argon-hash">
-   <title>argon2i(d) без libargon</title>
+   <title>Алгоритмы Argon2i и argon2id без библиотеки libargon</title>
    <para>
     Функция <function>password_hash</function> теперь поддерживает варианты хеширования argon2i и argon2id
-    из модуля sodium, когда PHP собран без libargon.
+    из модуля Sodium, если PHP собрали без библиотеки libargon.
    </para>
   </sect3>
 
