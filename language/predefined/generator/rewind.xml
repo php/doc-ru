@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8fee3ae9715ffa15922469eb7d98f4878917a6ee Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 285d4ca5804f106ed3e19d4b0270819b8d38a74b Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="generator.rewind" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Generator::rewind</refname>
-  <refpurpose>Отматывает итератор</refpurpose>
+  <refpurpose>Перематывает генератор к первому выражению yield</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,8 +14,20 @@
    <void/>
   </methodsynopsis>
   <para>
-   Если итерация уже началась, это выбросит исключение.
+   Метод перематывает генератор к первому выражению &yield;.
+   При перемотке генератор выполнит код, который идёт перед первым выражением &yield;,
+   если при вызове метода генератор ещё не дошёл до первого выражения &yield;.
+   Метод выбросит исключение <classname>Exception</classname>,
+   если метод вызывали, когда генератор уже перешёл ко второму выражению &yield;.
   </para>
+
+  <note>
+   <para>
+    Это <emphasis>первый</emphasis> метод, который генератор автоматически вызывает
+    при запуске цикла &foreach;. Метод <emphasis>не</emphasis>
+    выполняется <emphasis>после</emphasis> цикла &foreach;.
+   </para>
+  </note>
 
  </refsect1>
 
@@ -28,6 +40,81 @@
   &reftitle.returnvalues;
   <para>
    &return.void;
+  </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример перемотки генератора методом <methodname>Generator::rewind</methodname></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+function generator(): Generator
+{
+    echo "Я генератор!\n";
+
+    for ($i = 1; $i <= 3; $i++) {
+        yield $i;
+    }
+}
+
+// Инициализируем генератор
+$generator = generator();
+
+// Перематываем генератор к началу первого выражения yield,
+// если генератор ещё не там
+$generator->rewind(); // Я генератор!
+
+// В этом месте ничего не произойдёт; генератор уже перемотался к первому yield
+$generator->rewind(); // No output (NULL)
+
+// Цикл возвращает генератор к первому выражению yield,
+// если генератор ещё не там, и начинает итерацию по генератору
+foreach ($generator as $value) {
+    // После выдачи первого значения генератор остается
+    // на первом выражении yield, пока не возобновит выполнение и не продвинется к следующем yield
+    echo $value, PHP_EOL; // 1
+
+    break;
+}
+
+// Снова возобновляем работу генератора и «отматываем» к первому выражению yield.
+// Слово «отматываем» в кавычках, потому что генератор уже на первом yield.
+// Ошибка не возникает, поскольку генератор ещё не продвинулся дальше первого yield
+$generator->rewind();
+
+echo $generator->current(), PHP_EOL; // 1
+
+// Ошибка тоже не возникает, генератор всё ещё на первом выражении
+$generator->rewind();
+
+// Этот вызов продвигает генератор ко второму выражению yield
+$generator->next();
+
+try {
+    // Попытка перемотать генератор выбросит исключение Exception,
+    // потому что генератор уже перешёл ко второму выражению yield
+    $generator->rewind(); // Fatal error: Uncaught Exception: Cannot rewind a generator that was already run
+} catch (Exception $e) {
+    echo $e->getMessage();
+}
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Я генератор!
+1
+1
+Cannot rewind a generator that was already run
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
