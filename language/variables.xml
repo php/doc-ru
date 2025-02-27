@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: df1e7145848499f193d0e106a86c27a9b94d130e Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.variables" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Переменные</title>
@@ -41,7 +41,7 @@
   &tip.userlandnaming;
 
    <example>
-    <title>Правильные и неправильные названия переменных</title>
+    <title>Правильные названия переменных</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -50,11 +50,22 @@ $var = 'Боб';
 $Var = 'Джо';
 echo "$var, $Var";      // Инструкция выведет "Боб, Джо"
 
-$4site = 'ещё нет';     // Неверно; имя переменной начинается с цифры
-$_4site = 'ещё нет';    // Верно; имя переменной начинается с символа подчёркивания
-$täyte = 'mansikka';    // Верно; символ 'ä' — 228-я кодовая точка в кодировке Extended ASCII
+$_4site = 'ещё нет';    // Правильно; название переменной начинается с символа подчёркивания
+$täyte = 'mansikka';    // Правильно; символ 'ä' — 228-я кодовая точка в кодировке Extended ASCII
 
 ?>
+]]>
+    </programlisting>
+   </example>
+
+   <example>
+    <title>Неправильные названия переменных</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$4site = 'not yet';     // Неправильно; название начинается с цифры
+
 ]]>
     </programlisting>
    </example>
@@ -563,6 +574,38 @@ function foo()
      </example>
    </para>
 
+   <simpara>
+    Статические переменные внутри анонимных функций сохраняются только внутри этого
+    конкретного экземпляра функции. Статическая переменная переинициализируется,
+    если анонимная функция воссоздаётся при каждом вызове.
+   </simpara>
+   <example>
+    <title>Статические переменные в анонимных функциях</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+function exampleFunction($input)
+{
+    $result = (static function () use ($input) {
+        static $counter = 0;
+        $counter++;
+        return "Функция получила значение: $input, счётчик: $counter\n";
+    });
+
+    return $result();
+}
+
+// Вызов функции exampleFunction пересоздаст анонимную функцию, поэтому статическая
+// переменная не сохранит значение
+echo exampleFunction('A'); // Выводит: Функция получила значение: A, счётчик: 1
+echo exampleFunction('B'); // Выводит: Функция получила значение: B, счётчик: 1
+
+?>
+]]>
+    </programlisting>
+   </example>
+
    <para>
     Начиная с PHP 8.1.0 при наследовании, но не переопределении, метода
     со статическими переменными унаследованный метод будет использовать
@@ -892,11 +935,13 @@ echo $foo->{$arr}[1] . "\n";
     </programlisting>
     &example.outputs;
     <screen>
+<![CDATA[
 Я bar.
 Я bar.
 Я bar.
 Я r.
 Я B.
+]]>
     </screen>
    </example>
   </para>
