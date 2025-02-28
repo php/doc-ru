@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: mch Status: ready -->
+<!-- EN-Revision: 3b2503bdcbbffc9bd1381078ee06c298d4f8a49a Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pg-pconnect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,31 +15,28 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_pconnect</function> устанавливает соединение с базой данных
-   PostgreSQL. Возвращает экземпляр <classname>PgSql\Connection</classname>, необходимый для работы большинства
-   функций PostgreSQL.
+   Функция <function>pg_pconnect</function> устанавливает соединение с базой данных
+   PostgreSQL и возвращает экземпляр класса <classname>PgSql\Connection</classname>, который требуется
+   другим функциям взаимодействия с СУБД PostgreSQL.
   </para>
   <para>
-   При повторном вызове функции <function>pg_pconnect</function> с теми же
-   значениями параметров в <parameter>connection_string</parameter> функция вернёт
-   существующее подключение. Чтобы принудительно создать новое соединение,
-   необходимо передать строку подключения функции <constant>PGSQL_CONNECT_FORCE_NEW</constant> в качестве
-   параметра <parameter>flags</parameter>.
+   При повторном вызове функции <function>pg_pconnect</function> с той же
+   строкой <parameter>connection_string</parameter>, что и у подключения, которое уже установили,
+   функция вернёт существующее подключение, если только в параметр <parameter>flags</parameter>
+   не передали флаг <constant>PGSQL_CONNECT_FORCE_NEW</constant>.
   </para>
   <para>
-   Возможность создавать постоянные подключения регулируется директивой
-   <link linkend="ini.pgsql.allow-persistent">pgsql.allow_persistent</link>
-   файла &php.ini;. Для включения, установите значение в &quot;On&quot;
-   (является значением по умолчанию). Максимальное количество постоянных
-   соединений задаётся директивой
-   <link linkend="ini.pgsql.max-persistent">pgsql.max_persistent</link>
-   файла &php.ini; (по умолчанию -1, не ограничено). Количество любых возможных
-   подключений устанавливается директивой
-   <link linkend="ini.pgsql.max-links">pgsql.max_links</link> файла
-   &php.ini;.
+   Постоянные соединения включают в файле &php.ini; путём установки
+   в директиве <link linkend="ini.pgsql.allow-persistent">pgsql.allow_persistent</link>
+   значения по умолчанию — <literal>"On"</literal>.
+   Максимальное количество постоянных подключений определяют в файле &php.ini; через директиву
+   <link linkend="ini.pgsql.max-persistent">pgsql.max_persistent</link>.
+   Стандартное значение директивы равняется <literal>-1</literal>. Это значение снимает ограничения на количество подключений.
+   Общее количество подключений устанавливают в файле &php.ini; через директиву
+   <link linkend="ini.pgsql.max-links">pgsql.max_links</link>.
   </para>
   <para>
-   <function>pg_close</function> не закрывает соединения, открытые функцией
+   Функция <function>pg_close</function> не закрывает соединения, которые открыли функцией
    <function>pg_pconnect</function>.
   </para>
  </refsect1>
@@ -52,23 +49,23 @@
      <term><parameter>connection_string</parameter></term>
      <listitem>
       <para>
-       Строка <parameter>connection_string</parameter> может быть пустой строкой или содержать
-       несколько параметров разделённых пробелами. Каждый параметр указывается как
-       <literal>keyword = value</literal>. Пробелы вокруг знака равно необязательны.
-       Пустые строки в качестве значения или значения,
-       содержащие пробелы отделяются одинарными кавычками, как например, <literal>keyword = 'a value'</literal>.
-       Для задания одинарных кавычек и обратных слешей в качестве значений их необходимо экранировать
-       обратным слешем, то есть \' и \\.
+       Параметр <parameter>connection_string</parameter> принимает пустую строку или настройки параметров через пробел.
+       При передаче пустой строки функция открывает постоянное соединение с параметрами по умолчанию.
+       Каждую настройку параметра передают в форме <literal>keyword = value</literal>. Пробелы вокруг
+       знака равенства необязательны. Пустые значения или значения
+       с пробелами записывают в одинарных кавычках: <literal>keyword = 'a value'</literal>.
+       Одинарные кавычки и обратные слеши внутри значения
+       экранируют обратным слешем: <literal>\'</literal> и <literal>\\</literal>.
       </para>
       <para>
-       Список основных ключевых слов:
+       Функция распознаёт следующие параметры:
        <parameter>host</parameter>, <parameter>hostaddr</parameter>, <parameter>port</parameter>,
-       <parameter>dbname</parameter> (значение по умолчанию для параметра <parameter>user</parameter>),
-       <parameter>user</parameter>,
+       <parameter>dbname</parameter>, <parameter>user</parameter>,
        <parameter>password</parameter>, <parameter>connect_timeout</parameter>,
        <parameter>options</parameter>, <parameter>tty</parameter> (игнорируется), <parameter>sslmode</parameter>,
-       <parameter>requiressl</parameter> (устарело в связи с использованием параметра <parameter>sslmode</parameter>), и
-       <parameter>service</parameter>. Какие из этих аргументов будут обработаны, зависит от версии PostgreSQL.
+       <parameter>requiressl</parameter> (устарел в пользу <parameter>sslmode</parameter>)
+       и <parameter>service</parameter>.
+       Поддержка аргументов зависит от версии СУБД PostgreSQL.
       </para>
      </listitem>
     </varlistentry>
@@ -76,9 +73,9 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Если в функцию передана константа <constant>PGSQL_CONNECT_FORCE_NEW</constant>,
-       будет создаваться новое подключение, даже если <parameter>connection_string</parameter>
-       идентична строке существующего подключения.
+       При передаче флага <constant>PGSQL_CONNECT_FORCE_NEW</constant> функция создаёт новое соединение,
+       даже если строка подключения <parameter>connection_string</parameter> идентична
+       строке подключения, которое уже установили.
       </para>
      </listitem>
     </varlistentry>
@@ -89,7 +86,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Экземпляр <classname>PgSql\Connection</classname> в случае успешного выполнения&return.falseforfailure;.
+   Функция возвращает экземпляр класса <classname>PgSql\Connection</classname>,
+   если выполнилась успешно,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -107,8 +105,8 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Возвращает экземпляр <classname>PgSql\Connection</classname>;
-       ранее возвращался ресурс (&resource;).
+       Функция теперь возвращает экземпляр класса <classname>PgSql\Connection</classname>;
+       раньше возвращался ресурс (&resource;).
       </entry>
      </row>
     </tbody>
@@ -120,22 +118,24 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pg_pconnect</function></title>
+    <title>Пример установки постоянного соединения функцией <function>pg_pconnect</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
+// Подключение к базе данных "mary"
 $dbconn = pg_pconnect("dbname=mary");
-//подключиться к базе "mary"
 
+// Подключение к БД "mary" на хосте "localhost" и порте "5432"
 $dbconn2 = pg_pconnect("host=localhost port=5432 dbname=mary");
-// подключиться к базе "mary" на хосте "localhost", порт "5432"
 
+// Подключение к базе данных "mary" на хосте "sheep" с именем пользователя и паролем
 $dbconn3 = pg_pconnect("host=sheep port=5432 dbname=mary user=lamb password=foo");
-//подключиться к базе "mary" на хосте "sheep", используя имя пользователя и пароль
 
+// Подключение к БД "test" на хосте "sheep" с именем пользователя и паролем
 $conn_string = "host=sheep port=5432 dbname=test user=lamb password=bar";
 $dbconn4 = pg_pconnect($conn_string);
-//подключиться к базе "test" на хосте "sheep", используя имя пользователя и пароль
+
 ?>
 ]]>
     </programlisting>
