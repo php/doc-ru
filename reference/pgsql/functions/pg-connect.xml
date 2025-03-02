@@ -15,20 +15,19 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_connect</function> открывает соединение с базой данных
-   PostgreSQL, определённое строкой <parameter>connection_string</parameter>.
+   Функция <function>pg_connect</function> открывает соединение с базой данных
+   PostgreSQL на основе параметров, которые указали в строке <parameter>connection_string</parameter>.
   </para>
   <para>
-   При повторном вызове функции <function>pg_connect</function> с теми же
-   значениями параметров в <parameter>connection_string</parameter> функция вернёт
-   существующее подключение. Чтобы принудительно создать новое соединение,
-   необходимо передать строку подключения функции <constant>PGSQL_CONNECT_FORCE_NEW</constant> в качестве
-   параметра <parameter>flags</parameter>.
+   При повторном вызове функции <function>pg_connect</function> с теми же параметрами
+   в строке <parameter>connection_string</parameter> функция вернёт подключение,
+   которое уже установили, если только в параметр <parameter>flags</parameter>
+   не передали флаг <constant>PGSQL_CONNECT_FORCE_NEW</constant>.
   </para>
   <para>
-   Прежний синтаксис с множеством параметров
-   <command>$conn = pg_connect("host", "port", "options", "tty", "dbname")
-   </command> считается устаревшим.
+   Прежний синтаксис с набором параметров —
+   <command>$conn = pg_connect("host", "port", "options", "tty", "dbname")</command> —
+   устарел.
   </para>
  </refsect1>
 
@@ -40,27 +39,26 @@
      <term><parameter>connection_string</parameter></term>
      <listitem>
       <para>
-       Строка <parameter>connection_string</parameter> может быть пустой строкой или содержать
-       несколько параметров, разделённых пробелами. Каждый параметр указывается как
-       <literal>keyword = value</literal>. Пробелы вокруг знака "равно" необязательны.
-       Пустые строки в качестве значения или значения,
-       содержащие пробелы отделяются одинарными кавычками, как например, <literal>keyword = 'a value'</literal>.
-       Для записи одинарных кавычек и обратных слешей в качестве значений, их необходимо экранировать
-       обратным слешем, то есть \' и \\.
+       Параметр <parameter>connection_string</parameter> принимает пустую строку или настройки параметров через пробел.
+       Каждую настройку параметра передают в форме <literal>keyword = value</literal>. Пробелы вокруг
+       знака равенства необязательны. Пустые значения или значения
+       с пробелами записывают в одинарных кавычках: <literal>keyword = 'a value'</literal>.
+       Одинарные кавычки и обратные слеши внутри значения
+       экранируют обратным слешем: \' и \\.
       </para>
       <para>
-       Список основных ключевых слов:
+       Функция распознаёт следующие параметры:
        <parameter>host</parameter>, <parameter>hostaddr</parameter>, <parameter>port</parameter>,
        <parameter>dbname</parameter> (значение по умолчанию для параметра <parameter>user</parameter>),
        <parameter>user</parameter>,
        <parameter>password</parameter>, <parameter>connect_timeout</parameter>,
        <parameter>options</parameter>, <parameter>tty</parameter> (игнорируется), <parameter>sslmode</parameter>,
-       <parameter>requiressl</parameter> (устарело в связи с использованием параметра <parameter>sslmode</parameter>), и
-       <parameter>service</parameter>. Какие из этих аргументов будут обработаны, зависит от версии PostgreSQL.
+       <parameter>requiressl</parameter> (устарело в связи с использованием параметра <parameter>sslmode</parameter>)
+       и <parameter>service</parameter>. Поддержка параметров зависит от версии СУБД PostgreSQL.
       </para>
       <para>
-       Параметр <parameter>options</parameter> служит для установки параметров командной строки, которые
-       обработаны сервером.
+       Параметр <parameter>options</parameter> устанавливает параметры командной строки, которые
+       вызовет сервер.
       </para>
      </listitem>
     </varlistentry>
@@ -68,14 +66,15 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Если в функцию передана константа <constant>PGSQL_CONNECT_FORCE_NEW</constant>, будет создаваться новое
-       подключение, даже если <parameter>connection_string</parameter> идентична строке существующего подключения.
+       При передаче флага <constant>PGSQL_CONNECT_FORCE_NEW</constant> функция создаёт новое соединение,
+       даже если строка подключения <parameter>connection_string</parameter> идентична
+       строке подключения, которое уже установили.
       </para>
       <para>
-       Если передана константа <constant>PGSQL_CONNECT_ASYNC</constant>, то
-       соединение устанавливается асинхронным. Состояние соединения можно
-       проверить с помощью функций <function>pg_connect_poll</function> или
-       <function>pg_connection_status</function>.
+       При передаче флага <constant>PGSQL_CONNECT_ASYNC</constant> функция устанавливает
+       асинхронное соединение. Состояние соединения
+       проверяют функцией <function>pg_connect_poll</function>
+       или <function>pg_connection_status</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -86,7 +85,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает экземпляр <classname>PgSql\Connection</classname> в случае успешного выполнения&return.falseforfailure;.
+   Функция возвращает экземпляр класса <classname>PgSql\Connection</classname>,
+   если выполнилась успешно,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -104,8 +104,8 @@
      <row>
       <entry>8.1.0</entry>
       <entry>
-       Возвращает экземпляр <classname>PgSql\Connection</classname>;
-       ранее возвращался ресурс (&resource;).
+       Функция теперь возвращает экземпляр класса <classname>PgSql\Connection</classname>;
+       раньше возвращался ресурс (&resource;).
       </entry>
      </row>
     </tbody>
@@ -117,25 +117,28 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Использование функции <function>pg_connect</function></title>
+    <title>Пример установки соединения функцией <function>pg_connect</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
+// Подключение к базе данных "mary"
 $dbconn = pg_connect("dbname=mary");
-//подключиться к базе "mary"
 
+// Подключение к базе "mary" на хосте "localhost" и порте "5432"
 $dbconn2 = pg_connect("host=localhost port=5432 dbname=mary");
-//подключиться к базе "mary" на хосте "localhost", порт "5432"
 
+// Подключение к базе "mary" на хосте "sheep" с именем пользователя и паролем
 $dbconn3 = pg_connect("host=sheep port=5432 dbname=mary user=lamb password=foo");
-//подключиться к базе "mary" на хосте "sheep", используя имя пользователя и пароль
 
+// Подключение к базе "test" на хосте "sheep" с именем пользователя и паролем
 $conn_string = "host=sheep port=5432 dbname=test user=lamb password=bar";
 $dbconn4 = pg_connect($conn_string);
-//подключиться к базе "test" на хосте "sheep", используя имя пользователя и пароль
 
+// Подключение к базе на хосте "localhost" с передачей параметра командной строки,
+// который устанавливает кодировку UTF-8
 $dbconn5 = pg_connect("host=localhost options='--client_encoding=UTF8'");
-//подключиться к базе на хосте "localhost" и передать параметр командной строки, задающий кодировку UTF-8
+
 ?>
 ]]>
     </programlisting>
