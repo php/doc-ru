@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 459c0e1de40c71062731abb431ec1c9f74b2aaf2 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: d987f5fea44af3e2b2740bebc9700903cdfcf1f6 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration71.new-features" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Новые возможности</title>
@@ -8,10 +8,10 @@
   <title>Обнуляемые типы</title>
 
   <para>
-   Типы для параметров и возвращаемых значений могут быть помечены как
-   обнуляемые путём добавления префикса в виде знака вопроса.
-   Это означает, что указанные параметры и возвращаемые значения, могут
-   быть как указанного типа, так и &null;.
+   Типы параметров и значений возврата функций стали обнуляемыми.
+   Тип становится обнуляемым, если перед названием типа указали вопросительный знак.
+   Знак вопроса перед названием типа указывает, что параметр принимает, или функция возвращает,
+   значение заданного типа или значение &null;.
   </para>
 
   <informalexample>
@@ -19,19 +19,19 @@
 <![CDATA[
 <?php
 
-function testReturn(): ?string
+function testReturnA(): ?string
 {
     return 'elePHPant';
 }
 
-var_dump(testReturn());
+var_dump(testReturnA());
 
-function testReturn(): ?string
+function testReturnB(): ?string
 {
     return null;
 }
 
-var_dump(testReturn());
+var_dump(testReturnB());
 
 function test(?string $name)
 {
@@ -41,36 +41,38 @@ function test(?string $name)
 test('elePHPant');
 test(null);
 test();
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
-string(10) "elePHPant"
+string(9) "elePHPant"
 NULL
-string(10) "elePHPant"
+string(9) "elePHPant"
 NULL
-Uncaught Error: Too few arguments to function test(), 0 passed in...
+Fatal error: Uncaught ArgumentCountError: Too few arguments to function test(), 0 passed in...
 ]]>
    </screen>
   </informalexample>
  </sect2>
 
  <sect2 xml:id="migration71.new-features.void-functions">
-  <title>Ничего не возвращающие функции</title>
+  <title>Функции без возврата значения</title>
 
   <para>
-   Был добавлен тип возвращаемого значения <type>void</type>. Функции с
-   таким заданным типом возвращаемого значения не должны ничего возвращать.
-   То есть либо вообще не содержать ни одного оператора return, либо использовать его без
-   параметра. &null; не является корректным значением для возврата в
-   таких функциях.
+   Для значений возврата добавили тип <type>void</type>. В функциях
+   с типом возврата void потребуется либо пропустить инструкцию return,
+   либо указать пустую инструкцию return, без значения. Из void-функций
+   нельзя возвращать значение &null;.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 function swap(&$left, &$right): void
 {
     if ($left === $right) {
@@ -85,6 +87,8 @@ function swap(&$left, &$right): void
 $a = 1;
 $b = 2;
 var_dump(swap($a, $b), $a, $b);
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -98,10 +102,9 @@ int(1)
   </informalexample>
 
   <para>
-   Попытка использовать возвращаемое значение таких функций приведёт к тому,
-   что это значение будет считаться за &null;, без вывода предупреждения.
-   Причина этого в том, что предупреждения будут вызывать общих функций
-   высшего порядка.
+   При попытке получить возврат void-функции значение вычисляется как &null;, без выдачи предупреждения.
+   Причина такого поведения состоит в том, что предупреждения ограничили бы работу общих функций
+   высшего порядка с void-функциями.
   </para>
  </sect2>
 
@@ -109,35 +112,39 @@ int(1)
   <title>Симметричная деструктуризация массива</title>
 
   <para>
-   Можно использовать короткий синтаксис (<literal>[]</literal>) для деструктуризации
-   массивов с целью присвоения (в том числе в <literal>foreach</literal>), как альтернатива
-   функции <function>list</function>, которая, впрочем, всё ещё поддерживается.
+   Короткий синтаксис массивов <literal>[]</literal> теперь доступен для деструктуризации массивов
+   и присваивания значений, в том числе в циклах <literal>foreach</literal>.
+   Короткий синтаксис появился как альтернатива
+   языковой конструкции <function>list</function>, которая по-прежнему поддерживается.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $data = [
     [1, 'Tom'],
     [2, 'Fred'],
 ];
 
-// используя list()
+// Деструктуризация массива в стиле языковой конструкции list()
 list($id1, $name1) = $data[0];
 
-// используя []
+// Деструктуризация массива в стиле короткого синтаксиса массивов []
 [$id1, $name1] = $data[0];
 
-// используя list()
+// Деструктуризация через list()
 foreach ($data as list($id, $name)) {
-    // код, содержащий $id и $name
+    // В этом месте применяем логику работы с переменными $id и $name
 }
 
-// используя []
+// Деструктуризация через короткий синтаксис []
 foreach ($data as [$id, $name]) {
-    // код, содержащий $id и $name
+    // В этом месте применяем логику работы с переменными $id и $name
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
@@ -147,13 +154,14 @@ foreach ($data as [$id, $name]) {
   <title>Видимость констант класса</title>
 
   <para>
-   Добавлена поддержка определения области видимости для констант класса.
+   Константы классов теперь поддерживают определение области видимости.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class ConstDemo
 {
     const PUBLIC_CONST_A = 1;
@@ -161,6 +169,8 @@ class ConstDemo
     protected const PROTECTED_CONST = 3;
     private const PRIVATE_CONST = 4;
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
@@ -170,21 +180,21 @@ class ConstDemo
   <title>Псевдотип <type>iterable</type></title>
 
   <para>
-   Был добавлен новый псевдотип (похожий на <type>callable</type>), названный
-   <type>iterable</type>. Он может использоваться как параметр, так и в качестве
-   возвращаемого значения там, где используется массив или объект,
-   реализующий интерфейс <classname>Traversable</classname>.
-   Что касается подтипов, типы параметров из дочерних классов могут расширить
-   декларацию родителей типа <type>array</type> или <classname>Traversable</classname>
-   до <type>iterable</type>. Для типов возврата, дочерние классы могут сужать тип
-   возвращаемого значения с <type>iterable</type> до <type>array</type> или объекта
-   реализующего <classname>Traversable</classname>.
+   Семейство псевдотипов, к которым также относится тип <type>callable</type>,
+   пополнилось новым псевдотипом с названием <type>iterable</type>. Новый псевдотип доступен и как тип параметров,
+   и как тип значений возврата, которые принимают массивы или объекты,
+   которые реализуют интерфейс <classname>Traversable</classname>.
+   В вопросах подтипирования, типам параметров дочерних классов доступно расширение
+   типа <type>array</type> или <classname>Traversable</classname> в объявлениях родительского класса
+   до типа <type>iterable</type>. В объявлениях типа возврата дочерним классам разрешается сужать
+   тип возврата родительского метода с <type>iterable</type> до <type>array</type> или <classname>Traversable</classname>.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 function iterator(iterable $iter)
 {
     foreach ($iter as $val) {
@@ -197,22 +207,23 @@ function iterator(iterable $iter)
  </sect2>
 
  <sect2 xml:id="migration71.new-features.mulit-catch-exception-handling">
-  <title>Обработка нескольких исключений в одном блоке catch</title>
+  <title>Обработка набора исключений в одном блоке catch</title>
 
   <para>
-   В блоке catch теперь можно обрабатывать несколько исключений, перечисляя их
-   через символ вертикальной черты (<literal>|</literal>). Это может быть полезно,
-   если различные исключения обрабатываются одинаково.
+   Блоки catch научились обрабатывать набор исключений, которые
+   указывают через символ вертикальной черты <literal>|</literal>. Это приносит пользу,
+   когда исключения разных иерархий классов требуется обрабатывать одинаково.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 try {
-    // Какой то код
+    // Какой-то код
 } catch (FirstException | SecondException $e) {
-    // Обрабатываем оба исключения
+    // Обрабатываем одно или другое исключение
 }
 ]]>
    </programlisting>
@@ -220,11 +231,12 @@ try {
  </sect2>
 
  <sect2 xml:id="migration71.new-features.support-for-keys-in-list">
-  <title>Поддержка ключей в <function>list</function></title>
+  <title>Поддержка ключей в языковой конструкции <function>list</function></title>
 
   <para>
-   Теперь вы можете указывать ключи в операторе <function>list</function> или в
-   его новом коротком синтаксисе <literal>[]</literal>. Это позволяет деструктурировать
+   Языковая конструкция <function>list</function> и её новый
+   короткий синтаксис <literal>[]</literal> теперь поддерживают ключи.
+   Это помогает деструктурировать
    массивы с нечисловыми или непоследовательными ключами.
   </para>
 
@@ -232,48 +244,54 @@ try {
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $data = [
     ["id" => 1, "name" => 'Tom'],
     ["id" => 2, "name" => 'Fred'],
 ];
 
-// стиль list()
+// Деструктуризация массива в стиле языковой конструкции list()
 list("id" => $id1, "name" => $name1) = $data[0];
 
-// стиль []
+// Деструктуризация массива в стиле короткого синтаксиса массивов []
 ["id" => $id1, "name" => $name1] = $data[0];
 
-// стиль list()
+// Деструктуризация в стиле list()
 foreach ($data as list("id" => $id, "name" => $name)) {
-    // logic here with $id and $name
+    // Применяем логику обработки переменных $id и $name
 }
 
-// стиль []
+// Деструктуризация в стиле короткого синтаксиса []
 foreach ($data as ["id" => $id, "name" => $name]) {
-    // logic here with $id and $name
+    // Применяем логику обработки переменных $id и $name
 }
+
+?>
 ]]>
    </programlisting>
   </informalexample>
  </sect2>
 
  <sect2 xml:id="migration71.new-features.support-for-negative-string-offsets">
-  <title>Поддержка отрицательных смещений для строк</title>
+  <title>Поддержка отрицательных смещений в строках</title>
 
   <para>
-   Поддержка отрицательных смещений для строк добавлена в
-   <link linkend="book.strings">функции для работы со строками</link>, а также в
-   <link linkend="language.types.string.substr">индексацию строк</link> с помощью
-   <literal>[]</literal> или <literal>{}</literal>. В этих случаях отрицательные
-   смещения интерпретируются как смещения относительно конца строки.
+   <link linkend="book.strings">В функции для работы со строками</link>, которые поддерживают смещения,
+   и <link linkend="language.types.string.substr">в работу с символами строки по индексу</link>
+   через короткий синтаксис массива <literal>[]</literal> или фигурные скобки <literal>{}</literal>
+   добавили поддержку отрицательных смещений в строках.
+   В функциях и при доступе к символам строки по индексу отрицательные смещения интерпретируются как смещения относительно конца строки.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump("abcdef"[-2]);
 var_dump(strpos("aabbcc", "b", -3));
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -286,51 +304,56 @@ int(3)
   </informalexample>
 
   <para>
-   Теперь поддерживаются отрицательные смещения в простом синтаксисе указания индекса
-   в строках и массивах.
+   Отрицательные смещения в строках и массивах теперь также
+   поддерживаются в простом синтаксисе разбора переменных внутри строк.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $string = 'bar';
-echo "Последний символ '$string' - '$string[-1]'.\n";
+echo "Последний символ в строке '$string' — '$string[-1]'.\n";
+
 ?>
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
-Последний символ 'bar' - 'r'.
+Последний символ в строке 'bar' — 'r'.
 ]]>
    </screen>
   </informalexample>
  </sect2>
 
  <sect2 xml:id="migration71.new-features.support-for-aead-in-ext-openssl">
-  <title>Поддержка AEAD в ext/openssl</title>
+  <title>Поддержка режима AEAD в модуле OpenSSL</title>
 
   <para>
-   Поддержка AEAD (режимы GCM и CCM) была добавлена путём расширения функций
-   <function>openssl_encrypt</function> и
-   <function>openssl_decrypt</function> дополнительными параметрами.
+   За счёт расширения функций <function>openssl_encrypt</function>
+   и <function>openssl_decrypt</function> дополнительными параметрами
+   добавили поддержку AEAD-режимов GCM и CCM.
   </para>
  </sect2>
 
  <sect2 xml:id="migration71.new-features.convert-callables-to-closures">
-  <title>Преобразование callable в <classname>Closure</classname> с помощью <methodname>Closure::fromCallable</methodname></title>
+  <title>
+   Преобразование значений с типом callable в тип <classname>Closure</classname> методом <methodname>Closure::fromCallable</methodname>
+  </title>
 
   <para>
-   В класс <classname>Closure</classname> добавлен новый статический метод
-   для возможности легко преобразовать <type>callable</type> в объекты типа
-   <classname>Closure</classname>.
+   В класс <classname>Closure</classname> добавили новый статический метод,
+   который легко преобразовывает значения с типом <type>callable</type> в объекты
+   класса <classname>Closure</classname>.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class Test
 {
     public function exposeFunction()
@@ -346,6 +369,8 @@ class Test
 
 $privFunc = (new Test)->exposeFunction();
 $privFunc('значение');
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -361,22 +386,24 @@ string(16) "значение"
   <title>Асинхронная обработка сигналов</title>
 
   <para>
-   Новая функция <function>pcntl_async_signals</function> была добавлена
-   для разрешения асинхронной обработки сигналов без использования тиков
-   (которые производят много накладных расходов).
+   Для асинхронной обработки сигналов в ядро PHP добавили функцию <function>pcntl_async_signals</function>.
+   Новая функция не использует механизм тиков, который вызывает избыточные накладные расходы.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
-pcntl_async_signals(true); // включает асинхронные сигналы
+
+pcntl_async_signals(true); // Включает асинхронные сигналы
 
 pcntl_signal(SIGHUP,  function($sig) {
     echo "SIGHUP\n";
 });
 
 posix_kill(posix_getpid(), SIGHUP);
+
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -389,14 +416,14 @@ SIGHUP
  </sect2>
 
  <sect2 xml:id="migration71.new-features.http2-server-push-support-in-ext-curl">
-  <title>Поддержка HTTP/2 server push в ext/curl</title>
+  <title>Поддержка механизма HTTP/2 Server Push в модуле cURL</title>
 
   <para>
-   Поддержка "server push" добавлена в модуль CURL (требуется версия 7.46 и выше).
-   Использовать можно в функции <function>curl_multi_setopt</function> с новой
-   константой <constant>CURLMOPT_PUSHFUNCTION</constant>. Также добавлены константы
-   <constant>CURL_PUSH_OK</constant> и <constant>CURL_PUSH_DENY</constant> для
-   определения, был ли принят или отклонён "server push".
+   В модуль cURL добавили поддержку механизма Server Push. Для работы механизма требуется библиотека cURL версия 7.46 и выше.
+   Поддержка заблаговременной отправки данных работает в функции <function>curl_multi_setopt</function> с новой
+   константой <constant>CURLMOPT_PUSHFUNCTION</constant>. В модуль также добавили константы
+   <constant>CURL_PUSH_OK</constant> и <constant>CURL_PUSH_DENY</constant>,
+   чтобы одобрить или отклонить выполнение Server Push в клиентской callback-функции.
   </para>
  </sect2>
 
@@ -404,7 +431,7 @@ SIGHUP
   <title>Контекстные опции потока</title>
 
   <para>
-   Была добавлена опция контекста потока <link linkend="context.socket.tcp_nodelay">tcp_nodelay</link>.
+   В контекст потока добавили параметр <link linkend="context.socket.tcp_nodelay">tcp_nodelay</link>.
   </para>
  </sect2>
 </sect1>
