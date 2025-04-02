@@ -1,71 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 2485376b5b3d6b40e5c0d4e198ab5ff2a142425c Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect2 xml:id="migration70.incompatible.error-handling">
  <title>Изменения в обработке ошибок и исключений</title>
 
  <para>
-  Многие фатальные и поправимые фатальные ошибки были
-  переделаны в исключения в PHP 7. Эти исключения наследуют
+  В PHP 7 многие фатальные и поправимые фатальные ошибки
+  переделали в исключения. Эти исключения наследуют
   класс <classname>Error</classname>, который, в свою
   очередь, реализует интерфейс
   <classname>Throwable</classname>
-  (новый базовый интерфейс, который наследуют все исключения).
+  (новый базовый интерфейс, который наследуют исключения).
  </para>
 
  <para>
-  Это означает, пользовательские обработчики ошибок могут
-  не быть вызваны, потому что вместо вызова ошибки, будет
-  выброшено исключение (порождая новые фатальные ошибки
+  Поэтому пользовательские обработчики ошибок
+  не вызовутся, если вместо вызова ошибки
+  выбросится исключение (порождая новые фатальные ошибки
   из-за неперехваченных исключений класса
   <classname>Error</classname>).
  </para>
 
  <para>
-  Более подробное описание того, как ошибки работают в PHP 7,
-  можно найти на странице
+  Более подробное описание работы ошибок в PHP 7
+  даёт страница
   <link linkend="language.errors.php7">ошибки PHP 7</link>.
-  Это руководство всего лишь перечисляет изменения, которые
-  могут привести к обратной несовместимости.
+  Это руководство только перечисляет изменения, которые
+  приводят к обратной несовместимости.
  </para>
 
  <sect3 xml:id="migration70.incompatible.error-handling.set-exception-handler">
   <title>
-   <function>set_exception_handler</function> больше не
-   гарантирует получение объекта класса
+   Функция <function>set_exception_handler</function> больше
+   не гарантирует получение объекта класса
    <classname>Exception</classname>
   </title>
 
   <para>
-   Код, реализующий регистрацию обработчика исключений
-   с помощью <function>set_exception_handler</function>,
-   используя декларацию типа
-   <classname>Exception</classname>, вызовет фатальную
-   ошибку, если будет выброшено исключение
+   Код, который реализует регистрацию обработчика исключений
+   функцией <function>set_exception_handler</function>
+   через декларацию типа
+   <classname>Exception</classname> вызовет фатальную
+   ошибку, если выбросится исключение
    <classname>Error</classname>.
   </para>
 
   <para>
-   Если требуется работа обработчика в PHP 5 и 7, вы должны
-   убрать объявление класса из обработчика. Если код
-   предполагается использовать только в PHP 7, то можно
-   просто поменять тип с <classname>Exception</classname> на
-   <classname>Throwable</classname>.
+   Потребуется убрать объявление класса из обработчика,
+   если требуется работа обработчика в PHP 5 и 7. Достаточно
+   изменить тип <classname>Exception</classname> на тип
+   <classname>Throwable</classname>, если код
+   планируется использовать только в PHP 7.
   </para>
 
   <informalexample>
    <programlisting role="php">
 <![CDATA[
 <?php
-// Только PHP 5. В PHP 7 может вызвать фатальную ошибку.
+
+// Только PHP 5. В PHP 7 при исключении другого типа вызывает фатальную ошибку
 function handler(Exception $e) { /* ... */ }
 set_exception_handler('handler');
 
-// Будет работать PHP 5 и 7.
-function handler($e) { ... }
+// Будет работать PHP 5 и 7
+function handler($e) { /* ... */ }
 
-// Только PHP 7.
+// Только PHP 7
 function handler(Throwable $e) { /* ... */ }
+
 ?>
 ]]>
    </programlisting>
@@ -73,14 +75,14 @@ function handler(Throwable $e) { /* ... */ }
  </sect3>
 
  <sect3 xml:id="migration70.incompatible.error-handling.constructors">
-  <title>Встроенные конструкторы всегда вызывают исключения в случае неудачи</title>
+  <title>Встроенные конструкторы вызывают исключения при ошибке</title>
 
   <para>
-   Ранее некоторые внутренние классы возвращали
-   &null; или бесполезный объект, когда конструктор терпел неудачу. Все
-   встроенные классы теперь в таком случае будут выбрасывать
-   исключение <classname>Exception</classname>, ровно
-   как это уже делают пользовательские классы.
+   Раньше отдельные внутренние классы возвращали
+   &null; или бесполезный объект, когда конструктор терпел неудачу.
+   Теперь встроенные классы в таких случаях выбрасывают
+   исключение <classname>Exception</classname>,
+   так же, как это уже делают пользовательские классы.
   </para>
  </sect3>
 
@@ -98,11 +100,11 @@ function handler(Throwable $e) { /* ... */ }
   <title>Изменение строгости уведомлений E_STRICT</title>
 
   <para>
-   Все сообщения <constant>E_STRICT</constant>
-   переквалифицированы по другим уровням.
-   Константа <constant>E_STRICT</constant> сохранена, так что
-   <literal>error_reporting(E_ALL|E_STRICT)</literal> не вызовет
-   ошибки.
+   Сообщения уровня <constant>E_STRICT</constant>
+   переквалифицировали по другим уровням.
+   Константу <constant>E_STRICT</constant> сохранили, поэтому
+   установка <literal>error_reporting(E_ALL|E_STRICT)</literal> не вызовет
+   ошибок.
   </para>
   <para>
    <table>
@@ -111,21 +113,21 @@ function handler(Throwable $e) { /* ... */ }
      <thead>
       <row>
        <entry>Ситуация</entry>
-       <entry>Новый уровень/поведение</entry>
+       <entry>Новый уровень или поведение</entry>
       </row>
      </thead>
      <tbody>
       <row>
-       <entry>Индексирование ресурсом</entry>
+       <entry>Установка ресурса как индекса</entry>
        <entry><constant>E_NOTICE</constant></entry>
       </row>
       <row>
        <entry>Абстрактные статические методы</entry>
-       <entry>Сообщение убрано, не вызывает ошибки</entry>
+       <entry>Сообщение убрали, ошибка не возникает</entry>
       </row>
       <row>
-       <entry>"Переопределение" конструктора</entry>
-       <entry>Сообщение убрано, не вызывает ошибки</entry>
+       <entry>«Переопределение» конструктора</entry>
+       <entry>Сообщение убрали, ошибка не возникает</entry>
       </row>
       <row>
        <entry>Несоблюдение сигнатуры при наследовании</entry>
@@ -133,18 +135,18 @@ function handler(Throwable $e) { /* ... */ }
       </row>
       <row>
        <entry>Одинаковые (совместимые) свойства в двух разных трейтах</entry>
-       <entry>Сообщение убрано, не вызывает ошибки</entry>
+       <entry>Сообщение убрали, ошибка не возникает</entry>
       </row>
       <row>
        <entry>Нестатический доступ к статическому свойству</entry>
        <entry><constant>E_NOTICE</constant></entry>
       </row>
       <row>
-       <entry>Только переменные могут быть присвоены по ссылке</entry>
+       <entry>Только переменные присваиваются по ссылке</entry>
        <entry><constant>E_NOTICE</constant></entry>
       </row>
       <row>
-       <entry>Только переменные могут быть переданы по ссылке</entry>
+       <entry>Только переменные передаются по ссылке</entry>
        <entry><constant>E_NOTICE</constant></entry>
       </row>
       <row>
