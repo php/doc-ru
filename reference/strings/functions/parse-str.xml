@@ -4,7 +4,7 @@
 <refentry xml:id="function.parse-str" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>parse_str</refname>
-  <refpurpose>Разбирает строку в переменные</refpurpose>
+  <refpurpose>Разбирает строку на переменные</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,9 +15,9 @@
    <methodparam><type>array</type><parameter role="reference">result</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Разбирает строку <parameter>string</parameter>, которая должна иметь
-   формат строки запроса URL и присваивает значения переменным в текущем
-   контексте (или заносит в массив, если задан параметр <parameter>result</parameter>).
+   Функция разбирает аргумент <parameter>string</parameter> как строку запроса,
+   которую передали в URL-адресе, и устанавливает переменные в текущей
+   области видимости, или заносит переменные в массив, если указали параметр <parameter>result</parameter>.
   </para>
  </refsect1>
 
@@ -37,17 +37,16 @@
      <term><parameter>result</parameter></term>
      <listitem>
       <para>
-       Если указан второй параметр <parameter>result</parameter>,
-       то вместо присвоения переменных в текущем контексте они
-       будут сохранены в этом параметре в качестве
-       элементов массива.
+       При вызове с двумя аргументами функция вместо присваивания переменных в текущей
+       области видимости сохраняет переменные как элементы массива
+       в параметре <parameter>result</parameter>.
       </para>
       <warning>
        <para>
-        Использовать эту функцию без параметра <parameter>result</parameter>
-        крайне <emphasis>НЕ РЕКОМЕНДУЕТСЯ</emphasis>. Подобное использование
-        объявлено <emphasis>УСТАРЕВШИМ</emphasis> с PHP 7.2.
-        Начиная с PHP 8.0.0, параметр <parameter>result</parameter> является <emphasis>обязательным</emphasis>.
+        Вызывать функцию без параметра <parameter>result</parameter>
+        настоятельно <emphasis>НЕ РЕКОМЕНДУЮТ</emphasis>, такой вызов
+        <emphasis>УСТАРЕЛ</emphasis> начиная с PHP 7.2.
+        С PHP 8.0.0 параметр <parameter>result</parameter> стал <emphasis>обязательным</emphasis>.
        </para>
       </warning>
      </listitem>
@@ -78,14 +77,14 @@
       <row>
       <entry>8.0.0</entry>
       <entry>
-       <parameter>result</parameter> больше не является необязательным.
+       Параметр <parameter>result</parameter> сделали обязательным.
       </entry>
      </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Использование <function>parse_str</function> без второго параметра будет
-        вызывать ошибку уровня <constant>E_DEPRECATED</constant>.
+        Вызов функции <function>parse_str</function> без второго параметра теперь
+        выдаёт ошибку уровня <constant>E_DEPRECATED</constant>.
        </entry>
       </row>
      </tbody>
@@ -98,13 +97,14 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Использование <function>parse_str</function></title>
+    <title>Пример разбора строки на переменный функцией <function>parse_str</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $str = "first=value&arr[]=foo+bar&arr[]=baz";
 
-// Рекомендуемый подход
+// Рекомендуется
 parse_str($str, $output);
 echo $output['first'];  // value
 echo $output['arr'][0]; // foo bar
@@ -115,26 +115,29 @@ parse_str($str);
 echo $first;  // value
 echo $arr[0]; // foo bar
 echo $arr[1]; // baz
+
 ?>
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
-   Так как имена переменных PHP не могут содержать пробелы и точки,
-   эти символы будут заменены на символ подчёркивания. Такие же правила
-   накладываются на имена ключей в массиве
-   <parameter>result</parameter>, если он задан.
+   Поскольку в PHP названия переменных не содержат точек и пробелов,
+   такие символы преобразовываются в символ подчёркивания. Эти же правила
+   относятся к названиям ключей в массиве
+   <parameter>result</parameter>, при вызове с функции с двумя аргументами.
    <example>
-    <title>Соотношение имён <function>parse_str</function></title>
+    <title>Пример искажения названий переменных и ключей функцией <function>parse_str</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 parse_str("My Value=Something");
-echo $My_Value; // Something
+echo $My_Value; // Выводит Something
 
 parse_str("My Value=Something", $output);
-echo $output['My_Value']; // Something
+echo $output['My_Value']; // Выводит Something
+
 ?>
 ]]>
     </programlisting>
@@ -146,16 +149,16 @@ echo $output['My_Value']; // Something
 
   <note>
    <para>
-    Все переменные создаются (или заносятся в массив)
-    уже обработанные функцией <function>urldecode</function>.
+    Каждая переменная, которую функция создаёт, и каждое значение, которое возвращается
+    в массиве при вызове со вторым аргументом, обрабатывается функцией <function>urldecode</function>.
    </para>
   </note>
   <note>
    <para>
-    Для получения текущей <literal>QUERY_STRING</literal>, можно использовать
-    переменную <varname>$_SERVER['QUERY_STRING']</varname>.
-    Кроме того, возможно вы захотите прочесть раздел о
-    <link linkend="language.variables.external">переменных вне PHP</link>.
+    Текущая строка запроса <literal>QUERY_STRING</literal>
+    доступна в переменной <varname>$_SERVER['QUERY_STRING']</varname>.
+    Рекомендуется также прочитать раздел
+    <link linkend="language.variables.external">о переменных из внешних источников</link>.
    </para>
   </note>
  </refsect1>
