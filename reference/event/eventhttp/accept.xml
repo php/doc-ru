@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: da9d81816187b87c03a6cd92a3c3b833f039485c Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 23ea6be076881a34e1d454e9680968ece085f7f6 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="eventhttp.accept" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>EventHttp::accept</refname>
-  <refpurpose>Заставляет HTTP-сервер принимать соединения с указанным потоком сокета или ресурсом</refpurpose>
+  <refpurpose>Заставляет HTTP-сервер принимать соединения на заданном потоке сокета или ресурса</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -19,18 +18,19 @@
    </methodparam>
   </methodsynopsis>
   <para>
-   Заставляет HTTP-сервер принимать соединения с указанным потоком сокета или ресурсом.
-   Сокет должен быть готов к приёму соединений.
+   Заставляет HTTP-сервер принимать соединения на заданном потоке сокета или ресурса.
+   Потребуется подготовить сокет к приёму соединений.
   </para>
   <para>
-   Может вызываться несколько раз, чтобы принимать соединения на разных сокетах.
+   Метод вызвают несколько раз, чтобы принимать соединения на разных сокетах.
   </para>
   <note>
    <para>
-    Чтобы связать сокет, <literal>прослушать</literal> и <literal>принять</literal>
-    соединения на сокете в одном вызове, используйте <methodname>EventHttp::bind</methodname>.
-    <methodname>EventHttp::accept</methodname> требуется только в том случае,
-    если у одного вызова уже есть сокет, готовый для принятия соединений.
+    Метод <methodname>EventHttp::bind</methodname> привязывает сокет, переводит сокет в режим <literal>listen</literal>
+    для ожидания соединений и принимает соединения на сокете через системный вызов <literal>accept</literal>
+    в одном вызове.
+    Метод <methodname>EventHttp::accept</methodname> вызывают,
+    только если сокет уже готов принимать соединения.
    </para>
   </note>
  </refsect1>
@@ -44,7 +44,7 @@
     <listitem>
      <para>
       Ресурс сокета, потоковый или числовой дескриптор файла,
-      представляющий сокет, готовый принимать соединения.
+      которые представляют сокет, готовый принимать соединения.
      </para>
     </listitem>
    </varlistentry>
@@ -59,17 +59,18 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>EventHttp::accept</function></title>
+   <title>Пример работы метода <function>EventHttp::accept</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $base = new EventBase();
 $http = new EventHttp($base);
 
-$addresses = array (
-     8091 => "127.0.0.1",
-     8092 => "127.0.0.2",
-);
+$addresses = [
+    8091 => "127.0.0.1",
+    8092 => "127.0.0.2",
+];
 $i = 0;
 
 $socket = array();
@@ -77,9 +78,11 @@ $socket = array();
 foreach ($addresses as $port => $ip) {
     echo $ip, " ", $port, PHP_EOL;
     $socket[$i] = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+
     if (!socket_bind($socket[$i], $ip, $port)) {
         exit("ошибка socket_bind\n");
     }
+
     socket_listen($socket[$i], 0);
     socket_set_nonblock($socket[$i]);
 
@@ -91,14 +94,14 @@ foreach ($addresses as $port => $ip) {
     ++$i;
 }
 
-$http->setCallback("/some-page", function() {
- echo "(some-page)\n";
+$http->setCallback("/some-page", function () {
+    echo "(some-page)\n";
     echo "URI: ", $req->getUri(), PHP_EOL;
     $req->sendReply(200, "OK");
     echo "OK\n";
 });
 
-$http->setDefaultCallback(function($req) {
+$http->setDefaultCallback(function ($req) {
     echo "URI: ", $req->getUri(), PHP_EOL;
     $req->sendReply(200, "OK");
     echo "OK\n";
