@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: da9d81816187b87c03a6cd92a3c3b833f039485c Maintainer: zors1 Status: ready -->
+<!-- EN-Revision: 23ea6be076881a34e1d454e9680968ece085f7f6 Maintainer: zors1 Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="eventbufferevent.connecthost" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>EventBufferEvent::connectHost</refname>
-  <refpurpose>Подключается по имени хоста с возможностью асинхронного разрешения DNS</refpurpose>
+  <refpurpose>Соединяется с хостом по имени с необязательным асинхронным разрешением DNS-имени</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -34,32 +33,32 @@
    </methodparam>
   </methodsynopsis>
   <para>
-   Разрешает имя хоста DNS-имени, ища адреса типа <parameter>family</parameter>
-   (константы <literal>EventUtil::AF_*</literal>). Если разрешение имени не
-   удалось произвести, вызывает callback-функцию события с событием ошибки. В
-   случае успешного выполнения совершает попытку подключения так же, как
-   <methodname>EventBufferEvent::connect</methodname>.
+   Метод разрешает DNS-имя хоста путём поиска адресов, тип которых указали в параметре <parameter>family</parameter>
+   константой семейства <literal>EventUtil::AF_*</literal>. При ошибке разрешения
+   имени метод вызывает callback-функцию события с событием ошибки.
+   Метод, если завершается успешно, запускает попытку подключения так же,
+   как это сделал бы метод <methodname>EventBufferEvent::connect</methodname>.
   </para>
   <para>
-   Параметр <parameter>dns_base</parameter> не является обязательным. Он может
-   иметь значение &null; или ссылаться на объект, созданный с помощью
+   Параметр <parameter>dns_base</parameter> необязателен и принимает
+   значение &null; или ссылается на объект, который создали методом
    <methodname>EventDnsBase::__construct</methodname>. Для асинхронного
-   разрешения имени хоста необходимо передать действительный базовый ресурс
-   DNS-события. В противном случае разрешение имени хоста будет заблокировано.
+   разрешения имени хоста потребуется передать действительный базовый ресурс
+   DNS-события, иначе разрешение имени хоста заблокируется.
   </para>
   <note>
    <para>
-    <classname>EventDnsBase</classname> доступен, только если
-    <literal>Event</literal> настроен с
+    Класс <classname>EventDnsBase</classname> доступен, только если
+    модуль <literal>Event</literal> сконфигурировали с параметром
     <option role="configure">--with-event-extra</option> (библиотека
     <literal>event_extra</literal>, <emphasis>поддержка функций протокола
-    libevent, включая HTTP, DNS и RPC</emphasis>).
+    libevent, включая протокол HTTP, систему DNS и проткол RPC</emphasis>).
    </para>
   </note>
   <note>
    <para>
-    <methodname>EventBufferEvent::connectHost</methodname>
-    требует
+    Методу <methodname>EventBufferEvent::connectHost</methodname>
+    требуется модуль
     <literal>libevent-2.0.3-alpha</literal>
     или выше.
    </para>
@@ -75,9 +74,9 @@
     </term>
     <listitem>
      <para>
-      Объект
-      <classname>EventDnsBase</classname>
-      в случае, если DNS нужно разрешить асинхронно. &null; в противном случае.
+      В параметр передают объект
+      <classname>EventDnsBase</classname>,
+      если DNS-имя требуется разрешить асинхронно, иначе значение &null;.
      </para>
     </listitem>
    </varlistentry>
@@ -117,10 +116,10 @@
      <para>
       Семейство адресов.
       <constant>EventUtil::AF_UNSPEC</constant>,
-      <constant>EventUtil::AF_INET</constant> или
-      <constant>EventUtil::AF_INET6</constant>.
-      Обратитесь к списку
-      <link linkend="eventutil.constants">констант EventUtil</link>.
+      <constant>EventUtil::AF_INET</constant>
+      или <constant>EventUtil::AF_INET6</constant>.
+      Смотрите
+      <link linkend="eventutil.constants">константы класса EventUtil</link>.
      </para>
     </listitem>
    </varlistentry>
@@ -138,15 +137,17 @@
   &reftitle.examples;
   <example>
    <title>
-    <function>Пример использования EventBufferEvent::connectHost</function></title>
+    <function>Пример работы метода EventBufferEvent::connectHost</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
-/* Callback-функция чтения */
-function readcb($bev, $base) {
-    //$input = $bev->input; //$bev->getInput();
 
-    //$pos = $input->search("TTP");
+/* Callback-функция чтения */
+function readcb($bev, $base)
+{
+    // $input = $bev->input; //$bev->getInput();
+
+    // $pos = $input->search("TTP");
     $pos = $bev->input->search("TTP");
 
     while (($n = $bev->input->remove($buf, 1024)) > 0) {
@@ -155,7 +156,8 @@ function readcb($bev, $base) {
 }
 
 /* Callback-функция события */
-function eventcb($bev, $events, $base) {
+function eventcb($bev, $events, $base)
+{
     if ($events & EventBufferEvent::CONNECTED) {
         echo "Подключено.\n";
     } elseif ($events & (EventBufferEvent::ERROR | EventBufferEvent::EOF)) {
@@ -171,12 +173,12 @@ function eventcb($bev, $events, $base) {
 
 $base = new EventBase();
 
-$dns_base = new EventDnsBase($base, TRUE); // Использование асинхронного разрешения DNS
+$dns_base = new EventDnsBase($base, TRUE); // Асинхронное разрешение DNS-имени
 if (!$dns_base) {
     exit("Не удалось запустить базу DNS\n");
 }
 
-$bev = new EventBufferEvent($base, /* использование внутреннего сокета */ NULL,
+$bev = new EventBufferEvent($base, /* Использовать внутренний сокет */ NULL,
     EventBufferEvent::OPT_CLOSE_ON_FREE | EventBufferEvent::OPT_DEFER_CALLBACKS,
     "readcb", /* writecb */ NULL, "eventcb", $base
 );
@@ -184,7 +186,7 @@ if (!$bev) {
     exit("Не удалось создать сокет bufferevent\n");
 }
 
-//$bev->setCallbacks("readcb", /* writecb */ NULL, "eventcb", $base);
+// $bev->setCallbacks("readcb", /* writecb */ NULL, "eventcb", $base);
 $bev->enable(Event::READ | Event::WRITE);
 
 $output = $bev->output; //$bev->getOutput();
@@ -201,6 +203,7 @@ if (!$bev->connectHost($dns_base, $argv[1], 80, EventUtil::AF_UNSPEC)) {
 }
 
 $base->dispatch();
+
 ?>
 ]]>
    </programlisting>
