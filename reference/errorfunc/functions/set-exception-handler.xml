@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 686b6869e2695d96d0f3a2055cfa629a8b3b1ac7 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 4a6671fe697ead5b27603b56face01a2c4e7ebe5 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.set-exception-handler" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>set_exception_handler</refname>
   <refpurpose>
-   Задаёт пользовательский обработчик исключений
+   Устанавливает пользовательскую функцию обработчика исключений
   </refpurpose>
  </refnamediv>
 
@@ -16,9 +16,9 @@
    <methodparam><type class="union"><type>callable</type><type>null</type></type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Задаёт обработчик по умолчанию для случаев, когда исключение выброшено
-   вне блока try/catch. После вызова <parameter>callback</parameter>
-   выполнение будет остановлено.
+   Функция устанавливает пользовательскую функцию как обработчик исключений по умолчанию
+   для перехвата исключений, которые не отловили в блоке try-catch. Выполнение скрипта остановится
+   после вызова <parameter>callback</parameter>-функции.
   </para>
  </refsect1>
 
@@ -30,11 +30,11 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Функция, вызываемая при возникновении неперехваченного исключения.
-       Эта функция-обработчик должна принимать один параметр, которым будет
-       объект выброшенного исключения <classname>Throwable</classname>.
-       И <classname>Error</classname> и <classname>Exception</classname>
-       реализуют интерфейс <classname>Throwable</classname>.
+       Функция, которую требуется вызвать, когда возникнет неперехваченное исключение.
+       В функции-обработчике определяют один параметр с типом <classname>Throwable</classname>,
+       в который придёт объект выброшенного исключения —
+       <classname>Error</classname> или <classname>Exception</classname>,
+       которые реализуют интерфейс <classname>Throwable</classname>.
        Сигнатура обработчика:
       </para>
       <para>
@@ -44,8 +44,8 @@
        </methodsynopsis>
       </para>
       <para>
-       В качестве этого аргумента можно передать &null;. В этом случае
-       обработчик вернётся к своему изначальному состоянию.
+       При передаче вместо callback-функции значения &null; пользовательский обработчик
+       исключений сбрасывается на встроенный обработчик.
       </para>
      </listitem>
     </varlistentry>
@@ -56,9 +56,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает ранее определённый обработчик исключений или &null; в случае
-   ошибки. Если предыдущих обработчиков определено не было, то также
-   возвращается &null;.
+   Функция возвращает предыдущий обработчик исключений или &null;,
+   если возникла ошибка. Функция также возвращает &null;,
+   если предыдущий обработчик не определили.
   </para>
  </refsect1>
 
@@ -67,19 +67,22 @@
   <para>
    <example>
     <title>
-     Пример использования <function>set_exception_handler</function>
+     Пример установки пользовательского обработчика исключений функцией <function>set_exception_handler</function>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-function exception_handler(Throwable $exception) {
+
+function exception_handler(Throwable $exception)
+{
   echo "Неперехваченное исключение: " , $exception->getMessage(), "\n";
 }
 
 set_exception_handler('exception_handler');
 
 throw new Exception('Неперехваченное исключение');
-echo "Не выполнено\n";
+echo "Не выполняется\n";
+
 ?>
 ]]>
     </programlisting>
@@ -91,6 +94,7 @@ echo "Не выполнено\n";
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member><function>get_exception_handler</function></member>
     <member><function>restore_exception_handler</function></member>
     <member><function>restore_error_handler</function></member>
     <member><function>error_reporting</function></member>
