@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 51ea49d0a56569458483a36478f6e5571a59bdc8 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 4639881688d3faaf0073ad71fe0a4b730aea15a0 Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mongodb-driver-manager.executebulkwrite" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -99,6 +99,13 @@
      </thead>
      <tbody>
       <row>
+       <entry>PECL-модуль mongodb 2.0.0</entry>
+       <entry>
+        Параметр <parameter>options</parameter> больше не принимает
+        объекты <classname>MongoDB\Driver\WriteConcern</classname>.
+       </entry>
+      </row>
+      <row>
        <entry>PECL-модуль mongodb 1.21.0</entry>
        <entry>
         Передача объекта <classname>MongoDB\Driver\WriteConcern</classname>
@@ -159,7 +166,7 @@ $bulk->delete(['x' => 1], ['limit' => 1]);
 
 $manager = new MongoDB\Driver\Manager('mongodb://localhost:27017');
 $writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 100);
-$result = $manager->executeBulkWrite('db.collection', $bulk, $writeConcern);
+$result = $manager->executeBulkWrite('db.collection', $bulk, ['writeConcern' => $writeConcern]);
 
 printf("Добавлено %d документ(ов)\n", $result->getInsertedCount());
 printf("Найдено %d документ(ов)\n", $result->getMatchedCount());
@@ -172,12 +179,12 @@ foreach ($result->getUpsertedIds() as $index => $id) {
     var_dump($id);
 }
 
-/* Если WriteConcern не может быть выполнен */
+/* При невозможности выполнить WriteConcern */
 if ($writeConcernError = $result->getWriteConcernError()) {
     printf("%s (%d): %s\n", $writeConcernError->getMessage(), $writeConcernError->getCode(), var_export($writeConcernError->getInfo(), true));
 }
 
-/* Если запись не может произойти вообще*/
+/* Если запись недоступна */
 foreach ($result->getWriteErrors() as $writeError) {
     printf("Операция#%d: %s (%d)\n", $writeError->getIndex(), $writeError->getMessage(), $writeError->getCode());
 }
