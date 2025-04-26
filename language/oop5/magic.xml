@@ -81,27 +81,27 @@
 
   <para>
    Функция <function>serialize</function> проверяет, определили ли
-   в классе метод с магическим именем <link linkend="object.sleep">__sleep()</link>.
-   Если метод определили, он выполняется перед сериализацией. Метод может
-   очистить объект и должен вернуть массив с именами
-   всех переменных этого объекта, которые должны быть сериализованы.
-   Если метод ничего не возвращает, то сериализуется константа &null;
+   в классе магический метод с названием <link linkend="object.sleep">__sleep()</link>.
+   Магический метод, если его определили, выполняется перед сериализацией. В методе очищают
+   сериализуемый объект, если требуетсея, и возвращают из метода массив с названиями
+   переменных объекта, которые требуется сериализовать.
+   При невозврате из магического метода значения сериализуется константа &null;
    и выдаётся предупреждение <constant>E_NOTICE</constant>.
   </para>
   <note>
    <para>
     Методу <link linkend="object.sleep">__sleep()</link> нельзя
-    возвращать имена закрытых свойств в родительских классах. Это
-    приведёт к ошибке уровня <constant>E_NOTICE</constant>.
-    Вместо этого используйте метод
-    <link linkend="object.serialize">__serialize()</link>.
+    возвращать названия закрытых свойств родительских классов.
+    Это сгенерирует ошибку уровня <constant>E_NOTICE</constant>.
+    Для сериализации закрытых родительских свойств вместо магического метода __sleep вызывают
+    магический метод <link linkend="object.serialize">__serialize()</link>.
    </para>
   </note>
   <note>
    <para>
-    Начиная с PHP 8.0.0 возврат из метода <link linkend="object.sleep">__sleep()</link>
-    значения, которое не является массивом,
-    генерирует предупреждение. Раньше выдавалось уведомление.
+    Начиная с PHP 8.0.0 при возврате из метода <link linkend="object.sleep">__sleep()</link>
+    значения кроме массива генерируется предупреждение.
+    Раньше выдавалось уведомление.
    </para>
   </note>
   <para>
@@ -111,15 +111,15 @@
   </para>
   <para>
    И наоборот, функция <function>unserialize</function> проверяет
-   наличие метода с магическим именем
+   в классе определение магического метода с названием
    <link linkend="object.wakeup">__wakeup()</link>.
-   Если метод определили, функция может восстанавливать любые ресурсы,
-   которые может иметь объект.
+   Методу пробуждения, если его определили в классе, доступно восстановление любых ресурсов,
+   которые разрешается содержать объекту.
   </para>
   <para>
    Назначение метода <link linkend="object.wakeup">__wakeup()</link> —
    восстановить соединения с базой данных,
-   которые могли потеряться во время сериализации,
+   которые потерялись при сериализации,
    и выполнить другие задачи повторной инициализации.
   </para>
   <example>
@@ -180,20 +180,20 @@ class Connection
 
   <para>
    Функция <function>serialize</function> проверяет, определили ли в классе
-   метод с магическим именем <link linkend="object.serialize">__serialize()</link>. Если метод определили,
+   магический метод с названием <link linkend="object.serialize">__serialize()</link>. Если метод определили,
    функция выполняется перед сериализацией. Метод должен создать и вернуть ассоциативный массив пар ключ и значение,
    которые представляют сериализованную форму объекта.
    Если метод не вернул массив, выбрасывается исключение <classname>TypeError</classname>.
   </para>
   <note>
    <para>
-    Если в одном и том же объекте определили оба метода —
+    При определении в классе обоих методов —
     и <link linkend="object.serialize">__serialize()</link>, и <link linkend="object.sleep">__sleep()</link>,
     PHP вызовет только метод <link linkend="object.serialize">__serialize()</link>.
     Метод <link linkend="object.sleep">__sleep()</link> проигнорируется.
-    Если объект реализует интерфейс <link linkend="class.serializable">Serializable</link>,
     PHP проигнорирует интерфейсный метод <literal>serialize()</literal>, и вместо него
-    будет использовать метод <link linkend="object.serialize">__serialize()</link>.
+    вызовет метод <link linkend="object.serialize">__serialize()</link>,
+    если класс реализует интерфейс <link linkend="class.serializable">Serializable</link>.
    </para>
   </note>
   <para>
@@ -202,22 +202,22 @@ class Connection
   </para>
   <para>
    И наоборот, функция <function>unserialize</function> проверяет
-   присутствие магического метода <link linkend="object.unserialize">__unserialize()</link>.
-   Если метод определили, PHP передаст методу массив, который восстановил и вернул метод
-   <link linkend="object.serialize">__serialize()</link>. Затем, если нужно,
-   метод восстанавливает свойства объекта из этого массива.
+   доступность магического метода <link linkend="object.unserialize">__unserialize()</link>.
+   PHP передаст методу массив, который восстановил и вернул метод
+   <link linkend="object.serialize">__serialize()</link>, если метод определили в классе.
+   А затем, если потребуется, метод восстановит свойства объекта из этого массива.
   </para>
   <note>
    <para>
-    Если в одном и том же объекте определили оба метода —
+    При определении в классе обоих методов —
     и <link linkend="object.unserialize">__unserialize()</link>, и <link linkend="object.wakeup">__wakeup()</link>,
-    PHP вызовет только метод <link linkend="object.unserialize">__unserialize()</link>.
-    Метод <link linkend="object.wakeup">__wakeup()</link> проигнорируется.
+    PHP вызовет только метод <link linkend="object.unserialize">__unserialize()</link>,
+    а метод <link linkend="object.wakeup">__wakeup()</link> проигнорируется.
    </para>
   </note>
   <note>
    <para>
-    Функция доступна с PHP 7.4.0.
+    Метод доступен с PHP 7.4.0.
    </para>
   </note>
   <example>
@@ -292,31 +292,31 @@ class Connection
     Объект, который реализует интерфейс <interfacename>Stringable</interfacename>,
     <emphasis>не</emphasis> будет приниматься объявлением типа <type>string</type>,
     если включили <link linkend="language.types.declarations.strict">строгую типизацию</link>.
-    Если такое поведение необходимо, то объявление типа должно принимать
+    Объявление типа должно принимать
     интерфейс <interfacename>Stringable</interfacename> и строку (<type>string</type>)
-    через объединение типов.
+    через объединение типов, если требуется такое поведение.
    </para>
    <para>
-    С PHP 8.0.0 любой класс, в котором описали метод <link linkend="object.tostring">__toString()</link>,
-    также будет неявно реализовывать интерфейс <interfacename>Stringable</interfacename> и, таким образом,
-    будет проходить проверку типа для этого интерфейса.
-    В любом случае рекомендуется явно реализовать интерфейс.
+    С PHP 8.0.0 каждый класс, в котором описали магический метод <link linkend="object.tostring">__toString()</link>,
+    неявно реализует интерфейс <interfacename>Stringable</interfacename>, и поэтому
+    проходит проверку типа для этого интерфейса.
+    В определении класса рекомендуют явно указывать, что класс реализует интерфейс.
     </para>
    <para>
-    В PHP 7.4 возвращаемое значение <emphasis>ДОЛЖНО</emphasis>
-    быть строкой (<type>string</type>), иначе выбрасывается исключение <classname>Error</classname>.
+    В PHP 7.4 значение возврата <emphasis>ДОЛЖНО</emphasis>
+    принадлежать типу <type>string</type>, иначе выбрасывается исключение <classname>Error</classname>.
    </para>
    <para>
-    До PHP 7.4.0 возвращаемое значение <emphasis>должно</emphasis> было быть
-    строкой (<type>string</type>), иначе выдавалась фатальная
-    ошибка <constant>E_RECOVERABLE_ERROR</constant>.
+    До PHP 7.4.0 значение возврата <emphasis>должно</emphasis> было принадлежать
+    типу <type>string</type>, иначе возникала фатальная
+    ошибка уровня <constant>E_RECOVERABLE_ERROR</constant>.
    </para>
   </warning>
   <warning>
    <simpara>
-    До PHP 7.4.0 нельзя было выбрасывать исключение из метода
+    До PHP 7.4.0 не разрешали выбрасывать исключение из метода
     <link linkend="object.tostring">__toString()</link>.
-    Это приводило к фатальной ошибке.
+    Это провоцировало фатальную ошибку.
    </simpara>
   </warning>
   <example>
@@ -369,7 +369,7 @@ echo $class;
    вызывается, когда скрипт пытается выполнить объект как функцию.
   </para>
   <example>
-   <title>Пример использования метода <link linkend="object.invoke">__invoke()</link></title>
+   <title>Пример вызова объекта класса с методом <link linkend="object.invoke">__invoke()</link></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -399,7 +399,7 @@ bool(true)
    </screen>
   </example>
   <example>
-   <title>Пример использования метода <link linkend="object.invoke">__invoke()</link></title>
+   <title>Пример вызова объекта класса с методом <link linkend="object.invoke">__invoke()</link></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -565,8 +565,8 @@ object(A)#2 (2) {
     если метод __set_state() не реализовали. В частности, это относится к ряду внутренних классов.
    </simpara>
    <simpara>
-    Программист несет ответственность за то, чтобы повторно
-    импортировались только те объекты, класс которых реализует метод __set_state().
+    Программист несёт ответственность повторный
+    импорт только тех объектов, класс которых реализует метод __set_state().
    </simpara>
   </note>
  </sect2>
@@ -581,11 +581,12 @@ object(A)#2 (2) {
   </methodsynopsis>
   <para>
    Этот метод вызывается функцией <function>var_dump</function>, когда
-   необходимо вывести список свойств объекта. Если этот метод не определили,
-   выводится каждое свойство объекта c модификаторами public, protected и private.
+   требуется вывести список свойств объекта. Функция выведет каждое объектное свойство
+   c модификаторами public, protected и private,
+   если метод не определили.
   </para>
   <example>
-   <title>Пример использования метода <link linkend="object.debuginfo">__debugInfo()</link></title>
+   <title>Пример вывода отладочной информации методом <link linkend="object.debuginfo">__debugInfo()</link></title>
    <programlisting role="php">
 <![CDATA[
 <?php
