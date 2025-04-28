@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7a75b854c8c52226d38397e7e8177e339fdb273f Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 402a72776804fbb74ec5c4cad72d4c7b6cdd5b2d Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
  <title>Исключения</title>
@@ -335,6 +335,12 @@ try {
 ?>
 ]]>
    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+A SpecificException was thrown, but we don't care about the details.
+]]>
+    </screen>
   </example>
   <example>
    <title>Throw как выражение</title>
@@ -346,7 +352,11 @@ try {
 <?php
 
 function test() {
-    do_something_risky() or throw new Exception('Всё сломалось');
+    do_something_risky() or throw new Exception('Функция завершилась ошибкой');
+}
+
+function do_something_risky() {
+    return false; // Имитация сбоя
 }
 
 try {
@@ -358,6 +368,12 @@ try {
 ?>
 ]]>
    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Функция завершилась ошибкой
+]]>
+    </screen>
   </example>
  </sect1>
 
@@ -384,7 +400,7 @@ class Exception implements Throwable
     private   $trace;                           // Трассировка вызовов методов и функций
     private   $previous;                        // Предыдущее исключение, если исключение вложенное
 
-    public function __construct($message = '', $code = 0, Throwable $previous = null);
+    public function __construct($message = '', $code = 0, ?Throwable $previous = null);
 
     final private function __clone();           // Запрещает клонирования исключения
 
@@ -432,7 +448,8 @@ class Exception implements Throwable
 class MyException extends Exception
 {
     // Переопределим исключение так, что параметр message станет обязательным
-    public function __construct($message, $code = 0, Throwable $previous = null) {
+    public function __construct($message, $code = 0, ?Throwable $previous = null)
+    {
         // Какой-то код
 
         // Убедимся, что родительский класс правильно присвоил значения
@@ -440,11 +457,13 @@ class MyException extends Exception
     }
 
     // Переопределим строковое представление объекта
-    public function __toString() {
+    public function __toString()
+    {
         return __CLASS__ . ": [{$this->code}]: {$this->message}\n";
     }
 
-    public function customFunction() {
+    public function customFunction()
+    {
         echo "Пользовательская функция для этого типа исключения\n";
     }
 }
@@ -461,7 +480,8 @@ class TestException
     const THROW_CUSTOM  = 1;
     const THROW_DEFAULT = 2;
 
-    function __construct($avalue = self::THROW_NONE) {
+    function __construct($avalue = self::THROW_NONE)
+    {
 
         switch ($avalue) {
             case self::THROW_CUSTOM:
@@ -485,10 +505,10 @@ class TestException
 // Пример 1
 try {
     $o = new TestException(TestException::THROW_CUSTOM);
-} catch (MyException $e) {      // Будет перехвачено
-    echo "Поймано собственное переопределённое исключение\n", $e;
+} catch (MyException $e) {      // Перехватится
+    echo "Блок catch перехватил пользовательское переопределённое исключение\n", $e;
     $e->customFunction();
-} catch (Exception $e) {        // Будет пропущено
+} catch (Exception $e) {        // Пропустится
     echo "Поймано встроенное исключение\n", $e;
 }
 
@@ -501,10 +521,10 @@ echo "\n\n";
 try {
     $o = new TestException(TestException::THROW_DEFAULT);
 } catch (MyException $e) {      // Тип исключения не совпадёт
-    echo "Поймано переопределённое исключение\n", $e;
+    echo "Блок catch перехватил пользовательское переопределённое исключение\n", $e;
     $e->customFunction();
-} catch (Exception $e) {        // Будет перехвачено
-    echo "Перехвачено встроенное исключение\n", $e;
+} catch (Exception $e) {        // Перехватится
+    echo "Блок catch перехватил встроенное исключение\n", $e;
 }
 
 // Продолжить выполнение
@@ -515,8 +535,8 @@ echo "\n\n";
 // Пример 3
 try {
     $o = new TestException(TestException::THROW_CUSTOM);
-} catch (Exception $e) {        // Будет перехвачено
-    echo "Поймано встроенное исключение\n", $e;
+} catch (Exception $e) {        // Перехватится
+    echo "Блок catch перехватил встроенное исключение\n", $e;
 }
 
 // Продолжить выполнение
@@ -527,8 +547,8 @@ echo "\n\n";
 // Пример 4
 try {
     $o = new TestException();
-} catch (Exception $e) {        // Будет пропущено, т.к. исключение не выбрасывается
-    echo "Поймано встроенное исключение\n", $e;
+} catch (Exception $e) {        // Пропустится, поскольку исключение не выбрасывается
+    echo "Блок catch перехватил встроенное исключение\n", $e;
 }
 
 // Продолжить выполнение
