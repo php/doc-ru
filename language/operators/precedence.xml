@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 43d07782b514d0c7a8487f2c74063739f302df8d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 16934048f79c6e117cd16a23c09c1b2ea502e284 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.operators.precedence">
  <title>Приоритет оператора</title>
@@ -328,13 +328,36 @@
 <?php
 
 $a = 3 * 3 % 5; // (3 * 3) % 5 = 4
-// ассоциативность тернарных операторов отличается от C/C++
-$a = true ? 0 : true ? 1 : 2; // (true ? 0 : true) ? 1 : 2 = 2 (до PHP 8.0.0)
+var_dump($a);
 
 $a = 1;
 $b = 2;
 $a = $b += 3; // $a = ($b += 3) -> $a = 5, $b = 5
+var_dump($a, $b);
 
+?>
+]]>
+   </programlisting>
+  </example>
+ </para>
+ <para>
+  Тернарный оператор требуется указывать в круглых скобках,
+  чтобы устранить неоднозначность приоритета.
+ </para>
+ <para>
+  <example>
+   <title>Явный приоритет</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$a = true ? 0 : (true ? 1 : 2);
+var_dump($a);
+
+// Начиная с PHP 8 такие выражения запретили
+// $a = true ? 0 : true ? 1 : 2;
+
+?>
 ]]>
    </programlisting>
   </example>
@@ -348,35 +371,36 @@ $a = $b += 3; // $a = ($b += 3) -> $a = 5, $b = 5
 
   <example>
    <title>Неопределённый порядок вычисления</title>
-   <programlisting role="php">
+   <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
 $a = 1;
-echo $a + $a++; // может вывести как 2, так и 3
+echo $a + $a++; // В зависимости от версии выводит как 2, так и 3
 
 $i = 1;
-$array[$i] = $i++; // может установить индекс как 1, так 2
+$array[$i] = $i++; // В зависимости от версии устанавливает индекс как 1, так 2
 
 ]]>
    </programlisting>
   </example>
   <example>
-   <title><literal>+</literal>, <literal>-</literal> и <literal>.</literal> имеют одинаковый приоритет (до PHP 8.0.0)</title>
+   <title>Приоритет операторов <literal>+</literal>, <literal>-</literal> и <literal>.</literal></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
 $x = 4;
-// следующий код может выдать неожиданный результат:
-echo "x минус 1 равно " . $x-1 . ", ну, я надеюсь\n";
+// Следующий код иногда выдаёт неожиданный результат:
+echo "x минус 1 равно " . $x - 1 . ", ну, я надеюсь\n";
 
-// поскольку он вычисляется таким образом (до PHP 8.0.0):
-echo (("x минус один равно " . $x) - 1) . ", ну, я надеюсь\n";
+// Круглые скобки помогают указать явный приоритет:
+echo "x minus one equals " . ($x - 1) . ", ну, я надеюсь\n";
 
-// требуемый приоритет следует задать скобками:
-echo "x минус 1 равно " . ($x-1) . ", ну, я надеюсь\n";
+// Так нельзя, код выбросит ошибку TypeError:
+echo (("x минус 1 равно " . $x) - 1) . ", ну, я надеюсь\n";
 
+?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -384,7 +408,35 @@ echo "x минус 1 равно " . ($x-1) . ", ну, я надеюсь\n";
 <![CDATA[
 -1, ну, я надеюсь
 -1, ну, я надеюсь
-x минус один равно 3, ну, я надеюсь
+Fatal error: Uncaught TypeError: Unsupported operand types: string - int
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>До PHP 8 приоритет операторов <literal>+</literal>, <literal>-</literal> and <literal>.</literal> был одинаковым</title>
+   <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
+
+$x = 4;
+// Следующий код иногда выдаёт неожиданный результат:
+echo "x минус 1 равно " . $x - 1 . ", ну, я надеюсь\n";
+
+// Поскольку до PHP 8.0.0 код вычислялся вот так:
+echo (("x минус один равно " . $x) - 1) . ", ну, я надеюсь\n";
+
+// Явный приоритет определяют круглыми скобками:
+echo "x минус 1 равно " . ($x - 1) . ", ну, я надеюсь\n";
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+-1, ну, я надеюсь
+-1, ну, я надеюсь
+x минус 1 равно 3, ну, я надеюсь
 ]]>
   </screen>
   </example>

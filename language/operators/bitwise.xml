@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8859c8b96cd9e80652813f7bcf561432a5e9f934 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 16934048f79c6e117cd16a23c09c1b2ea502e284 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.operators.bitwise">
  <title>Побитовые операторы</title>
@@ -115,16 +115,14 @@
   и <literal>&gt;&gt;</literal> обрабатываются как целые числа.
  </para>
  <para>
+  В PHP ini-параметр error_reporting принимает побитовые значения,
+  чем показывает практический пример сброса битов.
+  Чтобы показать каждую ошибку, кроме уведомлений,
+  инструкции файла php.ini говорят, что требуется указать:
+  <userinput>E_ALL &amp; ~E_NOTICE</userinput>
+ </para>
+ <para>
   <informalexample>
-   <para>
-    <literallayout>
-     В PHP ini-параметр error_reporting принимает побитовые значения,
-     чем показывает практический пример сброса битов.
-     Чтобы показать каждую ошибку, кроме уведомлений,
-     инструкции файла php.ini говорят, что требуется указать:
-     <userinput>E_ALL &amp; ~E_NOTICE</userinput>
-    </literallayout>
-   </para>
    <para>
     <literallayout>
      Начинаем со значения E_ALL:
@@ -138,34 +136,30 @@
      <computeroutput>00000000000000000111011111110111</computeroutput>
     </literallayout>
    </para>
-   <para>
-    <literallayout>
-     Другой способ достичь этого  — указать «исключающее ИЛИ» (XOR, <literal>^</literal>),
-     чтобы найти только те биты, которые установили
-     либо только в одном, либо только в другом значении:
-     <userinput>E_ALL ^ E_NOTICE</userinput>
-    </literallayout>
-   </para>
   </informalexample>
+ </para>
+ <para>
+  Другой способ достичь этого  — указать «исключающее ИЛИ» (XOR, <literal>^</literal>),
+  чтобы найти только те биты, которые установили
+  либо только в одном, либо только в другом значении:
+  <userinput>E_ALL ^ E_NOTICE</userinput>
+ </para>
+ <para>
+  На примере директивы error_reporting получится показать и то,
+  как устанавливают биты. Вот способ показа только неустранимых
+  и исправимых ошибок:
+  <userinput>E_ERROR | E_RECOVERABLE_ERROR</userinput>
  </para>
  <para>
   <informalexample>
    <para>
     <literallayout>
-     На примере директивы error_reporting получится показать и то,
-     как устанавливают биты. Вот способ показа только неустранимых
-     и исправимых ошибок:
-     <userinput>E_ERROR | E_RECOVERABLE_ERROR</userinput>
-    </literallayout>
-   </para>
-   <para>
-    <literallayout>
-     Здесь процесс сочетает E_ERROR
-     <computeroutput>00000000000000000000000000000001</computeroutput>
-     и
+     Здесь процесс сочетает значение константы E_ERROR —
+     <computeroutput>00000000000000000000000000000001</computeroutput> —
+     со значением
      <computeroutput>00000000000000000001000000000000</computeroutput>
      через оператор ИЛИ (<literal>|</literal>),
-     чтобы получить биты, которые установили хотя бы в одном операнде:
+     чтобы установить биты в заданных позициях:
      <computeroutput>00000000000000000001000000000001</computeroutput>
     </literallayout>
    </para>
@@ -183,8 +177,7 @@
  * это просто форматирование для более ясного вывода
  */
 $format = '(%1$2d = %1$04b) = (%2$2d = %2$04b)'
-    . ' %3$s (%4$2d = %4$04b)' . "\n"
-;
+    . ' %3$s (%4$2d = %4$04b)' . "\n";
 
 echo <<<EOH
  ----------  ----------- -- ----------
@@ -194,7 +187,7 @@ EOH;
 
 
 /*
- * Вот сами примеры.
+ * Вот сами примеры
  */
 
 $values = array(0, 1, 2, 4, 8);
@@ -258,18 +251,18 @@ foreach ($values as $value) {
 <![CDATA[
 <?php
 
-echo 12 ^ 9; // Выводит '5'
+echo 12 ^ 9, PHP_EOL; // Выводит '5'
 
-echo "12" ^ "9"; // Выводит символ Backspace (ASCII-код 8)
+echo "12" ^ "9", PHP_EOL; // Выводит символ Backspace (ASCII-код 8)
                  // ('1' (ascii 49)) ^ ('9' (ASCII-код 57)) = #8
 
-echo "hallo" ^ "hello"; // Выводит ASCII-значения #0 #4 #0 #0 #0
+echo "hallo" ^ "hello", PHP_EOL; // Выводит ASCII-значения #0 #4 #0 #0 #0
                         // 'a' ^ 'e' = #4
 
-echo 2 ^ "3"; // Выводит 1
+echo 2 ^ "3", PHP_EOL; // Выводит 1
               // 2 ^ ((int) "3") == 1
 
-echo "2" ^ 3; // Выводит 1
+echo "2" ^ 3, PHP_EOL; // Выводит 1
               // ((int) "2") ^ 3 == 1
 
 ?>
@@ -368,11 +361,12 @@ $res = $val << $places;
 p($res, $val, '<<', $places, 'биты сдвинулись за левый край, включая знаковый бит');
 
 /*
- * Не обращайте внимания на этот нижний раздел кода,
- * это просто форматирование для более ясного вывода
+ * Не обращайте внимания на нижний раздел кода,
+ * это только форматирование для более ясного вывода
  */
 
-function p($res, $val, $op, $places, $note = '') {
+function p($res, $val, $op, $places, $note = '')
+{
     $format = '%0' . (PHP_INT_SIZE * 8) . "b\n";
 
     printf("Выражение: %d = %d %s %d\n", $res, $val, $op, $places);
@@ -389,7 +383,7 @@ function p($res, $val, $op, $places, $note = '') {
         echo " ЗАМЕЧАНИЕ: $note\n";
     }
 
-    echo "\n";
+    echo "\n\n";
 }
 
 ?>
