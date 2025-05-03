@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cdc9d28d334bbc08386fecf8aade66080004a9dd Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e52b5c7312891f4728a2000583b7861a505b7ec9 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.define" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,7 +16,7 @@
    <methodparam choice="opt"><type>bool</type><parameter>case_insensitive</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Определяет именованную константу во время выполнения.
+   Функция определяет именованную константу во время выполнения кода.
   </para>
  </refsect1>
 
@@ -32,11 +32,11 @@
       </para>
       <note>
        <para>
-        Возможно определить константы с помощью функции
-        <function>define</function> зарезервированными или
-        даже некорректными именами, значения которых могут быть (только) получены
-        через функцию
-        <function>constant</function>. Однако, делать это не рекомендуется.
+        Функция <function>define</function> умеет определять константы
+        с названиями, которые совпадают с зарезервированными словами
+        или даже нарушают правила языка по именованию идентификаторов,
+        при этом значение таких констант вернёт
+        только функция <function>constant</function>, но делать так не рекомендуют.
        </para>
       </note>
      </listitem>
@@ -45,16 +45,12 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение константы. В PHP 5 <parameter>value</parameter> должно быть
-       скалярным значением (<type>int</type>, <type>float</type>,
-       <type>string</type>, <type>bool</type> или &null;).
-       В PHP 7 также возможно использовать тип <type>array</type>.
+       Значение константы.
       </para>
       <warning>
        <para>
-        Хотя возможно определить константы с типом <type>resource</type>, не
-        рекомендуется это делать, поскольку может привести к
-        непредсказуемому поведению.
+        Лучше не определять для констант значения с тип <type>resource</type>,
+        хотя это и возможно, поскольку поведение таких констант непредсказуемо.
        </para>
       </warning>
      </listitem>
@@ -63,17 +59,17 @@
      <term><parameter>case_insensitive</parameter></term>
      <listitem>
       <para>
-       Если параметр установлен как &true;, то константа будет определена
-       без учёта регистра. По умолчанию константа чувствительна к регистру, то
-       есть <literal>CONSTANT</literal> и <literal>Constant</literal>
+       Со значением &true; функция определит константу
+       без учёта регистра. По умолчанию названия констант чувствительны к регистру,
+       поэтому константы <literal>CONSTANT</literal> и <literal>Constant</literal>
        представляют разные значения.
       </para>
       <warning>
        <simpara>
-        Начиная с PHP 7.3.0, определение нечувствительных к регистру констант
-        объявлено устаревшим.
-        Начиная с PHP 8.0.0, допустимым значением является только &false;,
-        передача &true; вызовет предупреждение.
+        Начиная с PHP 7.3.0 определение нечувствительных к регистру констант
+        устарело.
+        Начиная с PHP 8.0.0 параметр принимает только значение &false;,
+        передача &true; выдаст предупреждение.
        </simpara>
       </warning>
       <note>
@@ -107,22 +103,22 @@
      </thead>
      <tbody>
       <row>
+       <entry>8.1.0</entry>
+       <entry>
+        Параметр <parameter>value</parameter> теперь принимает объекты.
+       </entry>
+      </row>
+      <row>
        <entry>8.0.0</entry>
        <entry>
-        Передача &true; в <parameter>case_insensitive</parameter> теперь выдаёт ошибку уровня <constant>E_WARNING</constant>.
-        Передача &false; всё ещё разрешена.
+        При передаче значения &true; в параметр <parameter>case_insensitive</parameter> теперь возникает ошибка уровня <constant>E_WARNING</constant>.
+        Передача значения &false; по-прежнему возможна.
        </entry>
       </row>
       <row>
        <entry>7.3.0</entry>
        <entry>
-        Параметр <parameter>case_insensitive</parameter> объявлен устаревшим и будет удалён в версии 8.0.0.
-       </entry>
-      </row>
-      <row>
-       <entry>7.0.0</entry>
-       <entry>
-        Допустимы значения типа <type>array</type>.
+        Параметр <parameter>case_insensitive</parameter> устарел, а в версии 8.0.0 параметр удалят.
        </entry>
       </row>
      </tbody>
@@ -139,13 +135,14 @@
     <programlisting role="php">
 <![CDATA[
 <?php
+
 define("CONSTANT", "Hello world.");
-echo CONSTANT; // выводит "Hello world."
-echo Constant; // выводит "Constant" и выдаёт уведомление.
+echo CONSTANT; // Выводит "Hello world."
+echo Constant; // Выводит "Constant" и выдаёт уведомление
 
 define("GREETING", "Hello you.", true);
-echo GREETING; // выводит "Hello you."
-echo Greeting; // выводит "Hello you."
+echo GREETING; // Выводит "Hello you."
+echo Greeting; // Выводит "Hello you."
 
 // Начиная с PHP 7
 define('ANIMALS', array(
@@ -153,7 +150,7 @@ define('ANIMALS', array(
     'кошка',
     'птица'
 ));
-echo ANIMALS[1]; // выводит "кошка"
+echo ANIMALS[1]; // Выводит "кошка"
 
 ?>
 ]]>
@@ -162,21 +159,23 @@ echo ANIMALS[1]; // выводит "кошка"
   </para>
   <para>
    <example>
-    <title>Определение констант зарезервированными именами</title>
+    <title>Определение констант, названия которых совпадают с зарезервированными словами</title>
     <para>
-     Этот пример демонстрирует <emphasis>возможность</emphasis> определения
-     константы с тем же именем, что и
-     <link linkend="language.constants.predefined">магическая константа</link>.
-     Поскольку это, очевидно, сбивающее с толку поведение, не рекомендуется делать
-     это на практике.
+     Пример иллюстрирует <emphasis>доступность</emphasis> определения
+     для константы названия, которое совпадает с названием
+     <link linkend="language.constants.predefined">магической константы</link>.
+     Лучше не давать константам такие названия,
+     поскольку такое поведение явно сбивает с толку.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(defined('__LINE__'));
 var_dump(define('__LINE__', 'test'));
 var_dump(constant('__LINE__'));
 var_dump(__LINE__);
+
 ?>
 ]]>
     </programlisting>
@@ -199,7 +198,7 @@ int(5)
    <simplelist>
     <member><function>defined</function></member>
     <member><function>constant</function></member>
-    <member>Смотрите раздел <link linkend="language.constants">Константы</link></member>
+    <member><link linkend="language.constants">Константы</link></member>
    </simplelist>
   </para>
  </refsect1>
