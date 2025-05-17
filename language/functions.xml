@@ -1849,14 +1849,13 @@ $f9 = [Foo::class, 'staticmethod'](...);
   </note>
 
   <para>
-   У выражения <code>CallableExpr(...)</code> та же семантика,
-   что и у метода <methodname>Closure::fromCallable</methodname>.
-   То есть, в отличие от callable-синтаксиса
+   Выражение <code>CallableExpr(...)</code> и метод <methodname>Closure::fromCallable</methodname>
+   семантически идентичны. Поэтому в отличие от callable-синтаксиса
    со строками и массивами, синтаксис <code>CallableExpr(...)</code>
-   учитывает область видимости в той точке, в которой его создали:
+   учитывает область видимости контекста, в котором создаёт замыкание:
    <example>
     <title>
-     Сравнение области действия синтаксиса <code>CallableExpr(...)</code>
+     Сравнение области видимости синтаксиса <code>CallableExpr(...)</code>
      и традиционного callable-синтаксиса
     </title>
     <programlisting role="php">
@@ -1880,8 +1879,8 @@ $foo = new Foo();
 $privateMethod = $foo->getPrivateMethod();
 $privateMethod();
 // Fatal error: Call to private method Foo::privateMethod() from global scope
-// Причина фатальной ошибки в том, что вызов выполнили за пределами класса Foo,
-// и с этого момента будет проверяться видимость.
+// Причина фатальной ошибки состоит в том, что callable-выражение вызвали за пределами класса Foo,
+// а видимость метода класса проверяется в контексте вызова, а не определения
 
 class Foo1
 {
@@ -1889,8 +1888,8 @@ class Foo1
     {
         // Callable-выражение унаследует область видимости переменных,
         // в которой получат выражение
-        return $this->privateMethod(...); // Значение возврата идентично значению вызова
-                                          // Closure::fromCallable([$this, 'privateMethod']);
+        return $this->privateMethod(...); // Значение возврата идентично
+                                          // значению вызова Closure::fromCallable([$this, 'privateMethod']);
     }
 
     private function privateMethod()
@@ -1913,13 +1912,13 @@ $privateMethod(); // Foo1::privateMethod
   <note>
    <para>
     Синтаксисом наподобие <code>new Foo(...)</code> нельзя создать объект,
-    поскольку PHP не считает синтаксис <code>new Foo()</code> вызовом.
+    поскольку синтаксис <code>new Foo()</code> не относится к вызовам.
    </para>
   </note>
 
   <note>
    <para>
-    Синтаксис, который создаёт объекты первого класса в виде callable-выражений,
+    Синтаксис, который создаёт объекты первого класса из callable-выражений,
     нельзя комбинировать
     <link linkend="language.oop5.basic.nullsafe">с null-безопасным оператором</link>.
     Каждая из следующих строк вызывает ошибку времени компиляции:
