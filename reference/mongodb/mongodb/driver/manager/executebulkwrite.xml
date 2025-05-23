@@ -27,7 +27,7 @@
   <para>
    Значение по умолчанию для опции <literal>"writeConcern"</literal>
    автоматически определяется на основе активной транзакции
-   или <link linkend="mongodb-driver-manager.construct-uri">URI-идентификатора соединения</link>, если транзация не содержит значения.
+   или <link linkend="mongodb-driver-manager.construct-uri">URI-идентификатора соединения</link>, если транзакция не содержит значения.
    На активную транзакцию указывает опция <literal>"session"</literal>.
   </para>
  </refsect1>
@@ -168,23 +168,28 @@ $manager = new MongoDB\Driver\Manager('mongodb://localhost:27017');
 $writeConcern = new MongoDB\Driver\WriteConcern(MongoDB\Driver\WriteConcern::MAJORITY, 100);
 $result = $manager->executeBulkWrite('db.collection', $bulk, ['writeConcern' => $writeConcern]);
 
-printf("Добавлено %d документ(ов)\n", $result->getInsertedCount());
-printf("Найдено %d документ(ов)\n", $result->getMatchedCount());
-printf("Обновлено %d документ(ов)\n", $result->getModifiedCount());
-printf("Добавлено и добавлено %d документ(ов)\n", $result->getUpsertedCount());
-printf("Удалено %d документ(ов)\n", $result->getDeletedCount());
+printf("Количество вставленных документов: %d\n", $result->getInsertedCount());
+printf("Количество документов для обновления: %d\n", $result->getMatchedCount());
+printf("Количество обновлённых документов: %d\n", $result->getModifiedCount());
+printf("Количество операций upsert: %d\n", $result->getUpsertedCount());
+printf("Количество удалённых документов: %d\n", $result->getDeletedCount());
 
 foreach ($result->getUpsertedIds() as $index => $id) {
     printf('upsertedId[%d]: ', $index);
     var_dump($id);
 }
 
-/* При невозможности выполнить WriteConcern */
+/* При невозможности выполнить требование WriteConcern */
 if ($writeConcernError = $result->getWriteConcernError()) {
-    printf("%s (%d): %s\n", $writeConcernError->getMessage(), $writeConcernError->getCode(), var_export($writeConcernError->getInfo(), true));
+    printf(
+		      "%s (%d): %s\n",
+		      $writeConcernError->getMessage(),
+		      $writeConcernError->getCode(),
+		      var_export($writeConcernError->getInfo(), true)
+    );
 }
 
-/* Если запись недоступна */
+/* При невозможности записи */
 foreach ($result->getWriteErrors() as $writeError) {
     printf("Операция#%d: %s (%d)\n", $writeError->getIndex(), $writeError->getMessage(), $writeError->getCode());
 }
@@ -195,11 +200,11 @@ foreach ($result->getWriteErrors() as $writeError) {
    &example.outputs.similar;
    <screen>
 <![CDATA[
-Добавлено 3 документ(ов)
-Найдено 1 документ(ов)
-Обновлено 1 документ(ов)
-Добавлено и добавлено 2 документ(ов)
-Удалено 1 документ(ов)
+Количество вставленных документов: 3
+Количество документов для обновления: 1
+Количество обновлённых документов: 1
+Количество операций upsert: 2
+Количество удалённых документов: 1
 upsertedId[3]: object(MongoDB\BSON\ObjectId)#5 (1) {
   ["oid"]=>
   string(24) "54d3adc3ce7a792f4d703756"
