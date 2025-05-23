@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 187032b3ea20fa28f1c9f29ba38d06820428f849 Maintainer: malferov Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="mongodb-driver-bulkwritecommand.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>MongoDB\Driver\BulkWriteCommand::__construct</refname>
+  <refpurpose>Создаёт новый объект BulkWriteCommand</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis>
+   <modifier>public</modifier> <methodname>MongoDB\Driver\BulkWriteCommand::__construct</methodname>
+   <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>options</parameter><initializer>&null;</initializer></methodparam>
+  </methodsynopsis>
+  <para>
+   Метод создаёт новый объект класса <classname>MongoDB\Driver\BulkWriteCommand</classname>
+   для выполнения множественных операций вставки, обновления и удаления
+   на наборе коллекций в одном запросе через команду
+   <link xlink:href="&url.mongodb.docs.command;bulkWrite">bulkWrite</link>,
+   которая появилась в MongoDB 8.0. Тогда как класс
+   <classname>MongoDB\Driver\BulkWrite</classname> поддерживается всеми
+   версиями серверов, но ограничивается одной коллекцией.
+  </para>
+  <para>
+   После добавления операций записи объект выполняют методом
+   <methodname>MongoDB\Driver\Manager::executeBulkWriteCommand</methodname>.
+  </para>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>options</parameter> (<type>array</type>)</term>
+    <listitem>
+     <para>
+      <table>
+       <title>Опции</title>
+       <tgroup cols="4">
+        <thead>
+         <row>
+          <entry>Опция</entry>
+          <entry>Тип</entry>
+          <entry>Описание</entry>
+          <entry>Стандартное значение</entry>
+         </row>
+        </thead>
+        <tbody>
+         <row>
+          <entry>bypassDocumentValidation</entry>
+          <entry><type>bool</type></entry>
+          <entry>
+           <para>
+            Со значением &true; разрешает операции вставки и обновления для обхода
+            проверки на уровне документа.
+           </para>
+          </entry>
+          <entry>&false;</entry>
+         </row>
+         <row>
+          <entry>comment</entry>
+          <entry><type>mixed</type></entry>
+          <entry>
+           <para>
+            Произвольный комментарий, который помогает отслеживать операцию
+            в профилировщике базы данных, выводе команды currentOp и логах.
+           </para>
+          </entry>
+         </row>
+         &mongodb.option.let;
+         <row>
+          <entry>ordered</entry>
+          <entry><type>bool</type></entry>
+          <entry>
+           <para>
+            Требуется ли выполнять операции текущей массовой записи
+            в порядке добавления. Со значением &false; выполнение операций записи
+            продолжится, если возникнет ошибка отдельной записи. Со значением &true;
+            выполнение операции записи прекратится, если возникнет ошибка отдельной записи.
+           </para>
+          </entry>
+          <entry>&true;</entry>
+         </row>
+         <row>
+          <entry>verboseResults</entry>
+          <entry><type>bool</type></entry>
+          <entry>
+           <para>
+            Требуется ли включать подробные результаты о каждой успешной операции
+            в данные, которые возвращает класс
+            <classname>MongoDB\Driver\BulkWriteCommandResult</classname>.
+           </para>
+          </entry>
+          <entry>&false;</entry>
+         </row>
+        </tbody>
+       </tgroup>
+      </table>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simplelist>
+   &mongodb.throws.argumentparsing;
+  </simplelist>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример создания методом <function>MongoDB\Driver\BulkWriteCommand::__construct</function> команды для множественных операций записи</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$manager = new MongoDB\Driver\Manager();
+
+$bulk = new MongoDB\Driver\BulkWriteCommand();
+
+// Удаление документов из обоих коллекций
+$bulk->deleteMany('db.coll_one', []);
+$bulk->deleteMany('db.coll_two', []);
+
+// Вставка документов в две коллекции
+$bulk->insertOne('db.coll_one', ['_id' => 1]);
+$bulk->insertOne('db.coll_two', ['_id' => 2]);
+$bulk->insertOne('db.coll_two', ['_id' => 3]);
+
+// Обновление документа в столбце "coll_one"
+$bulk->updateOne('db.coll_one', ['_id' => 1], ['$set' => ['x' => 1]]);
+
+$result = $manager->executeBulkWriteCommand($bulk);
+
+printf("Количество операций вставки документов: %d\n", $result->getInsertedCount());
+printf("Количество операций обновления документов: %d\n", $result->getModifiedCount());
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Количество операций вставки документов: 3
+Количество операций обновления документов: 1
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><methodname>MongoDB\Driver\Manager::executeBulkWriteCommand</methodname></member>
+   <member><classname>MongoDB\Driver\BulkWriteCommandResult</classname></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
