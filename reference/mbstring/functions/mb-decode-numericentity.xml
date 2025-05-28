@@ -4,7 +4,7 @@
 <refentry xml:id="function.mb-decode-numericentity" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>mb_decode_numericentity</refname>
-  <refpurpose>Декодирует ссылку на числовую строку HTML в символ</refpurpose>
+  <refpurpose>Декодирует HTML-строку с числовой ссылкой на кодовую точку символа в Юникоде в символ</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,8 +16,9 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>encoding</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Преобразовывает строку чисел <parameter>string</parameter> (<type>string</type>)
-   в заданном блоке в символ.
+   Функция преобразовывает числовые ссылки на символы в значении с типом <type>string</type>,
+   которое принимает параметр <parameter>string</parameter>,
+   в символы Юникода, если ссылки входят в заданный блок кодовых точек.
   </para>
  </refsect1>
 
@@ -29,7 +30,7 @@
      <term><parameter>string</parameter></term>
      <listitem>
       <para>
-       Строка (<type>string</type>) для декодирования.
+       Декодируемая строка (<type>string</type>).
       </para>
      </listitem>
     </varlistentry>
@@ -37,8 +38,7 @@
      <term><parameter>map</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>map</parameter> — массив (<type>array</type>), который
-       задаёт область кода для преобразования.
+       Параметр <parameter>map</parameter> принимает массив, в котором указывается диапазон кодовых точек для преобразования.
       </para>
      </listitem>
     </varlistentry>
@@ -52,7 +52,7 @@
      <term><parameter>is_hex</parameter></term>
      <listitem>
       <para>
-       Параметр объявлен устаревшим.
+       Параметр устарел.
       </para>
      </listitem>
     </varlistentry>
@@ -63,7 +63,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает преобразованную строку (<type>string</type>).
+   Функция возвращает преобразованную строку (<type>string</type>).
   </para>
  </refsect1>
 
@@ -71,7 +71,7 @@
   &reftitle.errors;
   <simpara>
    Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>, если значение
-   параметра <parameter>map</parameter> не является списком целочисленных значений (&integer;).
+   если в параметр <parameter>map</parameter> передали аргумент, который не содержит список значений с типом &integer;.
   </simpara>
  </refsect1>
 
@@ -90,8 +90,8 @@
       <entry>8.4.0</entry>
       <entry>
        Функция <function>mb_decode_numericentity</function> теперь выбрасывает
-       ошибку <exceptionname>ValueError</exceptionname>, если значение параметра
-       <parameter>map</parameter> не является списком целочисленных значений (&integer;).
+       ошибку <exceptionname>ValueError</exceptionname>, если в параметр <parameter>map</parameter> передали аргумент,
+       который не содержит список значений с типом &integer;.
       </entry>
      </row>
      &mbstring.changelog.encoding-nullable;
@@ -104,18 +104,21 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования параметра <parameter>map</parameter></title>
+    <title>Пример формата для установки параметра <parameter>map</parameter></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$convmap = array (
-   int start_code1, int end_code1, int offset1, int mask1,
-   int start_code2, int end_code2, int offset2, int mask2,
-   // ........
-   int start_codeN, int end_codeN, int offsetN, int maskN );
-// Задайте значения Юникода для start_codeN и end_codeN
-// Добавьте к значению offsetN и сложите побитово с maskN,
-// затем преобразуйте результат в число.
+
+$convmap = array(
+    int start_code1, int end_code1, int offset1, int mask1,
+    int start_code2, int end_code2, int offset2, int mask2,
+    // ........
+    int start_codeN, int end_codeN, int offsetN, int maskN
+);
+// Значениями start_codeN и end_codeN определяется диапазон кодовых точек Юникода.
+// К кодовой точке исходного символа добавляется смещение offsetN и выполняется побитовая операция 'И' со значением маски maskN,
+// а полученное значение затем преобразовывается в числовую ссылку на символ.
+
 ?>
 ]]>
     </programlisting>
@@ -124,68 +127,76 @@ $convmap = array (
 
   <para>
    <example>
-    <title>Пример экранирования строки JavaScript через параметр <parameter>map</parameter></title>
+    <title>Пример экранирования строки JavaScript-кода через параметр <parameter>map</parameter></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-function escape_javascript_string($str) {
-  $map = [
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,0,0, // 49
-          0,0,0,0,0,0,0,0,1,1,
-          1,1,1,1,1,0,0,0,0,0,
-          0,0,0,0,0,0,0,0,0,0,
-          0,0,0,0,0,0,0,0,0,0,
-          0,1,1,1,1,1,1,0,0,0, // 99
-          0,0,0,0,0,0,0,0,0,0,
-          0,0,0,0,0,0,0,0,0,0,
-          0,0,0,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1, // 149
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1, // 199
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1,
-          1,1,1,1,1,1,1,1,1,1, // 249
-          1,1,1,1,1,1,1, // 255
-          ];
-  // Кодировка символа UTF-8
-  $mblen = mb_strlen($str, 'UTF-8');
-  $utf32 = bin2hex(mb_convert_encoding($str, 'UTF-32', 'UTF-8'));
-  for ($i=0, $encoded=''; $i < $mblen; $i++) {
-      $u = substr($utf32, $i*8, 8);
-      $v = base_convert($u, 16, 10);
-      if ($v < 256 && $map[$v]) {
-        $encoded .= '\\x'.substr($u, 6,2);
-      } else if ($v == 2028) {
-        $encoded .= '\\u2028';
-      } else if ($v == 2029) {
-        $encoded .= '\\u2029';
-      } else {
-        $encoded .= mb_convert_encoding(hex2bin($u), 'UTF-8', 'UTF-32');
-      }
-   }
-   return $encoded;
+
+function escape_javascript_string($str)
+{
+    $map = [
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,0,0, // 49
+        0,0,0,0,0,0,0,0,1,1,
+        1,1,1,1,1,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,1,1,1,1,1,1,0,0,0, // 99
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,
+        0,0,0,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1, // 149
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1, // 199
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1, // 249
+        1,1,1,1,1,1,1, // 255
+    ];
+
+    // Кодировка символа UTF-8
+    $mblen = mb_strlen($str, 'UTF-8');
+    $utf32 = bin2hex(mb_convert_encoding($str, 'UTF-32', 'UTF-8'));
+
+    for ($i=0, $encoded=''; $i < $mblen; $i++) {
+        $u = substr($utf32, $i*8, 8);
+        $v = base_convert($u, 16, 10);
+        if ($v < 256 && $map[$v]) {
+            $encoded .= '\\x'.substr($u, 6,2);
+        } else if ($v == 2028) {
+            $encoded .= '\\u2028';
+        } else if ($v == 2029) {
+            $encoded .= '\\u2029';
+        } else {
+            $encoded .= mb_convert_encoding(hex2bin($u), 'UTF-8', 'UTF-32');
+        }
+    }
+
+    return $encoded;
 }
 
 // Данные для теста
 $convmap = [ 0x0, 0xffff, 0, 0xffff ];
 $msg = '';
 for ($i=0; $i < 1000; $i++) {
-  // Функция chr() не может сгенерировать корректный символ UTF-8 больший, чем 128. Используем функцию mb_decode_numericentity().
-  $msg .= mb_decode_numericentity('&#'.$i.';', $convmap, 'UTF-8');
+    // Функцией chr() невозможно сгенерировать правильные данные в кодировке UTF-8 с кодовыми точками больше 128,
+    // поэтому вызывается функция mb_decode_numericentity()
+    $msg .= mb_decode_numericentity('&#'.$i.';', $convmap, 'UTF-8');
 }
 
 // var_dump($msg);
 var_dump(escape_javascript_string($msg));
+
+?>
 ]]>
     </programlisting>
    </example>
