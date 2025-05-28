@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2c17cef6e71c3d85011319cde128cc4edf89a053 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 34f90a65914c900173f9a42331acc45bc53d8eee Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.mb-detect-encoding" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -16,22 +16,33 @@
    <methodparam choice="opt"><type>bool</type><parameter>strict</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Определяет наиболее вероятную кодировку символов строки,
-   переданной в параметр <parameter>string</parameter>,
-   проверяя список кандидатов по порядку.
+   Функция определяет наиболее вероятную кодировку символов строки
+   параметра <parameter>string</parameter>
+   путём проверки списка кандидатов по порядку.
   </para>
   <para>
-   Автоматическое определение предполагаемой кодировки символов не полностью надёжно;
+   Надёжность автоматического определения предполагаемой кодировки символов не достигает 100 %;
    без дополнительной информации это похоже на расшифровку зашифрованной строки без ключа.
-   Лучше предпочесть указание кодировки символов, хранящейся или передаваемой с данными,
+   Лучше явно указать кодировку символов, которая хранится или передаётся с данными,
    например в HTTP-заголовке Content-Type.
   </para>
   <para>
-   Функция будет полезнее, если вызывать её с многобайтовыми кодировками,
-   поскольку не все последовательности байтов образуют допустимую строку.
-   Если входная строка содержит такую последовательность,
-   кодировка будет отклонена, и будет проверена следующая кодировка.
+   Функция полезнее при вызове с многобайтовыми кодировками,
+   поскольку не каждая последовательность байтов образует допустимую строку.
+   Функция отклонит кодировку и проверит следующую,
+   если входная строка содержит такую последовательность.
   </para>
+
+  <warning>
+   <title>Неточность результата</title>
+   <para>
+    Название функции вводит в заблуждение: функция «угадывает» кодировку, а не «обнаруживает».
+   </para>
+   <para>
+    Догадки неточны, поэтому функцией невозможно точно
+    определить правильную кодировку символов.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -51,14 +62,14 @@
      <listitem>
       <para>
        Список кодировок символов для проверки в заданном порядке.
-       Список может быть определён как массив строк
+       Список определяется как массив строк
        или как одна строка, разделённая запятыми.
       </para>
       <para>
-       Если параметр <parameter>encodings</parameter> не задан или равен &null;,
-       будет выбрана кодировка, установленная в директиве с именем detect_order (устанавливают
+       При пропуске параметра <parameter>encodings</parameter> или установке для параметра значения &null;
+       выбирается текущий порядок определения кодировки, который установили
        в директиве <link linkend="ini.mbstring.detect-order">mbstring.detect_order</link> настроек конфигурации
-       или функцией <function>mb_detect_order</function>).
+       или функцией <function>mb_detect_order</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -68,14 +79,14 @@
       <para>
        Управляет поведением, когда строка в параметре <parameter>string</parameter>
        недопустима ни для одной перечисленной в параметре <parameter>encodings</parameter> кодировки.
-       Если параметр <parameter>strict</parameter> установлен в значение &false;,
-       будет возвращена первая совпавшая кодировка;
-       если параметр <parameter>strict</parameter> установлен в значение &true;,
-       будет возвращено значение &false;.
+       При передаче в параметр <parameter>strict</parameter> значения &false;
+       возвращается первая совпавшая кодировка;
+       при установке для параметра <parameter>strict</parameter> значения &true;
+       возвращается значение &false;.
       </para>
       <para>
        Значение по умолчанию для параметра <parameter>strict</parameter>
-       можно установить в директиве
+       также устанавливается в директиве
        <link linkend="ini.mbstring.strict-detection">mbstring.strict_detection</link>
        настроек конфигурации.
       </para>
@@ -107,7 +118,7 @@
      <row>
       <entry>8.2.0</entry>
       <entry>
-       Функция <function>mb_detect_encoding</function> больше не будет возвращать
+       Функция <function>mb_detect_encoding</function> больше не возвращает
        следующие нетекстовые кодировки:
        <literal>«Base64»</literal>, <literal>«QPrint»</literal>,
        <literal>«UUencode»</literal>, <literal>«HTML entities»</literal>,
@@ -123,30 +134,41 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>mb_detect_encoding</function></title>
+    <title>Пример определения кодировки функцией <function>mb_detect_encoding</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Определение кодировки с текущей detect_order
-echo mb_detect_encoding($str);
+$str = "\x95\xB6\x8E\x9A\x83\x52\x81\x5B\x83\x68";
 
-// Значение «auto» раскрывается в соответствии с директивой mbstring.language
-echo mb_detect_encoding($str, "auto");
+// Определение кодировки символов с текущим порядком определения
+var_dump(mb_detect_encoding($str));
 
-// Установка параметра «encodings» списком, разделённым запятой
-echo mb_detect_encoding($str, "JIS, eucjp-win, sjis-win");
+// Значение "auto" раскрывается в соответствии с директивой mbstring.language
+var_dump(mb_detect_encoding($str, "auto"));
 
-// Установка параметра «encodings» массивом
+// Установка параметра "encodings" списком значений через запятую
+var_dump(mb_detect_encoding($str, "JIS, eucjp-win, sjis-win"));
+
+// Установка параметра "encodings" массивом
 $encodings = [
   "ASCII",
   "JIS",
   "EUC-JP"
 ];
-echo mb_detect_encoding($str, $encodings);
+var_dump(mb_detect_encoding($str, $encodings));
 
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+string(5) "ASCII"
+string(5) "ASCII"
+string(8) "SJIS-win"
+string(5) "ASCII"
+]]>
+    </screen>
    </example>
   </para>
 <para>
@@ -156,14 +178,14 @@ echo mb_detect_encoding($str, $encodings);
 <![CDATA[
 <?php
 
-// «áéóú» закодирована в ISO-8859-1
+// Строка "áéóú" в кодировке ISO-8859-1
 $str = "\xE1\xE9\xF3\xFA";
 
-// Строка недействительна для кодировок ASCII или UTF-8, но UTF-8 считается более близким соответствием
+// Строка недопустима для кодировок ASCII или UTF-8, но UTF-8 считается более близким соответствием
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8'], false));
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8'], true));
 
-// Если допустимая кодировка найдена, параметр strict не меняет результат
+// При обнаружении допустимой кодировки параметр strict не изменяет результат
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8', 'ISO-8859-1'], false));
 var_dump(mb_detect_encoding($str, ['ASCII', 'UTF-8', 'ISO-8859-1'], true));
 
@@ -181,9 +203,9 @@ string(10) "ISO-8859-1"
    </example>
   </para>
   <para>
-   Иногда одна и та же последовательность байтов может образовывать
-   допустимую строку в нескольких кодировках символов, и невозможно узнать, какая интерпретация предполагалась.
-   Например, среди многих других байтовая последовательность «\xC4\xA2» может быть:
+   Иногда одна и та же последовательность байтов образовывает
+   допустимую строку в нескольких кодировках символов, и невозможно узнать, какая интерпретация подразумевалась.
+   Например, среди многих других байтовая последовательность "\xC4\xA2" допустима для:
   </para>
   <para>
    <simplelist>
@@ -209,7 +231,7 @@ string(10) "ISO-8859-1"
 
 $str = "\xC4\xA2";
 
-// Строка действительна во всех трёх кодировках, поэтому будет возвращена первая из перечисленных кодировок
+// Строка действительна в каждой из трёх кодировок, поэтому вернётся первая из перечисленных
 var_dump(mb_detect_encoding($str, ['UTF-8', 'ISO-8859-1', 'ISO-8859-5']));
 var_dump(mb_detect_encoding($str, ['ISO-8859-1', 'ISO-8859-5', 'UTF-8']));
 var_dump(mb_detect_encoding($str, ['ISO-8859-5', 'UTF-8', 'ISO-8859-1']));
