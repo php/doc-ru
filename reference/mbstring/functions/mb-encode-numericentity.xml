@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d553fa36940639b0889ec4358fa3bbb92f123b69 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 34f90a65914c900173f9a42331acc45bc53d8eee Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.mb-encode-numericentity" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>mb_encode_numericentity</refname>
-  <refpurpose>Кодирует символ в числовую HTML-ссылку</refpurpose>
+  <refpurpose>Кодирует символ в HTML-строку с числовой ссылкой на кодовую точку символа в Юникоде</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,8 +17,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>hex</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция преобразовывает заданные коды символов в строке (<type>string</type>)
-   <parameter>string</parameter> из кодов в числовые HTML-ссылки.
+   Функция преобразовывает кодовые точки символов значения с типом <type>string</type>,
+   которое принимает параметр <parameter>string</parameter>, в HTML-строки с числовой ссылкой на символ.
   </para>
  </refsect1>
 
@@ -38,7 +38,7 @@
      <term><parameter>map</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>map</parameter> — массив, задающий область кода для преобразования.
+       Параметр <parameter>map</parameter> принимает массив, в котором указывается диапазон кодовых точек для преобразования.
       </para>
      </listitem>
     </varlistentry>
@@ -52,8 +52,8 @@
      <term><parameter>hex</parameter></term>
      <listitem>
       <para>
-       Должна ли возвращаемая на сущность ссылка быть в
-       шестнадцатеричной нотации (иначе она будет в десятичной).
+       Указывает, возвращать ли HTML-сущность
+       в шестнадцатеричной нотации, иначе числовая ссылка на символ возвращается в десятичной нотации.
       </para>
      </listitem>
     </varlistentry>
@@ -71,8 +71,8 @@
  <refsect1 role="errors">
   &reftitle.errors;
   <simpara>
-   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>, если значение
-   параметра <parameter>map</parameter> не является списком целочисленных значений (&integer;).
+   Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если в параметр <parameter>map</parameter> передали аргумент, который не содержит список значений с типом &integer;.
   </simpara>
  </refsect1>
 
@@ -91,8 +91,8 @@
       <entry>8.4.0</entry>
       <entry>
        Функция <function>mb_encode_numericentity</function> теперь выбрасывает
-       ошибку <exceptionname>ValueError</exceptionname>, если значение параметра
-       <parameter>map</parameter> не является списком целочисленных значений (&integer;).
+       ошибку <exceptionname>ValueError</exceptionname>, если в параметр <parameter>map</parameter> передали аргумент,
+       который не содержит список значений с типом &integer;.
       </entry>
      </row>
      &mbstring.changelog.encoding-nullable;
@@ -105,19 +105,21 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования параметра <parameter>map</parameter></title>
-    <programlisting role="php">
+    <title>Пример формата для установки параметра <parameter>map</parameter></title>
+    <programlisting>
 <![CDATA[
 <?php
 
-$convmap = array (
- int start_code1, int end_code1, int offset1, int mask1,
- int start_code2, int end_code2, int offset2, int mask2,
- ........
- int start_codeN, int end_codeN, int offsetN, int maskN );
-// Задайте значения Юникода для start_codeN и end_codeN
-// Добавьте к значению offsetN и сложите побитово с maskN,
-// затем преобразуйте результат в число.
+$convmap = array(
+    int start_code1, int end_code1, int offset1, int mask1,
+    int start_code2, int end_code2, int offset2, int mask2,
+    ........
+    int start_codeN, int end_codeN, int offsetN, int maskN
+);
+// Значениями start_codeN и end_codeN определяется диапазон кодовых точек Юникода.
+// К кодовой точке исходного символа добавляется смещение offsetN и выполняется побитовая операция 'И' со значением маски maskN,
+// а полученное значение затем преобразовывается в числовую ссылку на символ.
+
 ?>
 ]]>
     </programlisting>
@@ -126,31 +128,34 @@ $convmap = array (
 
   <para>
    <example>
-    <title>Пример использования функции <function>mb_encode_numericentity</function></title>
+    <title>Пример кодирования символа функцией <function>mb_encode_numericentity</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-/* Преобразование левой части ISO-8859-1 в числовую HTML-ссылку */
-$convmap = array(0x80, 0xff, 0, 0xff);
-$str = mb_encode_numericentity($str, $convmap, "ISO-8859-1");
+$str = "aAæÆあア𩸽";
 
-/* Преобразование заданного пользователем кода SJIS-win в блоке 95-104 в числовую ссыку*/
-$convmap = array(
-       0xe000, 0xe03e, 0x1040, 0xffff,
-       0xe03f, 0xe0bb, 0x1041, 0xffff,
-       0xe0bc, 0xe0fa, 0x1084, 0xffff,
-       0xe0fb, 0xe177, 0x1085, 0xffff,
-       0xe178, 0xe1b6, 0x10c8, 0xffff,
-       0xe1b7, 0xe233, 0x10c9, 0xffff,
-       0xe234, 0xe272, 0x110c, 0xffff,
-       0xe273, 0xe2ef, 0x110d, 0xffff,
-       0xe2f0, 0xe32e, 0x1150, 0xffff,
-       0xe32f, 0xe3ab, 0x1151, 0xffff );
-$str = mb_encode_numericentity($str, $convmap, "sjis-win");
+/* Преобразование каждого UTF8-символа длиной до 4 байтов в HTML-строку с числовой ссылкой на символ */
+$convmap = [0, 0x1FFFFF, 0, 0x10FFFF];
+var_dump(mb_encode_numericentity($str, $convmap, "utf8"));
+
+/* Преобразование только 2- и 4-байтовых UTF8-символов в HTML-строку с числовой ссылкой на символ */
+$convmap = [
+    0x80, 0x7FF, 0, 0x10FFFF,
+    0x10000, 0x1FFFFF, 0, 0x10FFFF,
+];
+var_dump(mb_encode_numericentity($str, $convmap, "utf8"));
+
 ?>
 ]]>
     </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+string(46) "&#97;&#65;&#230;&#198;&#12354;&#12450;&#40509;"
+string(28) "aA&#230;&#198;あア&#40509;"
+]]>
+   </screen>
    </example>
   </para>
  </refsect1>
