@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e49940b757b35b8ef26bb64380c231eda7b49fc4 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 53a400680d0cb2ddabd4493fb9846533c422e90d Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <!-- Revision: $ -->
 <sect1 xml:id="control-structures.foreach" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>foreach</title>
  <?phpdoc print-version-for="foreach"?>
  <para>
-  Языковая конструкция <literal>foreach</literal> предлагает простой способ
-  перебора массивов. Конструкция <literal>foreach</literal> работает только с
-  массивами и объектами, и будет выдавать ошибку при попытке
-  использовать её с переменными других типов данных или неинициализированными переменными.
+  Языковой конструкцией <literal>foreach</literal> удобно перебирать
+  массивы (<type>array</type>) и объекты, классы которых реализуют интерфейс <interfacename>Traversable</interfacename>.
+  Конструкция <literal>foreach</literal> выдаст ошибку при попытке
+  перебора переменной с другим типом данных или неинициализированной переменной.
   Разработчику доступны два вида синтаксиса:
   <informalexample>
+   <simpara>
+    Конструкция <literal>foreach</literal> умеет получать ключ каждого элемента, если требуется, и присваивать значение ключа переменной <literal>key</literal>:
+   </simpara>
    <programlisting>
 <![CDATA[
-foreach (iterable_expression as $value)
-    statement
-foreach (iterable_expression as $key => $value)
-    statement
+foreach (iterable_expression as $value) {
+    statement_list
+}
+
+foreach (iterable_expression as $key => $value) {
+    statement_list
+}
 ]]>
    </programlisting>
   </informalexample>
@@ -41,162 +47,86 @@ foreach (iterable_expression as $key => $value)
   <link linkend="language.oop5.iterations">настройка итерации объектов</link>.
  </simpara>
 
- <para>
-  Чтобы непосредственно изменять элементы массива внутри цикла,
-  перед переменной <literal>$value</literal> указывают знак &amp;. Тогда
-  значение будет присвоено <link linkend="language.references">по ссылке</link>.
-  <informalexample>
-   <programlisting role="php">
+ <example>
+  <title>Базовая работа с конструкцией <literal>foreach</literal></title>
+  <programlisting role="php">
 <![CDATA[
 <?php
 
-$arr = array(1, 2, 3, 4);
-foreach ($arr as &$value) {
-    $value = $value * 2;
-}
-// массив $arr теперь выглядит так: array(2, 4, 6, 8)
-unset($value); // разорвать ссылку на последний элемент
-?>
-]]>
-   </programlisting>
-  </informalexample>
- </para>
- <warning>
-  <para>
-   Ссылка переменной <literal>$value</literal> на последний элемент массива останется даже после окончания
-   цикла <literal>foreach</literal>. Рекомендовано уничтожать её языковой конструкцией <function>unset</function>.
-   В противном случае разработчик столкнётся с таким поведением:
-  </para>
-  <informalexample>
-   <programlisting role="php">
-<![CDATA[
-<?php
+/* Пример перебора только значений */
+$array = [1, 2, 3, 17];
 
-$arr = array(1, 2, 3, 4);
-foreach ($arr as &$value) {
-    $value = $value * 2;
-}
-// $arr = array(2, 4, 6, 8)
-
-// Без вызова конструкции unset($value), перменная $value всё ещё ссылается на последний элемент: $arr[3]
-
-foreach ($arr as $key => $value) {
-    // Значение элемента $arr[3] будет обновляться значениями массива $arr при каждой итерации цикла...
-    echo "{$key} => {$value} ";
-    print_r($arr);
-}
-// ...до тех пор, пока предпоследнее значение не будет скопировано в последнее значение
-
-// вывод:
-// 0 => 2 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 2 )
-// 1 => 4 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 4 )
-// 2 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
-// 3 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
-?>
-]]>
-   </programlisting>
-  </informalexample>
- </warning>
- <para>
-  Разрешено перебирать значение константного массива по ссылке:
-  <informalexample>
-   <programlisting role="php">
-<![CDATA[
-<?php
-
-foreach (array(1, 2, 3, 4) as &$value) {
-    $value = $value * 2;
-}
-?>
-]]>
-   </programlisting>
-  </informalexample>
- </para>
- <para>
-  <note>
-   <para>
-    Языковая конструкция <literal>foreach</literal> не поддерживает подавление
-    сообщений об ошибках через оператор <literal linkend="language.operators.errorcontrol">@</literal>.
-   </para>
-  </note>
- </para>
- <para>
-  Ещё примеры, которые показывают работу конструкции:
-  <informalexample>
-   <programlisting role="php">
-<![CDATA[
-<?php
-
-/* Пример 1: только значение */
-
-$a = array(1, 2, 3, 17);
-
-foreach ($a as $v) {
-    echo "Текущее значение переменной \$a: $v.\n";
+foreach ($array as $value) {
+    echo "Значение текущего элемента массива \$array: $value.\n";
 }
 
-/* Пример 2: значение (для иллюстрации массив выводится в виде значения с ключом) */
-
-$a = array(1, 2, 3, 17);
-
-$i = 0; /* только для пояснения */
-
-foreach ($a as $v) {
-    echo "\$a[$i] => $v.\n";
-    $i++;
-}
-
-/* Пример 3: ключ и значение */
-
-$a = array(
+/* Пример перебора ключей и значений */
+$array = [
     "one" => 1,
     "two" => 2,
     "three" => 3,
     "seventeen" => 17
-);
+];
 
-foreach ($a as $k => $v) {
-    echo "\$a[$k] => $v.\n";
+foreach ($array as $key => $value) {
+    echo "Ключ: $key => Значение: $value\n";
 }
 
-/* Пример 4: многомерные массивы */
-$a = array();
-$a[0][0] = "a";
-$a[0][1] = "b";
-$a[1][0] = "y";
-$a[1][1] = "z";
+/* Пример итерации по ключам и значениям многомерного массива */
+$grid = [];
+$grid[0][0] = "a";
+$grid[0][1] = "b";
+$grid[1][0] = "y";
+$grid[1][1] = "z";
 
-foreach ($a as $v1) {
-    foreach ($v1 as $v2) {
-        echo "$v2\n";
+foreach ($grid as $y => $row) {
+    foreach ($row as $x => $value) {
+        echo "Значение на позиции x=$x и y=$y: $value\n";
     }
 }
 
-/* Пример 5: динамические массивы */
-
-foreach (array(1, 2, 3, 4, 5) as $v) {
-    echo "$v\n";
+/* Пример итерации по динамическому массиву */
+foreach (range(1, 5) as $value) {
+    echo "$value\n";
 }
+
 ?>
 ]]>
-   </programlisting>
-  </informalexample>
- </para>
+  </programlisting>
+ </example>
+ <note>
+  <para>
+   Конструкция <literal>foreach</literal> не поддерживает
+   подавление сообщений об ошибках оператором
+   <link linkend="language.operators.errorcontrol"><literal>@</literal></link>.
+  </para>
+ </note>
 
  <sect2 xml:id="control-structures.foreach.list">
-  <title>Распаковка вложенных массивов языковой конструкцией list()</title>
+  <title>Распаковка вложенных массивов</title>
   <?phpdoc print-version-for="foreach.list"?>
-
   <para>
-   Доступен перебор массива массивов и распаковка
-   вложенного массива в переменные цикла путём передачи конструкции <function>list</function>
-   в качестве значения.
+   В PHP доступна итерация по массиву массивов и распаковка вложенного массива
+   в переменные цикла. Массив распаковывают либо путём
+   <link linkend="language.types.array.syntax.destructuring">деструктуризации массива</link>
+   через конструкцию <literal>[]</literal>, либо указывают языковую конструкцию <function>list</function>
+   как значение цикла.
+
+   <note>
+    <simpara>
+     <link linkend="language.types.array.syntax.destructuring">Деструктуризация массивов</link>
+     через конструкцию <literal>[]</literal> возможна только с PHP 7.1.0
+    </simpara>
+   </note>
   </para>
 
   <para>
-   Например:
-
    <informalexample>
+    <simpara>
+     В обоих следующих примерах переменной <literal>$a</literal> присваивается
+     первый элемент вложенного массива, а переменная <literal>$b</literal> получит
+     второй элемент:
+    </simpara>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -206,11 +136,14 @@ $array = [
     [3, 4],
 ];
 
-foreach ($array as list($a, $b)) {
-    // Переменная $a содержит первый элемент вложенного массива,
-    // а переменная $b — второй.
+foreach ($array as [$a, $b]) {
     echo "A: $a; B: $b\n";
 }
+
+foreach ($array as list($a, $b)) {
+    echo "A: $a; B: $b\n";
+}
+
 ?>
 ]]>
     </programlisting>
@@ -225,40 +158,47 @@ A: 3; B: 4
   </para>
 
   <para>
-   В конструкцию <function>list</function> разрешено передавать меньшее количество элементов,
-   чем содержится во вложенном массиве, тогда оставшиеся значения массива
-   будут проигнорированы:
-
+   Распаковка проигнорирует оставшиеся элементы,
+   если в значении цикла указали меньшее переменных, чем элементов в массиве.
+   Аналогично элементы пропускают, оставляя только запятую:
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $array = [
-    [1, 2],
-    [3, 4],
+    [1, 2, 3],
+    [3, 4, 6],
 ];
 
-foreach ($array as list($a)) {
-    // Обратите внимание, переменной $b здесь нет.
-    echo "$a\n";
+foreach ($array as [$a, $b]) {
+    // Обратите внимание, переменную $c не указали
+    echo "$a $b\n";
 }
+
+foreach ($array as [, , $c]) {
+    // Пропускаем переменные $a и $b
+    echo "$c\n";
+}
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-1
-3
+1 2
+3 4
+5
+6
 ]]>
     </screen>
    </informalexample>
   </para>
 
   <para>
-   Если массив содержит недостаточно элементов для заполнения переменных
-   в конструкции <function>list</function>, то будет сгенерировано уведомление об ошибке:
+   При недостаточном количестве элементов для заполнения переменных в конструкции <function>list</function>
+   или конструкции с квадратными скобками генерируется уведомление:
 
    <informalexample>
     <programlisting role="php">
@@ -270,16 +210,16 @@ $array = [
     [3, 4],
 ];
 
-foreach ($array as list($a, $b, $c)) {
+foreach ($array as [$a, $b, $c]) {
     echo "A: $a; B: $b; C: $c\n";
 }
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-
 Notice: Undefined offset: 2 in example.php on line 7
 A: 1; B: 2; C:
 
@@ -291,7 +231,100 @@ A: 3; B: 4; C:
   </para>
  </sect2>
 
-</sect1><!-- Keep this comment at the end of the file
+ <sect2 xml:id="control-structures.foreach.reference">
+  <title>Конструкция foreach и ссылки</title>
+  <para>
+   Элементы массива возможно напрямую модифицировать внутри цикла путём указания
+   перед значением <literal>$value</literal> знака <literal>&amp;</literal>,
+   тогда значение присваивается
+   <link linkend="language.references">по ссылке</link>.
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$arr = [1, 2, 3, 4];
+foreach ($arr as &$value) {
+    $value = $value * 2;
+}
+// Массив $arr теперь содержит значения [2, 4, 6, 8]
+unset($value); // Разрываем ссылочную связь с последним элементом
+
+?>
+]]>
+    </programlisting>
+   </informalexample>
+  </para>
+  <warning>
+   <simpara>
+    Ссылка на значение <literal>$value</literal> последнего элемента массива
+    сохраняется даже после завершения цикла <literal>foreach</literal>. Поэтому рекомендуют
+    уничтожать ссылку конструкцией <function>unset</function>,
+    иначе возникнет следующее поведение:
+   </simpara>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$arr = [1, 2, 3, 4];
+foreach ($arr as &$value) {
+    $value = $value * 2;
+}
+// Массив $arr теперь содержит значения [2, 4, 6, 8]
+
+// Без уничтожения ссылки конструкцией unset($value) переменная $value по-прежнему ссылается на последний элемент: $arr[3]
+
+foreach ($arr as $key => $value) {
+    // Элемент $arr[3] обновляется с каждым значением массива $arr...
+    echo "{$key} => {$value} ";
+    print_r($arr);
+}
+// ...пока предпоследнее значение не скопируется в последнее
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+0 => 2 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 2 )
+1 => 4 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 4 )
+2 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
+3 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
+]]>
+    </screen>
+   </informalexample>
+  </warning>
+  <example>
+  <title>Итерация по значениям константного массива по ссылке</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+foreach ([1, 2, 3, 4] as &$value) {
+    $value = $value * 2;
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+
+ <sect2 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><link linkend="language.types.array">array</link></member>
+   <member><interfacename>Traversable</interfacename></member>
+   <member><link linkend="language.types.iterable">iterable</link></member>
+   <member><function>list</function></member>
+  </simplelist>
+ </sect2>
+
+</sect1>
+
+<!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
 sgml-omittag:t
