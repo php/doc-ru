@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8cdc6621f9826d04abc3e50438c010804d7e8683 Maintainer: shein Status: ready -->
+<!-- EN-Revision: d816a0fad6c458d9515f697cc89e26ca9d8069f5 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.serialize" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>serialize</refname>
- <refpurpose>Генерирует пригодное для хранения представление переменной</refpurpose>
+ <refpurpose>Генерирует сохраняемое представление переменной</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,14 +14,14 @@
    <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Генерирует пригодное для хранения представление переменной.
+   Функция генерирует сохраняемое представление переменной.
   </para>
   <para>
-   Это полезно для хранения или передачи значений PHP между скриптами без
-   потери их типа и структуры.
+   Такое представление полезно для хранения или передачи PHP-значений между скриптами
+   без потери типа и структуры.
   </para>
   <para>
-   Для превращения сериализованной строки обратно в PHP-значение, используйте
+   Для превращения сериализованной строки обратно в PHP-значение вызывают
    функцию <function>unserialize</function>.
   </para>
  </refsect1>
@@ -34,29 +34,29 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение, которое необходимо сериализовать. <function>serialize</function>
+       Значение, которое требуется сериализовать. Функция <function>serialize</function>
        обрабатывает все типы, кроме <type>resource</type>
-       и некоторых типов <type>object</type> (смотрите примечание ниже).
-       Возможно также сериализовать массивы, которые содержат
+       и отдельных типов <type>object</type>, как говорится в примечании.
+       Функция даже умеет сериализовать массивы, которые содержат
        ссылки на себя. Циклические ссылки внутри сериализуемого
-       массива/объекта также сохраняются. Любые другие
-       ссылки будут потеряны.
+       массива или объекта также сохраняются. Любые другие
+       ссылки утратятся.
       </para>
       <para>
-       При сериализации объекта PHP пытается вызвать магические методы
-       <link linkend="object.serialize">__serialize()</link> или
-       <link linkend="object.sleep">__sleep()</link> перед сериализацией.
-       Это делается для того, чтобы позволить объекту в последний
-       момент произвести очистку и тому подобные операции перед сериализацией.
+       При сериализации объекта PHP пытается вызвать перед операцией магические методы
+       <link linkend="object.serialize">__serialize()</link>
+       или <link linkend="object.sleep">__sleep()</link>.
+       Это делается, чтобы разрешить объекту в последний
+       момент перед сериализацией произвести очистку и другие похожие операции.
        Аналогично, когда объект восстанавливается функцией
-       <function>unserialize</function>, вызывается магический метод <link linkend="object.unserialize">__unserialize()</link> или
-       <link linkend="object.wakeup">__wakeup()</link>.
+       <function>unserialize</function>, вызывается магический метод <link linkend="object.unserialize">__unserialize()</link>
+       или <link linkend="object.wakeup">__wakeup()</link>.
       </para>
       <note>
        <para>
-        Начало имён закрытых членов объекта дополняются именем класса,
-        а начало имён защищённых членов символом '*'. Эти дополненные
-        значения окружаются нулевым байтом (0x00) с обеих сторон.
+        Начало названий закрытых членов объекта дополняются названием класса,
+        а начало названий защищённых членов символом '*'. Эти дополненные
+        значения окружаются с обеих сторон нулевым байтом — 0x00.
        </para>
       </note>
      </listitem>
@@ -68,14 +68,14 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку, содержащую потоковое представление переменной
-   <parameter>value</parameter>, которая может быть сохранена где угодно.
+   Функция возвращает строку, которая содержит представление значения
+   <parameter>value</parameter> в виде потока байтов. Такое представление доступно для сохранения в произвольном хранилище.
   </para>
   <para>
-   Обратите внимание, что это бинарная строка, которая может включать нулевые байты,
-   и её нужно хранить и обрабатывать соответствующим образом. Например,
+   Обратите внимание, что это бинарная строка, которая иногда включает нулевые байты,
+   и которую требуется хранить и обрабатывать с учётом содержания. Например,
    вывод функции <function>serialize</function> лучше хранить в BLOB-поле
-   базы данных, а не в полях типа CHAR или TEXT.
+   базы данных, а не в полях с типом CHAR или TEXT.
   </para>
  </refsect1>
 
@@ -83,25 +83,34 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>serialize</function></title>
-    <programlisting role="php">
+    <title>Пример сериализации значения функцией <function>serialize</function></title>
+    <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-// $session_data содержит многомерный массив с сессионной
-// информацией о текущем пользователе. Мы используем serialize() для сохранения
-// этой информации в базе данных в конце запроса.
+
+// Переменная $session_data содержит многомерный массив с сессионной
+// информацией о текущем пользователе. Функция serialize() сохраняет
+// эту информацию в базе данных в конце запроса.
 
 $conn = odbc_connect("webdb", "php", "chicken");
-$stmt = odbc_prepare($conn,
-      "UPDATE sessions SET data = ? WHERE id = ?");
-$sqldata = array (serialize($session_data), $_SERVER['PHP_AUTH_USER']);
+$stmt = odbc_prepare(
+    $conn,
+    "UPDATE sessions SET data = ? WHERE id = ?"
+);
+
+$sqldata = array(serialize($session_data), $_SERVER['PHP_AUTH_USER']);
+
 if (!odbc_execute($stmt, $sqldata)) {
-    $stmt = odbc_prepare($conn,
-     "INSERT INTO sessions (id, data) VALUES(?, ?)");
+    $stmt = odbc_prepare(
+        $conn,
+        "INSERT INTO sessions (id, data) VALUES(?, ?)"
+    );
+
     if (!odbc_execute($stmt, array_reverse($sqldata))) {
-        /* Код, выполняемый в случае возникновения ошибки.. */
+        /* Код при ошибке */
     }
 }
+
 ?>
 ]]>
     </programlisting>
@@ -113,26 +122,25 @@ if (!odbc_execute($stmt, $sqldata)) {
   &reftitle.notes;
   <note>
    <para>
-    Обратите внимание, что много встроенных в PHP объектов не может быть
-    сериализовано. Однако, те из них, которые поддерживают эту
-    возможность, реализуют или интерфейс
-    <interfacename>Serializable</interfacename>, или
-    магические методы <link linkend="object.serialize">__serialize()</link>/<link linkend="object.unserialize">__unserialize()</link>
-    или <link linkend="object.sleep">__sleep()</link>/<link linkend="object.wakeup">__wakeup()</link>. Если
-    встроенный класс не удовлетворяет этим требованиям,
-    он не может быть надёжно сериализован.
+    Обратите внимание, бо́льшая часть встроенных в PHP объектов не поддерживает сериализацию.
+    Однако объекты, которые всё-таки поддерживают сериализацию,
+    или реализуют интерфейс <interfacename>Serializable</interfacename>,
+    или определяют магические методы <link linkend="object.serialize">__serialize()</link> и <link linkend="object.unserialize">__unserialize()</link>
+    или <link linkend="object.sleep">__sleep()</link> и <link linkend="object.wakeup">__wakeup()</link>.
+    Встроенные классы, которые не удовлетворяют ни одному из этих требований,
+    невозможно надёжно сериализовать.
    </para>
    <para>
-    Исторически есть некоторые исключения из вышеуказанного правила,
-    когда некоторые внутренние объекты могут быть сериализованы без
-    реализации интерфейса или магических методов.
+    PHP включает ряд исторических исключений из приведённого правила,
+    когда отдельные внутренние объекты сериализовавались
+    без реализации интерфейса или магических методов.
    </para>
   </note>
   <warning>
    <para>
-    При сериализации объектов функцией <function>serialize</function>,
-    ведущий обратный слеш не будет включён в имя класса с указанным
-    пространством имён для наилучшей обратной совместимости.
+    При сериализации объектов функцией <function>serialize</function>
+    ведущий обратный слеш не включается в название класса, который определили
+    в пространстве имён, для наилучшей обратной совместимости.
    </para>
   </warning>
  </refsect1>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0f27fadf81b66268edf545f13891401b4d53cc38 Maintainer: shein Status: ready -->
+<!-- EN-Revision: d816a0fad6c458d9515f697cc89e26ca9d8069f5 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.var-export" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>var_export</refname>
-  <refpurpose>Выводит или возвращает интерпретируемое строковое представление переменной</refpurpose>
+  <refpurpose>Выводит или возвращает удобное для разбора строковое представление переменной</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,9 +15,9 @@
    <methodparam choice="opt"><type>bool</type><parameter>return</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   <function>var_export</function> возвращает структурированную информацию о
-   данной переменной. Функция аналогична <function>var_dump</function>
-   за одним исключением: возвращаемое представление является полноценным PHP-кодом.
+   Функция <function>var_export</function> возвращает структурированную информацию
+   о переменной. Функция аналогична функции <function>var_dump</function>
+   за одним исключением: она возвращает представление переменной в виде допустимого PHP-кода.
   </simpara>
  </refsect1>
 
@@ -29,7 +29,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Переменная, которую необходимо экспортировать.
+       Переменная, которую требуется экспортировать.
       </para>
      </listitem>
     </varlistentry>
@@ -37,8 +37,8 @@
      <term><parameter>return</parameter></term>
      <listitem>
       <para>
-       Если передано и значение равно &true;, <function>var_export</function> вернёт
-       представление переменной вместо его вывода.
+       Со значением &true; функция <function>var_export</function> вернёт
+       представление переменной, а не выведет.
       </para>
      </listitem>
     </varlistentry>
@@ -49,8 +49,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает представление переменной, если параметр <parameter>return</parameter>
-   передан и равен &true;. В противном случае функция возвращает &null;.
+   Функция возвращает представление переменной, если параметр <parameter>return</parameter>
+   установили и значение аргумента вычисляется как &true;, иначе функция возвращает &null;.
   </para>
  </refsect1>
 
@@ -69,19 +69,18 @@
       <row>
        <entry>8.2.0</entry>
        <entry>
-        Имена экспортируемых классов теперь полностью определены;
-        ранее ведущий обратный слеш опускался.
+        Названия экспортируемых классов стали абсолютными;
+        раньше ведущий обратный слеш опускался.
        </entry>
       </row>
       <row>
        <entry>7.3.0</entry>
        <entry>
-        Теперь объекты <classname>stdClass</classname> экспортируются в виде массива, приведённого
-        к объекту (массив <code>(object) array( ... )</code>), вместо использования
-        несуществующего метода <methodname>stdClass::__setState</methodname>.
-        Практический эффект заключается в том, что теперь <classname>stdClass</classname> можно
-        экспортировать, и полученный код будет работать даже в более ранних версиях
-        PHP.
+        Функция теперь вместо вызова несуществующего метода <methodname>stdClass::__setState</methodname>
+        экспортирует объекты класса <classname>stdClass</classname> как массив,
+        который приводится к объекту: <code>(object) array( ... )</code>.
+        Практический эффект заключается в том, что теперь объекты класса <classname>stdClass</classname>
+        доступны для экспорта, а полученный код сработает даже в более ранних версиях PHP.
        </entry>
       </row>
      </tbody>
@@ -94,12 +93,14 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Примеры использования <function>var_export</function></title>
+    <title>Примеры экспорта переменной функцией <function>var_export</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $a = array (1, 2, array ("a", "b", "c"));
 var_export($a);
+
 ?>
 ]]>
     </programlisting>
@@ -139,15 +140,18 @@ echo $v;
   </para>
   <para>
    <example>
-    <title>Экспорт stdClass с PHP 7.3.0</title>
+    <title>Экспорт объекта класса stdClass с PHP 7.3.0</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$person = new stdClass;
+
+$person = new stdClass();
 $person->name = 'ElePHPant ElePHPantsdotter';
 $person->website = 'https://php.net/elephpant.php';
 
 var_export($person);
+
+?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -167,17 +171,23 @@ var_export($person);
     <programlisting role="php">
 <![CDATA[
 <?php
-class A { public $var; }
-$a = new A;
+
+class A
+{
+    public $var;
+}
+
+$a = new A();
 $a->var = 5;
 var_export($a);
+
 ?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-A::__set_state(array(
+\A::__set_state(array(
    'var' => 5,
 ))
 ]]>
@@ -186,10 +196,11 @@ A::__set_state(array(
   </para>
   <para>
    <example>
-    <title>Использование <link linkend="object.set-state">__set_state()</link></title>
+    <title>Пример экспорта переменной с обработкой магическим методом <link linkend="object.set-state">__set_state()</link></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class A
 {
     public $var1;
@@ -197,14 +208,14 @@ class A
 
     public static function __set_state($an_array)
     {
-        $obj = new A;
+        $obj = new A();
         $obj->var1 = $an_array['var1'];
         $obj->var2 = $an_array['var2'];
         return $obj;
     }
 }
 
-$a = new A;
+$a = new A();
 $a->var1 = 5;
 $a->var2 = 'foo';
 
@@ -213,6 +224,7 @@ eval('$b = ' . var_export($a, true) . ';'); // $b = A::__set_state(array(
                                             //    'var2' => 'foo',
                                             // ));
 var_dump($b);
+
 ?>
 ]]>
     </programlisting>
@@ -235,30 +247,31 @@ object(A)#2 (2) {
   &reftitle.notes;
   <note>
    <para>
-    Переменные типа <type>resource</type> не могут быть экспортированы
-    с помощью этой функции.
+    Функцией невозможно экспортировать переменные с типом <type>resource</type>.
    </para>
   </note>
   <note>
    <para>
-    <function>var_export</function> не обрабатывает циклические ссылки, так как
+    Функция <function>var_export</function> не обрабатывает циклические ссылки, поскольку
     было бы почти невозможно сгенерировать интерпретируемый PHP-код для такого случая.
-    Если необходимо производить какие-то действия с полным представлением массива
-    или объекта, используйте функцию <function>serialize</function>.
+    Для операций с полным представлением массива
+    или объекта вызывают функцию <function>serialize</function>.
    </para>
   </note>
   <warning>
    <para>
-    До версии PHP 8.2.0, когда функция <function>var_export</function> экспортировала объекты,
-    ведущий обратный слеш не добавлялся в имя класса с указанным
-    пространством имён для наилучшей обратной совместимости.
+    До PHP 8.2.0 функция <function>var_export</function> экспортировала объекты
+    без ведущего обратного слеша перед названием класса, который
+    определили в пространстве имён, для наилучшей обратной совместимости.
    </para>
   </warning>
   <note>
    <para>
-    Для того, чтобы можно было использовать сгенерированный <function>var_export</function>
-    PHP-код, необходимо, чтобы все затронутые объекты реализовывали
-    магический метод <link linkend="object.set-state">__set_state</link>. Единственное исключение — <classname>stdClass</classname>, который экспортируется с использованием массива, приведённого к объекту.
+    Функция <function>var_export</function> сгенерирует исполняемый PHP-код,
+    только если в каждом объекте, который обрабатывает функция, реализовали
+    магический метод <link linkend="object.set-state">__set_state</link>.
+    Единственное исключение — объекты класса <classname>stdClass</classname>,
+    которые экспортируются как массив с приведением к объекту.
    </para>
   </note>
  </refsect1>
