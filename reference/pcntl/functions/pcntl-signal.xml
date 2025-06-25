@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b890f28c0c6d2856eadcdc34b3faf83a846b3d79 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5fe0f8494374d594762e56b2d769c2828b1e0ddb Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="function.pcntl-signal" xmlns="http://docbook.org/ns/docbook">
+<refentry xml:id="function.pcntl-signal" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>pcntl_signal</refname>
-  <refpurpose>Установка обработчика сигнала</refpurpose>
+  <refpurpose>Устанавливает обработчик сигнала</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,9 +16,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>restart_syscalls</parameter><initializer>&true;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>pcntl_signal</function> устанавливает новый
-   обработчик сигнала или заменяет текущий обработчик сигнала,
-   указанный в аргументе <parameter>signal</parameter>.
+   Функция <function>pcntl_signal</function> устанавливает новый или заменяет текущий
+   обработчик сигнала <parameter>signal</parameter>.
   </para>
  </refsect1>
 
@@ -38,15 +37,14 @@
      <term><parameter>handler</parameter></term>
      <listitem>
       <para>
-       Обработчик сигнала. Это может быть или <type>callable</type>,
-       указатель на функцию, которая будет запущена для обработки сигнала,
-       или значение одной из глобальных констант:
-       <constant>SIG_IGN</constant> или <constant>SIG_DFL</constant>,
-       которые, соответственно, либо приведут к игнорированию сигнала,
-       либо восстановлению обработчика по умолчанию.
+       Обработчик сигнала. В параметр передают или <type>callable</type>-выражение,
+       которое запустится для обработки сигнала,
+       или глобальную константу:
+       <constant>SIG_IGN</constant> для игнорирования сигнала
+       или <constant>SIG_DFL</constant> для восстановления обработчика по умолчанию.
       </para>
       <para>
-       Если передан тип <type>callable</type>, он должен иметь следующую сигнатуру:
+       Для аргумента с псевдотипом <type>callable</type> определяют следующую сигнатуру:
       </para>
       <para>
        <methodsynopsis>
@@ -67,8 +65,8 @@
          <term><parameter>siginfo</parameter></term>
          <listitem>
           <simpara>
-           Если операционная система поддерживает структуры siginfo_t,
-           можно передать массив c информацией о сигнале соответствующей структуры.
+           При поддержке структур siginfo_t операционной системой
+           в аргумент поступит массив со специфичной для сигнала информацией.
           </simpara>
          </listitem>
         </varlistentry>
@@ -76,10 +74,9 @@
       </para>
       <note>
        <para>
-        Обратите внимание, что когда вы задаёте в качестве обработчика метод объекта,
-        счётчик ссылок на данный объект будет увеличен на единицу, что сохранит его в памяти
-        до тех пор, пока вы либо не смените обработчик на что-то другое, либо до тех пор
-        пока скрипт полностью не завершит свою работу.
+        Обратите внимание, при установке метода объекта как обработчика
+        счётчик ссылок на такой объект увеличится на единицу, что сохранит объект в памяти
+        либо до замены обработчика, либо пока скрипт не завершит работу.
        </para>
       </note>
      </listitem>
@@ -88,7 +85,7 @@
      <term><parameter>restart_syscalls</parameter></term>
      <listitem>
       <para>
-       Определяет, должен ли использоваться перезапуск системного вызова
+       Параметр определяет, перезапускать ли системный вызов
        при поступлении сигнала.
       </para>
      </listitem>
@@ -119,12 +116,11 @@
       <row>
        <entry>7.1.0</entry>
        <entry>
-        Начиная с PHP 7.1.0 обработчику callback-функции передаётся второй аргумент,
-        содержащий структуру siginfo определённого сигнала. Эти данные будут
-        переданы только в том случае, если операционная система поддерживает
-        структуры siginfo_t.
-        Если в операционной системе не реализована поддержка структуры siginfo_t,
-        то в качестве второго аргумента будет передан NULL.
+        Начиная с PHP 7.1.0 callback-функции обработчика передаётся второй аргумент,
+        который содержит структуру siginfo с со специфичной информацией о сигнале.
+        Эти данные передаются, только если операционная система поддерживает
+        структуры siginfo_t, а если в ОС не реализовали поддержку структур siginfo_t,
+        передаётся значение NULL.
        </entry>
       </row>
      </tbody>
@@ -137,24 +133,23 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>pcntl_signal</function></title>
+    <title>Пример установки обработчика сигнала функцией <function>pcntl_signal</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Обязательно
-declare(ticks = 1);
 
-// функция обработки сигнала
+pcntl_async_signals(true);
+
+// Функция обработки сигнала
 function sig_handler($signo)
 {
-
      switch ($signo) {
          case SIGTERM:
              // Обработка задач остановки
              exit;
              break;
          case SIGHUP:
-             // обработка задач перезапуска
+             // Обработка задач перезапуска
              break;
          case SIGUSR1:
              echo "Получен сигнал SIGUSR1...\n";
@@ -167,18 +162,18 @@ function sig_handler($signo)
 
 echo "Установка обработчиков сигналов...\n";
 
-// Установка обработчиков сигналов
+// Устанавливаем функцию как обработчик сигналов
 pcntl_signal(SIGTERM, "sig_handler");
 pcntl_signal(SIGHUP,  "sig_handler");
 pcntl_signal(SIGUSR1, "sig_handler");
 
-// или можете использовать объект
+// или устанавливаем как обработчик метод объекта
 // pcntl_signal(SIGUSR1, array($obj, "do_something"));
 
-echo "Отправка сигнала SIGUSR1 себе...\n";
+echo "Генерация сигнала SIGUSR1 для самого себя...\n";
 
-// Отправка SIGUSR1 процессу с текущим id (т.е. себе)
-// для использования функций posix_* требуется модуль posix
+// Отправка сигнала SIGUSR1 самому себе — процессу с текущим идентификатором.
+// PHP поддерживает функций семейства posix_* только при загрузке модуля posix
 posix_kill(posix_getpid(), SIGUSR1);
 
 echo "Завершено\n";
@@ -193,15 +188,33 @@ echo "Завершено\n";
  <refsect1 role="notes"><!-- {{{ -->
   &reftitle.notes;
   <para>
-   <function>pcntl_signal</function> не собирает обработчики сигналов в стек, а заменяет их.
+   Функция <function>pcntl_signal</function> не накапливает вызовы обработчиков сигналов в стек, а заменяет текущий.
   </para>
+  <refsect2>
+   <title>Методы диспетчеризации</title>
+   <para>
+    В модуле доступны следующие способы диспетчеризации обработчиков сигналов:
+    <simplelist>
+     <member>Асинхронная обработка, которую включает функция <function>pcntl_async_signals</function>. Это рекомендуемый метод</member>
+     <member>Настройка частоты <link linkend="control-structures.declare.ticks">тиков</link></member>
+     <member>Ручная диспетчеризация функцией <function>pcntl_signal_dispatch</function></member>
+    </simplelist>
+   </para>
+   <para>
+    При асинхронной диспетчеризации сигналов или выполнении на основе тиков блокирующие функции наподобие
+    <function>sleep</function> иногда прерываются.
+   </para>
+  </refsect2>
  </refsect1><!-- }}} -->
 
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
    <simplelist>
+    <member>Страница <link xlink:href="https://en.wikipedia.org/wiki/Signal_(IPC)">Signal (IPC)</link> на сайте Wikipedia</member>
+    <member><function>pcntl_async_signals</function></member>
     <member><function>pcntl_fork</function></member>
+    <member><function>pcntl_signal_dispatch</function></member>
     <member><function>pcntl_waitpid</function></member>
    </simplelist>
   </para>
