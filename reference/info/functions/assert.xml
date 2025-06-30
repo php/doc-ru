@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 27dcb487a7e9c0f04559522a6d2aacf860d622cd Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 2916fa4160bdf53bb316a5c7c018fc91df7cd951 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.assert" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,34 +15,32 @@
    <methodparam choice="opt"><type class="union"><type>Throwable</type><type>string</type><type>null</type></type><parameter>description</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>assert</function> — разрешает определение ожиданий: утверждения,
-   которые вступают в силу
-   в средах разработки и тестирования,
-   но оптимизированы так, что в производственной среде имеют нулевую стоимость.
+   Функция <function>assert</function> определяет ожидания: утверждения,
+   которые проверяются в средах разработки и тестирования,
+   но перед развёртыванием в производственной среде код оптимизируют — удаляют проверки утверждений, чтобы исключить накладные расходы.
   </para>
   <para>
-   Утверждения следует использовать только в качестве отладочной функции.
-   Один из вариантов их использования — проверка на вменяемость предварительных условий,
-   которые всегда должны быть &true; и если они не выполняются,
-   это указывает на ошибки программирования.
-   Другой случай использования — убедиться в наличии определённых возможностей,
-   например, функций модуля или определённых ограничений и возможностей системы.
+   Утверждения помогают отлаживать код.
+   В одном случае утверждениями проверяют, выполняются ли предварительные условия:
+   корректные условия вычисляются как значение &true;, а ложность условий
+   указывает на ошибки программирования.
+   В другом сценарии проверяют доступность конкретной функции модуля
+   или не накладывает ли система конкретные ограничения.
   </para>
   <para>
-   Поскольку утверждения могут быть настроены на отказ от них,
-   их <emphasis>не</emphasis> следует использовать для обычных операций во время выполнения,
-   таких как проверка входных параметров.
-   Как правило, код должен вести себя так, как ожидается, даже если проверка утверждений отключена.
+   Утверждения <emphasis>не</emphasis> включают в производственный код и не проверяют утверждениями стандартные операции времени выполнения
+   наподобие проверки входных параметров, поскольку код с утверждениями сломается, когда проверку ожиданий отключат в конфигурации PHP.
+   Поэтому в производственной среде разворачивают код, который работает правильно даже при отключении проверки утверждений.
   </para>
   <para>
    Функция <function>assert</function> проверяет, выполняется ли ожидание,
-   заданное в параметре <parameter>assertion</parameter>.
-   Если нет, и в результате вернулось значение &false;,
-   то функция <function>assert</function> выполнит заданное конфигурацией действие.
+   установленное в параметре <parameter>assertion</parameter>.
+   Функция <function>assert</function> выполнит действие, которое сконфигурировали во втором параметре,
+   если условие не выполнилось и поэтому вернуло значения &false;.
   </para>
 
   <para>
-   Поведение конструкции <function>assert</function> определяется следующими настройками INI:
+   Поведение конструкции <function>assert</function> определяется следующими INI-настройками:
    <table>
     <title>&ConfigureOptions; конструкции assert</title>
     <tgroup cols="4">
@@ -61,13 +59,13 @@
        <entry>
         <simplelist>
          <member>
-          <literal>1</literal>: генерирует и выполняет код (режим разработки)
+          <literal>1</literal>: генерирует и выполняет код. Значение указывают в режиме разработки
          </member>
          <member>
-          <literal>0</literal>: генерирует код, но перепрыгивает через него во время выполнения
+          <literal>0</literal>: генерирует, но не выполняет код при выполнении
          </member>
          <member>
-          <literal>-1</literal>: не генерирует код (рабочий режим)
+          <literal>-1</literal>: не генерирует код. Значение указывают в производственном режиме
          </member>
         </simplelist>
        </entry>
@@ -77,11 +75,11 @@
        <entry><link linkend="ini.assert.active">assert.active</link></entry>
        <entry>&true;</entry>
        <entry>
-        Если &false;, функция <function>assert</function> не проверяет ожидание
-        и возвращает &true;, безоговорочно.
+        Со значением &false; функция <function>assert</function> не проверяет ожидание
+        и возвращает &true; без проверки утверждения.
        </entry>
        <entry>
-        Директива устарела начиная с PHP 8.3.0.
+        Директива устарела с PHP 8.3.0.
        </entry>
       </row>
       <row>
@@ -89,8 +87,8 @@
        <entry>&null;</entry>
        <entry>
         <para>
-         Пользовательская функция, вызываемая при неудачной проверке утверждения.
-         Сигнатура функции должна соответствовать определению:
+         Пользовательская функция, которая вызывается, если утверждение не прошло проверку.
+         Callback-функцию определяют со следующей сигнатурой:
          <methodsynopsis role="procedural">
           <type>void</type><methodname>assert_callback</methodname>
           <methodparam><type>string</type><parameter>file</parameter></methodparam>
@@ -102,7 +100,7 @@
        </entry>
        <entry>
         <para>
-         До PHP 8.0.0 сигнатура callback-функции должна соответствовать определению:
+         До PHP 8.0.0 сигнатуру callback-функции определяли так:
          <methodsynopsis role="procedural">
           <type>void</type><methodname>assert_callback</methodname>
           <methodparam><type>string</type><parameter>file</parameter></methodparam>
@@ -112,7 +110,7 @@
           </methodsynopsis>
         </para>
         <simpara>
-         Директива устарела начиная с PHP 8.3.0.
+         Директива устарела с PHP 8.3.0.
         </simpara>
        </entry>
       </row>
@@ -120,33 +118,33 @@
        <entry><link linkend="ini.assert.exception">assert.exception</link></entry>
        <entry>&true;</entry>
        <entry>
-        Если &true;, выбрасывается исключение <classname>AssertionError</classname>,
-        при неудачной проверке утверждения.
+        Со значением &true; функция выбрасывает исключение <classname>AssertionError</classname>,
+        если ожидание не оправдалось.
        </entry>
        <entry>
-        Директива устарела начиная с PHP 8.3.0.
+        Директива устарела с PHP 8.3.0.
        </entry>
       </row>
       <row>
        <entry><link linkend="ini.assert.bail">assert.bail</link></entry>
        <entry>&false;</entry>
        <entry>
-        Если &true;, выполнение PHP-скрипта прервётся в случае неудачной проверки утверждении.
+        Со значением &true; выполнение PHP-скрипта прервётся, если ожидание не оправдалось.
        </entry>
        <entry>
-        Директива устарела начиная с PHP 8.3.0.
+        Директива устарела с PHP 8.3.0.
        </entry>
       </row>
       <row>
        <entry><link linkend="ini.assert.warning">assert.warning</link></entry>
        <entry>&true;</entry>
        <entry>
-        Если &true;, в случае неудачной проверки утверждения
-        будет выдана ошибка уровня <constant>E_WARNING</constant>.
-        Эта INI-настройка неэффективна, если включена директива <link linkend="ini.assert.exception">assert.exception</link>.
+        Со значением &true; функция выдаёт ошибку уровня <constant>E_WARNING</constant>,
+        если ожидание не оправдалось.
+        INI-настройка не работает, если включили директиву <link linkend="ini.assert.exception">assert.exception</link>.
        </entry>
        <entry>
-        Директива устарела начиная с PHP 8.3.0.
+        Директива устарела с PHP 8.3.0.
        </entry>
       </row>
      </tbody>
@@ -163,17 +161,16 @@
      <term><parameter>assertion</parameter></term>
      <listitem>
       <para>
-       Любое выражение, которое возвращает значение, которое выполнит функция,
-       а результат использует, чтобы указать, удалась или не удалась проверка утверждения.
+       Выражение, значение возврата которого выполняется,
+       а резлультат выполнения указывает, прошло ли утверждение проверку.
       </para>
 
       <warning>
        <para>
-        До версии PHP 8.0.0, если утверждение <parameter>assertion</parameter> было
-        строкой (<type>string</type>), утверждение интерпретировалось как PHP-код
-        и выполнялось функцией <function>eval</function>.
+        До PHP 8.0.0 аргумент с типом <type>string</type> для параметра <parameter>assertion</parameter>
+        интерпретировался как PHP-код и выполнялся функцией <function>eval</function>.
         Эта строка передавалась в callback-функцию как третий аргумент.
-        Это поведение объявили <emphasis>УСТАРЕВШИМ</emphasis> в PHP 7.2.0 и <emphasis>УДАЛИЛИ</emphasis> в PHP 8.0.0.
+        Это поведение <emphasis>УСТАРЕЛО</emphasis> в PHP 7.2.0, а в PHP 8.0.0 поведение <emphasis>УДАЛИЛИ</emphasis>.
        </para>
       </warning>
      </listitem>
@@ -182,38 +179,38 @@
      <term><parameter>description</parameter></term>
      <listitem>
       <para>
-       Если описание <parameter>description</parameter> — экземпляр
-       класса <classname>Throwable</classname>, исключение будет выброшено только тогда,
-       когда проверка утверждения <parameter>assertion</parameter> не удастся.
+       При передаче в параметр <parameter>description</parameter> значения
+       с типом <classname>Throwable</classname> функция выбрасывает исключение,
+       но только если утверждение <parameter>assertion</parameter> не прошло проверку.
        <note>
         <para>
-         Начиная с PHP 8.0.0 это делается <emphasis>до</emphasis>
-         вызова потенциально определённой callback-функции утверждения.
+         Начиная с PHP 8.0.0 исключение выбрасывается <emphasis>до</emphasis> вызова
+         callback-функции утверждения, если такой пользовательский обработчик определили.
         </para>
        </note>
        <note>
         <para>
-         Начиная с PHP 8.0.0 объект (&object;) будет выброшен независимо от конфигурации параметра
+         Начиная с PHP 8.0.0 объект (&object;) исключения выбрасывается независимо от конфигурации директивы
          <link linkend="ini.assert.exception">assert.exception</link>.
         </para>
        </note>
        <note>
         <para>
-         Начиная с PHP 8.0.0 параметр <link linkend="ini.assert.bail">assert.bail</link>
-         не имеет никакого эффекта в этом случае.
+         Начиная с PHP 8.0.0 настройка <link linkend="ini.assert.bail">assert.bail</link>
+         не работает, если в параметр передали объект исключения и утверждение не прошло проверку.
         </para>
        </note>
       </para>
       <para>
-       Если параметр <parameter>description</parameter> — строка (&string;),
-       это сообщение будет использоваться в случае исключения или предупреждения.
+       При передаче в параметр <parameter>description</parameter> значения с типом &string;
+       это сообщение появится в исключении или предупреждении.
        Необязательное описание, которое функция включит в сообщение,
-       если проверка утверждения <parameter>assertion</parameter> не удастся.
+       если утверждение <parameter>assertion</parameter> не пройдет проверку.
       </para>
       <para>
-       Если параметр <parameter>description</parameter> опустили.
-       Во время компиляции создаётся описание по умолчанию,
-       равное исходному коду для вызова <function>assert</function>.
+       При пропуске параметра <parameter>description</parameter>
+       PHP на этапе сгенерирует описание ошибки, эквивалентное строке исходного кода
+       самого утверждения <function>assert</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -224,19 +221,22 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция <function>assert</function> каждый раз возвращает &true;,
-   если истинно хотя бы одно из следующих утверждений:
+   Функция <function>assert</function> возвращает значение &true;,
+   если хотя бы одно из следующих утверждений истинно:
   </para>
   <simplelist>
    <member><literal>zend.assertions=0</literal></member>
    <member><literal>zend.assertions=-1</literal></member>
+   <member><literal>assert.active=0</literal></member>
    <member><literal>assert.exception=1</literal></member>
    <member><literal>assert.bail=1</literal></member>
-   <member>Объект пользовательского исключения передали в параметр <parameter>description</parameter>.</member>
+   <member>В параметр <parameter>description</parameter> передали объект пользовательского исключения.</member>
   </simplelist>
   <para>
-   Если ни одно из условий не истинно, функция <function>assert</function> вернёт &true;,
-   если параметр <parameter>assertion</parameter> истинен, иначе вернёт &false;.
+   Функция <function>assert</function> проверяет утверждения
+   и возвращает &true; при истинности аргумента <parameter>assertion</parameter>,
+   но только если ни одно из отключающих проверки условий не выполняется,
+   иначе функция возвращает &false;.
   </para>
  </refsect1>
 
@@ -255,55 +255,55 @@
       <row>
        <entry>8.3.0</entry>
        <entry>
-        Все INI-настройки <literal>assert.</literal> устарели.
+        INI-настройки <literal>assert.</literal> устарели.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Функция <function>assert</function> больше не будет оценивать строковые аргументы,
-        вместо этого они будут рассматриваться как любой другой аргумент.
-        Вместо <code>assert('$a == $b')</code> следует использовать assert($a == $b).
-        Директива <literal>assert.quiet_eval</literal> &php.ini; и константа <constant>ASSERT_QUIET_EVAL</constant>
-        также были удалены, поскольку они больше не будут иметь никакого эффекта.
+        Функция <function>assert</function> больше не оценивает строковые аргументы,
+        вместо этого строки рассматриваются как любой другой аргумент.
+        Вместо <code>assert('$a == $b')</code> лучше вызывать assert($a == $b).
+        Директиву <literal>assert.quiet_eval</literal> &php.ini; и константу <constant>ASSERT_QUIET_EVAL</constant>
+        тоже удалили, поскольку они больше не дают никакого эффекта.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Если параметр <parameter>description</parameter> — экземпляр класса <classname>Throwable</classname>,
-        объект выбрасывается при неудачной проверке утверждения,
+        При передаче в параметр <parameter>description</parameter> экземпляра класса <classname>Throwable</classname>
+        исключение выбрасывается, если утверждение не прошло проверку,
         независимо от значения опции <link linkend="ini.assert.exception">assert.exception</link>.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Если параметр <parameter>description</parameter> — экземпляр класса <classname>Throwable</classname>,
-        пользовательская callback-функция не вызывается, даже если она установлена.
+        При передаче в параметр <parameter>description</parameter> экземпляра класса <classname>Throwable</classname>
+        пользовательская callback-функция не вызывается, даже если её установили.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Объявление функции с именем <literal>assert()</literal> внутри пространства имён
-        больше не допускается и выдаёт ошибку уровня <constant>E_COMPILE_ERROR</constant>.
+        Объявление пользовательской функции с названием <literal>assert()</literal> запретили,
+        даже внутри пространства имён. Попытка объявить функцию выдаст ошибку уровня <constant>E_COMPILE_ERROR</constant>.
        </entry>
       </row>
       <row>
        <entry>7.3.0</entry>
        <entry>
-        Объявление функции <literal>assert()</literal> внутри пространства имён устарело.
-        Такое объявление теперь выдаёт ошибку уровня <constant>E_DEPRECATED</constant>.
+        Объявление пользовательской функции с названием <literal>assert()</literal> устарело,
+        даже внутри пространства имён. Объявление функции теперь выдаёт ошибку уровня <constant>E_DEPRECATED</constant>.
        </entry>
       </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Строка (<type>string</type>) как <parameter>assertion</parameter>
-        устарела. Теперь выдаётся ошибка уровня <constant>E_DEPRECATED</constant>,
-        когда для опций <link linkend="ini.assert.active">assert.active</link> и
-        <link linkend="ini.zend.assertions">zend.assertions</link> установили значение <literal>1</literal>.
+        Передача в параметр <parameter>assertion</parameter> утверждений в значении с типом <type>string</type>
+        устарела. Функция теперь выдаст ошибку уровня <constant>E_DEPRECATED</constant>,
+        когда и для опции <link linkend="ini.assert.active">assert.active</link>,
+        и для опции <link linkend="ini.zend.assertions">zend.assertions</link> установили значение <literal>1</literal>.
        </entry>
       </row>
      </tbody>
@@ -315,7 +315,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
    <example>
-    <title>Пример использования функции <function>assert</function></title>
+    <title>Пример проверки утверждения функцией <function>assert</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -327,8 +327,8 @@ echo 'Привет!';
 ]]>
     </programlisting>
     <para>
-     Если утверждения включены (<link linkend="ini.zend.assertions"><literal>zend.assertions=1</literal></link>),
-     то пример выше выведет:
+     Приведённый пример выведет следующее,
+     если утверждения включили в директиве <link linkend="ini.zend.assertions"><literal>zend.assertions=1</literal></link>:
     </para>
     <screen>
 <![CDATA[
@@ -340,8 +340,8 @@ Stack trace:
 ]]>
     </screen>
     <para>
-     Если утверждения отключены (<literal>zend.assertions=0</literal> or <literal>zend.assertions=-1</literal>),
-     то пример выше выведет:
+     Приведённый пример выведет следующее,
+     если утверждения отключили путём установки для директивы значений <literal>zend.assertions=0</literal> или <literal>zend.assertions=-1</literal>:
     </para>
     <screen>
 <![CDATA[
@@ -362,7 +362,7 @@ echo 'Привет!';
 ]]>
     </programlisting>
     <para>
-     Если утверждения включены пример выше выведет:
+     Приведённый пример выведет следующее, если утверждения включили:
     </para>
     <screen>
 <![CDATA[
@@ -374,7 +374,7 @@ Stack trace:
 ]]>
     </screen>
     <para>
-     Если утверждения выключены, то пример выше выведет:
+     Приведённый пример выведет следующее, если утверждения выключили:
     </para>
     <screen>
 <![CDATA[
@@ -383,7 +383,7 @@ Stack trace:
     </screen>
     </example>
    <example>
-    <title>Пример использования пользовательского класса исключения</title>
+    <title>Пример пользовательского класса ошибок</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -397,7 +397,7 @@ echo 'Hi!';
 ]]>
     </programlisting>
     <para>
-     Если утверждения включены, то пример выше выведет:
+     Приведённый пример выведет следующее, если утверждения включили:
     </para>
     <screen>
 <![CDATA[
@@ -408,7 +408,7 @@ Stack trace:
 ]]>
     </screen>
     <para>
-     Если утверждения выключены, пример выше выведет:
+     Приведённый пример выведет следующее, если утверждения выключили:
     </para>
     <screen>
 <![CDATA[
