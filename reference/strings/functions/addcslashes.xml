@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2bcb7a986d47e06c1a37474a8b3634367c907043 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 45042fef652f1b4e904e809fcbfcf31f6c60670b Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.addcslashes" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,8 +15,8 @@
    <methodparam><type>string</type><parameter>characters</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция возвращает строку, которую заэкранировала обратными слешами перед символами,
-   которые указали в параметре <parameter>characters</parameter>.
+   Функция добавляет обратные слеши перед символами, которые перечислили в параметре <parameter>characters</parameter>,
+   и возвращает заэкранированную строку.
   </para>
  </refsect1>
 
@@ -28,7 +28,7 @@
      <term><parameter>string</parameter></term>
      <listitem>
       <para>
-       Строка, которую требуется заэкранировать.
+       Строка, в которой требуется заэкранировать символы.
       </para>
      </listitem>
     </varlistentry>
@@ -36,18 +36,24 @@
      <term><parameter>characters</parameter></term>
      <listitem>
       <para>
-       Список экранируемых символов.
-       Если параметр <parameter>characters</parameter> содержит символы
-       <literal>\n</literal>, <literal>\r</literal> и т. п., функция преобразует их
-       в стиле языка C, тогда как другие нецифробуквенные
-       символы с ASCII-кодами ниже 32 и выше 126 функция преобразует
+       Список символов для экранирования.
+       Отдельные управляющие символы наподобие перевода строки или возврата каретки функция заменяет в стиле языка C,
+       если параметр <parameter>characters</parameter> содержит последовательности символов <literal>\n</literal>, <literal>\r</literal> и аналогичные.
+       Остальные небуквенно-цифровые символы с ASCII-кодами ниже 32 и выше 126 функция преобразует
+       в восьмеричное представление.
+
+       Список символов для экранирования.
+       Функция заменит во входной строке управляющие символы по правилам языка C,
+       если параметр <parameter>characters</parameter> содержит последовательности символов наподобие <literal>\n</literal> и <literal>\r</literal>.
+       Остальные небуквенно-цифровые символы с ASCII-кодами ниже 32 и выше 126 функция преобразует
        в восьмеричное представление.
       </para>
       <para>
-       При определении последовательности символов в аргументе <parameter>characters</parameter>
-       убедитесь, что знаете, какие символы находятся между символами, которые установили
-       как начало и конец диапазона.
-       <informalexample>
+       Диапазон символов в аргументе <parameter>characters</parameter>
+       определяют правильными символами начала и конца диапазона, чтобы символы между начальным
+       и конечным значением диапазона образовывали правильную последовательность символов.
+       <example>
+        <title>Пример работы функции <function>addcslashes</function> с диапазонами</title>
         <programlisting role="php">
 <![CDATA[
 <?php
@@ -61,12 +67,13 @@ echo addcslashes('foo[ ]', 'A..z');
 ?>
 ]]>
         </programlisting>
-       </informalexample>
+       </example>
        Функция не создаст диапазон, если ASCII-код первого символа диапазона больше
        последнего. Вместо этого функция заэкранирует только первый символ, последний символ
        и точку. Значение ASCII-кода символов находят функцией
        <function>ord</function>.
-       <informalexample>
+       <example>
+        <title>Пример поведения функции <function>addcslashes</function> с символами в неправильном порядке</title>
         <programlisting role="php">
 <![CDATA[
 <?php
@@ -76,16 +83,15 @@ echo addcslashes("zoo['.']", 'z..A'); // Выводит:  \zoo['\.']
 ?>
 ]]>
         </programlisting>
-       </informalexample>
+       </example>
       </para>
       <para>
        При экранировании символов 0, a, b, f, n, r, t и v соблюдают осторожность.
-       Функция преобразовывает символы в последовательности \0, \a, \b, \f, \n, \r, \t и \v —
-       предопределённые escape-последовательности в языке Си. Многие из этих
-       последовательностей также определяют другие Си-подобные языки, включая PHP,
-       то есть иногда выдётся неожиданный результат, если использовать
-       вывод функции <function>addcslashes</function>, чтобы создать код в этих языках
-       с этими символами в аргументе <parameter>characters</parameter>.
+       Функция преобразовывает эти символы в предопределённые управляющие последовательности языка C:
+       \0, \a, \b, \f, \n, \r, \t и \v. Эти последовательности работают и в других Си-подобных языках, включая PHP.
+       Поэтому с этими символами в аргументе <parameter>characters</parameter>
+       функция <function>addcslashes</function> иногда возвращает результат, который интерпретируется как управляющие последовательности,
+       если использовать вывод функции для генерации кода на этих языках.
       </para>
      </listitem>
     </varlistentry>
@@ -111,7 +117,9 @@ echo addcslashes("zoo['.']", 'z..A'); // Выводит:  \zoo['\.']
 <![CDATA[
 <?php
 
+$not_escaped = "PHP isThirty\nYears Old!\tYay to the Elephant!\n";
 $escaped = addcslashes($not_escaped, "\0..\37!@\177..\377");
+echo $escaped;
 
 ?>
 ]]>
