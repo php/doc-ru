@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f134250210702ab6280ab303b846679177d39f14 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 45042fef652f1b4e904e809fcbfcf31f6c60670b Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.sprintf" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,8 +15,7 @@
    <methodparam rep="repeat"><type>mixed</type><parameter>values</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает строку, созданную с использованием строки формата
-   <parameter>format</parameter>.
+   Функция форматирует строку по условиям, которые передали в параметр <parameter>format</parameter>.
   </para>
  </refsect1>
 
@@ -39,8 +38,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку, отформатированную в соответствии с форматом
-   <parameter>format</parameter>.
+   Функция возвращает строку, которую создала по условиям
+   строки форматирования <parameter>format</parameter>.
   </para>
  </refsect1>
 
@@ -57,18 +56,20 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Argument swapping</title>
+   <title>Перестановка аргументов</title>
    <para>
-    Строка формата поддерживает нумерацию и перемешивание аргументов.
+    Строка формата поддерживает нумерацию и перестановку аргументов.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $num = 5;
 $location = 'tree';
 
 $format = 'There are %d monkeys in the %s';
 echo sprintf($format, $num, $location);
+
 ?>
 ]]>
    </programlisting>
@@ -78,61 +79,94 @@ echo sprintf($format, $num, $location);
 There are 5 monkeys in the tree
 ]]>
    </screen>
+  </example>
+  <para>
+   Теперь представим, что строку форматирования определяет отдельный файл интернационализации,
+   в котором строку формата записали вот так:
+  </para>
+  <example>
+   <title>Неправильный порядок аргументов</title>
    <para>
-    Теперь представим, что строка форматирования задаётся в стороннем файле.
-    Это обычная практика при необходимости поддержки нескольких языков.
-    Представим, что строка была переписана таким образом:
+    Строка формата поддерживает нумерацию и перестановку аргументов.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+$num = 5;
+$location = 'tree';
+
 $format = 'The %s contains %d monkeys';
 echo sprintf($format, $num, $location);
+
 ?>
 ]]>
    </programlisting>
-   <para>
-    Упс! У нас проблема - порядок спецификаторов перестал соответствовать
-    порядку аргументов. Так как нам очень не хочется менять код каждый
-    раз, когда меняется формат строки, то мы можем использовать
-    нумерованные аргументы:
-   </para>
+  </example>
+  <para>
+   Возникла проблема. Порядок заменителей
+   в строке формата не соответствует порядку аргументов
+   в коде. Лучше бы оставить код без изменений и только указать
+   в строке формата, на какие аргументы ссылаются заполнители.
+   Перепишем строку формата вот так:
+  </para>
+
+  <example>
+   <title>Порядок заполнителей</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+$num = 5;
+$location = 'tree';
+
 $format = 'The %2$s contains %1$d monkeys';
 echo sprintf($format, $num, $location);
+
 ?>
 ]]>
    </programlisting>
-   <para>
-    Дополнительным приятным моментом является то, что мы можем
-    использовать один параметр для нескольких подстановок.
-   </para>
+  </example>
+
+  <para>
+   Дополнительное преимущество заключается в том, что функция разрешает повторять заполнители
+   и не добавлять дополнительные аргументы в код.
+  </para>
+
+  <example>
+   <title>Повторение заполнителя</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+$num = 5;
+$location = 'tree';
+
 $format = 'The %2$s contains %1$d monkeys.
            That\'s a nice %2$s full of %1$d monkeys.';
 echo sprintf($format, $num, $location);
+
 ?>
 ]]>
    </programlisting>
-   <para>
-    При использовании нумерованных аргументов,
-    <emphasis>спецификатор позиции</emphasis> <literal>n$</literal> должен
-    стоять сразу же за символом процента (<literal>%</literal>), до любого
-    другого спецификатора, как показано ниже.
-   </para>
   </example>
 
+  <para>
+   При перестановке аргументов <emphasis>спецификатор позиции</emphasis>
+   <literal>n$</literal> указывают сразу
+   после знака процента <literal>%</literal>, перед другими
+   спецификаторами, как в следующем примере.
+  </para>
+
   <example>
-   <title>Использование символа заполнения</title>
+   <title>Указание символа заполнения</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 echo sprintf("%'.9d\n", 123);
 echo sprintf("%'.09d\n", 123);
+
 ?>
 ]]>
    </programlisting>
@@ -144,13 +178,19 @@ echo sprintf("%'.09d\n", 123);
 ]]>
    </screen>
   </example>
+
   <example>
    <title>Спецификатор позиции в комбинации с другими спецификаторами</title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+$num = 5;
+$location = 'tree';
+
 $format = 'The %2$s contains %1$04d monkeys';
 echo sprintf($format, $num, $location);
+
 ?>
 ]]>
    </programlisting>
@@ -161,28 +201,39 @@ The tree contains 0005 monkeys
 ]]>
    </screen>
   </example>
+
   <example>
-   <title><function>sprintf</function>: целое с лидирующими нулями</title>
+   <title>Добавление ведущих нулей перед целочисленными значениями функцией <function>sprintf</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
+$year = 2005;
+$month = 5;
+$day = 6;
+
 $isodate = sprintf("%04d-%02d-%02d", $year, $month, $day);
+echo $isodate, PHP_EOL;
+
 ?>
 ]]>
    </programlisting>
   </example>
+
   <example>
-   <title><function>sprintf</function>: форматирование денежных единиц</title>
+   <title>Форматирование денежных сумм функцией <function>sprintf</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $money1 = 68.75;
 $money2 = 54.35;
 $money = $money1 + $money2;
-echo $money;
-echo "\n";
+echo $money, PHP_EOL;
+
 $formatted = sprintf("%01.2f", $money);
-echo $formatted;
+echo $formatted, PHP_EOL;
+
 ?>
 ]]>
    </programlisting>
@@ -195,13 +246,15 @@ echo $formatted;
    </screen>
   </example>
   <example>
-   <title><function>sprintf</function>: научная нотация</title>
+   <title>Вывод чисел в научной нотации функцией <function>sprintf</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $number = 362525200;
 
-echo sprintf("%.3e", $number);
+echo sprintf("%.3e", $number), PHP_EOL;
+
 ?>
 ]]>
    </programlisting>
