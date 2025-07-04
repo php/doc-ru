@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2eb2cdbe58d2f35cb88ad06fa090f3c0ccd9f860 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 45042fef652f1b4e904e809fcbfcf31f6c60670b Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.strrpos" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>strrpos</refname>
-  <refpurpose>Возвращает позицию последнего вхождения подстроки в строке</refpurpose>
+  <refpurpose>Возвращает позицию последнего вхождения подстроки в строку</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,8 +16,8 @@
    <methodparam choice="opt"><type>int</type><parameter>offset</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Ищет позицию последнего вхождения подстроки <parameter>needle</parameter>
-   в строку <parameter>haystack</parameter>.
+   Функция ищет в строке <parameter>haystack</parameter>
+   позицию последнего вхождения подстроки <parameter>needle</parameter>.
   </para>
  </refsect1>
 
@@ -29,7 +29,7 @@
      <term><parameter>haystack</parameter></term>
      <listitem>
       <para>
-       Строка, в которой производится поиск.
+       Строка, в которой выполняется поиск.
       </para>
      </listitem>
     </varlistentry>
@@ -37,7 +37,7 @@
      <term><parameter>needle</parameter></term>
      <listitem>
       <para>
-       Строка для поиска.
+       Строка, которую требуется найти.
       </para>
       &strings.parameter.needle.non-string;
      </listitem>
@@ -46,20 +46,20 @@
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Если равно или больше ноля, то поиск будет идти слева направо
-       и, при этом, будут пропущены первые <parameter>offset</parameter>
-       байт строки <parameter>haystack</parameter>.
+       При установке нулевого или положительного значения поиск выполняется слева направо,
+       при этом функция пропускает начальные байты строки <parameter>haystack</parameter>,
+       смещение которых указали в параметре <parameter>offset</parameter>.
       </para>
       <para>
-       Если меньше ноля, то поиск начинается с <parameter>offset</parameter> байта справа,
-       а не с начала <parameter>haystack</parameter>.
-       Поиск выполняется справа налево, ищется первое
-       вхождение <parameter>needle</parameter> от выбранного байта.
+       При отрицательных значениях поиск начинается с позиции смещения <parameter>offset</parameter> справа,
+       а не с начала строки <parameter>haystack</parameter>.
+       Поиск выполняется справа налево, функция находит первое
+       вхождение подстроки <parameter>needle</parameter> от выбранного байта.
        <note>
         <para>
-         Фактически это будет последнее вхождение
-         <parameter>needle</parameter> без учёта
-         <parameter>offset</parameter> последних байт.
+         Функция фактически ищет последнее вхождение подстроки <parameter>needle</parameter>, если условно воспринимать поиск как движение слева направо:
+         при нулевом или положительном смещении поиск выполняется в части строки от смещения <parameter>offset</parameter> до конца входной строки,
+         а при отрицательном смещении — с начала входной строки до байта смещения.
         </para>
        </note>
       </para>
@@ -72,16 +72,16 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает номер позиции последнего вхождения needle
-   относительно начала строки <parameter>haystack</parameter> (независимо от направления поиска и смещения (offset)).
+   Функция возвращает позицию последнего вхождения искомой подстроки
+   относительно начала строки <parameter>haystack</parameter> независимо от направления поиска и смещения.
    <note>
     <simpara>
-     Позиция в строке строки отсчитывается от 0, а не от 1.
+     Поиск вхождения подстроки начинается с 0, а не с 1 позиции.
     </simpara>
    </note>
   </para>
   <para>
-   Возвращает &false;, если искомая строка не найдена.
+   Функция возвращает значение &false;, если не находит подстроку.
   </para>
   &return.falseproblem;
  </refsect1>
@@ -101,13 +101,13 @@
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Передача целого числа (&integer;) в <parameter>needle</parameter> больше не поддерживается.
+       Передача целого числа (&integer;) в параметр <parameter>needle</parameter> больше не поддерживается.
       </entry>
      </row>
      <row>
       <entry>7.3.0</entry>
       <entry>
-       Передача целого числа (&integer;) в <parameter>needle</parameter> объявлена устаревшей.
+       Передача целого числа (&integer;) в параметр <parameter>needle</parameter> устарела.
       </entry>
      </row>
     </tbody>
@@ -119,18 +119,19 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Проверка существования искомой строки</title>
+    <title>Пример поиска иголки в стоге сена</title>
     <para>
-     Легко ошибиться и перепутать возвращаемые значения в случаях
-     "символ найден в нулевой позиции" и "символ не найден".
-     Вот так можно узнать разницу:
+     При проверке результата работы функции часто путают значения возврата «функция нашла символ на позиции 0»
+     и «функция не нашла символ». Вот как определить разницу:
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
 
+$mystring = 'Elephpant';
+
 $pos = strrpos($mystring, "b");
-if ($pos === false) { // обратите внимание: три знака равенства
+if ($pos === false) { // Обратите внимание: три знака равенства
     // не найдено...
 }
 
@@ -145,15 +146,30 @@ if ($pos === false) { // обратите внимание: три знака р
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $foo = "0123456789a123456789b123456789c";
 
-var_dump(strrpos($foo, '7', -5));  // Поиск происходит в обратном направлении и
-                                   // начинается с пятой позиции с конца. Результат: int(17)
+// Ищем символ '0' с нулевого байта с начала строки
+var_dump(strrpos($foo, '0', 0));
 
-var_dump(strrpos($foo, '7', 20));  // Начинает поиск с 20 позиции в строке.
-                                   // Результат: int(27)
+// Ищем символ '0' с первого байта с пропуском байта "0"
+var_dump(strrpos($foo, '0', 1));
 
-var_dump(strrpos($foo, '7', 28));  // Результат: bool(false)
+// Ищем символ '7' с 21-го байта после 20-го байта
+var_dump(strrpos($foo, '7', 20));
+
+// Ищем символ '7' с 29-го байта после 28-го байта
+var_dump(strrpos($foo, '7', 28));
+
+// Ищем символ '7' справа налево с 5-го байта с конца
+var_dump(strrpos($foo, '7', -5));
+
+// Ищем символ 'c' справа налево со 2-го байта с конца
+var_dump(strrpos($foo, 'c', -2));
+
+// Ищем символы '9c' справа налево со 2-го байта с конца
+var_dump(strrpos($foo, '9c', -2));
+
 ?>
 ]]>
     </programlisting>
