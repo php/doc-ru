@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: shein Status: ready -->
+<!-- EN-Revision: e587d0655e426f97b3fcb431453da5030e743b23 Maintainer: shein Status: ready -->
 <!-- Reviewed: no  -->
 <sect1 xml:id="language.types.array">
  <title>Массивы</title>
@@ -24,11 +24,11 @@
   <title>Синтаксис</title>
 
   <sect3 xml:id="language.types.array.syntax.array-func">
-   <title>Определение при помощи <function>array</function></title>
+   <title>Определение массива через языковую конструкцию <function>array</function></title>
 
    <para>
     Массив (<type>array</type>) создают языковой конструкцией <function>array</function>.
-    В качестве аргументов она принимает любое количество разделённых запятыми пар
+    Конструкция принимает как аргументы произвольное количество разделённых запятыми пар
     <literal><replaceable>ключ</replaceable> =&gt; <replaceable>значение</replaceable></literal>.
    </para>
 
@@ -42,10 +42,10 @@ array(
    <!-- Do not fix the whitespace for the synopsis end element. A limitation of PhD prevents proper trimming -->
 
    <para>
-    Запятая после последнего элемента массива необязательна и её можно опустить.
-    Обычно это делается для однострочных массивов, — лучше предпочесть <literal>array(1, 2)</literal>
+    Запятая после последнего элемента массива необязательна; пропуск конечной запятой не вызывает ошибок.
+    Конечную запятую часто опускают в определениях однострочных массивов, — лучше предпочесть <literal>array(1, 2)</literal>
     вместо <literal>array(1, 2, )</literal>. Для многострочных массивов, наоборот,
-    обычно указывают висящую запятую, так как упрощает добавление
+    часто указывают конечную запятую, поскольку это упрощает добавление
     новых элементов в конец массива.
    </para>
 
@@ -62,16 +62,18 @@ array(
 <![CDATA[
 <?php
 
-$array = array(
+$array1 = array(
     "foo" => "bar",
     "bar" => "foo",
 );
 
 // Работа с коротким синтаксисом массива
-$array = [
+$array2 = [
     "foo" => "bar",
     "bar" => "foo",
 ];
+
+var_dump($array1, $array2);
 
 ?>
 ]]>
@@ -89,12 +91,12 @@ $array = [
     <itemizedlist>
      <listitem>
       <simpara>
-       Строки (<type>string</type>), содержащие целое число (<type>int</type>)
-       (исключая случаи, когда перед числом указывают знак <literal>+</literal>),
-       будут преобразованы в целое число (<type>int</type>).
-       Например, ключ со значением <literal>«8»</literal> сохранится
-       со значением <literal>8</literal>. При этом, значение <literal>«08»</literal>
-       не преобразуется, так как оно — не корректное десятичное целое.
+       Строки (<type>string</type>), которые содержат целое число (<type>int</type>)
+       (исключая случаи, в которых перед числом указывают знак <literal>+</literal>),
+       преобразуются в целое число (<type>int</type>).
+       Например, ключ со значением <literal>"8"</literal> сохранится
+       со значением <literal>8</literal>. При этом, значение <literal>"08"</literal>
+       не преобразуется, поскольку значение не относится к корректным десятичным целым.
       </simpara>
      </listitem>
      <listitem>
@@ -123,16 +125,15 @@ $array = [
      <listitem>
       <simpara>
        Массивы (<type>array</type>) и объекты (<type>object</type>) <emphasis>нельзя</emphasis>
-       указывать как ключи. Это
-       сгенерирует предупреждение: <literal>Недопустимый тип смещения (Illegal offset type)</literal>.
+       указывать как ключи. Это сгенерирует предупреждение: <literal>Недопустимый тип смещения (Illegal offset type)</literal>.
       </simpara>
      </listitem>
     </itemizedlist>
    </para>
 
    <para>
-    Если нескольким элементам в объявлении массива указан одинаковый ключ, то только
-    последний будет сохранён, а другие будут перезаписаны.
+    PHP перезаписывает значение элемента, если встречает в объявлении массива
+    повтор одного и того же ключа, поэтому в массиве остается только последний такой элемент.
    </para>
 
    <example>
@@ -281,7 +282,7 @@ array(4) {
 ]]>
     </screen>
     <para>
-     Видно, что последнее значение <literal>«d»</literal> присвоилось ключу
+     Видно, что последнее значение <literal>"d"</literal> присвоилось ключу
      <literal>7</literal>. Это произошло потому, что перед этим
      самым большим значением целочисленного ключа было <literal>6</literal>.
     </para>
@@ -397,7 +398,7 @@ array(2) {
    <title>Доступ к элементам массива через синтаксис квадратных скобок</title>
 
    <para>
-    Доступ к элементам массива разрешено получать, используя синтакс <literal>array[key]</literal>.
+    Доступ к элементам массива получают синтаксисом <literal>array[key]</literal>.
    </para>
 
    <example>
@@ -448,11 +449,14 @@ string(3) "foo"
 <![CDATA[
 <?php
 
-function getArray() {
+function getArray()
+{
     return array(1, 2, 3);
 }
 
 $secondElement = getArray()[1];
+
+var_dump($secondElement);
 
 ?>
 ]]>
@@ -521,32 +525,36 @@ $secondElement = getArray()[1];
    </note>
 
    <para>
-    Для изменения конкретного значения элементу просто присваивают новое значение,
-    указывая его ключ. Если нужно удалить пару ключ/значение, необходимо
-    вызывать конструкцию <function>unset</function>.
+    Для изменения конкретного значения указывают ключ элемента и присваивают новое значение.
+    Пару «ключ — значение» удаляют языковой конструкцией <function>unset</function>.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Работа с массивами через квадратные скобки</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $arr = array(5 => 1, 12 => 2);
 
-$arr[] = 56;    // В этом месте скрипта это
-                // то же самое, что и $arr[13] = 56;
+$arr[] = 56;    // В этом месте скрипта такое аналогично
+                // присваиванию $arr[13] = 56;
 
-$arr["x"] = 42; // Это добавляет в массив новый
-                // элемент с ключом «x»
+$arr["x"] = 42; // Добавление в массив нового
+                // элемента с ключом "x"
 
-unset($arr[5]); // Это удаляет элемент из массива
+unset($arr[5]); // Удаление элемента из массива
+
+var_dump($arr);
 
 unset($arr);    // Это удаляет весь массив
+
+var_dump($arr);
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <note>
     <para>
@@ -628,28 +636,30 @@ Array
     для деструктуризации массива на отдельные переменные.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Деструктуризация массива</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $source_array = ['foo', 'bar', 'baz'];
 [$foo, $bar, $baz] = $source_array;
-echo $foo;    // выведет «foo»
-echo $bar;    // выведет «bar»
-echo $baz;    // выведет «baz»
+echo $foo, PHP_EOL;    // Выведет "foo"
+echo $bar, PHP_EOL;    // Выведет "bar"
+echo $baz, PHP_EOL;    // Выведет "baz"
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <para>
     Деструктуризацию массива также выполняют в конструкции &foreach;
     для деструктуризации многомерного массива во время итерации по массиву.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Деструктуризация массива в конструкции foreach</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -658,21 +668,23 @@ $source_array = [
     [1, 'John'],
     [2, 'Jane'],
 ];
+
 foreach ($source_array as [$id, $name]) {
-    // логика работы с $id и $name
+    echo "{$id}: '{$name}'\n";
 }
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <para>
-    Элементы массива будут проигнорированы, если переменная не указана.
+    Деструктуризация проигнорирует элементы массива, для которых не указали переменную.
     Деструктуризация массива начинается с индекса <literal>0</literal>.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Игнорирование элементов</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -682,48 +694,50 @@ $source_array = ['foo', 'bar', 'baz'];
 // Присваивание элемента с индексом 2 переменной $baz
 [, , $baz] = $source_array;
 
-echo $baz;    // выведет "baz"
+echo $baz;    // Выведет "baz"
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <para>
-    С PHP 7.1.0 ассоциативные массивы также разрешено деструктурировать.
-    Это упрощает выбор нужного элемента в массивах с числовым индексом,
-    так как индекс может быть указан явно.
+    Начиная с PHP 7.1.0 поддерживается деструктуризация ассоциативных массивов.
+    Это упрощает выбор элемента в массивах с числовым индексом,
+    поскольку разрешает явно указать индекс.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Деструктуризация ассоциативных массивов</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $source_array = ['foo' => 1, 'bar' => 2, 'baz' => 3];
 
-// Присваивание элемента с индексом «baz» переменной $three
+// Присваивание элемента с индексом 'baz' переменной $three
 ['baz' => $three] = $source_array;
 
-echo $three;    // выведет 3
+echo $three, PHP_EOL;  // Выведет 3
 
 $source_array = ['foo', 'bar', 'baz'];
 
 // Присваивание элемента с индексом 2 переменной $baz
 [2 => $baz] = $source_array;
 
-echo $baz;    // выведет «baz»
+echo $baz, PHP_EOL;    // Выведет "baz"
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <para>
     Деструктуризацией массива пользуются, чтобы поменять две переменные местами.
    </para>
 
-   <informalexample>
+   <example>
+    <title>Перестановка двух переменных</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -731,13 +745,13 @@ echo $baz;    // выведет «baz»
 $a = 1;
 $b = 2;
 [$b, $a] = [$a, $b];
-echo $a;    // выведет 2
-echo $b;    // выведет 1
+echo $a, PHP_EOL;    // Выведет 2
+echo $b, PHP_EOL;    // Выведет 1
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <note>
     <para>
@@ -770,35 +784,39 @@ echo $b;    // выведет 1
    <para>
     Языковая конструкция <function>unset</function> умеет удалять ключи массива.
     Обратите внимание, что массив <emphasis>НЕ</emphasis>
-    будет переиндексирован. Если нужно поведение в стиле
-    «удалить и сдвинуть», можно переиндексировать массив
-    функцией <function>array_values</function>.
+    переиндексируется. Массив переиндексируют функцией <function>array_values</function>,
+    если требуется поведение в стиле «удалить и сдвинуть».
    </para>
 
-   <informalexample>
+   <example>
+    <title>Удаление промежуточных элементов</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $a = array(1 => 'один', 2 => 'два', 3 => 'три');
-unset($a[2]);
-/* даст массив, представленный так:
+
+/* Удаление элемента изменит массив так, как если бы его определили так:
    $a = array(1 => 'один', 3 => 'три');
-   а НЕ так:
+   но НЕ так:
    $a = array(1 => 'один', 2 => 'три');
 */
+unset($a[2]);
+var_dump($a);
 
 $b = array_values($a);
-// Теперь $b это array(0 => 'один', 1 => 'три')
+// Теперь переменная $b содержит array(0 => 'один', 1 => 'три')
+var_dump($b);
+
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
   </note>
 
   <para>
-   Управляющая конструкция &foreach; существует специально для массивов.
-   Она предлагает простой способ перебора массива.
+   Управляющая конструкция &foreach; появилась в языке для перебора массивов.
+   Конструкция предлагает простой способ обхода массива.
 
   </para>
  </sect2>
@@ -812,7 +830,7 @@ $b = array_values($a);
    <para>
     Рекомендовано заключать в кавычки строковый литерал в индексе ассоциативного массива.
     Например, нужно писать <literal>$foo['bar']</literal>, а не
-    <literal>$foo[bar]</literal>. Но почему? Часто в старых скриптах можно встретить
+    <literal>$foo[bar]</literal>. Но почему? Часто в старых скриптах встречается
     следующий синтаксис:
    </para>
 
@@ -831,14 +849,14 @@ echo $foo[bar];
    </informalexample>
 
    <para>
-    Это неверно, хотя и работает. Причина в том, что этот код содержит неопределённую
-    константу (<literal>bar</literal>), а не строку (<literal>'bar'</literal> — обратите внимание
-    на кавычки). Это работает, потому что PHP автоматически преобразовывает
-    <emphasis>«голую строку»</emphasis> (не заключённую в кавычки строку,
-    которая не соответствует ни одному из известных символов языка) в строку
-    со значением этой «голой строки». Например, если константа с именем <constant>bar</constant>
-    не определена, то PHP заменит bar на
-    строку <literal>«bar»</literal> и будет работать с ней.
+    Это неверно, хотя и работает. Причина состоит в том, что этот код содержит неопределённую
+    константу <literal>bar</literal>), а не строку (<literal>'bar'</literal> — обратите внимание
+    на кавычки. Это работает, потому что PHP автоматически преобразовывает
+    <emphasis>«голую строку»</emphasis> — строка без кавычек,
+    которая не соответствует ни одному известному символу языка — в строку
+    со значением этой «голой строки». PHP заменит строку bar
+    на строку <literal>'bar'</literal> и будет работать с ней,
+    если константу с названием <constant>bar</constant> не определили.
    </para>
 
    <warning>
@@ -851,17 +869,16 @@ echo $foo[bar];
     </simpara>
    </warning>
 
-   <note>
-    <simpara>
-     Это не значит, что нужно <emphasis>всегда</emphasis> заключать
-     ключ в кавычки. Не обязательно заключать в кавычки <link
-     linkend="language.constants">константы</link> или <link
-     linkend="language.variables">переменные</link>, поскольку это
-     помешает PHP обрабатывать их.
-    </simpara>
+   <simpara>
+    Это не значит, что в кавычки заключают <emphasis>каждый</emphasis> ключ.
+    В кавычки не берут <link linkend="language.constants">константы</link>
+    и <link linkend="language.variables">переменные</link>,
+    поскольку закавычивание помешает интерпретации.
+   </simpara>
 
-    <informalexample>
-     <programlisting role="php">
+   <example>
+    <title>Закавычивание ключей</title>
+    <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -884,9 +901,9 @@ for ($i = 0; $i < $count; $i++) {
 ?>
 ]]>
      </programlisting>
-    </informalexample>
+    </example>
     &example.outputs;
-    <screen>
+   <screen>
 <![CDATA[
 Проверяем 0:
 Notice: Undefined index:  $i in /path/to/script.html on line 9
@@ -904,14 +921,14 @@ Notice: Undefined index:  $i in /path/to/script.html on line 11
 Плохо:
 Хорошо: 2
 ]]>
-    </screen>
-   </note>
+   </screen>
 
    <para>
     Дополнительные примеры, которые подтверждают этот факт:
    </para>
 
-   <informalexample>
+   <example>
+    <title>Дополнительные примеры</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -922,47 +939,52 @@ error_reporting(E_ALL);
 $arr = array('fruit' => 'apple', 'veggie' => 'carrot');
 
 // Верно
-print $arr['fruit'];  // apple
-print $arr['veggie']; // carrot
+echo $arr['fruit'], PHP_EOL;  // apple
+echo $arr['veggie'], PHP_EOL; // carrot
 
-// Неверно. Это работает, но из-за неопределённой константы с
-// именем fruit также выдаёт ошибку PHP уровня E_NOTICE
+// Неверно. Это работает, но также выбрасывает PHP-ошибку из-за неопределённой константы
+// с названием fruit
 //
-// Notice: Use of undefined constant fruit - assumed 'fruit' in...
-print $arr[fruit];    // apple
+// Error: Undefined constant "fruit"
+try {
+    echo $arr[fruit];    // apple
+} catch (Error $e) {
+    echo get_class($e), ': ', $e->getMessage(), PHP_EOL;
+}
 
-// Давайте определим константу, чтобы продемонстрировать, что
-// происходит. Присвоим константе с именем fruit значение «veggie».
+// Определим константу, чтобы посмотреть,
+// что произоёдет. Присвоим константе с названием fruit значение "veggie".
 define('fruit', 'veggie');
 
 // Теперь обратите внимание на разницу
-print $arr['fruit'];  // apple
-print $arr[fruit];    // carrot
+echo $arr['fruit'], PHP_EOL;  // apple
+echo $arr[fruit], PHP_EOL;    // carrot
 
-// Внутри строки это нормально. Внутри строк константы
-// не рассматриваются, поэтому ошибка E_NOTICE здесь не возникнет
-print "Hello $arr[fruit]";      // Hello apple
+// Доступ по ключу без кавычек сработает внутри строки. PHP не ищет константы внутри строк,
+// поэтому ошибка уровня E_NOTICE здесь не возникнет
+echo "Hello $arr[fruit]", PHP_EOL;      // Hello apple
 
-// С одним исключением: фигурные скобки вокруг массивов внутри
-// строк допускают константы
-print "Hello {$arr[fruit]}";    // Hello carrot
-print "Hello {$arr['fruit']}";  // Hello apple
+// За одним исключением: PHP интерпретирует константы,
+// если обращение к массиву внутри строки обернули фигурными скобками
+echo "Hello {$arr[fruit]}", PHP_EOL;    // Hello carrot
+echo "Hello {$arr['fruit']}", PHP_EOL;  // Hello apple
 
-// Ещё один способ — конкатенация
-print "Hello " . $arr['fruit']; // Hello apple
+// Ещё один способ вывести значение массива — конкатенация
+echo "Hello " . $arr['fruit'], PHP_EOL; // Hello apple
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
+
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Это не будет работать и вызовет ошибку обработки:
-// Parse error: parse error, expecting T_STRING' or T_VARIABLE' or T_NUM_STRING'
-// Это, конечно, также действует и с суперглобальными переменными в строках
+// Это не сработает и вызовет ошибку разбора наподобие:
+// Parse error: parse error, expecting T_STRING' or T_VARIABLE' or T_NUM_STRING'.
+// Это относится и к суперглобальным переменным в строках
 print "Hello $arr['fruit']";
 print "Hello $_GET['foo']";
 
@@ -972,18 +994,16 @@ print "Hello $_GET['foo']";
    </informalexample>
 
    <para>
-    Если директива <link linkend="ini.error-reporting">error_reporting</link> настроена
-    на режим отображения ошибок уровня
-    <constant>E_NOTICE</constant> (например,
-    <constant>E_ALL</constant>), ошибки сразу будут видны.
-    По умолчанию директива <link linkend="ini.error-reporting">
-    error_reporting</link> настроена на то, чтобы не показывать предупреждения.
+    При установке для директивы <link linkend="ini.error-reporting">error_reporting</link> значения <constant>E_ALL</constant>,
+    которое включит также и режим отображения ошибок уровня <constant>E_NOTICE</constant>,
+    PHP сразу покажет ошибки, которые возникают при неправильном доступе к элементам массива.
+    Со значением по умолчанию директива <link linkend="ini.error-reporting">error_reporting</link>
+    не показывает уведомления.
    </para>
 
    <para>
-    Как указано в разделе <link linkend="language.types.array.syntax">о синтаксисе</link>,
-    внутри квадратных скобок («<literal>[</literal>»
-    и «<literal>]</literal>») должно быть выражение. То есть вот такой код работает:
+    Как указывает раздел <link linkend="language.types.array.syntax">о синтаксисе</link>,
+    внутри квадратных скобок '<literal>[</literal>' и '<literal>]</literal>' требуется указывать выражение. Поэтому следующий код работает:
    </para>
 
    <informalexample>
@@ -1058,7 +1078,7 @@ $error_descriptions[8] = "Это просто уведомление";
      <simpara>
       Повторим, внутри строки (<type>string</type>)
       в двойных кавычках допустимо не окружать индексы
-      массива кавычками, поэтому <literal>«$foo[bar]»</literal> —
+      массива кавычками, поэтому <literal>"$foo[bar]"</literal> —
       допустимая запись. В примерах выше объяснено, почему,
       дополнительная информация дана в разделе
       <link linkend="language.types.string.parsing">об обработке
@@ -1094,20 +1114,24 @@ $error_descriptions[8] = "Это просто уведомление";
    автоматически отбрасываются.
   </para>
 
-  <informalexample>
+  <example>
+   <title>Преобразование в массив</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-class A {
+class A
+{
     private $B;
     protected $C;
     public $D;
+
     function __construct()
     {
         $this->{1} = null;
     }
 }
+
 var_export((array) new A());
 
 ?>
@@ -1124,24 +1148,29 @@ array (
 )
 ]]>
    </screen>
-  </informalexample>
+  </example>
 
   <para>
    Это может вызвать несколько неожиданное поведение:
   </para>
 
-  <informalexample>
+  <example>
+   <title>Приведение объекта к массиву</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-class A {
-    private $A; // Это станет '\0A\0A'
+class A
+{
+    private $A; // Свойство станет ключом '\0A\0A'
 }
-class B extends A {
-    private $A; // Это станет '\0B\0A'
-    public $AA; // Это станет 'AA'
+
+class B extends A
+{
+    private $A; // Свойство станет ключом '\0B\0A'
+    public $AA; // Свойство станет ключом 'AA'
 }
+
 var_dump((array) new B());
 
 ?>
@@ -1160,16 +1189,16 @@ array(3) {
 }
 ]]>
    </screen>
-  </informalexample>
+  </example>
 
   <para>
-   Приведённый код покажет 2 ключа с именем «AA», хотя один из них на самом деле
-   имеет имя «\0A\0A».
+   Приведённый код покажет 2 ключа с названием 'AA', хотя один ключ на самом деле
+   называется '\0A\0A'.
   </para>
 
   <para>
-   Если преобразовать в массив значение &null;, получится
-   пустой массив.
+   Получится пустой массив,
+   если преобразовать в массив значение &null;.
   </para>
  </sect2>
 
@@ -1186,14 +1215,14 @@ array(3) {
   <title>Распаковка массива</title>
 
   <para>
-   Массив, перед которым указан оператор <code>...</code>, будет распакован во время определения массива.
-   Только массивы и объекты, которые реализуют интерфейс
-   <interfacename>Traversable</interfacename>, разрешено распаковывать.
+   Массив, перед которым указали оператор <code>...</code>, распакуется во время определения массива.
+   Распаковка доступна только массивам и объектам, которые реализуют интерфейс
+   <interfacename>Traversable</interfacename>.
    Распаковка массива оператором <code>...</code> доступна начиная с PHP 7.4.0.
   </para>
 
   <para>
-   Массив разрешено распаковывать несколько раз и добавлять обычные элементы до или после оператора <code>...</code>:
+   PHP поддерживает многократное чередование распаковки и стандартных элементов до или после оператора <code>...</code>:
    <example>
     <title>Простая распаковка массива</title>
     <programlisting role="php">
@@ -1212,7 +1241,9 @@ function getArr() {
   return ['a', 'b'];
 }
 
-$arr6 = [...getArr(), 'c' => 'd']; // ['a', 'b', 'c' => 'd']
+$arr6 = [...getArr(), 'c' => 'd']; // ['a', 'b', 'c' => 'd'];
+
+var_dump($arr1, $arr2, $arr3, $arr4, $arr5, $arr6);
 
 ?>
 ]]>
@@ -1221,27 +1252,27 @@ $arr6 = [...getArr(), 'c' => 'd']; // ['a', 'b', 'c' => 'd']
   </para>
 
   <para>
-   Распаковка массива оператором <code>...</code> соблюдает семантику функции <function>array_merge</function>.
-   То есть более поздние строковые ключи перезаписывают более ранние, а целочисленные ключи перенумеровываются:
+   Распаковка массива оператором <code>...</code> соблюдает семантику функции <function>array_merge</function>,
+   поэтому более поздние строковые ключи перезаписывают более ранние, а целочисленные ключи перенумеровываются:
    <example>
     <title>Распаковка массива с дублирующим ключом</title>
     <programlisting role="php">
      <![CDATA[
 <?php
 
-// строковый ключ
+// Строковый ключ
 $arr1 = ["a" => 1];
 $arr2 = ["a" => 2];
 $arr3 = ["a" => 0, ...$arr1, ...$arr2];
 var_dump($arr3); // ["a" => 2]
 
-// целочисленный ключ
+// Целочисленный ключ
 $arr4 = [1, 2, 3];
 $arr5 = [4, 5, 6];
 $arr6 = [...$arr4, ...$arr5];
 var_dump($arr6); // [1, 2, 3, 4, 5, 6]
-// Который [0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6]
-// где исходные целочисленные ключи не были сохранены.
+// Распаковка массивов создаёт массив [0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
+// в котором исходные целочисленные ключи не сохранились
 
 ?>
 ]]>
@@ -1288,43 +1319,48 @@ $arr6 = [...$arr4, ...$arr5]; // работает. [1, 2, 3, 4, 5]
    Массив в PHP — гибкий тип данных. Вот несколько примеров:
   </para>
 
-  <informalexample>
+  <example>
+   <title>Видимость массивов</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-// Этот код:
+// Код:
 $a = array( 'color' => 'красный',
             'taste' => 'сладкий',
             'shape' => 'круг',
             'name'  => 'яблоко',
-            4        // ключом будет 0
+            4        // PHP назначит элементу ключ 0
           );
 
 $b = array('a', 'b', 'c');
 
-// ...эквивалентен этому:
+var_dump($a, $b);
+
+// ...эквивалентен следующему коду:
 $a = array();
 $a['color'] = 'красный';
 $a['taste'] = 'сладкий';
 $a['shape'] = 'круг';
 $a['name']  = 'яблоко';
-$a[]        = 4;        // ключом будет 0
+$a[]        = 4;        // ключом станет 0
 
 $b = array();
 $b[] = 'a';
 $b[] = 'b';
 $b[] = 'c';
 
-// после выполнения приведённого кода, переменная $a будет массивом
+// После выполнения приведённого кода переменная $a станет массивом
 // array('color' => 'красный', 'taste' => 'сладкий', 'shape' => 'круг',
-// 'name' => 'яблоко', 0 => 4), а переменная $b будет
-// array(0 => 'a', 1 => 'b', 2 => 'c'), или просто array('a', 'b', 'c').
+// 'name' => 'яблоко', 0 => 4), а переменная $b станет массивом
+// array(0 => 'a', 1 => 'b', 2 => 'c'), или просто array('a', 'b', 'c')
+
+var_dump($a, $b);
 
 ?>
 ]]>
    </programlisting>
-  </informalexample>
+  </example>
 
   <example>
    <title>Вызов языковой конструкции array()</title>
@@ -1340,7 +1376,10 @@ $map = array(
     'short_tags' => true
 );
 
-// строго числовые ключи
+var_dump($map);
+
+// Строго числовые ключи,
+// что эквивалентно массиву array(0 => 7, 1 => 8, ...)
 $array = array(
     7,
     8,
@@ -1348,7 +1387,7 @@ $array = array(
     156,
     -10
 );
-// это то же самое, что и array(0 => 7, 1 => 8, ...)
+var_dump($array);
 
 $switching = array(
     10,         // ключ = 0
@@ -1358,11 +1397,13 @@ $switching = array(
     11,         // ключ = 6 (максимальным числовым индексом было 5)
     '8'  =>  2, // ключ = 8 (число!)
     '02' => 77, // ключ = '02'
-    0    => 12  // значение 10 будет перезаписано на 12
+    0    => 12  // значение 10 перезапишется значением 12
 );
+var_dump($switching);
 
 // пустой массив
 $empty = array();
+var_dump($empty);
 
 ?>
 ]]>
@@ -1411,11 +1452,13 @@ foreach ($colors as $color) {
 <![CDATA[
 <?php
 
+$colors = array('red', 'blue', 'green', 'yellow');
+
 foreach ($colors as &$color) {
     $color = mb_strtoupper($color);
 }
-unset($color); /* это нужно, чтобы очередные записи в
-                  переменной $color не меняли последний элемент массива */
+unset($color); /* Переменную удаляют, чтобы очередные записи
+                  в переменной $color не меняли последний элемент массива */
 
 print_r($colors);
 
@@ -1441,12 +1484,12 @@ Array
   </para>
 
   <example>
-   <title>Индекс, начинающийся с единицы</title>
+   <title>Индексация с единицы</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-$firstquarter  = array(1 => 'Январь', 'Февраль', 'Март');
+$firstquarter = array(1 => 'январь', 'февраль', 'март');
 print_r($firstquarter);
 
 ?>
@@ -1457,9 +1500,9 @@ print_r($firstquarter);
 <![CDATA[
 Array
 (
-    [1] => 'Январь'
-    [2] => 'Февраль'
-    [3] => 'Март'
+    [1] => 'январь'
+    [2] => 'февраль'
+    [3] => 'март'
 )
 ]]>
    </screen>
@@ -1471,12 +1514,14 @@ Array
 <![CDATA[
 <?php
 
-// заполняем массив всеми элементами из директории
+// Заполняем массив элементами из директории
 $handle = opendir('.');
 while (false !== ($file = readdir($handle))) {
     $files[] = $file;
 }
 closedir($handle);
+
+var_dump($files);
 
 ?>
 ]]>
@@ -1486,14 +1531,13 @@ closedir($handle);
   <para>
    Массивы упорядочены. Порядок изменяют
    разными функциями сортировки. Подробнее об этом рассказано
-   в разделе «<link linkend="ref.array">Функции
-   для работы с массивами</link>». Для подсчёта количества элементов
-   в массиве вызывают функцию <function>count</function>.
+   в разделе «<link linkend="ref.array">Функции для работы с массивами</link>».
+   Для подсчёта количества элементов в массиве вызывают функцию <function>count</function>.
   </para>
 
   <example>
    <title>Сортировка массива</title>
-   <programlisting role="php">
+   <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
@@ -1506,9 +1550,8 @@ print_r($files);
   </example>
 
   <para>
-   Поскольку значению массива разрешено быть любым,
-   значение может быть также другим массивом. Поэтому разрешено создавать
-   рекурсивные и многомерные массивы.
+   Массивы поддерживают значения в виде других массивов, поскольку массивы принимают произвольные значения.
+   Поэтому PHP разрешает создавать рекурсивные и многомерные массивы.
   </para>
 
   <example>
@@ -1533,14 +1576,16 @@ $fruits = array ( "fruits"  => array ( "a" => "апельсин",
                                             "третья"
                                      )
                 );
+var_dump($fruits);
 
-// Несколько примеров доступа к значениям предыдущего массива
-echo $fruits["holes"][5];    // напечатает «вторая»
-echo $fruits["fruits"]["a"]; // напечатает «апельсин»
-unset($fruits["holes"][0]);  // удалит «первая»
+// Ряд примеров доступа к значениям предыдущего массива
+echo $fruits["holes"][5];    // Выведет "вторая"
+echo $fruits["fruits"]["a"]; // напечатает "апельсин"
+unset($fruits["holes"][0]);  // удалит "первая"
 
 // Создаст новый многомерный массив
 $juices["apple"]["green"] = "хороший";
+var_dump($juices);
 
 ?>
 ]]>
@@ -1552,7 +1597,8 @@ $juices["apple"]["green"] = "хороший";
    по ссылке, указывают <link linkend="language.operators">оператор присваивания по ссылке</link>.
   </para>
 
-  <informalexample>
+  <example>
+   <title>Копирование массивов</title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -1565,10 +1611,12 @@ $arr2[] = 4; // Массив $arr2 изменился,
 $arr3 = &$arr1;
 $arr3[] = 4; // Теперь массивы $arr1 и $arr3 одинаковы
 
+var_dump($arr1, $arr2, $arr3);
+
 ?>
 ]]>
    </programlisting>
-  </informalexample>
+  </example>
 
  </sect2>
 </sect1>
