@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: shein Status: ready -->
+<!-- EN-Revision: e587d0655e426f97b3fcb431453da5030e743b23 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.types.type-juggling">
  <title>Жонглирование типами</title>
@@ -62,11 +62,11 @@
 
   <simpara>
    В этом контексте оба операнда интерпретируются как число с плавающей точкой (<type>float</type>)
-   и результатом будет число с плавающей точкой (<type>float</type>),
+   и результатом станет число с плавающей точкой (<type>float</type>),
    если один из операндов — число с плавающей точкой (<type>float</type>)
    (или не интерпретируется как целое число (<type>int</type>)).
    В противном случае операнды интерпретируются как целое число (<type>int</type>)
-   и результатом также будет целое число (<type>int</type>).
+   и результатом также станет целое число (<type>int</type>).
    С PHP 8.0.0 выбрасывается исключение <classname>TypeError</classname>,
    если не получается интерпретировать хотя бы один операнд.
   </simpara>
@@ -82,9 +82,9 @@
   </simpara>
 
   <simpara>
-   В этом контексте значение будет интерпретироваться как строка (<type>string</type>).
-   Выбрасывается исключение <classname>TypeError</classname>,
-   если значение не получается интерпретировать.
+   В этом контексте значение интерпретируется как значение <type>string</type>.
+   PHP выбросит ошибку <classname>TypeError</classname>,
+   если не получится интерпретировать значение.
    До версии PHP 7.4.0 выдавалась ошибка уровня <constant>E_RECOVERABLE_ERROR</constant>.
   </simpara>
  </sect2>
@@ -112,11 +112,11 @@
   </simpara>
 
   <simpara>
-   В этом контексте результатом будет строка (<type>string</type>),
-   если тип всех операндов — строка (<type>string</type>).
-   В противном случае операнды интерпретируются как целое число (<type>int</type>)
-   и результатом также будет целое число (<type>int</type>).
-   С PHP 8.0.0 выбрасывается исключение <classname>TypeError</classname>,
+   В этом контексте результатом станет значение <type>string</type>,
+   если каждый операнд принадлежит типу <type>string</type>,
+   иначе операнды интерпретируются как значения <type>int</type>
+   и результатом также становится тип <type>int</type>.
+   Начиная с версии 8.0.0 PHP выбрасывает ошибку <classname>TypeError</classname>,
    если не получается интерпретировать хотя бы один операнд.
   </simpara>
  </sect2>
@@ -264,7 +264,7 @@
     <para>
      Типы, которые не входят в список предпочтений, не станут целями
      для неявного приведения. Говоря конкретнее, никакого неявного приведения к типам
-     <type>null</type>, <type>false</type> и <type>true</type> не будет.
+     <type>null</type>, <type>false</type> и <type>true</type> не выполняется.
     </para>
    </note>
 
@@ -314,18 +314,21 @@ true  --> 1           // Тип bool совместим с типом int
    преобразовывается.
   </simpara>
 
-  <informalexample>
+  <example>
+   <title>Приведение типа</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-$foo = 10;            // Переменная $foo — целое число
-$bar = (bool) $foo;   // Переменная $bar — логическое значение
+$foo = 10;            // Переменная $foo содержит целое число
+$bar = (bool) $foo;   // Переменная $bar содержит логическое значение
+
+var_dump($bar);
 
 ?>
 ]]>
    </programlisting>
-  </informalexample>
+  </example>
 
   <simpara>
    Разрешены следующие приведения типов:
@@ -413,31 +416,30 @@ $binary = b"binary string";
    </programlisting>
   </informalexample>
 
-  <note>
-   <simpara>
-    Вместо приведения переменной к строке (<type>string</type>)
-    переменную берут в двойные кавычки.
-   </simpara>
+  <simpara>
+   Вместо приведения переменной к типу <type>string</type>
+   переменную берут в двойные кавычки.
+  </simpara>
 
-   <informalexample>
-    <programlisting role="php">
+  <example>
+   <title>Механизмы приведения к строке</title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
-$foo = 10;            // Переменная $foo — целое число
-$str = "$foo";        // Переменная $str — строка
-$fst = (string) $foo; // Переменная $fst тоже строка
+$foo = 10;            // Переменная $foo содержит целое число
+$str = "$foo";        // Переменная $str содержит строку
+$fst = (string) $foo; // Переменная $fst тоже содержит строку
 
-// Выводит: «они одинаковые»
+// Выводит: "они одинаковые"
 if ($fst === $str) {
-    echo "они одинаковые";
+    echo "они одинаковые", PHP_EOL;
 }
 
 ?>
 ]]>
-    </programlisting>
-   </informalexample>
-  </note>
+   </programlisting>
+  </example>
 
   <para>
    Не всегда ясно, что произойдет при приведении между конкретными типами.
@@ -463,19 +465,20 @@ if ($fst === $str) {
     в массивах (<type>array</type>), следующий пример справедлив для всех версий PHP:
    </simpara>
 
-   <informalexample>
+   <example>
+    <title>Работа с символами строки по индексу</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-$a    = 'car'; // Переменная $a — строка
-$a[0] = 'b';   // Переменная $a по-прежнему строка
+$a    = 'car'; // Переменная $a содержит строку
+$a[0] = 'b';   // Переменная $a по-прежнему содержит строку
 echo $a;       // Выводит: bar
 
 ?>
 ]]>
     </programlisting>
-   </informalexample>
+   </example>
 
    <simpara>
     Дополнительную информацию даёт раздел
