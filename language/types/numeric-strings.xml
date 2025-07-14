@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 7ba2406e555a240338d63f72d9ac54a46e0bee5d Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e587d0655e426f97b3fcb431453da5030e743b23 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.types.numeric-strings" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Числовые строки</title>
@@ -27,26 +27,30 @@ NUM_STRING       ({INT_NUM_STRING} | {FLOAT_NUM_STRING})
  </informalexample>
 
  <para>
-  В PHP также присутствует концепция <emphasis>префиксной</emphasis> числовой строки.
+  В PHP также поддерживается концепция <emphasis>префиксной</emphasis> числовой строки.
   Это строка, которая начинается как числовая и продолжается любыми другими символами.
  </para>
 
  <note>
   <para>
    Строка, которая содержит букву <literal>E</literal> (без учёта регистра),
-   ограниченную цифрами, будет восприниматься как число, которое выразили в научной нотации.
-   Это приводит к неожиданным результатам.
+   ограниченную цифрами, воспринимается как число, которое выразили в научной нотации.
+   Поведение при сравнении строк с числами в научной нотации иногда кажется неожиданным.
+  </para>
+  <example>
+   <title>Сравнение строк с числами в научной нотации</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-var_dump("0D1" == "000"); // false, «0D1» — не научная нотация
-var_dump("0E1" == "000"); // true, «0E1» — это 0 * (10 ^ 1) или 0
-var_dump("2E1" == "020"); // true, «2E1» — это 2 * (10 ^ 1) или 20
+var_dump("0D1" == "000"); // false, "0D1" — не научная нотация
+var_dump("0E1" == "000"); // true, "0E1" интерпретируется как выражение 0 * (10 ^ 1), которое равно значению 0
+var_dump("2E1" == "020"); // true, "2E1" интерпретируется как выражение 2 * (10 ^ 1), которое равно значению 20
+
 ?>
 ]]>
    </programlisting>
-  </para>
+  </example>
  </note>
 
  <sect2 xml:id="language.types.numeric-string.conversion">
@@ -57,26 +61,25 @@ var_dump("2E1" == "020"); // true, «2E1» — это 2 * (10 ^ 1) или 20
    <orderedlist>
     <listitem>
      <simpara>
-      Если строка числовая, представляет целое число и не превышает максимально
-      допустимого значения для типа <type>int</type>, которое опеределяет
-      константа <constant>PHP_INT_MAX</constant>, то строка приводится к типу <type>int</type>.
-      Иначе строка приводится к типу <type>float</type>.
-     </simpara>
-    </listitem>
-    <listitem>
-     <simpara>
-      Если в заданном контексте разрешается использовать префиксную числовую строку,
-      то, если начало строки представляет целое число и не превышает максимально
+      Строка приводится к типу <type>int</type>, если строка числовая, представляет целое число и не превышает максимально
       допустимого значения для типа <type>int</type>, которое определяет
-      константа <constant>PHP_INT_MAX</constant>, строка приводится к типу <type>int</type>.
-      Иначе строка приводится к типу <type>float</type>.
-      В таких случаях также выдаётся ошибка уровня <constant>E_WARNING</constant>.
+      константа <constant>PHP_INT_MAX</constant>, иначе строка приводится к типу <type>float</type>.
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Если строка не числовая — выбрасывается исключение
-      <classname>TypeError</classname>.
+      Тип <type>string</type> приводится к типу <type>int</type>, если контекст разрешает строки,
+      которые начинаются с числа, и значение <type>string</type>
+      начинается с целочисленной числовой части, которая не превышает значение константы <constant>PHP_INT_MAX</constant>,
+      которая определяет в PHP наибольшее значение для типа <type>int</type>,
+      иначе строка разрешается
+      в тип <type>float</type> и дополнительно выдаёт ошибку
+      уровня <constant>E_WARNING</constant>.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Для нечисловых строк выбрасывается ошибка <classname>TypeError</classname>.
      </simpara>
     </listitem>
    </orderedlist>
@@ -87,13 +90,12 @@ var_dump("2E1" == "020"); // true, «2E1» — это 2 * (10 ^ 1) или 20
   <title>Поведение до PHP 8.0.0</title>
   <para>
    До PHP 8.0.0 строка считалась числовой, только если она
-   <emphasis>начиналась</emphasis> с пробельных символов. Если строка
-   <emphasis>завершалась</emphasis> пробельными символами —
-   PHP считал строку префиксной числовой.
+   <emphasis>начиналась</emphasis> с пробельных символов. PHP считал строку префиксной числовой,
+   если строка <emphasis>завершалась</emphasis> пробельными символами.
   </para>
 
   <para>
-   До PHP 8.0.0, когда строку требовалось использовать как число, применялся приведённый алгоритм,
+   До PHP 8.0.0 при работе со строкой как с числом применялся приведённый алгоритм,
    но с рядом отличий:
    <itemizedlist>
     <listitem>
@@ -104,7 +106,7 @@ var_dump("2E1" == "020"); // true, «2E1» — это 2 * (10 ^ 1) или 20
     </listitem>
     <listitem>
      <simpara>
-      Если строка не была числовой, вызывалась ошибка уровня <constant>E_WARNING</constant>,
+      Нечисловые строки вызывали ошибку уровня <constant>E_WARNING</constant>,
       а сама строка приводилась к числу <literal>0</literal>.
      </simpara>
     </listitem>
