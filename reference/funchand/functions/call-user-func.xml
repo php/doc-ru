@@ -4,7 +4,7 @@
 <refentry xml:id="function.call-user-func" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>call_user_func</refname>
-  <refpurpose>Вызывает callback-функцию, заданную в первом параметре</refpurpose>
+  <refpurpose>Вызывает callback-функцию</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,9 +15,8 @@
    <methodparam rep="repeat"><type>mixed</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Вызывает callback-функцию, переданную первым параметром,
-   и передаёт остальные параметры в качестве аргументов.
-   <parameter>callback</parameter>.
+   Функция вызывает <parameter>callback</parameter>-функцию, которую определили в первом параметре,
+   а значения остальных параметров передаёт в функцию обратного вызова как аргументы.
   </para>
  </refsect1>
 
@@ -29,7 +28,7 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Вызываемая функция типа <type>callable</type>.
+       Значение с типом <type>callable</type>, которое требуется вызвать как функцию.
       </para>
      </listitem>
     </varlistentry>
@@ -37,18 +36,20 @@
      <term><parameter>args</parameter></term>
      <listitem>
       <para>
-       Ноль или более параметров, передаваемые в callback-функцию.
+       Ноль или больше аргументов для передачи в callback-функцию.
       </para>
       <note>
        <para>
-        Учтите, что параметры для <function>call_user_func</function> не
-        передаются по ссылке.
+        Учтите, что аргументы для функции <function>call_user_func</function>
+        не передаются по ссылке.
         <example>
-         <title>Пример использования <function>call_user_func</function> и ссылки</title>
+         <title>Пример вызова функции <function>call_user_func</function> и передача аргумента по ссылке</title>
          <programlisting role="php">
 <![CDATA[
 <?php
+
 error_reporting(E_ALL);
+
 function increment(&$var)
 {
     $var++;
@@ -58,14 +59,16 @@ $a = 0;
 call_user_func('increment', $a);
 echo $a."\n";
 
-// Вместо этого можно использовать этот способ
+// Вместо вызова функции call_user_func() возможно вызывать функцию call_user_func_array()
 call_user_func_array('increment', array(&$a));
 echo $a."\n";
 
-// Также можно использовать функцию в качестве переменной
+// Возможно также вызывать функцию переменной
 $increment = 'increment';
 $increment($a);
-echo $a."\n";
+
+echo $a . "\n";
+
 ?>
 ]]>
          </programlisting>
@@ -90,7 +93,7 @@ Warning: Parameter 1 to increment() expected to be a reference, value given in �
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает значение, возвращённое callback-функцией.
+   Функция возвращает значение, которое вернула callback-функция.
   </para>
  </refsect1>
 
@@ -98,16 +101,19 @@ Warning: Parameter 1 to increment() expected to be a reference, value given in �
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>call_user_func</function></title>
+    <title>Пример вызова callback-функции функцией <function>call_user_func</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function barber($type)
 {
     echo "Вы хотели стрижку $type, без проблем\n";
 }
+
 call_user_func('barber', "под горшок");
 call_user_func('barber', "наголо");
+
 ?>
 ]]>
     </programlisting>
@@ -120,21 +126,23 @@ call_user_func('barber', "наголо");
     </screen>
    </example>
    <example>
-    <title>Использование <function>call_user_func</function>, используя пространства имён</title>
+    <title>Пример вызова функции <function>call_user_func</function> в пространстве имён</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 namespace Foobar;
 
-class Foo {
-    static public function test() {
+class Foo
+{
+    static public function test()
+    {
         print "Привет, мир!\n";
     }
 }
 
-call_user_func(__NAMESPACE__ .'\Foo::test');
-call_user_func(array(__NAMESPACE__ .'\Foo', 'test'));
+call_user_func(__NAMESPACE__ . '\Foo::test');
+call_user_func(array(__NAMESPACE__ . '\Foo', 'test'));
 
 ?>
 ]]>
@@ -148,24 +156,25 @@ call_user_func(array(__NAMESPACE__ .'\Foo', 'test'));
     </screen>
    </example>
    <example>
-    <title>Вызов метода класса с помощью <function>call_user_func</function></title>
+    <title>Пример вызова метода класса через функцию <function>call_user_func</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-class myclass {
+class MyClass
+{
     static function say_hello()
     {
         echo "Привет!\n";
     }
 }
 
-$classname = "myclass";
+$classname = "MyClass";
 
 call_user_func(array($classname, 'say_hello'));
-call_user_func($classname .'::say_hello');
+call_user_func($classname . '::say_hello');
 
-$myobject = new myclass();
+$myobject = new MyClass();
 
 call_user_func(array($myobject, 'say_hello'));
 
@@ -182,11 +191,15 @@ call_user_func(array($myobject, 'say_hello'));
     </screen>
    </example>
    <example>
-    <title>Использование лямбда-функции с <function>call_user_func</function></title>
+    <title>Пример вызова лямбда-функции через функцию <function>call_user_func</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-call_user_func(function($arg) { print "[$arg]\n"; }, 'test');
+
+call_user_func(function ($arg) {
+    print "[$arg]\n";
+}, 'test');
+
 ?>
 ]]>
     </programlisting>
