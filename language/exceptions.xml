@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 402a72776804fbb74ec5c4cad72d4c7b6cdd5b2d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: c81a48e58fc530a74827316027fae74668d17a1d Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.exceptions" xmlns="http://docbook.org/ns/docbook">
  <title>Исключения</title>
@@ -79,6 +79,12 @@
    Кроме того, PHP вернёт значение из блока &finally;, если блок &finally; тоже
    содержит инструкцию &return;.
   </para>
+   <para>
+    Другое примечательное взаимодействие встречается между исключениями, которые сгенерировали и блок &try;,
+    и блок &finally;. При генерации исключения обоими блоками
+    исключение блока &finally; продолжит всплывать,
+    а исключение блока &try; станет предыдущим исключением для исключения финального блока.
+   </para>
  </sect1>
 
  <sect1 annotations="chunk:false" xml:id="language.exceptions.exception-handler">
@@ -86,7 +92,7 @@
   <para>
    Глобальный обработчик исключений, если обработчик установили, перехватит исключение,
    если исключению разрешили всплывать до глобальной области видимости.
-   Функция <function>set_exception_handler</function> устанавливает функцию,
+   Функция <function>set_exception_handler</function> устанавливает callback-функцию,
    которую PHP вызовет вместо блока &catch;, если в коде не вызвали другие блоки.
    Эффект по существу такой же, как если бы всю программу обернули в блок &try;-&catch;
    с этой функцией в качестве &catch;.
@@ -351,11 +357,13 @@ A SpecificException was thrown, but we don't care about the details.
 <![CDATA[
 <?php
 
-function test() {
+function test()
+{
     do_something_risky() or throw new Exception('Функция завершилась ошибкой');
 }
 
-function do_something_risky() {
+function do_something_risky()
+{
     return false; // Имитация сбоя
 }
 
@@ -372,6 +380,40 @@ try {
     <screen>
 <![CDATA[
 Функция завершилась ошибкой
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Исключение в блоках try и finally</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+try {
+    try {
+        throw new Exception(message: 'Третье', previous: new Exception('Четвёртое'));
+    } finally {
+        throw new Exception(message: 'Первое', previous: new Exception('Второе'));
+    }
+} catch (Exception $e) {
+    var_dump(
+        $e->getMessage(),
+        $e->getPrevious()->getMessage(),
+        $e->getPrevious()->getPrevious()->getMessage(),
+        $e->getPrevious()->getPrevious()->getPrevious()->getMessage(),
+    );
+}
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+string(5) "Первое"
+string(6) "Второе"
+string(5) "Третье"
+string(6) "Четвёртое"
 ]]>
     </screen>
   </example>
@@ -485,12 +527,12 @@ class TestException
 
         switch ($avalue) {
             case self::THROW_CUSTOM:
-                // Выбрасываем собственное исключение
+                // Выбрасываем своё исключение
                 throw new MyException('1 — неправильный параметр', 5);
                 break;
 
             case self::THROW_DEFAULT:
-                // Выбрасываем встроеное исключение
+                // Выбрасываем встроенное исключение
                 throw new Exception('2 — недопустимый параметр', 6);
                 break;
 
@@ -508,7 +550,7 @@ try {
 } catch (MyException $e) {      // Перехватится
     echo "Блок catch перехватил пользовательское переопределённое исключение\n", $e;
     $e->customFunction();
-} catch (Exception $e) {        // Пропустится
+} catch (Exception $e) {        // Пропускается
     echo "Поймано встроенное исключение\n", $e;
 }
 
@@ -547,7 +589,7 @@ echo "\n\n";
 // Пример 4
 try {
     $o = new TestException();
-} catch (Exception $e) {        // Пропустится, поскольку исключение не выбрасывается
+} catch (Exception $e) {        // Пропускается, поскольку исключение не выбрасывается
     echo "Блок catch перехватил встроенное исключение\n", $e;
 }
 
