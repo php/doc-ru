@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 96c9d88bad9a7d7d44bfb7f26c226df7ee9ddf26 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 3abd17e61d5022d503604cc06894254e3281acf5 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="function.xmlrpc-encode-request" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>xmlrpc_encode_request</refname>
-  <refpurpose>Генерирует XML для метода запроса</refpurpose>
+  <refpurpose>Генерирует XML-запрос для вызова удалённого метода</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -26,7 +26,7 @@
      <term><parameter>method</parameter></term>
      <listitem>
       <para>
-       Имя метода для вызова.
+       Название метода для вызова.
       </para>
      </listitem>
     </varlistentry>
@@ -42,13 +42,13 @@
      <term><parameter>output_options</parameter></term>
      <listitem>
       <para>
-       Массив, уточняющий параметры вывода, может содержать (значения по умолчанию выделены):
+       Массив для определения параметров вывода. Значения по умолчанию выделены курсивом:
        <itemizedlist>
         <listitem><para>output_type: php, <emphasis>xml</emphasis></para></listitem>
         <listitem><para>verbosity: no_white_space, newlines_only, <emphasis>pretty</emphasis></para></listitem>
-        <listitem><para>escaping: cdata, <emphasis>non-ascii, non-print, markup</emphasis> (может быть строка с одним значением или массив с несколькими значениями)</para></listitem>
+        <listitem><para>escaping: cdata, <emphasis>non-ascii, non-print, markup</emphasis> — строка с единственным значением или массив значений</para></listitem>
         <listitem><para>version: simple, <emphasis>xmlrpc</emphasis>, soap 1.1, auto</para></listitem>
-        <listitem><para>encoding: <emphasis>iso-8859-1</emphasis>, другой набор символов, поддерживаемый iconv</para></listitem>
+        <listitem><para>encoding: <emphasis>iso-8859-1</emphasis> или другой набор символов, который поддерживается утилитой iconv</para></listitem>
        </itemizedlist>
       </para>
      </listitem>
@@ -60,7 +60,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает строку, содержащую XML-представление запроса.
+   Функция возвращает строку, которая содержит XML-представление запроса.
   </para>
  </refsect1>
 
@@ -68,23 +68,31 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример клиентской функции XMLRPC</title>
+    <title>Пример клиентской XMLRPC-функции</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$request = xmlrpc_encode_request("method", array(1, 2, 3));
-$context = stream_context_create(array('http' => array(
-    'method' => "POST",
-    'header' => "Content-Type: text/xml",
-    'content' => $request
-)));
+
+$request = xmlrpc_encode_request("method", [1, 2, 3]);
+
+$context = stream_context_create([
+    'http' => [
+        'method'  => "POST",
+        'header'  => "Content-Type: text/xml",
+        'content' => $request,
+    ]
+]);
+
 $file = file_get_contents("http://www.example.com/xmlrpc", false, $context);
+
 $response = xmlrpc_decode($file);
+
 if ($response && xmlrpc_is_fault($response)) {
     trigger_error("xmlrpc: $response[faultString] ($response[faultCode])");
 } else {
     print_r($response);
 }
+
 ?>
 ]]>
     </programlisting>
