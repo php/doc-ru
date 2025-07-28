@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 41c8533ff5a8f93ba9fdf0732d05dd5ab79864c9 Maintainer: shein Status: ready -->
+<!-- EN-Revision: c1f37a6c270aadbbb3da56a3973ffd62197adf2b Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.preg-replace-callback" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>preg_replace_callback</refname>
-  <refpurpose>Выполняет поиск по регулярному выражению и замену с использованием callback-функции</refpurpose>
+  <refpurpose>Выполняет поиск по регулярному выражению и заменяет совпадения callback-функцией</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,10 +19,10 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Поведение этой функции во многом напоминает
-   <function>preg_replace</function>, за исключением того, что вместо
-   параметра <parameter>replacement</parameter> необходимо указывать
-   <parameter>callback</parameter>-функцию.
+   Поведение функции во многом напоминает поведение функции
+   <function>preg_replace</function>, за исключением передачи
+   <parameter>callback</parameter>-функции вместо
+   параметра <parameter>replacement</parameter>.
   </para>
  </refsect1>
 
@@ -34,7 +34,7 @@
      <term><parameter>pattern</parameter></term>
      <listitem>
       <para>
-       Искомый шаблон. Может быть как строкой, так и массивом строк.
+       Искомый шаблон: строка или массив строк.
       </para>
      </listitem>
     </varlistentry>
@@ -42,9 +42,9 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Вызываемая callback-функция, которой будет передан массив
-       совпавших элементов из строки <parameter>subject</parameter>.
-       Callback-функция должна вернуть строку с заменой. Callback-функция должна быть описана так:
+       Callback-функция для вызова и передачи
+       массива совпадений, которые функция нашла в строке <parameter>subject</parameter>.
+       Сигнатура callback-функции предусматривает возврат изменённой строки:
       </para>
       <para>
        <methodsynopsis>
@@ -53,28 +53,27 @@
        </methodsynopsis>
       </para>
       <para>
-       Достаточно часто <parameter>callback</parameter> функция,
-       кроме как в вызове <function>preg_replace_callback</function>,
-       ни в чем больше не участвует. Исходя из этих соображений, можно
-       использовать <link linkend="functions.anonymous">анонимные функции</link> для
-       создания callback-функции непосредственно
-       в вызове <function>preg_replace_callback</function>.
-       Если вы используете такой подход, вся информация, связанная с
-       заменой по регулярному выражению, будет собрана в одном
-       месте, и пространство имён функций не будет загромождаться
-       неиспользуемыми записями.
+       При вызове функции <function>preg_replace_callback</function>
+       <parameter>callback</parameter>-функцию часто вызывают однократно,
+       поэтому для объявления обратного вызова внутри вызова функции <function>preg_replace_callback</function>
+       объявляют <link linkend="functions.anonymous">анонимную функцию</link>.
+       При таком способе организации кода информация о вызове собирается в одном месте
+       и не загромождает текущее пространство имён
+       названием callback-функции, которая не вызывается в другом месте.
       </para>
       <para>
        <example>
-        <title><function>preg_replace_callback</function> и анонимная функция</title>
+        <title>Пример вызова функции <function>preg_replace_callback</function> с анонимной callback-функцией</title>
         <programlisting role="php">
 <![CDATA[
 <?php
-/* фильтр, подобный тому, что используется в системах Unix
+
+/* Фильтр командной строки в стиле Unix-систем
  * для преобразования заглавных букв в начале параграфа в строчные */
 $fp = fopen("php://stdin", "r") or die("не удалось прочесть stdin");
 while (!feof($fp)) {
     $line = fgets($fp);
+
     $line = preg_replace_callback(
         '|<p>\s*\w|',
         function ($matches) {
@@ -82,9 +81,12 @@ while (!feof($fp)) {
         },
         $line
     );
+
     echo $line;
 }
+
 fclose($fp);
+
 ?>
 ]]>
         </programlisting>
@@ -104,8 +106,8 @@ fclose($fp);
      <term><parameter>limit</parameter></term>
      <listitem>
       <para>
-       Максимально возможное количество замен для каждого шаблона в
-       каждой строке <parameter>subject</parameter>. По умолчанию
+       Максимально возможное количество замен для каждого шаблона
+       в каждой строке <parameter>subject</parameter>. По умолчанию значение
        равно <literal>-1</literal> (без ограничений).
       </para>
      </listitem>
@@ -114,8 +116,8 @@ fclose($fp);
      <term><parameter>count</parameter></term>
      <listitem>
       <para>
-       Если указана, то эта переменная будет заполнена количеством
-       произведённых замен.
+       При вызове с этим параметром переменная заполняется количеством
+       замен, которые выполнила функция.
       </para>
      </listitem>
     </varlistentry>
@@ -123,11 +125,11 @@ fclose($fp);
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       <parameter>flags</parameter> может быть комбинацией флагов
-       <constant>PREG_OFFSET_CAPTURE</constant> и
-       <constant>PREG_UNMATCHED_AS_NULL</constant>, которые влияют на
-       формат массива совпадений.
-       Смотрите описание в <function>preg_match</function> для более подробной информации.
+       Параметр <parameter>flags</parameter> принимает комбинацию флагов
+       <constant>PREG_OFFSET_CAPTURE</constant>
+       и <constant>PREG_UNMATCHED_AS_NULL</constant>, которые влияют
+       на формат массива совпадений.
+       Дополнительную информацию даёт описание функции <function>preg_match</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -138,13 +140,13 @@ fclose($fp);
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   <function>preg_replace_callback</function> возвращает массив,
-   если параметр <parameter>subject</parameter> является массивом,
-   иначе возвращается строка. В случае ошибок возвращается &null;
+   Функция <function>preg_replace_callback</function> возвращает массив,
+   если в параметр <parameter>subject</parameter> передали массив,
+   иначе возвращает строку. Функция возвращает значение &null;, если возникла ошибка.
   </para>
   <para>
-   Если найдены совпадения, будет возвращена результирующая строка,
-   иначе <parameter>subject</parameter> вернётся неизмененным.
+   Функция возвращает новую строку, если нашла совпадения,
+   иначе возвращает строку <parameter>subject</parameter> без изменений.
   </para>
  </refsect1>
 
@@ -168,7 +170,7 @@ fclose($fp);
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Добавлен параметр <parameter>flags</parameter>.
+        Добавили параметр <parameter>flags</parameter>.
        </entry>
       </row>
      </tbody>
@@ -185,22 +187,26 @@ fclose($fp);
     <programlisting role="php">
 <![CDATA[
 <?php
-// Этот текст был использован в 2002 году
-// мы хотим обновить даты к 2003 году
-$text = "День смеха был 01/04/2002\n";
-$text.= "Последнее Рождество было 24/12/2001\n";
-// callback-функция
+
+// Текст написали в 2002 году
+// и требуется обновить даты на 2003 год
+$text = "День смеха отмечали 01/04/2002\n";
+$text.= "Последнее Рождество отмечали 24/12/2001\n";
+
+// Callback-функция
 function next_year($matches)
 {
-  // как обычно: $matches[0] -  полное вхождение шаблона
-  // $matches[1] - вхождение первой подмаски,
-  // заключённой в круглые скобки и так далее...
+    // Стандартно: $matches[0] — полное вхождение шаблона,
+    // $matches[1] — вхождение первой подмаски
+    // в круглых скобках '(...)' и так далее...
   return $matches[1].($matches[2]+1);
 }
+
 echo preg_replace_callback(
-            "|(\d{2}/\d{2}/)(\d{4})|",
-            "next_year",
-            $text);
+    "|(\d{2}/\d{2}/)(\d{4})|",
+    "next_year",
+    $text,
+);
 
 ?>
 ]]>
@@ -208,18 +214,19 @@ echo preg_replace_callback(
     &example.outputs;
     <screen>
 <![CDATA[
-День смеха был 01/04/2003
-Последнее Рождество было 24/12/2002
+День смеха отмечали 01/04/2003
+Последнее Рождество отмечали 24/12/2002
 ]]>
     </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Рекурсивная обработка BB-кодов с помощью <function>preg_replace_callback</function></title>
+    <title>Пример рекурсивной обработки BB-кода функцией <function>preg_replace_callback</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $input = "верх [indent] глубже [indent] ещё глубже [/indent] глубже [/indent] верх";
 
 function parseTagsRecursive($input)
@@ -237,6 +244,7 @@ function parseTagsRecursive($input)
 $output = parseTagsRecursive($input);
 
 echo $output;
+
 ?>
 ]]>
     </programlisting>
@@ -248,7 +256,7 @@ echo $output;
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member><link linkend="pcre.pattern">Регулярные выражения PCRE</link></member>
+    <member><link linkend="pcre.pattern">Регулярные PCRE-выражения</link></member>
     <member><function>preg_replace_callback_array</function></member>
     <member><function>preg_quote</function></member>
     <member><function>preg_replace</function></member>
