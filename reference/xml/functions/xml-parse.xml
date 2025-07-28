@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3db49ee0a331a657dd97b539a749f53d3965b593 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: c1f37a6c270aadbbb3da56a3973ffd62197adf2b Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.xml-parse" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,8 +16,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>is_final</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>xml_parse</function> разбирает XML-документ. Обработчики
-   запрограммированных событий вызываются столько раз, сколько необходимо.
+   Функция <function>xml_parse</function> разбирает XML-документ. Обработчики
+   запрограммированных событий вызываются столько раз, сколько потребуется.
   </para>
  </refsect1>
 
@@ -29,7 +29,7 @@
      <term><parameter>parser</parameter></term>
      <listitem>
       <para>
-       Ссылка на используемый XML-анализатор.
+       Ссылка на XML-анализатор.
       </para>
      </listitem>
     </varlistentry>
@@ -37,10 +37,10 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Часть данных для разбора. Документ можно разбирать по частям, вызывая
-       функцию <function>xml_parse</function> несколько раз с новыми данными,
-       пока аргумент <parameter>is_final</parameter> не будет установлен в
-       &true;, это сообщит анализатору, что разбирается последняя часть
+       Часть данных для разбора. Для разбора документа по частям
+       функцию <function>xml_parse</function> вызывают несколько раз с новыми данными,
+       пока аргумент <parameter>is_final</parameter> не получит
+       значение &true;, это сообщит анализатору, что разбирается последняя часть
        документа.
       </para>
      </listitem>
@@ -49,8 +49,8 @@
      <term><parameter>is_final</parameter></term>
      <listitem>
       <para>
-       Если задан и установлен в &true;, <parameter>data</parameter>
-       считается последней частью в этом разборе.
+       При установке значения &true; функция расценивает значение параметра <parameter>data</parameter>
+       как последнюю часть разбора.
       </para>
      </listitem>
     </varlistentry>
@@ -61,21 +61,21 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает 1 при успешном завершении, 0 в противном случае.
+   Функция возвращает значение 1, если выполнилась успешно, иначе значение 0.
   </para>
   <para>
-   В случае неудачного разбора информацию об ошибках можно получить с помощью
-   функций <function>xml_get_error_code</function>,
+   При ошибках разбора информацию об ошибках получают
+   функциями <function>xml_get_error_code</function>,
    <function>xml_error_string</function>,
    <function>xml_get_current_line_number</function>,
-   <function>xml_get_current_column_number</function> и
-   <function>xml_get_current_byte_index</function>.
+   <function>xml_get_current_column_number</function>
+   и <function>xml_get_current_byte_index</function>.
   </para>
   <note>
    <para>
-    Некоторые ошибки (такие как ошибки при разборе сущностей) выдаются в
-    конце разбора и получить их можно
-    только когда <parameter>is_final</parameter> установлен в &true;.
+    Отдельные ошибки наподобие ошибок при разборе сущностей выдаются
+    в конце разбора и получить такие ошибки получится
+    только при установке для параметра <parameter>is_final</parameter> значения &true;.
    </para>
   </note>
  </refsect1>
@@ -100,24 +100,36 @@
  <refsect1 role="examples">
   &reftitle.examples;
    <example xml:id="xml_parse.example.chunked">
-    <title>Разбор по частям больших XML-документов</title>
+    <title>Пример разбора по частям больших XML-документов</title>
     <para>
-     Этот пример показывает, как большие XML-документы могут быть прочитаны и разобраны по частям,
-     поэтому нет необходимости держать весь документ в памяти.
-     Обработка ошибок опущена для краткости.
+     Следующий пример показывает, как считывать и разбирать по частям большие XML-документы,
+     поэтому не требуется держать весь документ в памяти.
+     Обработку ошибок в примере опустили для краткости.
    </para>
    <programlisting role="php">
 <![CDATA[
 <?php
-$stream = fopen('large.xml', 'r');
+
+$stream = fopen('examples/book-simple.xml', 'r');
 $parser = xml_parser_create();
-// установить обработчики
+
+xml_set_element_handler(
+    $parser,
+    function ($parser, $name, $attributes) {
+        echo $name, PHP_EOL;
+    },
+    function ($parser, $name) {
+        echo $name, PHP_EOL;
+    }
+);
+
 while (($data = fread($stream, 16384))) {
-    xml_parse($parser, $data); // разобрать текущую часть
+    xml_parse($parser, $data); // Разобрать текущую часть
 }
-xml_parse($parser, '', true); // завершить разбор
+xml_parse($parser, '', true); // Завершить разбор
 xml_parser_free($parser);
 fclose($stream);
+
 ]]>
    </programlisting>
    </example>
