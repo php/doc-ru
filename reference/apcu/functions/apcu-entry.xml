@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e9366ee458b2900c53a503b1ad97664e1d9a8859 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 080a00e2014fbf36c8bd7fff91ed97f7ba636949 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.apcu-entry" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>apcu_entry</refname>
   <refpurpose>
-   Автоматическое извлечение или создание записи в кеше
+   Атомарно извлекает или генерирует запись в кеше
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -13,30 +13,30 @@
   <methodsynopsis>
    <type>mixed</type><methodname>apcu_entry</methodname>
    <methodparam><type>string</type><parameter>key</parameter></methodparam>
-   <methodparam><type>callable</type><parameter>generator</parameter></methodparam>
+   <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>ttl</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Автоматически пытается найти запись с заданным ключом <parameter>key</parameter>.
-   Если не может, то вызывается генератор <parameter>generator</parameter> и ему
-   передаётся ключ <parameter>key</parameter> как единственный аргумент.
-   Сгенерированное значение заносится в кеш с указанным <parameter>ttl</parameter> и
-   возвращается.</para>
+   Функция атомарно пытается найти запись с ключом <parameter>key</parameter>,
+   а если не находит, вызывает <parameter>callback</parameter>-функцию
+   и передаёт в функцию обратного вызова ключ <parameter>key</parameter> как единственный аргумент.
+   Затем функция кеширует значение, которое вернула callback-функция, опционально устанавливает для записи время жизни <parameter>ttl</parameter>
+   и возвращает это значение.
+  </para>
   <note>
    <simpara>
-    Когда контроль передаётся <function>apcu_entry</function>, производится эксклюзивная
-    блокировка кеша, которая снимается после завершения работы
-    <function>apcu_entry</function>: это приводит к тому, что тело генератора
-    <parameter>generator</parameter> помещается в критическую секцию, запрещая
-    двум процессам запустить выполнение одинакового кода конкурентно. К тому же, это
-    приводит к запрету конкурентного запуска любых других функций APCu, так как они будут
-    выставлять ту же блокировку.
+    Как только функция <function>apcu_entry</function> получает управление, устанавливается эксклюзивная
+    блокировка кеша, которая снимается при выходе из функции
+    <function>apcu_entry</function>: тело
+    <parameter>callback</parameter>-функции становится критической секцией и не разрешает
+    двум процессам выполнять одни и те же ветви кода одновременно. Эта же блокировка
+    устанавливается и для остальных APCu-функций, поэтому параллельное выполнение функций модуля невозможно.
    </simpara>
   </note>
   <warning>
    <simpara>
-    Единственная функция APCu, которую можно безопасно вызывать в генераторе
-    <parameter>generator</parameter> - это <function>apcu_entry</function>.
+    Единственная APCu-функция, которая безопасно вызывается
+    в <parameter>callback</parameter>-функции, — <function>apcu_entry</function>.
    </simpara>
   </warning>
  </refsect1>
@@ -48,16 +48,16 @@
      <term><parameter>key</parameter></term>
      <listitem>
       <para>
-       Идентификатор записи
+       Идентификатор записи.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
-     <term><parameter>generator</parameter></term>
+     <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Callback-функция, принимающая один параметр <parameter>key</parameter>
-       и возвращающая значение для кеширования.
+       Callback-функция, которая принимает единственный аргумент <parameter>key</parameter>
+       и возвращает значение для кеширования.
       </para>
      </listitem>
     </varlistentry>
@@ -65,12 +65,13 @@
      <term><parameter>ttl</parameter></term>
      <listitem>
       <para>
-       Время жизни; переменная <parameter>var</parameter> будет храниться в течение
-       <parameter>ttl</parameter> секунд. Как только <parameter>ttl</parameter> секунд
-       пройдут, переменная будет удалена из кеша (при следующем запросе). Если параметр
-       <parameter>ttl</parameter> не задан (или <parameter>ttl</parameter> задан как
-       <literal>0</literal>), значение будет храниться пока не будет удалено явно, либо
-       по технической причине (очистка кеша, перезапуск и т.д.)
+       Время жизни; параметр <parameter>ttl</parameter> устанавливает интервал времени в секундах,
+       в течение которого значение возврата <parameter>callback</parameter>-функции хранится в кеше.
+       По истечении количества секунд, которое определили в параметре <parameter>ttl</parameter>,
+       запись удаляется из кеша при следующем запросе. При пропуске параметра
+       <parameter>ttl</parameter> или при передаче в параметр <parameter>ttl</parameter> значения
+       <literal>0</literal> запись хранится, пока не удалится вручную или не исчезнет
+       из кеша из-за автоматической очистки, перезапуска сервера и по другой причине.
       </para>
      </listitem>
     </varlistentry>
@@ -80,7 +81,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает закешированное значение
+   Функция возвращает значение, которое закешировала.
   </para>
  </refsect1>
 
@@ -88,10 +89,11 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>apcu_entry</function></title>
+    <title>Пример атомарного извлечения или генерации записи кеша функцией <function>apcu_entry</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $config = apcu_entry("config", function($key) {
  return [
    "fruit" => apcu_entry("config.fruit", function($key){
@@ -111,6 +113,7 @@ $config = apcu_entry("config", function($key) {
 });
 
 var_dump($config);
+
 ?>
 ]]>
     </programlisting>
