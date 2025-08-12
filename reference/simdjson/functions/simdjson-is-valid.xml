@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 3f3362ebcdd1a27cf9c9c751dd5cbe8a6264d1c3 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: cf2b279980fc54b7f2602a0687652c170a906930 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.simdjson-is-valid" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>simdjson_is_valid</refname>
-  <refpurpose>Проверяет, является ли строка JSON корректной</refpurpose>
+  <refpurpose>Проверяет, корректна ли JSON-строка</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>bool</type><methodname>simdjson_is_valid</methodname>
-   <methodparam><type>string</type><parameter>json</parameter><initializer>&false;</initializer></methodparam>
+   <methodparam><type>string</type><parameter>json</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>depth</parameter><initializer>512</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Принимает строку, закодированную в JSON и возвращает true, если она корректная.
+   Функция принимает строку в формате JSON и возвращает значение &true;, если формат данных корректен.
   </para>
  </refsect1>
 
@@ -32,8 +32,8 @@
       Функция работает только со строками в кодировке UTF-8.
      </para>
      <para>
-      Функция анализирует допустимые входные данные, которые функция <function>json_decode</function>
-      может декодировать, при условии, что их длина не превышает 4 Гб.
+      Функция анализирует входные данные, которые умеет декодировать функция <function>json_decode</function>,
+      при условии, что длина данных не превышает 4 ГиБ.
      </para>
     </listitem>
    </varlistentry>
@@ -42,10 +42,10 @@
     <listitem>
      <para>
       Максимальная глубина вложенности декодируемой структуры.
-      Значение должно быть больше <literal>0</literal> и меньше или равно <literal>2147483647</literal>.
+      Параметр принимает только значение, которое больше <literal>0</literal> и меньше или равно <literal>2_147_483_647</literal>.
 
-      Вызывающие команды должны использовать достаточно маленькие значения,
-      поскольку большая глубина требуют больше места в буфере и увеличивают глубину рекурсии,
+      Вызывающей стороне лучше указывать разумные маленькие значения,
+      поскольку большая глубина требует больше места в буфере и увеличивает глубину рекурсии,
       в отличие от текущей реализации функции <function>json_decode</function>.
      </para>
     </listitem>
@@ -56,22 +56,22 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает &true;, если параметр <parameter>json</parameter> является корректной
-   строкой JSON, в противном случае возвращает &false;.
+   Функция возвращает значение &true;, если в параметр <parameter>json</parameter> передали корректную
+   JSON-строку, иначе возвращает значение &false;.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Если параметр <parameter>json</parameter> больше 4 ГБ, то начиная с версии PECL simdjson 2.1.0
-   выбрасывается исключение <classname>SimdJsonException</classname>;
-   ранее выбрасывалось исключение <classname>RuntimeException</classname>.
+   Начиная с версии PECL simdjson 2.1.0 функция выбрасывает исключение <classname>SimdJsonException</classname>,
+   если в параметр <parameter>json</parameter> передали значение больше 4 ГиБ;
+   раньше функция выбрасывала исключение <classname>RuntimeException</classname>.
   </para>
   <para>
-   Если параметр <parameter>depth</parameter> находится вне допустимого диапазона,
-   то начиная с версии PECL simdjson 3.0.0 выбрасывается исключение <classname>SimdJsonValueError</classname>,
-   тогда как ранее выдавалась ошибка уровня <constant>E_WARNING</constant>.
+   Начиная с версии PECL simdjson 3.0.0 функция выбрасывает исключение <classname>SimdJsonValueError</classname>,
+   если значение параметра <parameter>depth</parameter> выходит за пределы допустимого диапазона;
+   раньше функция выдавала ошибку уровня <constant>E_WARNING</constant>.
   </para>
  </refsect1>
 
@@ -79,10 +79,11 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>simdjson_decode</function></title>
+    <title>Пример проверки корректности JSON-строки функцией <function>simdjson_decode</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $json = '{"a":1,"b":2,"c":3}';
 $invalidJson = '{"a":1,"b":2,"c":';
 
@@ -101,10 +102,11 @@ bool(false)
     </screen>
    </example>
    <example>
-    <title>Ошибки <parameter>depth</parameter></title>
+    <title>Ошибочные значения параметра <parameter>depth</parameter></title>
     <programlisting role="php">
      <![CDATA[
 <?php
+
 // Кодирование данных с максимальной глубиной 4
 // (array -> array -> array -> string)
 $json = json_encode(
@@ -122,9 +124,10 @@ $json = json_encode(
     ]
 );
 
-// Отображает ошибки для разных глубин.
+// Вывод ошибки для разных глубин
 var_dump(simdjson_is_valid($json, 4));
 var_dump(simdjson_is_valid($json, 3));
+
 ?>
 ]]>
     </programlisting>
@@ -143,14 +146,15 @@ bool(false)
   &reftitle.notes;
   <note>
    <para>
-    Спецификация JSON - это не JavaScript, а подмножество JavaScript.
+    Спецификация JSON — не язык программирования JavaScript, а подмножество JavaScript-синтаксиса.
    </para>
   </note>
   <note>
    <para>
-    В случае возникновения ошибки декодирования выбрасывается исключение <classname>SimdJsonException</classname>,
-    а <methodname>SimdJsonException::getCode</methodname> и <methodname>SimdJsonException::getMessage</methodname>
-    могут быть использованы для определения точной природы ошибки.
+    Функция выбрасывает исключение <classname>SimdJsonException</classname>,
+    если возникла ошибка.
+    Методы <methodname>SimdJsonException::getCode</methodname> и <methodname>SimdJsonException::getMessage</methodname>
+    помогают определить точную природу ошибки.
    </para>
   </note>
  </refsect1>
