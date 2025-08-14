@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b95d28e6ec86e4a71e012737d36ebdc1cf009180 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 1c3a0a021e0d97acce54fda55f6e941557056afe Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="memcache.increment" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Memcache::increment</refname>
-  <refpurpose>Увеличить значение элемента</refpurpose>
+  <refname>memcache_increment</refname>
+  <refpurpose>Инкрементирует значение элемента</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,22 +15,27 @@
    <methodparam><type>string</type><parameter>key</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>value</parameter><initializer>1</initializer></methodparam>
   </methodsynopsis>
+  <methodsynopsis>
+   <type class="union"><type>int</type><type>false</type></type><methodname>memcache_increment</methodname>
+   <methodparam><type>Memcache</type><parameter>memcache</parameter></methodparam>
+   <methodparam><type>string</type><parameter>key</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>value</parameter><initializer>1</initializer></methodparam>
+  </methodsynopsis>
 
   <para>
-   <function>Memcache::increment</function> увеличивает значение элемента на величину
-   <parameter>value</parameter>. Если элемент с указанным ключом
-   <parameter>key</parameter> не числовой и не может быть приведён к числу, то его
-   значение будет установлено в <parameter>value</parameter>.
-   <function>Memcache::increment</function> <emphasis>не</emphasis>
-   создаёт элемент, если он до этого не существовал.
+   Метод <function>Memcache::increment</function> увеличивает значение элемента на величину
+   <parameter>value</parameter>. Значение элемента изменится на значение аргумента <parameter>value</parameter>,
+   если элемент с ключом <parameter>key</parameter> не числовой
+   и значение элемента невозможно преобразовать в число.
+   Метод <function>Memcache::increment</function> <emphasis>не</emphasis> создаёт
+   элемент, который ещё не содержится в кеше.
    <note>
     <para>
-     Не используйте <function>Memcache::increment</function> с элементами, которые были
-     сохранены с использованием сжатия, потому что соответствующий вызов
-     <function>Memcache::get</function> обернётся неудачей.
+     Лучше не вызывать метод <function>Memcache::increment</function> с элементом,
+     который сохранили в сжатом виде, поскольку очередной вызов
+     метода <function>Memcache::get</function> завершится ошибкой.
     </para>
    </note>
-   Также вы можете использовать функцию <function>memcache_increment</function>.
   </para>
 
  </refsect1>
@@ -42,7 +48,7 @@
      <term><parameter>key</parameter></term>
      <listitem>
       <para>
-       Ключ элемента.
+       Ключ элемента, который требуется инкрементировать.
       </para>
      </listitem>
     </varlistentry>
@@ -50,7 +56,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Увеличение значения на величину <parameter>value</parameter>.
+       Параметр <parameter>value</parameter> определяет шаг увеличения элемента.
       </para>
      </listitem>
     </varlistentry>
@@ -61,7 +67,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения возвращает новое значение элемента&return.falseforfailure;.
+   Метод возвращает новое значение элемента, если выполнился успешно,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -69,20 +75,20 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Memcache::increment</function></title>
+    <title>Пример инкремента значения элемента методом <function>Memcache::increment</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-/* процедурное API */
+/* Процедурный API */
 $memcache_obj = memcache_connect('memcache_host', 11211);
-/* инкрементировать счётчик на 2 */
+/* Инкрементировать счётчик на 2 */
 $current_value = memcache_increment($memcache_obj, 'counter', 2);
 
-/* объектно-ориентированное API */
-$memcache_obj = new Memcache;
+/* Объектно-ориентированный API */
+$memcache_obj = new Memcache();
 $memcache_obj->connect('memcache_host', 11211);
-/* инкрементировать счётчик на 3 */
+/* Инкрементировать счётчик на 3 */
 $current_value = $memcache_obj->increment('counter', 3);
 
 ?>
