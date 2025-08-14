@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e41806c30bf6975e452c0d4ce35ab0984c2fa68c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 1c3a0a021e0d97acce54fda55f6e941557056afe Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="memcache.getextendedstats" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Memcache::getExtendedStats</refname>
-  <refpurpose>Получить статистику со всех серверов в пуле</refpurpose>
+  <refname>memcache_get_extended_stats</refname>
+  <refpurpose>Получает статистику с каждого сервера в пуле</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,18 +16,24 @@
    <methodparam choice="opt"><type>int</type><parameter>slabid</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>limit</parameter><initializer>100</initializer></methodparam>
   </methodsynopsis>
+  <methodsynopsis>
+   <type>array</type><methodname>memcache_get_extended_stats</methodname>
+   <methodparam><type>Memcache</type><parameter>memcache</parameter></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>type</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>slabid</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>limit</parameter><initializer>100</initializer></methodparam>
+  </methodsynopsis>
 
   <para>
-   <function>Memcache::getExtendedStats</function> возвращает двумерный ассоциативный массив, содержащий
-   статистику сервера. Ключи массива соответствуют host:port сервера, а значения содержат статистику по
-   данному серверу. Если не удалось извлечь данные для какого-либо сервера, то соответствующее значение
-   будет выставлено в &false;.
-   Вы также можете использовать функцию <function>memcache_get_extended_stats</function>.
+   Метод <function>Memcache::getExtendedStats</function> возвращает двумерный ассоциативный массив, который содержит
+   статистику серверов. Ключи массива соответствуют формату host:port сервера, а значения содержат статистику
+   отдельного сервера. Для неисправных серверов возвращается запись
+   со значением &false;.
   </para>
 
   <note>
    <para>
-    Эта функция была добавлена в Memcache версии 2.0.0.
+    Функцию добавили в модуль Memcache версии 2.0.0.
    </para>
   </note>
 
@@ -40,10 +47,10 @@
      <term><parameter>type</parameter></term>
      <listitem>
       <para>
-       Тип статистики для извлечения. Корректные значения: reset,
-       malloc, maps, cachedump, slabs, items, sizes. В соответствии со
-       спецификацией протокола memcached, эти дополнительные аргументы
-       "могут быть изменены для удобства разработчиков memcache".
+       Тип статистики для извлечения. Допустимые значения: reset,
+       malloc, maps, cachedump, slabs, items, sizes. Спецификация протокола
+       Memcached предупреждает о возможном изменении или удалении этих дополнительных аргументов в новых версиях сервера,
+       по усмотрению разработчиков, даже если изменения нарушат обратную совместимость.
       </para>
      </listitem>
     </varlistentry>
@@ -51,10 +58,10 @@
      <term><parameter>slabid</parameter></term>
      <listitem>
       <para>
-       Используется совместно с <parameter>type</parameter> для
-       указания из какого slab-файла делать выгрузку. Используется
-       только в целях отладки. Команда cachedump пытается
-       запустить сервер и должна использоваться только для отладки.
+       Параметр устанавливают одновременно с передачей в параметр <parameter>type</parameter> значения cachedump,
+       чтобы указать, из какого slab-класса выгружать дамп кеша. Команда cachedump
+       блокирует работу сервера и выполняется
+       только в целях отладки.
       </para>
      </listitem>
     </varlistentry>
@@ -62,15 +69,15 @@
      <term><parameter>limit</parameter></term>
      <listitem>
       <para>
-       Используется вместе с <parameter>type</parameter>
-       для ограничения количества извлекаемых записей.
+       Параметр устанавливают одновременно с передачей в параметр <parameter>type</parameter> значения cachedump,
+       чтобы ограничить количество записей в дампе.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
    <warning>
     <simpara>
-     Тип статистики cachedump был удалён из демона memcached для безопасности.
+     Тип статистики cachedump удалили из демона memcached по соображениям безопасности.
     </simpara>
    </warning>
   </para>
@@ -80,8 +87,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает двумерный ассоциативный массив, содержащий статистику по серверам или &false;
-   в случае неудачи.
+   Метод возвращает двумерный ассоциативный массив, который содержит статистику по серверам, или значение &false;,
+   если возникла ошибка.
   </para>
  </refsect1>
 
@@ -89,16 +96,18 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Memcache::getExtendedStats</function></title>
+    <title>Пример получения статистики по пулу серверов методом <function>Memcache::getExtendedStats</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-    $memcache_obj = new Memcache;
-    $memcache_obj->addServer('memcache_host', 11211);
-    $memcache_obj->addServer('failed_host', 11211);
 
-    $stats = $memcache_obj->getExtendedStats();
-    print_r($stats);
+$memcache_obj = new Memcache();
+$memcache_obj->addServer('memcache_host', 11211);
+$memcache_obj->addServer('failed_host', 11211);
+
+$stats = $memcache_obj->getExtendedStats();
+print_r($stats);
+
 ?>
 ]]>
     </programlisting>
