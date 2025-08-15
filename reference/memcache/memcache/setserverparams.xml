@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b8758b0605e80c4e3610137b7502a6abeea5c69b Maintainer: lex Status: ready -->
+<!-- EN-Revision: 1c3a0a021e0d97acce54fda55f6e941557056afe Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id="memcache.setserverparams" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Memcache::setServerParams</refname>
-  <refpurpose>Изменяет параметры сервера и статус во время выполнения</refpurpose>
+  <refname>memcache_set_server_params</refname>
+  <refpurpose>Изменяет параметры и статус сервера во время выполнения</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,15 +19,24 @@
    <methodparam choice="opt"><type>bool</type><parameter>status</parameter></methodparam>
    <methodparam choice="opt"><type>callable</type><parameter>failure_callback</parameter></methodparam>
   </methodsynopsis>
+  <methodsynopsis>
+   <type>bool</type><methodname>memcache_set_server_params</methodname>
+   <methodparam><type>Memcache</type><parameter>memcache</parameter></methodparam>
+   <methodparam><type>string</type><parameter>host</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>port</parameter><initializer>11211</initializer></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>timeout</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter>retry_interval</parameter><initializer>&false;</initializer></methodparam>
+   <methodparam choice="opt"><type>bool</type><parameter>status</parameter></methodparam>
+   <methodparam choice="opt"><type>callable</type><parameter>failure_callback</parameter></methodparam>
+  </methodsynopsis>
 
   <para>
-   <function>Memcache::setServerParams</function> изменяет параметры сервера во время выполнения.
-   Вы также можете использовать функцию <function>memcache_set_server_params</function>.
+   Метод <function>Memcache::setServerParams</function> изменяет параметры сервера на лету.
   </para>
 
   <note>
    <para>
-     Эта функция была добавлена в Memcache версии 2.1.0.
+     Функцию добавили в модуль Memcache версии 2.1.0.
    </para>
   </note>
 
@@ -41,7 +50,7 @@
      <term><parameter>host</parameter></term>
      <listitem>
       <para>
-       Указывает на хост, на котором memcached прослушивает соединения.
+       В параметре указывается хост, на котором сервер memcached прослушивает соединения.
       </para>
      </listitem>
     </varlistentry>
@@ -49,7 +58,7 @@
      <term><parameter>port</parameter></term>
      <listitem>
       <para>
-       Указывает на порт, на котором memcached прослушивает соединения.
+       В параметре указывается порт, на котором сервер memcached прослушивает соединения.
       </para>
      </listitem>
     </varlistentry>
@@ -57,10 +66,9 @@
      <term><parameter>timeout</parameter></term>
      <listitem>
       <para>
-       Значение в секундах, которое будет использоваться для подключения к домену.
-       Подумайте дважды, прежде чем менять значение по умолчанию в 1 секунду -
-       вы можете потерять все преимущества кеширования, если ваше соединение
-       слишком медленное.
+       Время ожидания в секундах для подключения к демону.
+       Изменение значения по умолчанию в 1 секунду
+       часто нивелирует преимущества кеширования на медленных соединениях.
       </para>
      </listitem>
     </varlistentry>
@@ -68,13 +76,13 @@
      <term><parameter>retry_interval</parameter></term>
      <listitem>
       <para>
-       Управляет частотой проверки доступности отказавшего сервера, по умолчанию
-       15 секунд.
-       Если задать значение "-1", то попыток проверить доступность сервера
-       предприниматься не будет.
-       Ни этот параметр, ни параметр <parameter>persistent</parameter> не
-       оказывают никакого влияния,
-       если модуль загружен динамически через функцию
+       Параметр управляет частотой проверки доступности отказавшего сервера. Значение по умолчанию
+       равно 15 секундам.
+       Значение "-1" отключает автоматические повторные
+       проверки.
+       Ни этот параметр, ни параметр <parameter>persistent</parameter>
+       не влияют на работу метода,
+       если модуль загружается динамически функцией
        <function>dl</function>.
       </para>
      </listitem>
@@ -83,15 +91,15 @@
      <term><parameter>status</parameter></term>
      <listitem>
       <para>
-       Определяет, должен ли сервер помечен флагом как "онлайн". Установка этого
-       параметра в &false; и <parameter>retry_interval</parameter> в -1 позволит
-       сохранить сервер в пуле, но не использовать его в алгоритме распределения
+       Параметр определяет, помечать ли сервер флагом "онлайн". Одновременная установка
+       значения &false; для этого параметра и значения -1 для параметра <parameter>retry_interval</parameter>
+       оставит отказавший сервер в пуле, чтобы не влиять на алгоритм распределения
        ключей.
-       Запрос к этому серверу либо запустит механизм обеспечения
+       Запрос к этому серверу либо запустит механизм
        отказоустойчивости, либо
        сразу же прервётся с ошибкой, в зависимости от настройки
-       <parameter>memcache.allow_failover</parameter>. По умолчанию равно &true;,
-       что означает, что сервер активен и готов принимать запросы.
+       директивы <parameter>memcache.allow_failover</parameter>. Значение по умолчанию равно &true; —
+       сервер активен и готов принимать запросы.
       </para>
      </listitem>
     </varlistentry>
@@ -99,10 +107,10 @@
      <term><parameter>failure_callback</parameter></term>
      <listitem>
       <para>
-       Позволяет пользователю задать callback-функцию, которая запустится
-       в случае какой-либо ошибки. Эта функция будет вызвана раньше, чем будет
-       запущен механизм обеспечения отказоустойчивости. Функция принимает два
-       параметра - имя хоста и порт отказавшего сервера.
+       Пользовательская callback-функция, которая запустится
+       при ошибке. Эта функция вызывается
+       до запуска механизма отказоустойчивости. Функция принимает два
+       параметра — имя хоста и порт отказавшего сервера.
       </para>
      </listitem>
     </varlistentry>
@@ -121,26 +129,27 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Memcache::setServerParams</function></title>
+    <title>Пример изменения параметров и статуса сервера методом <function>Memcache::setServerParams</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-function _callback_memcache_failure($host, $port) {
+function _callback_memcache_failure($host, $port)
+{
     print "неудачное подключение memcache - '$host:$port'";
 }
 
-/* объектно-ориентированное API */
+/* Объектно-ориентированный API */
 
-$memcache = new Memcache;
+$memcache = new Memcache();
 
-// Добавить сервер в офлайн-режим
+// Добавить сервер в офлайн-режиме
 $memcache->addServer('memcache_host', 11211, false, 1, 1, -1, false);
 
 // Перевести сервер обратно в онлайн
 $memcache->setServerParams('memcache_host', 11211, 1, 15, true, '_callback_memcache_failure');
 
-/* процедурное API */
+/* Процедурный API */
 
 $memcache_obj = memcache_connect('memcache_host', 11211);
 memcache_set_server_params($memcache_obj, 'memcache_host', 11211, 1, 15, true, '_callback_memcache_failure');

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e41806c30bf6975e452c0d4ce35ab0984c2fa68c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 1c3a0a021e0d97acce54fda55f6e941557056afe Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="memcache.get" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Memcache::get</refname>
-  <refpurpose>Извлечь элемент с сервера</refpurpose>
+  <refname>memcache_get</refname>
+  <refpurpose>Извлекает элемент с сервера</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,16 +20,28 @@
    <methodparam><type>array</type><parameter>keys</parameter></methodparam>
    <methodparam choice="opt"><type>array</type><parameter role="reference">flags</parameter></methodparam>
   </methodsynopsis>
+  <methodsynopsis>
+   <type>string</type><methodname>memcache_get</methodname>
+   <methodparam><type>Memcache</type><parameter>memcache</parameter></methodparam>
+   <methodparam><type>string</type><parameter>key</parameter></methodparam>
+   <methodparam choice="opt"><type>int</type><parameter role="reference">flags</parameter></methodparam>
+  </methodsynopsis>
+  <methodsynopsis>
+   <type>array</type><methodname>memcache_get</methodname>
+   <methodparam><type>Memcache</type><parameter>memcache</parameter></methodparam>
+   <methodparam><type>array</type><parameter>keys</parameter></methodparam>
+   <methodparam choice="opt"><type>array</type><parameter role="reference">flags</parameter></methodparam>
+  </methodsynopsis>
 
   <para>
-   <function>Memcache::get</function> возвращает ранее сохранённый элемент с ключом <parameter>key</parameter>,
-   если он в данный момент существует на сервере.
+   Метод <function>Memcache::get</function> возвращает данные элемента с ключом <parameter>key</parameter>,
+   если сервер содержит такой ключ.
   </para>
 
   <para>
-   Вы можете передать массив ключей в <function>Memcache::get</function>, чтобы получить
-   массив элементов.
-   Результирующий массив будет содержать только существующие пары ключ-значение.
+   При передаче в метод <function>Memcache::get</function> массива ключей
+   возвращается массив значений.
+   В массив с результатами добавляются только те пары «ключ — значение», которые содержит кеш сервера, остальные игнорируются.
   </para>
 
  </refsect1>
@@ -41,7 +54,7 @@
      <term><parameter>key</parameter></term>
      <listitem>
       <para>
-       Ключ или массив ключей для чтения.
+       Ключ или массив ключей для извлечения элементов.
       </para>
      </listitem>
     </varlistentry>
@@ -49,12 +62,11 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Если задан, флаги, полученные вместе со значениями, будут записаны в этот
-       параметр. Это в точности те флаги, что и
-       переданные, например в <function>Memcache::set</function>.
-       Младший байт значения зарезервирован для внутреннего использования
-       pecl/memcache
-       (например для индикации сжатия или сериализации статуса).
+       При вызове метода с этим аргументом параметр заполняется флагами, которые метод извлёк вместе со значениями.
+       Это в точности те флаги, которые указывают, например, при вызове метода <function>Memcache::set</function>.
+       Младший байт каждого целочисленного значения резервируется для внутренних целей модуля
+       pecl/memcache,
+       например, чтобы указать статус сжатия или сериализации.
       </para>
      </listitem>
     </varlistentry>
@@ -65,12 +77,12 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает значение, связанное с ключом <parameter>key</parameter> или
-   массив найденных пар ключ-значение, если в <parameter>key</parameter> задан
+   Метод возвращает значение, которое связали с ключом <parameter>key</parameter>,
+   или массив найденных пар «ключ — значение», если в параметр <parameter>key</parameter> передали
    массив.
-   Возвращает &false; в случае возникновения ошибки или если указанный ключ
-   <parameter>key</parameter> не
-   был найден или является пустым массивом.
+   Метод возвращает значение &false;, если возникла ошибка, сервер не нашёл
+   ключ <parameter>key</parameter>
+   или с ключом <parameter>key</parameter> связали пустой массив.
   </para>
  </refsect1>
 
@@ -78,34 +90,34 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Memcache::get</function></title>
+    <title>Пример извлечения записи кеша методом <function>Memcache::get</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-/* процедурное API */
+/* Процедурный API */
 $memcache_obj = memcache_connect('memcache_host', 11211);
 $var = memcache_get($memcache_obj, 'some_key');
 
-/* объектно-ориентированное API */
-$memcache_obj = new Memcache;
+/* Объектно-ориентированный API */
+$memcache_obj = new Memcache();
 $memcache_obj->connect('memcache_host', 11211);
 $var = $memcache_obj->get('some_key');
 
 /*
-Также в качестве параметра вы можете использовать массив ключей.
-Если элемент не будет найден, то в результирующий массив просто не будет
-включён этот ключ.
+Параметр также принимает массив ключей.
+В массив с результатами добавляются только те элементы,
+которые содержит кеш сервера, остальные игнорируются
 */
 
-/* процедурное API */
+/* Процедурный API */
 $memcache_obj = memcache_connect('memcache_host', 11211);
 $var = memcache_get($memcache_obj, Array('some_key', 'another_key'));
 
-/* объектно-ориентированное API */
-$memcache_obj = new Memcache;
+/* Объектно-ориентированный API */
+$memcache_obj = new Memcache();
 $memcache_obj->connect('memcache_host', 11211);
-$var = $memcache_obj->get(Array('some_key', 'second_key'));
+$var = $memcache_obj->get(array('some_key', 'second_key'));
 
 ?>
 ]]>
