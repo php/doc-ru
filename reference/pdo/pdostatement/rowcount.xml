@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 28529d3539b850e870e3aa97570f4db0e53daa03 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: a5950d8ae47e8befb9fa5f774ddb96a860833ed5 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdostatement.rowcount" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>PDOStatement::rowCount</refname>
   <refpurpose>
-   Возвращает количество строк, затронутых последним SQL-запросом
+   Возвращает количество строк, которое затронул последний SQL-запрос
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -16,22 +16,21 @@
   </methodsynopsis>
 
   <para>
-   <methodname>PDOStatement::rowCount</methodname> возвращает количество строк,
-   которые были затронуты в ходе выполнения последнего запроса
-   DELETE, INSERT или UPDATE, запущенного соответствующим объектом
-   <literal>PDOStatement</literal>.
+   Метод <methodname>PDOStatement::rowCount</methodname> возвращает количество строк,
+   которое затронул последний запрос DELETE, INSERT или UPDATE
+   объекта <literal>PDOStatement</literal>.
   </para>
   <para>
-   Для операторов, создающих наборы результатов, таких как <literal>SELECT</literal>,
-   поведение не определено и может быть различным для каждого драйвера.
-   Некоторые базы данных могут возвращать количество строк, созданных этим оператором (например,
-   MySQL в буферизованном режиме), но такое поведение не гарантируется для всех баз данных
-   и не должно использоваться в переносимых приложениях.
+   Для запросов наподобие <literal>SELECT</literal>, которые создают наборы результатов,
+   поведение не определено и индивидуально для каждого драйвера.
+   Отдельные базы данных, например MySQL в режиме буферизации результатов, иногда возвращают количество строк,
+   которое вернул этот запрос, но такое поведение не гарантируется для каждой базы данных
+   и на него лучше не полагаться в переносимых приложениях.
   </para>
   <note>
    <para>
-    Этот метод всегда возвращает "0" (ноль) с драйвером SQLite,
-    а с драйвером PostgreSQL только при установке атрибута оператора <constant>PDO::ATTR_CURSOR</constant> равным <constant>PDO::CURSOR_SCROLL</constant>.
+    При взаимодействии с БД через драйвер PostgreSQL метод возвращает числовую строку "0",
+    если в запросе для атрибута <constant>PDO::ATTR_CURSOR</constant> установили значение <constant>PDO::CURSOR_SCROLL</constant>.
    </para>
   </note>
  </refsect1>
@@ -44,7 +43,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает количество строк.
+   Метод возвращает количество строк.
   </para>
  </refsect1>
 
@@ -57,14 +56,15 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Получение количества удалённых строк</title>
+    <title>Пример получения количества удалённых строк</title>
     <para>
-     <methodname>PDOStatement::rowCount</methodname> возвращает количество строк,
+     Метод <methodname>PDOStatement::rowCount</methodname> возвращает количество строк,
      изменённых выражениями DELETE, INSERT или UPDATE.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 /* Удалим все строки из таблицы FRUIT */
 $del = $dbh->prepare('DELETE FROM fruit');
 $del->execute();
@@ -73,6 +73,7 @@ $del->execute();
 print "Количество удалённых строк:\n";
 $count = $del->rowCount();
 print "Удалено $count строк.\n";
+
 ?>
 ]]>
     </programlisting>
@@ -86,30 +87,32 @@ print "Удалено $count строк.\n";
    </example>
    <example>
     <title>
-     Подсчёт строк, возвращаемых выражением SELECT
+     Пример подсчёта строк в результатах запроса SELECT
     </title>
     <para>
-     Для большинства СУБД <methodname>PDOStatement::rowCount</methodname> не
-     возвращает количество строк, затронутых SELECT запросом. Вместо этого метода
-     запустите через <methodname>PDO::query</methodname> выражение SELECT COUNT(*)
-     с тем же текстом запроса. Затем методом
-     <methodname>PDOStatement::fetchColumn</methodname> вы получите число совпадающих строк.
+     Для большей части СУБД метод <methodname>PDOStatement::rowCount</methodname>
+     не возвращает количество строк в результатах SELECT-запроса. Вместо этого метода
+     вызывают метод <methodname>PDO::query</methodname> со строкой запроса SELECT COUNT(*)
+     и теми же предикатами, которые планировали указать в главном SELECT-запросе, а затем вызывают метод
+     <methodname>PDOStatement::fetchColumn</methodname>, чтобы получить количество строк, которое соответствует запросу.
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $sql = "SELECT COUNT(*) FROM fruit WHERE calories > 100";
 $res = $conn->query($sql);
 $count = $res->fetchColumn();
 
-print "Совпадающих записей: " .  $count;
+print "Количество записей, которые соответствуют запросу: " .  $count;
+
 ?>
 ]]>
     </programlisting>
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Совпадающих записей: 2
+Количество записей, которые соответствуют запросу: 2
 ]]>
     </screen>
    </example>
