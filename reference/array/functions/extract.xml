@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d58ee8eaaa7f716c51f66f5f1058ab3c42376d98 Maintainer: shein Status: ready -->
+<!-- EN-Revision: f53ab502a11a52e82baca372c37d64e3f298b17c Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.extract" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,18 +15,18 @@
    <methodparam choice="opt"><type>string</type><parameter>prefix</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Импортирует переменные массива в текущую <link linkend="features.gc.refcounting-basics">таблицу символов</link>.
+   Функция импортирует переменные массива в текущую <link linkend="features.gc.refcounting-basics">таблицу символов</link>.
   </para>
   <para>
-   Функция проверяет каждый ключ массива, чтобы увидеть, содержит ли он допустимое имя переменной.
-   Будут также проверены совпадения (коллизии) с существующими переменными
-   в таблице символов.
+   Функция проверяет каждый ключ массива и определяет, соответствует ли ключ допустимому названию переменной.
+   Функция также проверит, возникают ли коллизии с переменными
+   в текущей таблице символов.
   </para>
   <warning>
    <para>
-    Не вызывайте функцию <function>extract</function> с ненадёжными данными
-    наподобие пользовательского ввода
-    (например, с суперглобальными переменными <varname>$_GET</varname>, <varname>$_FILES</varname>).
+    Функцию <function>extract</function> нельзя вызывать с ненадёжными данными
+    наподобие пользовательского ввода, который
+    сохраняется в суперглобальных переменных <varname>$_GET</varname>, <varname>$_FILES</varname> или других.
    </para>
   </warning>
  </refsect1>
@@ -39,11 +39,11 @@
      <listitem>
       <para>
        Ассоциативный массив. Функция трактует ключи массива
-       как имена переменных, а значения — как значения
-       переменных. Для каждой пары ключ/значение будет создана
+       как названия переменных, а значения — как значения
+       переменных. Для каждой пары «ключ — значение» создаётся
        переменная в текущей таблице символов с учётом
-       флагов (<parameter>flags</parameter>)
-       и параметров префикса (<parameter>prefix</parameter>).
+       флагов параметра <parameter>flags</parameter>
+       и значения префикса в параметре <parameter>prefix</parameter>.
       </para>
       <para>
        Без флагов <constant>EXTR_PREFIX_ALL</constant>
@@ -58,14 +58,14 @@
      <listitem>
       <para>
        Параметр <parameter>flags</parameter> определяет способ
-       трактовки неправильных/числовых ключей и коллизий. Разрешено
-       указывать одно из следующих значений:
+       трактовки недопустимых или числовых ключей и коллизий. Параметр
+       принимает следующие значения:
        <variablelist>
         <varlistentry>
          <term><constant>EXTR_OVERWRITE</constant></term>
          <listitem>
           <simpara>
-           Если переменная с таким именем существует, она будет перезаписана.
+           При коллизии перезаписывать переменную в текущей таблице символов.
           </simpara>
          </listitem>
         </varlistentry>
@@ -73,16 +73,16 @@
          <term><constant>EXTR_SKIP</constant></term>
          <listitem>
           <simpara>
-           Если переменная с таким именем существует, её текущее значение
-           не будет перезаписано.
+           При коллизии не перезаписывать переменную в текущей таблице символов.
           </simpara>
          </listitem>
         </varlistentry>
         <varlistentry>
          <term><constant>EXTR_PREFIX_SAME</constant></term>
          <listitem>
-          <simpara>Если переменная с таким именем существует, к её имени
-           будет добавлен префикс, определённый параметром
+          <simpara>
+           При коллизии добавлять к названию
+           переменной префикс
            <parameter>prefix</parameter>.
           </simpara>
          </listitem>
@@ -91,7 +91,7 @@
          <term><constant>EXTR_PREFIX_ALL</constant></term>
          <listitem>
           <simpara>
-           Добавить префикс <parameter>prefix</parameter> ко всем именам переменных.
+           Добавлять префикс <parameter>prefix</parameter> к названию каждой переменной.
           </simpara>
          </listitem>
         </varlistentry>
@@ -99,8 +99,8 @@
          <term><constant>EXTR_PREFIX_INVALID</constant></term>
          <listitem>
           <simpara>
-           Добавить префикс <parameter>prefix</parameter> только к
-           некорректным/числовым именам переменных.
+           Добавлять префикс <parameter>prefix</parameter>
+           только к недопустимым или числовым названиям переменных.
           </simpara>
          </listitem>
         </varlistentry>
@@ -108,12 +108,11 @@
          <term><constant>EXTR_IF_EXISTS</constant></term>
          <listitem>
           <simpara>
-           Перезаписать только те переменные, которые содержатся
-           в текущей таблице символов, иначе ничего не делать.
-           Это полезно для определения списка
-           допустимых переменных и извлечения только тех
-           из них, которые разработчик уже определил, например, из массива
-           наподобие <varname>$_REQUEST</varname>.
+           Перезаписывает переменную, только если название уже содержится
+           в текущей таблице символов, иначе ничего не делает.
+           Флаг полезен для определения «белого списка»
+           переменных, чтобы затем извлечь только предопределённые переменные, например,
+           из суперглобального массива <varname>$_REQUEST</varname>.
           </simpara>
          </listitem>
         </varlistentry>
@@ -130,20 +129,20 @@
          <term><constant>EXTR_REFS</constant></term>
          <listitem>
           <simpara>
-           Извлечь переменные как ссылки. Это фактически означает, что
-           значения импортированных переменных всё ещё будут ссылаться
-           на значения массива <parameter>array</parameter>.
-           Разрешено указывать этот флаг отдельно или
-           комбинировать его с другими значениями
-           параметра <parameter>flags</parameter> через побитовое «ИЛИ».
+           Извлечь переменные как ссылки. Это фактически означает,
+           что значения импортированных переменных по-прежнему ссылаются
+           на значения параметра <parameter>array</parameter>.
+           Флаг работает отдельно
+           или в комбинации с другими флагами
+           параметра <parameter>flags</parameter> при объединении через побитовое «ИЛИ».
           </simpara>
          </listitem>
         </varlistentry>
        </variablelist>
       </para>
       <para>
-       Если параметр <parameter>flags</parameter> не задан, он
-       трактуется как флаг <constant>EXTR_OVERWRITE</constant>.
+       Для параметра <parameter>flags</parameter>
+       значение по умолчанию равно <constant>EXTR_OVERWRITE</constant>.
       </para>
      </listitem>
     </varlistentry>
@@ -151,15 +150,16 @@
      <term><parameter>prefix</parameter></term>
      <listitem>
       <para>
-       Обратите внимание, что префикс (<parameter>prefix</parameter>)
-       нужен, только если параметру <parameter>flags</parameter>
-       установлено значение <constant>EXTR_PREFIX_SAME</constant>,
+       Обратите внимание, параметр <parameter>prefix</parameter>
+       становится обязательным при установке для параметра <parameter>flags</parameter>
+       флагов <constant>EXTR_PREFIX_SAME</constant>,
        <constant>EXTR_PREFIX_ALL</constant>,
        <constant>EXTR_PREFIX_INVALID</constant>
-       или <constant>EXTR_PREFIX_IF_EXISTS</constant>. Если
-       в результате добавления префикса не будет получено
-       допустимое имя переменной, она не будет импортирована
-       в текущую таблицу символов.
+       или <constant>EXTR_PREFIX_IF_EXISTS</constant>.
+       Переменная не импортируется в текущую таблицу символов,
+       если после добавления префикса формируется
+       недопустимое название переменной. Префикс объединяется
+       с ключом массива через символ подчеркивания: prefix_key.
       </para>
      </listitem>
     </varlistentry>
@@ -169,26 +169,17 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает количество переменных, успешно импортированных в таблицу символов.
+   Функция возвращает количество переменных, которые успешно импортировала в таблицу символов.
   </para>
  </refsect1>
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>extract</function></title>
-    <para>
-     Функцию <function>extract</function> также вызывают
-     для импорта в таблицу символов переменных,
-     содержащихся в ассоциативном массиве, возвращаемом функцией
-     <function>wddx_deserialize</function>.
-    </para>
+    <title>Пример импорта переменных функцией <function>extract</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-
-/* Предположим, что переменная $var_array — это массив, который вернула
-   функция wddx_deserialize */
 
 $size = "large";
 $var_array = array(
@@ -210,15 +201,15 @@ blue, large, sphere, medium
 ]]>
     </screen>
     <para>
-     Переменная <varname>$size</varname> не была перезаписана,
-     потому что был установлен флаг <constant>EXTR_PREFIX_SAME</constant>,
-     поэтому была создана переменная <varname>$wddx_size</varname>.
-     Если был бы определён флаг <constant>EXTR_SKIP</constant>,
-     тогда переменная <varname>$wddx_size</varname> не была бы создана.
-     Флаг <constant>EXTR_OVERWRITE</constant> привёл бы к тому,
-     что переменной <varname>$size</varname> было бы присвоено
-     значение «medium», а флаг <constant>EXTR_PREFIX_ALL</constant>
-     был бы причиной того, что были бы созданы
+     Переменная <varname>$size</varname> не перезаписалась
+     из-за установки флага <constant>EXTR_PREFIX_SAME</constant>,
+     поэтому функция создала переменную <varname>$wddx_size</varname>.
+     При установке флага <constant>EXTR_SKIP</constant>
+     функция не создала бы переменную <varname>$wddx_size</varname>.
+     С флагом <constant>EXTR_OVERWRITE</constant>
+     переменная <varname>$size</varname> получила бы
+     значение "medium", а при установке флага <constant>EXTR_PREFIX_ALL</constant>
+     функция создала бы
      переменные <varname>$wddx_color</varname>,
      <varname>$wddx_size</varname> и <varname>$wddx_shape</varname>.
     </para>
@@ -229,13 +220,13 @@ blue, large, sphere, medium
   &reftitle.notes;
   <warning>
    <para>
-    Не стоит вызывать функцию <function>extract</function>
-    с ненадёжными данными наподобие пользовательского ввода
-    (например, с суперглобальными переменными <varname>$_GET</varname>, <varname>$_FILES</varname>).
-    Когда это всё-таки делают, проверяют, что значение параметра <parameter>flags</parameter>
-    задано неперезаписывающим флагом наподобие
-    <constant>EXTR_SKIP</constant>, и помнят,
-    что переменные нужно извлекать в том же порядке, который определён
+    Функцию <function>extract</function> нельзя вызывать с ненадёжными данными
+    наподобие пользовательского ввода, который
+    сохраняется в суперглобальных переменных <varname>$_GET</varname>, <varname>$_FILES</varname> или других.
+    Для параметра <parameter>flags</parameter>,
+    если всё же потребовалось извлечь пользовательские данные,
+    устанавливают флаг наподобие <constant>EXTR_SKIP</constant>, который не перезаписывает текущие переменные,
+    и извлекают переменные в том же порядке, который определили
     в директиве <link linkend="ini.variables-order">variables_order</link>
     файла <link linkend="ini">&php.ini;</link>.
    </para>
