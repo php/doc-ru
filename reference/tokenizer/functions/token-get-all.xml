@@ -15,11 +15,12 @@
   </methodsynopsis>
   <para>
    Функция <function>token_get_all</function> разбирает строку <parameter>code</parameter>
-   на токены языка PHP через лексический сканер Zend Engine.
+   на токены языка PHP средствами лексического сканера движка Zend.
   </para>
   <para>
-   Список токенов синтаксического анализатора приводит раздел «<xref linkend="tokens"/>»,
-   или значения лексем в строковое представление переводят функцией <function>token_name</function>.
+   Раздел «<xref linkend="tokens"/>» перечисляет лексемы синтаксического анализатора.
+   Символьное название отдельного токена возвращает функция <function>token_name</function>,
+   которая преобразовывает целочисленный идентификатор токена в строковое представление.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -30,7 +31,7 @@
      <term><parameter>code</parameter></term>
      <listitem>
       <para>
-       Исходный PHP-код, который требуется разбрать.
+       Исходный PHP-код для разбора.
       </para>
      </listitem>
     </varlistentry>
@@ -42,8 +43,7 @@
        <itemizedlist>
         <listitem>
          <simpara>
-          <constant>TOKEN_PARSE</constant> - Распознает в отдельных контекстах,
-          возможно ли использовать зарезервированные слова.
+          <constant>TOKEN_PARSE</constant> — Включает проверку синтаксиса внутри PHP-тегов.
          </simpara>
         </listitem>
        </itemizedlist>
@@ -56,11 +56,11 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает массив идентификаторов лексем. Каждый индивидуальный идентификатор токена —
-   или одиночный символ наподобие <literal>;</literal>, <literal>.</literal>,
-   <literal>&gt;</literal>, <literal>!</literal> и другие,
-   или 3-элементный массив, который содержит индекс лексемы в нулевом элементе, строку
-   с оригинальным содержимым токена в первом элементе и номером строки во втором элементе.
+   Функция возвращает массив идентификаторов лексем. Каждую отдельную лексему функция представляет в массиве
+   или как строку из одного символа наподобие <literal>;</literal>, <literal>.</literal>,
+   <literal>&gt;</literal>, <literal>!</literal>,
+   или как 3-элементный массив, который содержит целочисленный идентификатор лексемы в элементе с индексом 0,
+   строковое содержимое исходного токена в элементе с индексом 1 и номер строки в элементе с индексом 2.
   </para>
  </refsect1>
 
@@ -97,7 +97,7 @@ foreach ($tokens as $token) {
   </para>
   <para>
    <example>
-    <title>Пример неправильной разбивки кода функцией <function>token_get_all</function></title>
+    <title>Пример неправильной строки для разбивки функцией <function>token_get_all</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -120,16 +120,15 @@ foreach ($tokens as $token) {
 ]]>
     </screen>
    </example>
-   Обратите внимание, в приведённом примере строка разбирается как токен <constant>T_INLINE_HTML</constant>
-   вместо ожидаемого <constant>T_COMMENT</constant>.
-   Это связано с тем, что в коде, который проверяет функция, не указали открывающий тег.
-   Это было бы эквивалентно помещению комментариев вне PHP-тегов в обычном файле.
+   Обратите внимание, в приведённом примере функция разобрала строку как токен <constant>T_INLINE_HTML</constant>,
+   а не как предполагаемый <constant>T_COMMENT</constant>.
+   Это связано с пропуском открывающего PHP-тега в строке кода:
+   функция обрабатывает текст вне PHP-тегов как строку в режиме HTML-разметки, а не кода.
   </para>
   <para>
    <example>
     <title>
-     Пример разбивки функцией <function>token_get_all</function> кода класса,
-     который содержит зарезервированные слова
+     Пример разбивки кода класса с зарезервированными словами функцией <function>token_get_all</function>
     </title>
     <programlisting role="php">
 <![CDATA[
