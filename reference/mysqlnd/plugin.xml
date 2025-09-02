@@ -1,47 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e8ac70bf549a723cb36465667a6109d9933b8619 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e62098163abde8c0b6b4d5c1b889b7312b5de3da Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="mysqlnd.plugin" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>API для плагинов к встроенному драйверу MySQL</title>
+ <title>API интеграции плагинов в драйвер MySQL Native Driver</title>
  <para>
-  API-интерфейс для плагинов к встроенному драйверу MySQL — особенность встроенного
-  драйвера MySQL — <literal>mysqlnd</literal>. Плагины <literal>mysqlnd</literal>
-  работают на уровне между PHP-приложениями и MySQL-сервером. Это похоже на работу
-  MySQL Proxy. Плагины <literal>mysqlnd</literal> реализуют стандартные
+  Драйвер MySQL Native Driver, или <literal>mysqlnd</literal>, предоставляет API, через который плагины встраиваются
+  в драйвер.
+  Плагины драйвера <literal>mysqlnd</literal>
+  работают на уровне между PHP-приложениями и MySQL-сервером, аналогично
+  приложению MySQL Proxy, которое также работает между клиентскими приложениями и сервером MySQL.
+  Плагины драйвера <literal>mysqlnd</literal> выполняют типовые
   задачи MySQL Proxy наподобие балансировки нагрузки, мониторинга и оптимизации
-  быстродействия. При этом, вследствие другой архитектуры и месторасположения,
-  плагины <literal>mysqlnd</literal> не содержат отдельных недочётов MySQL Proxy. Например,
-  нет единой точки отказа, не требуется установка отдельного proxy-сервера и не нужно
-  изучать новый язык программирования Lua.
+  быстродействия. Из-за другой архитектуры и места обработки запросов
+  плагины драйвера <literal>mysqlnd</literal> не содержат недочётов MySQL Proxy наподобие
+  единой точки отказа, не требуют установки отдельного прокси-сервера
+  и изучения нового языка программирования Lua.
  </para>
  <para>
-  Плагин <literal>mysqlnd</literal> рассматривают как модуль
-  <literal>mysqlnd</literal>. Плагины умеют перехватывать большую часть функций
-  драйвера <literal>mysqlnd</literal>. Эти функции вызывают модули PHP наподобие
+  Плагин <literal>mysqlnd</literal> расширяет функции драйвера
+  <literal>mysqlnd</literal>. Плагин умеет перехватывать вызовы функций
+  драйвера <literal>mysqlnd</literal> из MySQL-модулей PHP наподобие
   <literal>ext/mysql</literal>, <literal>ext/mysqli</literal> и <literal>PDO_MYSQL</literal>.
-  В конечном счёте, плагинам драйвера <literal>mysqlnd</literal> доступен перехват каждого запроса,
-  который сделали эти модули из клиентского приложения.
+  Поэтому плагинам драйвера <literal>mysqlnd</literal> доступен перехват каждого запроса,
+  который модули выполнили из клиентского приложения.
  </para>
  <para>
-  Внутренние вызовы функций <literal>mysqlnd</literal> также можно перехватить
-  или заменить. Ограничений по работе с внутренней таблицей функций <literal>mysqlnd</literal>
-  нет. Возможно настроить всё так, что при вызове отдельных функций
-  <literal>mysqlnd</literal> из модулей, которые работают с <literal>mysqlnd</literal>,
-  этот вызов перенаправится в соответствующую функцию плагина
-  <literal>mysqlnd</literal>. Возможность манипулировать внутренней таблицей функций
-  <literal>mysqlnd</literal> даёт плагинам максимум гибкости.
+  Плагины умеют перехватывать или подменять вызовы внутренних функций драйвера <literal>mysqlnd</literal>.
+  API не ограничивает модификацию таблиц внутренних функций драйвера <literal>mysqlnd</literal>
+  и разрешает перенаправлять вызовы конкретных функций драйвера <literal>mysqlnd</literal>
+  из <literal>mysqlnd</literal>-модулей на функции <literal>mysqlnd</literal>-плагина.
+  Управление таблицей внутренних функций
+  драйвера <literal>mysqlnd</literal> даёт плагинам максимум гибкости.
  </para>
  <para>
-  Плагины <literal>mysqlnd</literal> — фактически модули PHP, которые написали
-  на языке C и которые работают через API-интерфейс для плагинов <literal>mysqlnd</literal>
-  (встроенном в драйвер <literal>mysqlnd</literal>). Плагины могут быть полностью прозрачными
-  для PHP-приложений. Изменять приложение не потребуется, поскольку плагины работают
-  на другом уровне. Считают, что плагины <literal>mysqlnd</literal>
-  работают на уровень ниже драйвера <literal>mysqlnd</literal>.
+  Плагины драйвера <literal>mysqlnd</literal> — фактически PHP-модули на языке C,
+  которые работают через API интеграции <literal>mysqlnd</literal>-плагинов
+  в PHP-драйвер MySQL Native Driver, или <literal>mysqlnd</literal>.
+  Плагины на 100 % прозрачны
+  для PHP-приложений. Приложение не требуется изменять, поскольку плагины работают
+  на другом уровне. С точки зрения поведения, <literal>mysqlnd</literal>-плагин
+  работает на уровень ниже <literal>mysqlnd</literal>-драйвера, поскольку переопределяет поведение драйвера.
  </para>
  <para>
-  Нижеуказанный список показывает несколько возможных
-  вариантов плагинов <literal>mysqlnd</literal>.
+  Следующий список приводит примеры практических задач,
+  которые решают посредством плагинов драйвера <literal>mysqlnd</literal>.
  </para>
  <itemizedlist>
   <listitem>
@@ -51,8 +53,8 @@
    <itemizedlist>
     <listitem>
      <para>
-      Разделение чтения и записи. Примером является модуль
-      PECL/mysqlnd_ms (Master Slave). Модель разделяет
+      Разделение чтения и записи. Пример —
+      модуль PECL/mysqlnd_ms (Master Slave). Модуль разделяет
       запросы на чтение и запись для настройки репликации.
      </para>
     </listitem>
@@ -63,7 +65,7 @@
     </listitem>
     <listitem>
      <para>
-      Равномерная загрузка, запросы на наименее загруженный сервер
+      Циклическое распределение запросов по принципу Round-Robin для равномерной нагрузки, распределение на наименее загруженный сервер
      </para>
     </listitem>
    </itemizedlist>
@@ -85,10 +87,10 @@
     </listitem>
     <listitem>
      <para>
-      Аудит запросов. Пример — модуль
-      PECL/mysqlnd_sip (SQL Injection Protection, защита
-      от SQL-инъекций). Модель анализирует запросы
-      и выполняет только те, которые подходят под набор правил.
+      Аудит запросов. Пример —
+      модуль PECL/mysqlnd_sip (SQL Injection Protection, защита
+      от SQL-инъекций). Модуль инспектирует запросы
+      и выполняет только те, которые соответствуют набору правил.
      </para>
     </listitem>
    </itemizedlist>
@@ -100,93 +102,92 @@
    <itemizedlist>
     <listitem>
      <para>
-      Кеширование. Пример — модуль
-      PECL/mysqlnd_qc (Query Cache, кеширование запросов).
+      Кеширование. Пример —
+      модуль PECL/mysqlnd_qc (Query Cache, кеширование запросов).
      </para>
     </listitem>
     <listitem>
      <para>
-      Ограничение ресурсов выделяемых запросу
+      Ограничение числа запросов
      </para>
     </listitem>
     <listitem>
      <para>
-      Шардинг. Пример — модуль PECL/mysqlnd_mc
-      (Multi Connect). Модель пытается разбить запрос
+      Шардирование. Пример — модуль PECL/mysqlnd_mc
+      (Multi Connect). Модуль пытается разбить запрос
       SELECT на n частей через SELECT ... LIMIT part_1,
-      SELECT LIMIT part_n. Он отправляет запросы
-      на отдельные MySQL-серверы и собирает результат на клиенте.
+      SELECT LIMIT part_n. Модуль отправляет запросы
+      на отдельные MySQL-серверы и объединяет результаты на клиенте.
      </para>
     </listitem>
    </itemizedlist>
   </listitem>
  </itemizedlist>
  <para>
-  <emphasis role="bold">Доступные плагины к встроенному драйверу MySQL</emphasis>
+  <emphasis role="bold">Доступные плагины драйвера MySQL Native Driver</emphasis>
  </para>
  <para>
-  Существует несколько уже доступных плагинов mysqlnd. Список включает:
+  Репозитории PECL уже содержит ряд mysqlnd-плагинов, включая следующие:
  </para>
  <itemizedlist>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_mc</emphasis> — Multi
-    Connect plugin.
+    <emphasis role="bold">mysqlnd_mc</emphasis> — Multi
+    Connect, разбивка запросов по шардам.
    </para>
   </listitem>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_ms</emphasis> — Master
-    Slave plugin.
+    <emphasis role="bold">mysqlnd_ms</emphasis> — Master
+    Slave, разделение запросов на чтение и запросов на запись.
    </para>
   </listitem>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_qc</emphasis> — Query
-    Cache (кеширование запросов) plugin.
+    <emphasis role="bold">mysqlnd_qc</emphasis> — Query
+    Cache, кеширование результатов запросов.
    </para>
   </listitem>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_pscache</emphasis> -
-    Prepared Statement Handle Cache plugin (обработка
-    кеширования подготовленных запросов)
+    <emphasis role="bold">mysqlnd_pscache</emphasis> —
+    Prepared Statement Handle Cache, обработка
+    кеширования подготовленных запросов.
    </para>
   </listitem>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_sip</emphasis> — SQL
-    Injection Protection plugin (защита от SQL-инъекций)
+    <emphasis role="bold">mysqlnd_sip</emphasis> — SQL
+    Injection Protection, защита от SQL-инъекций.
    </para>
   </listitem>
   <listitem>
    <para>
-    <emphasis role="bold">PECL/mysqlnd_uh</emphasis> — User
-    Handler plugin (обработка пользователей)
+    <emphasis role="bold">mysqlnd_uh</emphasis> — User
+    Handler, обработка пользователей.
    </para>
   </listitem>
  </itemizedlist>
  <section xml:id="mysqlnd.plugin.mysql-proxy">
   <title>Сравнение плагинов mysqlnd с MySQL Proxy</title>
   <para>
-   Плагины <literal>mysqlnd</literal> и MySQL Proxy — разные
-   технологии, использующие разные подходы. Оба варианта
-   являются подходящими инструментами для решения
-   разнообразных стандартных задач, таких как балансировка
-   нагрузки, мониторинг и улучшение производительности.
-   Важным отличием является то, что MySQL Proxy работает со
-   всеми клиентами MySQL, тогда как плагины
-   <literal>mysqlnd</literal> — только для PHP-приложений.
+   Плагины <literal>mysqlnd</literal> и приложение MySQL Proxy — разные
+   технологии с разными подходами. Оба инструмента решают
+   стандартные задачи наподобие балансировки
+   нагрузки, мониторинга и улучшения производительности.
+   Важное отличие состоит в том, что приложение MySQL Proxy работает
+   со всеми MySQL-клиентами, тогда как плагины
+   <literal>mysqlnd</literal> работают только с PHP-приложениями.
   </para>
   <para>
-   Как модуль PHP, плагин <literal>mysqlnd</literal>
-   устанавливается на сервере приложений PHP вместе с
-   остальным PHP. MySQL Proxy может быть запущен на сервере
-   приложений PHP или же быть установлен на отдельной машине
-   для поддержки множественных серверов приложений PHP.
+   Как PHP-модуль, плагин <literal>mysqlnd</literal> устанавливается
+   на сервер PHP-приложений вместе с остальными компонентами
+   PHP-дистрибутива. MySQL Proxy запускают на сервере
+   приложений PHP или устанавливают на отдельной машине
+   для поддержки множественных серверов PHP-приложений.
   </para>
   <para>
-   Установка MySQL Proxy на сервере приложений имеет два преимущества:
+   Установка MySQL Proxy на сервере приложений даёт два преимущества:
   </para>
   <orderedlist>
    <listitem>
@@ -196,37 +197,37 @@
    </listitem>
    <listitem>
     <para>
-     Лёгкость в масштабировании (горизонтальном или же клиентском)
+     Лёгкость в горизонтальном масштабировании и масштабировании за счёт клиента
     </para>
    </listitem>
   </orderedlist>
   <para>
-   MySQL Proxy (а также плагины <literal>mysqlnd</literal>)
-   могут легко решать проблемы, ради решения которых иначе
-   понадобились бы изменения в существующих приложениях.
+   Приложение MySQL Proxy и плагины <literal>mysqlnd</literal>
+   легко решают проблемы, которые иначе
+   потребовали бы изменений в текущих приложениях.
   </para>
   <para>
-   Тем не менее, у MySQL Proxy есть некоторые недостатки:
+   Тем не менее, MySQL Proxy содержит и ряд недостатков:
   </para>
   <itemizedlist>
    <listitem>
     <para>
-     MySQL Proxy — новый элемент и технология, которую потребуется изучить и установить
+     MySQL Proxy — новый элемент и технология, которую потребуется изучить и установить.
     </para>
    </listitem>
    <listitem>
     <para>
-     MySQL Proxy требует знания скриптового языка Lua
+     MySQL Proxy требует знания скриптового языка Lua.
     </para>
    </listitem>
   </itemizedlist>
   <para>
-   MySQL Proxy может быть изменён с помощью C и Lua. Lua
-   является предпочтительным скриптовым языком для MySQL
-   Proxy. Для большинства экспертов PHP, Lua является новым
-   языком, который надо изучать. Плагин
-   <literal>mysqlnd</literal> может быть написан на C. Также
-   можно написать плагин на PHP, используя <link xlink:href="&url.pecl.package;mysqlnd_uh">PECL/mysqlnd_uh</link>.
+   Приложения MySQL Proxy настраиваются под конкретные задачи средствами языков C и Lua.
+   Lua — предпочтительный скриптовый язык для MySQL
+   Proxy. Для большей части PHP-экспертов Lua новый
+   язык, который потребуется изучать. Плагин
+   драйвера <literal>mysqlnd</literal> пишут на C
+   или на PHP через модуль <link xlink:href="&url.pecl.package;mysqlnd_uh">PECL/mysqlnd_uh</link>.
   </para>
   <para>
    MySQL Proxy работает как демон — фоновый процесс. MySQL Proxy может вспомнить ранее
@@ -244,7 +245,7 @@
    анализу протокол MySQL Client Server. Что-либо поменять
    можно только манипулируя протоколом обмена. Если протокол
    вдруг поменяется (что бывает крайне редко), скрипты
-   MySQL Proxy будет необходимо переписывать.
+   MySQL Proxy потребуется переписывать.
   </para>
   <para>
    Плагины <literal>Mysqlnd</literal> работают поверх C API,
@@ -280,10 +281,9 @@
   </para>
   <para>
    Разработчики плагинов узнают версию <literal>mysqlnd</literal> путём доступа
-   к <literal>MYSQLND_VERSION</literal> — строка
-   в формате <quote>mysqlnd 5.0.7-dev - 091210 - $Revision: 300535</quote> или через
-   <literal>MYSQLND_VERSION_ID</literal> — числовое представление версии
-   наподобие 50007. Версию из этого числа рассчитывают вот так:
+   к <literal>MYSQLND_VERSION</literal> — строка в формате <quote>mysqlnd 8.3.17</quote>,
+   или через <literal>MYSQLND_VERSION_ID</literal> — числовое представление версии
+   наподобие 50007. Разработчики вычисляют номер версии из этого числа следующим способом:
   </para>
   <table xml:id="mysqlnd.plugin.version-id">
    <title>Таблица расчёта MYSQLND_VERSION_ID</title>
@@ -315,25 +315,25 @@
    </tgroup>
   </table>
   <para>
-   В процессе разработки, разработчики должны отслеживать версию
-   <literal>mysqlnd</literal> на предмет совместимости и версионного тестирования, так как
-   версии <literal>mysqlnd</literal> имеют свойство меняться и это
-   может случиться в процессе работы над плагином.
+   Разработчики отслеживают версию драйвера
+   <literal>mysqlnd</literal> на предмет совместимости и версионного тестирования,
+   поскольку версии <literal>mysqlnd</literal> иногда изменяется
+   в процессе работы над плагином.
   </para>
  </section>
  <section xml:id="mysqlnd.plugin.architecture">
   <title>Архитектура плагинов MySQL Native Driver </title>
   <para>
-   В этой секции рассмотрена архитектура плагинов
-   <literal>mysqlnd</literal>.
+   В секции рассматривается архитектура плагинов
+   драйвера <literal>mysqlnd</literal>.
   </para>
   <para>
    <emphasis role="bold">Обзор MySQL Native Driver</emphasis>
   </para>
   <para>
-   Перед началом разработки плагинов
-   <literal>mysqlnd</literal>, полезно ознакомиться, как сам по
-   себе организован <literal>mysqlnd</literal>.
+   Перед началом разработки плагинов для драйвера
+   <literal>mysqlnd</literal> полезно узнать,
+   как организован сам драйвер <literal>mysqlnd</literal>.
    <literal>Mysqlnd</literal> состоит из следующих модулей:
   </para>
   <table xml:id="mysqlnd.plugin.orgchart">
@@ -1238,7 +1238,7 @@ mysqlnd_plugin_set_conn_proxy(new proxy());
 ]]>
   </programlisting>
   <para>
-   Zend API поддерживает только два аргумента. Вам может понадобиться больше. К примеру:
+   API движка Zend поддерживает только два аргумента. Иногда требуется больше. Например:
   </para>
   <programlisting>
 <![CDATA[
@@ -1386,7 +1386,7 @@ mysqlnd_plugin_set_conn_proxy(new proxy());
    реализации переопределённых методов.
   </para>
   <para>
-   В результате наследования возможно "уточнить" только выбранные
+   В результате наследования возможно «уточнить» только выбранные
    методы и вы можете выбрать, когда выполнять ваш код, до или после родительского.
   </para>
   <para>
