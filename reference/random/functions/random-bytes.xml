@@ -4,7 +4,7 @@
 <refentry xml:id="function.random-bytes" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>random_bytes</refname>
-  <refpurpose>Получает криптографически безопасные случайные байты</refpurpose>
+  <refpurpose>Генерирует криптографически безопасные случайные байты</refpurpose>
  </refnamediv>
 
  <refsect1 role="description"><!-- {{{ -->
@@ -14,16 +14,16 @@
    <methodparam><type>int</type><parameter>length</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция создаёт строку, которая содержит равномерно выбранные случайные байты с запрошенной длиной <parameter>length</parameter>.
+   Функция генерирует строку, которая содержит равномерно выбранные случайные байты. Длину строки определяет параметр <parameter>length</parameter>.
   </para>
   <para>
-   Поскольку возвращаемые байты выбираются совершенно случайно,
-   полученная строка может содержать непечатаемые символы или недопустимые последовательности UTF-8.
-   Может потребоваться её кодирование перед передачей или отображением.
+   Функция выбирает байты случайно, поэтому с большей вероятностью вернёт строку
+   с непечатаемыми символами или недопустимой последовательностью байтов, которую невозможно сопоставить ни с одним символом в кодировке UTF-8.
+   В ряде сценариев перед передачей или выводом двоичную строку потребуется закодировать.
   </para>
   <para>
-   Случайная последовательность, которую создаёт функция, подходит для всех приложений,
-   включая генерацию долгосрочных секретов, таких как ключи шифрования.
+   Случайные последовательности, которые генерирует функция, применяют для шифрования и защиты данных:
+   как ключи шифрования, токены доступа, соль для хеширования паролей и другие долгосрочные или временные криптографические параметры.
   </para>
   &csprng.sources;
   &csprng.function.backport;
@@ -36,7 +36,7 @@
     <term><parameter>length</parameter></term>
     <listitem>
      <para>
-      Длина генерируемой строки в байтах; значение должно быть равно или больше <literal>1</literal>.
+      Длина генерируемой строки в байтах. При передаче значения меньше <literal>1</literal> функция выдаст ошибку.
      </para>
     </listitem>
    </varlistentry>
@@ -46,7 +46,7 @@
  <refsect1 role="returnvalues"><!-- {{{ -->
   &reftitle.returnvalues;
   <para>
-   Функция возвращает строку, которая состоит из заданного количества криптографически безопасных байтов.
+   Функция возвращает строку, которая содержит заданное количество криптографически стойких байтов.
   </para>
  </refsect1><!-- }}} -->
 
@@ -56,8 +56,8 @@
    &csprng.errors;
    <listitem>
     <simpara>
-     Если значение параметра <parameter>length</parameter> меньше <literal>1</literal>,
-     будет выброшена ошибка <classname>ValueError</classname>.
+     При передаче в параметр <parameter>length</parameter> значения меньше <literal>1</literal>
+     функция выбросит ошибку <classname>ValueError</classname>.
     </simpara>
    </listitem>
   </itemizedlist>
@@ -77,9 +77,9 @@
      <row>
       <entry>8.2.0</entry>
       <entry>
-       В случае возникновения ошибки <acronym>CSPRNG</acronym>,
-       функция теперь будет выбрасывать исключение <classname>Random\RandomException</classname>.
-       Ранее выбрасывалось исключение <classname>Exception</classname>.
+       При сбое генератора криптографически безопасных псевдослучайных чисел (англ. Cryptographically Secure Pseudorandom Number Generator, <acronym>CSPRNG</acronym>)
+       функция теперь выбрасывает исключение <classname>Random\RandomException</classname>.
+       Раньше функция выбрасывала исключение <classname>Exception</classname>.
       </entry>
      </row>
     </tbody>
@@ -90,12 +90,14 @@
  <refsect1 role="examples"><!-- {{{ -->
   &reftitle.examples;
   <example xml:id="random-bytes.example.basic"><!-- {{{ -->
-   <title>Пример использования <function>random_bytes</function></title>
+   <title>Пример генерации криптографически безопасных случайных байтов функцией <function>random_bytes</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $bytes = random_bytes(5);
 var_dump(bin2hex($bytes));
+
 ?>
 ]]>
    </programlisting>
