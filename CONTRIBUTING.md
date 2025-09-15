@@ -137,7 +137,7 @@ php phd/render.php --docbook doc-base/.manual.xml --package PHP --format xhtml
 | Coding standards                | Стандарты кодирования                                                 |
 | Commandline program             | Консольная программа                                                  |
 | Commit                          | Фиксация (например, транзакции)                                       |
-| Default, by default             | По умолчанию (без дефиса), предустановленное                          |
+| Default, by default             | По умолчанию (без дефиса)                                             |
 | Directory                       | Директория                                                            |
 | Download                        | Скачать (не то же, что «загрузить», см. Load)                         |
 | Entry                           | Элемент (существительное, для массивов, списков и прочих структур)    |
