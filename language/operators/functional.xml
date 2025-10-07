@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 2946c8a267734a9e8696e1764f7436e6caa8909c Maintainer: malferov Status: ready -->
+<!-- Reviewed: no -->
+<sect1 xml:id="language.operators.functional">
+ <title>Функциональный оператор</title>
+ <titleabbrev>Функциональный оператор</titleabbrev>
+ <para>
+  PHP версии 8.5 и новее поддерживает один оператор, который работает с callable-выражениями. Оператор <literal>|></literal>,
+  или pipe, принимает в правой части callable-выражение с единственным параметром и передаёт
+  значение в левой части в вызываемое значение, которое вычисляется как результат. В правой части
+  оператор принимает допустимое в PHP callable-выражение: объект класса <classname>Closure</classname>,
+  <link linkend="functions.first_class_callable_syntax">callable-выражение как объект первого класса</link>,
+  объект, класс которого реализует метод <link linkend="object.invoke">__invoke()</link>, и другие вызываемые значения.
+ </para>
+ <para>
+  Каждые две следующие строки эквивалентны.
+  <example>
+   <title>Оператор <literal>|></literal></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$result = "Привет, мир!" |> strlen(...);
+print $result . PHP_EOL;
+
+$result = strlen("Привет, мир!");
+print $result . PHP_EOL;
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+21
+21
+]]>
+   </screen>
+  </example>
+ </para>
+ <para>
+  Конвейерный оператор с единственным вызовом бесполезен, но принесёт пользу при множественных вызовах, которые объединяются в цепочку.
+  Следующие два фрагмента кода эквивалентны:
+  <example>
+   <title>Цепочка вызовов через оператор |></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$result = "PHP Rocks"
+    |> htmlentities(...)
+    |> str_split(...)
+    |> (fn($x) => array_map(strtoupper(...), $x))
+    |> (fn($x) => array_filter($x, fn($v) => $v != 'O'));
+print $result . PHP_EOL;
+
+$temp = "PHP Rocks";
+$temp = htmlentities($temp);
+$temp = str_split($temp);
+$temp = array_map(strtoupper(...), $temp);
+$temp = array_filter($temp, fn($v) => $v != 'O');
+$result = $temp;
+print $result . PHP_EOL;
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Array
+(
+    [0] => P
+    [1] => H
+    [2] => P
+    [3] =>
+    [4] => R
+    [6] => C
+    [7] => K
+    [8] => S
+)
+Array
+(
+    [0] => P
+    [1] => H
+    [2] => P
+    [3] =>
+    [4] => R
+    [6] => C
+    [7] => K
+    [8] => S
+)
+]]>
+   </screen>
+  </example>
+ </para>
+ <para>
+  В левой части оператор конвейера принимает произвольное значение или выражение, а в правой —
+  допустимое в PHP callable-выражение, которое принимает единственный параметр.
+  Функции с двумя или больше обязательными параметрами
+  запрещены и вызовут ошибку, как при стандартном вызове с недостаточным количеством
+  аргументов. В правой части оператора нельзя указывать функции, которые принимают переменную по ссылке.
+  PHP выбросит ошибку Error, если в правую часть оператора передали значение, которое невозможно вызывать как функцию.
+ </para>
+ <note>
+  <para>
+   <link linkend="functions.arrow">Стрелочные функции</link> в правой части оператора
+   ОБЯЗАТЕЛЬНО указывают в круглых скобках, чтобы избежать синтаксической двусмысленности, как в следующем примере.
+   При нарушении требования PHP выдаст фатальную ошибку.
+  </para>
+ </note>
+
+ <sect2 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><classname>Closure</classname></member>
+   </simplelist>
+  </para>
+ </sect2>
+</sect1>
