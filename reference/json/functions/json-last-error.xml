@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8cdc6621f9826d04abc3e50438c010804d7e8683 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 7100979e254970cef72c6f91b32352e7c7898635 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.json-last-error" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>json_last_error</refname>
-  <refpurpose>Возвращает последнюю ошибку</refpurpose>
+  <refpurpose>Возвращает код последней ошибки</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,9 +14,9 @@
    <void />
   </methodsynopsis>
   <para>
-   Функция возвращает последнюю ошибку (если она есть),
-   которая возникла во время последнего кодирования или декодирования JSON, если
-   при вызове не устанавливался флаг <constant>JSON_THROW_ON_ERROR</constant>.
+   Функция возвращает код последней ошибки,
+   которая возникла во время кодирования, декодирования или проверки JSON-данных
+   без установки флага <constant>JSON_THROW_ON_ERROR</constant>.
   </para>
  </refsect1>
 
@@ -44,7 +44,7 @@
     <tbody>
      <row>
       <entry><constant>JSON_ERROR_NONE</constant></entry>
-      <entry>Ошибок нет</entry>
+      <entry>Без ошибок</entry>
       <entry></entry>
      </row>
      <row>
@@ -54,7 +54,7 @@
      </row>
      <row>
       <entry><constant>JSON_ERROR_STATE_MISMATCH</constant></entry>
-      <entry>Неверный или некорректный JSON</entry>
+      <entry>Недопустимые или сформированные с нарушением формата JSON данные</entry>
       <entry></entry>
      </row>
      <row>
@@ -94,7 +94,7 @@
      </row>
      <row>
       <entry><constant>JSON_ERROR_INVALID_PROPERTY_NAME</constant></entry>
-      <entry>Имя свойства не может быть закодировано</entry>
+      <entry>Название свойства невозможно закодировать</entry>
       <entry></entry>
      </row>
      <row>
@@ -111,17 +111,17 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>json_last_error</function></title>
+    <title>Пример получения кода последней ошибки функцией <function>json_last_error</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Верная json-строка
-$json[] = '{"Organization": "PHP Documentation Team"}';
+// Допустимая json-строка
+$json[] = '{"Организация": "Команда PHP-документации"}';
 
-// Неверная json-строка, которая вызовет синтаксическую ошибку,
-// здесь в качестве кавычек мы используем ' вместо "
-$json[] = "{'Organization': 'PHP Documentation Team'}";
+// Недопустимая json-строка, которая вызовет синтаксическую ошибку,
+// поскольку вместо двойных кавычек указали одинарные
+$json[] = "{'Организация': 'Команда PHP-документации'}";
 
 
 foreach ($json as $string) {
@@ -130,26 +130,26 @@ foreach ($json as $string) {
 
     switch (json_last_error()) {
         case JSON_ERROR_NONE:
-            echo ' - Ошибок нет';
-        break;
+            echo ' — Без ошибок';
+            break;
         case JSON_ERROR_DEPTH:
-            echo ' - Достигнута максимальная глубина стека';
-        break;
+            echo ' — Достигнута максимальная глубина стека';
+            break;
         case JSON_ERROR_STATE_MISMATCH:
-            echo ' - Некорректные разряды или несоответствие режимов';
-        break;
+            echo ' — Некорректные разряды или несоответствие режимов';
+            break;
         case JSON_ERROR_CTRL_CHAR:
-            echo ' - Некорректный управляющий символ';
-        break;
+            echo ' — Некорректный управляющий символ';
+            break;
         case JSON_ERROR_SYNTAX:
-            echo ' - Синтаксическая ошибка, некорректный JSON';
-        break;
+            echo ' — Синтаксическая ошибка, некорректный формат JSON';
+            break;
         case JSON_ERROR_UTF8:
-            echo ' - Некорректные символы UTF-8, возможно неверно закодирован';
-        break;
+            echo ' — Некорректные символы для кодировки UTF-8, возможно, строку неправильно закодировали';
+            break;
         default:
-            echo ' - Неизвестная ошибка';
-        break;
+            echo ' — Неизвестная ошибка';
+            break;
     }
 
     echo PHP_EOL;
@@ -161,20 +161,23 @@ foreach ($json as $string) {
     &example.outputs;
     <screen>
 <![CDATA[
-Декодируем: {"Organization": "PHP Documentation Team"} - Ошибок нет
-Декодируем: {'Organization': 'PHP Documentation Team'} - Синтаксическая ошибка, некорректный JSON
+Декодируем: {"Организация": "Команда PHP-документации"} — Без ошибок
+Декодируем: {'Организация': 'Команда PHP-документации'} — Синтаксическая ошибка, некорректный формат JSON
 ]]>
     </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Совместное использование <function>json_last_error</function> и <function>json_encode</function></title>
+    <title>
+     Пример получения функцией <function>json_last_error</function> кода последней ошибки,
+     которую сгенерировала функция <function>json_encode</function>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Некорректная последовательность UTF8
+// Недопустимая для кодировки UTF-8 последовательность символов
 $text = "\xB1\x31";
 
 $json  = json_encode($text);
@@ -197,19 +200,21 @@ bool(true)
   <para>
    <example>
     <title>
-     Пример работы функции <function>json_last_error</function> и константы <constant>JSON_THROW_ON_ERROR</constant>
+     Пример получения кода последней ошибки функцией <function>json_last_error</function>
+     при обработке JSON-данных с флагом <constant>JSON_THROW_ON_ERROR</constant>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Некорректная последовательность UTF8, которая вызывает ошибку JSON_ERROR_UTF8
+// Недопустимая для кодировки UTF-8 последовательность символов, которая вызывает ошибку JSON_ERROR_UTF8
 json_encode("\xB1\x31");
 
-// Не вызовет ошибки JSON
+// Следующий вызов не генерирует ошибку при кодировании данных в формат JSON
 json_encode('okay', JSON_THROW_ON_ERROR);
 
-// Функцией json_encode() не изменит глобальное состояние
+// Второй вызов функции json_encode() не изменил глобальное состояние ошибки,
+// которую сгенерировал первый вызов
 var_dump(json_last_error() === JSON_ERROR_UTF8);
 
 ?>
