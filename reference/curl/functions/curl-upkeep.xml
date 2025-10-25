@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1139146aa49b99fd29fab078199b25b2811a6447 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: fc9a0a8b29a7a099998bdd71fe5350a10b18fe62 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.curl_upkeep" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>curl_upkeep</refname>
-  <refpurpose>Выполняет любые проверки работоспособности соединений</refpurpose>
+  <refpurpose>Проверяет и поддерживает соединение в рабочем состоянии</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,17 +14,17 @@
    <methodparam><type>CurlHandle</type><parameter>handle</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Доступен при сборке с libcurl &gt;= 7.62.0.
+   Функция доступна, только если PHP-модуль cURL собрали с библиотекой libcurl &gt;= 7.62.0.
   </para>
   <para>
-   Некоторые протоколы поддерживают механизмы "поддержания соединения".
-   Эти механизмы обычно передают небольшой объем трафика по существующим соединениям, чтобы сохранить их.
-   Это может предотвратить закрытие соединений, например, из-за слишком усердных файерволов.
+   Отдельные протоколы поддерживают механизмы «обслуживания соединения».
+   Такие механизмы в стандартном сценарии передают небольшой объем данных через текущие соединения, чтобы соединения оставались активными;
+   это предотвращает разрыв соединений, например, из-за агрессивной политики межсетевых экранов.
   </para>
   <para>
-   В настоящее время функция поддержания соединения доступна только для соединений HTTP/2.
-   Для поддержания соединения обычно отправляется небольшой объем трафика.
-   HTTP/2 поддерживает соединение, отправляя фрагмент HTTP/2 PING.
+   Механизм обслуживания и поддержки соединений доступен только для соединений по протоколу HTTP/2.
+   Для поддержания соединения отправляется небольшой объем трафика.
+   Протокол HTTP/2 обслуживает соединение путём отправки HTTP/2-команды PING.
   </para>
  </refsect1>
 
@@ -48,23 +48,25 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>curl_upkeep</function></title>
+    <title>Пример проверки работоспособности соединения функцией <function>curl_upkeep</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $url = "https://example.com";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTP_VERSION,CURL_HTTP_VERSION_2_0);
+curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_UPKEEP_INTERVAL_MS, 200);
+
 if (curl_exec($ch)) {
     usleep(300);
     var_dump(curl_upkeep($ch));
 }
-curl_close($ch);
+
 ?>
 ]]>
     </programlisting>
