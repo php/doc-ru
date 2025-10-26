@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a8a81b5185dcdd0722c356b573349b907aba9609 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 85d9a34e16732043af52954a069a020b8c30ec50 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.ldap-set-option" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>ldap_set_option</refname>
-  <refpurpose>Установить значение данной опции</refpurpose>
+  <refpurpose>Устанавливает значение опции</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,7 +16,7 @@
    <methodparam><type class="union"><type>array</type><type>string</type><type>int</type><type>bool</type></type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Устанавливает значение указанной опции в <parameter>value</parameter>.
+   Функция устанавливает для опции значение <parameter>value</parameter>.
   </para>
  </refsect1>
 
@@ -28,8 +28,8 @@
      <term><parameter>ldap</parameter></term>
      <listitem>
       <para>
-       Либо экземпляр <classname>LDAP\Connection</classname>, возвращаемый функцией <function>ldap_connect</function>
-       для установки опции для этого соединения, либо &null; для установки опции глобально.
+       Параметр принимает либо экземпляр класса <classname>LDAP\Connection</classname>, который возвращает функция <function>ldap_connect</function>,
+       и устанавливает значение опции для этого соединения, либо значение &null; для установки глобального значения опции.
       </para>
      </listitem>
     </varlistentry>
@@ -37,7 +37,7 @@
      <term><parameter>option</parameter></term>
      <listitem>
       <para>
-       Опция <parameter>option</parameter> может быть одной из:
+       Параметр <parameter>option</parameter> принимает константу из следующего списка:
        <informaltable>
         <tgroup cols="2">
          <thead>
@@ -193,27 +193,33 @@
        </informaltable>
       </para>
       <para>
-       <constant>LDAP_OPT_SERVER_CONTROLS</constant> и <constant>LDAP_OPT_CLIENT_CONTROLS</constant>
-       требуют список элементов управления. Это означает, что значение должно быть массивом элементов управления.
-       Элемент управления состоит из <emphasis>oid</emphasis>, определяющего элемент управления,
-       опционального <emphasis>значения</emphasis>, и дополнительного флага для <emphasis>критичности</emphasis>.
-       В PHP элемент управления задаётся массивом, содержащим элемент с ключом <emphasis>oid</emphasis>
+       Опции <constant>LDAP_OPT_SERVER_CONTROLS</constant> и <constant>LDAP_OPT_CLIENT_CONTROLS</constant>
+       требуют список элементов управления, поэтому значение передают как массив элементов управления.
+       Элемент управления состоит из элемента <emphasis>oid</emphasis>, который определяет элемент управления,
+       необязательного поля <emphasis>value</emphasis>, и дополнительного флага для <emphasis>criticality</emphasis>.
+       В PHP элемент управления задаётся массивом, который содержит элемент с ключом <emphasis>oid</emphasis>,
        и строковым значением, и двумя необязательными элементами.
-       Необязательные элементы являются ключом <emphasis>value</emphasis> со строковым значением
-       и ключом <emphasis>iscritical</emphasis> с логическим значением.
-       <emphasis>iscritical</emphasis> по умолчанию устанавливается в <emphasis>&false;</emphasis>,
-       если не указан.
-       Для более подробной информации смотрите <link
-       xlink:href="&url.ldap.openldap-c-api;">draft-ietf-ldapext-ldap-c-api-xx.txt</link>.
-       Смотрите также второй пример, расположенный ниже.
+       Необязательные элементы — ключ <emphasis>value</emphasis> со строковым значением
+       и ключ <emphasis>iscritical</emphasis> с логическим значением.
+       Для элемента с ключом <emphasis>iscritical</emphasis> по умолчанию устанавливается значение <emphasis>&false;</emphasis>,
+       если не указали другое значение.
+       Подробнее API протокола LDAP описывает документ <link xlink:href="&url.ldap.openldap-c-api;">draft-ietf-ldapext-ldap-c-api-xx.txt</link>.
+       Смотрите также второй пример на этой странице.
       </para>
+      <note>
+       <para>
+        TLS-параметры учитываются LDAPS-подключением, которое создаёт функция <function>ldap_connect</function>,
+        или TLS-подключением, которое устанавливает функция <function>ldap_start_tls</function>,
+        только если параметры установили глобально и до инициализации соединения.
+       </para>
+      </note>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Новое значение для указанной <parameter>option</parameter> (опции).
+       Новое значение опции <parameter>option</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -249,34 +255,40 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Устанавливает версию протокола</title>
+    <title>Пример установки версии протокола</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// $ds - действительный идентификатор связи с LDAP-сервером
+
+// Переменная $ds — допустимый для сервера каталогов экземпляр класса LDAP\Connection
 if (ldap_set_option($ds, LDAP_OPT_PROTOCOL_VERSION, 3)) {
-    echo "Используется LDAPv3";
+    echo "Функция установила в объекте подключения 3-ю версию протокола — LDAPv3";
 } else {
-    echo "Не удалось установить версию протокола в 3";
+    echo "Сбой установки 3-й версии протокола";
 }
+
 ?>
 ]]>
     </programlisting>
    </example>
    <example>
-    <title>Устанавливает управление сервером</title>
+    <title>Пример установки серверных элементов управления</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// $ds - действительный идентификатор связи с LDAP-сервером
-// элемент управления с отсутствующим значением
+
+// Переменная $ds — допустимый для сервера каталогов экземпляр класса LDAP\Connection.
+// Элемент управления без элемента с ключом value
 $ctrl1 = array("oid" => "1.2.752.58.10.1", "iscritical" => true);
-// iscritical по умолчанию FALSE
+
+// Для элемента с ключом iscritical по умолчанию устанавливается значение FALSE
 $ctrl2 = array("oid" => "1.2.752.58.1.10", "value" => "magic");
-// попытка установить оба элемента управления
+
+// Попытка установить оба элемента управления
 if (!ldap_set_option($ds, LDAP_OPT_SERVER_CONTROLS, array($ctrl1, $ctrl2))) {
-    echo "Не удалось установить серверные элементы управления";
+    echo "Сбой установки серверных элементов управления";
 }
+
 ?>
 ]]>
     </programlisting>
@@ -288,7 +300,7 @@ if (!ldap_set_option($ds, LDAP_OPT_SERVER_CONTROLS, array($ctrl1, $ctrl2))) {
   &reftitle.notes;
   <note>
    <para>
-    Эта функция доступна только, когда используется OpenLDAP 2.x.x или Netscape Directory SDK x.x.
+    Функция доступна только при работе с протоколом OpenLDAP 2.x.x или набором инструментов Netscape Directory SDK x.x.
    </para>
   </note>
  </refsect1>
