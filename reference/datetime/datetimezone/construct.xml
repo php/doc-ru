@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d9ac376dbee6e45ef775059456caf0ec348ada6a Maintainer: das Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: das Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetimezone.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -21,17 +21,17 @@
    <methodparam><type>string</type><parameter>timezone</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Создаёт новый объект DateTimeZone.
+   Метод создаёт новый объект DateTimeZone.
   </para>
   <para>
-   Объект DateTimeZone предоставляет доступ к трём различным типам правил временных зон:
-   Смещение UTC (тип <literal>1</literal>),
-   сокращение часового пояса (тип <literal>2</literal>)
-   и <link linkend="timezones">идентификаторы часовых поясов</link>, опубликованные в базе данных часовых поясов IANA (тип <literal>3</literal>).
+   Объект DateTimeZone поддерживает три типа представления часового пояса:
+   тип <literal>1</literal> — смещение относительно времени UTC,
+   тип <literal>2</literal> — аббревиатура часового пояса
+   и тип <literal>3</literal> — <link linkend="timezones">идентификатор часового пояса</link>, которые публикуются в базе данных часовых поясов организации IANA.
   </para>
   <para>
-   Объект DateTimeZone может быть присоединён к объектам <classname>DateTime</classname> и <classname>DateTimeImmutable</classname>,
-   чтобы иметь возможность отображать часовой пояс, заключённый в этих объектах в локальном часовом поясе.
+   Объект DateTimeZone прикрепляют к объектам <classname>DateTime</classname> и <classname>DateTimeImmutable</classname>
+   для форматирования времени в заданном часовом поясе.
   </para>
  </refsect1>
 
@@ -43,8 +43,8 @@
      <term><parameter>timezone</parameter></term>
      <listitem>
       <para>
-       Одно из поддерживаемых <link linkend="timezones">имён часовых поясов</link> или
-       значение смещения (+0200) или аббревиатура часового пояса (BST).
+       Поддерживаемое <link linkend="timezones">название часового пояса</link>,
+       значение смещения в формате +0200 или аббревиатура часового пояса наподобие BST.
       </para>
      </listitem>
     </varlistentry>
@@ -55,7 +55,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения возвращает <classname>DateTimeZone</classname>.
+   Метод возвращает объект <classname>DateTimeZone</classname>, если выполнился успешно.
    &return.falseforfailure.style.procedural;
   </para>
  </refsect1>
@@ -63,8 +63,8 @@
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Если часовой пояс не распознается как действительный,
-   выбрасывается исключение
+   При передаче недопустимого часового пояса
+   метод выбрасывает исключение
    <exceptionname>DateInvalidTimeZoneException</exceptionname>.
    До PHP 8.3 вместо этого выбрасывалось исключение
    <exceptionname>Exception</exceptionname>.
@@ -86,9 +86,9 @@
       <row>
        <entry>8.3.0</entry>
        <entry>
-        Теперь из-за недопустимых значений
+        При передаче недопустимых значений часового пояса
         вместо общего исключения <exceptionname>Exception</exceptionname>
-        выбрасывается исключение <exceptionname>DateInvalidTimeZoneException</exceptionname>.
+        метод теперь выбрасывает исключение <exceptionname>DateInvalidTimeZoneException</exceptionname>.
        </entry>
       </row>
      </tbody>
@@ -101,55 +101,59 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Создание и присоединение DateTimeZone к DateTimeImmutable</title>
+    <title>Пример создания и прикрепления часового пояса DateTimeZone к объекту даты и времени DateTimeImmutable</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $d = new DateTimeImmutable("2022-06-02 15:44:48 UTC");
 
-$timezones = [ 'Europe/London', 'GMT+04:45', '-06:00', 'CEST' ];
+$timezones = ['Europe/London', 'GMT+04:45', '-06:00', 'CEST'];
 
 foreach ($timezones as $tz) {
     $tzo = new DateTimeZone($tz);
 
     $local = $d->setTimezone($tzo);
-    echo $local->format(DateTimeInterface::RFC2822 . ' — e'), "\n";
+    echo $local->format(DateTimeInterface::RFC2822 . ' — e') . "\n";
 }
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
+<![CDATA[
 Thu, 02 Jun 2022 16:44:48 +0100 — Europe/London
 Thu, 02 Jun 2022 20:29:48 +0445 — +04:45
 Thu, 02 Jun 2022 09:44:48 -0600 — -06:00
 Thu, 02 Jun 2022 17:44:48 +0200 — CEST
+]]>
     </screen>
    </example>
   </para>
 
   <para>
    <example>
-    <title>Перехват ошибок при создании экземпляра <classname>DateTimeZone</classname></title>
+    <title>Пример перехвата ошибок при создании объекта <classname>DateTimeZone</classname></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Обработка ошибок с помощью перехвата исключений
+
+// Обработка ошибок путём перехвата исключений
 $timezones = array('Europe/London', 'Mars/Phobos', 'Jupiter/Europa');
 
 foreach ($timezones as $tz) {
     try {
         $mars = new DateTimeZone($tz);
+        echo $mars->getName() . "\n";
     } catch(Exception $e) {
-        echo $e->getMessage() . '<br />';
+        echo $e->getMessage() . "\n";
     }
 }
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
+Europe/London
 DateTimeZone::__construct() [datetimezone.--construct]: Unknown or bad timezone (Mars/Phobos)
 DateTimeZone::__construct() [datetimezone.--construct]:  Unknown or bad timezone (Jupiter/Europa)
 ]]>
