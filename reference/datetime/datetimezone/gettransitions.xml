@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 02ff7fef5b34cf8f5395180d9d39fb64d9398d00 Maintainer: das Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: das Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetimezone.gettransitions" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>DateTimeZone::getTransitions</refname>
   <refname>timezone_transitions_get</refname>
-  <refpurpose>Возвращает все переходы для часового пояса</refpurpose>
+  <refpurpose>Возвращает информацию о переходах времени для часового пояса</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -52,11 +52,14 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения возвращает численно индексированный массив массивов со всеми переходами&return.falseforfailure;.
-   Объекты DateTimeZone, оборачивающие тип 1 (смещения UTC) и тип 2 (сокращения), не содержат переходов и вызов этого метода в таком случае вернёт &false;.
+   Функция возвращает индексный массив массивов с информацией об исторических,
+   сезоннных и политико-административных переходах времени в хронологическом порядке, если выполнилась успешно,&return.falseforfailure;.
+   Объекты DateTimeZone, которые оборачивают смещения 1-го типа со смещением относительно часового пояса UTC
+   и 2-го типа с аббревиатурой названия часового пояса, не содержат переходов и вызов метода на таких объектах вернёт значение &false;.
   </para>
   <para>
-   Если задан параметр <parameter>timestampBegin</parameter>, то первая запись в возвращаемом массиве будет содержать элемент перехода на момент параметра <parameter>timestampBegin</parameter>.
+   При передаче аргумента <parameter>timestampBegin</parameter> первым элементом массива с результатами
+   становится массив с информацией о последнем на момент <parameter>timestampBegin</parameter> переходе.
   </para>
   <para>
    <table>
@@ -79,14 +82,14 @@
        <entry><literal>time</literal></entry>
        <entry><type>string</type></entry>
        <entry>
-        <constant>DateTimeInterface::ISO8601_EXPANDED</constant> (PHP 8.2 и более поздние версии)
-        или <constant>DateTimeInterface::ISO8601</constant> (PHP 8.1 и более ранние версии) строка времени
+        Строка времени в формате <constant>DateTimeInterface::ISO8601_EXPANDED</constant> для PHP 8.2 и более поздних выпусков
+        или в формате <constant>DateTimeInterface::ISO8601</constant> для PHP 8.1 и предыдущих выпусков
        </entry>
       </row>
       <row>
        <entry><literal>offset</literal></entry>
        <entry><type>int</type></entry>
-       <entry>Смещение от UTC в секундах</entry>
+       <entry>Смещение относительно времени часового пояса UTC в секундах</entry>
       </row>
       <row>
        <entry><literal>isdst</literal></entry>
@@ -108,14 +111,14 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>timezone_transitions_get</function></title>
+    <title>Пример получения хронологии переходов времени функцией <function>timezone_transitions_get</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $timezone = new DateTimeZone("Europe/London");
 $transitions = $timezone->getTransitions();
 print_r(array_slice($transitions, 0, 3));
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -125,29 +128,29 @@ Array
 (
     [0] => Array
         (
-            [ts] => -9223372036854775808
-            [time] => -292277022657-01-27T08:29:52+0000
-            [offset] => 3600
-            [isdst] => 1
-            [abbr] => BST
+            [ts] => -2147483648
+            [time] => 1901-12-13T20:45:52+00:00
+            [offset] => -75
+            [isdst] =>
+            [abbr] => LMT
         )
 
     [1] => Array
         (
-            [ts] => -1691964000
-            [time] => 1916-05-21T02:00:00+0000
-            [offset] => 3600
-            [isdst] => 1
-            [abbr] => BST
+            [ts] => 442304971
+            [time] => 1847-12-01T00:01:15+00:00
+            [offset] => 0
+            [isdst] =>
+            [abbr] => GMT
         )
 
     [2] => Array
         (
-            [ts] => -1680472800
-            [time] => 1916-10-01T02:00:00+0000
-            [offset] => 0
-            [isdst] =>
-            [abbr] => GMT
+            [ts] => -1691964000
+            [time] => 1916-05-21T02:00:00+00:00
+            [offset] => 3600
+            [isdst] => 1
+            [abbr] => BST
         )
 
 )
@@ -155,14 +158,14 @@ Array
     </screen>
    </example>
    <example>
-    <title>Пример использования <function>timezone_transitions_get</function> с заданным параметром <parameter>timestampBegin</parameter></title>
+    <title>Пример работы функции <function>timezone_transitions_get</function> с аргументом <parameter>timestampBegin</parameter></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $timezone = new DateTimeZone("Europe/London");
 $transitions = $timezone->getTransitions(time());
 print_r(array_slice($transitions, 0, 3));
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -172,8 +175,8 @@ Array
 (
     [0] => Array
         (
-            [ts] => 1654184161
-            [time] => 2022-06-02T15:36:01+0000
+            [ts] => 1759058251
+            [time] => 2025-09-28T11:17:31+00:00
             [offset] => 3600
             [isdst] => 1
             [abbr] => BST
@@ -181,17 +184,17 @@ Array
 
     [1] => Array
         (
-            [ts] => 1667091600
-            [time] => 2022-10-30T01:00:00+0000
+            [ts] => 1761440400
+            [time] => 2025-10-26T01:00:00+00:00
             [offset] => 0
-            [isdst] =>
+            [isdst] => 
             [abbr] => GMT
         )
 
     [2] => Array
         (
-            [ts] => 1679792400
-            [time] => 2023-03-26T01:00:00+0000
+            [ts] => 1774746000
+            [time] => 2026-03-29T01:00:00+00:00
             [offset] => 3600
             [isdst] => 1
             [abbr] => BST
