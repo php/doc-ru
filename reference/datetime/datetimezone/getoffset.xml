@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e057f1f552548a68030830e96ae1bdf313b1794e Maintainer: das Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: das Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetimezone.getoffset" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>DateTimeZone::getOffset</refname>
   <refname>timezone_offset_get</refname>
-  <refpurpose>Возвращает смещение часового пояса от UTC (GMT)</refpurpose>
+  <refpurpose>Возвращает смещение времени часового пояса относительно времени UTC</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -21,9 +21,9 @@
    <methodparam><type>DateTimeInterface</type><parameter>datetime</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция возвращает смещение от GMT для даты/времени, указанных в параметре
-   <parameter>datetime</parameter>. GMT-смещение рассчитывается с помощью информации
-   о часовом поясе, содержащейся в используемом объекте DateTimeZone.
+   Функция возвращает смещение времени заданного часового пояса относительно времени по стандарту UTC
+   на конкретный момент времени, который содержится в объекте даты и времени аргумента <parameter>datetime</parameter>.
+   Смещение вычисляется для часового пояса в объекте DateTimeZone относительно времени UTC.
   </para>
  </refsect1>
 
@@ -36,7 +36,8 @@
      <term><parameter>datetime</parameter></term>
      <listitem>
       <para>
-       DateTime, содержащий дату/время, относительно которых вычисляется смещение.
+       Объект DateTime или другой совместимый с интерфейсом объект
+       с датой и временем, относительно которого вычисляется смещение.
       </para>
      </listitem>
     </varlistentry>
@@ -47,7 +48,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает смещение часового пояса в секундах.
+   Функция возвращает смещение времени часового пояса в секундах.
   </para>
  </refsect1>
 
@@ -55,30 +56,37 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>DateTimeZone::getOffset</function></title>
+    <title>Пример получения смещения времени часового пояса относительно UTC-времени методом <function>DateTimeZone::getOffset</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Создание двух объектов timezone, один для Тайбэй (Тайвань) и один для
-// Токио (Япония)
+
+// Создаём два объекта часового пояса: один для города Тайбэй — столицы Тайваня,
+// и другой для города Токио — столицы Японии
 $dateTimeZoneTaipei = new DateTimeZone("Asia/Taipei");
-$dateTimeZoneJapan = new DateTimeZone("Asia/Tokyo");
+$dateTimeZoneJapan  = new DateTimeZone("Asia/Tokyo");
 
-// Создание двух объектов DateTime, которые будут содержать одинаковые метки времени Unix, но
-// имеющих различные часовые пояса.
+// Создаём два объекта DateTime, оба содержат идентичные метки Unix-времени,
+// но разные часовые пояса
 $dateTimeTaipei = new DateTime("now", $dateTimeZoneTaipei);
-$dateTimeJapan = new DateTime("now", $dateTimeZoneJapan);
+$dateTimeJapan  = new DateTime("now", $dateTimeZoneJapan);
 
-// Вычисление смещения от GMT для даты/времени, содержащихся в объекте $dateTimeTaipei,
-// но с использованием правил часового пояса, определённых для Токио
-// ($dateTimeZoneJapan).
+// Вычисляем смещение времени часового пояса Токио в объекте $dateTimeZoneJapan
+// относительно времени UTC на момент времени в объекте $dateTimeTaipei
+// с учётом переходов на летнее или зимнее время и исторических изменений наподобие календарных реформ
 $timeOffset = $dateTimeZoneJapan->getOffset($dateTimeTaipei);
 
-// Должен показать int(32400) (для дат после Sat Sep 8 01:00:00 1951 JST).
+// Выведет значение int(32400) для дат после 01:00:00 субботы 8 сентября 1951 года
+// по стандартному японскому времени в часовом поясе JST, Sat Sep 8 01:00:00 1951 JST
 var_dump($timeOffset);
-?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+int(32400)
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>

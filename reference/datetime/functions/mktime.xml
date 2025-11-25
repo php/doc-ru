@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 349e3c6502e0bbeb15aef2b4a4a25f3f5e10fbfe Maintainer: shein Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.mktime" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mktime</refname>
-  <refpurpose>Получает Unix-метку времени для даты</refpurpose>
+  <refpurpose>Получает метку Unix-времени для даты</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,7 +19,7 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>year</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция возвращает временну́ю метку Unix, которая соответствует заданным
+   Функция возвращает метку времени Unix, которая соответствует заданным
    аргументам. Метка времени — целое число, которое содержит количество секунд
    между началом эпохи Unix, которая началась 1 января 1970 00:00:00 GMT, и датой и временем.
   </para>
@@ -127,8 +127,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция <function>mktime</function> возвращает временну́ю метку Unix по заданным аргументам
-   или &false;, если метка времени не вписывается в целое число PHP.
+   Функция <function>mktime</function> возвращает метку времени Unix по заданным аргументам
+   или &false;, если метка времени выходит за пределы диапазона целых чисел PHP.
   </para>
  </refsect1>
 
@@ -147,15 +147,15 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Параметр <parameter>hour</parameter> теперь обязателен.
-        Чтобы получить временну́ю метку Unix, вызывают функцию <function>time</function>.
+        Параметр <parameter>hour</parameter> стал обязательным.
+        Функция <function>time</function> возвращает метку времени Unix без аргументов.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
         Параметры <parameter>minute</parameter>, <parameter>second</parameter>, <parameter>month</parameter>,
-        <parameter>day</parameter> и <parameter>year</parameter> теперь принимают значение null.
+        <parameter>day</parameter> и <parameter>year</parameter> теперь принимают значение &null;.
        </entry>
       </row>
      </tbody>
@@ -177,61 +177,115 @@
 date_default_timezone_set('UTC');
 
 // Выводит: July 1, 2000 is on a Saturday
-echo "July 1, 2000 is on a " . date("l", mktime(0, 0, 0, 7, 1, 2000));
+echo "July 1, 2000 is on a " . date("l", mktime(0, 0, 0, 7, 1, 2000)) . "\n";
 
 // Выводит что-то вроде: 2006-04-05T01:02:03+00:00
-echo date('c', mktime(1, 2, 3, 4, 5, 2006));
-
-?>
+echo date('c', mktime(1, 2, 3, 4, 5, 2006)) . "\n";
 ]]>
     </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+July 1, 2000 is on a Saturday
+2006-04-05T01:02:03+00:00
+]]>
+    </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Пример использования функции <function>mktime</function></title>
+    <title>Пример получения метки времени функцией <function>mktime</function></title>
     <para>
      Функция <function>mktime</function> полезна для выполнения
      арифметических операций и проверки дат,
      поскольку функция автоматически
      вычисляет правильные значения для входных аргументов, которые выходят за пределы
-     допустимого диапазона. В следующем примере каждая строка кода создаёт строку «Jan-01-1998».
+     допустимого диапазона. В следующем примере каждая строка кода создаёт строку "Jan-01-1998".
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-echo date("M-d-Y", mktime(0, 0, 0, 12, 32, 1997));
-echo date("M-d-Y", mktime(0, 0, 0, 13, 1, 1997));
-echo date("M-d-Y", mktime(0, 0, 0, 1, 1, 1998));
-echo date("M-d-Y", mktime(0, 0, 0, 1, 1, 98));
+date_default_timezone_set('America/New_York');
 
-?>
+echo date("c", mktime(0, 0, 0, 12, 32, 1997)) . "\n";
+echo date("c", mktime(0, 0, 0, 13, 1, 1997)) . "\n";
+echo date("c", mktime(0, 0, 0, 1, 1, 1998)) . "\n";
+echo date("c", mktime(0, 0, 0, 1, 1, 98)) . "\n";
 ]]>
     </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+1998-01-01T00:00:00-05:00
+1998-01-01T00:00:00-05:00
+1998-01-01T00:00:00-05:00
+1998-01-01T00:00:00-05:00
+]]>
+    </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Последний день месяца</title>
+    <title>Пример получения метки времени для относительных дат функцией mktime</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+date_default_timezone_set('Asia/Tokyo');
+
+$tomorrow  = mktime(0, 0, 0, date("m"), date("d") + 1, date("Y"));
+print date('c', $tomorrow) . "\n";
+
+$lastmonth = mktime(0, 0, 0, date("m") - 1, date("d"),   date("Y"));
+print date('c', $lastmonth) . "\n";
+
+$nextyear  = mktime(0, 0, 0, date("m"),   date("d"),   date("Y") + 1) . "\n";
+print date('c', $nextyear) . "\n";
+]]>
+    </programlisting>
+    &example.outputs.similar;
+    <screen>
+<![CDATA[
+2025-09-30T00:00:00+09:00
+2025-08-29T00:00:00+09:00
+2026-09-29T00:00:00+09:00
+]]>
+    </screen>
+   </example>
+   <note>
+    <para>
+     Добавление относительных интервалов времени часто надёжнее добавления или вычитания
+     секунд в дне или месяце, поскольку учитывают переходы на летнее время.
+    </para>
+   </note>
+  </para>
+  <para>
+   <example>
+    <title>Пример получения последнего дня месяца</title>
     <para>
      Последний день любого месяца получится выразить «нулевым» днём
      следующего месяца, но не -1 днём. Оба следующих примера
-     создадут строку «Последний день февраля 2000 г.: 29».
+     создадут строку "Последний день февраля 2000 г.: 29".
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $lastday = mktime(0, 0, 0, 3, 0, 2000);
-echo 'Последний день февраля в 2000 году: ', date('d', $lastday);
+echo 'Последний день февраля в 2000 году: ', date('d', $lastday) . "\n";
 
 $lastday = mktime(0, 0, 0, 4, -31, 2000);
-echo 'Последний день февраля в 2000 году: ', date('d', $lastday);
-
-?>
+echo 'Последний день февраля в 2000 году: ', date('d', $lastday) . "\n";
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Last day in Feb 2000 is: 29
+Last day in Feb 2000 is: 29
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>

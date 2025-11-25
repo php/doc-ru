@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 57e27d2a7615da2ee6de57ed27eb40b473d487cb Maintainer: shein Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.gmmktime" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>gmmktime</refname>
-  <refpurpose>Возвращает локальную метку времени Unix для времени по Гринвичу</refpurpose>
+  <refpurpose>Получает метку Unix-времени для времени UTC</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -19,19 +19,20 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>year</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция идентична функции <function>mktime</function>, за исключением того, что
-   аргументы являются временем по Гринвичу (GMT). <function>gmmktime</function> внутри
-   использует <function>mktime</function>, поэтому могут быть использованы только те даты
-   местного времени, которые корректно представляются в этом часовом поясе.
+   Функция работает аналогично функции <function>mktime</function>,
+   но игнорирует смещение времени в текущем часовом поясе и интерпретирует аргументы как UTC-время.
+   Функция <function>gmmktime</function> внутренне опирается на функцию <function>mktime</function>,
+   которая возвращает правильный результат только для допустимых для местного часового пояса моментов времени.
   </para>
   <para>
-   Подобно функции <function>mktime</function>, необязательные аргументы могут быть
-   опущены в порядке справа налево, при этом все опущенные аргументы
-   предполагаются равными соответствующим компонентам текущего времени по Гринвичу.
+   Аналогично функции <function>mktime</function> необязательные аргументы
+   опускают в порядке справа налево, при этом параметрам без аргументов
+   функция установит значения, которые соответствуют компонентам текущего времени UTC.
   </para>
   <simpara>
    Вызов функции <function>gmmktime</function> без аргументов не поддерживается
-   и приведёт к ошибке <classname>ArgumentCountError</classname>.
+   и выбросит ошибку <classname>ArgumentCountError</classname>.
+   Метку времени без передачи аргументов получают функцией <function>time</function>.
   </simpara>
  </refsect1>
 
@@ -43,11 +44,11 @@
      <term><parameter>hour</parameter></term>
      <listitem>
       <para>
-       Количество часов, прошедших с начала дня, указанного параметрами
-       <parameter>month</parameter>, <parameter>day</parameter> и
-       <parameter>year</parameter>.
-       Отрицательные значения определяют часы до полуночи указанного дня.
-       Значения, большие 23 определяют соответствующий час следующего дня (или дней).
+       Номер часа с начала дня, который определили параметрами
+       <parameter>month</parameter>, <parameter>day</parameter>
+       и <parameter>year</parameter>.
+       Отрицательные значения соответствуют часам предыдущих дней,
+       а значения больше 23 — следующих.
       </para>
      </listitem>
     </varlistentry>
@@ -55,10 +56,10 @@
      <term><parameter>minute</parameter></term>
      <listitem>
       <para>
-       Количество минут, прошедших от начала часа, указанного параметром
+       Номер минуты с начала часа, который определили в параметре
        <parameter>hour</parameter>.
-       Отрицательные значения определяют минуты предыдущего часа.
-       Значения, большие 59 определяют соответствующие минуты следующего часа (или часов).
+       Отрицательные значения соответствуют минутам предыдущих часов,
+       а значения больше 59 — следующих.
       </para>
      </listitem>
     </varlistentry>
@@ -66,10 +67,10 @@
      <term><parameter>second</parameter></term>
      <listitem>
       <para>
-       Количество секунд, прошедших от начала минуты, указанной параметром
-       <parameter>minute</parameter>. Отрицательные значения определяют секунды из
-       предыдущей минуты. Значения, большие 59 определяют соответствующие секунды
-       следующей минуты (или минут).
+       Номер секунды с начала минуты, которую определили в параметре
+       <parameter>minute</parameter>.
+       Отрицательные значения соответствуют секундам предыдущих минут,
+       а значения больше 59 — следующих.
       </para>
      </listitem>
     </varlistentry>
@@ -77,12 +78,11 @@
      <term><parameter>month</parameter></term>
      <listitem>
       <para>
-       Количество месяцев, прошедших с конца предыдущего года.
-       Значения от 1 до 12 определяют нормальные обычные календарные месяцы года.
-       Значения, меньшие 1 (включая отрицательные значения) определяют месяца предыдущего
-       года в обратном порядке, то есть 0 будет декабрём, -1 - ноябрём и т.д.
-       Значения больше 12 определяют соответствующий месяц в следующем
-       году (или годах).
+       Номер месяца в году.
+       Значения от 1 до 12 соответствуют месяцам заданного года.
+       Значения меньше 1, включая отрицательные, соответствуют месяцам предыдущих лет в обратном порядке,
+       поэтому 0 станет декабрём, -1 — ноябрём и т. д.
+       Значения больше 12 соответствуют месяцам следующих лет.
       </para>
      </listitem>
     </varlistentry>
@@ -90,13 +90,12 @@
      <term><parameter>day</parameter></term>
      <listitem>
       <para>
-       Количество дней, прошедших с конца предыдущего месяца. Значения от 1 до 28, 29, 30
-       или 31 (в зависимости от месяца) определяют нормальные дни соответствующего месяца.
-       Значения, меньшие 1 (включая отрицательные значения) определяют дни предыдущего
-       месяца, таким образом, 0 является последним днём предыдущего месяца, -1 -
-       предпоследним днём предыдущего месяца и т.д. Значения, большие количества дней
-       соответствующего месяца определяют соответствующий день следующего месяца
-       (или месяцев).
+       Номер дня в месяце. Значения от 1 до 28, 29, 30
+       или 31 — в зависимости от месяца — соответствуют дням заданного месяца.
+       Значения меньше 1, включая отрицательные, соответствуют дням предыдущих
+       месяцев, поэтому 0 становится последним днём предыдущего месяца, -1 —
+       предпоследним днём предыдущего месяца и т. д. Значения, которые превышают количество
+       дней в заданном месяце, соответствуют дням следующих месяцев.
       </para>
      </listitem>
     </varlistentry>
@@ -104,7 +103,7 @@
      <term><parameter>year</parameter></term>
      <listitem>
       <para>
-       Год
+       Год.
       </para>
      </listitem>
     </varlistentry>
@@ -115,8 +114,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает временную метку Unix (<type>int</type>) в случае успешного выполнения или &false;,
-   если временная метка не может быть представлена в виде целого числа PHP.
+   Функция возвращает значение <type>int</type> — метку времени Unix, если выполнилась успешно,
+   значение &false;, если метка выходит за пределы целочисленного значения PHP.
   </para>
  </refsect1>
 
@@ -135,15 +134,15 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        <parameter>hour</parameter> больше не является необязательным.
-        Если вам нужна временная метка Unix, используйте функцию <function>time</function>.
+        Параметр <parameter>hour</parameter> стал обязательным.
+        Метку времени Unix без передачи аргументов возвращает функция <function>time</function>.
        </entry>
       </row>
       <row>
        <entry>8.0.0</entry>
        <entry>
-        <parameter>minute</parameter>, <parameter>second</parameter>, <parameter>month</parameter>,
-        <parameter>day</parameter> и <parameter>year</parameter> теперь допускают значение null.
+        Параметры <parameter>minute</parameter>, <parameter>second</parameter>, <parameter>month</parameter>,
+        <parameter>day</parameter> и <parameter>year</parameter> теперь принимают значение &null;.
        </entry>
       </row>
      </tbody>
@@ -156,15 +155,22 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Базовый пример использования <function>gmmktime</function></title>
+    <title>Базовый пример получения метки UTC-времени функцией <function>gmmktime</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// Выводит: July 1, 2000 is on a Saturday
+
+date_default_timezone_set("Indian/Maldives");
+
 echo "July 1, 2000 is on a " . date("l", gmmktime(0, 0, 0, 7, 1, 2000));
-?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+July 1, 2000 is on a Saturday
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
@@ -173,7 +179,7 @@ echo "July 1, 2000 is on a " . date("l", gmmktime(0, 0, 0, 7, 1, 2000));
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member>The <classname>DateTimeImmutable</classname> class</member>
+    <member>Класс <classname>DateTimeImmutable</classname></member>
     <member><function>mktime</function></member>
     <member><function>date</function></member>
     <member><function>time</function></member>

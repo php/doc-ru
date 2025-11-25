@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 50dcf55ce543220dd8375df2fdb4f7db702b9c9f Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 3a8c3e77df070a046c9d5b56b68926ca2d7e5ee3 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.date-parse" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -15,20 +15,23 @@
    <methodparam><type>string</type><parameter>datetime</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>date_parse</function> разбирает указанную
-   в параметре <parameter>datetime</parameter> строку по тем же правилам,
-   что и функции <function>strtotime</function> и <function>DateTimeImmutable::__construct</function>.
-   Вместо того чтобы возвращать временную метку Unix (при использовании функции <function>strtotime</function>) или объект <classname>DateTimeImmutable</classname> (при использовании функции <function>DateTimeImmutable::__construct</function>),
-   она возвращает ассоциативный массив с информацией,
-   которую функция смогла обнаружить в данной строке параметра <parameter>datetime</parameter>.
+   Функция <function>date_parse</function> разбирает строку
+   параметра <parameter>datetime</parameter> аналогично
+   функции <function>strtotime</function> или методу <function>DateTimeImmutable::__construct</function>,
+   но вместо возврата метки Unix-времени, как это делает функция <function>strtotime</function>, или объекта
+   <classname>DateTimeImmutable</classname>, который создаёт метод <function>DateTimeImmutable::__construct</function>),
+   функция возвращает ассоциативный массив с информацией,
+   которую функция обнаружила в строке параметра <parameter>datetime</parameter>.
   </para>
   <para>
-   Если информация об определённой группе элементов не найдена,
-   эти элементы массива будут установлены в значение &false; или будут отсутствовать.
-   Если это необходимо для построения временной метки или объекта <classname>DateTimeImmutable</classname>
-   из одной и той же строки параметра <parameter>datetime</parameter>,
-   большее количество полей может быть установлено в значение не &false;.
-   Смотрите примеры, в которых это происходит.
+   Функция установит элементам массива значение &false; или пропустит элемент,
+   если не найдёт информацию о конкретных компонентах даты и времени.
+   Поэтому в PHP предусмотрели другие функции для работы с датой и временем,
+   которые при том же значении параметра <parameter>datetime</parameter>
+   умеют создавать метку времени или объект <classname>DateTimeImmutable</classname>,
+   в котором заполняют значения для большего количества компонентов времени,
+   тогда как эта функция для аналогичных компонентов устанавливает значение &false;.
+   Примеры на этой странице показывают обработку строк, из которых невозможно извлечь отдельные компоненты времени.
   </para>
  </refsect1>
 
@@ -40,7 +43,7 @@
      <term><parameter>datetime</parameter></term>
      <listitem>
       <para>
-       Дата/время в формате, распознаваемом функцией <function>DateTimeImmutable::__construct</function>.
+       Строка с датой и временем в формате, который распознаёт метод <function>DateTimeImmutable::__construct</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -51,47 +54,48 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив (<type>array</type>), содержащий информацию о дате/времени.
+   Функция возвращает массив (<type>array</type>) с информацией о дате и времени.
   </para>
   <para>
-   Возвращаемый массив содержит ключи <literal>year</literal>,
+   Результирующий массив содержит следующие ключи: <literal>year</literal>,
    <literal>month</literal>, <literal>day</literal>, <literal>hour</literal>,
    <literal>minute</literal>, <literal>second</literal>,
    <literal>fraction</literal> и <literal>is_localtime</literal>.
   </para>
   <para>
-   Если присутствует <literal>is_localtime</literal>, то <literal>zone_type</literal> указывает тип часового пояса.
-   Для типа <literal>1</literal> (смещение UTC) указывается <literal>zone</literal>, добавляется поле <literal>is_dst</literal>;
-   для типа <literal>2</literal> (аббревиатура) добавляются поля <literal>tz_abbr</literal> и <literal>is_dst</literal>;
-   для типа <literal>3</literal> (идентификатор часового пояса) добавляются поля <literal>tz_abbr</literal> и <literal>tz_id</literal>.
+   Элемент <literal>zone_type</literal> укажет тип часового пояса, если массив с результатами содержит элемент <literal>is_localtime</literal>.
+   Для <literal>1</literal>-го типа представления часовых поясов — со смещением относительно UTC — добавляются поля <literal>zone</literal> и <literal>is_dst</literal>;
+   для <literal>2</literal>-го типа представления — аббревиатура — добавляются поля <literal>tz_abbr</literal> и <literal>is_dst</literal>;
+   для <literal>3</literal>-го тип — идентификатор часового пояса — добавляются поля <literal>tz_abbr</literal> и <literal>tz_id</literal>.
   </para>
   <para>
-   Если в параметре <parameter>datetime</parameter> присутствуют элементы относительного времени,
-   например, <literal>+3 days</literal>, то возвращаемый массив включает вложенный массив с ключом <literal>relative</literal>.
-   Этот массив затем содержит ключи
+   Функция включит в массив с результатами массив <literal>relative</literal>,
+   если строка <parameter>datetime</parameter> содержит элементы относительного времени
+   наподобие <literal>+3 days</literal>.
+   Массив с результатами разбора элементов времени в относительном формате содержит следующие ключи:
    <literal>year</literal>, <literal>month</literal>, <literal>day</literal>,
    <literal>hour</literal>, <literal>minute</literal>,
-   <literal>second</literal>, и, если необходимо, <literal>weekday</literal> и
-   <literal>weekdays</literal>, в зависимости от переданной строки.
+   <literal>second</literal> и, если строка содержит названия дней недели или относительные количества рабочих дней,
+   <literal>weekday</literal> и <literal>weekdays</literal>.
   </para>
   <para>
    Массив включает поля <literal>warning_count</literal> и <literal>warnings</literal>.
-   Первое из них указывает, сколько было предупреждений.
-   Ключи элементов массива <literal>warnings</literal> указывают на позицию в данном параметре <parameter>datetime</parameter>,
-   где произошло предупреждение, а строковое значение описывает само предупреждение.
+   Первое указывает количество предупреждений.
+   Ключи элементов массива <literal>warnings</literal> указывают позицию в аргументе <parameter>datetime</parameter>,
+   на которой возникло предупреждение, а строковое значение содержит описание предупреждения.
   </para>
   <para>
    Массив также содержит поля <literal>error_count</literal> и <literal>errors</literal>.
-   Первое из них указывает, сколько ошибок было найдено.
-   Ключи элементов массива <literal>errors</literal> указывают на позицию в данном параметре <parameter>datetime</parameter>,
-   где произошла ошибка, а строковое значение описывает саму ошибку.
+   Первое указывает количество ошибок.
+   Ключи элементов массива <literal>errors</literal> указывают позицию в аргументе <parameter>datetime</parameter>,
+   на которой возникла ошибка, а строковое значение содержит описание ошибки.
   </para>
   <warning>
    <para>
-    Количество элементов массивов <literal>warnings</literal> и
-    <literal>errors</literal> может быть меньше, чем
-    <literal>warning_count</literal> или <literal>error_count</literal>,
-    если они возникли в одной и той же позиции.
+    Функция запишет в массивы <literal>warnings</literal>
+    и <literal>errors</literal> меньшее количество элементов,
+    чем указывают значения элементов <literal>warning_count</literal> и <literal>error_count</literal>,
+    если предупреждения или ошибки возникнут на тех же позициях.
    </para>
   </warning>
  </refsect1>
@@ -99,8 +103,8 @@
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   В случае возникновения ошибок форматирования даты/времени, элемент массива 'errors' будет
-   содержать сообщения об этих ошибках.
+   При недопустимом формате даты и времени во входной строке
+   функция заполнит массив 'errors' элементами с сообщениями об ошибках.
   </para>
  </refsect1>
 
@@ -118,10 +122,9 @@
      <row>
       <entry>7.2.0</entry>
       <entry>
-       Элемент возвращаемого массива с ключом <literal>zone</literal>
-       теперь содержит секунды, а не минуты. Кроме того, знак
-       инвертирован. Т.е. раньше был
-       <literal>-120</literal>, а теперь <literal>7200</literal>.
+       Элемент <literal>zone</literal> в массиве результатов теперь содержит
+       секунды вместо минут, а знак инвертируется, например:
+       значение <literal>-120</literal> теперь выводится как <literal>7200</literal>.
       </entry>
      </row>
     </tbody>
@@ -133,12 +136,12 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>date_parse</function> с полной строкой <parameter>datetime</parameter></title>
+    <title>Пример разбора полной строки даты и времени <parameter>datetime</parameter>а функцией <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(date_parse("2006-12-12 10:00:00.5"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -178,16 +181,16 @@ array(12) {
   </para>
 
   <para>
-   Элементы часовых поясов появляются только в том случае,
-   если они включены в заданную строку параметра <parameter>datetime</parameter>.
-   В этом случае всегда будет присутствовать элемент <literal>zone_type</literal> и ещё несколько в зависимости от его значения.
+   Функция включает элементы часового пояса в результаты,
+   только если строка параметра <parameter>datetime</parameter> содержит информацию о часовом поясе.
+   Для часовых поясов функция включает элемент <literal>zone_type</literal> и ряд других элементов в зависимости от значения типа представления часового пояса.
    <example>
-    <title>Пример использования <function>date_parse</function> с информацией об аббревиатуре часового пояса</title>
+    <title>Пример разбора строки с аббревиатурой часового пояса функцией <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(date_parse("June 2nd, 2022, 10:28:17 BST"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -233,12 +236,12 @@ array(16) {
     </screen>
    </example>
    <example>
-    <title>Пример использования <function>date_parse</function> с информацией об идентификаторе часового пояса</title>
+    <title>Пример разбора строки с идентификатором часового пояса функцией <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(date_parse("June 2nd, 2022, 10:28:17 Europe/London"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -282,15 +285,15 @@ array(14) {
   </para>
 
   <para>
-   Если разбирается более минимальная строка параметра <parameter>datetime</parameter>,
-   то информации будет меньше. В этом примере все части времени возвращаются как &false;.
+   При разборе немногословной строки <parameter>datetime</parameter> функция возвращает меньше информации.
+   В следующем примере функция возвращает массив, в котором все компоненты времени содержат значение &false;.
    <example>
-    <title>Пример использования <function>date_parse</function> с минимальной строкой</title>
+    <title>Пример разбора строки с минимумом информации о дате функцией <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(date_parse("June 2nd, 2022"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -331,14 +334,13 @@ array(12) {
 
   <para>
    <link linkend="datetime.formats.relative">Относительные форматы</link> не влияют на значения,
-   разбираемые из абсолютных форматов, но разбираются в элемент "relative".
+   которые функция извлекла при разборе абсолютных форматов даты и времени, но результаты разбора относительных форматов включаются в элемент "relative".
    <example>
-    <title>Пример использования <function>date_parse</function> с относительными форматами</title>
+    <title>Пример разбора строки с относительными форматами даты и времени функцией <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 var_dump(date_parse("2006-12-12 10:00:00.5 +1 week +1 hour"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -393,17 +395,17 @@ array(13) {
   </para>
 
   <para>
-   Некоторые строки, такие как <literal>Thursday</literal>, установят временную часть строки в значение <literal>0</literal>.
-   Если <literal>Thursday</literal> передать в функцию <function>DateTimeImmutable::__construct</function>,
-   то это также приведёт к тому, что час, минута, секунда и дробь будут установлены в значение <literal>0</literal>.
-   В приведённом ниже примере элемент year, однако, оставлен как &false;.
+   При разборе названий дней недели наподобие <literal>Thursday</literal> функция установит для компонентов
+   hour, minute, second и fraction значение <literal>0</literal>. При передаче значения <literal>Thursday</literal>
+   в метод <function>DateTimeImmutable::__construct</function> для каждого компонента времени также устанавливается значение <literal>0</literal>.
+   В следующем примере для элемента year, однако, функция оставляет значение &false;.
    <example>
-    <title>Пример использования <function>date_parse</function> с побочными эффектами</title>
+    <title>Пример побочных эффектов в работе функции <function>date_parse</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 var_dump(date_parse("Thursday, June 2nd"));
-?>
 ]]>
     </programlisting>
     &example.outputs;
