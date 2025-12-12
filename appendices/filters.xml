@@ -1,55 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 3f1dbc451b313fb1ec8058f24c1beccf55fce316 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <appendix xml:id="filters" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Список доступных фильтров</title>
  <para>
-  Следующий список перечисляет несколько встроенных фильтров для использования
-  с <function>stream_filter_append</function>.
-  Ваша версия PHP может включать больше (или меньше) фильтров, чем перечислено
-  здесь.
+  Раздел описывает ряд встроенных фильтров, которые функцией <function>stream_filter_append</function>
+  добавляют в цепочку обработки потока данных.
+  На количество доступных фильтров влияют конкретная версия и сборка PHP.
  </para>
 
  <para>
-  Следует акцентировать внимание на определённой асимметричности функций
-  <function>stream_filter_append</function> и
-  <function>stream_filter_prepend</function>.
-  Каждый поток в PHP имеет небольшой <emphasis>буфер чтения</emphasis>,
-  в котором он хранит блоки данных, полученные из файловой системы или
-  другого ресурса, для того чтобы обрабатывать данные наиболее эффективным
-  образом. Как только данные переносятся из ресурса во внутренний буфер
-  потока, они сразу же обрабатываются закреплёнными за потоком фильтрами,
-  независимо от того, готово ли приложение PHP принимать данные или нет.
-  Если данные находятся в буфере чтения в момент, когда в фильтр
-  что-то <emphasis>дописывают в конец</emphasis>, данные будут немедленно
-  обработаны этим фильтром, таким образом их нахождение в буфере
-  будет прозрачным. В то же время, если данные находятся в буфере в
-  момент, когда в фильтр что-то <emphasis>дописывают в начало</emphasis>,
-  данные <emphasis>НЕ</emphasis> будут обработаны этим фильтром.
-  Вместо этого, они будут ждать момента, когда следующий блок данных будет
-  получен из ресурса.
+  Функции <function>stream_filter_append</function>
+  и <function>stream_filter_prepend</function> работают асимметрично.
+  Каждый поток данных в PHP содержит <emphasis>буфер чтения</emphasis>.
+  В буфере хранятся блоки данных, которые поток получил из файловой системы
+  или другого источника. Буферизация оптимизирует операции ввода и вывода
+  при обработке данных. Сразу после извлечения из ресурса данные обрабатываются фильтрами,
+  которые добавили в цепочку обработки потока данных,
+  и записываются во внутренний буфер потока, независимо от готовности PHP-приложения принимать данные.
+  Данные в буфере чтения немедленно обрабатываются новым фильтром при добавлении фильтра
+  <emphasis>в конец цепочки</emphasis>, хотя данные и содержались в буфере на момент добавления фильтра.
+  При этом данные буфера чтения <emphasis>НЕ</emphasis> обрабатываются фильтром,
+  который добавляют <emphasis>в начало цепочки</emphasis>.
+  Такой фильтр ожидает считывания из источника нового блока данных.
  </para>
 
  <para>
-  Для получения списка фильтров, установленных в вашу версию PHP,
-  используйте функцию <function>stream_get_filters</function>.
+  Список установленных в конкретной версии PHP фильтров
+  возвращает функция <function>stream_get_filters</function>.
  </para>
 
  <section xml:id="filters.string">
   <title>Строковые фильтры</title>
 
   <simpara>
-   Все эти фильтры служат для того самого, что подразумевают их
-   имена в соответствии с поведением встроенных в PHP функций для
-   работы со строками.
-   Для получения дополнительной информации о конкретном фильтре,
-   обратитесь к странице руководства соответствующей функции.
+   Каждый фильтр выполняет подразумеваемую
+   названием работу, которая соответствует поведению встроенных в PHP функций
+   для работы со строками.
+   Страницы руководства с описанием функций дают дополнительную информацию
+   о конкретном фильтре.
   </simpara>
 
   <section xml:id="filters.string.rot13">
    <title>string.rot13</title>
    <simpara>
-    Использование этого фильтра эквивалентно обработке всех данных потока
+    Работа фильтра эквивалентна обработке всех данных потока
     функцией <function>str_rot13</function>.
    </simpara>
    <example>
@@ -57,11 +52,11 @@
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'string.rot13');
 fwrite($fp, "This is a test.\n");
 /* Выведет:  Guvf vf n grfg.   */
-?>
 ]]>
     </programlisting>
    </example>
@@ -70,7 +65,7 @@ fwrite($fp, "This is a test.\n");
   <section xml:id="filters.string.toupper">
    <title>string.toupper</title>
    <simpara>
-    Использование этого фильтра эквивалентно обработке всех данных потока
+    Работа фильтра эквивалентна обработке всех данных потока
     функцией <function>strtoupper</function>.
    </simpara>
    <example>
@@ -78,11 +73,11 @@ fwrite($fp, "This is a test.\n");
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'string.toupper');
 fwrite($fp, "This is a test.\n");
 /* Выведет:  THIS IS A TEST.   */
-?>
 ]]>
     </programlisting>
    </example>
@@ -91,7 +86,7 @@ fwrite($fp, "This is a test.\n");
   <section xml:id="filters.string.tolower">
    <title>string.tolower</title>
    <simpara>
-    Использование этого фильтра эквивалентно обработке всех данных потока
+    Работа фильтра эквивалентна обработке всех данных потока
     функцией <function>strtolower</function>.
    </simpara>
    <example>
@@ -103,7 +98,6 @@ $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'string.tolower');
 fwrite($fp, "This is a test.\n");
 /* Выведет:  this is a test.   */
-?>
 ]]>
     </programlisting>
    </example>
@@ -112,20 +106,19 @@ fwrite($fp, "This is a test.\n");
   <section xml:id="filters.string.strip_tags">
    <title>string.strip_tags</title>
    <simpara>
-    Использование этого фильтра эквивалентно обработке всех данных потока
+    Работа фильтра эквивалентна обработке всех данных потока
     функцией <function>strip_tags</function>.
-    Он принимает аргументы в одной из двух форм:
-    Либо в виде строки со списком тегов, как и второй аргумент функции
+    Фильтр принимает аргументы в одной из двух форм:
+    либо в виде строки со списком тегов, как и второй аргумент функции
     <function>strip_tags</function>, либо массив названий тегов.
    </simpara>
-   <para>
-    &warn.deprecated.feature-7-3-0;
-   </para>
+   &warn.deprecated.feature-7-3-0;
    <example>
     <title>string.strip_tags</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'string.strip_tags', STREAM_FILTER_WRITE, "<b><i><u>");
 fwrite($fp, "<b>bolded text</b> enlarged to a <h1>level 1 heading</h1>\n");
@@ -133,11 +126,10 @@ fclose($fp);
 /* Выведет:  bolded text enlarged to a level 1 heading   */
 
 $fp = fopen('php://output', 'w');
-stream_filter_append($fp, 'string.strip_tags', STREAM_FILTER_WRITE, array('b','i','u'));
+stream_filter_append($fp, 'string.strip_tags', STREAM_FILTER_WRITE, array('b', 'i', 'u'));
 fwrite($fp, "<b>bolded text</b> enlarged to a <h1>level 1 heading</h1>\n");
 fclose($fp);
 /* Выведет:  bolded text enlarged to a level 1 heading   */
-?>
 ]]>
     </programlisting>
    </example>
@@ -145,7 +137,7 @@ fclose($fp);
  </section>
 
  <section xml:id="filters.convert">
-  <title>Преобразовывающие фильтры</title>
+  <title>Преобразующие фильтры</title>
 
   <simpara>
    Как и фильтры string.*, фильтры convert.* совершают действия,
@@ -157,26 +149,26 @@ fclose($fp);
   <section xml:id="filters.convert.base64">
    <title>convert.base64-encode и convert.base64-decode</title>
    <simpara>
-    Использование этих фильтров эквивалентно обработке всех данных потока
-    функциями <function>base64_encode</function> и
-    <function>base64_decode</function> соответственно.
-    <literal>convert.base64-encode</literal> поддерживает аргументы, переданные
-    в виде ассоциативного массива. Если указан аргумент
-    <parameter>line-length</parameter>, результат base64 будет разделён на
-    куски длинной <parameter>line-length</parameter> символов каждый.
-    Если указан аргумент <parameter>line-break-chars</parameter>,
-    каждый кусок будет разделён указанными символами. Эти параметры дают
-    такой же эффект, как и использование <function>base64_encode</function>
-    в паре с <function>chunk_split</function>.
+    Работа фильтров эквивалентна обработке всех данных потока
+    функциями <function>base64_encode</function>
+    и <function>base64_decode</function> соответственно.
+    Фильтр <literal>convert.base64-encode</literal> поддерживает аргументы,
+    которые передали как ассоциативный массив. С аргументом
+    <parameter>line-length</parameter> результат base64 разделится
+    на куски длинной <parameter>line-length</parameter> символов каждый.
+    С аргументом <parameter>line-break-chars</parameter>
+    каждый кусок разделяется заданными символами. Эффект этих параметров
+    аналогичен работе функции <function>base64_encode</function>
+    в паре с функцией <function>chunk_split</function>.
    </simpara>
    <example>
     <title>
-     convert.base64-encode и
-     convert.base64-decode
+     Пример работы фильтров convert.base64-encode и convert.base64-decode
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'convert.base64-encode');
 fwrite($fp, "This is a test.\n");
@@ -197,7 +189,6 @@ stream_filter_append($fp, 'convert.base64-decode');
 fwrite($fp, "VGhpcyBpcyBhIHRlc3QuCg==");
 fclose($fp);
 /* Выведет:  This is a test.  */
-?>
 ]]>
     </programlisting>
    </example>
@@ -206,33 +197,33 @@ fclose($fp);
   <section xml:id="filters.covert.quoted-printable">
    <title>convert.quoted-printable-encode и convert.quoted-printable-decode</title>
    <simpara>
-    Использование decode-версии этого фильтра эквивалентно обработке всех
+    Работа decode-версии этого фильтра эквивалентна обработке всех
     данных потока функцией <function>quoted_printable_decode</function>.
     У фильтра <literal>convert.quoted-printable-encode</literal> нет
     эквивалентной функции.
-    <literal>convert.quoted-printable-encode</literal> поддерживает аргументы,
-    переданные в виде ассоциативного массива. В дополнение к аргументам,
-    поддерживаемыми <literal>convert.base64-encode</literal>,
-    <literal>convert.quoted-printable-encode</literal> также поддерживает
-    boolean-аргументы <parameter>binary</parameter> и
-    <parameter>force-encode-first</parameter>.
-    <literal>convert.base64-decode</literal> поддерживает лишь аргумент
-    <parameter>line-break-chars</parameter> в качестве подсказки для
-    чистки закодированных данных.
+    Фильтр <literal>convert.quoted-printable-encode</literal> поддерживает аргументы,
+    которые передали как ассоциативный массив. В дополнение к аргументам,
+    которые поддерживает фильтр <literal>convert.base64-encode</literal>,
+    фильтр <literal>convert.quoted-printable-encode</literal> также поддерживает
+    boolean-аргументы <parameter>binary</parameter>
+    и <parameter>force-encode-first</parameter>.
+    Фильтр <literal>convert.base64-decode</literal> поддерживает только аргумент
+    <parameter>line-break-chars</parameter> как подсказку
+    для чистки закодированных данных.
    </simpara>
    <example>
     <title>
-     convert.quoted-printable-encode &amp;
+     Пример работы фильтров convert.quoted-printable-encode &amp;
      convert.quoted-printable-decode
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'convert.quoted-printable-encode');
 fwrite($fp, "This is a test.\n");
 /* Выведет:  =This is a test.=0A  */
-?>
 ]]>
     </programlisting>
    </example>
@@ -246,8 +237,8 @@ fwrite($fp, "This is a test.\n");
     аналогично обработке потоковых данных с помощью <function>iconv</function>.
     Эти фильтры не поддерживают параметров. Вместо этого ожидается, что
     исходная и целевая кодировки были заданы в имени фильтра таким образом:
-    <literal>convert.iconv.&lt;input-encoding&gt;.&lt;output-encoding&gt;</literal> или
-    <literal>convert.iconv.&lt;input-encoding&gt;/&lt;output-encoding&gt;</literal>
+    <literal>convert.iconv.&lt;input-encoding&gt;.&lt;output-encoding&gt;</literal>
+    или <literal>convert.iconv.&lt;input-encoding&gt;/&lt;output-encoding&gt;</literal>
     (оба варианта семантически эквивалентны).
    </simpara>
 
@@ -256,12 +247,12 @@ fwrite($fp, "This is a test.\n");
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $fp = fopen('php://output', 'w');
 stream_filter_append($fp, 'convert.iconv.utf-16le.utf-8');
 fwrite($fp, "T\0h\0i\0s\0 \0i\0s\0 \0a\0 \0t\0e\0s\0t\0.\0\n\0");
 fclose($fp);
 /* Выведет: This is a test. */
-?>
 ]]>
     </programlisting>
    </example>
@@ -269,37 +260,36 @@ fclose($fp);
  </section>
 
  <section xml:id="filters.compression">
-  <title>Компрессионные фильтры</title>
+  <title>Фильтры сжатия</title>
 
   <simpara>
-   В то время, как <link linkend="wrappers.compression">Компрессионные
-   обёртки</link> обеспечивают способ создания gzip- и bz2-совместимых
-   файлов в локальной файловой системе, они не предоставляют общих средств
+   Хотя <link linkend="wrappers.compression">обёртки сжатия</link>
+   и создают gzip- и bz2-совместимые
+   файлы в локальной файловой системе, они не предоставляют общих средств
    для компрессии в сетевых потоках, как и не предоставляют средств
-   для создания потока без компрессии с последующим превращением в
-   компрессируемый. Для этих целей к любым потоковым ресурсам в любое время
-   могут применяться компрессионные фильтры.
+   для создания потока без компрессии с последующим превращением
+   в компрессируемый. Для этих целей к любым потоковым ресурсам в любое время
+   применяют фильтры сжатия.
   </simpara>
 
   <note>
    <simpara>
-    Компрессионные фильтры <emphasis>не</emphasis> генерируют заголовков и
-    окончаний, которые используют утилиты командной строки, такие как
-    <literal>gzip</literal>. Они просто компрессируют (сжимают) и
-    декомпрессируют (разжимают) порции данных в компрессируемом потоке
-    данных.
+    Фильтры сжатия <emphasis>не</emphasis> генерируют заголовочных
+    и хвостовых блоков архива, которые создают утилиты командной строки наподобие
+    <literal>gzip</literal>. Фильтры сжатия только сжимают
+    и распаковывают порции данных в компрессируемом потоке данных.
    </simpara>
   </note>
 
   <section xml:id="filters.compression.zlib">
    <title>zlib.deflate и zlib.inflate</title>
    <simpara>
-    <literal>zlib.deflate</literal> (компрессия) и
-    <literal>zlib.inflate</literal> (декомпрессия) являются реализациями
+    <literal>zlib.deflate</literal> (компрессия)
+    и <literal>zlib.inflate</literal> (декомпрессия) являются реализациями
     методов сжатия, описанных в
     <link xlink:href="&url.rfc;1951">RFC 1951</link>.
-    Фильтр <literal>deflate</literal> принимает три аргумента, переданных в
-    виде ассоциативного массива.
+    Фильтр <literal>deflate</literal> принимает три аргумента, переданных
+    в виде ассоциативного массива.
 
     <parameter>level</parameter> определяет, какой уровень компрессии
     использовать (1-9). Повышение этого значения приведёт к уменьшению
@@ -334,12 +324,13 @@ fclose($fp);
    </simpara>
    <example>
     <title>
-     <literal>zlib.deflate</literal> и
-     <literal>zlib.inflate</literal>
+     <literal>zlib.deflate</literal>
+     и <literal>zlib.inflate</literal>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $params = array('level' => 6, 'window' => 15, 'memory' => 9);
 
 $original_text = "This is a test.\nThis is only a test.\nThis is not an important string.\n";
@@ -365,23 +356,23 @@ This is only a test.
 This is not an important string.
 
  */
-?>
 ]]>
     </programlisting>
    </example>
 
    <example>
     <title>
-     Упрощённое использование <literal>zlib.deflate</literal>
+     Упрощённая работа фильтра <literal>zlib.deflate</literal>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $original_text = "This is a test.\nThis is only a test.\nThis is not an important string.\n";
 echo "Оригинальный текст длиной " . strlen($original_text) . " символов.\n";
 
 $fp = fopen('test.deflated', 'w');
-/* Здесь "6" указывает уровень компрессии 6 */
+/* Здесь аргумент 6 указывает уровень компрессии 6 */
 stream_filter_append($fp, 'zlib.deflate', STREAM_FILTER_WRITE, 6);
 fwrite($fp, $original_text);
 fclose($fp);
@@ -394,7 +385,6 @@ echo "Сжатый файл размером " . filesize('test.deflated') . " �
 Сжатый файл размером 56 байт.
 
  */
-?>
 ]]>
     </programlisting>
    </example>
@@ -403,15 +393,15 @@ echo "Сжатый файл размером " . filesize('test.deflated') . " �
   <section xml:id="filters.compression.bzip2">
    <title>bzip2.compress и bzip2.decompress</title>
    <simpara>
-    <literal>bzip2.compress</literal> и
-    <literal>bzip2.decompress</literal>
-    работают точно так же, как и фильтры zlib, описанные выше.
+    Фильтры <literal>bzip2.compress</literal>
+    и <literal>bzip2.decompress</literal>
+    работают аналогично zlib-фильтрам, которые уже описывались.
 
     Фильтр <literal>bzip2.compress</literal> принимает два аргумента в виде
     элементов ассоциативного массива:
 
     <parameter>blocks</parameter> является целочисленным (integer) значением
-    в диапазоне от 1 до 9 и указывает на количество 100-килобайтовых блоков
+    в диапазоне от 1 до 9 и указывает на количество 100-килобайтных блоков
     памяти для резервирования в качестве рабочего пространства.
 
     <parameter>work</parameter> - это так же целочисленное (integer) значение
@@ -438,12 +428,13 @@ echo "Сжатый файл размером " . filesize('test.deflated') . " �
 
    <example>
     <title>
-     <literal>bzip2.compress</literal> и
-     <literal>bzip2.decompress</literal>
+     <literal>bzip2.compress</literal>
+     и <literal>bzip2.decompress</literal>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $param = array('blocks' => 9, 'work' => 0);
 
 echo "Оригинальный файл размером " . filesize('LICENSE') . " байт.\n";
@@ -461,7 +452,6 @@ echo "Сжатый файл размером " . filesize('LICENSE.compressed') 
 Сжатый файл размером 1488 байт.
 
  */
-?>
 ]]>
     </programlisting>
    </example>
@@ -477,16 +467,14 @@ echo "Сжатый файл размером " . filesize('LICENSE.compressed') 
 
   <section xml:id="filters.encryption.mcrypt">
    <title>mcrypt.* и mdecrypt.*</title>
-   <para>
-    &warn.deprecated.feature-7-1-0;
-   </para>
+   &warn.deprecated.feature-7-1-0;
    <simpara>
     <literal>mcrypt.*</literal> и <literal>mdecrypt.*</literal>
-    обеспечивают симметричное шифрование и дешифрование при помощи
-    libmcrypt. Оба набора фильтров поддерживают те же алгоритмы, что и
-    <link linkend="ref.mcrypt">модуль mcrypt</link> в виде
-    <literal>mcrypt.ciphername</literal>, где
-    <parameter>ciphername</parameter> - это название шифра, как если
+    обеспечивают симметричное шифрование и дешифровку через библиотеку
+    libmcrypt. Оба набора фильтров поддерживают те же алгоритмы,
+    что и <link linkend="ref.mcrypt">модуль mcrypt</link> в виде
+    фильтра <literal>mcrypt.ciphername</literal>,
+    где <parameter>ciphername</parameter> — название шифра, как если
     бы оно передавалось функции <function>mcrypt_module_open</function>.
     Также доступны следующие пять параметров:
    </simpara>
@@ -539,142 +527,186 @@ echo "Сжатый файл размером " . filesize('LICENSE.compressed') 
    </para>
 
    <example>
-    <title>Шифрование/расшифровка используя Blowfish</title>
+    <title>Шифрование алгоритмом Blowfish и расшифровка</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-// примем, что $key  уже сформирован
+
+// Примем, что ключ $key уже сформировали
 $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_CBC);
 $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM);
 $fp = fopen('encrypted-file.enc', 'wb');
 fwrite($fp, $iv);
-$opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key);
+$opts = array('mode' => 'cbc', 'iv' => $iv, 'key' => $key);
 stream_filter_append($fp, 'mcrypt.blowfish', STREAM_FILTER_WRITE, $opts);
 fwrite($fp, 'message to encrypt');
 fclose($fp);
 
-//расшифровка...
+// Расшифровка...
 $fp = fopen('encrypted-file.enc', 'rb');
 $iv = fread($fp, $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_CBC));
-$opts = array('mode'=>'cbc','iv'=>$iv, 'key'=>$key);
+$opts = array('mode' => 'cbc', 'iv' => $iv, 'key' => $key);
 stream_filter_append($fp, 'mdecrypt.blowfish', STREAM_FILTER_READ, $opts);
-$data = rtrim(stream_get_contents($fp));//trims off null padding
+$data = rtrim(stream_get_contents($fp)); //trims off null padding
 fclose($fp);
 echo $data;
-?>
 ]]>
     </programlisting>
    </example>
 
    <example>
-    <title>Шифрование файла с помощью AES-128 CBC с SHA256 HMAC</title>
+    <title>Шифрование файла алгоритмом SHA256 HMAC в режиме AES-128 CBC</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 AES_CBC::encryptFile($password, "plaintext.txt", "encrypted.enc");
 AES_CBC::decryptFile($password, "encrypted.enc", "decrypted.txt");
 
 class AES_CBC
 {
-   protected static $KEY_SIZES = array('AES-128'=>16,'AES-192'=>24,'AES-256'=>32);
-   protected static function key_size() { return self::$KEY_SIZES['AES-128']; } //default AES-128
-   public static function encryptFile($password, $input_stream, $aes_filename){
-      $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-      $fin = fopen($input_stream, "rb");
-      $fc = fopen($aes_filename, "wb+");
-      if (!empty($fin) && !empty($fc)) {
-         fwrite($fc, str_repeat("_", 32) );//placeholder, SHA256 HMAC will go here later
-         fwrite($fc, $hmac_salt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
-         fwrite($fc, $esalt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
-         fwrite($fc, $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
-         $ekey = hash_pbkdf2("sha256", $password, $esalt, $it=1000, self::key_size(), $raw=true);
-         $opts = array('mode'=>'cbc', 'iv'=>$iv, 'key'=>$ekey);
-         stream_filter_append($fc, 'mcrypt.rijndael-128', STREAM_FILTER_WRITE, $opts);
-         $infilesize = 0;
-         while (!feof($fin)) {
-            $block = fread($fin, 8192);
-            $infilesize+=strlen($block);
-            fwrite($fc, $block);
-         }
-         $block_size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-         $padding = $block_size - ($infilesize % $block_size);//$padding is a number from 1-16
-         fwrite($fc, str_repeat(chr($padding), $padding) );//perform PKCS7 padding
-         fclose($fin);
-         fclose($fc);
-         $hmac_raw = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
-         $fc = fopen($aes_filename, "rb+");
-         fwrite($fc, $hmac_raw);//overwrite placeholder
-         fclose($fc);
-      }
-   }
-   public static function decryptFile($password, $aes_filename, $out_stream) {
-      $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
-      $hmac_raw = file_get_contents($aes_filename, false, NULL,  0, 32);
-      $hmac_salt = file_get_contents($aes_filename, false, NULL, 32, $iv_size);
-      $hmac_calc = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
-      $fc = fopen($aes_filename, "rb");
-      $fout = fopen($out_stream, 'wb');
-      if (!empty($fout) && !empty($fc) && self::hash_equals($hmac_raw,$hmac_calc)) {
-         fread($fc, 32+$iv_size);//skip sha256 hmac and salt
-         $esalt = fread($fc, $iv_size);
-         $iv    = fread($fc, $iv_size);
-         $ekey = hash_pbkdf2("sha256", $password, $esalt, $it=1000, self::key_size(), $raw=true);
-         $opts = array('mode'=>'cbc', 'iv'=>$iv, 'key'=>$ekey);
-         stream_filter_append($fc, 'mdecrypt.rijndael-128', STREAM_FILTER_READ, $opts);
-         while (!feof($fc)) {
-            $block = fread($fc, 8192);
-            if (feof($fc)) {
-               $padding = ord($block[strlen($block) - 1]);//assume PKCS7 padding
-               $block = substr($block, 0, 0-$padding);
+    protected static $KEY_SIZES = array('AES-128' => 16, 'AES-192' => 24, 'AES-256' => 32);
+
+    protected static function key_size()
+    {
+        return self::$KEY_SIZES['AES-128'];
+    } // default AES-128
+
+    public static function encryptFile($password, $input_stream, $aes_filename)
+    {
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+        $fin = fopen($input_stream, "rb");
+        $fc = fopen($aes_filename, "wb+");
+
+        if (!empty($fin) && !empty($fc)) {
+            fwrite($fc, str_repeat("_", 32)); //placeholder, SHA256 HMAC will go here later
+            fwrite($fc, $hmac_salt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            fwrite($fc, $esalt = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            fwrite($fc, $iv = mcrypt_create_iv($iv_size, MCRYPT_DEV_URANDOM));
+            $ekey = hash_pbkdf2("sha256", $password, $esalt, $it = 1000, self::key_size(), $raw = true);
+            $opts = array('mode' => 'cbc', 'iv' => $iv, 'key' => $ekey);
+            stream_filter_append($fc, 'mcrypt.rijndael-128', STREAM_FILTER_WRITE, $opts);
+
+            $infilesize = 0;
+            while (!feof($fin)) {
+                $block = fread($fin, 8192);
+                $infilesize += strlen($block);
+                fwrite($fc, $block);
             }
-            fwrite($fout, $block);
-         }
-         fclose($fout);
-         fclose($fc);
-      }
-   }
-   private static function hash_equals($str1, $str2) {
-      if(strlen($str1) == strlen($str2)) {
-         $res = $str1 ^ $str2;
-         for($ret=0,$i = strlen($res) - 1; $i >= 0; $i--) $ret |= ord($res[$i]);
-         return !$ret;
-      }
-      return false;
-   }
-   private static function calculate_hmac_after_32bytes($password, $hsalt, $filename) {
-      static $init=0;
-      $init or $init = stream_filter_register("user-filter.skipfirst32bytes", "FileSkip32Bytes");
-      $stream = 'php://filter/read=user-filter.skipfirst32bytes/resource=' . $filename;
-      $hkey = hash_pbkdf2("sha256", $password, $hsalt, $iterations=1000, 24, $raw=true);
-      return hash_hmac_file('sha256', $stream, $hkey, $raw=true);
-   }
+
+            $block_size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+            $padding = $block_size - ($infilesize % $block_size); //$padding is a number from 1-16
+            fwrite($fc, str_repeat(chr($padding), $padding)); //perform PKCS7 padding
+            fclose($fin);
+            fclose($fc);
+            $hmac_raw = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
+            $fc = fopen($aes_filename, "rb+");
+            fwrite($fc, $hmac_raw); //overwrite placeholder
+            fclose($fc);
+        }
+    }
+
+    public static function decryptFile($password, $aes_filename, $out_stream)
+    {
+        $iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+        $hmac_raw = file_get_contents($aes_filename, false, NULL,  0, 32);
+        $hmac_salt = file_get_contents($aes_filename, false, NULL, 32, $iv_size);
+        $hmac_calc = self::calculate_hmac_after_32bytes($password, $hmac_salt, $aes_filename);
+        $fc = fopen($aes_filename, "rb");
+        $fout = fopen($out_stream, 'wb');
+
+        if (!empty($fout) && !empty($fc) && self::hash_equals($hmac_raw, $hmac_calc)) {
+            fread($fc, 32 + $iv_size); //skip sha256 hmac and salt
+            $esalt = fread($fc, $iv_size);
+            $iv    = fread($fc, $iv_size);
+            $ekey = hash_pbkdf2("sha256", $password, $esalt, $it = 1000, self::key_size(), $raw = true);
+            $opts = array('mode' => 'cbc', 'iv' => $iv, 'key' => $ekey);
+            stream_filter_append($fc, 'mdecrypt.rijndael-128', STREAM_FILTER_READ, $opts);
+
+            while (!feof($fc)) {
+                $block = fread($fc, 8192);
+
+                if (feof($fc)) {
+                    $padding = ord($block[strlen($block) - 1]); //assume PKCS7 padding
+                    $block = substr($block, 0, 0 - $padding);
+                }
+
+                fwrite($fout, $block);
+            }
+
+            fclose($fout);
+            fclose($fc);
+        }
+    }
+
+    private static function hash_equals($str1, $str2)
+    {
+        if (strlen($str1) == strlen($str2)) {
+            $res = $str1 ^ $str2;
+            for ($ret = 0, $i = strlen($res) - 1; $i >= 0; $i--) $ret |= ord($res[$i]);
+            return !$ret;
+        }
+
+        return false;
+    }
+
+    private static function calculate_hmac_after_32bytes($password, $hsalt, $filename)
+    {
+        static $init = 0;
+        $init or $init = stream_filter_register("user-filter.skipfirst32bytes", "FileSkip32Bytes");
+        $stream = 'php://filter/read=user-filter.skipfirst32bytes/resource=' . $filename;
+        $hkey = hash_pbkdf2("sha256", $password, $hsalt, $iterations = 1000, 24, $raw = true);
+
+        return hash_hmac_file('sha256', $stream, $hkey, $raw = true);
+    }
 }
+
 class FileSkip32Bytes extends php_user_filter
 {
-   private $skipped=0;
-   function filter($in, $out, &$consumed, $closing)  {
-      while ($bucket = stream_bucket_make_writeable($in)) {
-         $outlen = $bucket->datalen;
-         if ($this->skipped<32){
-            $outlen = min($bucket->datalen,32-$this->skipped);
-            $bucket->data = substr($bucket->data, $outlen);
-            $bucket->datalen = $bucket->datalen-$outlen;
-            $this->skipped+=$outlen;
-         }
-         $consumed += $outlen;
-         stream_bucket_append($out, $bucket);
-      }
-      return PSFS_PASS_ON;
-   }
+    private $skipped = 0;
+
+    function filter($in, $out, &$consumed, $closing)
+    {
+        while ($bucket = stream_bucket_make_writeable($in)) {
+            $outlen = $bucket->datalen;
+
+            if ($this->skipped < 32) {
+                $outlen = min($bucket->datalen, 32 - $this->skipped);
+                $bucket->data = substr($bucket->data, $outlen);
+                $bucket->datalen = $bucket->datalen - $outlen;
+                $this->skipped += $outlen;
+            }
+
+            $consumed += $outlen;
+            stream_bucket_append($out, $bucket);
+        }
+
+        return PSFS_PASS_ON;
+    }
 }
-class AES_128_CBC extends AES_CBC {
-   protected static function key_size() { return self::$KEY_SIZES['AES-128']; }
+
+class AES_128_CBC extends AES_CBC
+{
+    protected static function key_size()
+    {
+        return self::$KEY_SIZES['AES-128'];
+    }
 }
-class AES_192_CBC extends AES_CBC {
-   protected static function key_size() { return self::$KEY_SIZES['AES-192']; }
+
+class AES_192_CBC extends AES_CBC
+{
+    protected static function key_size()
+    {
+        return self::$KEY_SIZES['AES-192'];
+    }
 }
-class AES_256_CBC extends AES_CBC {
-   protected static function key_size() { return self::$KEY_SIZES['AES-256']; }
+
+class AES_256_CBC extends AES_CBC
+{
+    protected static function key_size()
+    {
+        return self::$KEY_SIZES['AES-256'];
+    }
 }
 ]]>
     </programlisting>
