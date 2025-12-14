@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ec45af749649dc0d6a23eaedeed1b601f7460813 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: ce397343296708654c8cdac774e23a9ee47ab27d Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration85.new-features" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Новая функциональность</title>
@@ -11,13 +11,14 @@
    <title>Оператор Pipe</title>
 
    <simpara>
-    Добавлен оператор <link linkend="language.operators.functional">pipe (<literal>|&gt;</literal>)</link>.
+    Добавили оператор конвейеризации <link linkend="language.operators.functional"><literal>|&gt;</literal></link>.
    </simpara>
 
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $result = "Hello World" |> strlen(...);
 print $result . PHP_EOL;  // Prints "11"
 ]]>
@@ -29,14 +30,16 @@ print $result . PHP_EOL;  // Prints "11"
    <title>Замыкания в константных выражениях</title>
 
    <para>
-    Добавлена поддержка <link linkend="class.closure">замыканий</link> и
-    <link linkend="functions.first_class_callable_syntax">объектов первого класса</link>
-    в константных выражениях. Поддерживаются:
+    Добавили поддержку статических замыканий в константных выражениях. Константные выражения теперь поддерживают
+    как стандартный синтаксис объявления анонимных функций,
+    так и синтаксис с многоточием, которым создаются
+    <link linkend="functions.first_class_callable_syntax">первоклассные вызываемые объекты</link>
+    <link linkend="class.closure">Closure</link>. Статические замыкания определяют при инициализации:
 
     <simplelist>
-     <member>Параметры атрибутов.</member>
-     <member>Значения свойств и параметров по умолчанию.</member>
-     <member>Константы и константы классов.</member>
+     <member>Параметров атрибутов.</member>
+     <member>Значений по умолчанию для свойств и параметров.</member>
+     <member>Глобальных констант, констант в пространствах имён и констант классов.</member>
     </simplelist>
    </para>
   </sect3>
@@ -45,17 +48,17 @@ print $result . PHP_EOL;  // Prints "11"
    <title>Атрибут #[\NoDiscard]</title>
 
    <simpara>
-    Добавлен атрибут <classname>NoDiscard</classname> для указания,
-    что возвращаемое значение функции является важным и должно быть использовано.
+    Добавили атрибут <classname>NoDiscard</classname>, который делает
+    значение возврата функции обязательным для обработки.
    </simpara>
 
    <simpara>
-    Также добавлено приведение типа <literal>(void)</literal> для указания,
-    что значение не используется намеренно.
-    Приведение типа <literal>(void)</literal> само по себе не влияет на выполнение программы,
-    но может использоваться для подавления предупреждений,
-    выдаваемых атрибутом <code>#[\NoDiscard]</code>, а также, возможно,
-    диагностических сообщений, выдаваемых внешними IDE или инструментами статического анализа.
+    Добавили также инструкцию <literal>(void)</literal>, которая указывает на намеренное
+    игнорирование требования обработать значение возврата.
+    Инструкция <literal>(void)</literal> не влияет на выполнение программы,
+    а только подавляет предупреждения,
+    которые выдаёт атрибут <code>#[\NoDiscard]</code>, и возможные
+    диагностические сообщения, которые выдают внешние IDE или инструменты статического анализа.
    </simpara>
 
    <informalexample>
@@ -65,17 +68,17 @@ print $result . PHP_EOL;  // Prints "11"
 
 #[\NoDiscard]
 function concat(string $a, string $b): string {
-     return a + b;
+     return $a . $b;
 }
 
-// Предупреждение: Возвращаемое значение функции concat() должно быть либо использовано,
-// либо намеренно проигнорировано путём приведения его к типу (void) в xxx.php.
+// Предупреждение: Значение, которое возвращает функция concat(), требуется либо обработать,
+// либо намеренно проигнорировать путём приведения к типу (void) в xxx.php.
 concat("a", "b");
 
-// Предупреждение не выдаётся, поскольку возвращаемое значение используется в присваивании.
+// Предупреждение не выдаётся, поскольку возвращаемое значение присваивается переменной.
 $results = concat("a", "b");
 
-// Предупреждение не выдаётся, поскольку используется приведение типа (void).
+// Предупреждение не выдаётся, поскольку инструкция (void) намеренно подавила вывод предупреждения.
 (void)concat("a", "b");
 ]]>
     </programlisting>
@@ -87,12 +90,13 @@ $results = concat("a", "b");
    <title>Атрибуты констант</title>
 
    <simpara>
-    Добавлена поддержка атрибутов для констант, не относящихся к классам, на этапе компиляции
-    (например, <code>const MY_CONST = 1;</code> вместо <code>define('MY_CONST', 1);</code>).
+    Добавили поддержку нацеливания атрибутов на константы, которые объявляются вне классов выражениями наподобие
+    <code>const MY_CONST = 1;</code> и вычисляются на этапе компиляции.
+    Константы, которые определили функцией — <code>define('MY_CONST', 1);</code>, не поддерживают назначение атрибутов.
    </simpara>
 
    <simpara>
-    Атрибут <classname>Deprecated</classname> теперь можно использовать для констант.
+    Атрибут <classname>Deprecated</classname> теперь поддерживает нацеливание на константы.
    </simpara>
 
   </sect3>
@@ -101,11 +105,11 @@ $results = concat("a", "b");
    <title>Атрибут <code>#[\DelayedTargetValidation]</code></title>
 
    <simpara>
-    Новый атрибут <classname>DelayedTargetValidation</classname> можно использовать
-    для подавления ошибок компиляции из атрибутов ядра (или модулей),
-    которые используются на недопустимых целях.
-    Вместо этого ошибки сообщаются во время выполнения,
-    если и когда вызывается метод <methodname>ReflectionAttribute::newInstance</methodname>.
+    Новый атрибут <classname>DelayedTargetValidation</classname>
+    подавляет ошибки, которые на этапе компиляции выдаёт ядро или модуль
+    при назначении атрибутов недопустимым целям.
+    При назначении атрибута ядро или модуль сообщают об ошибках во время выполнения
+    в момент вызова метода <methodname>ReflectionAttribute::newInstance</methodname>.
    </simpara>
 
   </sect3>
@@ -114,7 +118,7 @@ $results = concat("a", "b");
    <title>Атрибут <code>#[\Override]</code> для свойств</title>
 
    <simpara>
-    Атрибут <classname>Override</classname> теперь можно применять к свойствам.
+    Атрибут <classname>Override</classname> теперь поддерживает нацеливание на свойства.
    </simpara>
 
   </sect3>
@@ -123,18 +127,18 @@ $results = concat("a", "b");
    <title>Асимметричная видимость статических свойств</title>
 
    <simpara>
-    Добавлена поддержка <link linkend="language.oop5.visibility-members-aviz">асимметричной видимости</link>
-    для статических свойств.
+    Добавили поддержку <link linkend="language.oop5.visibility-members-aviz">асимметричной видимости</link>
+    при объявлении статических свойств.
    </simpara>
 
   </sect3>
 
   <sect3 xml:id="migration85.new-features.core.backtraces-for-fatal-errors">
-   <title>Трассировки для фатальных ошибок</title>
+   <title>Трассировки стека вызовов при фатальных ошибках</title>
 
    <simpara>
-    Фатальные ошибки (такие как превышение максимального времени выполнения)
-    теперь включают обратную трассировку.
+    Фатальные ошибки наподобие превышения предельного времени выполнения
+    теперь включают трассировку стека вызовов.
    </simpara>
 
   </sect3>
@@ -143,8 +147,8 @@ $results = concat("a", "b");
    <title>Объявление окончательных свойств в конструкторе</title>
 
    <simpara>
-    <link linkend="language.oop5.decon.constructor.promotion">Объявление свойств в конструкторе</link>
-    теперь можно использовать для окончательных (final) свойств.
+    Конструкторы теперь поддерживают объявление окончательных свойств
+    <link linkend="language.oop5.decon.constructor.promotion">при продвижении параметров до свойств класса</link>.
    </simpara>
 
   </sect3>
@@ -153,15 +157,16 @@ $results = concat("a", "b");
    <title>Приведения типов в константных выражениях</title>
 
    <simpara>
-    Добавлена поддержка приведения типов в константных выражениях.
+    Добавили поддержку приведения типов в константных выражениях.
    </simpara>
 
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
-const T1 = (int) 0.3; // Ранее: "Фатальная ошибка: константное выражение содержит недопустимые операции"
-print T1 . PHP_EOL;   // Сейчас выведет "0"
+
+const T1 = (int) 0.3; // Раньше: "Fatal error: Constant expression contains invalid operations"
+print T1 . PHP_EOL;   // Теперь выводит "0"
 ]]>
     </programlisting>
    </informalexample>
@@ -173,8 +178,8 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
 
    <simpara>
     Языковая конструкция <link linkend="language.oop5.cloning">clone</link>
-    теперь является функцией и поддерживает переназначение (только для чтения) свойств
-    во время клонирования с помощью нового параметра <property>$withProperties</property>.
+    теперь стала функцией и поддерживает переназначение доступных только для чтения свойств
+    во время клонирования через новый параметр <property>$withProperties</property>.
    </simpara>
 
   </sect3>
@@ -185,68 +190,69 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль cURL</title>
 
   <simpara>
-   Добавлена поддержка <link linkend="class.curlsharepersistenthandle">совместного использования дескрипторов</link>,
-   которые сохраняются между несколькими запросами PHP,
-   что позволяет безопасно и более эффективно повторно использовать соединения.
+   Добавили поддержку <link linkend="class.curlsharepersistenthandle">общих дескрипторов</link>,
+   которые сохраняются между PHP-запросами, разделяют ресурсы между сеансами обмена данными
+   и сокращают накладные расходы на повторную установку соединений.
   </simpara>
 
   <simpara>
-   Добавлена поддержка констант <constant>CURLINFO_USED_PROXY</constant> (libcurl >= 8.7.0),
-   <constant>CURLINFO_HTTPAUTH_USED</constant> и <constant>CURLINFO_PROXYAUTH_USED</constant> (libcurl >= 8.12.0)
-   в функции <function>curl_getinfo</function>.
-   Если функция <function>curl_getinfo</function> возвращает массив, та же информация доступна
-   в виде ключей <literal>"used_proxy"</literal>,
+   Для функции <function>curl_getinfo</function> добавили поддержку констант
+   <constant>CURLINFO_USED_PROXY</constant> (требуется библиотека libcurl >= 8.7.0),
+   <constant>CURLINFO_HTTPAUTH_USED</constant> и <constant>CURLINFO_PROXYAUTH_USED</constant> (libcurl >= 8.12.0).
+   При возврате функцией <function>curl_getinfo</function> массива та же информация доступна
+   в элементах с ключами <literal>"used_proxy"</literal>,
    <literal>"httpauth_used"</literal> и <literal>"proxyauth_used"</literal>.
    Константа <constant>CURLINFO_USED_PROXY</constant> получает значение ноль,
-   если в предыдущей передаче не использовался прокси или значение, отличное от нуля, если прокси использовался.
+   если предыдущая передача выполнялась не через прокси, или ненулевое значение, если передача выполнялась через прокси.
    Константы <constant>CURLINFO_HTTPAUTH_USED</constant> и <constant>CURLINFO_PROXYAUTH_USED</constant>
-   получают битовые маски, указывающие методы аутентификации HTTP и прокси,
-   которые использовались в предыдущем запросе.
-   Возможные значения смотрите в описании констант <constant>CURLAUTH_<replaceable>*</replaceable></constant>.
+   получают битовые маски, которые указывают на методы аутентификации HTTP и прокси
+   в предыдущем запросе.
+   Возможные значения содержатся в описании констант семейства <constant>CURLAUTH_<replaceable>*</replaceable></constant>.
   </simpara>
 
   <simpara>
-   Добавлена опция cURL <constant>CURLOPT_INFILESIZE_LARGE</constant>,
-   которая является безопасной заменой константы <constant>CURLOPT_INFILESIZE</constant>.
-   В некоторых системах <constant>CURLOPT_INFILESIZE</constant> принимает только
-   32-разрядное целое число со знаком в качестве размера файла (2,0 ГБ) даже в 64-разрядных системах.
-   Константа <constant>CURLOPT_INFILESIZE_LARGE</constant> принимает наибольшее целое значение,
-   которое может обработать система.
+   Добавили cURL-опцию <constant>CURLOPT_INFILESIZE_LARGE</constant> —
+   безопасная замена константы <constant>CURLOPT_INFILESIZE</constant>.
+   В отдельных системах опция <constant>CURLOPT_INFILESIZE</constant> для размера файла принимает только
+   32-разрядное знаковое целочисленное значение, которое ограничивает предельный размер файла 2,0 ГиБ, даже в 64-разрядных системах.
+   Константа <constant>CURLOPT_INFILESIZE_LARGE</constant> принимает наибольшее целочисленное значение,
+   обработку которого поддерживает система.
   </simpara>
 
   <simpara>
-   Добавлены значения <constant>CURLFOLLOW_OBEYCODE</constant>, <constant>CURLFOLLOW_FIRSTONLY</constant>
+   Добавили значения <constant>CURLFOLLOW_OBEYCODE</constant>, <constant>CURLFOLLOW_FIRSTONLY</constant>
    и <constant>CURLFOLLOW_ALL</constant> для опции <constant>CURLOPT_FOLLOWLOCATION</constant>
    функции <function>curl_setopt</function>.
    Константа <constant>CURLFOLLOW_OBEYCODE</constant> для более строгого соблюдения перенаправлений, если они разрешены.
-   Коснатнта <constant>CURLFOLLOW_FIRSTONLY</constant> для соблюдения только первого перенаправления,
-   таким образом, если есть последующие перенаправления, они не будут выполняться.
+   Константа <constant>CURLFOLLOW_FIRSTONLY</constant> следует только за первым перенаправлением,
+   поэтому передача прекратится, если в текущем сеансе обмена данными появятся очередные перенаправлениями.
    Константа <constant>CURLFOLLOW_ALL</constant> эквивалентна установке
    константе <constant>CURLOPT_FOLLOWLOCATION</constant> значения true.
   </simpara>
 
   <simpara>
-   Добавлена поддержка <constant>CURLINFO_CONN_ID</constant> (libcurl >= 8.2.0)
-   для функции <function>curl_getinfo</function>. Константа позволяет получить
-   уникальный идентификатор соединения, используемого для передачи cURL.
-   Это в первую очередь полезно, когда в приложениях на уровне PHP требуется
-   повторное использование соединений или логика пула соединений.
-   Если функция <function>curl_getinfo</function> возвращает массив,
-   значение доступно как ключ <literal>"conn_id"</literal>.
+   Для функции <function>curl_getinfo</function> добавили поддержку
+   константы <constant>CURLINFO_CONN_ID</constant> (требуется библиотека libcurl >= 8.2.0).
+   Константа возвращает уникальный идентификатор соединения, через которое модуль cURL выполнял передачу данных.
+   В первую очередь константа полезна, когда в приложениях на уровне PHP требуется
+   логика передачи данных через то же соединение или логика пула соединений.
+   При возврате функцией <function>curl_getinfo</function> массива
+   значение доступно в элементе с ключом <literal>"conn_id"</literal>.
   </simpara>
 
   <simpara>
-   Добавлена поддержка <constant>CURLINFO_QUEUE_TIME_T</constant> (libcurl >= 8.6.0)
-   для функции <function>curl_getinfo</function>. Константа позволяет получить время (в микросекундах),
-   которое запрос провёл в очереди соединений libcurl перед отправкой.
-   Это значение также можно получить, передав
-   константу <constant>CURLINFO_QUEUE_TIME_T</constant> в параметр <parameter>option</parameter>
+   Для функции <function>curl_getinfo</function> добавили поддержку
+   константы <constant>CURLINFO_QUEUE_TIME_T</constant> (требуется библиотека libcurl >= 8.6.0).
+   Константа возвращает время в микросекундах,
+   которое запрос провёл в очереди соединений библиотеки libcurl перед отправкой.
+   Это значение также доступно при передаче
+   константы <constant>CURLINFO_QUEUE_TIME_T</constant> в параметр <parameter>option</parameter>
    функции <function>curl_getinfo</function>.
   </simpara>
 
   <simpara>
-   Добавлена поддержка <constant>CURLOPT_SSL_SIGNATURE_ALGORITHMS</constant>
-   для указания алгоритмов подписи, которые будут использоваться для TLS.
+   Добавили поддержку опции <constant>CURLOPT_SSL_SIGNATURE_ALGORITHMS</constant>,
+   через которую указывают алгоритмы подписи для протокола TLS.
   </simpara>
 
  </sect2>
@@ -255,12 +261,12 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль DOM</title>
 
   <simpara>
-   Добавлено свойство <property>Dom\Element::$outerHTML</property>.
+   Добавили свойство <property>Dom\Element::$outerHTML</property>.
   </simpara>
 
   <simpara>
-   Добавлено свойство <property>$children</property> в
-   реализацию интерфейса <interfacename>Dom\ParentNode</interfacename>.
+   Добавили свойство <property>$children</property>
+   в реализацию интерфейса <interfacename>Dom\ParentNode</interfacename>.
   </simpara>
 
  </sect2>
@@ -269,11 +275,11 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль EXIF</title>
 
   <simpara>
-   Добавлена поддержка тегов Exif <literal>OffsetTime*</literal>.
+   Добавили поддержку Exif-тегов <literal>OffsetTime*</literal>.
   </simpara>
 
   <simpara>
-   Добавлена поддержка HEIF/HEIC.
+   Добавили поддержку формата HEIF/HEIC.
   </simpara>
 
  </sect2>
@@ -282,10 +288,10 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Фильтрация данных</title>
 
   <simpara>
-   Добавлен новый флаг <constant>FILTER_THROW_ON_FAILURE</constant> для передачи
-   в функции фильтрации, который при выявлении ошибки при проверке выбрасывает исключение.
-   Новый флаг нельзя комбинировать с <constant>FILTER_NULL_ON_FAILURE</constant>;
-   попытка сделать это приведёт к выбрасыванию исключения <exceptionname>ValueError</exceptionname>.
+   Добавили новый флаг <constant>FILTER_THROW_ON_FAILURE</constant>
+   для функций фильтрации. Флаг заставит функцию выбросить исключение, если значение не прошло фильтрацию.
+   Новый флаг нельзя комбинировать с флагом <constant>FILTER_NULL_ON_FAILURE</constant>;
+   при попытке объединить флаги PHP выбросит ошибку <exceptionname>ValueError</exceptionname>.
   </simpara>
 
  </sect2>
@@ -294,29 +300,29 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль интернационализации</title>
 
   <simpara>
-   Добавлены константы класса <constant>NumberFormatter::CURRENCY_ISO</constant>,
+   Добавили константы класса: <constant>NumberFormatter::CURRENCY_ISO</constant>,
    <constant>NumberFormatter::CURRENCY_PLURAL</constant>,
    <constant>NumberFormatter::CASH_CURRENCY</constant>
    и <constant>NumberFormatter::CURRENCY_STANDARD</constant>
-   для различных форматов чисел, связанных с валютой.
+   для форматов чисел, связанных с валютой.
   </simpara>
 
   <simpara>
-   Добавлены методы <methodname>Locale::addLikelySubtags</methodname> и
-   <methodname>Locale::minimizeSubtags</methodname> для обработки вероятных тегов
+   Добавили методы <methodname>Locale::addLikelySubtags</methodname>
+   и <methodname>Locale::minimizeSubtags</methodname> для обработки вероятных тегов
    заданной локали.
   </simpara>
 
   <simpara>
-   Добавлен класс <classname>IntlListFormatter</classname> для форматирования, упорядочивания
+   Добавили класс <classname>IntlListFormatter</classname> для форматирования, упорядочивания
    и пунктуации списка элементов с заданной локалью:
    операнды <constant>IntlListFormatter::TYPE_AND</constant>,
    <constant>IntlListFormatter::TYPE_OR</constant>,
-   <constant>IntlListFormatter::TYPE_UNITS</constant>
+   <constant>IntlListFormatter::TYPE_UNITS</constant>,
    а также ширины <constant>IntlListFormatter::WIDTH_WIDE</constant>,
    <constant>IntlListFormatter::WIDTH_SHORT</constant>,
    <constant>IntlListFormatter::WIDTH_NARROW</constant>.
-   Поддерживается начиная с icu 67.
+   Поддерживается начиная с библиотеки ICU 67.
   </simpara>
 
  </sect2>
@@ -325,21 +331,21 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Драйвер PDO_Sqlite</title>
 
   <simpara>
-   Добавлена константа класса <constant>Pdo\Sqlite::ATTR_BUSY_STATEMENT</constant>.
+   В класс добавили константу <constant>Pdo\Sqlite::ATTR_BUSY_STATEMENT</constant>.
   </simpara>
 
   <simpara>
-   Добавлена константы класса <constant>Pdo\Sqlite::ATTR_EXPLAIN_STATEMENT</constant>,
+   Добавили константы класса: <constant>Pdo\Sqlite::ATTR_EXPLAIN_STATEMENT</constant>,
    <constant>Pdo\Sqlite::EXPLAIN_MODE_PREPARED</constant>,
    <constant>Pdo\Sqlite::EXPLAIN_MODE_EXPLAIN</constant>,
    <constant>Pdo\Sqlite::EXPLAIN_MODE_EXPLAIN_QUERY_PLAN</constant>.
   </simpara>
 
   <simpara>
-   Добавлен атрибут соединения <constant>Pdo\Sqlite::ATTR_TRANSACTION_MODE</constant>
+   Добавили атрибут соединения <constant>Pdo\Sqlite::ATTR_TRANSACTION_MODE</constant>
    с возможными значениями <constant>Pdo\Sqlite::TRANSACTION_MODE_DEFERRED</constant>,
-   <constant>Pdo\Sqlite::TRANSACTION_MODE_IMMEDIATE</constant> и <constant>Pdo\Sqlite::TRANSACTION_MODE_EXCLUSIVE</constant>,
-   что позволяет настроить режим транзакции, который будет использоваться
+   <constant>Pdo\Sqlite::TRANSACTION_MODE_IMMEDIATE</constant> и <constant>Pdo\Sqlite::TRANSACTION_MODE_EXCLUSIVE</constant>
+   для настройки режима транзакции, в котором выполнится транзакция
    при вызове метода beginTransaction().
   </simpara>
 
@@ -351,8 +357,8 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <simpara>
    Функции <function>session_set_cookie_params</function>,
    <function>session_get_cookie_params</function>,
-   и <function>session_start</function> теперь поддерживают cookie с независимым разделенным состоянием
-   с помощью ключа <literal>"partitioned"</literal>.
+   и <function>session_start</function>теперь поддерживают ключ <literal>"partitioned"</literal>
+   для секционирования данных cookie.
   </simpara>
 
  </sect2>
@@ -365,14 +371,14 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   </simpara>
 
   <simpara>
-   Добавлена поддержка атрибута xml:lang в Soap 1.2 Reason Text.
+   Добавили поддержку атрибута xml:lang для элемента Reason Text в протоколе SOAP 1.2.
   </simpara>
 
   <simpara>
-   Добавлен опциональный параметр <parameter>$lang</parameter> в
-   подпись <methodname>SoapFault::__construct</methodname> и
-   <methodname>SoapServer::fault</methodname>.
-   Это решает проблему совместимости с клиентами .NET SOAP.
+   В сигнатуру методов <methodname>SoapFault::__construct</methodname>
+   и <methodname>SoapServer::fault</methodname> добавили необязательный параметр 
+   <parameter>lang</parameter>. Параметр решает проблему совместимости
+   с SOAP-клиентами на платформе .NET.
   </simpara>
 
  </sect2>
@@ -381,31 +387,31 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Стандартные модули</title>
 
   <simpara>
-   Функция <function>mail</function> теперь возвращает фактическую ошибку
-   sendmail и определяет, был ли процесс sendmail неожиданно прерван.
-   В таких случаях выдаётся предупреждение и функция возвращает значение false.
-   Ранее ошибки игнорировались без предупреждения.
-   Это изменение затрагивает только транспорт sendmail.
+   Функция <function>mail</function> теперь возвращает фактическую ошибку процесса 
+   sendmail и распознаёт его внезапное завершение. 
+   В таких случаях PHP выдаёт предупреждение и функция возвращает &false;. 
+   Раньше эти ошибки игнорировались. Изменение затрагивает только 
+   транспорт sendmail.
   </simpara>
 
   <simpara>
-   Функция <function>getimagesize</function> теперь поддерживает изображения HEIF/HEIC.
+   Функция <function>getimagesize</function> теперь поддерживает изображения в формате HEIF/HEIC.
   </simpara>
 
   <simpara>
-   Функция <function>getimagesize</function> теперь поддерживает изображения SVG,
-   если установлена библиотека ext-libxml.
-   Аналогично, функции <function>image_type_to_extension</function> и
-   <function>image_type_to_mime_type</function>
-   теперь также обрабатывают IMAGETYPE_SVG.
+   Функция <function>getimagesize</function> теперь поддерживает изображения в формате SVG,
+   если установили библиотеку ext-libxml.
+   Аналогично, функции <function>image_type_to_extension</function>
+   и <function>image_type_to_mime_type</function>
+   теперь тоже обрабатывают константу IMAGETYPE_SVG.
   </simpara>
 
   <simpara>
-   У массив, возвращаемого функцией <function>getimagesize</function>,
-   появилось две дополнительные записи:
-   <literal>"width_unit"</literal> и <literal>"height_unit"</literal> для указания единиц измерения размеров.
-   По умолчанию эти единицы измерения — px.
-   Они не обязательно должны быть одинаковыми (например, одна может быть cm, а другая — px).
+   Массив, который возвращается функцией <function>getimagesize</function>,
+   теперь содержит две дополнительные записи:
+   <literal>"width_unit"</literal> и <literal>"height_unit"</literal>, которые указывают, в каких единицах выражаются размеры.
+   По умолчанию размеры выражаются в пикселях — px.
+   Не в каждом изображении единицы совпадают, например, размер одного направления выражается в сантиметрах — cm, а другого в пикселях — px.
   </simpara>
 
   <simpara>
@@ -419,8 +425,8 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль URI</title>
 
   <simpara>
-   Добавлен всегда включённый модуль URI, который можно использовать
-   для обработки URI и URL в соответствии с RFC 3986 и WHATWG URL.
+   Добавили встроенный модуль URI, который теперь включён по умолчанию.
+   Модуль предоставляет инструменты для обработки URI-идентификаторов и URL-адресов по правилам стандартов RFC 3986 и WHATWG.
   </simpara>
 
  </sect2>
@@ -429,13 +435,14 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль XSL</title>
 
   <simpara>
-   Аргумент <parameter>$namespace</parameter> методов <methodname>XSLTProcessor::getParameter</methodname>,
-   <methodname>XSLTProcessor::setParameter</methodname> и
-   <methodname>XSLTProcessor::removeParameter</methodname> теперь действительно работает,
-   а не рассматривается как пустой.
-   Работает только в том случае, если аргумент <parameter>$name</parameter>
-   не использует нотацию Кларка и не является QName,
-   поскольку в этих случаях пространство имён берётся из href или префикса пространства имён соответственно.
+   Аргумент <parameter>namespace</parameter> в методах
+   <methodname>XSLTProcessor::getParameter</methodname>,
+   <methodname>XSLTProcessor::setParameter</methodname>
+   и <methodname>XSLTProcessor::removeParameter</methodname> теперь обрабатывается корректно
+   и не игнорируется как пустой. Аргумент работает, только если параметр
+   <parameter>name</parameter> указали не в нотации Кларка или QName-имени, 
+   поскольку при таком формате значения пространство имён извлекается из префикса
+   или атрибута href самого имени.
   </simpara>
 
  </sect2>
@@ -444,8 +451,8 @@ print T1 . PHP_EOL;   // Сейчас выведет "0"
   <title>Модуль Zlib</title>
 
   <simpara>
-   Функция <function>flock</function> теперь поддерживается в потоках zlib.
-   Ранее это всегда приводило к сбою при выполнении любых действий по блокировке.
+   Функция <function>flock</function> теперь поддерживает потоки zlib.
+   Раньше попытки установить блокировку в таких потоках завершались ошибкой.
   </simpara>
 
  </sect2>
