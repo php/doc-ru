@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 02ff7fef5b34cf8f5395180d9d39fb64d9398d00 Maintainer: das Status: ready -->
+<!-- EN-Revision: c018a4d2c85ac429f238f78679eca46d86c63a31 Maintainer: das Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="datetimezone.listidentifiers" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>DateTimeZone::listIdentifiers</refname>
   <refname>timezone_identifiers_list</refname>
-  <refpurpose>Возвращает численно индексированный массив со всеми идентификаторами часовых поясов</refpurpose>
+  <refpurpose>Возвращает индексный массив идентификаторов часовых поясов</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -21,6 +21,17 @@
    <methodparam choice="opt"><type>int</type><parameter>timezoneGroup</parameter><initializer>DateTimeZone::ALL</initializer></methodparam>
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>countryCode</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
+  <simpara>
+   Метод возвращает список <link xlink:href="&url.wiki.tzdb.names;">идентификаторов часовых поясов</link>, которые определила администрация IANA.
+  </simpara>
+
+  <note>
+   <simpara>
+    Для определения часового пояса клиента, например браузера, в JavaScript обращаются к объекту
+    <link xlink:href="&url.js.intl-datetimeformat;">Intl.DateTimeFormat</link>
+    или <link xlink:href="&url.js.temporal-zoneddatetime;">Temporal.ZonedDateTime</link>.
+   </simpara>
+  </note>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -31,7 +42,7 @@
      <term><parameter>timezoneGroup</parameter></term>
      <listitem>
       <para>
-       Одна из констант класса <classname>DateTimeZone</classname> (или комбинация из них).
+       Константа или комбинация констант класса <classname>DateTimeZone</classname>.
       </para>
      </listitem>
     </varlistentry>
@@ -39,12 +50,12 @@
      <term><parameter>countryCode</parameter></term>
      <listitem>
       <para>
-       Двухбуквенный код страны в верхнем регистре, совместимый с ISO 3166-1.
+       Двухбуквенный код страны в верхнем регистре, совместимый со стандартом ISO 3166-1.
       </para>
       <note>
        <simpara>
-        Эта опция используется только тогда, когда параметр <parameter>timezoneGroup</parameter> установлен в
-        <constant>DateTimeZone::PER_COUNTRY</constant>.
+        Параметр требуется и влияет на результат только при установке для параметра <parameter>timezoneGroup</parameter>
+        флага <constant>DateTimeZone::PER_COUNTRY</constant>.
        </simpara>
       </note>
      </listitem>
@@ -56,9 +67,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает массив идентификаторов часовых поясов. Возвращаются только не устаревшие элементы.
-   Чтобы получить все, включая устаревшие идентификаторы часовых поясов, используйте
-   <literal>DateTimeZone::ALL_WITH_BC</literal> в качестве значения для параметра <parameter>timezoneGroup</parameter>.
+   Метод возвращает массив идентификаторов часовых поясов. Возвращаются только неустаревшие элементы.
+   При передаче в параметр <parameter>timezoneGroup</parameter> флага <literal>DateTimeZone::ALL_WITH_BC</literal>
+   метод возвращает все идентификаторы часовых поясов, включая устаревшие.
   </para>
  </refsect1>
 
@@ -77,13 +88,13 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        До этой версии, в случае возникновения ошибки возвращалось &false;.
+        До этой версии при ошибке возвращалось значение &false;.
        </entry>
       </row>
       <row>
        <entry>7.1.0</entry>
        <entry>
-        <parameter>countryCode</parameter> теперь допускает значение null.
+        Параметр <parameter>countryCode</parameter> теперь принимает значение &null;.
        </entry>
       </row>
      </tbody>
@@ -96,40 +107,44 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <methodname>DateTimeZone::listIdentifiers</methodname></title>
+    <title>Пример получения списка идентификаторов часовых поясов с комментарием о расположении</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$timezone_identifiers = DateTimeZone::listIdentifiers();
-for ($i=0; $i < 5; $i++) {
-    echo "$timezone_identifiers[$i]\n";
+
+$identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ALL);
+
+foreach ($identifiers as $tzid) {
+    $tz = new DateTimeZone($tzid);
+    $comments = $tz->getLocation()['comments'];
+    echo $tzid . " (" . ($comments ?: 'Whole region') . ")\n";
 }
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
     <screen>
 <![CDATA[
-Africa/Abidjan
-Africa/Accra
-Africa/Addis_Ababa
-Africa/Algiers
-Africa/Asmara
+America/Antigua (Whole region)
+America/Araguaina (Tocantins)
+America/Argentina/Buenos_Aires (Buenos Aires (BA, CF))
+America/Argentina/Catamarca (Catamarca (CT), Chubut (CH))
+America/Argentina/Cordoba (Argentina (most areas: CB, CC, CN, ER, FM, MN, SE, SF))
+// (Только фрагмент вывода, из-за длины)
 ]]>
     </screen>
    </example>
   </para>
   <para>
    <example>
-    <title>Перечисление идентификаторов для конкретного региона</title>
+    <title>Пример получения списка идентификаторов конкретного региона</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$timezone_identifiers = DateTimeZone::listIdentifiers( DateTimeZone::ASIA );
-for ($i=0; $i < 5; $i++) {
+
+$timezone_identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ASIA);
+for ($i = 0; $i < 5; $i++) {
     echo "$timezone_identifiers[$i]\n";
 }
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -147,13 +162,13 @@ Asia/Aqtau
 
   <para>
    <example>
-    <title>Перечисление идентификаторов для нескольких регионов</title>
+    <title>Пример получения списка идентификаторов двух регионов</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$timezone_identifiers = DateTimeZone::listIdentifiers( DateTimeZone::ASIA | DateTimeZone::PACIFIC );
-echo join( ', ', $timezone_identifiers );
-?>
+
+$timezone_identifiers = DateTimeZone::listIdentifiers(DateTimeZone::ASIA | DateTimeZone::PACIFIC);
+echo join(', ', $timezone_identifiers);
 ]]>
     </programlisting>
     &example.outputs.similar;
@@ -192,15 +207,15 @@ Pacific/Tarawa, Pacific/Tongatapu, Pacific/Wake, Pacific/Wallis
 
   <para>
    <example>
-    <title>Перечисление идентификаторов для одной страны</title>
+    <title>Пример получения списка идентификаторов одной страны</title>
     <programlisting role="php">
 <![CDATA[
 <?php
-$timezone_identifiers = DateTimeZone::listIdentifiers( DateTimeZone::PER_COUNTRY, "UA" );
-foreach( $timezone_identifiers as $identifier ) {
+
+$timezone_identifiers = DateTimeZone::listIdentifiers(DateTimeZone::PER_COUNTRY, "UA");
+foreach ($timezone_identifiers as $identifier) {
     echo "$identifier\n";
 }
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
