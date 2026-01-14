@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5c04cf0fd637b258d2a3bf7f4b7aba1beef6d823 Maintainer: irker Status: ready -->
+<!-- EN-Revision: b9af4bd4eef9a501e9a6787d5d8998bce9f37dfb Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.visibility" xmlns="http://docbook.org/ns/docbook">
  <title>Область видимости</title>
  <para>
   Область видимости свойства, метода или начиная c PHP 7.1.0 константы определяют
   путём добавления перед объявлением ключевого слова: <literal>public</literal>,
-  <literal>protected</literal> или <literal>private</literal>. Доступ к общедоступным членам класса,
-  — которые объявили с ключевым словом public, — разрешается из любой области видимости.
+  <literal>protected</literal> или <literal>private</literal>. Доступ к общедоступным членам класса, —
+  которые объявили с ключевым словом public, — разрешается из любой области видимости.
   Доступ к защищённым членам класса, которые объявили с ключевым словом protected, — возможен только
   внутри самого класса, и в производных классах-наследниках или родительских классах.
   Доступ к закрытым членам класса, — которые объявили с ключевым словом private, — открывается
@@ -18,7 +18,7 @@
   <title>Область видимости свойства</title>
   <para>
    Свойства класса разрешается определять как открытые — public, защищённые — protected или закрытые — private.
-   Свойства, которые объявили без явного ключевого слова области видимости,
+   Свойства, которые объявили без модификатора области видимости,
    определяются как открытые, как будто свойство объявили с ключевым словом public.
   </para>
   <example>
@@ -73,20 +73,18 @@ echo $obj2->public; // Работает
 echo $obj2->protected; // Фатальная ошибка
 echo $obj2->private; // Предупреждение о неопределённом свойстве
 $obj2->printHello(); // Выводит 'Public2', 'Protected2' и предупреждение о неопределённом свойстве
-
-?>
 ]]>
     </programlisting>
    </example>
   <sect3 xml:id="language.oop5.visibility-members-aviz">
    <title>Асимметричная область видимости свойств</title>
    <simpara>
-    Начиная с PHP 8.4 область видимости свойств разрешили также устанавливать асимметрично —
-    отдельно для чтения и записи. Видимость свойства для записи определяют инструкцией
-    <literal>(set)</literal>, которую указывают сразу после модификатора видимости,
-    тогда как инструкцию <literal>(get)</literal> после модификатора видимости для чтения не указывают, а подразумевают.
-    Область видимости <literal>set</literal> разрешается указывать отдельно,
-    если только она не слабее области видимости по умолчанию.
+    Начиная с PHP 8.4 свойства объекта дополнительно стали поддерживать установку асимметричной области видимости:
+    отдельно для чтения и записи. Видимость свойства для записи определяют спецификатором
+    <literal>(set)</literal>, который указывают сразу после модификатора видимости,
+    тогда как спецификатор <literal>(get)</literal> после модификатора видимости для чтения не указывают, а подразумевают.
+    Спецификатором <literal>set</literal> нельзя устанавливать уровень доступности свойства для записи
+    слабее, чем уровень доступа для чтения.
    </simpara>
    <example>
     <title>Пример асимметричной установки области видимости свойств</title>
@@ -112,20 +110,54 @@ class SpecialBook extends Book
     }
 }
 
-$b = new Book('How to PHP', 'Peter H. Peterson', 2024);
+$b = new Book('Правильный PHP-код', 'Peter H. Peterson', 2024);
 
 echo $b->title; // Всё хорошо
 echo $b->author; // Всё хорошо
 echo $b->pubYear; // Критическая ошибка
 
-$b->title = 'How not to PHP'; // Критическая ошибка
+$b->title = 'Неправильный PHP-код'; // Критическая ошибка
 $b->author = 'Pedro H. Peterson'; // Критическая ошибка
 $b->pubYear = 2023; // Критическая ошибка
-
-?>
 ]]>
     </programlisting>
    </example>
+    <simpara>
+     Начиная с PHP 8.5 статические свойства класса тоже стали поддерживать установку отдельной области видимости для записи через спецификатор <literal>set</literal>.
+    </simpara>
+    <example>
+     <title>Asymmetric Static Property Visibility</title>
+     <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
+
+class Manager
+{
+    public private(set) static int $calls = 0;
+
+    public function doAThing(): string
+    {
+        self::$calls++;
+        // Выполняем другую работу
+        return "Произвольная строка";
+    }
+}
+
+$m = new Manager();
+
+$m->doAThing(); // Работает
+echo Manager::$calls; // Работает
+Manager::$calls = 5; // Фатальная ошибка
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+1
+Fatal error: Uncaught Error: Cannot modify private(set) property Manager::$calls from global scope in /some/file.php
+]]>
+     </screen>
+    </example>
    <para>Относительно асимметричной области видимости определили ряд условий:</para>
    <itemizedlist>
     <listitem>
@@ -135,9 +167,9 @@ $b->pubYear = 2023; // Критическая ошибка
     </listitem>
     <listitem>
      <simpara>
-      Ограничение области видимости <literal>set</literal> должно быть как у области видимости <literal>get</literal>
+      Ограничение области видимости <literal>set</literal> требуется указывать как у области видимости <literal>get</literal>
       или сильнее. Так, сочетания модификаторов <code>public protected(set)</code> и <code>protected protected(set)</code>
-      разрешаются, но более слабое условие области видимости для записи наподобие <code>protected public(set)</code>
+      допустимы, но более слабое условие области видимости для записи наподобие <code>protected public(set)</code>
       вызовет синтаксическую ошибку.
      </simpara>
     </listitem>
@@ -203,8 +235,6 @@ class SpecialBook extends Book
     public string $author; // Всё хорошо, поскольку ограничение на чтение такое же, а на запись – слабее
     public protected(set) int $pubYear; // Критическая ошибка. Свойства с видимостью private(set) — окончательны!
 }
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -309,8 +339,6 @@ class Foo extends Bar
 $myFoo = new Foo();
 $myFoo->test(); // Bar::testPrivate
                 // Foo::testPublic
-
-?>
 ]]>
     </programlisting>
   </example>
@@ -375,7 +403,6 @@ class MyClass2 extends MyClass
 $myclass2 = new MyClass2;
 echo MyClass2::MY_PUBLIC; // Работает
 $myclass2->foo2(); // Выводятся константы с модификаторами public и protected, но не с модификатором private
-?>
 ]]>
     </programlisting>
    </example>
@@ -422,8 +449,6 @@ class Test
 $test = new Test('test');
 
 $test->baz(new Test('other'));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
