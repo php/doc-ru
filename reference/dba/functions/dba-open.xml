@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 44428b04b7b046593e9ab33874eddd1fea7dfab1 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: bfa334803465822457b4dabcf9d9f9a5a990c4d3 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
-<refentry xml:id="function.dba-open" xmlns="http://docbook.org/ns/docbook">
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.dba-open">
  <refnamediv>
   <refname>dba_open</refname>
   <refpurpose>Открывает базу данных</refpurpose>
@@ -25,190 +25,188 @@
  </refsect1>
  <refsect1 role="parameters">
   &reftitle.parameters;
-  <para>
-   <variablelist>
-    <varlistentry>
-     <term><parameter>path</parameter></term>
-     <listitem>
+  <variablelist>
+   <varlistentry>
+    <term><parameter>path</parameter></term>
+    <listitem>
+     <para>
+      Путь до файлов базы данных.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>mode</parameter></term>
+    <listitem>
+     <para>
+      <literal>r</literal> для режима чтения, <literal>w</literal> для
+      режима чтения/записи с уже существующей базой данных. <literal>c</literal>
+      для режима чтения/записи и создания базы данных, если она ещё не была создана,
+      и <literal>n</literal> для создания, обрезания и доступа для чтения/записи.
+      База данных создаётся с архитектурой BTree, другие архитектуры (вроде Hash или Queue)
+      не поддерживаются.
+     </para>
+     <para>
+      Дополнительно, с помощью следующего символа, вы можете задать режим блокировки
+      базы данных. <literal>l</literal> для блокировки базы данных с помощью файла
+      <filename>.lck</filename>, или <literal>d</literal> для самостоятельной блокировки
+      средствами самой базы. Важно, чтобы все ваши приложения делали это согласованно.
+     </para>
+     <para>
+      Если вы хотите просто проверить доступ и не хотите ждать освобождения блокировки,
+      вы можете добавить третий символ <literal>t</literal>.  Если вы абсолютно уверены,
+      что вам не нужно использовать блокировку базы данных, вы можете использовать
+      символ <literal>-</literal> вместо <literal>l</literal> или <literal>d</literal>.
+      Если ни один из символов: <literal>d</literal>, <literal>l</literal> или
+      <literal>-</literal> не задан, база данных будет использовать режим <literal>d</literal>.
+     </para>
+     <note>
       <para>
-       Путь до файлов базы данных.
+       В один момент времени может быть только один процесс, пишущий в базу данных.
+       Когда вы используете dba на веб-сервере, и более чем один запрос требует
+       записи в базу данных, они могут это делать только строго по очереди.
+       Также, в момент чтения, запись не доступна. Модуль dba использует
+       блокировки для предотвращения нежелательного поведения.
+       Изучите следующую таблицу:
+       <table>
+        <title>Блокировки DBA</title>
+        <tgroup cols="9">
+         <thead>
+          <row>
+           <entry>уже открыта</entry>
+           <entry><parameter>mode</parameter> = "rl"</entry>
+           <entry><parameter>mode</parameter> = "rlt"</entry>
+           <entry><parameter>mode</parameter> = "wl"</entry>
+           <entry><parameter>mode</parameter> = "wlt"</entry>
+           <entry><parameter>mode</parameter> = "rd"</entry>
+           <entry><parameter>mode</parameter> = "rdt"</entry>
+           <entry><parameter>mode</parameter> = "wd"</entry>
+           <entry><parameter>mode</parameter> = "wdt"</entry>
+          </row>
+         </thead>
+         <tbody>
+          <row>
+           <entry>не открыта</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+          </row>
+          <row>
+           <entry><parameter>mode</parameter> = "rl"</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+          </row>
+          <row>
+           <entry><parameter>mode</parameter> = "wl"</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+          </row>
+          <row>
+           <entry><parameter>mode</parameter> = "rd"</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>ok</entry>
+           <entry>ok</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+          </row>
+          <row>
+           <entry><parameter>mode</parameter> = "wd"</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>illegal</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+           <entry>wait</entry>
+           <entry>false</entry>
+          </row>
+         </tbody>
+        </tgroup>
+       </table>
+       <simplelist>
+        <member>ok: второй вызов будет успешным.</member>
+        <member>wait: второй вызов будет ждать, пока первый не вызовет
+         <function>dba_close</function>.</member>
+        <member>false: второй вызов вернёт &false;.</member>
+        <member>illegal: вы не можете смешивать модификаторы <literal>"l"</literal> и <literal>"d"</literal> в параметре <parameter>mode</parameter>.</member>
+       </simplelist>
       </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>mode</parameter></term>
-     <listitem>
-      <para>
-       <literal>r</literal> для режима чтения, <literal>w</literal> для
-       режима чтения/записи с уже существующей базой данных. <literal>c</literal>
-       для режима чтения/записи и создания базы данных, если она ещё не была создана,
-       и <literal>n</literal> для создания, обрезания и доступа для чтения/записи.
-       База данных создаётся с архитектурой BTree, другие архитектуры (вроде Hash или Queue)
-       не поддерживаются.
-      </para>
-      <para>
-       Дополнительно, с помощью следующего символа, вы можете задать режим блокировки
-       базы данных. <literal>l</literal> для блокировки базы данных с помощью файла
-       <filename>.lck</filename>, или <literal>d</literal> для самостоятельной блокировки
-       средствами самой базы. Важно, чтобы все ваши приложения делали это согласованно.
-      </para>
-      <para>
-       Если вы хотите просто проверить доступ и не хотите ждать освобождения блокировки,
-       вы можете добавить третий символ <literal>t</literal>.  Если вы абсолютно уверены,
-       что вам не нужно использовать блокировку базы данных, вы можете использовать
-       символ <literal>-</literal> вместо <literal>l</literal> или <literal>d</literal>.
-       Если ни один из символов: <literal>d</literal>, <literal>l</literal> или
-       <literal>-</literal> не задан, база данных будет использовать режим <literal>d</literal>.
-      </para>
-      <note>
-       <para>
-        В один момент времени может быть только один процесс, пишущий в базу данных.
-        Когда вы используете dba на веб-сервере, и более чем один запрос требует
-        записи в базу данных, они могут это делать только строго по очереди.
-        Также, в момент чтения, запись не доступна. Модуль dba использует
-        блокировки для предотвращения нежелательного поведения.
-        Изучите следующую таблицу:
-        <table>
-         <title>Блокировки DBA</title>
-         <tgroup cols="9">
-          <thead>
-           <row>
-            <entry>уже открыта</entry>
-            <entry><parameter>mode</parameter> = "rl"</entry>
-            <entry><parameter>mode</parameter> = "rlt"</entry>
-            <entry><parameter>mode</parameter> = "wl"</entry>
-            <entry><parameter>mode</parameter> = "wlt"</entry>
-            <entry><parameter>mode</parameter> = "rd"</entry>
-            <entry><parameter>mode</parameter> = "rdt"</entry>
-            <entry><parameter>mode</parameter> = "wd"</entry>
-            <entry><parameter>mode</parameter> = "wdt"</entry>
-           </row>
-          </thead>
-          <tbody>
-           <row>
-            <entry>не открыта</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-           </row>
-           <row>
-            <entry><parameter>mode</parameter> = "rl"</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-           </row>
-           <row>
-            <entry><parameter>mode</parameter> = "wl"</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-           </row>
-           <row>
-            <entry><parameter>mode</parameter> = "rd"</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>ok</entry>
-            <entry>ok</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-           </row>
-           <row>
-            <entry><parameter>mode</parameter> = "wd"</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>illegal</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-            <entry>wait</entry>
-            <entry>false</entry>
-           </row>
-          </tbody>
-         </tgroup>
-        </table>
-        <simplelist>
-         <member>ok: второй вызов будет успешным.</member>
-         <member>wait: второй вызов будет ждать, пока первый не вызовет
-          <function>dba_close</function>.</member>
-         <member>false: второй вызов вернёт &false;.</member>
-         <member>illegal: вы не можете смешивать модификаторы <literal>"l"</literal> и <literal>"d"</literal> в параметре <parameter>mode</parameter>.</member>
-        </simplelist>
-       </para>
-      </note>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>handler</parameter></term>
-     <listitem>
-      <para>
-       Имя <link linkend="dba.requirements">обработчика</link>, который будет
-       использоваться для доступа по пути <parameter>path</parameter>. Ему передаются
-       все необязательные параметры, заданные в <function>dba_open</function>.
-       Если параметр <parameter>handler</parameter> равен &null;,
-       то вызывается обработчик по умолчанию.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>permission</parameter></term>
-     <listitem>
-      <para>
-       Необязательный параметр, заданный целым числом (&integer;), который передаётся драйверу.
-       У него то же значение, что и у параметра <parameter>permissions</parameter> функции <function>chmod</function>,
-       значение по умолчанию - <literal>0644</literal>.
-      </para>
-      <para>
-       Драйверы <literal>db1</literal>, <literal>db2</literal>, <literal>db3</literal>,
-       <literal>db4</literal>, <literal>dbm</literal>, <literal>gdbm</literal>,
-       <literal>ndbm</literal> и <literal>lmdb</literal> поддерживают
-       параметр <parameter>permission</parameter>.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>map_size</parameter></term>
-     <listitem>
-      <para>
-       Необязательный параметр, заданный целым числом (&integer;), который передаётся драйверу.
-       Его значение должно быть кратно размеру страницы ОС или равно нулю,
-       чтобы использовать размер карты по умолчанию.
-      </para>
-      <para>
-       Только драйвер <literal>lmdb</literal> допускает параметр <parameter>map_size</parameter>.
-      </para>
-     </listitem>
-    </varlistentry>
-    <varlistentry>
-     <term><parameter>flags</parameter></term>
-     <listitem>
-      <para>
-       Флаги для передачи драйверам базы данных. Если указано значение &null;,
-       будут переданы флаги по умолчанию.
-       В настоящее время только драйвер LMDB поддерживает следующие флаги:
-       <constant>DBA_LMDB_USE_SUB_DIR</constant> и
-       <constant>DBA_LMDB_NO_SUB_DIR</constant>.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-  </para>
+     </note>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>handler</parameter></term>
+    <listitem>
+     <para>
+      Имя <link linkend="dba.requirements">обработчика</link>, который будет
+      использоваться для доступа по пути <parameter>path</parameter>. Ему передаются
+      все необязательные параметры, заданные в <function>dba_open</function>.
+      Если параметр <parameter>handler</parameter> равен &null;,
+      то вызывается обработчик по умолчанию.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>permission</parameter></term>
+    <listitem>
+     <para>
+      Необязательный параметр, заданный целым числом (&integer;), который передаётся драйверу.
+      У него то же значение, что и у параметра <parameter>permissions</parameter> функции <function>chmod</function>,
+      значение по умолчанию - <literal>0644</literal>.
+     </para>
+     <para>
+      Драйверы <literal>db1</literal>, <literal>db2</literal>, <literal>db3</literal>,
+      <literal>db4</literal>, <literal>dbm</literal>, <literal>gdbm</literal>,
+      <literal>ndbm</literal> и <literal>lmdb</literal> поддерживают
+      параметр <parameter>permission</parameter>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>map_size</parameter></term>
+    <listitem>
+     <para>
+      Необязательный параметр, заданный целым числом (&integer;), который передаётся драйверу.
+      Его значение должно быть кратно размеру страницы ОС или равно нулю,
+      чтобы использовать размер карты по умолчанию.
+     </para>
+     <para>
+      Только драйвер <literal>lmdb</literal> допускает параметр <parameter>map_size</parameter>.
+     </para>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>flags</parameter></term>
+    <listitem>
+     <para>
+      Флаги для передачи драйверам базы данных. Если указано значение &null;,
+      будут переданы флаги по умолчанию.
+      В настоящее время только драйвер LMDB поддерживает следующие флаги:
+      <constant>DBA_LMDB_USE_SUB_DIR</constant> и
+      <constant>DBA_LMDB_NO_SUB_DIR</constant>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 role="returnvalues">
@@ -270,12 +268,10 @@
 
  <refsect1 role="seealso">
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>dba_popen</function></member>
-    <member><function>dba_close</function></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><function>dba_popen</function></member>
+   <member><function>dba_close</function></member>
+  </simplelist>
  </refsect1>
 </refentry>
 <!-- Keep this comment at the end of the file
