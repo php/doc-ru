@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d21607e3ecb3bd8bb67e098ab906287229d44572 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 9a8c593c09cf7d84085989e42f3b2b23536279db Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.grapheme-substr" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>grapheme_substr</refname>
-  <refpurpose>Возвращает часть строки</refpurpose>
+  <refpurpose>Возвращает часть строки в графемных кластерах</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,9 +14,10 @@
    <methodparam><type>string</type><parameter>string</parameter></methodparam>
    <methodparam><type>int</type><parameter>offset</parameter></methodparam>
    <methodparam choice="opt"><type class="union"><type>int</type><type>null</type></type><parameter>length</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>locale</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает часть строки.
+   Функция возвращает часть строки. Смещение и длина измеряются в графемных кластерах.
   </para>
  </refsect1>
 
@@ -28,7 +29,7 @@
      <term><parameter>string</parameter></term>
      <listitem>
       <para>
-       Входная строка. Должна быть корректным UTF-8.
+       Входная строка по стандарту UTF-8, часть которой требуется вернуть.
       </para>
      </listitem>
     </varlistentry>
@@ -36,9 +37,11 @@
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Начальная позиция в единицах графемы по умолчанию.
-       Если <parameter>offset</parameter> больше, либо равна нулю, возвращаемая строка будет начинаться с позиции <parameter>offset</parameter> в $string, начиная с нуля.
-       Если значение <parameter>offset</parameter> отрицательное, возвращаемая строка будет начинаться с единицы графемы <parameter>offset</parameter> от конца строки.
+       Начальная позиция подстроки в графемных кластерах, а не в байтах или кодовых точках.
+       При передаче в параметр <parameter>offset</parameter> нуля или положительного значения началом подстроки станет позиция <parameter>offset</parameter>,
+       которую функция при подсчёте с нуля найдёт с начала строки <parameter>string</parameter>. При передаче в параметр <parameter>offset</parameter>
+       отрицательного значения началом подстроки станет позиция <parameter>offset</parameter>, которую функция также вычислит 
+       в графемных кластерах, но с конца строки.
       </para>
      </listitem>
     </varlistentry>
@@ -46,13 +49,20 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Длина в графемных единицах.
-       Если задано положительное значение <parameter>length</parameter>, возвращаемая строка будет содержать не более <parameter>length</parameter> единиц графемы,
-       начиная со значения <parameter>offset</parameter> (в зависимости от длины строки).
-       Если задано отрицательное значение <parameter>length</parameter>, то такое количество единиц графемы будет опущено в конце строки
-       (после того, как начальная позиция была вычислена, если параметр <parameter>offset</parameter> отрицательный).
-       Если <parameter>offset</parameter> обозначает позицию за пределами этого усечения, будет возвращена пустая строка.
+       Длина подстроки в графемных кластерах.
+       Положительное значение параметра <parameter>length</parameter> ограничит длину подстроки;
+       функция вернёт подстроку меньшей длины, если количество графемных кластеров с позиции <parameter>offset</parameter>
+       до конца строки окажется меньше значения <parameter>length</parameter>. При отрицательном значении параметра <parameter>length</parameter>
+       функция отбросит графемные кластеры с конца строки; при отрицательном значении смещения <parameter>offset</parameter>
+       усечение выполняется после вычисления начальной позиции.
+       При пересечении позиций смещения <parameter>offset</parameter> и усечения функция вернёт пустую строку.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>locale</parameter></term>
+     <listitem>
+      &intl.param.grapheme.locale;
      </listitem>
     </varlistentry>
    </variablelist>
@@ -62,7 +72,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает извлечённую часть <parameter>string</parameter>&return.falseforfailure;.
+   Функция возвращает подстроку, которую извлекла из строки <parameter>string</parameter>,&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -77,11 +87,12 @@
      </row>
     </thead>
     <tbody>
+     &intl.changelog.grapheme.locale;
      <row>
       <entry>8.0.0</entry>
       <entry>
-       Функция теперь последовательно прижимает выходящие за границы смещения к границе строки.
-       Ранее в некоторых случаях вместо пустой строки возвращалось значение &false;.
+       Функция теперь автоматически уменьшает или увеличивает значение смещения, которое выходит за пределы строки;
+       раньше при выходе смещения за границы строки вместо пустой строки возвращалось значение &false;.
       </entry>
      </row>
     </tbody>
@@ -92,16 +103,20 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>grapheme_substr</function></title>
+   <title>Пример извлечения подстроки в графемных кластерах функцией <function>grapheme_substr</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-$char_a_ring_nfd = "a\xCC\x8A";  // 'LATIN SMALL LETTER A WITH RING ABOVE' (U+00E5) normalization form "D"
-$char_o_diaeresis_nfd = "o\xCC\x88"; // 'LATIN SMALL LETTER O WITH DIAERESIS' (U+00F6) normalization form "D"
+// Символ | Название | Кодовая точка | Форма нормализации
 
-print urlencode(grapheme_substr( "ao" . $char_a_ring_nfd . "bc" . $char_o_diaeresis_nfd . "O", 2, -1 ));
-?>
+// å: 'LATIN SMALL LETTER A WITH RING ABOVE', U+00E5, NFD
+$char_a_ring_nfd = "a\xCC\x8A";
+
+// ö: 'LATIN SMALL LETTER O WITH DIAERESIS', U+00F6, NFD
+$char_o_diaeresis_nfd = "o\xCC\x88";
+
+echo urlencode(grapheme_substr("ao" . $char_a_ring_nfd . "bc" . $char_o_diaeresis_nfd . "O", 2, -1));
 ]]>
    </programlisting>
   </example>
@@ -120,7 +135,7 @@ a%CC%8Abco%CC%88
     <member><function>grapheme_extract</function></member>
     <member>
      <link xlink:href="&uri.unicode.graphemes;">
-      Сегментация текста в Unicode: границы кластера графемы
+      Сегментация текста в Юникоде: Границы графемных кластеров
      </link>
     </member>
    </simplelist>
