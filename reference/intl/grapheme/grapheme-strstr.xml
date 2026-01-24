@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d25989728702c2f55c4666840d07683ed73ae24d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 9a8c593c09cf7d84085989e42f3b2b23536279db Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.grapheme-strstr" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>grapheme_strstr</refname>
-  <refpurpose>Возвращает часть строки haystack от первого появления needle до конца haystack</refpurpose>
+  <refpurpose>Возвращает часть строки относительно первого вхождения подстроки</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,9 +14,11 @@
    <methodparam><type>string</type><parameter>haystack</parameter></methodparam>
    <methodparam><type>string</type><parameter>needle</parameter></methodparam>
    <methodparam choice="opt"><type>bool</type><parameter>beforeNeedle</parameter><initializer>&false;</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>locale</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Возвращает часть строки haystack от первого появления needle до конца haystack (включая needle).
+   По умолчанию функция возвращает часть строки <parameter>haystack</parameter>
+   от первого вхождения подстроки до конца строки <parameter>haystack</parameter>.
   </para>
  </refsect1>
 
@@ -28,7 +30,7 @@
      <term><parameter>haystack</parameter></term>
      <listitem>
       <para>
-       Входная строка. Должна быть корректным UTF-8.
+       Строка по стандарту UTF-8, в которой требуется найти подстроку.
       </para>
      </listitem>
     </varlistentry>
@@ -36,7 +38,7 @@
      <term><parameter>needle</parameter></term>
      <listitem>
       <para>
-       Строка, которую нужно найти. Должна быть корректным UTF-8.
+       Подстрока по стандарту UTF-8, которую требуется найти.
       </para>
      </listitem>
     </varlistentry>
@@ -44,36 +46,66 @@
      <term><parameter>beforeNeedle</parameter></term>
      <listitem>
       <para>
-       Если &true;, функция <function>grapheme_strstr</function> возвращает часть <parameter>haystack</parameter>
-       перед первым появлением <parameter>needle</parameter> (исключая <parameter>needle</parameter>).
+       При передаче значения &true; функция <function>grapheme_strstr</function> возвращает часть строки <parameter>haystack</parameter>
+       до первого вхождения подстроки <parameter>needle</parameter>, не включая подстроку <parameter>needle</parameter>.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>locale</parameter></term>
+     <listitem>
+      &intl.param.grapheme.locale;
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
 
-
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает часть строки <parameter>haystack</parameter> или &false;, если вхождение <parameter>needle</parameter> не найдено.
+   Функция возвращает часть строки <parameter>haystack</parameter>.
+   Функция <function>grapheme_strstr</function> вернёт &false;, если не найдёт подстроку <parameter>needle</parameter>.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     &intl.changelog.grapheme.locale;
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>grapheme_strstr</function></title>
+   <title>Пример извлечения части строки функцией <function>grapheme_strstr</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-$char_a_ring_nfd = "a\xCC\x8A";  // 'LATIN SMALL LETTER A WITH RING ABOVE' (U+00E5) normalization form "D"
-$char_o_diaeresis_nfd = "o\xCC\x88"; // 'LATIN SMALL LETTER O WITH DIAERESIS' (U+00F6) normalization form "D"
+// Символ | Название | Кодовая точка | Форма нормализации
 
-print urlencode(grapheme_stristr( $char_a_ring_nfd . $char_o_diaeresis_nfd . $char_a_ring_nfd, $char_o_diaeresis_nfd));
+// å: 'LATIN SMALL LETTER A WITH RING ABOVE', U+00E5, NFD
+$char_a_ring_nfd = "a\xCC\x8A";
 
+// ö: 'LATIN SMALL LETTER O WITH DIAERESIS', U+00F6, NFD
+$char_o_diaeresis_nfd = "o\xCC\x88";
+
+print urlencode(grapheme_strstr(
+    $char_a_ring_nfd . $char_o_diaeresis_nfd . $char_a_ring_nfd,
+    $char_o_diaeresis_nfd
+));
 ?>
 ]]>
    </programlisting>
@@ -97,13 +129,14 @@ o%CC%88a%CC%8A
     <member><function>grapheme_strrpos</function></member>
     <member>
      <link xlink:href="&uri.unicode.graphemes;">
-      Сегментация текста в Unicode: границы кластера графемы
+      Сегментация текста в Юникоде: Границы графемных кластеров
      </link>
     </member>
    </simplelist>
   </para>
  </refsect1>
 </refentry>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
