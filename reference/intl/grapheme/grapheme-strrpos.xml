@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2245ff665ae4b3037728ee52c247b409ad75de35 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 9a8c593c09cf7d84085989e42f3b2b23536279db Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.grapheme-strrpos" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>grapheme_strrpos</refname>
-  <refpurpose>Находит позицию (в единицах графемы) последнего вхождения строки</refpurpose>
+  <refpurpose>Вычисляет позицию последнего вхождения подстроки в графемных кластерах</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -14,11 +14,12 @@
    <methodparam><type>string</type><parameter>haystack</parameter></methodparam>
    <methodparam><type>string</type><parameter>needle</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>offset</parameter><initializer>0</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>locale</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Находит позицию (в единицах графемы) последнего вхождения строки.
+   Функция находит позицию последнего вхождения подстроки. Позиция вычисляется в графемных кластерах.
   </para>
-  </refsect1>
+ </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
@@ -28,7 +29,7 @@
      <term><parameter>haystack</parameter></term>
      <listitem>
       <para>
-       Строка для поиска. Должна быть корректным UTF-8.
+       Строка по стандарту UTF-8, в которой требуется найти подстроку.
       </para>
      </listitem>
     </varlistentry>
@@ -36,7 +37,7 @@
      <term><parameter>needle</parameter></term>
      <listitem>
       <para>
-       Строка, которую нужно найти. Должна быть корректным UTF-8.
+       Подстрока по стандарту UTF-8, которую требуется найти.
       </para>
      </listitem>
     </varlistentry>
@@ -44,37 +45,74 @@
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Необязательный параметр <parameter>offset</parameter> позволяет указать, где в <parameter>haystack</parameter> начинать поиск в виде смещения в единицах графемы (не в байтах или символах).
-       Если смещение отрицательное, оно обрабатывается относительно конца строки.
-       Возвращённая позиция по-прежнему относительно начала <parameter>haystack</parameter>, независимо от значения <parameter>offset</parameter>.
+       Необязательный параметр <parameter>offset</parameter> указывает смещение,
+       с которого начнётся поиск в строке <parameter>haystack</parameter>. Смещение вычисляется в графемных кластерах, а не в байтах или символах.
+       Отрицательные смещения отсчитываются с конца строки,
+       но позиция по-прежнему вычисляется с начала строки <parameter>haystack</parameter>, независимо от значения параметра <parameter>offset</parameter>.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>locale</parameter></term>
+     <listitem>
+      &intl.param.grapheme.locale;
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
 
-
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает позицию как целое число. Если вхождение <parameter>needle</parameter> не найдено,
-   функция <function>grapheme_strrpos</function> вернёт &false;.
+   Функция возвращает позицию в виде целого числа. Функция <function>grapheme_strrpos</function>
+   вернёт &false;, если не найдёт подстроку <parameter>needle</parameter>.
   </para>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     &intl.changelog.grapheme.locale;
+     <row>
+      <entry>7.1.0</entry>
+      <entry>
+       Параметр <parameter>offset</parameter> теперь поддерживает отрицательные значения.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>grapheme_strrpos</function></title>
+   <title>Пример поиска позиции последнего вхождения подстроки функцией <function>grapheme_strrpos</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
-$char_a_ring_nfd = "a\xCC\x8A";  // 'LATIN SMALL LETTER A WITH RING ABOVE' (U+00E5) normalization form "D"
-$char_o_diaeresis_nfd = "o\xCC\x88"; // 'LATIN SMALL LETTER O WITH DIAERESIS' (U+00F6) normalization form "D"
 
-print grapheme_strrpos( $char_a_ring_nfd . $char_o_diaeresis_nfd . $char_o_diaeresis_nfd, $char_o_diaeresis_nfd);
-?>
+// Символ | Название | Кодовая точка | Форма нормализации
+
+// å: 'LATIN SMALL LETTER A WITH RING ABOVE', U+00E5, NFD
+$char_a_ring_nfd = "a\xCC\x8A";
+
+// ö: 'LATIN SMALL LETTER O WITH DIAERESIS', U+00F6, NFD
+$char_o_diaeresis_nfd = "o\xCC\x88";
+
+print grapheme_strrpos(
+    $char_a_ring_nfd . $char_o_diaeresis_nfd . $char_o_diaeresis_nfd,
+    $char_o_diaeresis_nfd
+);
 ]]>
    </programlisting>
   </example>
@@ -97,7 +135,7 @@ print grapheme_strrpos( $char_a_ring_nfd . $char_o_diaeresis_nfd . $char_o_diaer
     <member><function>grapheme_strstr</function></member>
     <member>
      <link xlink:href="&uri.unicode.graphemes;">
-      Сегментация текста в Unicode: границы кластера графемы
+      Сегментация текста в Юникоде: Границы графемных кластеров
      </link>
     </member>
    </simplelist>
