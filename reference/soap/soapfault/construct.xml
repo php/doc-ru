@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fe4e8b87d18f17394e7177917c498774b062448c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 9a8c593c09cf7d84085989e42f3b2b23536279db Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="soapfault.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>SoapFault::__construct</refname>
-  <refpurpose>Конструктор SoapFault</refpurpose>
+  <refpurpose>Инициализирует объект SoapFault</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,12 +17,13 @@
    <methodparam choice="opt"><type>mixed</type><parameter>details</parameter><initializer>&null;</initializer></methodparam>
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>name</parameter><initializer>&null;</initializer></methodparam>
    <methodparam choice="opt"><type>mixed</type><parameter>headerFault</parameter><initializer>&null;</initializer></methodparam>
+   <methodparam choice="opt"><type>string</type><parameter>lang</parameter><initializer>""</initializer></methodparam>
   </constructorsynopsis>
   <para>
-   Этот класс служит для отправки ответа на ошибку SOAP из обработчика PHP.
-   <parameter>faultcode</parameter>, <parameter>faultstring</parameter>,
-   <parameter>faultactor</parameter> и <parameter>detail</parameter> являются
-   стандартными элементами ошибки SOAP.
+   Метод инициализирует объект SOAP-ошибки, на основе которого PHP-обработчик серверной части сообщает о сбое.
+   Параметры <parameter>faultcode</parameter>, <parameter>faultstring</parameter>,
+   <parameter>faultactor</parameter> и <parameter>detail</parameter> —
+   стандартные элементы SOAP-ошибки.
   </para>
  </refsect1>
 
@@ -34,7 +35,7 @@
      <term><parameter>faultcode</parameter></term>
      <listitem>
       <para>
-       Код ошибки <classname>SoapFault</classname>.
+       Код ошибки для объекта <classname>SoapFault</classname>.
       </para>
      </listitem>
     </varlistentry>
@@ -42,7 +43,7 @@
      <term><parameter>faultstring</parameter></term>
      <listitem>
       <para>
-       Сообщение об ошибке <classname>SoapFault</classname>.
+       Сообщение об ошибке для объекта <classname>SoapFault</classname>.
       </para>
      </listitem>
     </varlistentry>
@@ -50,7 +51,7 @@
      <term><parameter>faultactor</parameter></term>
      <listitem>
       <para>
-       Строка идентифицирующая отправителя, вызвавшего ошибку.
+       Строка идентификации участнинка, который сгенерировал ошибку.
       </para>
      </listitem>
     </varlistentry>
@@ -58,7 +59,7 @@
      <term><parameter>detail</parameter></term>
      <listitem>
       <para>
-       Детальная информация о причинах ошибки.
+       Подробности о причинах ошибки.
       </para>
      </listitem>
     </varlistentry>
@@ -66,7 +67,7 @@
      <term><parameter>faultname</parameter></term>
      <listitem>
       <para>
-       Может быть использовано для выбора корректной кодировки ошибки из WSDL.
+       Название, которое указывает клиенту тип и структуру ошибки в WSDL-описании.
       </para>
      </listitem>
     </varlistentry>
@@ -74,23 +75,55 @@
      <term><parameter>headerfault</parameter></term>
      <listitem>
       <para>
-       Может быть использовано во время обработки заголовка SOAP для
-       сообщения об ошибке в заголовке ответа.
+       Параметр указывают, чтобы об ошибках в заголовках запроса
+       сообщить в SOAP-заголовке ответа.
       </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><parameter>lang</parameter></term>
+     <listitem>
+      <simpara>
+       Язык текста сообщения об ошибке в объекте SoapFault. Параметр учитывается только в протоколе SOAP версии 1.2.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
  </refsect1>
 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.5.0</entry>
+      <entry>
+       В метод добавили необязательный параметр <parameter>lang</parameter>,
+       чтобы объект ошибки соответствовал спецификации протокола SOAP 1.2.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Несколько примеров</title>
+    <title>Примеры</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function test($x)
 {
     return new SoapFault("Server", "Сообщение об ошибке");
@@ -99,13 +132,12 @@ function test($x)
 $server = new SoapServer(null, array('uri' => "http://test-uri/"));
 $server->addFunction("test");
 $server->handle();
-?>
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
-   Можно использовать механизм исключений PHP для сообщения об ошибках SOAP.
+   SOAP-ошибки обрабатывают через механизм исключений PHP.
   </para>
   <para>
    <example>
@@ -113,6 +145,7 @@ $server->handle();
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function test($x)
 {
     throw new SoapFault("Server", "Some error message");
@@ -121,7 +154,6 @@ function test($x)
 $server = new SoapServer(null, array('uri' => "http://test-uri/"));
 $server->addFunction("test");
 $server->handle();
-?>
 ]]>
     </programlisting>
    </example>
