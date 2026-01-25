@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 976425d4f6eec32448be3cc22ec063015921b753 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: b6c220c748034c8db2d007ef42b74b212ac2f1cd Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <appendix xml:id="memcached.constants" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.constants;
@@ -9,25 +9,89 @@
   <varlistentry xml:id="memcached.constants.opt-compression">
    <term><constant>Memcached::OPT_COMPRESSION</constant></term>
    <listitem>
-    <para>Разрешает или запрещает сжатие данных. Если разрешено, то записи длиннее
-     определённого порога (обычно 100 байт) будут прозрачно сжиматься при сохранении и
-     разжиматься при извлечении.</para>
-    <para>Тип: &boolean;, по умолчанию: &true;.</para>
+    <simpara>
+     Включает или отключает сжатие полезных данных. При включении значения элементов,
+     превышающие определённый порог (в настоящее время 2000 байт), будут сжиматься
+     при хранении и декомпрессироваться при извлечении прозрачным образом.
+     Порог можно настроить с помощью ini-параметра
+     <link linkend="ini.memcached.compression-threshold">memcached.compression_threshold</link>.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &true;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-compression-type">
+   <term><constant>Memcached::OPT_COMPRESSION_TYPE</constant></term>
+   <listitem>
+    <simpara>
+     Указывает алгоритм сжатия, который будет использоваться, если сжатие включено.
+     Допустимые алгоритмы: <constant>Memcached::COMPRESSION_FASTLZ</constant>,
+     <constant>Memcached::COMPRESSION_ZLIB</constant> и
+     <constant>Memcached::COMPRESSION_ZSTD</constant>.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <constant>Memcached::COMPRESSION_FASTLZ</constant>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.compression-fastlz">
+   <term><constant>Memcached::COMPRESSION_FASTLZ</constant></term>
+   <listitem>
+    <simpara>
+     Алгоритм сжатия FASTLZ.
+    </simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.compression-zlib">
+   <term><constant>Memcached::COMPRESSION_ZLIB</constant></term>
+   <listitem>
+    <simpara>Алгоритм сжатия ZLIB.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.compression-zstd">
+   <term><constant>Memcached::COMPRESSION_ZSTD</constant></term>
+   <listitem>
+    <simpara>
+     Алгоритм сжатия ZSTD.
+    </simpara>
+    <simpara>
+     Доступно с Memcached 3.3.0.
+    </simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-compression-level">
+   <term><constant>Memcached::OPT_COMPRESSION_LEVEL</constant></term>
+   <listitem>
+    <simpara>
+     Указывает уровень сжатия, который будет использоваться, если сжатие включено.
+    </simpara>
+    <simplelist>
+     <member><constant>Memcached::COMPRESSION_FASTLZ</constant> не поддерживает уровни сжатия.</member>
+     <member><constant>Memcached::COMPRESSION_ZSTD</constant>: минимальный уровень <literal>-22</literal>, а максимальный уровень – <literal>22</literal>.</member>
+     <member><constant>Memcached::COMPRESSION_ZLIB</constant>: минимальный уровень <literal>0</literal>, а максимальный уровень – <literal>9</literal>.</member>
+    </simplelist>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>3</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-serializer">
    <term><constant>Memcached::OPT_SERIALIZER</constant></term>
    <listitem>
+    <simpara>
+     Указывает сериализатор, который будет использоваться для сериализации нескалярных значений.
+     Допустимые сериализаторы: <constant>Memcached::SERIALIZER_PHP</constant>,
+     <constant>Memcached::SERIALIZER_IGBINARY</constant>,
+     <constant>Memcached::SERIALIZER_JSON</constant>,
+     <constant>Memcached::SERIALIZER_JSON_ARRAY</constant> и
+     <constant>Memcached::SERIALIZER_MSGPACK</constant>.
+    </simpara>
     <para>
-     Задаёт сериализатор для сериализации не скалярных значений.
-     Корректными значениями являются <constant>Memcached::SERIALIZER_PHP</constant>
-     и <constant>Memcached::SERIALIZER_IGBINARY</constant>. Последний допустим, только
-     если memcached собран с опцией
-     <literal>--enable-memcached-igbinary</literal> и загружен модуль
-     <literal>igbinary</literal>.
+     Тип: <type>int</type>, по умолчанию: <constant>Memcached::SERIALIZER_IGBINARY</constant> если доступно,
+     затем <constant>Memcached::SERIALIZER_MSGPACK</constant> если доступно,
+     затем <constant>Memcached::SERIALIZER_PHP</constant>.
     </para>
-    <para>Тип: &integer;, по умолчанию: <constant>Memcached::SERIALIZER_PHP</constant>.</para>
    </listitem>
   </varlistentry>
 
@@ -41,39 +105,73 @@
   <varlistentry xml:id="memcached.constants.serializer-igbinary">
    <term><constant>Memcached::SERIALIZER_IGBINARY</constant></term>
    <listitem>
-    <para>Сериализатор <link xlink:href="&url.igbinary;">igbinary</link>.
-     Вместо текстового представления он сохраняет данные в компактном бинарном
-     формате, что даёт выигрыш в размере и скорости работы.</para>
+    <simpara>
+     Сериализатор <link linkend="book.igbinary">igbinary</link>.
+     Вместо текстового представления он хранит структуры данных PHP
+     в компактной двоичной форме, что позволяет сэкономить место и время.
+    </simpara>
+    <simpara>
+     Сериализатор поддерживается только в том случае, если memcached настроен с помощью
+     опции <option>--enable-memcached-igbinary</option> и загружен модуль
+     <link linkend="intro.igbinary">igbinary</link>.
+    </simpara>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.serializer-json">
    <term><constant>Memcached::SERIALIZER_JSON</constant></term>
    <listitem>
-    <para>Сериализатор JSON.</para>
+    <para>Сериализатор JSON. Сериализатор десериализует JSON в объект.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.serializer-json-array">
+   <term><constant>Memcached::SERIALIZER_JSON_ARRAY</constant></term>
+   <listitem>
+    <simpara>
+     Сериализатор массива JSON.
+     Сериализатор десериализует JSON в ассоциативный массив.
+    </simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.serializer-msgpack">
+   <term><constant>Memcached::SERIALIZER_MSGPACK</constant></term>
+   <listitem>
+    <simpara>
+     Сериализатор <link xlink:href="&url.pecl.package;msgpack">MessagePack</link>.
+    </simpara>
+    <simpara>
+     Сериализатор поддерживается только в том случае, если memcached настроен с помощью
+     опции <option>--enable-memcached-msgpack</option> и загружен модуль <literal>msgpack</literal>.
+    </simpara>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-prefix-key">
    <term><constant>Memcached::OPT_PREFIX_KEY</constant></term>
    <listitem>
-    <para>Используется для создания "домена" для ваших ключей. Заданное здесь
+    <simpara>
+     Используется для создания "домена" для ваших ключей. Заданное здесь
      значение будет использоваться в качестве префикса для всех ключей. Значение
      не может быть длиннее <literal>128</literal> символов и, соответственно, максимальная
      длина ключей будет уменьшена. Префикс применяется только для обычных ключей, но
-     не для серверных ключей.</para>
-    <para>Тип: &string;, по умолчанию: <literal>""</literal>.</para>
+     не для серверных ключей.
+    </simpara>
+    <para>Тип: <type>string</type>, по умолчанию: <literal>""</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-hash">
    <term><constant>Memcached::OPT_HASH</constant></term>
    <listitem>
-    <para>Задаёт алгоритм хеширования для ключей. Можно задавать константами
+    <simpara>
+     Задаёт алгоритм хеширования для ключей. Можно задавать константами
      <constant>Memcached::HASH_<replaceable>*</replaceable></constant>. Каждый алгоритм хеширования имеет
      свои достоинства и недостатки. Используйте значение по умолчанию, если не уверены
-     или вам всё равно.</para>
-    <para>Тип: &integer;, по умолчанию: <constant>Memcached::HASH_DEFAULT</constant></para>
+     или вам всё равно.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <constant>Memcached::HASH_DEFAULT</constant></para>
    </listitem>
   </varlistentry>
 
@@ -143,11 +241,13 @@
   <varlistentry xml:id="memcached.constants.opt-distribution">
    <term><constant>Memcached::OPT_DISTRIBUTION</constant></term>
    <listitem>
-    <para>Задаёт способ распределения ключей по серверам.
+    <simpara>
+     Задаёт способ распределения ключей по серверам.
      В данный момент поддерживаются методы модульного и консистентного
      хеширования. Консистентное хеширование даёт лучшее распределение и
-     позволяет добавлять сервера в кластер с минимальными потерями кеша.</para>
-    <para>Тип: &integer;, по умолчанию: <constant>Memcached::DISTRIBUTION_MODULA.</constant></para>
+     позволяет добавлять сервера в кластер с минимальными потерями кеша.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <constant>Memcached::DISTRIBUTION_MODULA</constant>.</para>
    </listitem>
   </varlistentry>
 
@@ -165,10 +265,20 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry xml:id="memcached.constants.distribution-virtual-bucket">
+   <term><constant>Memcached::DISTRIBUTION_VIRTUAL_BUCKET</constant></term>
+   <listitem>
+    <simpara>
+     Алгоритм распределения хеш-ключей Virtual Bucket (также называемый vbucket).
+    </simpara>
+   </listitem>
+  </varlistentry>
+
   <varlistentry xml:id="memcached.constants.opt-libketama-compatible">
    <term><constant>Memcached::OPT_LIBKETAMA_COMPATIBLE</constant></term>
    <listitem>
-    <para>Включает или отключает совместимость с поведением типа libketama. Если
+    <para>
+     Включает или отключает совместимость с поведением типа libketama. Если
      включено, то алгоритм хеширования ключей устанавливается в MD5 и распределение
      ключей в режим консистентного хеширования на базе весов. Это полезно потому, что
      другие клиенты с поведением типа libketama (Python, Ruby и т.д.) с такими же
@@ -181,167 +291,325 @@
       следующих релизах.
      </para>
     </note>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-libketama-hash">
+   <term><constant>Memcached::OPT_LIBKETAMA_HASH</constant></term>
+   <listitem>
+    <simpara>
+     Указывает алгоритм хеширования для сопоставления хостов.
+    </simpara>
+    <para>Тип: <type>int</type>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-tcp-keepalive">
+   <term><constant>Memcached::OPT_TCP_KEEPALIVE</constant></term>
+   <listitem>
+    <simpara>
+     Включает функцию поддержания активности TCP.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-buffer-writes">
    <term><constant>Memcached::OPT_BUFFER_WRITES</constant></term>
    <listitem>
-    <para>Включает или отключает буферизованный ввод/вывод. Включение буферизации
+    <simpara>
+     Включает или отключает буферизованный ввод/вывод. Включение буферизации
      приводит к буферизации команд хранилищу вместо моментальной отправки.
      Любое действие по извлечению данных приведёт к немедленной отправке буфера
      на удалённый сервер. Выход или закрытие соединения также приводит к
-     немедленной отправке буфера.</para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+     немедленной отправке буфера.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-binary-protocol">
    <term><constant>Memcached::OPT_BINARY_PROTOCOL</constant></term>
    <listitem>
-    <para>Включает использование бинарного протокола. Учтите, что на уже открытом
-     соединении включить данную опцию не получится.</para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    <simpara>
+     Включает использование бинарного протокола. Учтите, что на уже открытом
+     соединении включить данную опцию не получится.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-no-block">
    <term><constant>Memcached::OPT_NO_BLOCK</constant></term>
    <listitem>
-    <para>Включает или отключает асинхронный ввод/вывод. Это самый быстрый транспорт
-     для функций хранения.</para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    <simpara>
+     Включает или отключает асинхронный ввод/вывод. Это самый быстрый транспорт
+     для функций хранения.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-noreply">
    <term><constant>Memcached::OPT_NOREPLY</constant></term>
    <listitem>
-    <para>
+    <simpara>
      Включает или отключает игнорирование результата функций хранения
      (set, add, replace, append, prepend, delete, increment, decrement и т.д.).
      Функции хранения будут отправлены, не тратя время на ожидание ответа (ответа не будет).
      Этот параметр не влияет на команды извлечения, такие как <function>Memcached::get</function>.
-    </para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-tcp-nodelay">
    <term><constant>Memcached::OPT_TCP_NODELAY</constant></term>
    <listitem>
-    <para>Включает или отключает опцию no-delay для сокетов соединения (в некоторых
-     случаях может дать прирост скорости).</para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    <simpara>
+     Включает или отключает опцию no-delay для сокетов соединения (в некоторых
+     случаях может дать прирост скорости).
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-socket-send-size">
    <term><constant>Memcached::OPT_SOCKET_SEND_SIZE</constant></term>
    <listitem>
-    <para>Максимальный размер буфера отправки для сокета в байтах.</para>
-    <para>Тип: &integer;, по умолчанию: зависит от настроек платформы/ядра.</para>
+    <simpara>Максимальный размер буфера отправки для сокета в байтах.</simpara>
+    <para>
+     Тип: <type>int</type>, по умолчанию: зависит от настроек платформы/ядра.
+    </para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-socket-recv-size">
    <term><constant>Memcached::OPT_SOCKET_RECV_SIZE</constant></term>
    <listitem>
-    <para>Максимальный размер буфера приёма для сокета в байтах.</para>
-    <para>Тип: &integer;, по умолчанию: зависит от настроек платформы/ядра.</para>
+    <simpara>Максимальный размер буфера приёма для сокета в байтах.</simpara>
+    <para>
+     Тип: <type>int</type>, по умолчанию: зависит от настроек платформы/ядра.
+    </para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-connect-timeout">
    <term><constant>Memcached::OPT_CONNECT_TIMEOUT</constant></term>
    <listitem>
-    <para>В неблокирующем режиме задаёт время ожидания соединения для сокета в миллисекундах.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>1000</literal>.</para>
+    <simpara>
+     В неблокирующем режиме задаёт время ожидания соединения для сокета в миллисекундах.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>1000</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-retry-timeout">
    <term><constant>Memcached::OPT_RETRY_TIMEOUT</constant></term>
    <listitem>
-    <para>Задержка в секундах перед попыткой повторного соединения после ошибки.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>0</literal>.</para>
+    <simpara>
+     Время в секундах, в течение которого следует ждать
+     перед повторной попыткой установления соединения.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>2</literal>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-dead-timeout">
+   <term><constant>Memcached::OPT_DEAD_TIMEOUT</constant></term>
+   <listitem>
+    <simpara>
+     Время в секундах, в течение которого следует ждать перед повторной попыткой
+     подключения к неработающим серверам.
+     <literal>0</literal> означает, что повторная попытка не будет выполняться.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>0</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-send-timeout">
    <term><constant>Memcached::OPT_SEND_TIMEOUT</constant></term>
    <listitem>
-    <para>Время ожидания отправки для сокета в микросекундах. В случаях, когда вы не можете
+    <simpara>
+     Время ожидания отправки для сокета в микросекундах. В случаях, когда вы не можете
      использовать неблокирующий ввод/вывод это поможет вам сохранить время ожидания при
-     отсылке данных.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>0</literal>.</para>
+     отсылке данных.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>0</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-recv-timeout">
    <term><constant>Memcached::OPT_RECV_TIMEOUT</constant></term>
    <listitem>
-    <para>Время ожидания чтения для сокета в микросекундах. В случаях, когда вы не можете
+    <simpara>
+     Время ожидания чтения для сокета в микросекундах. В случаях, когда вы не можете
      использовать неблокирующий ввод/вывод это поможет вам сохранить время ожидания при
-     чтении данных.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>0</literal>.</para>
+     чтении данных.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>0</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-poll-timeout">
    <term><constant>Memcached::OPT_POLL_TIMEOUT</constant></term>
    <listitem>
-    <para>Период опроса сокета в миллисекундах.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>1000</literal>.</para>
+    <simpara>Время ожидания опроса соединения, в миллисекундах.</simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>1000</literal>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-cache-lookups">
    <term><constant>Memcached::OPT_CACHE_LOOKUPS</constant></term>
    <listitem>
-    <para>Разрешает или запрещает кешировать результаты запросов к DNS.</para>
-    <para>Тип: &boolean;, по умолчанию: &false;.</para>
+    <simpara>Включает или отключает кеширование DNS-запросов.</simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.opt-server-failure-limit">
    <term><constant>Memcached::OPT_SERVER_FAILURE_LIMIT</constant></term>
    <listitem>
-    <para>Задаёт максимальное количество неудачных попыток соединиться с сервером.
-     После достижения этого предела сервер будет удалён.</para>
-    <para>Тип: &integer;, по умолчанию: <literal>0</literal>.</para>
+    <simpara>
+     Указывает предел неудачных попыток подключения к серверу.
+     Сервер будет удалён после такого количества непрерывных неудачных попыток подключения.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>5</literal>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-server-timeout-limit">
+   <term><constant>Memcached::OPT_SERVER_TIMEOUT_LIMIT</constant></term>
+   <listitem>
+    <simpara>
+     Указывает предельное время ожидания попыток подключения к серверу.
+     Сервер будет удалён после стольких последовательных таймаутов подключения.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>0</literal>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-auto-eject-hosts">
+   <term><constant>Memcached::OPT_AUTO_EJECT_HOSTS</constant></term>
+   <listitem>
+    <para>
+     Удаляет отключённые серверы из списка. Используется вместе с
+     <constant>Memcached::OPT_SERVER_FAILURE_LIMIT</constant> и
+     <constant>Memcached::OPT_SERVER_TIMEOUT_LIMIT</constant>.
+    </para>
+    <note>
+     <para>
+      Опция заменена на
+      <constant>Memcached::OPT_REMOVE_FAILED_SERVERS</constant>.
+     </para>
+    </note>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-verify-key">
+   <term><constant>Memcached::OPT_VERIFY_KEY</constant></term>
+   <listitem>
+    <simpara>
+     Включает проверку ключей memcached.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-use-udp">
+   <term><constant>Memcached::OPT_USE_UDP</constant></term>
+   <listitem>
+    <simpara>
+     Использует UDP вместо TCP.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-number-of-replicas">
+   <term><constant>Memcached::OPT_NUMBER_OF_REPLICAS</constant></term>
+   <listitem>
+    <simpara>
+     Количество реплик каждого элемента, хранящихся на разных серверах.
+    </simpara>
+    <para>Тип: <type>int</type>, по умолчанию: <literal>0</literal>.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-randomize-replica-reads">
+   <term><constant>Memcached::OPT_RANDOMIZE_REPLICA_READS</constant></term>
+   <listitem>
+    <simpara>
+     Рандомизирует сервер чтения реплик.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.opt-remove-failed-servers">
+   <term><constant>Memcached::OPT_REMOVE_FAILED_SERVERS</constant></term>
+   <listitem>
+    <simpara>
+     Удаляет отключённые серверы из списка. Используется вместе с
+     <constant>Memcached::OPT_SERVER_FAILURE_LIMIT</constant> и
+     <constant>Memcached::OPT_SERVER_TIMEOUT_LIMIT</constant>.
+    </simpara>
+    <para>Тип: <type>bool</type>, по умолчанию: &false;.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.have-igbinary">
    <term><constant>Memcached::HAVE_IGBINARY</constant></term>
    <listitem>
-    <para>Указывает, доступна ли поддержка сериализатора igbinary.</para>
-    <para>Тип: &boolean;.</para>
+    <simpara>Указывает, доступна ли поддержка сериализатора igbinary.</simpara>
+    <para>Тип: <type>bool</type>.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.have-json">
    <term><constant>Memcached::HAVE_JSON</constant></term>
    <listitem>
-    <para>Указывает, доступна ли поддержка сериализатора JSON.</para>
-    <para>Тип: &boolean;.</para>
+    <simpara>Указывает, доступна ли поддержка сериализатора JSON.</simpara>
+    <para>Тип: <type>bool</type>.</para>
    </listitem>
   </varlistentry>
+
   <varlistentry xml:id="memcached.constants.have-msgpack">
    <term><constant>Memcached::HAVE_MSGPACK</constant></term>
    <listitem>
-    <para>Указывает, доступна ли поддержка сериализатора msgpack.</para>
-    <para>Type: &boolean;.</para>
+    <simpara>Указывает, доступна ли поддержка сериализатора MessagePack.</simpara>
+    <para>Тип: <type>bool</type>.</para>
     <para>Доступно с Memcached 3.0.0.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.have-zstd">
+   <term><constant>Memcached::HAVE_ZSTD</constant></term>
+   <listitem>
+    <simpara>Indicates whether ZSTD compression support is available.</simpara>
+    <para>Type: <type>bool</type>.</para>
+    <para>Доступно с Memcached 3.3.0.</para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.have-encoding">
+   <term><constant>Memcached::HAVE_ENCODING</constant></term>
+   <listitem>
+    <simpara>
+     Указывает, поддерживается ли шифрование данных с помощью
+     <methodname>Memcached::setEncodingKey</methodname>.
+    </simpara>
+    <para>Тип: <type>bool</type>.</para>
+    <para>Доступно с Memcached 3.1.0.</para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.have-session">
    <term><constant>Memcached::HAVE_SESSION</constant></term>
    <listitem>
-    <para>Type: &boolean;.</para>
+    <para>Тип: <type>bool</type>.</para>
     <para>Доступно с Memcached 3.0.0.</para>
    </listitem>
   </varlistentry>
@@ -349,7 +617,7 @@
   <varlistentry xml:id="memcached.constants.have-sasl">
    <term><constant>Memcached::HAVE_SASL</constant></term>
    <listitem>
-    <para>Type: &boolean;.</para>
+    <para>Тип: <type>bool</type>.</para>
     <para>Доступно с Memcached 3.0.0.</para>
    </listitem>
   </varlistentry>
@@ -357,19 +625,24 @@
   <varlistentry xml:id="memcached.constants.get-extended">
    <term><constant>Memcached::GET_EXTENDED</constant></term>
    <listitem>
-    <para>Флаг для <function>Memcached::get</function>, <function>Memcached::getMulti</function> и
+    <para>
+     Флаг для <function>Memcached::get</function>, <function>Memcached::getMulti</function> и
      <function>Memcached::getMultiByKey</function> дл того, чтобы также возвращались
-     значения токена CAS.</para>
+     значения токена CAS.
+    </para>
     <para>Доступно с Memcached 3.0.0.</para>
    </listitem>
   </varlistentry>
+
   <varlistentry xml:id="memcached.constants.get-preserve-order">
    <term><constant>Memcached::GET_PRESERVE_ORDER</constant></term>
    <listitem>
-    <para>Флаг для <function>Memcached::getMulti</function> и
+    <para>
+     Флаг для <function>Memcached::getMulti</function> и
      <function>Memcached::getMultiByKey</function> для гарантированного
      возвращения ключей в том же порядке, как они были запрошены. Несуществующие
-     ключи будут возвращены со значениями &null;.</para>
+     ключи будут возвращены со значениями &null;.
+    </para>
    </listitem>
   </varlistentry>
 
@@ -440,16 +713,20 @@
   <varlistentry xml:id="memcached.constants.res-notstored">
    <term><constant>Memcached::RES_NOTSTORED</constant></term>
    <listitem>
-    <para>Элемент не сохранён: но не из-за ошибки. Обычно такое означает, что
+    <para>
+     Элемент не сохранён: но не из-за ошибки. Обычно такое означает, что
      не соблюдены предусловия команд "add" или "replace" либо что
-     элемент находится в очереди на удаление.</para>
+     элемент находится в очереди на удаление.
+    </para>
    </listitem>
   </varlistentry>
 
   <varlistentry xml:id="memcached.constants.res-notfound">
    <term><constant>Memcached::RES_NOTFOUND</constant></term>
    <listitem>
-    <para>Элемент с заданным ключом не найден (при операциях "get" или "cas").</para>
+    <para>
+     Элемент с заданным ключом не найден (при операциях "get" или "cas").
+    </para>
    </listitem>
   </varlistentry>
 
@@ -509,6 +786,76 @@
    </listitem>
   </varlistentry>
 
+  <varlistentry xml:id="memcached.constants.res-stored">
+   <term><constant>Memcached::RES_STORED</constant></term>
+   <listitem>
+    <simpara>Элемент сохранён.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-deleted">
+   <term><constant>Memcached::RES_DELETED</constant></term>
+   <listitem>
+    <simpara>Элемент удалён.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-stat">
+   <term><constant>Memcached::RES_STAT</constant></term>
+   <listitem>
+    <simpara>Статистика.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-item">
+   <term><constant>Memcached::RES_ITEM</constant></term>
+   <listitem>
+    <simpara>Элемент.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-not-supported">
+   <term><constant>Memcached::RES_NOT_SUPPORTED</constant></term>
+   <listitem>
+    <simpara>Не поддерживается.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-fetch-notfinished">
+   <term><constant>Memcached::RES_FETCH_NOTFINISHED</constant></term>
+   <listitem>
+    <simpara>Загрузка не завершена.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-server-marked-dead">
+   <term><constant>Memcached::RES_SERVER_MARKED_DEAD</constant></term>
+   <listitem>
+    <simpara>Сервер помечен как неработающий.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-unknown-stat-key">
+   <term><constant>Memcached::RES_UNKNOWN_STAT_KEY</constant></term>
+   <listitem>
+    <simpara>Неизвестный ключ статистики.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-invalid-host-protocol">
+   <term><constant>Memcached::RES_INVALID_HOST_PROTOCOL</constant></term>
+   <listitem>
+    <simpara>Недопустимый протокол хоста.</simpara>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry xml:id="memcached.constants.res-memory-allocation-failure">
+   <term><constant>Memcached::RES_MEMORY_ALLOCATION_FAILURE</constant></term>
+   <listitem>
+    <simpara>Ошибка выделения памяти.</simpara>
+   </listitem>
+  </varlistentry>
+
   <varlistentry xml:id="memcached.constants.res-connection-socket-create-failure">
    <term><constant>Memcached::RES_CONNECTION_SOCKET_CREATE_FAILURE</constant></term>
    <listitem>
@@ -522,6 +869,7 @@
     <para>Проблемы с данными: не удаётся сжать/разжать или сериализовать/десериализовать значение.</para>
    </listitem>
   </varlistentry>
+
   <varlistentry xml:id="memcached.constants.res-auth-problem">
    <term><constant>Memcached::RES_AUTH_PROBLEM</constant></term>
    <listitem>
@@ -570,6 +918,7 @@
     <para>Доступно с Memcached 3.0.0.</para>
    </listitem>
   </varlistentry>
+
  </variablelist>
 </appendix>
 <!-- Keep this comment at the end of the file
