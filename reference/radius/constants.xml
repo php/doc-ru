@@ -24,7 +24,7 @@
 
   <simpara>
    Ряд функций службы RADIUS принимает флаги опций как битовые маски.
-   Константы, представляющие эти фалги, перечислены ниже.
+   Константы, представляющие эти флаги, перечислены ниже.
   </simpara>
 
   <variablelist>
@@ -81,7 +81,7 @@
       <link linkend="constant.radius-chap-password"><constant>RADIUS_CHAP_PASSWORD</constant></link>
       или
       <link linkend="constant.radius-state"><constant>RADIUS_STATE</constant></link>,
-      и должны включать атрибут
+      и рекомендуется включать атрибут
       <link linkend="constant.radius-user-name"><constant>RADIUS_USER_NAME</constant></link>.
      </simpara>
     </listitem>
@@ -320,7 +320,7 @@ radius_put_attr($radh, RADIUS_CHAP_PASSWORD, pack('C', $ident).$cp);
 // Добавляем атрибут Chap-Challenge
 radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
 
-/* Теперь нужно добавить оставшиеся аттриубты
+/* Теперь нужно добавить оставшиеся атрибуты
  * и вызывать функцию radius_send_request(). */
 
 ?>
@@ -349,9 +349,9 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут NAS-Port. Ожидается, что значение будет физическим портом
-      клиента RADIUS в виде целого числа. Атрибут устанавливается функцией
-      <function>radius_put_addr</function>.
+      Атрибут NAS-Port. Значение атрибута должно быть физическим портом
+      пользователя на клиенте RADIUS в виде целого числа (<type>int</type>),
+      которое устанавливается функцией <function>radius_put_int</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -362,12 +362,14 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут Service-Type. Значение атрибута указывает на тип сервиса, который
-      запросил клиент, и ожидается, что значение будет целым числом, которое
-      устанавливается функцией <function>radius_put_addr</function>.
+      Атрибут Service-Type. Значение атрибута указывает на тип службы,
+      которую запрашивает пользователь; ожидается целое число
+      (<type>int</type>), которое можно установить функцией
+      <function>radius_put_int</function>.
      </simpara>
      <para>
-      Следующие константы представляют допустимые значения атрибута:
+      Для представления возможных значений этого атрибута предусмотрен ряд
+      констант. К ним относятся:
       <simplelist>
        <member><constant>RADIUS_LOGIN</constant></member>
        <member><constant>RADIUS_FRAMED</constant></member>
@@ -389,11 +391,10 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <para>
-      Атрибут Framed-Protocol. Ожидается, что значение атрибута будет
-      целым числом (<type>int</type>), которое указывает тип кадра
-      для доступа по пакетному протоколу,
-      и которое устанавливается функцией
-      radius_put_int(). Допустимые значения атрибута:
+      Атрибут Framed-Protocol. Значение атрибута указывает тип кадрирования
+      для доступа; ожидается целое число (<type>int</type>), которое можно
+      установить функцией <function>radius_put_int</function>.
+      Возможные значения атрибута включают следующие константы:
       <simplelist>
        <member><constant>RADIUS_PPP</constant></member>
        <member><constant>RADIUS_SLIP</constant></member>
@@ -425,10 +426,10 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут Framed-IP-Netmask.  Атрибут должен содержать маску пользовательской
-      сети в виде целого числа.
-      Атрибут устанавливается функцией <function>radius_put_addr</function> и извлекается
-      функцией <function>radius_cvt_addr</function>
+      Атрибут Framed-IP-Netmask. Значение атрибута должно быть маской
+      сети пользователя, представленной в виде целого числа (<type>int</type>),
+      которое можно установить функцией <function>radius_put_addr</function>
+      и извлечь функцией  <function>radius_cvt_addr</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -439,16 +440,18 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут Framed-Routing. Атрибут должен быть целым числом и содержать
-      метод маршрутизации. Атрибут устанавливается функцией <function>radius_put_addr</function>.
+      Атрибут Framed-Routing. Значение атрибута указывает метод
+      маршрутизации для пользователя; ожидается целое число
+      (<type>int</type>), которое можно установить функцией
+      <function>radius_put_int</function>.
      </simpara>
      <para>
-      Допустимые значения:
+      Возможные значения включают:
       <simplelist>
        <member><literal>0</literal>: Без маршрутизации</member>
        <member><literal>1</literal>: Посылка пакетов маршрутизации</member>
-       <member><literal>2</literal>: Ожидать пакеты маршрутизации</member>
-       <member><literal>3</literal>: Посылать и ожидать</member>
+       <member><literal>2</literal>: Прослушивание пакетов маршрутизации</member>
+       <member><literal>3</literal>: Отправка и прослушивание</member>
       </simplelist>
      </para>
     </listitem>
@@ -462,7 +465,7 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
      <simpara>
       Атрибут Filter-ID. Атрибут должен быть зависящей от реализации, человеко-читаемой
       строкой фильтров.
-      Атрибут устанавливается функцией <function>radius_put_addr</function>.
+      Атрибут устанавливается функцией <function>radius_put_attr</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -473,10 +476,9 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут Framed-MTU. Ожидается, что значение атрибута будет целым числом (<type>int</type>),
-      которое указыает максимальный размер полезного блока данных одного пакета, который протокол
-      умеет передавать без фрагментации данных, или MTU.
-      Атрибут устанавливается функцией <function>radius_put_addr</function>.
+      Атрибут Framed-MTU. Значение атрибута указывает MTU для пользователя;
+      ожидается целое число (<type>int</type>), которое можно установить
+      функцией <function>radius_put_int</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -487,9 +489,10 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <para>
-      Атрибут Framed-Compression. Целое число, которое указывает протокол сжатия.
-      Атрибут устанавливается функцией <function>radius_put_addr</function>
-      Допустимые значения:
+      Атрибут Framed-Compression. Значение атрибута указывает на используемый тип
+      сжатия; ожидается целое число (<type>int</type>), которое можно установить
+      функцией <function>radius_put_int</function>. Возможные значения атрибута
+      включают следующие константы:
       <simplelist>
        <member><constant>RADIUS_COMP_NONE</constant>: Без сжатия</member>
        <member><constant>RADIUS_COMP_VJ</constant>: Сжатие заголовков VJ TCP/IP</member>
@@ -509,9 +512,10 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Атрибут Login-IP-Host. Целое число, которое представляет IP-адрес, с которым соединяется
-      пользователь.
-      Атрибут устанавливается функцией <function>radius_put_addr</function>.
+      Атрибут Login-IP-Host. Значение атрибута должно быть IP-адресом для
+      подключения пользователя, представленным в виде целого числа
+      (<type>int</type>), которое можно установить функцией
+      <function>radius_put_addr</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -772,7 +776,7 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Канал пакетной передачи данных для стека протоклов Appletalk.
+      Канал пакетной передачи данных для стека протоколов Appletalk.
      </simpara>
     </listitem>
    </varlistentry>
@@ -783,7 +787,7 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Сеть пакетной передачи данных для стека протоклов Appletalk.
+      Сеть пакетной передачи данных для стека протоколов Appletalk.
      </simpara>
     </listitem>
    </varlistentry>
@@ -794,7 +798,7 @@ radius_put_attr($radh, RADIUS_CHAP_CHALLENGE, $challenge);
     </term>
     <listitem>
      <simpara>
-      Зона пакетной передачи данных для стека протоклов Appletalk.
+      Зона пакетной передачи данных для стека протоколов Appletalk.
      </simpara>
     </listitem>
    </varlistentry>
