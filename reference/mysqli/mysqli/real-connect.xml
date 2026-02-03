@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5bc68add3da3cd18c40f851e944b15095d3a26aa Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 71ebfcb54339612efc64861dcb0869e765be8aa3 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="mysqli.real-connect" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>mysqli::real_connect</refname>
   <refname>mysqli_real_connect</refname>
-  <refpurpose>Устанавливает соединение с MYSQL-сервером</refpurpose>
+  <refpurpose>Устанавливает соединение с MySQL-сервером</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -34,7 +34,8 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция устанавливает соединение с СУБД MySQL.
+   Открывает соединение с сервером базы данных MySQL
+   с дополнительными параметрами соединения.
   </para>
   <para>
    Эта функция отличается от функции <function>mysqli_connect</function>:
@@ -44,12 +45,6 @@
     <para>
      Для работы <function>mysqli_real_connect</function> необходим действительный
      объект, созданный функцией <function>mysqli_init</function>.
-    </para>
-   </listitem>
-   <listitem>
-    <para>
-     Функцией <function>mysqli_options</function> можно задать разные
-     настройки подключения.
     </para>
    </listitem>
    <listitem>
@@ -242,29 +237,15 @@
 <![CDATA[
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $mysqli = mysqli_init();
-if (!$mysqli) {
-    die('mysqli_init завершилась провалом');
-}
 
-if (!$mysqli->options(MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0')) {
-    die('Установка MYSQLI_INIT_COMMAND завершилась провалом');
-}
+$mysqli->options(MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0');
+$mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
 
-if (!$mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5)) {
-    die('Установка MYSQLI_OPT_CONNECT_TIMEOUT завершилась провалом');
-}
-
-if (!$mysqli->real_connect('localhost', 'my_user', 'my_password', 'my_db')) {
-    die('Ошибка подключения (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
-}
+$mysqli->real_connect('localhost', 'my_user', 'my_password', 'my_db', null, null, MYSQLI_CLIENT_COMPRESS|MYSQLI_CLIENT_FOUND_ROWS);
 
 echo 'Выполнено... ' . $mysqli->host_info . "\n";
-
-$mysqli->close();
-
-?>
 ]]>
    </programlisting>
    <para>&style.oop; при расширении класса mysqli</para>
@@ -272,33 +253,21 @@ $mysqli->close();
 <![CDATA[
 <?php
 
-class foo_mysqli extends mysqli
-{
+class foo_mysqli extends mysqli {
     public function __construct($host, $user, $pass, $db)
     {
         parent::__construct();
 
-        if (!parent::options(MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0')) {
-            die('Установка MYSQLI_INIT_COMMAND завершилась провалом');
-        }
+        parent::options(MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0');
+        parent::options(MYSQLI_OPT_CONNECT_TIMEOUT, 5);
 
-        if (!parent::options(MYSQLI_OPT_CONNECT_TIMEOUT, 5)) {
-            die('Установка MYSQLI_OPT_CONNECT_TIMEOUT завершилась провалом');
-        }
-
-        if (!parent::real_connect($host, $user, $pass, $db)) {
-            die('Ошибка подключения (' . mysqli_connect_errno() . ') '
-                    . mysqli_connect_error());
-        }
+        parent::real_connect($host, $user, $pass, $db, null, null, MYSQLI_CLIENT_COMPRESS|MYSQLI_CLIENT_FOUND_ROWS);
     }
 }
 
 $db = new foo_mysqli('localhost', 'my_user', 'my_password', 'my_db');
 
 echo 'Выполнено... ' . $db->host_info . "\n";
-
-$db->close();
-
 ?>
 ]]>
    </programlisting>
@@ -307,29 +276,15 @@ $db->close();
 <![CDATA[
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $link = mysqli_init();
 
-if (!$link) {
-    die('mysqli_init завершилась провалом');
-}
+mysqli_options($link, MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0');
+mysqli_options($link, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
 
-if (!mysqli_options($link, MYSQLI_INIT_COMMAND, 'SET AUTOCOMMIT = 0')) {
-    die('Установка MYSQLI_INIT_COMMAND завершилась провалом');
-}
-
-if (!mysqli_options($link, MYSQLI_OPT_CONNECT_TIMEOUT, 5)) {
-    die('Установка MYSQLI_OPT_CONNECT_TIMEOUT завершилась провалом');
-}
-
-if (!mysqli_real_connect($link, 'localhost', 'my_user', 'my_password', 'my_db')) {
-    die('Ошибка подключения (' . mysqli_connect_errno() . ') '
-            . mysqli_connect_error());
-}
+mysqli_real_connect($link, 'localhost', 'my_user', 'my_password', 'my_db', null, null, MYSQLI_CLIENT_COMPRESS|MYSQLI_CLIENT_FOUND_ROWS);
 
 echo 'Выполнено... ' . mysqli_get_host_info($link) . "\n";
-
-mysqli_close($link);
-
 ?>
 ]]>
    </programlisting>
