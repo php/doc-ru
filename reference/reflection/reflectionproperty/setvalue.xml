@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0a8a502764676759e213265a3e1e675c43533dd1 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: c4aabaa0b97ef1ecc00cf2cd539ea186c6a855ae Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionproperty.setvalue" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -11,7 +11,7 @@
   &reftitle.description;
   <methodsynopsis role="ReflectionProperty">
    <modifier>public</modifier> <type>void</type><methodname>ReflectionProperty::setValue</methodname>
-   <methodparam><type>object</type><parameter>object</parameter></methodparam>
+   <methodparam><type class="union"><type>object</type><type>null</type></type><parameter>object</parameter></methodparam>
    <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <methodsynopsis>
@@ -23,9 +23,8 @@
   </para>
   <note>
    <simpara>
-    Начиная с PHP 8.3.0 вызов метода с единственным аргументом устарел,
-    вместо него вызывают метод
-    <methodname>ReflectionClass::setStaticPropertyValue</methodname>.
+    Чтобы установить статические значения свойств,
+    используйте метод <literal>ReflectionProperty::setValue(null, $value)</literal>.
    </simpara>
   </note>
  </refsect1>
@@ -38,8 +37,8 @@
      <term><parameter>object</parameter></term>
      <listitem>
       <para>
-       Чтобы метод изменил нестатическое свойство, в метод передают объект.
-       Если свойство статическое, <emphasis>нужно</emphasis> передать значение &null;.
+       Для статических свойств передайте &null;.
+       Для нестатических свойств передайте объект.
       </para>
      </listitem>
     </varlistentry>
@@ -76,9 +75,9 @@
      <row>
       <entry>8.3.0</entry>
       <entry>
-       Вызов метода с единственным аргументом устарел,
-       вместо него для изменения статического свойства вызывают
-       метод <methodname>ReflectionClass::setStaticPropertyValue</methodname>.
+       Вызов метода с одним аргументом является устаревшим,
+       вместо этого используйте <literal>ReflectionProperty::setValue(null, $value)</literal>
+       для статических свойств.
       </entry>
      </row>
      <row>
@@ -106,9 +105,7 @@
     <programlisting role="php">
 <![CDATA[
 <?php
-
-class Foo
-{
+class Foo {
     public static $staticProperty;
 
     public $property;
@@ -117,9 +114,10 @@ class Foo
 
 $reflectionClass = new ReflectionClass('Foo');
 
-// С PHP 8.3 больше не нужно вызывать метод setValue для установки
-// значения статического свойства, вместо него вызвают метод setStaticPropertyValue()
-$reflectionClass->setStaticPropertyValue('staticProperty', 'foo');
+// Начиная с PHP 8.3, для доступа к статическим свойствам необходимо передавать null
+// в качестве первого аргумента.
+$reflectionProperty = $reflectionClass->getProperty('staticProperty');
+$reflectionProperty->setValue(null, 'foo');
 var_dump(Foo::$staticProperty);
 
 $foo = new Foo;
