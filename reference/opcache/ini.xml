@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 87d6bb1bbd5f118f5b0cf0160438f06c0f91ea45 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 8ea24dc32374bf4f6b04005e317101e4c65a0214 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="opcache.configuration">
  &reftitle.runtime;
@@ -588,10 +588,168 @@
    <listitem>
     <simpara>
      Битовая маска, которая контролирует, какие шаги оптимизации выполняются.
-     По умолчанию применяются все безопасные оптимизации.
-     Изменение значения по умолчанию в основном полезно для отладки или разработки оптимизатора
-     (смотрите также описание директивы <link linkend="ini.opcache.opt_debug_level">opcache.opt_debug_level</link>).
+     Значением по умолчанию является <literal>0x7FFEBFFF</literal>, которое включает все безопасные оптимизации.
+     Отключение оптимизаций или включение небезопасных оптимизаций
+     в основном полезно для отладки/разработки оптимизатора.
     </simpara>
+    <simpara>
+     Каждый бит в битовой маске включает определённый этап оптимизации:
+    </simpara>
+    <table>
+     <title>Маска битов оптимизации</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Бит</entry>
+        <entry>Название</entry>
+        <entry>&Description;</entry>
+        <entry>По умолчанию</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+        <entry>0</entry>
+        <entry>PASS_1</entry>
+        <entry>Простая оптимизация Peephole</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>1</entry>
+        <entry>PASS_2</entry>
+        <entry>Не используется (объединён с PASS_1)</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>2</entry>
+        <entry>PASS_3</entry>
+        <entry>Простая оптимизация JuMP</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>3</entry>
+        <entry>PASS_4</entry>
+        <entry>Оптимизация Call</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>4</entry>
+        <entry>PASS_5</entry>
+        <entry>Оптимизация на основе графа управления потоком</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>5</entry>
+        <entry>PASS_6</entry>
+        <entry>Оптимизация на основе анализа потока данных</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>6</entry>
+        <entry>PASS_7</entry>
+        <entry>Следует ли использовать график вызовов для оптимизации на основе SSA</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>7</entry>
+        <entry>PASS_8</entry>
+        <entry>Редкое распространение условных констант</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>8</entry>
+        <entry>PASS_9</entry>
+        <entry>Оптимизация временных переменных</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>9</entry>
+        <entry>PASS_10</entry>
+        <entry>Удаление кодов операций NOP</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>10</entry>
+        <entry>PASS_11</entry>
+        <entry>Сжатие литералов</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>11</entry>
+        <entry>PASS_12</entry>
+        <entry>Предварительный расчет размера стека вызовов</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>12</entry>
+        <entry>PASS_13</entry>
+        <entry>Удаление неиспользуемых переменных</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>13</entry>
+        <entry>PASS_14</entry>
+        <entry>Удаление мёртвого кода</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>14</entry>
+        <entry>PASS_15</entry>
+        <entry>Сбор и замена объявлений констант (небезопасно)</entry>
+        <entry><emphasis>Off</emphasis></entry>
+       </row>
+       <row>
+        <entry>15</entry>
+        <entry>PASS_16</entry>
+        <entry>Встраивание тривиальных функций (часть оптимизации вызовов)</entry>
+        <entry>On</entry>
+       </row>
+       <row>
+        <entry>16</entry>
+        <entry>(Flag)</entry>
+        <entry>Игнорировать возможность перегрузки оператора (небезопасно)</entry>
+        <entry><emphasis>Off</emphasis></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+    <note>
+     <title>Безопасные и небезопасные оптимизации</title>
+     <simpara>
+      <emphasis>Безопасные оптимизации</emphasis> (включены по умолчанию) сохраняют точное
+      поведение кода PHP, одновременно повышая производительность. Включают удаление мёртвого кода,
+      сворачивание констант и оптимизацию переходов.
+     </simpara>
+     <simpara>
+      <emphasis>Небезопасные оптимизации</emphasis> (по умолчанию отключено) может изменить поведение
+      в пограничных случаях:
+     </simpara>
+     <itemizedlist>
+      <listitem>
+       <simpara>
+        <emphasis>Бит 14</emphasis>: Сбор констант. Константы подставляются во время компиляции,
+        игнорируя порядок объявления во время выполнения:
+       </simpara>
+       <informalexample>
+        <programlisting role="php">
+<![CDATA[
+<?php
+echo getA();         // Вывод: "hello" вместо того, чтобы вызывать ошибку
+const A = "hello";
+function getA() { return A; }
+]]>
+        </programlisting>
+       </informalexample>
+      </listitem>
+      <listitem>
+       <simpara>
+        <emphasis>Бит 16</emphasis>: Игнорирование перегрузки операторов.
+        Небезопасно при использовании классов с <literal>do_operation</literal>
+        (например, <link linkend="book.gmp">GMP</link>, <link linkend="book.bc">BCMath</link>) в арифметических операциях.
+        При объявлении типов оптимизатор может безопасно применять те же оптимизации.
+       </simpara>
+      </listitem>
+     </itemizedlist>
+    </note>
    </listitem>
   </varlistentry>
   <varlistentry xml:id="ini.opcache.inherited-hack">
