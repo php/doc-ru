@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e35fbbaa52702ebf45c5e7284351e136ed67f3bb Maintainer: shein Status: ready -->
+<!-- EN-Revision: da15b6674ac1900c7d065bd746a04b53d7e963bf Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.parse-str" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>parse_str</refname>
-  <refpurpose>Разбирает строку на переменные</refpurpose>
+  <refpurpose>Разбирает строку как аргументы URL-адреса</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,9 +15,10 @@
    <methodparam><type>array</type><parameter role="reference">result</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция разбирает аргумент <parameter>string</parameter> как строку запроса,
-   которую передали в URL-адресе, и устанавливает переменные в текущей
-   области видимости, или заносит переменные в массив, если указали параметр <parameter>result</parameter>.
+   Функция разбирает строку <parameter>string</parameter> как аргументы URL-адреса
+   и заполняет переменную <parameter>result</parameter> массивом, в котором ключами становятся названия, а значениями — значения аргументов.
+   При пропуске параметра <parameter>result</parameter> функция
+   создаст переменные в текущей области видимости.
   </para>
  </refsect1>
 
@@ -29,7 +30,7 @@
      <term><parameter>string</parameter></term>
      <listitem>
       <para>
-       Входная строка.
+       Строка в формате аргументов URL-адреса.
       </para>
      </listitem>
     </varlistentry>
@@ -37,15 +38,16 @@
      <term><parameter>result</parameter></term>
      <listitem>
       <para>
-       При вызове с двумя аргументами функция вместо присваивания переменных в текущей
-       области видимости сохраняет переменные как элементы массива
-       в параметре <parameter>result</parameter>.
+       Переменная по ссылке. Функция заполнит переменную парами
+       «ключ — значение», которые извлечёт из строки <parameter>string</parameter>.
+       При пропуске параметра <parameter>result</parameter>
+       каждый ключ станет отдельной переменной в локальной области видимости.
       </para>
       <warning>
        <para>
-        Вызывать функцию без параметра <parameter>result</parameter>
-        настоятельно <emphasis>НЕ РЕКОМЕНДУЮТ</emphasis>, такой вызов
-        <emphasis>УСТАРЕЛ</emphasis> начиная с PHP 7.2.
+        Начиная с PHP 7.2 вызов функции с одним аргументом <emphasis>УСТАРЕЛ</emphasis>;
+        разработчики языка <emphasis>НАСТОЯТЕЛЬНО</emphasis> рекомендуют вызывать функцию
+        с аргументом <parameter>result</parameter>.
         С PHP 8.0.0 параметр <parameter>result</parameter> стал <emphasis>обязательным</emphasis>.
        </para>
       </warning>
@@ -77,13 +79,13 @@
       <row>
       <entry>8.0.0</entry>
       <entry>
-       Параметр <parameter>result</parameter> сделали обязательным.
+       Параметр <parameter>result</parameter> стал обязательным.
       </entry>
      </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Вызов функции <function>parse_str</function> без второго параметра теперь
+        Вызов функции <function>parse_str</function> без второго аргумента теперь
         выдаёт ошибку уровня <constant>E_DEPRECATED</constant>.
        </entry>
       </row>
@@ -97,48 +99,36 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример разбора строки на переменный функцией <function>parse_str</function></title>
+    <title>Пример разбора аргументов URL-адреса функцией <function>parse_str</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $str = "first=value&arr[]=foo+bar&arr[]=baz";
 
-// Рекомендуется
+// Правильный вызов с двумя аргументами
 parse_str($str, $output);
-echo $output['first'];  // value
-echo $output['arr'][0]; // foo bar
-echo $output['arr'][1]; // baz
-
-// НЕ РЕКОМЕНДУЕТСЯ
-parse_str($str);
-echo $first;  // value
-echo $arr[0]; // foo bar
-echo $arr[1]; // baz
-
-?>
+echo $output['first'], PHP_EOL;  // value
+echo $output['arr'][0], PHP_EOL; // foo bar
+echo $output['arr'][1], PHP_EOL; // baz
 ]]>
     </programlisting>
    </example>
   </para>
   <para>
-   Поскольку в PHP названия переменных не содержат точек и пробелов,
-   такие символы преобразовываются в символ подчёркивания. Эти же правила
-   относятся к названиям ключей в массиве
-   <parameter>result</parameter>, при вызове с функции с двумя аргументами.
+   Функция заменит пробелы и точки в названиях аргументов URL-адреса символами подчёркивания
+   прежде чем создать ключи массива или локальные переменные,
+   поскольку в названия PHP-переменных нельзя включать пробелы или точки.
+   Эти же правила относятся к названиям ключей в массиве
+   <parameter>result</parameter> при вызове функции с двумя аргументами.
    <example>
-    <title>Пример искажения названий переменных и ключей функцией <function>parse_str</function></title>
+    <title>Пример искажения названия аргумента функцией <function>parse_str</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-parse_str("My Value=Something");
-echo $My_Value; // Выводит Something
-
 parse_str("My Value=Something", $output);
-echo $output['My_Value']; // Выводит Something
-
-?>
+echo $output['My_Value']; // Выводит: Something
 ]]>
     </programlisting>
    </example>
@@ -149,16 +139,26 @@ echo $output['My_Value']; // Выводит Something
 
   <note>
    <para>
-    Каждая переменная, которую функция создаёт, и каждое значение, которое возвращается
-    в массиве при вызове со вторым аргументом, обрабатывается функцией <function>urldecode</function>.
+    Директива <link linkend="ini.max-input-vars">max_input_vars</link> ограничивает количество входных переменных в запросе
+    и выдаёт ошибку уровня <constant>E_WARNING</constant>, если количество аргументов превышает лимит.
+    Функция <function>parse_str</function> не добавит в результат переменные за пределами ограничения.
+    Предустановленное значение директивы <link linkend="ini.max-input-vars">max_input_vars</link> — 1000.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Перед заполнением массива <parameter>result</parameter> функция
+    декодирует названия и значения аргументов URL-адреса по правилам функции <function>urldecode</function>.
+    Названия переменных, которые функция создаёт при пропуске второго аргумента, тоже декодируются.
    </para>
   </note>
   <note>
    <para>
-    Текущая строка запроса <literal>QUERY_STRING</literal>
-    доступна в переменной <varname>$_SERVER['QUERY_STRING']</varname>.
-    Рекомендуется также прочитать раздел
-    <link linkend="language.variables.external">о переменных из внешних источников</link>.
+    Строку аргументов текущего запроса содержит элемент
+    <varname>$_SERVER['QUERY_STRING']</varname>.
+    Дополнительную информацию о переменных запроса содержит раздел
+    «<link linkend="language.variables.external">Переменные из внешних источников</link>».
    </para>
   </note>
  </refsect1>
