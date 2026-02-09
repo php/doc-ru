@@ -1,70 +1,203 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: eac9eff7b66d8c2b168c25c72de0422126daf8cb Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 312c0c7b39d0722c419f6784cbda24823220dfb3 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.types.callable">
- <title>Callable как выражение или псевдотип, и callback-функции</title>
+ <title>Вызываемые выражения</title>
 
- <para>
-  Тип callback-функций, или функций обратного вызова, в параметрах и значении возврата
-  функций и методов, разрешается объявлять как <type>callable</type>.
- </para>
+ <simpara>
+  Вызываемое выражение — ссылка на функцию или метод, которая передаётся
+  в другую функцию как аргумент.
+  Параметрам, которые принимают вызываемые выражения, объявляют тип <type>callable</type>.
+ </simpara>
+ <informalexample>
+  <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
 
- <para>
-  Функции наподобие <function>call_user_func</function>
-  или <function>usort</function> принимают пользовательские
-  callback-функции как параметры. Callback-функциями бывают как простые
-  функции, так и методы объектов, включая статические методы классов.
- </para>
+function foo(callable $callback) {
+    $callback();
+}
+]]>
+  </programlisting>
+ </informalexample>
+ <simpara>
+  Отдельные функции наподобие <function>array_map</function>, <function>usort</function>
+  или <function>preg_replace_callback</function> принимают callback-функции как аргументы.
+ </simpara>
 
  <sect2 xml:id="language.types.callable.passing">
-  <title>Передача callable-выражений</title>
+  <title>Объявление вызываемых выражений</title>
 
-  <para>
-   В PHP функции передаются или как значение <type>string</type> с названием функции,
-   или как <link linkend="functions.first_class_callable_syntax">вызываемый объект первого класса</link>.
-   PHP поддерживает передачу как встроенных, так и пользовательских функций, но не языковых конструкций:
-   <function>array</function>, <function>echo</function>,
-   <function>empty</function>, <function>eval</function>,
-   <function>exit</function>, <function>isset</function>,
-   <function>list</function>, <function>print</function>
-   или <function>unset</function>.
-  </para>
+  <simpara>
+   Тип callable представляет значения или выражения, доступные для вызова как функция.
+   Вызываемые выражения вызывают как функции или передают как аргументы в функции или методы,
+   которые ожидают в параметре callback-функцию.
+   Свойствам классов нельзя объявлять тип <type>callable</type>;
+   вызываемым свойствам объявляют тип <classname>Closure</classname>.
+  </simpara>
 
-  <para>
-   Метод объекта (<type>object</type>) передаётся как массив, в котором
-   в элементе с индексом 0 содержится объект, а в элементе с индексом 1 — название метода.
-   Доступ к закрытым и защищённым методам разрешается изнутри класса.
-  </para>
+  <simpara>
+   Вызываемыми значениями становятся:
+  </simpara>
 
-  <para>
-   Статические методы класса передаются как массив,
-   в котором в элементе с индексом 0 вместо передачи объекта указывают название класса,
-   или как строка вида <literal>'ClassName::methodName'</literal>,
-   при этом объект класса не создают.
-  </para>
+  <itemizedlist>
+   <listitem>
+    <simpara>Объекты класса <classname>Closure</classname></simpara>
+   </listitem>
+   <listitem>
+    <simpara>Строки (&string;) с названием функции или квалифицированным названием метода</simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Массивы (&array;) с названием класса или объектом (<type>object</type>)
+     в элементе с индексом 0 и названием метода в элементе с индексом 1
+    </simpara>
+   </listitem>
+   <listitem>
+    <simpara>
+     Объекты (&object;), в классе которых объявили магический метод
+     <link linkend="object.invoke">__invoke()</link>
+    </simpara>
+   </listitem>
+  </itemizedlist>
 
-  <para>
-   Кроме пользовательских функций, в callback-параметр разрешается передавать
-   <link linkend="functions.anonymous">анонимные</link>
-   и <link linkend="functions.arrow">стрелочные функции</link>.
-  </para>
+  <simpara>
+   Объекты <classname>Closure</classname> создают синтаксисом
+   <link linkend="functions.anonymous">анонимных функций</link>,
+   <link linkend="functions.arrow">стрелочных функций</link>,
+   <link linkend="functions.first_class_callable_syntax">синтаксисом первоклассных вызываемых значений</link>
+   или методом <methodname>Closure::fromCallable</methodname>.
+  </simpara>
 
   <note>
-   <para>
-    Начиная с PHP 8.1.0 анонимные функции разрешается создавать
-    <link linkend="functions.first_class_callable_syntax">синтаксисом callable-выражений как объектов первого класса</link>.
-   </para>
+   <simpara>
+    <link linkend="functions.first_class_callable_syntax">Синтаксис первоклассных callable-значений</link>
+    доступен только с PHP 8.1.0.
+   </simpara>
   </note>
 
-  <para>
-   Объект, в классе которого реализовали магический метод
-   <link linkend="object.invoke">__invoke()</link>, разрешается передавать в callback-параметр.
-  </para>
+  <example>
+   <title>
+    Пример объявления функций обратного вызова, которые становятся объектами класса <classname>Closure</classname>
+   </title>
+   <programlisting role="php">
+<![CDATA[
+<?php
 
-  <para>
-   <example>
-    <title>Примеры callback-функций</title>
-    <programlisting role="php">
+// Синтаксис анонимных функций
+$double1 = function ($a) {
+    return $a * 2;
+};
+
+// Синтаксис первоклассных вызываемых значений
+function double_function($a) {
+    return $a * 2;
+}
+$double2 = double_function(...);
+
+// Синтаксис стрелочных функций
+$double3 = fn($a) => $a * 2;
+
+// Метод Closure::fromCallable
+$double4 = Closure::fromCallable('double_function');
+
+// Вызов замыкания как callback-функции
+// удваивает значение каждого элемента в диапазоне
+$new_numbers = array_map($double1, range(1, 5));
+print implode(' ', $new_numbers) . PHP_EOL;
+
+$new_numbers = array_map($double2, range(1, 5));
+print implode(' ', $new_numbers) . PHP_EOL;
+
+$new_numbers = array_map($double3, range(1, 5));
+print implode(' ', $new_numbers) . PHP_EOL;
+
+$new_numbers = array_map($double4, range(1, 5));
+print implode(' ', $new_numbers);
+]]>
+   </programlisting>
+   &example.outputs.81;
+   <screen>
+<![CDATA[
+2 4 6 8 10
+2 4 6 8 10
+2 4 6 8 10
+2 4 6 8 10
+]]>
+   </screen>
+  </example>
+
+  <simpara>
+   Вызываемые выражения объявляют как строку с названием функции
+   или статического метода.
+   PHP поддерживает передачу встроенных и пользовательских функций, но не языковых конструкций:
+   <function>array</function>, <function>echo</function>,
+   <function>empty</function>, <function>eval</function>,
+   <function>isset</function>,
+   <function>list</function>, <function>print</function>
+   или <function>unset</function>.
+  </simpara>
+
+  <simpara>
+   Для ссылки на статический метод класса не потребуется создавать
+   объект (<type>object</type>) этого класса, достаточно создать массив
+   с названием класса в элементе с индексом 0 и названием метода в элементе с индексом 1
+   или сослаться на метод через синтаксис с оператором <literal>::</literal>, который разрешает
+   область действия метода:
+   <literal>'ClassName::methodName'</literal>.
+  </simpara>
+
+  <simpara>
+   На методы объектов (<type>object</type>) в вызываемых выражениях ссылаются
+   через массив: объект (<type>object</type>) указывают в элементе с индексом 0,
+   а название метода — в элементе с индексом 1.
+  </simpara>
+
+  <simpara>
+   Видимость метода в объектах <classname>Closure</classname>
+   проверяется относительно места объявления,
+   а не вызова замыкания <classname>Closure</classname>, тогда как видимость методов
+   в выражениях с псевдотипом <type>callable</type>
+   проверяется относительно места вызова выражения,
+   поэтому попытка вызова callable-выражения, которое ссылается на недоступный в точке вызова метод, выдаст ошибку.
+   На методы классов лучше ссылаться через замыкания <classname>Closure</classname>, поскольку видимость метода в точке вызова замыкания не влияет на доступность вызова метода.
+  </simpara>
+
+  <note>
+   <simpara>
+    Объекты <classname>Closure</classname> связываются с областью видимости
+    объявления, тогда как вызываемые выражения со ссылкой на метод класса
+    через строку или массив разрешаются в области видимости вызова.
+    Вызываемое значение со ссылкой на закрытый или защищённый метод класса, который
+    потребуется вызывать извне области видимости класса,
+    создают методом <methodname>Closure::fromCallable</methodname>
+    <link linkend="functions.first_class_callable_syntax">или синтаксисом первоклассных вызываемых значений</link>.
+   </simpara>
+  </note>
+
+  <simpara>
+   PHP поддерживает вызываемые выражения, которые возможно передать как аргумент,
+   но невозможно вызывать.
+   К таким выражениям относятся вызываемые значения, которые зависят от контекста и ссылаются на метод класса
+   в иерархии наследования через ключевые слова:
+   <literal>'parent::method'</literal> или <literal>["static", "method"]</literal>.
+  </simpara>
+
+  <note>
+   <simpara>
+    С PHP 8.2.0 контекстно-зависимые вызываемые выражения устарели.
+    Независимые от контекста ссылки на методы получают
+    путём замены выражений наподобие <literal>'parent::method'</literal>
+    выражениями <literal>parent::class . '::method'</literal>
+    или <link linkend="functions.first_class_callable_syntax">синтаксисом первоклассных вызываемых значений</link>.
+   </simpara>
+  </note>
+
+  <example>
+   <title>
+    Примеры вызова callable-выражений функцией <function>call_user_function</function>
+   </title>
+   <programlisting role="php">
 <![CDATA[
 <?php
 
@@ -87,16 +220,19 @@ class MyClass
 call_user_func('my_callback_function');
 
 // Тип 2: Вызов статического метода класса
-call_user_func(array('MyClass', 'myCallbackMethod'));
+call_user_func(['MyClass', 'myCallbackMethod']);
 
 // Тип 3: Вызов метода объекта класса
 $obj = new MyClass();
-call_user_func(array($obj, 'myCallbackMethod'));
+call_user_func([$obj, 'myCallbackMethod']);
 
 // Тип 4: Вызов статического метода класса
 call_user_func('MyClass::myCallbackMethod');
 
-// Тип 5: Вызов статического метода родственного класса
+// Тип 5: Вызов статического метода класса с разрешением названия класса через языковую конструкцию ::class
+call_user_func([MyClass::class, 'myCallbackMethod']);
+
+// Тип 6: Вызов статического метода класса по контекстно-зависимой относительной ссылке
 class A
 {
     public static function who()
@@ -113,66 +249,42 @@ class B extends A
     }
 }
 
-call_user_func(array('B', 'parent::who')); // Выводит: A.
-                                           // Начиная с PHP 8.2.0 callable-выражения
-                                           // с относительными названиями методов устарели
+call_user_func(['B', 'parent::who']); // Выводит: A.
+// Начиная с PHP 8.2.0 callable-выражения
+// с относительными названиями методов устарели
 
-// Тип 6: Объекты, классы которых реализуют магический метод __invoke(),
-// разрешается передавать как callable-объекты
+// Тип 7: Объекты, классы которых реализуют магический метод __invoke(),
+// доступны для вызова как функции
 class C
 {
     public function __invoke($name)
     {
-        echo 'Привет, ', $name, PHP_EOL;
+        echo 'Привет, ', $name;
     }
 }
 
 $c = new C();
 call_user_func($c, 'PHP!');
-
-?>
 ]]>
-    </programlisting>
-   </example>
-  </para>
-  <para>
-   <example>
-    <title>
-     Пример передачи объекта <classname>Closure</classname> в качестве callback-функции
-    </title>
-    <programlisting role="php">
+   </programlisting>
+   &example.outputs;
+   <screen>
 <![CDATA[
-<?php
+Привет, мир!
+Привет, мир!
+Привет, мир!
+Привет, мир!
+Привет, мир!
 
-// Замыкание
-$double = function($a) {
-    return $a * 2;
-};
-
-// Диапазон чисел
-$numbers = range(1, 5);
-
-// Передаём замыкание как callback-функцию,
-// чтобы удвоить каждый элемент диапазона
-$new_numbers = array_map($double, $numbers);
-
-print implode(' ', $new_numbers);
-
-?>
+Deprecated: Callables of the form ["B", "parent::who"] are deprecated in script on line 51
+A
+Привет, PHP!
 ]]>
-    </programlisting>
-    &example.outputs;
-    <screen>
-<![CDATA[
-2 4 6 8 10
-]]>
-    </screen>
-   </example>
-  </para>
+   </screen>
+  </example>
 
   &note.func-callback-exceptions;
  </sect2>
-
 </sect1>
 <!-- Keep this comment at the end of the file
 Local variables:
