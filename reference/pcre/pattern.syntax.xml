@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 587830d5d261802148a160a59059dd8d76385fd2 Maintainer: shein Status: ready -->
+<!-- EN-Revision: a0434e05111acabf2b9b2c7847e7e733f8dab0dc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="reference.pcre.pattern.syntax" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Описание синтаксиса Perl-совместимых регулярных выражений</title>
@@ -849,7 +849,7 @@
      <row rowsep="1">
       <entry><literal>So</literal></entry>
       <entry>Другой символ</entry>
-      <entry></entry>
+      <entry>Включая эмодзи</entry>
      </row>
      <row>
       <entry><literal>Z</literal></entry>
@@ -1309,6 +1309,18 @@
    только при соответствии одного из альтернативных вариантов подшаблона
    и остатка основного шаблона.
   </para>
+  <para>
+   Можно записать, какая альтернатива была найдена,
+   используя <literal>(*MARK:NAME)</literal> или <literal>(*:NAME)</literal>.
+   Может появиться любое количество таких глаголов <literal>(*MARK)</literal>,
+   и их имена не обязательно должны быть уникальными.
+   Когда совпадение найдено, имя последнего встреченного <literal>(*MARK:NAME)</literal>
+   будет помещено среди совпадений, как если бы оно было группой захвата
+   с именем <literal>MARK</literal>, так что его можно будет прочитать
+   из параметра <parameter>matches</parameter> функции <function>preg_match</function>
+   и оно будет передано в параметр <parameter>callback</parameter>
+   функции <function>preg_replace_callback</function> и т. д.
+  </para>
  </section>
 
  <section xml:id="regexp.reference.internal-options">
@@ -1556,12 +1568,22 @@
 
    <literal>\d{8}</literal>
 
-   соответствует ровно восьми цифрам. Открывающая фигурная скобка,
-   расположенная в недопустимой для квантификатора позиции, либо не
-   соответствующая синтаксису квантификатора, интерпретируется как
-   обыкновенная символьная строка. Например, {,6} — не квантификатор,
-   а интерпретируется как символьная строка из четырёх символов.
+   соответствует ровно восьми цифрам.
   </para>
+  <simpara>
+   До PHP 8.4.0 открывающая фигурная скобка, которая появляется в месте,
+   где квантификатор не допускается или которая не соответствует синтаксису квантификатора,
+   рассматривается как литеральный символ.
+   Например, <literal>{,6}</literal> не является квантификатором,
+   а представляет собой литеральную строку из четырёх символов.
+
+   Начиная с PHP 8.4.0, модуль PCRE поставляется в комплекте с PCRE2 версии 10.44,
+   которое допускает такие шаблоны, как <literal>\d{,8}</literal>
+   и они интерпретируются как <literal>\d{0,8}</literal>.
+
+   Кроме того, начиная с PHP 8.4.0, допускаются пробелы вокруг квантификаторов,
+   такие как <literal>\d{0 , 8}</literal> и <literal>\d{ 0 , 8 }</literal>.
+  </simpara>
   <para>
    Квантификатор {0} — допустим и ведёт себя таким образом, будто бы
    сам квантификатор и предшествующий ему элемент отсутствуют.
@@ -2072,7 +2094,7 @@
   <informalexample>
    <programlisting>
 <![CDATA[
-( \( )?    [^()]+    (?(1) \) )
+( \( )? [^()]+ (?(1) \) )
 ]]>
    </programlisting>
   </informalexample>
@@ -2108,7 +2130,7 @@
    <programlisting>
 <![CDATA[
 (?(?=[^a-z]*[a-z])
-\d{2}-[a-z]{3}-\d{2}  |  \d{2}-\d{2}-\d{2} )
+\d{2}-[a-z]{3}-\d{2} | \d{2}-\d{2}-\d{2} )
 ]]>
    </programlisting>
   </informalexample>
