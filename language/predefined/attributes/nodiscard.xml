@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 02bee41067ab2822cbffcb4b3b2387f79488dffd Maintainer: malferov Status: ready -->
+<!-- Reviewed: no -->
+<reference xml:id="class.nodiscard" role="class" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
+ <title>Атрибут NoDiscard</title>
+ <titleabbrev>NoDiscard</titleabbrev>
+
+ <partintro>
+
+  <section xml:id="nodiscard.intro">
+   &reftitle.intro;
+   <simpara>
+    Атрибут указывает, что нельзя игнорировать значение возврата функции
+    или метода. Движок выдаст предупреждение, если значение возврата
+    не обработали: не передали, не вернули, не присвоили переменной и не указали в выражении.
+   </simpara>
+   <simpara>
+    Атрибут полезно нацеливать на функции, результат которых нельзя игнорировать из-за риска
+    пропустить ошибку.
+   </simpara>
+   <simpara>
+    Предупреждение подавляют инструкцией (void), когда требуется преднамеренно проигнорировать
+    обработку результата функции, на которую нацелили атрибут.
+   </simpara>
+   <note>
+    <simpara>
+     В PHP 8.4 или ниже движок проигнорирует атрибут <code>#[\NoDiscard]</code>,
+     который добавили к функции или методу,
+     поскольку атрибуты разработали с учётом обратной совместимости.
+     В PHP 8.5 и выше движок выдаст предупреждение, если результат проигнорировали.
+     Присваивание результата переменной наподобие <code>$_</code>
+     не нарушит работу кода на прежних версиях PHP,
+     в которых ещё не добавили поддержку инструкции <code>(void)</code>,
+     и подавит предупреждение при переносе кода на PHP 8.5.
+    </simpara>
+   </note>
+  </section>
+
+  <section xml:id="nodiscard.synopsis">
+   &reftitle.classsynopsis;
+
+   <classsynopsis class="class">
+    <ooclass>
+     <modifier>final</modifier>
+     <classname>NoDiscard</classname>
+    </ooclass>
+
+    <classsynopsisinfo role="comment">&Properties;</classsynopsisinfo>
+    <fieldsynopsis>
+     <modifier>public</modifier>
+     <modifier>readonly</modifier>
+     <type class="union"><type>string</type><type>null</type></type>
+     <varname linkend="nodiscard.props.message">message</varname>
+    </fieldsynopsis>
+
+    <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.nodiscard')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[@role='NoDiscard'])">
+     <xi:fallback/>
+    </xi:include>
+   </classsynopsis>
+
+  </section>
+
+  <section xml:id="nodiscard.props">
+   &reftitle.properties;
+   <variablelist>
+    <varlistentry xml:id="nodiscard.props.message">
+     <term><varname>message</varname></term>
+     <listitem>
+      <simpara>
+       Необязательное сообщение, которое объясняет, почему нельзя игнорировать значение возврата.
+      </simpara>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </section>
+
+  <section>
+   &reftitle.examples;
+   <example>
+    <title>Базовый пример</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+/**
+ * Метод возвращает массив, элементы которого содержат результат обработки
+ * каждого отдельного значения. Значение null указывает, что обработка элемента завершилась без ошибок,
+ * а объект Exception указывает на ошибку. Ключи в массиве с результатами обработки совпадают с ключами массива $items.
+ *
+ * @param array<string> $items
+ * @return array<null|Exception>
+ */
+#[\NoDiscard("поскольку вероятна ошибка при обработке отдельного элемента")]
+function bulk_process(array $items): array
+{
+    $results = [];
+
+    foreach ($items as $key => $item) {
+        if (\random_int(0, 9999) < 9999) {
+            // Имитация полезной операции со значением $item
+            // с вероятностью успеха 99,99 %.
+            echo "Обработка значения {$item}", PHP_EOL;
+            $error = null;
+        } else {
+            $error = new \Exception("Ошибка обработки значения {$item}.");
+        }
+
+        $results[$key] = $error;
+    }
+
+    return $results;
+}
+
+bulk_process($items);
+]]>
+    </programlisting>
+    &example.outputs.85.similar;
+    <screen>
+<![CDATA[
+Warning: The return value of function bulk_process() should either be used or intentionally ignored by casting it as (void), поскольку вероятна ошибка при обработке отдельного элемента
+]]>
+    </screen>
+   </example>
+   <example>
+    <title>Преднамеренное игнорирование значения возврата</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+#[\NoDiscard]
+function some_command(): int
+{
+    return 1;
+}
+
+// Подавление предупреждения инструкцией (void) — поддерживается в PHP 8.5+
+(void) some_command();
+
+// Временная переменная сохранит обратную совместимость с PHP до версии 8.5
+$_ = some_command();
+]]>
+    </programlisting>
+   </example>
+  </section>
+
+  <section xml:id="nodiscard.seealso">
+   &reftitle.seealso;
+   <simplelist>
+    <member><link linkend="language.attributes">Введение в атрибуты</link></member>
+   </simplelist>
+  </section>
+
+ </partintro>
+
+ &language.predefined.attributes.nodiscard.construct;
+
+</reference>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
