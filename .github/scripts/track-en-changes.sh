@@ -116,7 +116,7 @@ while read -r PR; do
   echo "$BODY" | gh issue create \
     --repo "$GH_REPO" \
     --title "$ISSUE_TITLE" \
-    --label "sync-en" \
+    --label "Перевод устарел" \
     --body-file -
 
   echo "  -> Issue created."
