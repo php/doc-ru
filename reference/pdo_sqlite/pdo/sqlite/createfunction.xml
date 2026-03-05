@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 51610360d58ed09bc9d1312f419057c0d1d1a998 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 28930349caaaa78f908c380e44066d37a70e97b8 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdo-sqlite.createfunction" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Pdo\Sqlite::createFunction</refname>
   <refpurpose>
-   Регистрирует определяемую пользователем функцию для использования в SQL-выражениях
+   Регистрирует пользовательскую функцию для вызова в SQL-инструкциях
   </refpurpose>
  </refnamediv>
 
@@ -19,14 +19,14 @@
    <methodparam choice="opt"><type>int</type><parameter>flags</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Метод позволяет зарегистрировать PHP-функцию в SQLite как пользовательскую функцию,
-   чтобы её можно было вызывать в SQL-выражениях.
-   Определённая функция может быть использована в любом SQL-запросе,
-   допускающем вызов функции, например <literal>SELECT</literal>, <literal>UPDATE</literal> или триггерах.
+   Метод регистрирует пользовательскую PHP-функцию в SQLite
+   для вызова в SQL-инструкциях.
+   Пользовательскую функцию вызывают в триггерах или SQL-запросах наподобие <literal>SELECT</literal>, <literal>UPDATE</literal>
+   или других предложениях с поддержкой вызова функций.
   </simpara>
   <tip>
    <simpara>
-    С помощью метода можно переопределить встроенные SQL-функции.
+    При совпадении названий метод переопределит встроенную SQL-функцию.
    </simpara>
   </tip>
  </refsect1>
@@ -38,7 +38,7 @@
     <term><parameter>function_name</parameter></term>
     <listitem>
      <simpara>
-      Имя функции, используемой в SQL-выражениях.
+      Название функции, которое указывается в SQL-инструкции.
      </simpara>
     </listitem>
    </varlistentry>
@@ -46,16 +46,16 @@
     <term><parameter>callback</parameter></term>
     <listitem>
      <simpara>
-      Callback-функция для обработки определённой SQL-функции.
+      Callback-функция для обработки пользовательской SQL-функции.
      </simpara>
      <note>
       <simpara>
-       Callback-функции должны возвращать тип, понятный SQLite
-       (например, <link linkend="language.types.intro">скалярный тип</link>).
+       SQLite поддерживает только значения <link linkend="language.types.intro">скалярных типов</link>,
+       поэтому возврат из callback-функций значений других типов вызовет ошибку.
       </simpara>
      </note>
      <para>
-      Сигнатура функции должна быть определена как:
+      Корректная сигнатура функции обратного вызова:
       <methodsynopsis>
        <type>mixed</type><methodname><replaceable>callback</replaceable></methodname>
        <methodparam><type>mixed</type><parameter>value</parameter></methodparam>
@@ -66,7 +66,7 @@
         <term><parameter>value</parameter></term>
         <listitem>
          <para>
-          Первый аргумент, передаваемый SQL-функции.
+          Первый аргумент SQL-функции.
          </para>
         </listitem>
        </varlistentry>
@@ -74,7 +74,7 @@
         <term><parameter>values</parameter></term>
         <listitem>
          <para>
-          Дополнительные аргументы, передаваемые SQL-функции.
+          Дополнительные аргументы SQL-функции.
          </para>
         </listitem>
        </varlistentry>
@@ -86,9 +86,9 @@
     <term><parameter>num_args</parameter></term>
     <listitem>
      <simpara>
-      Количество аргументов, которые принимает SQL-функция.
-      Если параметр равен <literal>-1</literal>, то SQL-функция
-      может принимать любое количество аргументов.
+      Количество аргументов, которое принимает SQL-функция.
+      При установке значения <literal>-1</literal> SQL-функция
+      примет произвольное количество аргументов.
      </simpara>
     </listitem>
    </varlistentry>
@@ -97,9 +97,9 @@
     <listitem>
      <simpara>
       Битовая маска флагов.
-      В настоящее время поддерживается только флаг <constant>Pdo\Sqlite::DETERMINISTIC</constant>,
-      который указывает, что функция всегда возвращает один и тот же результат
-      при одинаковых входных данных в рамках одного SQL-выражения.
+      Метод пока поддерживает только флаг <constant>Pdo\Sqlite::DETERMINISTIC</constant>,
+      который указывает, что функция возвращает один и тот же результат
+      при одинаковых входных данных в рамках одной SQL-инструкции.
      </simpara>
     </listitem>
    </varlistentry>
@@ -116,30 +116,30 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example xml:id="pdo-sqlite.createfunction.example.basic">
-   <title>Пример использования метода <methodname>Pdo\Sqlite::createFunction</methodname></title>
+   <title>Пример регистрации пользовательской SQL-функции методом <methodname>Pdo\Sqlite::createFunction</methodname></title>
    <simpara>
-    В этом примере функция вычисляет сумму SHA256 строки, а затем меняет её на противоположную.
-    При выполнении SQL-выражения она возвращает значение имени файла,
-    преобразованного функцией.
-    Данные, возвращаемые в переменную <varname>$rows</varname>,
-    содержат обработанный результат.
+    В примере функция вычисляет дайджест строки по алгоритму SHA256, а затем инвертирует хеш.
+    При выполнении SQL-инструкции БД возвращает результат,
+    в котором пользовательская функция преобразовала каждое название файла.
+    Данные, которые возвращаются в переменной <varname>$rows</varname>,
+    содержат результат обработки.
    </simpara>
    <simpara>
-    Прелесть техники в том, что после выполнения запроса
-    не нужно обрабатывать результат с помощью цикла &foreach;.
+    Преимущество подхода состоит в автоматической обработке запроса пользовательской функцией
+    вместо постобработки результата в цикле &foreach;.
    </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 function sha256_and_reverse($string)
 {
     return strrev(hash('sha256', $string));
 }
 
 $db = new Pdo\Sqlite('sqlite::sqlitedb');
-$db->sqliteCreateFunction('sha256rev', 'sha256_and_reverse', 1);
+$db->createFunction('sha256rev', 'sha256_and_reverse', 1);
 $rows = $db->query('SELECT sha256rev(filename) FROM files')->fetchAll();
-?>
 ]]>
    </programlisting>
   </example>
