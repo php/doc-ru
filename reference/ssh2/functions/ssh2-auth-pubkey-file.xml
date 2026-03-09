@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 12f0e72200ea9249d0fc2f118528bd24b24c44a6 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 74ef2355c59e814d14f75a0792d22727be72f137 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ssh2-auth-pubkey-file">
  <refnamediv>
   <refname>ssh2_auth_pubkey_file</refname>
-  <refpurpose>Аутентификация с открытым ключом</refpurpose>
+  <refpurpose>Аутентифицирует клиента путём считывания открытого ключа из файла</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -18,7 +18,7 @@
    <methodparam choice="opt"><type>string</type><parameter>passphrase</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Аутентификация с открытым ключом, сохранённом в файле.
+   Функция аутентифицирует клиента по открытому ключу, который считывает из файла.
   </simpara>
  </refsect1>
 
@@ -29,8 +29,8 @@
     <term><parameter>session</parameter></term>
     <listitem>
      <simpara>
-      Идентификатор соединения SSH, полученный из
-      <function>ssh2_connect</function>.
+      Идентификатор канала SSH-соединения, который вернула
+      функция <function>ssh2_connect</function>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -38,6 +38,7 @@
     <term><parameter>username</parameter></term>
     <listitem>
      <simpara>
+      Имя пользователя, от лица которого требуется выполнить аутентификацию на удалённом сервере.
      </simpara>
     </listitem>
    </varlistentry>
@@ -45,7 +46,7 @@
     <term><parameter>pubkeyfile</parameter></term>
     <listitem>
      <simpara>
-      Открытый ключ в формате OpenSSH. Должен выглядеть примерно так:
+      Открытый ключ в формате OpenSSH, строка наподобие:
      </simpara>
      <simpara>
       ssh-rsa AAAAB3NzaC1yc2EAAA....NX6sqSnHA8= rsa-key-20121110
@@ -56,6 +57,7 @@
     <term><parameter>privkeyfile</parameter></term>
     <listitem>
      <simpara>
+      Путь к файлу закрытого OpenSSH-ключа.
      </simpara>
     </listitem>
    </varlistentry>
@@ -63,8 +65,9 @@
     <term><parameter>passphrase</parameter></term>
     <listitem>
      <simpara>
-      Если <parameter>privkeyfile</parameter> зашифрован (как должен бы),
-      то необходимо предоставить <parameter>passphrase</parameter>.
+      Парольная фраза для расшифровки закрытого ключа <parameter>privkey</parameter>.
+      Парольную фразу передают в параметр <parameter>passphrase</parameter>,
+      только если выполняются требования безопасности и закрытый ключ хранится в зашифрованном виде.
      </simpara>
     </listitem>
    </varlistentry>
@@ -81,20 +84,24 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Аутентификация с открытым ключом</title>
+   <title>Пример аутентификации по открытому ключу</title>
    <programlisting role="php">
 <![CDATA[
 <?php
-$connection = ssh2_connect('shell.example.com', 22, array('hostkey'=>'ssh-rsa'));
 
-if (ssh2_auth_pubkey_file($connection, 'username',
-                          '/home/username/.ssh/id_rsa.pub',
-                          '/home/username/.ssh/id_rsa', 'secret')) {
-  echo "Успешная аутентификация с открытым ключом\n";
+$connection = ssh2_connect('shell.example.com', 22, array('hostkey' => 'ssh-rsa'));
+
+if (ssh2_auth_pubkey_file(
+    $connection,
+    'username',
+    '/home/username/.ssh/id_rsa.pub',
+    '/home/username/.ssh/id_rsa',
+    'secret'
+)) {
+    echo "Клиент прошёл аутентификацию по открытому ключу\n";
 } else {
-  die('Неудачная аутентификация с открытым ключом');
+    die('Открытый ключ не подтвердил подлинность клиента');
 }
-?>
 ]]>
    </programlisting>
   </example>
@@ -104,11 +111,21 @@ if (ssh2_auth_pubkey_file($connection, 'username',
   &reftitle.notes;
   <note>
    <simpara>
-    Основная библиотека libssh не поддерживает частичные аутентификации очень чисто.
-    То есть,  если вам нужно предоставить как открытый ключ, так и пароль, он будет выглядеть так, как если бы эта функция потерпела неудачу. В данном конкретном случае неудачный вызов
-    может означать, что аутентификация не завершена. Вам нужно игнорировать это неудачное выполнение, продолжить работу и вызвать <function>ssh2_auth_password</function> для завершения аутентификации.
+    Библиотека libssh, на базе которой работает PHP-модуль SSH2, не поддерживает
+    частичное подтверждение подлинности на серверах с многофакторной аутентификацией,
+    при которой требуется проверка и открытого ключа, и пароля. Поэтому на шаге проверки
+    открытого ключа возврат значения &false; часто указывает не на ошибку, а только на незавершённость процесса аутентификации. 
+    При многоступенчатой аутентификации ошибку игнорируют
+    и вызывают функцию <function>ssh2_auth_password</function>, чтобы завершить аутентификацию.
    </simpara>
   </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><function>ssh2_auth_pubkey</function></member>
+  </simplelist>
  </refsect1>
 
 </refentry>
