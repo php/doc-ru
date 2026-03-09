@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 74ef2355c59e814d14f75a0792d22727be72f137 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 74ef2355c59e814d14f75a0792d22727be72f137 Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
-<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ssh2-auth-pubkey-file">
+<refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.ssh2-auth-pubkey">
  <refnamediv>
-  <refname>ssh2_auth_pubkey_file</refname>
-  <refpurpose>Аутентифицирует клиента путём считывания открытого ключа из файла</refpurpose>
+  <refname>ssh2_auth_pubkey</refname>
+  <refpurpose>Аутентифицирует клиента по открытому ключу в переменной</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>bool</type><methodname>ssh2_auth_pubkey_file</methodname>
+   <type>bool</type><methodname>ssh2_auth_pubkey</methodname>
    <methodparam><type>resource</type><parameter>session</parameter></methodparam>
    <methodparam><type>string</type><parameter>username</parameter></methodparam>
-   <methodparam><type>string</type><parameter>pubkeyfile</parameter></methodparam>
-   <methodparam><type>string</type><parameter>privkeyfile</parameter></methodparam>
+   <methodparam><type>string</type><parameter>pubkey</parameter></methodparam>
+   <methodparam><type>string</type><parameter>privkey</parameter></methodparam>
    <methodparam choice="opt"><type>string</type><parameter>passphrase</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция аутентифицирует клиента по открытому ключу, который считывает из файла.
+   Функция аутентифицирует клиента по открытому ключу, который содержит переменная.
   </simpara>
  </refsect1>
 
@@ -38,26 +38,25 @@
     <term><parameter>username</parameter></term>
     <listitem>
      <simpara>
-      Имя пользователя, от лица которого требуется выполнить аутентификацию на удалённом сервере.
+       Имя пользователя, от лица которого требуется выполнить аутентификацию на удалённом сервере.
      </simpara>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>pubkeyfile</parameter></term>
+    <term><parameter>pubkey</parameter></term>
     <listitem>
      <simpara>
       Открытый ключ в формате OpenSSH, строка наподобие:
-     </simpara>
-     <simpara>
-      ssh-rsa AAAAB3NzaC1yc2EAAA....NX6sqSnHA8= rsa-key-20121110
+      <literal>ssh-rsa AAAAB3NzaC1yc2EAAA....NX6sqSnHA8= rsa-key-20121110</literal>
      </simpara>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>privkeyfile</parameter></term>
+    <term><parameter>privkey</parameter></term>
     <listitem>
      <simpara>
-      Путь к файлу закрытого OpenSSH-ключа.
+      Закрытый OpenSSH-ключ, который начинается со строки:
+      <literal>-----BEGIN RSA PRIVATE KEY-----</literal>
      </simpara>
     </listitem>
    </varlistentry>
@@ -84,18 +83,20 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример аутентификации по открытому ключу</title>
+   <title>Пример аутентификации с открытым ключом</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
 $connection = ssh2_connect('shell.example.com', 22, array('hostkey' => 'ssh-rsa'));
+$publicKey = file_get_contents('/home/username/.ssh/id_rsa.pub');
+$privateKey = file_get_contents('/home/username/.ssh/id_rsa');
 
-if (ssh2_auth_pubkey_file(
+if (ssh2_auth_pubkey(
     $connection,
     'username',
-    '/home/username/.ssh/id_rsa.pub',
-    '/home/username/.ssh/id_rsa',
+    $publicKey,
+    $privateKey,
     'secret'
 )) {
     echo "Клиент прошёл аутентификацию по открытому ключу\n";
@@ -124,7 +125,7 @@ if (ssh2_auth_pubkey_file(
  <refsect1 role="seealso">
   &reftitle.seealso;
   <simplelist>
-   <member><function>ssh2_auth_pubkey</function></member>
+   <member><function>ssh2_auth_pubkey_file</function></member>
   </simplelist>
  </refsect1>
 
