@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9960a09a5705102bf4dd0ce63e03d9ec716d0015 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: fcd9214294f88b05862a538c6dd94c7872420139 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.imageantialias" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -9,7 +9,7 @@
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>bool</type><methodname>imageantialias</methodname>
+   <type>true</type><methodname>imageantialias</methodname>
    <methodparam><type>GdImage</type><parameter>image</parameter></methodparam>
    <methodparam><type>bool</type><parameter>enable</parameter></methodparam>
   </methodsynopsis>
@@ -19,13 +19,13 @@
    смешивания цветов и работает только с полноцветными truecolor-изображениями.
   </para>
   <para>
-   Стили и толщина не поддерживаются.
+   Для сглаженных примитивов стили и толщина не поддерживаются.
   </para>
   <para>
    Сглаженные примитивы совместно с прозрачным фоном иногда дают
-   неожиданный результат. Метод смешивания использует цвет фона наравне с любым
-   другим цветом. Отсутствие поддержки альфа-компонента не даёт применять
-   основанный на нём метод сглаживания.
+   неожиданный результат. Метод смешивания обрабатывает цвет фона наравне
+   с другими цветами. Отсутствие поддержки альфа-компонента не даёт применять
+   метод сглаживания на основе альфа-канала.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -37,7 +37,7 @@
      <term><parameter>enable</parameter></term>
      <listitem>
       <para>
-       Включить сглаживание или нет.
+       Параметр определяет, включать ли сглаживание.
       </para>
      </listitem>
     </varlistentry>
@@ -47,7 +47,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
+   &return.true.always;
   </para>
  </refsect1>
 
@@ -66,9 +66,8 @@
      <row>
       <entry>7.2.0</entry>
       <entry>
-       Функция <function>imageantialias</function> доступна без ограничений. Ранее она
-       была доступна, только если PHP был собран с использованием библиотеки GD, идущей
-       с ним в комплекте.
+       Функция <function>imageantialias</function> теперь доступна и при сборке PHP с системной библиотекой GD;
+       раньше требовалось компилировать PHP только с библиотекой, которая входит в комплект исходных файлов интерпретатора.
       </entry>
      </row>
     </tbody>
@@ -81,43 +80,41 @@
   <para>
    <example>
     <title>
-     Сравнение двух линий, одна из которых рисуется с включённым сглаживанием
+     Пример сравнения сглаженной и несглаженной линий
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Создание двух изображений
+// Создаём два изображения
 $aa = imagecreatetruecolor(400, 100);
 $normal = imagecreatetruecolor(200, 100);
 
-// Включение сглаживания для одного из них
+// Включаем сглаживание для одного изображения
 imageantialias($aa, true);
 
-// Задание цветов
+// Устанавливаем цвета
 $red = imagecolorallocate($normal, 255, 0, 0);
 $red_aa = imagecolorallocate($aa, 255, 0, 0);
 
-// Рисование линий
+// Рисуем линии
 imageline($normal, 0, 0, 200, 100, $red);
 imageline($aa, 0, 0, 200, 100, $red_aa);
 
-// Размещение изображений рядом для сравнения (АА: слева, Обычное: справа)
+// Объединяем два изображения для вывода: слева — со сглаживанием, справа — без
 imagecopymerge($aa, $normal, 200, 0, 0, 0, 200, 100, 100);
 
-// Вывод результата
+// Устанавливаем заголовок с MIME-типом изображения
 header('Content-type: image/png');
 
 imagepng($aa);
-
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
     <mediaobject>
      <alt>
-      Вывод примера: Сравнение двух линий, одна из которых рисуется с
-      включённым сглаживанием
+      Пример выводит изображение с двумя линиями:
+      одна со сглаживанием, другая без сглаживания
      </alt>
      <imageobject>
       <imagedata fileref="en/reference/image/figures/imageantialias.png"/>
