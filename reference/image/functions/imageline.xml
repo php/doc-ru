@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 593ea510e853ff034e03f78a4be0daa41661c9d4 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: fcd9214294f88b05862a538c6dd94c7872420139 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.imageline" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>imageline</refname>
-  <refpurpose>Рисование линии</refpurpose>
+  <refpurpose>Рисует отрезок</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <type>bool</type><methodname>imageline</methodname>
+   <type>true</type><methodname>imageline</methodname>
    <methodparam><type>GdImage</type><parameter>image</parameter></methodparam>
    <methodparam><type>int</type><parameter>x1</parameter></methodparam>
    <methodparam><type>int</type><parameter>y1</parameter></methodparam>
@@ -18,7 +18,7 @@
    <methodparam><type>int</type><parameter>color</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Рисует линию соединяющую две точки.
+   Функция рисует линию между двумя точками.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -30,7 +30,7 @@
      <term><parameter>x1</parameter></term>
      <listitem>
       <para>
-       x-координата первой точки.
+       Координата первой точки по оси x.
       </para>
      </listitem>
     </varlistentry>
@@ -38,7 +38,7 @@
      <term><parameter>y1</parameter></term>
      <listitem>
       <para>
-       y-координата первой точки.
+       Координата первой точки по оси y.
       </para>
      </listitem>
     </varlistentry>
@@ -46,7 +46,7 @@
      <term><parameter>x2</parameter></term>
      <listitem>
       <para>
-       x-координата второй точки.
+       Координата второй точки по оси x.
       </para>
      </listitem>
     </varlistentry>
@@ -54,7 +54,7 @@
      <term><parameter>y2</parameter></term>
      <listitem>
       <para>
-       y-координата второй точки.
+       Координата второй точки по оси y.
       </para>
      </listitem>
     </varlistentry>
@@ -72,7 +72,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   &return.success;
+   &return.true.always;
   </para>
  </refsect1>
 
@@ -97,37 +97,51 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Рисование жирной линии</title>
+    <title>Пример рисования жирной линии</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 function imagelinethick($image, $x1, $y1, $x2, $y2, $color, $thick = 1)
 {
-    /* этот способ применим только для ортогональных прямых
+    /* Способ хорошо работает только с ортогональными прямыми
     imagesetthickness($image, $thick);
     return imageline($image, $x1, $y1, $x2, $y2, $color);
     */
     if ($thick == 1) {
         return imageline($image, $x1, $y1, $x2, $y2, $color);
     }
+
     $t = $thick / 2 - 0.5;
     if ($x1 == $x2 || $y1 == $y2) {
-        return imagefilledrectangle($image, round(min($x1, $x2) - $t), round(min($y1, $y2) - $t), round(max($x1, $x2) + $t), round(max($y1, $y2) + $t), $color);
+        return imagefilledrectangle(
+            $image,
+            round(min($x1, $x2) - $t),
+            round(min($y1, $y2) - $t),
+            round(max($x1, $x2) + $t),
+            round(max($y1, $y2) + $t),
+            $color
+        );
     }
-    $k = ($y2 - $y1) / ($x2 - $x1); //y = kx + q
+
+    $k = ($y2 - $y1) / ($x2 - $x1); // y = kx + q
     $a = $t / sqrt(1 + pow($k, 2));
+
     $points = array(
-        round($x1 - (1+$k)*$a), round($y1 + (1-$k)*$a),
-        round($x1 - (1-$k)*$a), round($y1 - (1+$k)*$a),
-        round($x2 + (1+$k)*$a), round($y2 - (1-$k)*$a),
-        round($x2 + (1-$k)*$a), round($y2 + (1+$k)*$a),
+        round($x1 - (1 + $k) * $a),
+        round($y1 + (1 - $k) * $a),
+        round($x1 - (1 - $k) * $a),
+        round($y1 - (1 + $k) * $a),
+        round($x2 + (1 + $k) * $a),
+        round($y2 - (1 - $k) * $a),
+        round($x2 + (1 - $k) * $a),
+        round($y2 + (1 + $k) * $a),
     );
+
     imagefilledpolygon($image, $points, 4, $color);
+
     return imagepolygon($image, $points, 4, $color);
 }
-
-?>
 ]]>
     </programlisting>
    </example>
