@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1976eae0d815797af97a1e16c5cd90ffc2868395 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 89b92b42cc3fcbd4481f454139beb20ba3328be2 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="numberformatter.setattribute" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>NumberFormatter::setAttribute</refname>
   <refname>numfmt_set_attribute</refname>
-  <refpurpose>Устанавливает атрибут</refpurpose>
+  <refpurpose>Устанавливает значение для атрибута форматирования чисел</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -28,8 +28,8 @@
    <methodparam><type class="union"><type>int</type><type>float</type></type><parameter>value</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Устанавливает числовой атрибут, связанный со средством форматирования. Примером числового атрибута
-   является количество целых цифр, которое будет выдавать средство форматирования.
+   Функция устанавливает значение для атрибута форматирования чисел. Пример атрибута числового формата —
+   количество разрядов в целой части числа, которое выведет средство форматирования.
   </para>
  </refsect1>
 
@@ -49,9 +49,8 @@
      <term><parameter>attribute</parameter></term>
      <listitem>
       <para>
-       Спецификатор атрибута - одна из констант
-       <link linkend="intl.numberformatter-constants.unumberformatattribute">
-        числового атрибута</link>.
+       Спецификатор атрибута — константа
+       <link linkend="intl.numberformatter-constants.unumberformatattribute">атрибута форматирования чисел</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -59,7 +58,7 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение атрибута.
+       Значение для атрибута.
       </para>
      </listitem>
     </varlistentry>
@@ -78,44 +77,85 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>numfmt_set_attribute</function></title>
+   <title>Пример форматирования чисел функцией <function>numfmt_set_attribute</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
-$fmt = numfmt_create( 'de_DE', NumberFormatter::DECIMAL );
-echo "Цифр: ".numfmt_get_attribute($fmt, NumberFormatter::MAX_FRACTION_DIGITS)."\n";
-echo numfmt_format($fmt, 1234567.891234567890000)."\n";
+
+$fmt = numfmt_create('de_DE', NumberFormatter::DECIMAL);
+echo "Количество разрядов в дробной части числа: " . numfmt_get_attribute($fmt, NumberFormatter::MAX_FRACTION_DIGITS) . "\n";
+echo numfmt_format($fmt, 1234567.891234567890000) . "\n";
+
 numfmt_set_attribute($fmt, NumberFormatter::MAX_FRACTION_DIGITS, 2);
-echo "Цифр: ".numfmt_get_attribute($fmt, NumberFormatter::MAX_FRACTION_DIGITS)."\n";
-echo numfmt_format($fmt, 1234567.891234567890000)."\n";
-?>
+echo "Количество разрядов в дробной части числа: " . numfmt_get_attribute($fmt, NumberFormatter::MAX_FRACTION_DIGITS) . "\n";
+echo numfmt_format($fmt, 1234567.891234567890000) . "\n";
 ]]>
    </programlisting>
   </example>
   <example>
-   <title>Пример использования в объектно-ориентированном стиле</title>
+   <title>Пример форматирования чисел в объектно-ориентированном стиле</title>
    <programlisting role="php">
 <![CDATA[
 <?php
-$fmt = new NumberFormatter( 'de_DE', NumberFormatter::DECIMAL );
-echo "Цифр: ".$fmt->getAttribute(NumberFormatter::MAX_FRACTION_DIGITS)."\n";
-echo $fmt->format(1234567.891234567890000)."\n";
+
+$fmt = new NumberFormatter('de_DE', NumberFormatter::DECIMAL);
+echo "Количество разрядов в дробной части числа: " . $fmt->getAttribute(NumberFormatter::MAX_FRACTION_DIGITS) . "\n";
+echo $fmt->format(1234567.891234567890000) . "\n";
+
 $fmt->setAttribute(NumberFormatter::MAX_FRACTION_DIGITS, 2);
-echo "Цифр: ".$fmt->getAttribute(NumberFormatter::MAX_FRACTION_DIGITS)."\n";
-echo $fmt->format(1234567.891234567890000)."\n";
-?>
+echo "Количество разрядов в дробной части числа: " . $fmt->getAttribute(NumberFormatter::MAX_FRACTION_DIGITS) . "\n";
+echo $fmt->format(1234567.891234567890000) . "\n";
 ]]>
    </programlisting>
   </example>
   &example.outputs;
   <screen>
 <![CDATA[
-Цифр: 3
+Количество разрядов в дробной части числа: 3
 1.234.567,891
-Цифр: 2
+Количество разрядов в дробной части числа: 2
 1.234.567,89
 ]]>
   </screen>
+  <example>
+   <title>Пример усечения значений атрибутом <constant>NumberFormatter::ROUNDING_MODE</constant></title>
+   <simpara>
+    По умолчанию объект <classname>NumberFormatter</classname> округляет значения.
+    В режиме <constant>NumberFormatter::ROUND_DOWN</constant>
+    для атрибута <constant>NumberFormatter::ROUNDING_MODE</constant> функция усекает
+    значение до заданного количества дробных разрядов без округления.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$fmt = new NumberFormatter('en_US', NumberFormatter::DECIMAL);
+$fmt->setAttribute(NumberFormatter::FRACTION_DIGITS, 2);
+
+echo "Округление в режиме по умолчанию:\n";
+echo $fmt->format(3.789), "\n"; // 3.79 — результат округления вверх
+echo $fmt->format(3.781), "\n"; // 3.78 — результат округления вниз
+
+$fmt->setAttribute(NumberFormatter::ROUNDING_MODE, NumberFormatter::ROUND_DOWN);
+
+echo "\nУсечение в режиме ROUND_DOWN:\n";
+echo $fmt->format(3.789), "\n"; // 3.78 — результат усечения
+echo $fmt->format(3.781), "\n"; // 3.78 — результат усечения
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Округление в режиме по умолчанию:
+3.79
+3.78
+
+Усечение в режиме ROUND_DOWN:
+3.78
+3.78
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="seealso">
