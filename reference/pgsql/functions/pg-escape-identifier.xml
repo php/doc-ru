@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c2eca73ef79ebe78cebb34053e41b565af504c4f Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e2f2172bf114599926878017ab2dce356956fa9e Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
-
 <refentry xml:id='function.pg-escape-identifier' xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_escape_identifier</refname>
   <refpurpose>
-   Экранирует идентификатор для вставки в текстовое поле
+   Экранирует идентификатор перед вставкой в текст SQL-инструкции
   </refpurpose>
  </refnamediv>
 
@@ -18,19 +17,14 @@
    <methodparam><type>string</type><parameter>data</parameter></methodparam>
   </methodsynopsis>
   <para>
-   <function>pg_escape_identifier</function> экранирует идентификатор (например, таблицу, имена полей) для выполнения запроса к базе.
-   Возвращает экранированный идентификатор строки для сервера PostgreSQL.
-   <function>pg_escape_identifier</function> добавляет двойные кавычки до и после данных.
-   Пользователи не должны добавлять двойные кавычки.
-   Использование этой функции рекомендуется для параметров идентификаторов в запросах.
-   Для SQL-литералов (то есть параметров, кроме bytea) необходимо использовать <function>pg_escape_literal</function>
-   или <function>pg_escape_string</function>. Для типа поля bytea нужно использовать <function>pg_escape_bytea</function>.
+   Функция <function>pg_escape_identifier</function> экранирует названия таблиц, полей и других идентификаторов в SQL-инструкциях
+   перед отправкой запроса к базе данных. Функция <function>pg_escape_identifier</function> экранирует идентификаторы
+   по правилам PostgreSQL-сервера — обрамляет двойными кавычками — и возвращает заэкранированную строку.
+   Оставлять в SQL-инструкции незаэкранированные идентификаторы или добавлять двойные кавычки вручную — небезопасно.
+   Строковые, числовые, логические и другие SQL-литералы внутри инструкции, кроме типа bytea,
+   экранируют функцией <function>pg_escape_literal</function> или <function>pg_escape_string</function>.
+   Поля с типом bytea экранируют функцией <function>pg_escape_bytea</function>.
   </para>
-  <note>
-   <para>
-    Эта функция имеет внутренний код экранирования и может быть использована с PostgreSQL 8.4 и ниже.
-    </para>
-  </note>
  </refsect1>
 
 <refsect1 role="parameters">
@@ -47,7 +41,7 @@
      <term><parameter>data</parameter></term>
      <listitem>
       <para>
-       Строка (<type>string</type>), содержащая текст, который должен быть экранирован.
+       Текстовая строка (<type>string</type>), которую требуется заэкранировать.
       </para>
      </listitem>
     </varlistentry>
@@ -58,7 +52,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Строка (<type>string</type>), содержащая экранированные данные.
+   Функция возвращает строку (<type>string</type>) с заэкранированными данными.
   </para>
  </refsect1>
 
@@ -83,19 +77,19 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример выполнения <function>pg_escape_identifier</function></title>
+    <title>Пример экранирования идентификатора функцией <function>pg_escape_identifier</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
-  // Установить соединение с базой данных
-  $dbconn = pg_connect('dbname=foo');
 
-  // Экранировать данные имени таблицы
-  $escaped = pg_escape_identifier($table_name);
+// Устанавливаем соединение с базой данных
+$dbconn = pg_connect('dbname=foo');
 
-  // Выбрать строки из $table_name
-  pg_query("SELECT * FROM {$escaped};");
-?>
+// Экранируем название таблицы
+$escaped = pg_escape_identifier($table_name);
+
+// Выбираем строки из таблицы $table_name
+pg_query("SELECT * FROM {$escaped};");
 ]]>
     </programlisting>
    </example>
