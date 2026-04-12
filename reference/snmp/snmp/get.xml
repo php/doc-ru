@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 40906725410aac6fe8cac4913a557a1784bf04b9 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: e2f2172bf114599926878017ab2dce356956fa9e Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="snmp.get">
  <refnamediv>
   <refname>SNMP::get</refname>
-  <refpurpose>Получает объект <acronym>SNMP</acronym></refpurpose>
+  <refpurpose>Получает <acronym>SNMP</acronym>-объект</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,26 +16,25 @@
    <methodparam choice="opt"><type>bool</type><parameter>preserveKeys</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Получает объект <acronym>SNMP</acronym>, указанный в
-   <parameter>objectId</parameter>, с помощью запроса GET.
+   Метод выполняет SNMP-запрос GET и получает <acronym>SNMP</acronym>-объект,
+   идентификатор которого указали в аргументе <parameter>objectId</parameter>.
   </simpara>
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <simpara>
-   Если <parameter>objectId</parameter> является строкой, то <methodname>SNMP::get</methodname>
-   вернёт объект <acronym>SNMP</acronym> в виде строки. Если
-   <parameter>objectId</parameter> является массивом, все запрошенные объекты <acronym>SNMP</acronym>
-   будут возвращены как ассоциативный массив идентификаторов объектов <acronym>SNMP</acronym> и их
-   значений.
+   При передаче в аргументе <parameter>objectId</parameter> строки метод <methodname>SNMP::get</methodname>
+   вернёт <acronym>SNMP</acronym>-объект в виде строки. При передаче
+   в аргументе <parameter>objectId</parameter> массива запрошенные <acronym>SNMP</acronym>-объекты
+   вернутся как ассоциативный массив идентификаторов и значений <acronym>SNMP</acronym>-объектов.
   </simpara>
   <variablelist>
   <varlistentry>
    <term><parameter>objectId</parameter></term>
    <listitem>
     <simpara>
-     Объект <acronym>SNMP</acronym> (OID) или объекты
+     Отдельный OID — идентификатор <acronym>SNMP</acronym>-объекта — или массив идентификаторов.
     </simpara>
    </listitem>
   </varlistentry>
@@ -43,11 +42,10 @@
    <term><parameter>preserveKeys</parameter></term>
    <listitem>
     <simpara>
-     Когда <parameter>objectId</parameter> является массивом и
-     для параметра <parameter>preserveKeys</parameter> установлено значение &true; ключи в результатах
-     будут взяты точно так же, как в <parameter>objectId</parameter>,
-     в противном случае свойство <varname>SNMP::oid_output_format</varname> используется для определения
-     формы ключей.
+     При передаче в параметр <parameter>objectId</parameter> массива
+     и установке для параметра <parameter>preserveKeys</parameter> значения &true;
+     ключи в результатах заполняются аналогично ключам в массиве <parameter>objectId</parameter>,
+     иначе форма вывода ключей определяется по свойству <varname>SNMP::oid_output_format</varname>.
     </simpara>
    </listitem>
   </varlistentry>
@@ -57,8 +55,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Возвращает запрошенные объекты <acronym>SNMP</acronym> в виде строки или массива
-   в зависимости от типа <parameter>objectId</parameter> или &false; в случае возникновения ошибки.
+   Метод возвращает запрошенные <acronym>SNMP</acronym>-объекты в виде строки или массива,
+   в зависимости от типа параметра <parameter>objectId</parameter>, или &false;, если возникла ошибка.
   </simpara>
  </refsect1>
 
@@ -67,21 +65,23 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example xml:id="snmp.get.example.singleoid">
-   <title>Одиночный объект <acronym>SNMP</acronym></title>
+   <title>Пример извлечения одного <acronym>SNMP</acronym>-объекта</title>
    <simpara>
-    Одиночный объект <acronym>SNMP</acronym> может быть запрошен двумя способами: как
-    строковое возвращаемое строковое значение или как одноэлементный массив с
-    ассоциативным массивом в качестве вывода.
+    Метод умеет запрашивать отдельный <acronym>SNMP</acronym>-объект двумя способами:
+    по строковому идентификатору с возвратом строкового значения или путём передачи в первом аргументе
+    одноэлементного массива с возвратом ассоциативного массива.
    </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
-  $session = new SNMP(SNMP::VERSION_1, "127.0.0.1", "public");
-  $sysdescr = $session->get("sysDescr.0");
-  echo "$sysdescr\n";
-  $sysdescr = $session->get(array("sysDescr.0"));
-  print_r($sysdescr);
-?>
+
+$session = new SNMP(SNMP::VERSION_1, "127.0.0.1", "public");
+
+$sysdescr = $session->get("sysDescr.0");
+echo "$sysdescr\n";
+
+$sysdescr = $session->get(array("sysDescr.0"));
+print_r($sysdescr);
 ]]>
    </programlisting>
    &example.outputs.similar;
@@ -96,13 +96,17 @@ Array
    </screen>
   </example>
   <example xml:id="snmp.get.example.oidarray">
-   <title>Множественные объекты <acronym>SNMP</acronym></title>
+   <title>Пример запроса двух <acronym>SNMP</acronym>-объектов</title>
    <programlisting role="php">
 <![CDATA[
-  $session = new SNMP(SNMP::VERSION_1, "127.0.0.1", "public");
-  $results = $session->get(array("sysDescr.0", "sysName.0"));
-  print_r($results);
-  $session->close();
+<?php
+
+$session = new SNMP(SNMP::VERSION_1, "127.0.0.1", "public");
+
+$results = $session->get(array("sysDescr.0", "sysName.0"));
+print_r($results);
+
+$session->close();
 ]]>
    </programlisting>
    &example.outputs.similar;
