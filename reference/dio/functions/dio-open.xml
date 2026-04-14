@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e41806c30bf6975e452c0d4ce35ab0984c2fa68c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: e2f2172bf114599926878017ab2dce356956fa9e Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.dio-open" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>dio_open</refname>
   <refpurpose>
-   Открывает файл (по необходимости создаёт) на более низком уровне нежели
-   потоковые функции ввода/вывода языка C
+   Открывает или создаёт файл на уровне ниже,
+   чем потоковые функции ввода-вывода библиотеки языка C
   </refpurpose>
  </refnamediv>
  <refsect1 role="description">
@@ -18,7 +18,7 @@
    <methodparam choice="opt"><type>int</type><parameter>mode</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   <function>dio_open</function> открывает файл и возвращает его дескриптор.
+   Функция <function>dio_open</function> открывает файл и возвращает файловый дескриптор.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -29,7 +29,7 @@
      <term><parameter>filename</parameter></term>
      <listitem>
       <para>
-       Путь открываемого файла.
+       Путь к файлу, который требуется открыть.
       </para>
      </listitem>
     </varlistentry>
@@ -37,60 +37,60 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>flags</parameter> задаётся побитовой
-       комбинацией констант. Он <emphasis>должен</emphasis> включать одну из констант
-       <constant>O_RDONLY</constant>, <constant>O_WRONLY</constant>
-       или <constant>O_RDWR</constant>. Дополнительно он может
-       содержать другие константы.
+       Параметр <parameter>flags</parameter> принимает объединённую побитовым оператором ИЛИ
+       комбинацию следующих флагов. В комбинацию <emphasis>обязательно</emphasis> включают
+       константу <constant>O_RDONLY</constant>, <constant>O_WRONLY</constant>
+       или <constant>O_RDWR</constant> и дополнительно указывают
+       произвольную комбинацию других флагов из списка.
        <itemizedlist>
         <listitem>
          <para>
-          <constant>O_RDONLY</constant> - открыть файл на чтение.
+          <constant>O_RDONLY</constant> — открыть файл на чтение.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_WRONLY</constant> - открыть файл на запись.
+          <constant>O_WRONLY</constant> — открыть файл на запись.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_RDWR</constant> - открыть файл на чтение и запись.
+          <constant>O_RDWR</constant> — открыть файл на чтение и запись.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_CREAT</constant> - создать файл, если его не существует.
+          <constant>O_CREAT</constant> — создать файл, если не существует.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_EXCL</constant> - если заданы и <constant>O_CREAT</constant>
-          и <constant>O_EXCL</constant> и файл существует, то
-          <function>dio_open</function> завершится с ошибкой.
+          <constant>O_EXCL</constant> — функция <function>dio_open</function> выдаст ошибку,
+          если установили флаги <constant>O_CREAT</constant>
+          и <constant>O_EXCL</constant>, и файл существует.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_TRUNC</constant> - если файл существует и был открыт на запись, то
-          он будет обрезан до нулевой длины.
+          <constant>O_TRUNC</constant> — при открытии существующего файла на запись
+          функция усечёт файл до нулевой длины.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_APPEND</constant> - операции записи будут происходить в конец файла.
+          <constant>O_APPEND</constant> — запись в конец файла.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_NONBLOCK</constant> - установить неблокирующий режим.
+          <constant>O_NONBLOCK</constant> — установить неблокирующий режим.
          </para>
         </listitem>
         <listitem>
          <para>
-          <constant>O_NOCTTY</constant> - запрещает операционной системе
-          считать открытый файл за терминал контроля процесса, если был открыт
-          файл устройства TTY.
+          <constant>O_NOCTTY</constant> — запрещает операционной системе
+          назначать открытый файл как терминал контроля процесса,
+          если открыли файл устройства TTY.
          </para>
         </listitem>
        </itemizedlist>
@@ -101,15 +101,16 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       Если <parameter>flags</parameter> содержит
-       <constant>O_CREAT</constant>, <parameter>mode</parameter> установит
-       разрешения для файла (creation permissions). <parameter>mode</parameter>
-       требуется для корректной работы в случае указания <constant>O_CREAT</constant>
-       в <parameter>flags</parameter> и в других случаях будет проигнорирован.
+       При передаче в параметр <parameter>flags</parameter>
+       значения <constant>O_CREAT</constant> параметр <parameter>mode</parameter> установит для файла
+       права доступа с учётом системных ограничений на установку прав для вновь создаваемых файлов.
+       Параметр <parameter>mode</parameter> требуется для правильной работы функции
+       при передаче в параметр <parameter>flags</parameter>
+       значения <constant>O_CREAT</constant>, а в остальных случаях игнорируется.
       </para>
       <para>
-       Актуальные разрешения, которые будут присвоены созданному файлу, будут
-       зависеть от настройки <emphasis>umask</emphasis> процесса, как обычно.
+       Фактические разрешения, которые назначаются вновь созданному файлу,
+       стандартно зависят от настройки маски прав доступа <emphasis>umask</emphasis> для процесса.
       </para>
      </listitem>
     </varlistentry>
@@ -119,13 +120,13 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Файловый дескриптор или &false; в случае возникновения ошибки.
+   Функция возвращает дескриптор файла или &false;, если возникла ошибка.
   </para>
  </refsect1>
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Открытие файлового дескриптора</title>
+   <title>Пример открытия файлового дескриптора</title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -133,7 +134,6 @@
 $fd = dio_open('/dev/ttyS0', O_RDWR | O_NOCTTY | O_NONBLOCK);
 
 dio_close($fd);
-?>
 ]]>
    </programlisting>
   </example>

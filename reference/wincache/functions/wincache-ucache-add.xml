@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 07e42841b078fc8dfb4a2d053b707b5233c4cfeb Maintainer: evvc Status: ready -->
+<!-- EN-Revision: e2f2172bf114599926878017ab2dce356956fa9e Maintainer: evvc Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.wincache-ucache-add" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>wincache_ucache_add</refname>
-  <refpurpose>Добавляет переменную в пользовательский кеш, только если переменная ещё не существует в кеше</refpurpose>
+  <refpurpose>Добавляет переменную в пользовательский кеш, только если кеш ещё не содержит переменную</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -22,9 +22,9 @@
    <methodparam choice="opt"><type>int</type><parameter>ttl</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Добавляет переменную в пользовательский кеш, только если эта переменная ещё не существует в кеше.
-   Добавленная переменная остаётся в пользовательском кеше, пока не истечёт срок её действия
-   или она не будет удалена с помощью функций <function>wincache_ucache_delete</function> или <function>wincache_ucache_clear</function>.
+   Функция добавляет переменную в пользовательский кеш, только если кеш ещё не содержит переменную с таким ключом.
+   Переменная остаётся в пользовательском кеше до истечения срока действия
+   или пока переменную не удалят функцией <function>wincache_ucache_delete</function> или <function>wincache_ucache_clear</function>.
   </para>
  </refsect1>
 
@@ -36,11 +36,12 @@
      <term><parameter>key</parameter></term>
      <listitem>
       <para>
-       Сохраняет переменную с использованием этого имени <parameter>key</parameter>. Если переменная с таким же <parameter>key</parameter>
-       уже существует, завершится ошибкой и вернёт &false;. <parameter>key</parameter> чувствителен к регистру.
-       Чтобы переопределить значение, даже если <parameter>key</parameter> уже существует, используйте функцию <function>wincache_ucache_set</function>.
-       <parameter>key</parameter> также может принимать массив пар имя => значение, где имена будут использоваться в качестве ключей.
-       Это можно использовать для добавления нескольких значений в кеш за одну операцию, что позволяет избежать состояния гонки.
+       Параметр <parameter>key</parameter> — имя переменной, с которым значение сохраняется в кеше.
+       Функция выдаст ошибку и вернёт &false;, если переменная с ключом <parameter>key</parameter> уже содержится в кеше.
+       Параметр <parameter>key</parameter> чувствителен к регистру.
+       Функция <function>wincache_ucache_set</function> переопределит значение, даже если элемент с ключом <parameter>key</parameter> уже содержится в кеше.
+       Параметр <parameter>key</parameter> также принимает массив пар «имя => значение», где имя — ключ значения.
+       Массив передают для добавления в кеш набора значений за одну операцию и чтобы исключить состояние гонки.
       </para>
      </listitem>
     </varlistentry>
@@ -48,12 +49,12 @@
      <term><parameter>value</parameter></term>
      <listitem>
       <para>
-       Значение переменной, которую необходимо сохранить. <parameter>Value</parameter> поддерживает все типы данных, кроме ресурсов,
+       Значение переменной, которую требуется сохранить. Параметр <parameter>value</parameter> поддерживает все типы данных, кроме ресурсов,
        таких как дескрипторы файлов.
-       Параметр игнорируется, если первым аргументом является массив. Общее руководство - передать &null; в качестве <parameter>value</parameter>
-       при использовании массива <parameter>key</parameter>.
-       Если <parameter>value</parameter> является объектом или массивом, содержащим объекты,
-       то объекты будут сериализованы. Подробнее о сериализации объектов смотрите в описании <link linkend="object.sleep">__sleep()</link>.
+       Параметр игнорируется, если в первом аргументе передали массив. Общая рекомендация — при передаче в параметр <parameter>key</parameter> массива
+       передавать в аргументе <parameter>value</parameter> значение &null;.
+       Функция сериализует объекты, если в параметр <parameter>value</parameter> передали объект или массив объектов.
+       Подробнее о сериализации объектов рассказывает описание магического метода <link linkend="object.sleep">__sleep()</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -69,10 +70,10 @@
      <term><parameter>ttl</parameter></term>
      <listitem>
       <para>
-       Время, в течение которого переменная находится в кеше, в секундах. После того, как значение, указанное в <parameter>ttl</parameter>
-       будет передано, сохранённая переменная будет удалена из кеша.
-       Параметр принимает значение по умолчанию <literal>0</literal>, что означает, что переменная останется в кеше,
-       пока она не будет явно удалена с помощью функций <function>wincache_ucache_delete</function> или <function>wincache_ucache_clear</function>.
+       Время в секундах, в течение которого переменная хранится в кеше. После истечения времени <parameter>ttl</parameter>
+       переменная удаляется из кеша.
+       Значение по умолчанию — <literal>0</literal>, поэтому переменная останется в кеше бессрочно,
+       или пока переменную не удалят функцией <function>wincache_ucache_delete</function> или <function>wincache_ucache_clear</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -83,25 +84,25 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Если <parameter>key</parameter> является строкой, функция возвращает &true; в случае успешного выполнения и &false; в случае возникновения ошибки.
+   При передаче в параметр <parameter>key</parameter> строки функция возвращает &true;, если завершилась успешно, или &false;, если возникла ошибка.
   </simpara>
   <para>
-   Если <parameter>key</parameter> является массивом, функция возвращает:
+   При передаче в параметр <parameter>key</parameter> массива функция возвращает:
    <itemizedlist spacing="compact">
     <listitem>
      <simpara>
-      Если все пары имя => значение в массиве могут быть установлены, функция возвращает пустой массив;
+      Пустой массив, если все пары «имя => значение» в массиве возможно установить;
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Если все пары имя => значение в массиве не могут быть установлены, функция возвращает &false;;
+      Значение &false;, если ни одну пару «имя => значение» из массива невозможно установить;
      </simpara>
     </listitem>
     <listitem>
      <simpara>
-      Если некоторые из них могут быть установлены, а другие - нет,
-      функция возвращает массив с парами name => value, которые не удалось добавить в пользовательский кеш.
+      Массив пар «имя => значение», которые не добавились в пользовательский кеш,
+      если одни пары возможно установить, а другие — нет.
      </simpara>
     </listitem>
    </itemizedlist>
@@ -112,15 +113,18 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>wincache_ucache_add</function> с <parameter>key</parameter> в виде строки</title>
+    <title>
+     Пример добавления переменной в пользовательский кеш по строковому ключу <parameter>key</parameter>
+     функцией <function>wincache_ucache_add</function>
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $bar = 'BAR';
 var_dump(wincache_ucache_add('foo', $bar));
 var_dump(wincache_ucache_add('foo', $bar));
 var_dump(wincache_ucache_get('foo'));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -135,15 +139,19 @@ string(3) "BAR"
   </para>
   <para>
    <example>
-    <title>Пример использования <function>wincache_ucache_add</function> с <parameter>key</parameter> в виде массива</title>
+    <title>
+     Пример добавления переменных в пользовательский кеш функцией <function>wincache_ucache_add</function>
+     с передачей в параметр <parameter>key</parameter> массива
+    </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 $colors_array = array('green' => '5', 'Blue' => '6', 'yellow' => '7', 'cyan' => '8');
+
 var_dump(wincache_ucache_add($colors_array));
 var_dump(wincache_ucache_add($colors_array));
 var_dump(wincache_ucache_get('Blue'));
-?>
 ]]>
     </programlisting>
     &example.outputs;

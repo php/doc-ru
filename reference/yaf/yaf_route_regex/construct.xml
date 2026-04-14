@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b37bddfde36975bf6bf06ce98867e62d489d49c5 Maintainer: lex Status: ready -->
+<!-- EN-Revision: e2f2172bf114599926878017ab2dce356956fa9e Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="yaf-route-regex.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Yaf_Route_Regex::__construct</refname>
-  <refpurpose>Конструктор класса Yaf_Route_Regex</refpurpose>
+  <refpurpose>Инициализирует новый экземпляр класса Yaf_Route_Regex</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -29,9 +29,8 @@
     <term><parameter>match</parameter></term>
     <listitem>
      <para>
-       Готовый шаблон регулярного выражения будет использоваться для проверки соответствия URI запроса;
-       если не совпадает, <classname>Yaf_Route_Regex</classname> вернёт
-       &false;.
+      Регулярное выражение для проверки соответствия URI запроса шаблону.
+      При несовпадении URI объект <classname>Yaf_Route_Regex</classname> вернёт значение &false;.
      </para>
     </listitem>
    </varlistentry>
@@ -39,13 +38,13 @@
     <term><parameter>route</parameter></term>
     <listitem>
      <para>
-      Когда шаблон соответствия соответствует URI запроса,
-      <classname>Yaf_Route_Regex</classname> будет решать,
-      к какому маршруту m/c/a он относится.
+      Массив с правилами построения маршрута. При совпадении URI запроса с шаблоном
+      объект <classname>Yaf_Route_Regex</classname> построит маршрут
+      и направит запрос в модуль, контроллер и (или) действие.
      </para>
      <para>
-      Любой из m/c/a в этом массиве - необязательный, если вы не назначите
-      какое-либо значение, он перенаправит на маршрут по умолчанию.
+      Ни один компонент маршрута не относится к обязательным, маршрутизатор подставит значение по умолчанию,
+      если в массиве компоненту не присвоили конкретное значение.
      </para>
     </listitem>
    </varlistentry>
@@ -53,7 +52,7 @@
     <term><parameter>map</parameter></term>
     <listitem>
      <para>
-      Массив для назначения имени совпадениям (captures).
+      Массив для назначения имён совпадениям, которые захватил шаблон в результате сопоставления.
      </para>
     </listitem>
    </varlistentry>
@@ -69,11 +68,11 @@
     <term><parameter>reverse</parameter></term>
     <listitem>
      <para>
-      Строка, используемая для формирования URL, смотрите
-      <methodname>Yaf_Route_Regex::assemble</methodname>.
+      Строка для обратной сборки URL-адреса
+      методом <methodname>Yaf_Route_Regex::assemble</methodname>.
       <note>
        <para>
-       Этот параметр был представлен в версии 2.3.0
+       Параметр доступен с Yaf 2.3.0.
        </para>
       </note>
      </para>
@@ -92,101 +91,109 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования класса <classname>Yaf_Route_Regex</classname></title>
+   <title>Пример работы с классом <classname>Yaf_Route_Regex</classname></title>
    <programlisting role="php">
 <![CDATA[
 <?php
-   /**
-    * Добавить маршрут регулярного выражения в стек маршрута Yaf_Router Yaf_Router
-    */
-    Yaf_Dispatcher::getInstance()->getRouter()->addRoute("name",
-        new Yaf_Route_Regex(
-           "#^/product/([^/]+)/([^/])+#", // совпадение с URI запроса, начинающегося с "/product"
-           array(
-               'controller' => "product",  // маршрут на контроллер product,
-           ),
-           array(
-              1 => "name",   // теперь вы можете вызвать $request->getParam("name")
-              2 => "id",     // для получения первого совпадения в шаблоне.
-           )
-        )
-    );
-?>
-]]>
-   </programlisting>
-  </example>
-  <example>
-   <title>Пример использования класса <classname>Yaf_Route_Regex</classname> (с версии 2.3.0)</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-   /**
-    * Использовать результат совпадения в качестве имени MVC
-    */
-    Yaf_Dispatcher::getInstance()->getRouter()->addRoute("name",
-        new Yaf_Route_Regex(
-           "#^/product/([^/]+)/([^/])+#i", // совпадение с URI запроса, начинающегося с "/product"
-           array(
-              'controller' => ":name", // маршрут на :name, которому соответствует $1 в результате совпадения как имя контроллера
-           ),
-           array(
-              1 => "name",   // теперь вы можете вызвать $request->getParam("name")
-              2 => "id",     // для получения первого совпадения в шаблоне.
-           )
-        )
-    );
-?>
-]]>
-   </programlisting>
-  </example>
-  <example>
-   <title>Пример использования класса <classname>Yaf_Route_Regex</classname> (с версии 2.3.0)</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-   /**
-    * Использовать результат совпадения в качестве имени MVC
-    */
-    Yaf_Dispatcher::getInstance()->getRouter()->addRoute("name",
-        new Yaf_Route_Regex(
-           "#^/product/(?<name>[^/]+)/([^/])+#i", //match request uri leading "/product"
-           array(
-           'controller' => ":name", // маршрут на :name,
-                                    // который называется именем группы совпадения 'name' в результате совпадения как имя контроллера
-           ),
-           array(
-              2 => "id",     // для получения первого совпадения в шаблоне.
-           )
-        )
-    );
-?>
-]]>
-   </programlisting>
-  </example>
-  <example>
-   <title>Пример использования класса <classname>Yaf_Route_Regex</classname></title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-   /**
-    * Добавить маршрут регулярного выражения в стек маршрута Yaf_Router, вызвав addconfig
-    */
-    $config = array(
-        "name" => array(
-           "type"  => "regex",          // маршрут Yaf_Route_Regex
-           "match" => "#(.*)#",         // совпадение с произвольным запросом URI
-           "route" => array(
-               'controller' => "product",  // маршрут на контроллер product,
-               'action'     => "dummy",    // маршрут на действие dummy
-           ),
-           "map" => array(
-              1 => "uri",   // теперь вы можете вызвать $request->getParam("uri")
-           ),
+
+/**
+ * Добавить в стек маршрутизатора Yaf_RouterПример маршрут на основе регулярного выражения
+ */
+Yaf_Dispatcher::getInstance()->getRouter()->addRoute(
+    "name",
+    new Yaf_Route_Regex(
+        "#^/product/([^/]+)/([^/])+#", // Соответствует URI запроса, который начинается с "/product"
+        array(
+            'controller' => "product", // Маршрут к контроллеру продукта
         ),
-    );
-    Yaf_Dispatcher::getInstance()->getRouter()->addConfig(
-        new Yaf_Config_Simple($config));
-?>
+        array(
+            1 => "name",   // Вызов $request->getParam("name") теперь вернёт первое совпадение, которое захватил шаблон
+            2 => "id",
+        )
+    )
+);
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>Пример работы с классом <classname>Yaf_Route_Regex</classname> с версии 2.3.0</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+/**
+ * Обработать результат совпадения как имя MCA
+ */
+Yaf_Dispatcher::getInstance()->getRouter()->addRoute(
+    "name",
+    new Yaf_Route_Regex(
+        "#^/product/([^/]+)/([^/])+#i", // Соответствует URI запроса, который начинается с "/product"
+        array(
+            'controller' => ":name", // Маршрут к контроллеру, название которого получил заменитель :name
+                                     // в результате захвата совпадения $1
+        ),
+        array(
+            1 => "name",   // Вызов $request->getParam("name") вернёт первое захваченное шаблоном совпадение
+            2 => "id",
+        )
+    )
+);
+
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>Пример работы с классом <classname>Yaf_Route_Regex</classname> с версии 2.3.0</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+/**
+ * Обработать результат совпадения как имя MCA
+ */
+Yaf_Dispatcher::getInstance()->getRouter()->addRoute(
+    "name",
+    new Yaf_Route_Regex(
+        "#^/product/(?<name>[^/]+)/([^/])+#i", // Соответствует URI запроса, который начинается с "/product"
+        array(
+            'controller' => ":name", // Маршрут к контроллеру, название которого получил заменитель :name
+                                     // в результате захвата совпадения $1
+        ),
+        array(
+            2 => "id",
+        )
+    )
+);
+]]>
+   </programlisting>
+  </example>
+  <example>
+   <title>Пример работы с классом <classname>Yaf_Route_Regex</classname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+/**
+ * Добавить в стек маршрутизатора Yaf_Router маршрут на основе регулярного выражения
+ * путём вызова метода addConfig
+ */
+$config = array(
+    "name" => array(
+        "type"  => "regex",  // Маршрут Yaf_Route_Regex
+        "match" => "#(.*)#", // Совпадение с произвольным URI запроса
+        "route" => array(
+            'controller' => "product",  // Маршрут к контроллеру продукта
+            'action'     => "dummy",    // Маршрут к бессмысленному действию
+        ),
+        "map" => array(
+            1 => "uri",   // Вызов $request->getParam("uri") теперь вернёт URI запроса
+        ),
+    ),
+);
+
+Yaf_Dispatcher::getInstance()->getRouter()->addConfig(
+    new Yaf_Config_Simple($config)
+);
 ]]>
    </programlisting>
   </example>
