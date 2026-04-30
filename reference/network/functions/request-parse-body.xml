@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4bf789e981af0836c41daa16e57ef86c21497faa Maintainer: malferov Status: ready -->
+<!-- EN-Revision: c78af136d0497e16230218083ce43448f1864272 Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.request-parse-body" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -14,8 +14,8 @@
    <methodparam choice="opt"><type class="union"><type>array</type><type>null</type></type><parameter>options</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция считывает тело запроса и разбирает его с учётом типа содержимого, который указали
-   в заголовке <literal>Content-Type</literal>. Пока поддерживается два типа
+   Функция считывает и разбирает тело запроса с учётом типа содержимого,
+   который указали в заголовке <literal>Content-Type</literal>. Поддерживается два типа
    содержимого:
   </simpara>
   <itemizedlist>
@@ -31,16 +31,20 @@
    </listitem>
   </itemizedlist>
   <simpara>
-   Главное назначение функции — разбирать содержимое тела, которое закодировали
-   в формате <literal>multipart/form-data</literal>, в запросах с HTTP-глаголами кроме
-   <literal>POST</literal>, которые не заполняют суперглобальные массивы
-   <varname>$_POST</varname> и <varname>$_FILES</varname> автоматически.
+   При отправке запросов в формате <literal>multipart/form-data</literal> HTTP-методом
+   <literal>POST</literal> движок автоматически считывает входной буфер, чтобы заполнить суперглобальные массивы
+   <varname>$_POST</varname> и <varname>$_FILES</varname>, при этом входной буфер опустошается,
+   поэтому главное назначение функции — разбор тела запросов с другими HTTP-глаголами.
   </simpara>
 
   <caution>
    <simpara>
-    Функция <function>request_parse_body</function> считывает тело запроса
-    без буферизации в потоке <literal>php://input</literal>.
+    Тело запроса возможно прочитать из входного буфера только один раз.
+    После считывания входного буфера функцией <function>request_parse_body</function>
+    тело запроса не буферизуется в поток <literal>php://input</literal>.
+    Справедливо и обратное: функция <function>request_parse_body</function>
+    вернёт пустые данные, если входной буфер уже опустел, например после считывания тела запроса
+    через обёртку <literal>php://input</literal>.
    </simpara>
   </caution>
  </refsect1>
@@ -101,10 +105,8 @@
 // Разбор запроса и сохранение результата в суперглобальных массивах $_POST и $_FILES
 [$_POST, $_FILES] = request_parse_body();
 
-// Вывод содержимого файла, который передали
+// Вывод содержимого файла, который передали в запросе
 echo file_get_contents($_FILES['file_name']['tmp_name']);
-
-?>
 ]]>
    </programlisting>
   </example>
@@ -125,8 +127,6 @@ assert_logged_in();
 ]);
 
 // Обработка файлов, которые загрузили...
-
-?>
 ]]>
    </programlisting>
   </example>
