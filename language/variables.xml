@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 22583751fbfdaa3eaa41aeb6470d1343f5cb2c78 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 64007e9f6b23f70d8874be11c4eb9d45556b742f Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
-<chapter xml:id="language.variables" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+<chapter xml:id="language.variables" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink"
+ annotations="interactive">
  <title>Переменные</title>
 
  <sect1 xml:id="language.variables.basics">
@@ -42,18 +43,15 @@
 
    <example>
     <title>Правильные названия переменных</title>
-    <programlisting role="php">
+    <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 $var = 'Боб';
 $Var = 'Джо';
 echo "$var, $Var";      // Инструкция выведет "Боб, Джо"
 
 $_4site = 'ещё нет';    // Правильно; название переменной начинается с символа подчёркивания
 $täyte = 'mansikka';    // Правильно; символ 'ä' — 228-я кодовая точка в кодировке Extended ASCII
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -87,8 +85,6 @@ $4site = 'not yet';     // Неправильно; название начина
 ${'invalid-name'} = 'bar';
 $name = 'invalid-name';
 echo ${'invalid-name'}, " ", $$name;
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -129,10 +125,8 @@ bar bar
 $foo = 'Боб';              // Присваивает переменной $foo значение «Боб»
 $bar = &$foo;              // Ссылка на значение переменной $foo через переменную $bar
 $bar = "Меня зовут $bar";  // Изменение значения переменной $bar...
-echo $bar;
-echo $foo;                 // ...меняет и значение переменной $foo
-
-?>
+echo $bar . PHP_EOL;
+echo $foo . PHP_EOL;       // ...меняет и значение переменной $foo
 ]]>
     </programlisting>
    </informalexample>
@@ -144,19 +138,37 @@ echo $foo;                 // ...меняет и значение перемен
     <programlisting role="php">
 <![CDATA[
 <?php
-
-$foo = 25;
-$bar = &$foo;      // Это верное присваивание
-$bar = &(24 * 7);  // Неверно; ссылка на неименованное выражение
-
+$original = 25;
+$ref1 = &$original;        // Это верное присваивание
+$ref2 = &(24 * 7);         // Неверно; ссылка на неименованное выражение
+]]>
+    </programlisting>
+   </informalexample>
+   <informalexample>
+    <programlisting role="php">
+<![CDATA[
+<?php
+// Обратите внимание на отсутствие символа &, который обозначает возвращаемую ссылку, в объявлении функции,
+// то есть функция не возвращает ссылку, поэтому результат нельзя присвоить по ссылке
 function test()
 {
-   return 25;
+   $original = 25;
+   return $original;
 }
 
-$bar = &test();    // Неверно, потому что функция test() не возвращает переменную по ссылке
+// Обратите внимание: выдаётся уведомление, но значение, которое не относится к ссылке, всё равно присваивается
+$result1 = &test();        // Неверно, потому что функция test() не возвращает переменную по ссылке
+var_dump($result1);
 
-?>
+// Эта функция объявлена как возвращающая ссылку, но возвращает не переменную
+function &test2()
+{
+    return 26;             // Неверно, поскольку возвращаемое значение не является ссылкой на переменную
+}
+
+// Обратите внимание: значение, которое не относится к ссылке, всё равно присваивается
+$result2 = &test2();
+var_dump($result2);
 ]]>
     </programlisting>
    </informalexample>
@@ -182,8 +194,6 @@ $bar = &test();    // Неверно, потому что функция test() 
 // Пример переменной, которую не установили и (!) не упомянули в строковом,
 // логическом, целочисленном или другом контексте
 var_dump($unset_var);
-
-?>
 ]]>
     </programlisting>
      &example.outputs;
@@ -210,8 +220,7 @@ NULL
 <?php
 
 $unset_array[] = 'value'; // Предупреждение не выдаётся
-
-?>
+var_dump($unset_array);
 ]]>
     </programlisting>
    </example>
@@ -278,14 +287,11 @@ $unset_array[] = 'value'; // Предупреждение не выдаётся
   </simpara>
   <example>
    <title>Пример глобальной области видимости переменных</title>
-   <programlisting role="php">
+   <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 $a = 1;
 include 'b.inc'; // Код внутри файла b.inc получит доступ к переменной $a
-
-?>
 ]]>
    </programlisting>
   </example>
@@ -310,10 +316,10 @@ $a = 1; // Определяем переменную $a в глобальной 
 
 function test()
 {
-    echo $a; // Переменная $a не определена, поскольку конструкция echo указывает на локальную версию переменной $a
+    var_dump($a); // Переменная $a не определена, поскольку конструкция echo указывает на локальную версию переменной $a
 }
 
-?>
+test();
 ]]>
    </programlisting>
   </example>
@@ -360,8 +366,6 @@ function Sum()
 
 Sum();
 echo $b;
-
-?>
 ]]>
      </programlisting>
       &example.outputs;
@@ -405,8 +409,6 @@ function Sum()
 
 Sum();
 echo $b;
-
-?>
 ]]>
      </programlisting>
     </example>
@@ -425,16 +427,13 @@ echo $b;
    <para>
     <example>
      <title>Суперглобальные переменные и область видимости</title>
-     <programlisting role="php">
+     <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 function test_superglobal()
 {
     echo $_POST['name'];
 }
-
-?>
 ]]>
      </programlisting>
     </example>
@@ -470,11 +469,13 @@ function test_superglobal()
 function test()
 {
     $a = 0;
-    echo $a;
+    echo $a . PHP_EOL;
     $a++;
 }
 
-?>
+test();
+test();
+test();
 ]]>
      </programlisting>
     </example>
@@ -498,11 +499,13 @@ function test()
 function test()
 {
     static $a = 0;
-    echo $a;
+    echo $a . PHP_EOL;
     $a++;
 }
 
-?>
+test();
+test();
+test();
 ]]>
      </programlisting>
     </example>
@@ -531,7 +534,7 @@ function test()
     static $count = 0;
 
     $count++;
-    echo $count;
+    echo $count . PHP_EOL;
 
     if ($count < 10) {
         test();
@@ -540,7 +543,7 @@ function test()
     $count--;
 }
 
-?>
+test();
 ]]>
      </programlisting>
     </example>
@@ -554,7 +557,7 @@ function test()
    <para>
     <example>
      <title>Объявление статических переменных</title>
-     <programlisting role="php">
+     <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
@@ -567,8 +570,6 @@ function foo()
     $int++;
     echo $int;
 }
-
-?>
 ]]>
       </programlisting>
      </example>
@@ -600,8 +601,6 @@ function exampleFunction($input)
 // переменная не сохранит значение
 echo exampleFunction('A'); // Выводит: Функция получила значение: A, счётчик: 1
 echo exampleFunction('B'); // Выводит: Функция получила значение: B, счётчик: 1
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -643,8 +642,6 @@ var_dump(Foo::counter()); // int(1)
 var_dump(Foo::counter()); // int(2)
 var_dump(Bar::counter()); // int(3), до PHP 8.1.0 int(1)
 var_dump(Bar::counter()); // int(4), до PHP 8.1.0 int(2)
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -689,21 +686,19 @@ test_global_ref();
 var_dump($obj);
 test_global_noref();
 var_dump($obj);
-
-?>
 ]]>
     </programlisting>
-   </informalexample>
 
-   &example.outputs;
+    &example.outputs;
 
-   <screen>
+    <screen>
 <![CDATA[
 NULL
 object(stdClass)#1 (0) {
 }
 ]]>
-   </screen>
+    </screen>
+   </informalexample>
 
    <simpara>
     Аналогично ведёт себя и инструкция <literal>static</literal>. Ссылки не
@@ -767,13 +762,10 @@ $still_obj1 = get_instance_ref();
 echo "\n";
 $obj2 = get_instance_noref();
 $still_obj2 = get_instance_noref();
-
-?>
 ]]>
     </programlisting>
-   </informalexample>
-   &example.outputs;
-   <screen>
+    &example.outputs;
+    <screen>
 <![CDATA[
 Статический объект: NULL
 Статический объект: NULL
@@ -784,7 +776,8 @@ $still_obj2 = get_instance_noref();
   int(1)
 }
 ]]>
-   </screen>
+    </screen>
+   </informalexample>
 
    <simpara>
     Пример показывает, что при назначении ссылки статической
@@ -807,10 +800,8 @@ $still_obj2 = get_instance_noref();
    <programlisting role="php">
 <![CDATA[
 <?php
-
 $a = 'hello';
-
-?>
+var_dump($a);
 ]]>
    </programlisting>
   </informalexample>
@@ -827,10 +818,9 @@ $a = 'hello';
    <programlisting role="php">
 <![CDATA[
 <?php
-
+$a = 'hello';
 $$a = 'world';
-
-?>
+var_dump($hello);
 ]]>
    </programlisting>
   </informalexample>
@@ -846,10 +836,9 @@ $$a = 'world';
    <programlisting role="php">
 <![CDATA[
 <?php
-
+$a = 'hello';
+$$a = 'world';
 echo "{$a} {$$a}";
-
-?>
 ]]>
    </programlisting>
   </informalexample>
@@ -862,10 +851,9 @@ echo "{$a} {$$a}";
    <programlisting role="php">
 <![CDATA[
 <?php
-
+$a = 'hello';
+$$a = 'world';
 echo "{$a} {$hello}";
-
-?>
 ]]>
    </programlisting>
   </informalexample>
@@ -929,8 +917,6 @@ echo $foo->{$start . $end} . "\n";
 $arr = 'arr';
 echo $foo->{$arr[1]} . "\n";
 echo $foo->{$arr}[1] . "\n";
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -994,14 +980,11 @@ echo $foo->{$arr}[1] . "\n";
      <title>
       Доступ к данным несложной HTML-формы, которую отправили методом POST
      </title>
-     <programlisting role="php">
+     <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 echo $_POST['username'];
 echo $_REQUEST['username'];
-
-?>
 ]]>
      </programlisting>
     </example>
@@ -1038,7 +1021,7 @@ echo $_REQUEST['username'];
    <para>
     <example>
      <title>Более сложные переменные формы</title>
-     <programlisting role="php">
+     <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
@@ -1137,14 +1120,11 @@ if ($_POST) {
    </simpara>
 
    <informalexample>
-    <programlisting role="php">
+    <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 setcookie("MyCookie[foo]", 'Testing 1', time() + 3600);
 setcookie("MyCookie[bar]", 'Testing 2', time() + 3600);
-
-?>
 ]]>
     </programlisting>
    </informalexample>
@@ -1166,20 +1146,16 @@ setcookie("MyCookie[bar]", 'Testing 2', time() + 3600);
 
    <example>
     <title>Пример использования функции <function>setcookie</function></title>
-    <programlisting role="php">
+    <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 if (isset($_COOKIE['count'])) {
     $count = $_COOKIE['count'] + 1;
 } else {
     $count = 1;
 }
-
 setcookie('count', $count, time() + 3600);
 setcookie("Cart[$count]", $item, time() + 3600);
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -1193,13 +1169,10 @@ setcookie("Cart[$count]", $item, time() + 3600);
     PHP, как правило, не изменяет имена переменных, которые передали скрипту.
     Однако следует отметить, что точка — неправильный символ
     в имени переменной PHP. Поэтому рассмотрим такую запись:
-    <programlisting role="php">
+    <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
-
 $varname.ext;  /* Неправильное имя переменной */
-
-?>
 ]]>
     </programlisting>
     В приведённом примере интерпретатор видит переменную
