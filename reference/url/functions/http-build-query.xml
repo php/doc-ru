@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e80ef2394f0c64be66917a5d4335736ae05b774f Maintainer: aur Status: ready -->
+<!-- EN-Revision: f72c6031982a6f8152ef351d20f8e0d90e8f1612 Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.http-build-query" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -41,6 +41,14 @@
        Если <parameter>data</parameter> объект, тогда только общедоступные
        свойства будут включены в результат.
       </para>
+      <note>
+       <simpara>
+        Магический метод <link linkend="object.tostring">__toString()</link>
+        не вызывается, когда объект преобразуется. Чтобы использовать
+        строковое представление объекта в строке запроса, объект необходимо
+        явно привести к строке.
+       </simpara>
+      </note>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -258,6 +266,44 @@ echo http_build_query($parent);
    <screen>
 <![CDATA[
 pub=publicParent&pub_bar%5Bpub%5D=publicChild
+]]>
+   </screen>
+  </example>
+
+  <example>
+   <title>Использование <function>http_build_query</function> с объектами,
+    у которых определён метод <link linkend="object.tostring">__toString()</link>
+   </title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+class Foo {
+    public $publicProperty = 'visible';
+
+    public function __toString() {
+        return "bar";
+    }
+}
+
+$params = array(
+    'a' => 'b',
+    'foo' => new Foo()
+);
+
+// Без приведения http_build_query читает общедоступные свойства
+echo http_build_query($params) . "\n";
+
+// С явным приведением http_build_query использует результат __toString()
+$params['foo'] = (string) new Foo();
+echo http_build_query($params) . "\n";
+?>
+]]>
+   </programlisting>
+ &example.outputs;
+   <screen>
+<![CDATA[
+a=b&foo%5BpublicProperty%5D=visible
+a=b&foo=bar
 ]]>
    </screen>
   </example>
