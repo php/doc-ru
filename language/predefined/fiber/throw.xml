@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8fee3ae9715ffa15922469eb7d98f4878917a6ee Maintainer: sergey Status: ready -->
+<!-- EN-Revision: b3a0b9924ba577a3abf246c1bd1a6cf5c4bf14dc Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="fiber.throw" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -15,7 +15,8 @@
   </methodsynopsis>
   <para>
    Метод возобновляет выполнение файбера и передаёт в файбер исключение,
-   которое файбер выбрасывает в текущей точке прерывания стека вызовов методом <methodname>Fiber::suspend</methodname>.
+   которое выбрасывается в текущей точке прерывания стека вызовов —
+   месте последнего вызова метода <methodname>Fiber::suspend</methodname>.
   </para>
   <para>
    Вызов метода на неприостановленном файбере выбросит ошибку <classname>FiberError</classname>.
@@ -29,8 +30,8 @@
     <term><parameter>exception</parameter></term>
     <listitem>
      <para>
-      Исключение, которое требуется выбросить в текущей точке прерывания файбера
-      методом <methodname>Fiber::suspend</methodname>.
+      Исключение, которое требуется выбросить в текущей точке прерывания файбера —
+      точке вызова метода <methodname>Fiber::suspend</methodname>.
      </para>
     </listitem>
    </varlistentry>
@@ -44,6 +45,38 @@
    или значение &null;, если файбер вернул результирующее значение.
    Исключение, которое файбер выбрасывает раньше очередной приостановки, выбрасывается в точке вызова этого метода.
   </para>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$fiber = new Fiber(function () {
+   try {
+       // Приостановка выполнения файбера и объявление точки прерывания
+       Fiber::suspend();
+   } catch (Throwable $e) {
+       echo $e->getMessage();
+   }
+});
+
+$fiber->start();
+
+// Возобновляем выполнение файбера
+// с передачей исключения, которое выбросится в точке прерывания
+$fiber->throw(new Exception('Сообщение исключения, которое выбросилось в текущей точке прерывания'));
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+Сообщение исключения, которое выбросилось в текущей точке прерывания
+]]>
+   </screen>
+  </informalexample>
  </refsect1>
 
 </refentry>
