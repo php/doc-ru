@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e15a6c3e4d5819102361ae78e73c90a06238c8a Maintainer: irker Status: ready -->
+<!-- EN-Revision: 8f51247cb4631b29686f867bd904dfe5b2678074 Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.magic" xmlns="http://docbook.org/ns/docbook">
  <title>Магические методы</title>
@@ -24,10 +24,10 @@
   <link linkend="object.set">__set()</link>,
   <link linkend="object.isset">__isset()</link>,
   <link linkend="object.unset">__unset()</link>,
-  <link linkend="object.sleep">__sleep()</link>,
-  <link linkend="object.wakeup">__wakeup()</link>,
   <link linkend="object.serialize">__serialize()</link>,
   <link linkend="object.unserialize">__unserialize()</link>,
+  <link linkend="object.sleep">__sleep()</link>,
+  <link linkend="object.wakeup">__wakeup()</link>,
   <link linkend="object.tostring">__toString()</link>,
   <link linkend="object.invoke">__invoke()</link>,
   <link linkend="object.set-state">__set_state()</link>,
@@ -63,105 +63,6 @@
    иначе возникнет фатальная ошибка.
   </para>
  </warning>
-
- <sect2 xml:id="language.oop5.magic.sleep">
-  <title>
-   Методы <link linkend="object.sleep">__sleep()</link>
-   и <link linkend="object.wakeup">__wakeup()</link>
-  </title>
-
-  <methodsynopsis xml:id="object.sleep">
-   <modifier>public</modifier> <type>array</type><methodname>__sleep</methodname>
-   <void/>
-  </methodsynopsis>
-  <methodsynopsis xml:id="object.wakeup">
-   <modifier>public</modifier> <type>void</type><methodname>__wakeup</methodname>
-   <void/>
-  </methodsynopsis>
-
-  <para>
-   Функция <function>serialize</function> проверяет, определили ли
-   в классе магический метод с названием <link linkend="object.sleep">__sleep()</link>.
-   Магический метод, если его определили, выполняется перед сериализацией. В методе очищают
-   сериализуемый объект, если требуется, и возвращают из метода массив с названиями
-   переменных объекта, которые требуется сериализовать.
-   При невозврате из магического метода значения сериализуется константа &null;
-   и выдаётся предупреждение <constant>E_NOTICE</constant>.
-  </para>
-  <note>
-   <para>
-    Методу <link linkend="object.sleep">__sleep()</link> нельзя
-    возвращать названия закрытых свойств родительских классов.
-    Это сгенерирует ошибку уровня <constant>E_NOTICE</constant>.
-    Для сериализации закрытых родительских свойств вместо магического метода __sleep вызывают
-    магический метод <link linkend="object.serialize">__serialize()</link>.
-   </para>
-  </note>
-  <note>
-   <para>
-    Начиная с PHP 8.0.0 при возврате из метода <link linkend="object.sleep">__sleep()</link>
-    значения кроме массива генерируется предупреждение.
-    Раньше выдавалось уведомление.
-   </para>
-  </note>
-  <para>
-   Назначение метода <link linkend="object.sleep">__sleep()</link> —
-   зафиксировать отложенные данные или выполнить аналогичные задачи очистки.
-   Метод также будет полезным, когда требуется сохранить только часть объекта.
-  </para>
-  <para>
-   И наоборот, функция <function>unserialize</function> проверяет
-   в классе определение магического метода с названием
-   <link linkend="object.wakeup">__wakeup()</link>.
-   Методу пробуждения, если его определили в классе, доступно восстановление любых ресурсов,
-   которые разрешается содержать объекту.
-  </para>
-  <para>
-   Назначение метода <link linkend="object.wakeup">__wakeup()</link> —
-   восстановить соединения с базой данных,
-   которые потерялись при сериализации,
-   и выполнить другие задачи повторной инициализации.
-  </para>
-  <example>
-   <title>Пример засыпания и пробуждения</title>
-   <programlisting role="php">
-<![CDATA[
-<?php
-
-class Connection
-{
-    protected $link;
-    private $dsn, $username, $password;
-
-    public function __construct($dsn, $username, $password)
-    {
-        $this->dsn = $dsn;
-        $this->username = $username;
-        $this->password = $password;
-        $this->connect();
-    }
-
-    private function connect()
-    {
-        $this->link = new PDO($this->dsn, $this->username, $this->password);
-    }
-
-    public function __sleep()
-    {
-        return array('dsn', 'username', 'password');
-    }
-
-    public function __wakeup()
-    {
-        $this->connect();
-    }
-}
-
-?>
-]]>
-   </programlisting>
-  </example>
- </sect2>
 
  <sect2 xml:id="language.oop5.magic.serialize">
   <title>
@@ -259,6 +160,105 @@ class Connection
         $this->username = $data['user'];
         $this->password = $data['pass'];
 
+        $this->connect();
+    }
+}
+
+?>
+]]>
+   </programlisting>
+  </example>
+ </sect2>
+
+ <sect2 xml:id="language.oop5.magic.sleep">
+  <title>
+   Методы <link linkend="object.sleep">__sleep()</link>
+   и <link linkend="object.wakeup">__wakeup()</link>
+  </title>
+
+  <methodsynopsis xml:id="object.sleep">
+   <modifier>public</modifier> <type>array</type><methodname>__sleep</methodname>
+   <void/>
+  </methodsynopsis>
+  <methodsynopsis xml:id="object.wakeup">
+   <modifier>public</modifier> <type>void</type><methodname>__wakeup</methodname>
+   <void/>
+  </methodsynopsis>
+
+  <para>
+   Функция <function>serialize</function> проверяет, определили ли
+   в классе магический метод с названием <link linkend="object.sleep">__sleep()</link>.
+   Магический метод, если его определили, выполняется перед сериализацией. В методе очищают
+   сериализуемый объект, если требуется, и возвращают из метода массив с названиями
+   переменных объекта, которые требуется сериализовать.
+   При невозврате из магического метода значения сериализуется константа &null;
+   и выдаётся предупреждение <constant>E_NOTICE</constant>.
+  </para>
+  <note>
+   <para>
+    Методу <link linkend="object.sleep">__sleep()</link> нельзя
+    возвращать названия закрытых свойств родительских классов.
+    Это сгенерирует ошибку уровня <constant>E_NOTICE</constant>.
+    Для сериализации закрытых родительских свойств вместо магического метода __sleep вызывают
+    магический метод <link linkend="object.serialize">__serialize()</link>.
+   </para>
+  </note>
+  <note>
+   <para>
+    Начиная с PHP 8.0.0 при возврате из метода <link linkend="object.sleep">__sleep()</link>
+    значения кроме массива генерируется предупреждение.
+    Раньше выдавалось уведомление.
+   </para>
+  </note>
+  <para>
+   Назначение метода <link linkend="object.sleep">__sleep()</link> —
+   зафиксировать отложенные данные или выполнить аналогичные задачи очистки.
+   Метод также будет полезным, когда требуется сохранить только часть объекта.
+  </para>
+  <para>
+   И наоборот, функция <function>unserialize</function> проверяет
+   в классе определение магического метода с названием
+   <link linkend="object.wakeup">__wakeup()</link>.
+   Методу пробуждения, если его определили в классе, доступно восстановление любых ресурсов,
+   которые разрешается содержать объекту.
+  </para>
+  <para>
+   Назначение метода <link linkend="object.wakeup">__wakeup()</link> —
+   восстановить соединения с базой данных,
+   которые потерялись при сериализации,
+   и выполнить другие задачи повторной инициализации.
+  </para>
+  <example>
+   <title>Пример засыпания и пробуждения</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Connection
+{
+    protected $link;
+    private $dsn, $username, $password;
+
+    public function __construct($dsn, $username, $password)
+    {
+        $this->dsn = $dsn;
+        $this->username = $username;
+        $this->password = $password;
+        $this->connect();
+    }
+
+    private function connect()
+    {
+        $this->link = new PDO($this->dsn, $this->username, $this->password);
+    }
+
+    public function __sleep()
+    {
+        return array('dsn', 'username', 'password');
+    }
+
+    public function __wakeup()
+    {
         $this->connect();
     }
 }

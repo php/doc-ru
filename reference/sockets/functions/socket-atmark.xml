@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: eef7fb60d16864b253aa3aa95a57f8b1cfd41451 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 2c357a0dd6cc195bce10fa974ea14a2e30eb4b5b Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.socket-atmark" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -45,19 +45,54 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>socket_atmark</function> для установки адреса отправителя</title>
+    <title>Пример использования функции <function>socket_atmark</function> для проверки, готов ли сокет к чтению внеполосных данных</title>
     <programlisting role="php">
 <![CDATA[
 <?php
+$socketServer = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
+socket_set_option( $socketServer, SOL_SOCKET, SO_REUSEADDR, 1 );
+socket_bind( $socketServer, '127.0.0.1' );
+socket_listen( $socketServer );
 
-// Создать новый сокет
-$sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-var_dump(socket_atmark($sock));
-// Закрыть сокет
-socket_close($sock);
+$socketClient = socket_create( AF_INET, SOCK_STREAM, SOL_TCP );
+socket_getsockname( $socketServer, $stAddr, $uPort );
+socket_connect( $socketClient, $stAddr, $uPort );
+
+$socket = socket_accept( $socketServer );
+socket_shutdown( $socket, 1 );
+
+$st = 'This is normal data.';
+socket_send( $socketClient, $st, strlen( $st ), 0 );
+$st = '!'; # TCP допускает только один байт срочных данных.
+socket_send( $socketClient, $st, strlen( $st ), MSG_OOB );
+$st = 'Not so urgent.';
+socket_send( $socketClient, $st, strlen( $st ), 0 );
+socket_shutdown( $socketClient );
+
+do {
+    if ( socket_atmark( $socket ) ) {
+        $rc = socket_recv( $socket, $st, 65536, MSG_OOB );
+        echo "Получены срочные данные: ({$rc}) {$st}\n";
+    } else {
+        $rc = socket_recv( $socket, $st, 1024, 0 );
+        echo "Получены обычные данные: ({$rc}) {$st}\n";
+    }
+} while ( $rc > 0 );
+socket_close( $socketServer );
+socket_close( $socketClient );
+socket_close( $socket );
 ?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Получены обычные данные: (20) This is normal data.
+Получены срочные данные: (1) !
+Получены обычные данные: (14) Not so urgent.
+Получены обычные данные: (0)
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
