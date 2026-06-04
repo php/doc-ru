@@ -1,44 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9c828621cbce488cf6306b21c39e208f847eabd5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 8a910daad2efdfd29acf6766be8bca7c32c3dd2a Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="phar.setstub">
  <refnamediv>
   <refname>Phar::setStub</refname>
-  <refpurpose>Установить загрузчик или загрузочную заглушку в Phar-архив</refpurpose>
+  <refpurpose>Устанавливает в Phar-архив заглушку, которая играет роль начального загрузчика PHP</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis role="Phar">
-   <modifier>public</modifier> <type>bool</type><methodname>Phar::setStub</methodname>
+   <modifier>public</modifier> <type>true</type><methodname>Phar::setStub</methodname>
    <methodparam><type class="union"><type>resource</type><type>string</type></type><parameter>stub</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>length</parameter><initializer>-1</initializer></methodparam>
   </methodsynopsis>
   &phar.write;
 
   <para>
-   Этот метод используется для добавления начальной загрузочной заглушки PHP (PHP bootstrap loader stub)
-   в новый Phar-архив, либо
-   для замены уже существующего загрузочной заглушки.
+   Метод устанавливает заглушку — начальный загрузчик — в Phar-архив:
+   в новый архив добавляет, а в текущем — заменяет.
   </para>
   <para>
-   Загрузчик заглушки используется при подключении Phar-архива с помощью included:
+   Загрузочная заглушка срабатывает при каждом включении Phar-архива:
   </para>
   <programlisting role="php">
 <![CDATA[
 <?php
+
 include 'myphar.phar';
-?>
 ]]>
   </programlisting>
   <para>
-   Загрузчик не доступен, когда архив включается с использованием обёртки
-   <literal>phar</literal>, как в примере ниже:
+   При включении файла через потоковую обёртку <literal>phar</literal>
+   загрузчик не запускается:
   </para>
   <programlisting role="php">
 <![CDATA[
 <?php
+
 include 'phar://myphar.phar/somefile.php';
-?>
 ]]>
   </programlisting>
 
@@ -52,7 +51,7 @@ include 'phar://myphar.phar/somefile.php';
      <term><parameter>stub</parameter></term>
      <listitem>
       <para>
-       Строка, либо открытый ресурс потока.
+       Строка или дескриптор открытого потока; при включении архива код заглушки выполняется как начальный загрузчик.
       </para>
      </listitem>
     </varlistentry>
@@ -70,15 +69,15 @@ include 'phar://myphar.phar/somefile.php';
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   &return.success;
-  </para>
+  <simpara>
+   &return.true.always;
+  </simpara>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывается исключение <classname>UnexpectedValueException</classname>,
+   Метод выбросит исключение <classname>UnexpectedValueException</classname>,
    если <link linkend="ini.phar.readonly">phar.readonly</link> разрешено в php.ini.
    В случае проблем с записью на диск будет выброшено исключение
    <classname>PharException</classname>.
@@ -96,12 +95,13 @@ include 'phar://myphar.phar/somefile.php';
      </row>
     </thead>
     <tbody>
+     &return.type.true.84;
      <row>
       <entry>8.3.0</entry>
       <entry>
-       Вызов метода <methodname>Phar::setStub</methodname> с ресурсом (<type>resource</type>)
-       и параметром <parameter>length</parameter> теперь является устаревшим.
-       Такие вызовы должны быть заменены на: <code>$phar->setStub(stream_get_contents($resource));</code>
+       Передача аргумента <parameter>length</parameter> при вызове метода <methodname>Phar::setStub</methodname>
+       с типом <type>resource</type> в первом аргументе устарела.
+       Передачу ресурса с длиной заменяют вызовом: <code>$phar->setStub(stream_get_contents($resource));</code>.
       </entry>
      </row>
     </tbody>
@@ -113,35 +113,37 @@ include 'phar://myphar.phar/somefile.php';
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>Phar::setStub</function></title>
+    <title>Пример установки начальной загрузочной заглушки методом <function>Phar::setStub</function></title>
     <para>
     </para>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 try {
     $p = new Phar(dirname(__FILE__) . '/brandnewphar.phar', 0, 'brandnewphar.phar');
-    $p['a.php'] = '<?php var_dump("Hello");';
-    $p->setStub('<?php var_dump("First"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>');
+
+    $p['a.php'] = '<?php var_dump("Привет,");';
+    $p->setStub('<?php var_dump("Первый загрузчик"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>');
     include 'phar://brandnewphar.phar/a.php';
     var_dump($p->getStub());
-    $p['b.php'] = '<?php var_dump("World");';
-    $p->setStub('<?php var_dump("Second"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>');
+
+    $p['b.php'] = '<?php var_dump(" мир!");';
+    $p->setStub('<?php var_dump("Второй загрузчик"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>');
     include 'phar://brandnewphar.phar/b.php';
     var_dump($p->getStub());
 } catch (Exception $e) {
-    echo 'Операции записи на brandnewphar.phar завершились неудачей: ', $e;
+    echo 'При записи операций в архив brandnewphar.phar возникла ошибка: ', $e;
 }
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-string(5) "Hello"
-string(82) "<?php var_dump("First"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>"
-string(5) "World"
-string(83) "<?php var_dump("Second"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>"
+string(13) "Привет,"
+string(108) "<?php var_dump("Первый загрузчик"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>"
+string(8) " мир!"
+string(108) "<?php var_dump("Второй загрузчик"); Phar::mapPhar("brandnewphar.phar"); __HALT_COMPILER(); ?>"
 ]]>
     </screen>
    </example>
