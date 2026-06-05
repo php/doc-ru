@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a52e3d27cca786940272d0ae8efc21b5d6739070 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: e5ff446c832aded712d45c885609ffdd277e6a49 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <section xml:id="errorfunc.configuration" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  &reftitle.runtime;
@@ -185,20 +185,17 @@
      <note>
       <title>PHP-константы за пределами PHP</title>
       <para>
-       Использование PHP-констант за пределами PHP, например в файле
-       <filename>httpd.conf</filename>, не имеет смысла, так как в таких случаях требуются
-       целочисленные значения (<type>int</type>). Более того, с течением времени будут
-       добавляться новые уровни ошибок, а максимальное значение константы
-       <constant>E_ALL</constant> соответственно будет расти. Поэтому в месте, где
-       предполагается указать <constant>E_ALL</constant>, лучше задать большое целое число,
-       чтобы перекрыть все возможные битовые поля. Таким числом может быть, например,
-       <literal>2147483647</literal> (оно включит все возможные ошибки, не
-       только <constant>E_ALL</constant>).
+       PHP-константы не работают за пределами PHP, поэтому в файлах наподобие
+       <filename>httpd.conf</filename> указывают не названия,
+       а целочисленные (<type>int</type>) значения констант. По мере добавления
+       новых уровней ошибок значение константы <constant>E_ALL</constant> возрастает,
+       поэтому вместо текущего значения константы <constant>E_ALL</constant> лучше сразу указать
+       число <literal>2147483647</literal>, которое установит тридцать одно битовое поле вместо текущих пятнадцати
+       и включит вывод всех текущих и будущих ошибок.
       </para>
      </note>
     </listitem>
    </varlistentry>
-
    <varlistentry xml:id="ini.display-errors">
     <term>
      <parameter>display_errors</parameter>
@@ -206,25 +203,44 @@
     </term>
     <listitem>
      <para>
-      Эта настройка определяет, требуется ли выводить ошибки на экран вместе
-      с остальным выводом, либо ошибки должны быть скрыты от пользователя.
+      Настройка определяет, требуется ли выводить ошибки на экран вместе
+      с остальным выводом или скрывать ошибки от пользователя.
+      <itemizedlist>
+       <listitem>
+        <simpara>
+         <literal>Off</literal> — скрывать ошибки.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>
+         <literal>On</literal> или <literal>stdout</literal> — выводить ошибки в поток <literal>stdout</literal>. Это значение по умолчанию.
+        </simpara>
+       </listitem>
+       <listitem>
+        <simpara>
+         <literal>stderr</literal> — выводить ошибки в поток <literal>stderr</literal>.
+         Вывод ошибок в стандартный поток ошибок полезен только при работе с SAPI-интерфейсами <literal>CLI</literal>, <literal>phpdbg</literal> и <literal>CGI</literal>.
+        </simpara>
+       </listitem>
+      </itemizedlist>
      </para>
-     <para>
-      Значение <literal>"stderr"</literal> посылает ошибки в поток <literal>stderr</literal>
-      вместо <literal>stdout</literal>.
-     </para>
+     <simpara>
+       В файлах конфигурации, которые входят в дистрибутив PHP, для директивы устанавливаются следующие значения:
+       в <literal>php.ini-development</literal> —
+       <literal>On</literal>; в <literal>php.ini-production</literal>
+       — <literal>Off</literal>.
+     </simpara>
      <note>
-      <para>
-       Эта функциональность предназначена только для разработки и не должна использоваться в
-       готовых производственных системах (например, системах, имеющих доступ в интернет).
-      </para>
+      <simpara>
+       Вывод ошибок включают только в целях разработки.
+       В производственных системах с доступом к интернету вывод ошибок включать нельзя.
+      </simpara>
      </note>
      <note>
       <para>
-       Несмотря на то, что display_errors может быть установлена во время выполнения
-       (функцией <function>ini_set</function>), это ни на что не повлияет, если в скрипте есть
-       фатальные ошибки. Это обусловлено тем, что ожидаемые действия программы во время
-       выполнения не получат управления (не будут выполняться).
+       Включение директивы display_errors функцией <function>ini_set</function> не сработает
+       и сообщение об ошибке не появится в выводе, если скрипт содержит синтаксическую ошибку
+       или другую критическую ошибку, которая возникла до этапа выполнения.
       </para>
      </note>
     </listitem>
@@ -237,9 +253,9 @@
     </term>
     <listitem>
      <para>
-      Даже если display_errors включена, ошибки, возникающие во время запуска PHP, не будут
-      отображаться. Настойчиво рекомендуем включать директиву display_startup_errors только
-      для отладки.
+      Настройка управляет выводом ошибок, которые возникают на этапе запуска PHP;
+      директива display_errors не влияет на вывод ошибок инициализации.
+      Директиву display_startup_errors включают только для отладки.
      </para>
     </listitem>
    </varlistentry>
