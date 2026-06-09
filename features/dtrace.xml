@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: d35d7d811ccf7662eefe4f23ff1cabc727a917ca Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 939350f9b52be4b91e04ec1a5d41995e63aa5150 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="features.dtrace" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Динамическая трассировка DTrace</title>
@@ -564,6 +564,197 @@ probe process("sapi/cli/php").provider("php").mark("request__startup") {
      </programlisting>
     </informalexample>
    </para>
+  </sect2>
+ </sect1>
+ <sect1 xml:id="features.dtrace.bpftrace">
+  <title>Работа утилиты bpftrace со статическими зондами PHP DTrace</title>
+  <simpara>
+   В дистрибутивах Linux с ядром, которое поддерживает eBPF,
+   утилита bpftrace умеет подключаться к зондам PHP DTrace USDT напрямую,
+   без необходимости использовать SystemTap.
+  </simpara>
+  <sect2 xml:id="features.dtrace.bpftrace-install">
+   <title>Установка bpftrace</title>
+   <para>
+    Установите bpftrace через менеджер пакетов дистрибутива. Например,
+    в Oracle Linux, RHEL или Fedora:
+    <informalexample>
+     <programlisting role="shell">
+<![CDATA[
+# dnf install bpftrace
+]]>
+     </programlisting>
+    </informalexample>
+    Или в Debian либо Ubuntu:
+    <informalexample>
+     <programlisting role="shell">
+<![CDATA[
+# apt install bpftrace
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+   <simpara>
+    Приведённые ниже примеры предполагают, что целевой исполняемый файл PHP
+    установлен в <filename>/usr/bin/php</filename>.
+   </simpara>
+   <simpara>
+    Те же зонды USDT предоставляют и другие SAPI, которые собрали из того же дерева исходного кода,
+    поэтому целью зондов вместо этого выступает либо модуль Apache
+    (<filename>libphp.so</filename>), либо исполняемый файл диспетчера процессов FastCGI
+    (<filename>php-fpm</filename>); подставьте подходящий
+    путь или подключитесь по PID-идентификатору через ключ <literal>-p</literal> при необходимости.
+   </simpara>
+   <simpara>
+    Убедитесь, что целевой исполняемый файл собрали с поддержкой DTrace и что окружение настроено правильно.
+    Подробности описывает раздел <link linkend="features.dtrace.install">Конфигурирование PHP со статическими зондами DTrace</link>.
+   </simpara>
+   <para>
+    Статические зонды PHP умеет выводить команда
+    <command>bpftrace</command>:
+    <informalexample>
+     <programlisting>
+<![CDATA[
+# bpftrace -l 'usdt:/usr/bin/php:php:*'
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+
+   <para>
+    Команда выводит:
+    <informalexample>
+     <programlisting>
+<![CDATA[
+usdt:/usr/bin/php:php:compile__file__entry
+usdt:/usr/bin/php:php:compile__file__return
+usdt:/usr/bin/php:php:error
+usdt:/usr/bin/php:php:exception__caught
+usdt:/usr/bin/php:php:exception__thrown
+usdt:/usr/bin/php:php:execute__entry
+usdt:/usr/bin/php:php:execute__return
+usdt:/usr/bin/php:php:function__entry
+usdt:/usr/bin/php:php:function__return
+usdt:/usr/bin/php:php:request__shutdown
+usdt:/usr/bin/php:php:request__startup
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+
+   <para>
+    <example>
+     <title>Скрипт <filename>all_probes.bt</filename> — трассировка всех статических PHP-зондов через bpftrace</title>
+     <programlisting role="shell">
+<![CDATA[
+#!/usr/bin/env bpftrace
+
+usdt:/usr/bin/php:php:compile__file__entry
+{
+    printf("Probe compile__file__entry\n");
+    printf("  compile_file %s\n", str(arg0));
+    printf("  compile_file_translated %s\n", str(arg1));
+}
+usdt:/usr/bin/php:php:compile__file__return
+{
+    printf("Probe compile__file__return\n");
+    printf("  compile_file %s\n", str(arg0));
+    printf("  compile_file_translated %s\n", str(arg1));
+}
+usdt:/usr/bin/php:php:error
+{
+    printf("Probe error\n");
+    printf("  errormsg %s\n", str(arg0));
+    printf("  request_file %s\n", str(arg1));
+    printf("  lineno %d\n", (int32)arg2);
+}
+usdt:/usr/bin/php:php:exception__caught
+{
+    printf("Probe exception__caught\n");
+    printf("  classname %s\n", str(arg0));
+}
+usdt:/usr/bin/php:php:exception__thrown
+{
+    printf("Probe exception__thrown\n");
+    printf("  classname %s\n", str(arg0));
+}
+usdt:/usr/bin/php:php:execute__entry
+{
+    printf("Probe execute__entry\n");
+    printf("  request_file %s\n", str(arg0));
+    printf("  lineno %d\n", (int32)arg1);
+}
+usdt:/usr/bin/php:php:execute__return
+{
+    printf("Probe execute__return\n");
+    printf("  request_file %s\n", str(arg0));
+    printf("  lineno %d\n", (int32)arg1);
+}
+usdt:/usr/bin/php:php:function__entry
+{
+    printf("Probe function__entry\n");
+    printf("  function_name %s\n", str(arg0));
+    printf("  request_file %s\n", str(arg1));
+    printf("  lineno %d\n", (int32)arg2);
+    printf("  classname %s\n", str(arg3));
+    printf("  scope %s\n", str(arg4));
+}
+usdt:/usr/bin/php:php:function__return
+{
+    printf("Probe function__return\n");
+    printf("  function_name %s\n", str(arg0));
+    printf("  request_file %s\n", str(arg1));
+    printf("  lineno %d\n", (int32)arg2);
+    printf("  classname %s\n", str(arg3));
+    printf("  scope %s\n", str(arg4));
+}
+usdt:/usr/bin/php:php:request__shutdown
+{
+    printf("Probe request__shutdown\n");
+    printf("  file %s\n", str(arg0));
+    printf("  request_uri %s\n", str(arg1));
+    printf("  request_method %s\n", str(arg2));
+}
+usdt:/usr/bin/php:php:request__startup
+{
+    printf("Probe request__startup\n");
+    printf("  file %s\n", str(arg0));
+    printf("  request_uri %s\n", str(arg1));
+    printf("  request_method %s\n", str(arg2));
+}
+]]>
+     </programlisting>
+    </example>
+   </para>
+
+   <para>
+    Приведённый скрипт трассирует все статические зонды ядра PHP
+    на всём протяжении работы PHP-скрипта. Утилите bpftrace
+    требуются привилегии суперпользователя:
+    <informalexample>
+     <programlisting>
+<![CDATA[
+# USE_ZEND_DTRACE=1 bpftrace -c '/usr/bin/php test.php' all_probes.bt
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+
+   <para>
+    Чтобы трассировать уже запущенный PHP-процесс (например,
+    рабочий процесс <filename>php-fpm</filename> или процесс Apache, который загрузил
+    <filename>libphp.so</filename>), подключитесь по PID-идентификатору:
+    <informalexample>
+     <programlisting>
+<![CDATA[
+# bpftrace -p $PID all_probes.bt
+]]>
+     </programlisting>
+    </informalexample>
+    Путь цели <literal>usdt:</literal> в скрипте обязан совпадать с исполняемым файлом
+    запущенного процесса; скорректируйте <literal>usdt:/usr/bin/php</literal> до
+    исполняемого файла <filename>php-fpm</filename> или <filename>libphp.so</filename> при необходимости.
+  </para>
   </sect2>
  </sect1>
 </chapter>
