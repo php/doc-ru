@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e8ac70bf549a723cb36465667a6109d9933b8619 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 9f4cb232d01a06077a2324e38f767d63f87f2e5f Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="mongodb.architecture" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <titleabbrev>Архитектура и внутреннее устройство драйвера</titleabbrev>
@@ -9,11 +9,11 @@
   <titleabbrev>Архитектура</titleabbrev>
   <title>Обзор архитектуры</title>
 
-  <para>
+  <simpara>
    Раздел объясняет, как разные части PHP-драйвера сочетаются
    друг с другом, от базовых системных библиотек, через PHP-модули и до
    PHP-библиотек на самом верху.
-  </para>
+  </simpara>
 
   <para>
    <mediaobject>
@@ -30,7 +30,7 @@
    </mediaobject>
   </para>
 
-  <para>
+  <simpara>
    Наверху стека расположена
    <link xlink:href="&url.mongodb.library;">библиотека PHP</link>, которая распространяется
    в виде <link xlink:href="&url.packagist.package;/mongodb/mongodb">пакета Composer</link>.
@@ -40,7 +40,7 @@
    <link xlink:href="&url.mongodb.specs;">спецификации</link>.
    Хотя модуль можно использовать напрямую, библиотека даёт минимальные накладные расходы
    и должна быть общей зависимостью для большей части приложений, построенных с MongoDB.
-  </para>
+  </simpara>
 
   <para>
    На уровень ниже библиотеки располагается PHP-модуль, который распространяется
@@ -97,15 +97,15 @@
   <section>
    <title>Сохранение соединения и топологии (версия PHP начиная с 1.2.0)</title>
 
-   <para>
+   <simpara>
     Каждая версия модуля начиная с 1.2.0 сохраняет клиентский объект
     <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link>
     в рабочем процессе PHP, что позволяет ему повторно использовать соединения с базой данных,
     состояния аутентификации <emphasis>и</emphasis> информацию о топологии в
     нескольких запросах.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Когда вызывается метод <methodname>MongoDB\Driver\Manager::__construct</methodname>,
     из его аргументов создаётся хеш (т. е. строка URI и параметры
     массива). Модуль попытается найти ранее сохранённый клиентский объект
@@ -113,20 +113,20 @@
     этого хеша. Если существующий клиент не может быть найден для хеша, будет создан
     новый клиент и сохранён для будущего использования. Это поведение можно выключить
     через параметр драйвера <literal>"disableClientPersistence"</literal>.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Каждый клиент содержит свои собственные подключения к базе данных и представление
     топологии сервера (например, автономный, набор реплик, кластер сегментов). Сохраняя
     клиент между PHP-запросами, модуль может переиспользовать установленные
     подключения к базе данных и устранять необходимость
     <link xlink:href="&url.mongodb.sdam;">обнаружения топологии сервера</link>
     при каждом запросе.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Рассмотрим следующий пример:
-   </para>
+   </simpara>
 
    <programlisting role="php">
 <![CDATA[
@@ -147,7 +147,7 @@ foreach ($managers as $manager) {
 ]]>
    </programlisting>
 
-   <para>
+   <simpara>
     Первые два объекта Manager будут использовать один и тот же
     клиент <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link>, поскольку
     их аргументы конструктора идентичны. Третий и четвёртый объекты будут
@@ -158,21 +158,21 @@ foreach ($managers as $manager) {
     Если драйвер обнаруживает дополнительных членов набора реплик после выполнения команд
     <literal>hello</literal>, он также открывает дополнительные подключения
     к этим серверам.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Если этот же процесс снова выполнит сценарий во втором запросе, эти три
     клиента будут использованы повторно, а новых подключений установлено не будет. В зависимости
     от того, как давно был обработан предыдущий запрос, модулю может потребоваться выполнить
     дополнительные команды <literal>hello</literal> для обновления своего представления
     топологий.
-   </para>
+   </simpara>
   </section>
 
   <section>
    <title>Сохранение сокетов (версии PHP до 1.2.0)</title>
 
-   <para>
+   <simpara>
     Версии модуля до 1.2.0 используют API-интерфейс PHP-потоков
     для подключений к базам данных через внутренний API-интерфейс библиотеки
     <link xlink:href="&url.mongodb.libmongoc;">libmongoc</link>, чтобы назначить пользовательские
@@ -182,14 +182,14 @@ foreach ($managers as $manager) {
     или топологии. Поэтому модулю приходится выдавать
     команды в начале каждого запроса, чтобы проверить подлинность
     и <link xlink:href="&url.mongodb.sdam;">обнаружить топологию сервера</link>.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Соединения с базой данных сохраняются как хеш хоста,
     порта и строки URI-идентификатора сервера, которую передавали в конструктор
     менеджера <classname>MongoDB\Driver\Manager</classname>. Параметры массива конструктора
     не включаются в этот хеш.
-   </para>
+   </simpara>
 
    <note>
     <simpara>
@@ -200,12 +200,12 @@ foreach ($managers as $manager) {
     </simpara>
    </note>
 
-   <para>
+   <simpara>
     Несмотря на недостатки, которые связаны с сохранением SSL-соединений и информацией о топологии,
     эта версия модуля поддерживает все
     <link linkend="context.ssl">параметры SSL-контекста</link>, поскольку использует
     API-интерфейс потоков PHP.
-   </para>
+   </simpara>
   </section>
  </section>
 
@@ -213,10 +213,10 @@ foreach ($managers as $manager) {
   <titleabbrev>Сохранение данных</titleabbrev>
   <title>Сериализация и десериализация PHP-переменных в модуле MongoDB</title>
 
-  <para>
+  <simpara>
    В документе обсуждается, как составные структуры наподобие документов, массивов
    и объектов преобразовываются между значениями формата BSON и PHP-значениями.
-  </para>
+  </simpara>
 
   <section xml:id="mongodb.persistence.serialization">
    <title>Сериализация в BSON</title>
@@ -224,28 +224,28 @@ foreach ($managers as $manager) {
    <section>
     <title>Массивы</title>
 
-    <para>
+    <simpara>
      Если массив представляет собой <emphasis>упакованный массив</emphasis> —
      то есть пустой массив или ключи начинаются
      с 0 и идут последовательно без пробелов: <emphasis>BSON-массив</emphasis>.
-    </para>
+    </simpara>
 
-    <para>
+    <simpara>
      Если массив не упакован — то есть содержит ассоциативные (строковые) ключи,
      ключи не начинаются с 0 или содержат пробелы: <emphasis>BSON-объект</emphasis>
-    </para>
+    </simpara>
 
-    <para>
+    <simpara>
      Документ верхнего уровня (корневой) <emphasis>всегда</emphasis> сериализуется
      как BSON-документ.
-    </para>
+    </simpara>
 
     <section>
      <title>Примеры</title>
 
-     <para>
+     <simpara>
       Эти PHP-массивы сериализуются как BSON-массив:
-     </para>
+     </simpara>
 
      <programlisting role="text">
 <![CDATA[
@@ -254,9 +254,9 @@ foreach ($managers as $manager) {
 ]]>
      </programlisting>
 
-     <para>
+     <simpara>
       Эти PHP-массивы сериализуются как BSON-документ:
-     </para>
+     </simpara>
 
      <programlisting role="text">
 <![CDATA[
@@ -266,11 +266,11 @@ foreach ($managers as $manager) {
 ]]>
      </programlisting>
 
-     <para>
+     <simpara>
       Обратите внимание, что пять приведённых примеров — <emphasis>выдержки</emphasis> из полного
       документа и представляют только <emphasis>одно</emphasis> значение внутри
       документа.
-     </para>
+     </simpara>
 
     </section>
    </section>
@@ -278,12 +278,12 @@ foreach ($managers as $manager) {
    <section>
     <title>Объекты</title>
 
-     <para>
+     <simpara>
       Если объект принадлежит типу <classname>stdClass</classname>, он сериализуется
       как <emphasis>BSON-документ</emphasis>.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Если объект — поддерживаемый класс, который реализует
       интерфейс <interfacename>MongoDB\BSON\Type</interfacename>, используется
       логика сериализации BSON для этого конкретного типа.
@@ -292,66 +292,66 @@ foreach ($managers as $manager) {
       сериализовать только как значение поля документа. Попытка сериализовать такой объект
       как корневой документ выбросит исключение
       <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Если объект принадлежит неизвестному классу, который реализует интерфейс
       <interfacename>MongoDB\BSON\Type</interfacename>, выбрасывается исключение
       <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Если объект принадлежит какому-либо другому классу без реализации какого-либо специального
       интерфейса, он сериализуется как <emphasis>BSON-документ</emphasis>. Остаются только
       открытые (<emphasis>public</emphasis>) свойства, а защищённые (<emphasis>protected</emphasis>)
       и закрытые (<emphasis>private</emphasis>) свойства игнорируются.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Если объект принадлежит к классу, который реализует интерфейс
       <interfacename>MongoDB\BSON\Serializable</interfacename>, вызывают
       метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
       и сериализуют массив или <classname>stdClass</classname>, которые возвращает метод,
       как BSON-документ или как BSON-массив. Тип BSON определят следующие условия:
-     </para>
+     </simpara>
 
      <para>
       <orderedlist>
        <listitem>
-        <para>Корневые документы требуется сериализовать
+        <simpara>Корневые документы требуется сериализовать
          как BSON-документ.
-        </para>
+        </simpara>
        </listitem>
        <listitem>
-        <para>
+        <simpara>
          Объекты с типом <interfacename>MongoDB\BSON\Persistable</interfacename> требуется
          сериализовать как BSON-документы.
-        </para>
+        </simpara>
        </listitem>
        <listitem>
-        <para>
+        <simpara>
          Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
          возвращает упакованный массив, его сериализуют как BSON-массив.
-        </para>
+        </simpara>
        </listitem>
        <listitem>
-        <para>
+        <simpara>
          Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
          возвращает неупакованный массив или объект <classname>stdClass</classname>,
          его сериализуют как BSON-документ.
-        </para>
+        </simpara>
        </listitem>
        <listitem>
-        <para>
+        <simpara>
          Если метод <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>
          не вернул массив или объект <classname>stdClass</classname>, выбрасывается исключение
          <classname>MongoDB\Driver\Exception\UnexpectedValueException</classname>.
-        </para>
+        </simpara>
        </listitem>
       </orderedlist>
      </para>
 
-     <para>
+     <simpara>
       Если объект принадлежит классу, который реализует интерфейс
       <interfacename>MongoDB\BSON\Persistable</interfacename> (что
       подразумевает реализацию метода <interfacename>MongoDB\BSON\Serializable</interfacename>),
@@ -360,9 +360,9 @@ foreach ($managers as $manager) {
       <property>__pclass</property> в виде Binary-значения с подтипом
       <literal>0x80</literal> и данными, которые содержат полное имя класса объекта,
       который сериализуется.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Свойство <property>__pclass</property> добавляется в массив или
       объект, который возвращает метод
       <methodname>MongoDB\BSON\Serializable::bsonSerialize</methodname>,
@@ -373,7 +373,7 @@ foreach ($managers as $manager) {
       реализации интерфейса <interfacename>MongoDB\BSON\Persistable</interfacename>
       следует напрямую реализовать интерфейс
       <interfacename>MongoDB\BSON\Serializable</interfacename>.
-     </para>
+     </simpara>
 
      <section>
       <title>Примеры</title>
@@ -539,7 +539,7 @@ class UpperClass implements MongoDB\BSON\Persistable
 
    &mongodb.warning.duplicate-keys;
 
-   <para>
+   <simpara>
     Устаревший модуль <code>mongo</code> десериализовывал
     BSON-документы и BSON-массивы в PHP-массивы. Хотя с PHP-массивами
     удобно работать, такое поведение было проблематичным, поскольку разные
@@ -548,36 +548,36 @@ class UpperClass implements MongoDB\BSON\Persistable
     невозможным определение оригинального BSON-типа. По умолчанию модуль <code>mongodb</code>
     решает эту проблему и гарантирует, что BSON-массивы преобразуются в PHP-массивы, а BSON-документы
     в PHP-объекты.
-   </para>
+   </simpara>
 
-   <para>
+   <simpara>
     Для составных типов существует три типа данных:
-   </para>
+   </simpara>
 
    <para>
     <variablelist>
      <varlistentry>
       <term>root</term>
       <listitem>
-       <para>
+       <simpara>
         относится <emphasis>только</emphasis> к BSON-документу верхнего уровня
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
      <varlistentry>
       <term>document</term>
       <listitem>
-       <para>
+       <simpara>
         относится <emphasis>только</emphasis> к встроенным BSON-документам
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
      <varlistentry>
       <term>array</term>
       <listitem>
-       <para>
+       <simpara>
         относится к BSON-массивам
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -604,10 +604,10 @@ class UpperClass implements MongoDB\BSON\Persistable
     </programlisting>
    </para>
 
-   <para>
+   <simpara>
     Каждый из этих трёх типов данных, а также сопоставления конкретных полей
     можно сопоставить с различными типами PHP. Возможные значения сопоставления:
-   </para>
+   </simpara>
 
    <para>
     <variablelist>
@@ -617,35 +617,35 @@ class UpperClass implements MongoDB\BSON\Persistable
        <para>
         <itemizedlist>
          <listitem>
-          <para>
+          <simpara>
            BSON-массив будет десериализован как PHP-массив (<type>array</type>).
-          </para>
+          </simpara>
          </listitem>
          <listitem>
-          <para>
+          <simpara>
            BSON-документ (корневой или встроенный) без свойства
            <property>__pclass</property>
            <footnote xml:id="mongodb.pclass">
-            <para>
+            <simpara>
              Свойство __pclass считается существующим, только
              если существует свойство с таким именем, и оно представляет собой Binary-значение,
              а подтип Binary значения равен 0x80. Если какое-либо из этих трёх
              условий не выполняется, свойство __pclass не существует
              и должно рассматриваться как любое другое обычное свойство.
-            </para>
+            </simpara>
            </footnote>
            становится PHP-объектом <classname>stdClass</classname>, причём каждый
            ключ BSON-документа устанавливается как открытое
            свойство объекта <classname>stdClass</classname>.
-          </para>
+          </simpara>
          </listitem>
          <listitem>
-          <para>
+          <simpara>
            BSON-документ (корневой или встроенный) со свойством
            <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> становится PHP-объектом
            имени класса, как это определяет свойство <property>__pclass</property>.
-          </para>
-          <para>
+          </simpara>
+          <simpara>
            Если именованный класс реализует интерфейс
            M<interfacename>MongoDB\BSON\Persistable</interfacename>,
            то свойства BSON-документа, включая свойство
@@ -653,21 +653,21 @@ class UpperClass implements MongoDB\BSON\Persistable
            массив в метод
            <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>,
            чтобы инициализировать свойства объекта.
-          </para>
-          <para>
+          </simpara>
+          <simpara>
            Если именованный класс не существует или не реализует интерфейс
            <interfacename>MongoDB\BSON\Persistable</interfacename>,
            будет использоваться объект <classname>stdClass</classname>, и каждый ключ BSON-документа
            (включая свойство <property>__pclass</property>) будет установлен
            как открытое свойство объекта <classname>stdClass</classname>.
-          </para>
-          <para>
+          </simpara>
+          <simpara>
            Функциональность свойства <property>__pclass</property> зависит от того, представляет ли
            собой свойство часть извлечённого документа БД MongoDB. Если при запросе документов
            используется <link linkend="mongodb-driver-query.construct-queryOptions">проекция</link>,
            необходимо включить в проекцию поле <property>__pclass</property>,
            чтобы эта функциональность работала.
-          </para>
+          </simpara>
          </listitem>
         </itemizedlist>
        </para>
@@ -677,37 +677,37 @@ class UpperClass implements MongoDB\BSON\Persistable
      <varlistentry>
       <term><literal>«array»</literal></term>
       <listitem>
-       <para>
+       <simpara>
         Превращает BSON-массив или BSON-документ в PHP-массив. Специальной обработки
         свойства <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> не будет,
         но его можно установить как элемент в возвращаемом массиве, если он
         содержался в BSON-документе.
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><literal>«object»</literal> или <literal>«stdClass»</literal></term>
       <listitem>
-       <para>
+       <simpara>
         Превращает BSON-массив или BSON-документ в объект
         <classname>stdClass</classname>. Специальной
         обработки свойства <property>__pclass</property> <footnoteref linkend="mongodb.pclass"/> не будет,
         но его можно установить как открытое свойство в возвращаемом объекте, если оно присутствовало
         в BSON-документе.
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><literal>«bson»</literal></term>
       <listitem>
-       <para>
+       <simpara>
         Превращает BSON-массив в объект <classname>MongoDB\BSON\PackedArray</classname>,
         а BSON-документ в объект <classname>MongoDB\BSON\Document</classname>,
         независимо от того, есть ли у BSON-документа свойство <property>__pclass</property>
         <footnoteref linkend="mongodb.pclass"/>.
-       </para>
+       </simpara>
        <note>
         <simpara>
          Значение <literal>bson</literal> доступно только для трёх корневых типов,
@@ -720,33 +720,33 @@ class UpperClass implements MongoDB\BSON\Persistable
      <varlistentry>
       <term>любая другая строка</term>
       <listitem>
-       <para>
+       <simpara>
         Определяет имя класса, который должен десериализовать BSON-массив
         или BSON-объект. Для BSON-объектов, которые содержат свойства
         <property>__pclass</property>, этот класс будет приоритетным.
-       </para>
+       </simpara>
 
-       <para>
+       <simpara>
         Если именованный класс не существует, не представляет собой конкретный класс (то есть это
         абстрактный класс или интерфейс) или не реализует
         интерфейс <interfacename>MongoDB\BSON\Unserializable</interfacename>, выбрасывается исключение
         <classname>MongoDB\Driver\Exception\InvalidArgumentException</classname>.
-       </para>
+       </simpara>
 
-       <para>
+       <simpara>
         Если BSON-объект содержит свойство <property>__pclass</property> и
         этот класс существует и реализует
         интерфейс <interfacename>MongoDB\BSON\Persistable</interfacename>,
         он заменит класс, представленный в карте типов.
-       </para>
+       </simpara>
 
-       <para>
+       <simpara>
         Свойства BSON-документа, <emphasis>включая</emphasis>
         свойство <property>__pclass</property>, если оно существует, отправляются
         как ассоциативный массив в метод
         <methodname>MongoDB\BSON\Unserializable::bsonUnserialize</methodname>,
         чтобы инициализировать свойства объекта.
-       </para>
+       </simpara>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -755,7 +755,7 @@ class UpperClass implements MongoDB\BSON\Persistable
    <section xml:id="mongodb.persistence.typemaps">
     <title>TypeMaps</title>
 
-     <para>
+     <simpara>
       Функции настройки TypeMaps можно установить методом
       <methodname>MongoDB\Driver\Cursor::setTypeMap</methodname> для объекта
       <classname>MongoDB\Driver\Cursor</classname> или аргумента
@@ -766,55 +766,55 @@ class UpperClass implements MongoDB\BSON\Persistable
       классов (<emphasis>root</emphasis>, <emphasis>document</emphasis>, и
       <emphasis>array</emphasis>) можно задать индивидуально, в дополнение
       к типам полей.
-     </para>
+     </simpara>
 
-     <para>
+     <simpara>
       Если значение на карте равно <type>NULL</type>, это означает то же,
       что и значение <emphasis>по умолчанию</emphasis> для этого элемента.
-     </para>
+     </simpara>
     </section>
 
     <section>
      <title>Примеры</title>
 
-     <para>
+     <simpara>
       В этих примерах используются следующие классы:
-     </para>
+     </simpara>
 
      <para>
       <variablelist>
        <varlistentry>
         <term>MyClass</term>
         <listitem>
-         <para>
+         <simpara>
           <emphasis>не</emphasis> реализует интерфейсы
-         </para>
+         </simpara>
         </listitem>
        </varlistentry>
        <varlistentry>
         <term>YourClass</term>
         <listitem>
-         <para>
+         <simpara>
           реализует интерфейс
           <interfacename>MongoDB\BSON\Unserializable</interfacename>
-         </para>
+         </simpara>
         </listitem>
        </varlistentry>
        <varlistentry>
         <term>OurClass</term>
         <listitem>
-         <para>
+         <simpara>
           реализует интерфейс
           <interfacename>MongoDB\BSON\Persistable</interfacename>
-         </para>
+         </simpara>
         </listitem>
        </varlistentry>
        <varlistentry>
         <term>TheirClass</term>
         <listitem>
-         <para>
+         <simpara>
           расширяет класс OurClass
-         </para>
+         </simpara>
         </listitem>
        </varlistentry>
       </variablelist>
