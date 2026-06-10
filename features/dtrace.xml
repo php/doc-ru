@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 939350f9b52be4b91e04ec1a5d41995e63aa5150 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 7c966c94fde8a9bb4e52975b559dc0bb0cb2ef72 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="features.dtrace" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Динамическая трассировка DTrace</title>
@@ -8,16 +8,15 @@
   <title>Введение в PHP и DTrace</title>
 
   <para>
-   DTrace — доступный фреймворк трассировки, который практически
+   DTrace — встроенный в систему фреймворк трассировки, который практически
    не потребляет ресурсов. Фреймворк
    доступен на множестве платформ, включая Solaris, macOS,
-   Oracle Linux и BSD. DTrace умеет отслеживать поведение
+   Oracle Linux и BSD. DTrace отслеживает поведение
    операционной системы и запущенных пользовательских
-   приложений. Фреймворк умеет показывать значения параметров
+   приложений, показывает значения параметров
    и выводит статистику производительности.
-   Зонды отслеживаются пользовательскими скриптами,
-   которые написали на скриптовом языке DTrace D. Это помогает
-   эффективно анализировать срезы данных.
+   Зонды отслеживаются пользовательскими скриптами на языке DTrace D.
+   Обработка данных на уровне ядра помогает эффективно анализировать срезы данных.
   </para>
 
   <para>
@@ -105,8 +104,8 @@
     </informalexample>
    </para>
    <para>
-    Это делает статические зонды доступными в ядре PHP. Любой
-    модуль PHP, который предоставляет свои зонды,
+    Сборка PHP с ключом <literal>--enable-dtrace</literal> сделает статические зонды доступными в ядре PHP.
+    Каждый PHP-модуль, который предоставляет свои зонды,
     потребуется собрать отдельно как разделяемый модуль.
    </para>
    <para>
@@ -350,11 +349,11 @@ php*:::request-startup
    </para>
 
    <para>
-    Скрипт указывает опцию <literal>-Z</literal>
-    для команды <filename>dtrace</filename>, разрешая работать даже
-    если ни однин PHP-процесс не запущен. Без этой опции
-    скрипт сразу же завершит выполнение, поскольку
-    не увидит ни одного зонда, который требуется отслеживать.
+    Для команды <filename>dtrace</filename>
+    скрипт указывает опцию <literal>-Z</literal>
+    и разрешает работу, даже если ни один PHP-процесс не запущен.
+    Без опции скрипт сразу же завершит выполнение,
+    поскольку не увидит ни одного зонда для отслеживания.
    </para>
 
    <para>
@@ -412,7 +411,7 @@ php*:::function-entry
   <title>Работа средства SystemTap со статическими зондами PHP DTrace</title>
   <para>
    В отдельных дистрибутивах Linux для отслеживания статических зондов
-   DTrace доступна утилита трассировки SystemTap.
+   DTrace доступен инструмент трассировки SystemTap.
    Этот вариант доступен в PHP 5.4.20 и PHP 5.5.
   </para>
 
@@ -447,7 +446,7 @@ php*:::function-entry
    <title>Получение списка статических зондов через SystemTap</title>
 
    <para>
-    Статические PHP-зонды умеет выводить команда <filename>stap</filename>:
+    Статические PHP-зонды выводит команда <filename>stap</filename>:
     <informalexample>
      <programlisting>
 <![CDATA[
@@ -567,11 +566,11 @@ probe process("sapi/cli/php").provider("php").mark("request__startup") {
   </sect2>
  </sect1>
  <sect1 xml:id="features.dtrace.bpftrace">
-  <title>Работа утилиты bpftrace со статическими зондами PHP DTrace</title>
+  <title>Работа трассировщика bpftrace со статическими зондами PHP DTrace</title>
   <simpara>
-   В дистрибутивах Linux с ядром, которое поддерживает eBPF,
-   утилита bpftrace умеет подключаться к зондам PHP DTrace USDT напрямую,
-   без необходимости использовать SystemTap.
+   В дистрибутивах Linux, в которых ядро поддерживает технологию eBPF,
+   трассировщик bpftrace умеет подключаться к зондам PHP DTrace USDT
+   без посредничества инструмента SystemTap.
   </simpara>
   <sect2 xml:id="features.dtrace.bpftrace-install">
    <title>Установка bpftrace</title>
@@ -595,22 +594,22 @@ probe process("sapi/cli/php").provider("php").mark("request__startup") {
     </informalexample>
    </para>
    <simpara>
-    Приведённые ниже примеры предполагают, что целевой исполняемый файл PHP
-    установлен в <filename>/usr/bin/php</filename>.
+    Следующие примеры предполагают, что целевой исполняемый файл PHP
+    установлен по пути <filename>/usr/bin/php</filename>.
    </simpara>
    <simpara>
     Те же зонды USDT предоставляют и другие SAPI, которые собрали из того же дерева исходного кода,
     поэтому целью зондов вместо этого выступает либо модуль Apache
     (<filename>libphp.so</filename>), либо исполняемый файл диспетчера процессов FastCGI
-    (<filename>php-fpm</filename>); подставьте подходящий
+    (<filename>php-fpm</filename>); подставьте правильный
     путь или подключитесь по PID-идентификатору через ключ <literal>-p</literal> при необходимости.
    </simpara>
    <simpara>
-    Убедитесь, что целевой исполняемый файл собрали с поддержкой DTrace и что окружение настроено правильно.
+    Убедитесь, что собрали целевой исполняемый файл с поддержкой фреймворка DTrace и что правильно настроили переменные окружения.
     Подробности описывает раздел <link linkend="features.dtrace.install">Конфигурирование PHP со статическими зондами DTrace</link>.
    </simpara>
    <para>
-    Статические зонды PHP умеет выводить команда
+    Статические зонды PHP выводит команда
     <command>bpftrace</command>:
     <informalexample>
      <programlisting>
@@ -729,7 +728,7 @@ usdt:/usr/bin/php:php:request__startup
 
    <para>
     Приведённый скрипт трассирует все статические зонды ядра PHP
-    на всём протяжении работы PHP-скрипта. Утилите bpftrace
+    на всём протяжении работы PHP-скрипта. Трассировщику bpftrace
     требуются привилегии суперпользователя:
     <informalexample>
      <programlisting>
@@ -741,9 +740,9 @@ usdt:/usr/bin/php:php:request__startup
    </para>
 
    <para>
-    Чтобы трассировать уже запущенный PHP-процесс (например,
-    рабочий процесс <filename>php-fpm</filename> или процесс Apache, который загрузил
-    <filename>libphp.so</filename>), подключитесь по PID-идентификатору:
+    Для трассировки уже запущенного PHP-процесса, например,
+    рабочего процесса <filename>php-fpm</filename> или процесса Apache, который загрузил
+    библиотеку <filename>libphp.so</filename>, подключитесь по PID:
     <informalexample>
      <programlisting>
 <![CDATA[
@@ -751,9 +750,10 @@ usdt:/usr/bin/php:php:request__startup
 ]]>
      </programlisting>
     </informalexample>
-    Путь цели <literal>usdt:</literal> в скрипте обязан совпадать с исполняемым файлом
-    запущенного процесса; скорректируйте <literal>usdt:/usr/bin/php</literal> до
-    исполняемого файла <filename>php-fpm</filename> или <filename>libphp.so</filename> при необходимости.
+    Внутри скрипта после <literal>usdt:</literal> потребуется указать цель — путь до исполняемого файла
+    запущенного процесса: <literal>usdt:/usr/bin/php</literal>;
+    замените путь в строке спецификации зонда на путь до исполняемого файла <filename>php-fpm</filename>
+    или библиотеки <filename>libphp.so</filename>, если потребуется.
   </para>
   </sect2>
  </sect1>
