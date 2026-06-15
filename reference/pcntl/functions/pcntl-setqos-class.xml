@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: acb474ea92ab6226eaf419a85de05f68c6715a9f Maintainer: malferov Status: ready -->
+<!-- EN-Revision: 28192e830f2c204570cc140c24341d07807df8bc Maintainer: malferov Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pcntl-setqos-class" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pcntl_setqos_class</refname>
-  <refpurpose>Устанавливает QoS-класс процесса</refpurpose>
+  <refpurpose>Устанавливает QoS-класс текущему потоку</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
    <type>void</type><methodname>pcntl_setqos_class</methodname>
-   <methodparam choice="opt"><type>Pcntl\QosClass</type><parameter>qos_class</parameter><initializer>Pcntl\QosClass::Default</initializer></methodparam>
+   <methodparam choice="opt"><type>Pcntl\QosClass</type><parameter>qos_class</parameter><initializer><constant>Pcntl\QosClass::Default</constant></initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция устанавливает класс качества обслуживания (англ. Quality of Service, сокр. <acronym>QoS</acronym>) вызывающего процесса.
-   Функция доступна только на macOS, которая управляет энергоэффективностью и производительностью
-   на основе <acronym>QoS</acronym>-класса.
+   Функция устанавливает <acronym>QoS</acronym>-класс текущему потоку.
   </simpara>
  </refsect1>
 
@@ -26,20 +24,72 @@
    <varlistentry>
     <term><parameter>qos_class</parameter></term>
     <listitem>
-     <simpara>
-      <acronym>QoS</acronym>-класс, который требуется установить. Параметр принимает вариант перечисления
-      <classname>Pcntl\QosClass</classname>:
-     </simpara>
-     <simplelist>
-      <member><literal>Pcntl\QosClass::UserInteractive</literal></member>
-      <member><literal>Pcntl\QosClass::UserInitiated</literal></member>
-      <member><literal>Pcntl\QosClass::Default</literal></member>
-      <member><literal>Pcntl\QosClass::Utility</literal></member>
-      <member><literal>Pcntl\QosClass::Background</literal></member>
-     </simplelist>
+     <para>
+      Класс качества обслуживания (англ. Quality of Service, сокр. QoS), который требуется назначить текущему потоку.
+      Операционная система опирается на класс как на подсказку для планирования процессорного времени, приоритета ввода-вывода
+      и энергопотребления, при этом более высокие классы вытесняют более низкие.
+      Доступные варианты классов качества описывает страница перечисления <enumname>Pcntl\QosClass</enumname>.
+     </para>
+     <para>
+      <variablelist>
+       <varlistentry>
+        <term><constant>Pcntl\QosClass::UserInteractive</constant></term>
+        <listitem>
+         <simpara>
+          Наивысший приоритет. Приоритет указывают для задач, которые непосредственно влияют на пользовательский интерфейс
+          и требуют практически мгновенного завершения, чтобы пользователь не воспринимал промедление при отрисовке
+          или обработке задания как задержку.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><constant>Pcntl\QosClass::UserInitiated</constant></term>
+        <listitem>
+         <simpara>
+          Наивысший приоритет, но ниже приоритета <constant>UserInteractive</constant>.
+          Класс указывают для задачи, которую пользователь явно инициировал
+          и активно ожидает завершения в течение нескольких секунд.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><constant>Pcntl\QosClass::Default</constant></term>
+        <listitem>
+         <simpara>
+          Стандартный приоритет, который применяется, если не назначили более конкретный.
+          Задачи со стандартным приоритетом выполняются после задач с более высоким приоритетом,
+          но раньше задач с приоритетами <constant>Utility</constant> и <constant>Background</constant>.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><constant>Pcntl\QosClass::Utility</constant></term>
+        <listitem>
+         <simpara>
+          Более низкий приоритет, предназначен для длительных задач, о которых пользователь знает,
+          но которые активно не ожидает, например, загрузки, импорт или массовые вычисления.
+          Задачи с таким приоритетом планируются энергоэффективным способом.
+         </simpara>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><constant>Pcntl\QosClass::Background</constant></term>
+        <listitem>
+         <simpara>
+          Низший приоритет для фоновых задач наподобие предварительной загрузки, индексирования или технического обслуживания.
+          Приоритет до предела оптимизировали для повышения энергоэффективности, а система умеет откладывать запуск задач
+          с самым низким приоритетом, пока работает под нагрузкой.
+         </simpara>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
     </listitem>
    </varlistentry>
   </variablelist>
+  <note>
+   <simpara>Функция доступна только на платформах Apple.</simpara>
+  </note>
  </refsect1>
 
  <refsect1 role="returnvalues">
@@ -49,10 +99,19 @@
   </simpara>
  </refsect1>
 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <classname>Error</classname>, если при вызове нижележащей функции
+   <literal>pthread_set_qos_class_self_np()</literal> возникла ошибка.
+  </simpara>
+ </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <simplelist>
    <member><function>pcntl_getqos_class</function></member>
+   <member><enumname>Pcntl\QosClass</enumname></member>
   </simplelist>
  </refsect1>
 
