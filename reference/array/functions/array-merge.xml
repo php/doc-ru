@@ -4,7 +4,7 @@
 <refentry xml:id="function.array-merge" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>array_merge</refname>
-  <refpurpose>Сливает один или несколько массивов</refpurpose>
+  <refpurpose>Сливает элементы массивов</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -13,19 +13,19 @@
    <methodparam rep="repeat"><type>array</type><parameter>arrays</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция сливает элементы одного или нескольких массивов так,
-   что значения одного добавляются в конец предыдущего.
-   Функция возвращает результирующий массив.
+   Функция возвращает итоговый массив: результат слияния
+   элементов исходного и остальных массивов.
+   Значения очередного массива добавляются в конец предыдущего.
   </para>
   <para>
-   Каждое следующее значение ключа перезапишет предыдущее,
-   если входные массивы содержат одинаковые строковые ключи.
-   Следующее значение <emphasis role="strong">не перезапишет</emphasis> исходное,
-   а добавится в конец массива, если массивы содержат одинаковые числовые ключи.
+   При совпадении строковых ключей
+   значение очередного массива перезапишет значение предыдущего с тем же ключом,
+   а при совпадении числовых ключей
+   очередное значение <emphasis role="strong">не перезаписывает</emphasis> предыдущее,
+   а добавляется в конец массива.
   </para>
   <para>
-   В массиве с результатами функция перенумерует возрастающими ключами начиная с нуля
-   значения входных массивов с числовыми ключами.
+   В итоговом массиве индексация элементов с исходными числовыми ключами начинается с нуля.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -46,8 +46,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает результирующий массив.
-   Без аргументов функция возвращает пустой массив (&array;).
+   Функция возвращает результат слияния элементов входных массивов;
+   при вызове без аргументов возвращается пустой массив (&array;).
   </para>
  </refsect1>
 
@@ -66,8 +66,8 @@
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Теперь функция умеет работать без аргументов.
-        Раньше требовался хотя бы один аргумент.
+        Функция теперь поддерживает вызов без аргументов;
+        раньше требовался хотя бы один аргумент.
        </entry>
       </row>
      </tbody>
@@ -80,17 +80,17 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример слияния массивов функцией <function>array_merge</function></title>
+    <title>Пример обработки значений со строковыми и целочисленными ключами при слиянии массивов функцией <function>array_merge</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 $array1 = array("color" => "red", 2, 4);
 $array2 = array("a", "b", "color" => "green", "shape" => "trapezoid", 4);
-$result = array_merge($array1, $array2);
-print_r($result);
 
-?>
+$result = array_merge($array1, $array2);
+
+print_r($result);
 ]]>
     </programlisting>
     &example.outputs;
@@ -112,7 +112,7 @@ Array
   </para>
   <para>
    <example>
-    <title>Простой пример слияния массивов функцией <function>array_merge</function></title>
+    <title>Базовый пример слияния массивов функцией <function>array_merge</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -120,13 +120,12 @@ Array
 $array1 = array();
 $array2 = array(1 => "data");
 $result = array_merge($array1, $array2);
-print_r($result);
 
-?>
+print_r($result);
 ]]>
     </programlisting>
     <para>
-     Помните, что функция перенумерует числовые ключи!
+     Помните: функция перенумерует числовые ключи!
     </para>
     <screen role="php">
 <![CDATA[
@@ -137,9 +136,10 @@ Array
 ]]>
     </screen>
     <para>
-     Элементы второго массива добавляются в первый массив
-     без перезаписи элементов первого массива и без переиндексации
-     оператором объединения массивов — <literal>+</literal>:
+     При объединении массивов оператором <literal>+</literal>
+     элементы первого массива сохраняются,
+     а элементы второго добавляются в первый.
+     Числовые ключи массивов не переиндексируются.
     </para>
     <programlisting role="php">
 <![CDATA[
@@ -147,16 +147,15 @@ Array
 
 $array1 = array(0 => 'zero_a', 2 => 'two_a', 3 => 'three_a');
 $array2 = array(1 => 'one_b', 3 => 'three_b', 4 => 'four_b');
-$result = $array1 + $array2;
-var_dump($result);
 
-?>
+$result = $array1 + $array2;
+
+var_dump($result);
 ]]>
     </programlisting>
     <para>
-     Функция сохранит ключи первого массива. Функция возьмёт элемент
-     первого массива, а элемент второго проигнорирует,
-     если оба массива содержат одинаковый ключ.
+     Ключи первого массива сохранятся. Из второго массива в первый
+     добавятся только элементы с новыми ключами.
     </para>
     <screen role="php">
 <![CDATA[
@@ -179,8 +178,7 @@ array(5) {
   <para>
    <example>
     <title>
-     Пример слияния функцией <function>array_merge</function> значений,
-     тип которых не принадлежит массиву
+     Пример приведения к массиву значения другого типа при слиянии функцией <function>array_merge</function>
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -188,10 +186,10 @@ array(5) {
 
 $beginning = 'foo';
 $end = array(1 => 'bar');
-$result = array_merge((array) $beginning, (array) $end);
-print_r($result);
 
-?>
+$result = array_merge((array) $beginning, $end);
+
+print_r($result);
 ]]>
     </programlisting>
     &example.outputs;
