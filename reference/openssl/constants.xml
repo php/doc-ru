@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5b3a84935252a553528cb81b3dacb88647b57c7b Maintainer: aur Status: ready -->
+<!-- EN-Revision: 6eadfc4332ac3ba482aef3ebf3eab10e02e007ca Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <appendix xml:id="openssl.constants" xmlns="http://docbook.org/ns/docbook">
  &reftitle.constants;
@@ -158,6 +158,18 @@
      </simpara>
     </listitem>
    </varlistentry>
+   <varlistentry xml:id="constant.openssl-pkcs1-pss-padding">
+    <term>
+     <constant>OPENSSL_PKCS1_PSS_PADDING</constant>
+     (<type>int</type>)
+    </term>
+    <listitem>
+     <simpara>
+      Дополнение по схеме RSA-PSS.
+      Флаг доступен с PHP 8.5.0.
+     </simpara>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </section>
 
@@ -293,11 +305,12 @@
         (<type>int</type>)
        </entry>
        <entry>
-        Обычно входное сообщение преобразовывается к «каноническому» формату,
-        который эффективно использует последовательности <literal>CR</literal> и <literal>LF</literal>
-        как символы конца строки: как того требует сертификация S/MIME. С этой опцией
-        сообщение не преобразовывается. Это полезно при обработке двоичных данных,
-        формат которых не всегда соответствует MIME-формату.
+        По умолчанию входное сообщение преобразовывается в «канонический» формат,
+        в котором по требованию спецификации S/MIME одиночные символы перевода строки
+        заменяются последовательностью символов <literal>CR</literal> и <literal>LF</literal>.
+        При установке флага сообщение не преобразовывается.
+        Форматирование отключают при обработке двоичных данных
+        или данных, которые уже соответствуют каноническому MIME-формату.
        </entry>
       </row>
       <row xml:id="constant.pkcs7-nointern">
@@ -306,12 +319,12 @@
         (<type>int</type>)
        </entry>
        <entry>
-        При проверке сообщения, если сообщение содержит сертификаты,
-        среди сертификатов сообщения обычно выполняется поиск сертификата подписи.
-        С этой опцией поиск выполняется только по сертификатам параметра
-        <parameter>untrusted_certificates_filename</parameter> функции <function>openssl_pkcs7_verify</function>,
-        а не по сертификатам сообщения. Предоставленные сертификаты по-прежнему можно использовать,
-        но как сертификаты недоверенных центров сертификации.
+        При проверке сообщения функцией <function>openssl_pkcs7_verify</function>
+        поиск сертификата подписи выполняется среди сертификатов
+        параметра <parameter>untrusted_certificates_filename</parameter> и сертификатов сообщения,
+        если сообщение содержит сертификаты.
+        С опцией поиск ведётся только по сертификатам параметра,
+        центры сертификации которых по-прежнему интерпретируются как недоверенные.
        </entry>
       </row>
       <row xml:id="constant.pkcs7-noverify">
@@ -386,9 +399,49 @@
         (<type>int</type>)
        </entry>
        <entry>
-        Флаг доступен с PHP 8.3.0. Опция устанавливает для шифрования сообщения
-        заголовок <literal>Content-Type: application/pkcs7-mime</literal>
-        вместо заголовка <literal>Content-Type: application/x-pkcs7-mime</literal>.
+        Флаг доступен с PHP 8.3.0. При шифровании сообщения
+        для заголовка Content-Type вместо <literal>application/x-pkcs7-mime</literal>
+        устанавливается значение <literal>application/pkcs7-mime</literal>.
+       </entry>
+      </row>
+      <row xml:id="constant.pkcs7-nosmimecap">
+       <entry>
+        <constant>PKCS7_NOSMIMECAP</constant>
+        (<type>int</type>)
+       </entry>
+       <entry>
+        Флаг доступен с PHP 8.5.0.
+        Опция исключает из S/MIME-подписи атрибут SMIMECapabilities со сведениями о поддерживаемых алгоритмах шифрования.
+       </entry>
+      </row>
+      <row xml:id="constant.pkcs7-crlfeol">
+       <entry>
+        <constant>PKCS7_CRLFEOL</constant>
+        (<type>int</type>)
+       </entry>
+       <entry>
+        Флаг доступен с PHP 8.5.0.
+        С опцией конец строки в выводе обозначается последовательностью <literal>CRLF</literal>.
+       </entry>
+      </row>
+      <row xml:id="constant.pkcs7-nocrl">
+       <entry>
+        <constant>PKCS7_NOCRL</constant>
+        (<type>int</type>)
+       </entry>
+       <entry>
+        Флаг доступен с PHP 8.5.0.
+        Опция исключает из PKCS7-структуры списки отзыва сертификатов (англ. Certificate Revocation List, сокр. CRL).
+       </entry>
+      </row>
+      <row xml:id="constant.pkcs7-no-dual-content">
+       <entry>
+        <constant>PKCS7_NO_DUAL_CONTENT</constant>
+        (<type>int</type>)
+       </entry>
+       <entry>
+        Флаг доступен с PHP 8.5.0.
+        По умолчанию в PKCS7-структуру включаются данные и подпись данных. При установке флага данные не включаются.
        </entry>
       </row>
      </tbody>
@@ -838,13 +891,13 @@
     </term>
     <listitem>
      <simpara>
-      По умолчанию операции шифрования дополняются стандартным заполнением блока,
-      а заполнение проверяется и удаляется при дешифровании.
-      Если константа <constant>OPENSSL_ZERO_PADDING</constant> передана в параметр <parameter>options</parameter>
-      функций <function>openssl_encrypt</function> или <function>openssl_decrypt</function>,
-      то заполнение не выполняется, общий объем
-      зашифрованных или расшифрованных данных должен быть кратен размеру
-      блока, иначе возникнет ошибка.
+      При шифровании данные дополняются до стандартного для алгоритма размера блока,
+      а при расшифровке дополнение проверяется и удаляется.
+      Вызов функции <function>openssl_encrypt</function> или <function>openssl_decrypt</function>
+      с флагом <constant>OPENSSL_ZERO_PADDING</constant> в аргументе <parameter>options</parameter>
+      отключает обработку дополнения, но если общий объем данных
+      для шифрования или расшифровки не кратен размеру
+      блока, возникает ошибка.
      </simpara>
     </listitem>
    </varlistentry>
@@ -855,7 +908,7 @@
     </term>
     <listitem>
      <simpara>
-      Указывает, что выбрана кодировка S/MIME.
+      Предписывает обрабатывать данные в формате S/MIME.
      </simpara>
     </listitem>
    </varlistentry>
@@ -866,7 +919,7 @@
     </term>
     <listitem>
      <simpara>
-      Указывает, что выбрана кодировка <acronym>DER</acronym> (Distinguished Encoding Rules).
+      Предписывает обрабатывать данные в формате <acronym>DER</acronym>.
      </simpara>
     </listitem>
    </varlistentry>
@@ -877,7 +930,7 @@
     </term>
     <listitem>
      <simpara>
-      Указывает, что выбрана кодировка <acronym>PEM</acronym> (Privacy-Enhanced Mail).
+      Предписывает обрабатывать данные в формате <acronym>PEM</acronym>.
      </simpara>
     </listitem>
    </varlistentry>
