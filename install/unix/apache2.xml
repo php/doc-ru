@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e51792efe0f103ec8724ad199524d7543610c978 Maintainer: shein Status: ready -->
+<!-- EN-Revision: a38e360ae1ce4169b331013958c519d17f19114e Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="install.unix.apache2" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Apache 2.x на Unix системах</title>
@@ -264,6 +264,33 @@ LoadModule php7_module modules/libphp7.so
 <FilesMatch "\.phps$">
     SetHandler application/x-httpd-php-source
 </FilesMatch>
+]]>
+    </programlisting>
+   </informalexample>
+
+   <simpara>
+    Чтобы разрешить использование PHP-файла как обработчика по умолчанию, если ни один другой обработчик не найден,
+    например при использовании механизма маршрутизации, можно применить директиву <literal>FallbackResource</literal>.
+    Доступно в Apache 2.4.4 и выше.
+   </simpara>
+
+   <simpara>
+    Поскольку директива <literal>SetHandler</literal> применяется независимо от того, существует ли файл, а
+    <literal>FallbackResource</literal> применяется только если обработчик ещё не задан,
+    может потребоваться использовать директиву <literal>If</literal>, чтобы обработчик применялся только для существующих файлов.
+    Это позволяет <literal>FallbackResource</literal> обрабатывать пути, заканчивающиеся на <literal>.php</literal>,
+    но не существующие, что удобно для обработки ошибок и маршрутизации.
+   </simpara>
+
+   <informalexample>
+    <programlisting role="apache-conf">
+<![CDATA[
+<FilesMatch "\.php$">
+    <If "-f %{REQUEST_FILENAME}">
+        SetHandler application/x-httpd-php
+    </If>
+</FilesMatch>
+FallbackResource /index.php
 ]]>
     </programlisting>
    </informalexample>
