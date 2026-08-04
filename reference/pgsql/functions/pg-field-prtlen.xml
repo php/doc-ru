@@ -4,7 +4,7 @@
 <refentry xml:id="function.pg-field-prtlen" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pg_field_prtlen</refname>
-  <refpurpose>Возвращает количество печатаемых символов</refpurpose>
+  <refpurpose>Возвращает количество выводимых символов</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -21,18 +21,19 @@
    <methodparam><type>mixed</type><parameter>field_name_or_number</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>pg_field_prtlen</function> возвращает длину строки,
-   количество символов, значения поля при выводе результата <parameter>result</parameter>.
-   Строки нумеруются с нуля. Функция вернёт &false; в случае возникновения ошибки.
+   Функция <function>pg_field_prtlen</function> возвращает количество символов,
+   которое займет при выводе значение поля из объекта <parameter>result</parameter>
+   с результатами запроса к СУБД PostgreSQL.
+   Строки нумеруются с нуля. Функция вернёт &false;, если возникнет ошибка.
   </para>
   <para>
-   <parameter>field_name_or_number</parameter> Номер или имя выбранного поля.
-   Может передаваться либо как <type>int</type>, либо как <type>string</type>.
-   Если передаётся значение типа <type>int</type>, PHP распознает его как
-   номер, в противном случае как наименование поля.
+   Параметр <parameter>field_name_or_number</parameter> поддерживает
+   значения <type>int</type> и <type>string</type>:
+   тип <type>int</type> PHP распознаёт
+   как номер поля, иначе аргумент интерпретируется как название поля.
   </para>
   <para>
-   Ознакомьтесь с примерами на странице с описанием функции <function>pg_field_name</function>.
+   Пример работы функции содержит страница с описанием функции <function>pg_field_name</function>.
   </para>
   <note>
    <para>
@@ -56,7 +57,7 @@
      <listitem>
       <para>
        Номер строки в результате. Нумерация строк начинается с нуля.
-       Функция выбирает текущую строку, если аргумент не задан.
+       При пропуске аргумента значение извлекается из текущей строки.
       </para>
      </listitem>
     </varlistentry>
@@ -67,7 +68,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает длину строки при выводе значения поля.
+   Функция возвращает количество символов, которое занимает значение поля при выводе.
   </para>
  </refsect1>
 
@@ -85,11 +86,10 @@
      <row>
       <entry>8.4.0</entry>
       <entry>
-       Сигнатура функции <function>pg_field_prtlen</function> с двумя аргументами
-       (<parameter>result</parameter>,
-       <parameter>field_name_or_number</parameter>) объявлена устаревшей.
-       Вместо неё используют сигнатуру с тремя аргументами, передавая
-       параметру <parameter>row</parameter> значение &null;.
+       Сигнатура функции <function>pg_field_prtlen</function> с двумя аргументами —
+       <parameter>result</parameter> и <parameter>field</parameter> — устарела;
+       функцию вызывают с тремя аргументами
+       с передачей в параметр <parameter>row</parameter> значения &null;.
       </entry>
      </row>
      <row>
@@ -108,47 +108,45 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Получение информации о полях выборки</title>
+    <title>Пример получение информации о полях выборки</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-$dbconn = pg_connect("dbname=publisher") or die("Не удалось соединиться с базой");
+$dbconn = pg_connect("dbname=publisher") or die("Ошибка подключения к БД");
 $res = pg_query($dbconn, "SELECT * FROM authors WHERE author = 'Orwell'");
 
 $i = pg_num_fields($res);
 for ($j = 0; $j < $i; $j++) {
-    echo "column $j\n";
+    echo "Столбец $j\n";
     $fieldname = pg_field_name($res, $j);
-    echo "fieldname: $fieldname\n";
-    echo "printed length: " . pg_field_prtlen($res, $fieldname) . " characters\n";
-    echo "storage length: " . pg_field_size($res, $j) . " bytes\n";
-    echo "field type: " . pg_field_type($res, $j) . " \n\n";
+    echo "Название поля: $fieldname\n";
+    echo "Количество: " . pg_field_prtlen($res, $fieldname) . " символов\n";
+    echo "Размер в хранилище в байтах: " . pg_field_size($res, $j) . "\n";
+    echo "Тип поля: " . pg_field_type($res, $j) . " \n\n";
 }
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-column 0
-fieldname: author
-printed length: 6 characters
-storage length: -1 bytes
-field type: varchar
+Столбец 0
+Название поля: author
+Количество: 6 символов
+Размер в хранилище в байтах: -1
+Тип поля: varchar
 
-column 1
-fieldname: year
-printed length: 4 characters
-storage length: 2 bytes
-field type: int2
+Столбец 1
+Название поля: year
+Количество: 4 символов
+Размер в хранилище в байтах: 2
+Тип поля: int2
 
-column 2
-fieldname: title
-printed length: 24 characters
-storage length: -1 bytes
-field type: varchar
+Столбец 2
+Название поля: title
+Количество: 24 символов
+Размер в хранилище в байтах: -1
+Тип поля: varchar
 ]]>
     </screen>
    </example>
