@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 45042fef652f1b4e904e809fcbfcf31f6c60670b Maintainer: shein Status: ready -->
+<!-- EN-Revision: 1ed119182ad4629064b13301d0e427de47736bfe Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.strtr" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -89,7 +89,7 @@
       </para>
       <para>
        Функция игнорирует элементы массива <parameter>replace_pairs</parameter>
-       с ключами в виде пустой строки (<type>string</type>) (<literal>""</literal>),
+       с ключами в виде пустой строки (<type>string</type>) — <literal>""</literal>,
        а с PHP 8.0.0 выдаёт ошибку уровня <constant>E_WARNING</constant>.
       </para>
      </listitem>
@@ -101,7 +101,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает преобразованную строку (<type>string</type>).
+   Функция возвращает результат преобразования входной строки (<type>string</type>).
   </para>
  </refsect1>
 
@@ -114,14 +114,19 @@
 <![CDATA[
 <?php
 
-$addr = "The river å";
+$original = "He1Lo, w0rld!";
 
-// При вызове с тремя аргументами функция strtr() выполняет побайтовую замену символов,
-// поэтому представим, будто символы "ä", "å" и "ö" однобайтовые и заменяются по порядку на "a", "a" и "o":
-$addr = strtr($addr, "äåö", "aao");
-echo $addr, PHP_EOL;
+// При вызове с тремя аргументами функция strtr() заменяет символы побайтово.
+$result = strtr($original, "1L0", "llo");
+echo $result;
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Hello, world!
+]]>
+    </screen>
    </example>
   </para>
   <para>
@@ -132,13 +137,13 @@ echo $addr, PHP_EOL;
    больше не участвует в поиске.
   </para>
   <example>
-   <title>Пример замены символов или подстрок функцией <function>strtr</function> при вызове с двумя аргументами</title>
+   <title>Пример замены подстрок при вызове функции <function>strtr</function> с двумя аргументами</title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-$trans = array("h" => "-", "hello" => "hi", "hi" => "hello");
-echo strtr("hi all, I said hello", $trans);
+$replace_pairs = ["h" => "-", "hello" => "hi", "hi" => "hello"];
+echo strtr("hi all, I said hello", $replace_pairs);
 ]]>
    </programlisting>
    &example.outputs;
@@ -149,8 +154,8 @@ hello all, I said hi
    </screen>
   </example>
   <para>
-   Эти два режима поведения значительно различаются. При вызове
-   с тремя аргументами функция <function>strtr</function> заменяет байты,
+   Функция <function>strtr</function> работает в двух режимах:
+   при вызове с тремя аргументами выполняется побайтовая замена,
    а при вызове с двумя заменяются и более длинные подстроки.
   </para>
   <example>
@@ -159,10 +164,23 @@ hello all, I said hi
 <![CDATA[
 <?php
 
-echo strtr("baab", "ab", "01"),"\n";
+// Однобайтовые символы
+$singlebyte_string = "baab";
+echo strtr($singlebyte_string, "ab", "01"), "\n"; // Побайтовая замена
 
-$trans = array("ab" => "01");
-echo strtr("baab", $trans);
+$replace_pairs = ["ab" => "01"];
+echo strtr($singlebyte_string, $replace_pairs), "\n"; // Замена подстрок
+
+// Многобайтовые символы
+$multibyte_string = "Ä"; // В кодировке UTF-8 символ кодируется двумя байтами: "\xC3\x84"
+
+$result = strtr($multibyte_string, 'Ä', 'A');
+echo bin2hex($result), "\n"; // "4184", где "41" — байт символа "A", которым заменился байт "c3",
+                             // а "84" — байт, которому не нашлось замены в третьем аргументе;
+                             // последовательность байтов теперь невозможно интерпретировать
+                             // как символ в кодировке UTF-8
+$replace_pairs = ['Ä' => 'A'];
+echo strtr($multibyte_string, $replace_pairs); // Правильный перевод многобайтовой строки
 ]]>
    </programlisting>
    &example.outputs;
@@ -170,6 +188,8 @@ echo strtr("baab", $trans);
 <![CDATA[
 1001
 ba01
+4184
+A
 ]]>
    </screen>
   </example>
