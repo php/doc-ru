@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9ec2c28f9400490fe1b70fb88e50e23de97905f1 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 603435cd84951fc720eded819c62ef2466d21b5c Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdo-pgsql.copytoarray" xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude">
  <refnamediv>
   <refname>Pdo\Pgsql::copyToArray</refname>
-  <refpurpose>Копирует данные из таблицы базы данных в массив PHP</refpurpose>
+  <refpurpose>Копирует данные из таблицы базы данных в PHP-массив</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -17,23 +17,19 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>fields</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Копирует данные из таблицы <parameter>tableName</parameter> в массив,
-   используя разделитель полей <parameter>separator</parameter> и список <parameter>fields</parameter>.
+   Метод соединяет значения списка полей <parameter>fields</parameter>
+   из таблицы <parameter>tableName</parameter>
+   разделителем <parameter>separator</parameter>
+   и копирует данные в массив.
   </simpara>
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <variablelist>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='tableName']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='separator']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='nullAs']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='tableName']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='separator']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='nullAs']]]/.)"/>
    <varlistentry>
     <term><parameter>fields</parameter></term>
     <listitem>
@@ -48,8 +44,43 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Возвращает массив строк&return.falseforfailure;.
+   Метод возвращает массив строк&return.falseforfailure;.
   </simpara>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="pdo-pgsql.copytoarray.example.basic">
+   <title>Пример копирования данных из таблицы методом <methodname>Pdo\Pgsql::copyToArray</methodname></title>
+   <simpara>
+    Каждый элемент итогового массива включит одну запись,
+    в которой значения полей таблицы соединяются разделителем <parameter>separator</parameter> и заканчиваются переносом строки.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$db = new Pdo\Pgsql('pgsql:dbname=test host=localhost', $user, $pass);
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->exec('CREATE TABLE fruits (id int, name text, qty int)');
+$db->exec("INSERT INTO fruits VALUES (1, 'apple', 10), (2, 'banana', 20)");
+
+$rows = $db->copyToArray('fruits');
+var_export($rows);
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+array (
+  0 => '1	apple	10
+',
+  1 => '2	banana	20
+',
+)
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="seealso">
