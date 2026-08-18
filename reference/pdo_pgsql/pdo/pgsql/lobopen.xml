@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4bf27edcd6c317ea311e68117bb2fa20dacb8e57 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 603435cd84951fc720eded819c62ef2466d21b5c Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdo-pgsql.lobopen" xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude">
  <refnamediv>
   <refname>Pdo\Pgsql::lobOpen</refname>
-  <refpurpose>Открывает поток для существующего большого объекта</refpurpose>
+  <refpurpose>Открывает поток большого объекта</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,13 +16,11 @@
   </methodsynopsis>
   <simpara>
    Метод <methodname>Pdo\Pgsql::lobOpen</methodname> открывает поток для доступа к данным,
-   на которые ссылается <parameter>oid</parameter>.
-   Для работы с содержимым потока можно использовать все обычные функции файловой системы,
-   такие как функция <function>fread</function>, <function>fwrite</function> или <function>fgets</function>.
+   на которые ссылается идентификатор <parameter>oid</parameter>.
+   Работу с содержимым потока поддерживают все стандартные функции файловой системы
+   наподобие <function>fread</function>, <function>fwrite</function> или <function>fgets</function>.
   </simpara>
-  <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.lobcreate')/db:refsect1[@role='description']/db:note/.)">
-   <xi:fallback/>
-  </xi:include>
+  <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.lobcreate')/db:refsect1[@role='description']/db:note/.)"/>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -40,8 +38,11 @@
     <term><parameter>mode</parameter></term>
     <listitem>
      <simpara>
-      Если указано значение <literal>r</literal>, поток открывается для чтения.
-      Если указано значение <literal>w</literal>, поток открывается для записи.
+      Режим доступа. При передаче в параметр <parameter>mode</parameter>
+      значения <literal>w</literal> или <literal>+</literal> поток открывается
+      для чтения и записи; иначе поток открывается только для чтения.
+      Флаг <literal>b</literal>, которым устанавливается двоичный режим, игнорируется.
+      Предустановленное значение <literal>"rb"</literal> открывает поток для чтения.
      </simpara>
     </listitem>
    </varlistentry>
@@ -51,33 +52,36 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Метод возвращает ресурс потока в случае успешного выполнения&return.falseforfailure;.
+   При успешном выполнении метод возвращает ресурс потока&return.falseforfailure;.
   </simpara>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example xml:id="pdo-pgsql.lobopen.example.basic">
-   <title>Пример использования метода <methodname>Pdo\Pgsql::lobOpen</methodname></title>
+   <title>Пример открытия большого объекта методом <methodname>Pdo\Pgsql::lobOpen</methodname></title>
    <simpara>
     Продолжая пример метода <methodname>Pdo\Pgsql::lobCreate</methodname>,
-    этот фрагмент кода извлекает большой объект из базы данных
-    и выводит его в браузер.
+    следующий фрагмент кода извлекает большой объект из базы данных
+    и выводит в браузер.
    </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
+
 $db = new Pdo\Pgsql('pgsql:dbname=test host=localhost', $user, $pass);
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
 $db->beginTransaction();
 $stmt = $db->prepare("SELECT oid FROM BLOBS WHERE ident = ?");
-$stmt->execute(array($some_id));
+$stmt->execute([$some_id]);
 $stmt->bindColumn('oid', $oid, PDO::PARAM_STR);
+
 $stmt->fetch(PDO::FETCH_BOUND);
-$stream = $db->pgsqlLOBOpen($oid, 'r');
+$stream = $db->lobOpen($oid, 'r');
+
 header("Content-type: application/octet-stream");
 fpassthru($stream);
-?>
 ]]>
    </programlisting>
   </example>

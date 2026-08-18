@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9b69a8dcce47d6619d6459914e784627cbb02a5f Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 603435cd84951fc720eded819c62ef2466d21b5c Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="pdo-pgsql.copyfromfile" xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude">
  <refnamediv>
@@ -18,35 +18,28 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>fields</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Копирует данные из файла, указанного в параметре <parameter>filename</parameter>,
-   в таблицу <parameter>tableName</parameter>, используя разделитель полей <parameter>separator</parameter>
-   и список <parameter>fields</parameter>.
+   Метод построчно разбирает файл <parameter>filename</parameter>
+   по разделителю <parameter>separator</parameter>
+   на список полей <parameter>fields</parameter>
+   и копирует данные в таблицу <parameter>tableName</parameter>.
   </simpara>
  </refsect1>
 
  <refsect1 role="parameters">
   &reftitle.parameters;
   <variablelist>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='tableName']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='tableName']]]/.)"/>
    <varlistentry>
     <term><parameter>filename</parameter></term>
     <listitem>
      <simpara>
-      Имя файла, содержащего данные для импорта.
+      Путь к файлу с данными для импорта.
      </simpara>
     </listitem>
    </varlistentry>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='separator']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='nullAs']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='fields']]]/.)">
-    <xi:fallback><varlistentry><term></term><listitem><simpara></simpara></listitem></varlistentry></xi:fallback>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='separator']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='nullAs']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('pdo-pgsql.copyfromarray')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='fields']]]/.)"/>
   </variablelist>
  </refsect1>
 
@@ -55,6 +48,48 @@
   <simpara>
    &return.success;
   </simpara>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   При ошибке открытия файла <parameter>filename</parameter> для чтения о сбое
+   сообщается через механизм обработки ошибок соединения,
+   который устанавливается через атрибут <constant>PDO::ATTR_ERRMODE</constant>;
+   в режиме <constant>PDO::ERRMODE_EXCEPTION</constant>
+   выбрасывается исключение <exceptionname>PDOException</exceptionname>.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="pdo-pgsql.copyfromfile.example.basic">
+   <title>Пример копирования данных из файла методом <methodname>Pdo\Pgsql::copyFromFile</methodname></title>
+   <simpara>
+    На каждой строке файл содержит одну запись, поля соединяются
+    разделителем <parameter>separator</parameter> — по умолчанию символом табуляции.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$db = new Pdo\Pgsql('pgsql:dbname=test host=localhost', $user, $pass);
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->exec('CREATE TABLE fruits (id int, name text, qty int)');
+
+file_put_contents('/tmp/fruits.tsv', "1\tapple\t10\n2\tbanana\t20\n");
+$db->copyFromFile('fruits', '/tmp/fruits.tsv');
+
+echo $db->query('SELECT count(*) FROM fruits')->fetchColumn(), "\n";
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+2
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="seealso">
