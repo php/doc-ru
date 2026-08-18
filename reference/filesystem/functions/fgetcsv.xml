@@ -18,13 +18,13 @@
    <methodparam choice="opt"><type>string</type><parameter>escape</parameter><initializer>"\\"</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция похожа на функцию <function>fgets</function>, за исключением того,
-   что функция <function>fgetcsv</function> анализирует строку на наличие полей
-   в формате <acronym>CSV</acronym> и возвращает массив с прочитанными полями.
+   Функция <function>fgetcsv</function> аналогична функции <function>fgets</function>,
+   но разбирает прочитанную строку на поля в формате <acronym>CSV</acronym>,
+   которые возвращает в массиве.
   </para>
   <note>
    <simpara>
-    Функция учитывает региональный настройки. Поэтому функция иногда неправильно разбирает
+    Функция учитывает региональные настройки, поэтому иногда неправильно разбирает
     данные в отдельных однобайтовых кодировках, если значение константы
     <constant>LC_CTYPE</constant> равно <literal>en_US.UTF-8</literal>.
    </simpara>
@@ -39,7 +39,7 @@
      <term><parameter>stream</parameter></term>
      <listitem>
       <para>
-       Корректный указатель на файл, который успешно открыли функции
+       Корректный файловый указатель, который открыли функцией
        <function>fopen</function>, <function>popen</function>
        или <function>fsockopen</function>.
       </para>
@@ -49,10 +49,10 @@
      <term><parameter>length</parameter></term>
      <listitem>
       <para>
-       Для параметра <parameter>length</parameter> устанавливают значение,
-       которое больше самой длинной строки в CSV-файле, иначе строка разбивается на части заданной длины,
-       если только место разделения не встретится внутри символов-ограничителей.
-       Длина строк измеряется в символах с учётом символов конца строки, которыми завершаются строки.
+       Параметру устанавливают значение, которое превышает размер самой длинной строки CSV-файла
+       в байтах с учётом символов конца строки,
+       иначе строка разобьётся на части по <parameter>length</parameter> байтов;
+       длина значений внутри символов-ограничителей не учитывается.
       </para>
       <para>
        Функция снимет ограничение на длину строки, но замедлит работу,
@@ -64,8 +64,8 @@
      <term><parameter>separator</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>separator</parameter> устанавливает
-       символ-разделитель полей и принимает только один однобайтовый символ.
+       Параметр <parameter>separator</parameter> устанавливает разделитель полей
+       и принимает только один однобайтовый символ.
       </para>
      </listitem>
     </varlistentry>
@@ -73,8 +73,9 @@
      <term><parameter>enclosure</parameter></term>
      <listitem>
       <para>
-       Параметр <parameter>enclosure</parameter> устанавливает
-       символ-ограничитель значения поля и принимает только один однобайтовый символ.
+       Параметр <parameter>enclosure</parameter> устанавливает символ для обозначения границ значения поля
+       и принимает только один однобайтовый символ; часть строки внутри ограничителей разбирается как значение одного поля,
+       даже если содержит символ-разделитель.
       </para>
      </listitem>
     </varlistentry>
@@ -88,20 +89,25 @@
       </para>
       <warning xml:id="function.fgetcsv..warn.escape.parameter">
        <simpara>
-        Обычно символ ограничителя значений — <parameter>enclosure</parameter> экранируется внутри поля путём удвоения;
-        однако как альтернативу разрешается использовать символ экранирования <parameter>escape</parameter>.
-        Поэтому для стандартных значений параметра смысл значений <literal>""</literal> и <literal>\"</literal>
-        одинаков. Символ экранирования — <parameter>escape</parameter> не несёт отдельного смысла,
-        кроме экранирования символа ограничителя значений — <parameter>enclosure</parameter>;
-        он даже не экранирует сам себя.
+        Дублирование символа <parameter>enclosure</parameter> 
+        внутри обозначенных символом границ
+        вернёт в результате разбора входного потока
+        один символ <parameter>enclosure</parameter>.
+        Параметр <parameter>escape</parameter> работает по-другому:
+        при добавлении символа <parameter>escape</parameter>
+        перед символом <parameter>enclosure</parameter>
+        оба символа вернутся в результате разбора,
+        поэтому со стандартными значениями параметров CSV-строка наподобие
+        <literal>"a""b","c\"d"</literal> разберётся на два поля —
+        <literal>a"b</literal> и <literal>c\"d</literal>.
        </simpara>
       </warning>
       <warning>
        <simpara>
-        Начиная с PHP 8.4.0 полагаться на значение по умолчанию,
-        которое содержит параметр <parameter>escape</parameter>, не рекомендуют.
-        Значение потребуется указать явно, позиционно
-        или как <link linkend="functions.named-arguments">именованный аргумент</link>.
+        Начиная с PHP 8.4.0 вызов без явной передачи аргумента <parameter>escape</parameter> устарел.
+        Символ экранирования теперь передаётся при каждом вызове функции позиционно
+        или <link linkend="functions.named-arguments">как именованный аргумент</link>,
+        даже если значение аргумента совпадает с предустановленным значением параметра.
        </simpara>
       </warning>
      </listitem>
@@ -114,14 +120,14 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения функция возвращает индексный массив с полями,
-   которые прочитала из файла,&return.falseforfailure;.
+   При успешном выполнении функция возвращает индексный массив с прочитанными полями
+   &return.falseforfailure;.
   </para>
   <note>
    <para>
-    Пустую строку в CSV-файле функция возвращает как массив
-    с единственным элементом <type>null</type>
-    и не рассматривает как ошибку.
+    Пустую строку в CSV-файле функция интерпретирует не как ошибку,
+    а как одно поле со значением <type>null</type>,
+    которое возвращается в одноэлементном массиве.
    </para>
   </note>
   &note.line-endings;
@@ -131,12 +137,12 @@
   &reftitle.errors;
   <simpara>
    Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
-   если аргументы для разделителя полей <parameter>separator</parameter> или ограничителя значений <parameter>enclosure</parameter>
-   содержат значение короче одного байта.
+   если значение аргумента <parameter>separator</parameter> или <parameter>enclosure</parameter>
+   не равно одному байту.
   </simpara>
   <simpara>
    Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
-   если длина значения аргумента <parameter>escape</parameter> не равна одному байту или передали пустую строку.
+   если значение аргумента <parameter>escape</parameter> не равно одному байту или пустой строке.
   </simpara>
  </refsect1>
 
@@ -155,16 +161,15 @@
       <row>
        <entry>8.4.0</entry>
        <entry>
-        Вызов функции без явной передачи значения в параметр <parameter>escape</parameter>
+        Вызов функции без явной передачи аргумента <parameter>escape</parameter>
         устарел.
        </entry>
       </row>
       <row>
        <entry>8.3.0</entry>
        <entry>
-        Вместо строки с одним нулевым байтом возвращается пустая строка,
-        если последнее поле содержит только незавершённый символ ограничения значения поля.
-        enclosure.
+        Для последнего поля, которое состоит из единственного незакрытого символа-ограничителя,
+        вместо строки с одним нулевым байтом теперь возвращается пустая строка.
        </entry>
       </row>
       <row>
@@ -190,7 +195,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример считывания и вывода на экран содержимого CSV-файла</title>
+    <title>Пример считывания и вывода содержимого CSV-файла</title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -201,7 +206,7 @@ if (($handle = fopen("test.csv", "r")) !== FALSE) {
     while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
         $num = count($data);
 
-        echo "<p> $num полей в строке $row: <br /></p>\n";
+        echo "<p>Строка: $row. Количество полей: $num. Поля:<br /></p>\n";
         $row++;
 
         for ($c = 0; $c < $num; $c++) {
@@ -211,8 +216,6 @@ if (($handle = fopen("test.csv", "r")) !== FALSE) {
 
     fclose($handle);
 }
-
-?>
 ]]>
     </programlisting>
    </example>
