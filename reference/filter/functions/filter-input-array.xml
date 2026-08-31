@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 53054bf8decc8648cf2e90a493692a161e2371af Maintainer: shein Status: ready -->
+<!-- EN-Revision: 85264ba268a398c4b90c1948839d54ce688dd5cd Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="function.filter-input-array">
  <refnamediv>
@@ -39,12 +39,8 @@
      </warning>
     </listitem>
    </varlistentry>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)">
-    <xi:fallback/>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='add_empty']]]/.)">
-    <xi:fallback/>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='add_empty']]]/.)"/>
   </variablelist>
  </refsect1>
 
@@ -56,21 +52,23 @@
   </simpara>
   <simpara>
    Функция возвращает значение &false; в случае возникновения ошибки.
-   Если входной массив, определяемый параметром <parameter>type</parameter>, не заполнен,
-   функция вернёт значение &null;, если флаг <constant>FILTER_NULL_ON_FAILURE</constant>
-   не задан.
+   Если входной массив, который определяет параметр <parameter>type</parameter>,
+   не заполнен, функция вместо этого вернёт значение &null;.
   </simpara>
   <simpara>
-   Недостающие записи входного массива будут заполнены в возвращаемый массив (&array;),
-   если значение параметра <parameter>add_empty</parameter> равно &true;.
-   В этом случае отсутствующим записям будем присвоено значение &null;,
-   если только не используется флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
-   в этом случае записям будет присвоено значение &false;.
+   Недостающие записи входного массива добавляются в возвращаемый массив (&array;)
+   со значением &null;, если значение параметра <parameter>add_empty</parameter>
+   равно &true;, и полностью пропускаются, если оно равно &false;.
+   В отличие от функции <function>filter_input</function>, флаг
+   <constant>FILTER_NULL_ON_FAILURE</constant> это не меняет: отсутствующая
+   запись всегда равна &null;.
   </simpara>
   <simpara>
    Элемент возвращаемого массива (&array;) будет &false;,
    если фильтр не сработал, если только не используется флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
    в этом случае он будет &null;.
+   С флагом <constant>FILTER_FORCE_ARRAY</constant> это значение неудачи,
+   как и любой другой результат, оборачивается в массив из одного элемента.
   </simpara>
 
  </refsect1>
@@ -78,76 +76,106 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>filter_input_array</function></title>
+   <title>Пример использования функции <function>filter_input_array</function></title>
+   <simpara>
+    Пример предполагает GET-запрос вида
+    <literal>?email=user@example.com&amp;age=twenty&amp;url=https://example.com</literal>.
+    Запись <literal>age</literal> не проходит фильтр, потому что
+    <literal>twenty</literal> — не целое число; значение за пределами диапазона
+    от <literal>1</literal> до <literal>120</literal> не прошло бы фильтр так же.
+   </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
+$filters = [
+    'email' => FILTER_VALIDATE_EMAIL,
+    'age'   => [
+        'filter'  => FILTER_VALIDATE_INT,
+        'options' => ['min_range' => 1, 'max_range' => 120],
+    ],
+    'url'   => FILTER_VALIDATE_URL,
+];
 
-/* данные, полученные методом POST
-$_POST = array(
-    'product_id' => 'libgd<script>',
-    'component'  => array('10'),
-    'version'    => '2.0.33',
-    'testarray'  => array('2', '23', '10', '12'),
-    'testscalar' => '2',
-);
-*/
+$result = filter_input_array(INPUT_GET, $filters);
 
-$args = array(
-    'product_id'   => FILTER_SANITIZE_ENCODED,
-    'component'    => array('filter'    => FILTER_VALIDATE_INT,
-                            'flags'     => FILTER_REQUIRE_ARRAY,
-                            'options'   => array('min_range' => 1, 'max_range' => 10)
-                           ),
-    'version'      => FILTER_SANITIZE_ENCODED,
-    'doesnotexist' => FILTER_VALIDATE_INT,
-    'testscalar'   => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_REQUIRE_SCALAR,
-                           ),
-    'testarray'    => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_REQUIRE_ARRAY,
-                           )
-
-);
-
-$myinputs = filter_input_array(INPUT_POST, $args);
-
-var_dump($myinputs);
-echo "\n";
+var_dump($result);
 ?>
 ]]>
    </programlisting>
-   &example.outputs;
+   &example.outputs.similar;
    <screen>
 <![CDATA[
-array(6) {
-  ["product_id"]=>
-    string(17) "libgd%3Cscript%3E"
-  ["component"]=>
-  array(1) {
-    [0]=>
-    int(10)
-  }
-  ["version"]=>
-    string(6) "2.0.33"
-  ["doesnotexist"]=>
-  NULL
-  ["testscalar"]=>
-  int(2)
-  ["testarray"]=>
-  array(4) {
-    [0]=>
-    int(2)
-    [1]=>
-    int(23)
-    [2]=>
-    int(10)
-    [3]=>
-    int(12)
-  }
+array(3) {
+  ["email"]=>
+  string(16) "user@example.com"
+  ["age"]=>
+  bool(false)
+  ["url"]=>
+  string(19) "https://example.com"
 }
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Фильтрация POST-данных функцией <function>filter_input_array</function></title>
+   <simpara>
+    Пример предполагает POST-запрос с полями
+    <literal>username=&lt;script&gt;alert&lt;/script&gt;</literal> и
+    <literal>comment=Hello World</literal>.
+    Поле <literal>missing</literal> не передали: поскольку значение параметра
+    <parameter>add_empty</parameter> по умолчанию равно &true;, поле всё равно
+    попадает в результат со значением &null;.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$filters = [
+    'username' => FILTER_SANITIZE_SPECIAL_CHARS,
+    'comment'  => FILTER_SANITIZE_SPECIAL_CHARS,
+    'missing'  => FILTER_VALIDATE_INT,
+];
+
+$result = filter_input_array(INPUT_POST, $filters);
+
+var_dump($result);
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+array(3) {
+  ["username"]=>
+  string(38) "&#60;script&#62;alert&#60;/script&#62;"
+  ["comment"]=>
+  string(11) "Hello World"
+  ["missing"]=>
+  NULL
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Запрос незаполненного типа входных данных</title>
+   <simpara>
+    Пример предполагает GET-запрос.
+    Поскольку запрос не нёс POST-полей, входной массив, который определяет
+    константа <constant>INPUT_POST</constant>, не заполнен, и вместо массива
+    (&array;) функция возвращает &null;.
+    Это относится к каждому типу входных данных: запрос без строки запроса
+    точно так же даст &null; для константы <constant>INPUT_GET</constant>.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+var_dump(filter_input_array(INPUT_POST, ['a' => FILTER_VALIDATE_INT]));
+?>
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+NULL
 ]]>
    </screen>
   </example>
