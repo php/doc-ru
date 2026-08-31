@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 801e7a15e8c9ee2d16966487dc9058d992450b46 Maintainer: irker Status: ready -->
+<!-- EN-Revision: 4e77868e15fea65175b87a38d6d31b61d63f7f8e Maintainer: irker Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="language.oop5.properties" xmlns="http://docbook.org/ns/docbook">
  <title>Свойства</title>
@@ -19,10 +19,10 @@
   как <link linkend="language.constants">постоянное значение</link>.
  </para>
  <note>
-  <para>
+  <simpara>
    Устаревший способ объявления свойств класса —
    ключевое слово <literal>var</literal> вместо модификатора.
-  </para>
+  </simpara>
  </note>
  <note>
   <simpara>
@@ -165,7 +165,7 @@ class Shape
 
 $triangle = new Shape();
 $triangle->setName("triangle");
-$triangle->setNumberofSides(3);
+$triangle->setNumberOfSides(3);
 var_dump($triangle->getName());
 var_dump($triangle->getNumberOfSides());
 
@@ -271,6 +271,36 @@ $test1->prop = "foobar";
     </programlisting>
    </example>
   </para>
+  <note>
+   <para>
+    Readonly-свойство инициализируют только прямым присваиванием.
+    Неинициализированное readonly-свойство нельзя инициализировать по ссылке,
+    даже из той области видимости, в которой свойство объявили: передача
+    свойства в параметр функции, который принимает значение по ссылке,
+    или присваивание свойства по ссылке выбрасывают исключение
+    <exceptionname>Error</exceptionname>.
+    <informalexample>
+     <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
+
+class Test {
+    public readonly array $matches;
+
+    public function __construct(string $subject) {
+        // Недопустимая инициализация по ссылке.
+        preg_match('/\d+/', $subject, $this->matches);
+        // Error: Cannot indirectly modify readonly property Test::$matches
+    }
+}
+
+new Test('abc 42');
+?>
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
+  </note>
   <note>
    <para>
     Нельзя явным образом указывать значение по умолчанию для readonly-свойств,
@@ -392,6 +422,14 @@ var_dump($test2->prop); // NULL
      </programlisting>
     </example>
    </para>
+   <note>
+    <simpara>
+     Начиная с PHP 8.4.0 косвенное изменение readonly-свойства внутри метода
+     <link linkend="object.clone">__clone()</link>, например получение ссылки
+     на свойство (<code>$ref = &amp;$this-&gt;prop</code>), больше не разрешено.
+     Во время инициализации readonly-свойства это запрещали и раньше.
+    </simpara>
+   </note>
  </sect2>
 
  <sect2 xml:id="language.oop5.properties.dynamic-properties">
