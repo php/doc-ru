@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 21ce7d7f4f9f6f241f3e09e7f0a5be5c504d90d2 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: cbfc5d5d55d682c185583561295462a6d5ca0ea1 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.set-error-handler" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -16,10 +16,13 @@
    <methodparam><type class="union"><type>callable</type><type>null</type></type><parameter>callback</parameter></methodparam>
    <methodparam choice="opt"><type>int</type><parameter>error_levels</parameter><initializer><constant>E_ALL</constant></initializer></methodparam>
   </methodsynopsis>
-  <para>
+  <simpara>
    Функция устанавливает пользовательскую <parameter>callback</parameter>-функцию
    обработки ошибок, которые возникают в скрипте.
-  </para>
+   Обработчик, который действовал до этого, сохраняется во внутреннем стеке
+   обработчиков ошибок, откуда его снимает функция
+   <function>restore_error_handler</function>.
+  </simpara>
   <para>
    Функция определяет пользовательские обработчики ошибок, которые возникают во время выполнения кода.
    Обработчики устанавливают в приложениях, которым требуется
@@ -65,10 +68,13 @@
     <varlistentry>
      <term><parameter>callback</parameter></term>
      <listitem>
-      <para>
-       При передаче значения &null; обработчик сбрасывается в состояние по умолчанию,
-       иначе обработчиком становится callback-функция со следующей сигнатурой:
-      </para>
+      <simpara>
+       При передаче значения &null; активным не остаётся ни один пользовательский
+       обработчик, и ошибки обрабатывает встроенный обработчик.
+       Обработчик, который действовал до этого, остаётся в стеке, и его
+       возвращает функция <function>restore_error_handler</function>.
+       Иначе обработчиком становится callback-функция со следующей сигнатурой:
+      </simpara>
       <para>
        <methodsynopsis>
         <type>bool</type><methodname><replaceable>handler</replaceable></methodname>
@@ -351,20 +357,80 @@ vector d - fatal error
     </screen>
    </example>
   </para>
+  <para>
+   <example>
+    <title>Вызов предыдущего обработчика из нового</title>
+    <simpara>
+     Функция <function>set_error_handler</function> возвращает обработчик,
+     который действовал до вызова. Вызов этого обработчика из нового сохраняет
+     прежнее поведение и добавляет к нему новое. Приём работает, только если
+     прежним обработчиком была пользовательская функция: когда действовал
+     встроенный обработчик, функция возвращает &null;.
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+<?php
+function logging_handler(int $errno, string $errstr): bool
+{
+    echo "записано в журнал: $errstr\n";
+    return true;
+}
+
+set_error_handler('logging_handler');
+
+$previous = set_error_handler(function (int $errno, string $errstr) use (&$previous): bool {
+    echo "подсчитано: $errstr\n";
+    return $previous !== null ? $previous($errno, $errstr) : false;
+});
+
+trigger_error("что-то произошло", E_USER_WARNING);
+
+restore_error_handler();
+trigger_error("теперь только запись в журнал", E_USER_WARNING);
+
+restore_error_handler();
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+подсчитано: что-то произошло
+записано в журнал: что-то произошло
+записано в журнал: теперь только запись в журнал
+]]>
+    </screen>
+   </example>
+  </para>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <caution>
+   <simpara>
+    Не возвращаются к предыдущему обработчику, передавая функции
+    <function>set_error_handler</function> её же возвращаемое значение.
+    Такой вызов не снимает запись со стека, а добавляет ещё одну, поэтому
+    в циклах и долгоживущих процессах стек растёт без ограничений, а параметр
+    <parameter>error_levels</parameter> сбрасывается в значение
+    <constant>E_ALL</constant>, из-за чего восстановленный обработчик
+    незаметно начинает получать более широкий набор ошибок.
+    Для возврата к предыдущему обработчику предназначена функция
+    <function>restore_error_handler</function>.
+   </simpara>
+  </caution>
  </refsect1>
 
  <refsect1 role="seealso">
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><classname>ErrorException</classname></member>
-    <member><function>error_reporting</function></member>
-    <member><function>restore_error_handler</function></member>
-    <member><function>get_error_handler</function></member>
-    <member><function>trigger_error</function></member>
-    <member><link linkend="errorfunc.constants">Константы уровней ошибок</link></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><exceptionname>ErrorException</exceptionname></member>
+   <member><function>error_reporting</function></member>
+   <member><function>restore_error_handler</function></member>
+   <member><function>get_error_handler</function></member>
+   <member><function>trigger_error</function></member>
+   <member><link linkend="errorfunc.constants">Константы уровней ошибок</link></member>
+  </simplelist>
  </refsect1>
 </refentry>
 <!-- Keep this comment at the end of the file
