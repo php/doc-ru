@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 17ebcd2ea14b405b781bd93aea6fa7219b6e29ae Maintainer: shein Status: ready -->
+<!-- EN-Revision: a833060594749e44ff296fee01fd587d6395cff7 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <reference xml:id="class.splfixedarray" role="class" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
  <title>Класс SplFixedArray</title>
@@ -48,12 +48,8 @@
     </oointerface>
 
     <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
-    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.splfixedarray')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[@role='SplFixedArray'])">
-     <xi:fallback/>
-    </xi:include>
-    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.splfixedarray')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[@role='SplFixedArray'])">
-     <xi:fallback/>
-    </xi:include>
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.splfixedarray')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[@role='SplFixedArray'])"/>
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.splfixedarray')/db:refentry/db:refsect1[@role='description']/descendant::db:methodsynopsis[@role='SplFixedArray'])"/>
    </classsynopsis>
 
   </section>
@@ -86,6 +82,14 @@
         Магические методы <methodname>SplFixedArray::__serialize</methodname> и
         <methodname>SplFixedArray::__unserialize</methodname> добавлены
         в <classname>SplFixedArray</classname>.
+       </entry>
+      </row>
+      <row>
+       <entry>8.1.0</entry>
+       <entry>
+        Обращение к <classname>SplFixedArray</classname> по нецелочисленному ключу
+        теперь выбрасывает ошибку <exceptionname>TypeError</exceptionname>
+        вместо исключения <exceptionname>RuntimeException</exceptionname>.
        </entry>
       </row>
       <row>
@@ -136,23 +140,25 @@ $array[9] = "asdf";
 // Сокращаем размер массива до 2-х
 $array->setSize(2);
 
-// Следующий код вызывает исключение RuntimeException: Index invalid or out of range
-try {
-    var_dump($array["non-numeric"]);
-} catch(RuntimeException $re) {
-    echo "RuntimeException: ".$re->getMessage()."\n";
-}
-
+// Следующие два блока вызывают исключение RuntimeException: Index invalid or out of range
 try {
     var_dump($array[-1]);
-} catch(RuntimeException $re) {
-    echo "RuntimeException: ".$re->getMessage()."\n";
+} catch(RuntimeException $e) {
+    echo "RuntimeException: ".$e->getMessage()."\n";
 }
 
 try {
     var_dump($array[5]);
-} catch(RuntimeException $re) {
-    echo "RuntimeException: ".$re->getMessage()."\n";
+} catch(RuntimeException $e) {
+    echo "RuntimeException: ".$e->getMessage()."\n";
+}
+
+// Начиная с PHP 8.1.0 нецелочисленный ключ выбрасывает ошибку TypeError.
+// До PHP 8.1.0 вместо неё выбрасывалось исключение RuntimeException.
+try {
+    var_dump($array["non-numeric"]);
+} catch(TypeError $e) {
+    echo "TypeError: ".$e->getMessage()."\n";
 }
 ?>
 ]]>
@@ -165,11 +171,19 @@ int(2)
 string(3) "foo"
 RuntimeException: Index invalid or out of range
 RuntimeException: Index invalid or out of range
-RuntimeException: Index invalid or out of range
+TypeError: Illegal offset type
 ]]>
      </screen>
     </example>
    </para>
+   <note>
+    <simpara>
+     До PHP 8.1.0 обращение к <classname>SplFixedArray</classname>
+     по нецелочисленному ключу выбрасывало исключение
+     <exceptionname>RuntimeException</exceptionname>, а не ошибку
+     <exceptionname>TypeError</exceptionname>.
+    </simpara>
+   </note>
   </section>
   <!-- }}} -->
 
