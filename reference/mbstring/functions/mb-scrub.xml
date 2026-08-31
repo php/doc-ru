@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 77a60306bc47d2151ebca7e6983897a0371a9671 Maintainer: lex Status: ready -->
+<!-- EN-Revision: eb10503592351cf78c25be21c60a9049784d57bb Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.mb-scrub" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -69,6 +69,85 @@
     </tbody>
    </tgroup>
   </informaltable>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Побайтовая замена, которую выполняет функция <function>mb_scrub</function></title>
+   <simpara>
+    Функцию <function>bin2hex</function> здесь применяют потому, что терминалы,
+    браузеры и шрифты иногда отрисовывают некорректную последовательность байтов
+    собственным символом замены, из-за чего не видно, что на самом деле
+    содержит строка.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+// Байт 0xFF не встречается в корректной UTF-8 строке.
+$input = "A\xFFB";
+echo bin2hex($input), "\n";
+
+// Стандартный символ замены — "?" (0x3F).
+echo bin2hex(mb_scrub($input, 'UTF-8')), "\n";
+
+// Символ U+FFFD REPLACEMENT CHARACTER кодируется в UTF-8 как EF BF BD.
+mb_substitute_character(0xFFFD);
+echo bin2hex(mb_scrub($input, 'UTF-8')), "\n";
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+41ff42
+413f42
+41efbfbd42
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Вызов функции <function>mb_scrub</function> перед обработкой с учётом UTF-8</title>
+   <simpara>
+    PCRE-шаблоны с модификатором <literal>u</literal> отклоняют строки, которые
+    не являются корректным UTF-8. Очистка входных данных делает их приемлемыми.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$input = "A\xFFB";
+
+var_dump(preg_match_all('/./us', $input));
+echo preg_last_error_msg(), "\n";
+
+$clean = mb_scrub($input, 'UTF-8');
+
+var_dump(preg_match_all('/./us', $clean));
+
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+bool(false)
+Malformed UTF-8 characters, possibly incorrectly encoded
+int(3)
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><function>mb_substitute_character</function></member>
+   <member><function>mb_check_encoding</function></member>
+   <member><function>mb_convert_encoding</function></member>
+  </simplelist>
  </refsect1>
 
 </refentry>
