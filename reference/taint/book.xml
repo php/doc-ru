@@ -1,61 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cfe2c34143ab17e522b1594ae0902b7245f072d5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: befe2b9fbe37b0925498f336632742651386b151 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
-
 <book xml:id="book.taint" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <?phpdoc extension-membership="pecl" ?>
- <title>Модуль определения «грязных» строк Taint</title>
+ <title>Taint</title>
  <titleabbrev>Taint</titleabbrev>
 
  <preface xml:id="intro.taint">
   &reftitle.intro;
-  <para>
-   Taint — модуль определения XSS-кодов — вредоносных, или «грязных» строк (англ. tainted strings).
-   Модуль также помогает выявлять попытки внедрения SQL-инъекций,
-   shell-инъекций и т. д.
-  </para>
-  <para>
-   Модуль выдаст предупреждение при передаче в отдельные функции подозрительной строки,
-   которую получили из суперглобальных переменных <varname>$_GET</varname>,
-   <varname>$_POST</varname> или <varname>$_COOKIE</varname>.
-  </para>
+  <simpara>
+   Taint — модуль для обнаружения XSS-кода, то есть заражённых строк.
+   Модулем также выявляют SQL-инъекции, инъекции команд, инъекции путей
+   к файлам и похожие уязвимости.
+  </simpara>
+  <simpara>
+   Когда модуль taint включили, строки, которые пришли из пользовательского
+   ввода — <varname>$_GET</varname>, <varname>$_POST</varname>
+   и <varname>$_COOKIE</varname>, — помечаются как заражённые при запуске
+   запроса, и метка отслеживается через строковые операции. Когда заражённая
+   строка попадает в опасный приёмник — вывод, SQL-запрос, команду оболочки,
+   путь к файлу и так далее, — taint поднимает предупреждение, которое
+   указывает на это место. Полные списки приводит раздел
+   «<link linkend="taint.detail">Распространение и проверяемые приёмники</link>».
+  </simpara>
+  <simpara>
+   Taint — инструмент разработки и аудита, а не средство защиты во время
+   выполнения: он только сообщает о возможных проблемах и никогда не блокирует
+   и не изменяет данные. Модуль намеренно осторожен и иногда сообщает лишнее,
+   поэтому чистый прогон означает лишь «taint ничего не увидел», но никогда —
+   «доказано безопасно». В производственной среде модуль не включают.
+  </simpara>
   <example>
-   <title>Пример определения вредоносных строк функцией <function>taint</function></title>
+   <title>Пример работы модуля Taint</title>
    <programlisting role="php">
 <![CDATA[
 <?php
-
 $a = trim($_GET['a']);
 
-$file_name = '/tmp' .  $a;
-
+$file_name = '/tmp/' . $a;
 $output    = "Welcome, {$a} !!!";
-
-$var       = "output";
-$sql       = "SELECT * FROM " . $a;
-$sql      .= "ooxx";
+$sql       = "SELECT * FROM users WHERE name = " . $a;
 
 echo $output;
-
-print $$var;
-
+print $output;
 include $file_name;
-
-mysql_query($sql);
-
+mysqli_query($link, $sql);
 ?>
 ]]>
    </programlisting>
    &example.outputs.similar;
    <screen>
 <![CDATA[
-Warning: main() [function.echo]: Attempt to echo a string that might be tainted
+Warning: main() [echo]: Attempt to echo a string that might be tainted in /path/to/script.php on line 9
 
-Warning: main() [function.echo]: Attempt to print a string that might be tainted
+Warning: main() [print]: Attempt to print a string that might be tainted in /path/to/script.php on line 10
 
-Warning: include() [function.include]: File path contains data that might be tainted
+Warning: main() [include]: File path contains data that might be tainted in /path/to/script.php on line 11
 
-Warning: mysql_query() [function.mysql-query]: SQL statement contains data that might be tainted
+Warning: main() [mysqli_query]: SQL statement contains data that might be tainted in /path/to/script.php on line 12
 ]]>
    </screen>
   </example>
@@ -66,6 +68,7 @@ Warning: mysql_query() [function.mysql-query]: SQL statement contains data that 
  &reference.taint.reference;
 
 </book>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
