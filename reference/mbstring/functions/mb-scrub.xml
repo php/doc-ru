@@ -15,9 +15,8 @@
    <methodparam choice="opt"><type class="union"><type>string</type><type>null</type></type><parameter>encoding</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Преобразовывает набор символов из заданной кодировки или кодировки по умолчанию,
-   если кодировка не была указана, в ту же кодировку.
-   Это заменяет все недопустимые последовательности байтов заменяющим символом.
+   Функция заменяет во входной строке недопустимые для заданной кодировки —
+   или для кодировки по умолчанию, если кодировку не указали, — байтовые последовательности символом-заменителем.
   </para>
 
  </refsect1>
@@ -38,8 +37,8 @@
     <listitem>
      <para>
       Кодировка для интерпретации параметра <parameter>string</parameter>.
-      Если значение опущено или равно &null;, будет использовано значение директивы <link linkend="ini.mbstring.internal-encoding">mbstring.internal_encoding</link>,
-      если она установлена, иначе будет использовано значение директивы <link linkend="ini.default-charset">default_charset</link>.
+      При пропуске значения или передаче &null; функция возьмёт значение директивы <link linkend="ini.mbstring.internal-encoding">mbstring.internal_encoding</link>,
+      если установили, иначе строка интерпретируется в кодировке из директивы <link linkend="ini.default-charset">default_charset</link>.
      </para>
     </listitem>
    </varlistentry>
@@ -49,7 +48,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат в виде строки (&string;)
+   Функция возвращает результат в виде строки (&string;)
    с заменёнными недопустимыми последовательностями байтов.
   </para>
  </refsect1>
@@ -74,29 +73,27 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Побайтовая замена, которую выполняет функция <function>mb_scrub</function></title>
+   <title>Пример замены некорректных для UTF-8 байтовых последовательностей функцией <function>mb_scrub</function></title>
    <simpara>
-    Функцию <function>bin2hex</function> здесь применяют потому, что терминалы,
-    браузеры и шрифты иногда отрисовывают некорректную последовательность байтов
-    собственным символом замены, из-за чего не видно, что на самом деле
-    содержит строка.
+    В примере функцию <function>bin2hex</function> вызывают
+    из-за отрисовки некорректной последовательности байтов
+    терминалами, браузерами и шрифтами своим символом замены,
+    который скрывает фактическое содержимое строки.
    </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-// Байт 0xFF не встречается в корректной UTF-8 строке.
+// Байт 0xFF не встречается в корректно закодированной в UTF-8 строке.
 $input = "A\xFFB";
 echo bin2hex($input), "\n";
 
-// Стандартный символ замены — "?" (0x3F).
+// Символ замены по умолчанию — "?" (0x3F).
 echo bin2hex(mb_scrub($input, 'UTF-8')), "\n";
 
-// Символ U+FFFD REPLACEMENT CHARACTER кодируется в UTF-8 как EF BF BD.
+// Символ U+FFFD REPLACEMENT CHARACTER кодируется в UTF-8 последовательностью байтов EF BF BD.
 mb_substitute_character(0xFFFD);
 echo bin2hex(mb_scrub($input, 'UTF-8')), "\n";
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -109,10 +106,10 @@ echo bin2hex(mb_scrub($input, 'UTF-8')), "\n";
    </screen>
   </example>
   <example>
-   <title>Вызов функции <function>mb_scrub</function> перед обработкой с учётом UTF-8</title>
+   <title>Пример исправления неправильно закодированной в UTF-8 строки функцией <function>mb_scrub</function></title>
    <simpara>
-    PCRE-шаблоны с модификатором <literal>u</literal> отклоняют строки, которые
-    не являются корректным UTF-8. Очистка входных данных делает их приемлемыми.
+    PCRE-шаблоны с модификатором <literal>u</literal> отклоняют строки с некорректной для UTF-8 последовательностью байтов.
+    Предварительная очистка входной строки исправляет недопустимые для UTF-8 последовательности байтов.
    </simpara>
    <programlisting role="php">
 <![CDATA[
@@ -126,8 +123,6 @@ echo preg_last_error_msg(), "\n";
 $clean = mb_scrub($input, 'UTF-8');
 
 var_dump(preg_match_all('/./us', $clean));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
