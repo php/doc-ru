@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a464df4c7d82ef16d94fff2582eeb8dd7579b894 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 3b052562d228be18fa6dce221df7e375469fb7ad Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="yaconf.get" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Yaconf::get</refname>
-  <refpurpose>Извлечь элемент</refpurpose>
+  <refpurpose>Получает значение конфигурации по названию</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -12,11 +12,19 @@
   <methodsynopsis>
    <modifier>public</modifier> <modifier>static</modifier> <type>mixed</type><methodname>Yaconf::get</methodname>
    <methodparam><type>string</type><parameter>name</parameter></methodparam>
-   <methodparam choice="opt"><type>mixed</type><parameter>default_value</parameter><initializer>NULL</initializer></methodparam>
+   <methodparam choice="opt"><type>mixed</type><parameter>default</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
-  <para>
-
-  </para>
+  <simpara>
+   Метод получает значение конфигурации, которое сохранили под названием
+   <parameter>name</parameter>. В названиях применяют точечную нотацию, чтобы
+   обходить вложенные ключи: <literal>"app"</literal> адресует весь разобранный
+   файл <filename>app.ini</filename>, <literal>"app.name"</literal> — ключ
+   внутри него, а начиная с Yaconf 1.2.0
+   <literal>"users.database.master"</literal> — ключ в файле
+   <filename>database.ini</filename>, который положили в подкаталог
+   <filename>users/</filename>. Точечная нотация поддерживает до 64 уровней
+   вложенности.
+  </simpara>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -25,17 +33,21 @@
    <varlistentry>
     <term><parameter>name</parameter></term>
     <listitem>
-     <para>
-      Ключ конфигурации, ключ может быть вида "filename.key" или "filename.sectionName,key".
-     </para>
+     <simpara>
+      Название конфигурации, которую требуется найти; вложенные ключи обходят
+      точечной нотацией, например <literal>"app.name"</literal>,
+      <literal>"app.features.1"</literal> или, начиная с Yaconf 1.2.0,
+      <literal>"users.database.master"</literal> для файлов в подкаталогах.
+     </simpara>
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><parameter>default_value</parameter></term>
+    <term><parameter>default</parameter></term>
     <listitem>
-     <para>
-      Если ключа не существует, Yaconf::get вернёт значение этого параметра.
-     </para>
+     <simpara>
+      Значение, которое возвращают, когда название <parameter>name</parameter>
+      не нашли. Если параметр опустили, возвращается &null;.
+     </simpara>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -43,53 +55,73 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Возвращает результат конфигурации (строка или массив), если ключ существует,
-   возвращает default_value, если его нет.
-  </para>
+  <simpara>
+   Сохранённое значение конфигурации — строку (<type>string</type>) или массив
+   (<type>array</type>), — когда название <parameter>name</parameter>
+   существует; иначе значение параметра <parameter>default</parameter>
+   или &null;, если значение по умолчанию не задали.
+  </simpara>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
-  <example>
-   <title>Пример <function>INI</function></title>
-   <programlisting role="ini">
+  <simpara>
+   Примеры ниже предполагают, что в каталоге, который задали директивой
+   <literal>yaconf.directory</literal>, лежат следующие два файла.
+  </simpara>
+  <programlisting role="ini">
 <![CDATA[
-;файл foo.ini, находящийся в директории, заданной yaconf.directory
-[SectionA]
-;пара ключ-значение
-key=val
-;хеш
-hash.a=val
-;массив
-arr.0=val
-;или так
-arr[]=val
+; app.ini
+name="shop"                     ; скалярное значение
+debug=0                         ; число
+features[]="checkout"           ; элементы массива, обе записи
+features.1="wishlist"
+]]>
+  </programlisting>
+  <programlisting role="ini">
+<![CDATA[
+; users/database.ini, в подкаталоге (Yaconf 1.2.0+)
+master="192.168.0.10"
+replica="192.168.0.20"
+]]>
+  </programlisting>
+  <example>
+   <title>Пример использования метода <methodname>Yaconf::get</methodname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+// получаем весь разобранный файл как массив
+var_dump(Yaconf::get("app"));
 
-;SectionB наследуется от SectionA
-[SectionB:SectionA]
-;переопределить конфигурацию key из раздела SectionA
-key=new_val
+// точечная нотация обходит вложенные ключи
+var_dump(Yaconf::get("app.name"));           // string(4) "shop"
+var_dump(Yaconf::get("app.features.1"));     // string(8) "wishlist"
+
+// начиная с 1.2.0: файлы в подкаталогах адресуют
+// с названием каталога как пространством имён
+var_dump(Yaconf::get("users.database.master")); // string(12) "192.168.0.10"
+
+// когда ключа нет, возвращается значение по умолчанию
+var_dump(Yaconf::get("app.missing"));             // NULL
+var_dump(Yaconf::get("app.missing", "fallback")); // string(8) "fallback"
+?>
 ]]>
    </programlisting>
-   &example.outputs.similar;
-   <screen>
-<![CDATA[
-php7 -r 'var_dump(Yaconf::get("foo.SectionA.key"));'
-//string(3) "val"
-
-php7 -r 'var_dump(Yaconf::get("foo.SectionB.key"));'
-//string(7) "new_val"
-
-php7 -r 'var_dump(Yaconf::get("foo")["SectionA"]["hash"]);'
-//array(1)
-
-]]>
-   </screen>
   </example>
  </refsect1>
 
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <para>
+   <simplelist>
+    <member><methodname>Yaconf::has</methodname></member>
+    <member><methodname>Yaconf::__debug_info</methodname></member>
+   </simplelist>
+  </para>
+ </refsect1>
+
 </refentry>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
