@@ -4,7 +4,7 @@
 <refentry xml:id="function.grapheme-levenshtein" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>grapheme_levenshtein</refname>
-  <refpurpose>Вычисляет расстояние Левенштейна между двумя строками в единицах графем</refpurpose>
+  <refpurpose>Вычисляет расстояние Левенштейна между двумя строками в графемных кластерах</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -19,28 +19,28 @@
    <methodparam choice="opt"><type>string</type><parameter>locale</parameter><initializer>""</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Расстояние Левенштейна определяют как минимальное количество кластеров графем,
+   Расстояние Левенштейна определяют как минимальное количество графемных кластеров,
    которые требуется заменить, вставить или удалить, чтобы преобразовать строку
    <parameter>string1</parameter> в строку <parameter>string2</parameter>.
    Сложность алгоритма — <literal>O(m*n)</literal>, где <literal>n</literal>
    и <literal>m</literal> — длины строк <parameter>string1</parameter>
-   и <parameter>string2</parameter> в единицах графем.
+   и <parameter>string2</parameter> в графемных кластерах.
   </simpara>
   <simpara>
-   В отличие от функции <function>levenshtein</function>, которая работает
-   с байтами, эта функция считает Unicode-кластеры графем, поэтому составную
-   и разложенную формы одного и того же символа, например
-   <literal>U+00E9</literal> и <literal>U+0065 U+0301</literal>, каждая
-   из которых представляет символ <literal>é</literal>, функция считает
-   равнозначными, а расстояние между ними — нулевым.
+   В отличие от функции <function>levenshtein</function>, которая работает с байтами,
+   функция считает графемные кластеры Юникода,
+   поэтому составную и разложенную формы одного и того же символа,
+   например <literal>U+00E9</literal> и <literal>U+0065 U+0301</literal>,
+   каждая из которых представляет символ <literal>é</literal>,
+   функция считает эквивалентными, а расстояние между формами — нулевым.
   </simpara>
   <simpara>
-   Если значения параметров <parameter>insertion_cost</parameter>,
+   Алгоритм подстроится и выберет самые дешёвые преобразования,
+   если значения параметров <parameter>insertion_cost</parameter>,
    <parameter>replacement_cost</parameter> или <parameter>deletion_cost</parameter>
-   отличаются от <literal>1</literal>, алгоритм подстраивается и выбирает
-   самые дешёвые преобразования.
-   Например, если <literal>$insertion_cost + $deletion_cost &lt; $replacement_cost</literal>,
-   замены не выполняются, а вместо них выполняются вставки и удаления.
+   не равны <literal>1</literal>.
+   Например, при истинности выражения <literal>$insertion_cost + $deletion_cost &lt; $replacement_cost</literal>
+   вместо замен выполняются вставки и удаления.
   </simpara>
  </refsect1>
 
@@ -52,8 +52,7 @@
      <term><parameter>string1</parameter></term>
      <listitem>
       <simpara>
-       Одна из строк, для которых вычисляют расстояние Левенштейна.
-       Строка должна быть корректной в кодировке UTF-8.
+       Строка в кодировке UTF-8 для вычисления расстояния Левенштейна.
       </simpara>
      </listitem>
     </varlistentry>
@@ -61,8 +60,7 @@
      <term><parameter>string2</parameter></term>
      <listitem>
       <simpara>
-       Одна из строк, для которых вычисляют расстояние Левенштейна.
-       Строка должна быть корректной в кодировке UTF-8.
+       Строка в кодировке UTF-8 для вычисления расстояния Левенштейна.
       </simpara>
      </listitem>
     </varlistentry>
@@ -70,7 +68,7 @@
      <term><parameter>insertion_cost</parameter></term>
      <listitem>
       <simpara>
-       Задаёт стоимость вставки. Значение должно быть больше <literal>0</literal>.
+       Стоимость вставки — значение больше <literal>0</literal>.
       </simpara>
      </listitem>
     </varlistentry>
@@ -78,7 +76,7 @@
      <term><parameter>replacement_cost</parameter></term>
      <listitem>
       <simpara>
-       Задаёт стоимость замены. Значение должно быть больше <literal>0</literal>.
+       Стоимость замены — значение больше <literal>0</literal>.
       </simpara>
      </listitem>
     </varlistentry>
@@ -86,7 +84,7 @@
      <term><parameter>deletion_cost</parameter></term>
      <listitem>
       <simpara>
-       Задаёт стоимость удаления. Значение должно быть больше <literal>0</literal>.
+       Стоимость удаления — значение больше <literal>0</literal>.
       </simpara>
      </listitem>
     </varlistentry>
@@ -103,8 +101,8 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   Функция возвращает расстояние Левенштейна между двумя строками в единицах
-   графем или &false; в случае ошибки. Подробности об ошибке возвращает
+   Функция возвращает расстояние Левенштейна между двумя строками в графемных
+   кластерах или &false;, если возникла ошибка. Подробности об ошибке возвращает
    функция <function>intl_get_error_message</function>.
   </simpara>
  </refsect1>
@@ -112,16 +110,16 @@
  <refsect1 role="errors">
   &reftitle.errors;
   <simpara>
-   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>, если
-   значение параметра <parameter>insertion_cost</parameter>,
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если значение параметра <parameter>insertion_cost</parameter>,
    <parameter>replacement_cost</parameter> или <parameter>deletion_cost</parameter>
    меньше или равно <literal>0</literal>.
   </simpara>
   <simpara>
-   Функция возвращает &false; и устанавливает ошибку intl, если одна
-   из входных строк некорректна в кодировке UTF-8, если значение параметра
-   <parameter>locale</parameter> — некорректный идентификатор локали
-   или если произошла внутренняя ошибка библиотеки ICU.
+   Функция возвращает &false; и устанавливает ошибку модуля Intl,
+   если хотя бы одна входная строка не соответствует кодировке UTF-8,
+   в параметр <parameter>locale</parameter> передали недопустимый идентификатор локали
+   или возникла внутренняя ошибка библиотеки ICU.
   </simpara>
  </refsect1>
 
@@ -139,7 +137,7 @@
      <row>
       <entry>8.5.0</entry>
       <entry>
-       Функцию добавили.
+       Функцию добавили в модуль.
       </entry>
      </row>
     </tbody>
@@ -150,7 +148,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования функции <function>grapheme_levenshtein</function></title>
+   <title>Пример вычисления расстояния Левенштейна функцией <function>grapheme_levenshtein</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -161,13 +159,11 @@ $e_composed = "\u{00E9}";
 // Разложенная форма (NFD): U+0065 + U+0301 (e + комбинируемый акут)
 $e_decomposed = "\u{0065}\u{0301}";
 
-// Функция grapheme_levenshtein считает их одним и тем же кластером графем
+// Функция grapheme_levenshtein() считает обе формы как единый графемный кластер
 var_dump(grapheme_levenshtein($e_composed, $e_decomposed));
 
-// Функция levenshtein() работает с байтами и видит их как разные
+// Функция levenshtein() работает с байтами и видит разные байтовые последовательности
 var_dump(levenshtein($e_composed, $e_decomposed));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -190,7 +186,7 @@ int(3)
     <member><function>similar_text</function></member>
     <member>
      <link xlink:href="&uri.unicode.graphemes;">
-      Unicode Text Segmentation: Grapheme Cluster Boundaries
+      Сегментация текста в Юникоде: Границы графемных кластеров
      </link>
     </member>
    </simplelist>
