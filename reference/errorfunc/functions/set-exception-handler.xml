@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4a6671fe697ead5b27603b56face01a2c4e7ebe5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 1cc803aaa07ac94ce8e3bfdf56f4b9ddd23326d3 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.set-exception-handler" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -20,6 +20,35 @@
    для перехвата исключений, которые не отловили в блоке try-catch. Выполнение скрипта остановится
    после вызова <parameter>callback</parameter>-функции.
   </para>
+
+  <note>
+   <simpara>
+    Пока обработчик исключений выполняется, ни один обработчик исключений
+    не активен: начиная с PHP 8.3.0 движок снимает обработчик перед вызовом,
+    чтобы исключение, которое выбросил сам обработчик, не передавалось ему же.
+    Поэтому вызванная изнутри обработчика функция
+    <function>set_exception_handler</function> сообщает, что ранее определённого
+    обработчика нет.
+   </simpara>
+   <simpara>
+    Начиная с PHP 8.3.5 движок вдобавок помещает обработчик, который собирается
+    вызвать, в стек обработчиков, поэтому вызванная изнутри обработчика функция
+    <function>restore_exception_handler</function> переустанавливает обработчик,
+    который сейчас выполняется, а не тот, который действовал до него.
+   </simpara>
+   <simpara>
+    Выполняющийся обработчик переустанавливается автоматически, когда он
+    возвращает управление, но только если в этот момент ни один обработчик
+    исключений не активен. Как только обработчик вызвал функцию
+    <function>set_exception_handler</function> или
+    <function>restore_exception_handler</function>, автоматическое
+    восстановление пропускается, и активным остаётся тот обработчик,
+    который оставил сам обработчик.
+   </simpara>
+   <simpara>
+    Поэтому менять обработчик исключений изнутри него самого не рекомендуют.
+   </simpara>
+  </note>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -62,6 +91,41 @@
   </para>
  </refsect1>
 
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <para>
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>8.3.5</entry>
+       <entry>
+        Обработчик исключений, который вызывают, теперь помещается в стек
+        обработчиков и переустанавливается, когда он возвращает управление,
+        если только обработчик сам не изменил стек.
+       </entry>
+      </row>
+      <row>
+       <entry>8.3.0</entry>
+       <entry>
+        Активный обработчик исключений теперь снимается на время его работы,
+        поэтому вызванная изнутри обработчика функция
+        <function>set_exception_handler</function> сообщает, что ранее
+        определённого обработчика нет.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </para>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
@@ -92,15 +156,13 @@ echo "Не выполняется\n";
 
  <refsect1 role="seealso"><!-- {{{ -->
   &reftitle.seealso;
-  <para>
-   <simplelist>
-    <member><function>get_exception_handler</function></member>
-    <member><function>restore_exception_handler</function></member>
-    <member><function>restore_error_handler</function></member>
-    <member><function>error_reporting</function></member>
-    <member><link linkend="language.exceptions">Исключения</link></member>
-   </simplelist>
-  </para>
+  <simplelist>
+   <member><function>get_exception_handler</function></member>
+   <member><function>restore_exception_handler</function></member>
+   <member><function>restore_error_handler</function></member>
+   <member><function>error_reporting</function></member>
+   <member><link linkend="language.exceptions">Исключения</link></member>
+  </simplelist>
  </refsect1><!-- }}} -->
 
 </refentry>
