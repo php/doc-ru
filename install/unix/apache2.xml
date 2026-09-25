@@ -1,47 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a38e360ae1ce4169b331013958c519d17f19114e Maintainer: shein Status: ready -->
+<!-- EN-Revision: ee7185a089f266a9475b069aa199314811fad8a8 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="install.unix.apache2" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
- <title>Apache 2.x на Unix системах</title>
+ <title>Apache httpd 2.x на Unix-системах</title>
 
- <para>
-  Раздел описывает установку PHP c веб-сервером Apache 2.x на Unix-системах.
- </para>
+ <simpara>
+  Раздел содержит замечания и подсказки, которые касаются установки PHP
+  с веб-сервером Apache HTTP Server 2.x в Linux и Unix-подобных системах.
+ </simpara>
 
- &warn.apache2.compat;
+ <warning>
+  <title>Лучше выбрать PHP-FPM</title>
+  <simpara>
+   <emphasis role="strong">Для новых установок модуль <literal>mod_php</literal>
+   не применяют.</emphasis> Инструкции на этой странице сохранили для истории
+   и для тех редких случаев, когда PHP требуется встроить непосредственно
+   в процесс Apache httpd.
+  </simpara>
+  <simpara>
+   Для современных развёртываний берут
+   <link linkend="install.fpm">PHP-FPM</link> (FastCGI Process Manager)
+   вместе с модулем <literal>mod_proxy_fcgi</literal> веб-сервера Apache httpd.
+   PHP-FPM лучше управляет ресурсами, изолирует процессы, позволяет перезапускать
+   PHP независимо от Apache httpd и совместим с MPM-модулем
+   <literal>event</literal> веб-сервера Apache httpd (стандартный модуль начиная
+   с Apache httpd 2.4). Крупные Linux-дистрибутивы поставляют такую конфигурацию
+   как стандартную.
+  </simpara>
+  <simpara>
+   Подход с модулем <literal>mod_php</literal> встраивает PHP непосредственно
+   в каждый рабочий процесс Apache httpd. Если PHP не собрали с поддержкой
+   потокобезопасности (<literal>--enable-zts</literal>), модулю
+   <literal>mod_php</literal> требуется MPM-модуль <literal>prefork</literal>,
+   который заметно ограничивает параллельность. Прежде чем выбрать модуль
+   <literal>mod_php</literal>, требуется в полной мере понимать последствия
+   для производительности и безопасности.
+  </simpara>
+ </warning>
 
- <para>
-  Наиболее авторитетный источник информации по Apache 2.x —
+ <simpara>
+  Наиболее авторитетный источник информации по Apache httpd 2.x —
   <link xlink:href="&url.apache2.docs;">документация к Apache</link>.
-  Документация даёт подробную информацию о настройках при установке.
- </para>
+  Документация даёт подробную информацию о настройках при установке Apache httpd.
+ </simpara>
 
- <para>
-  Последняя версия веб-сервера Apache HTTP Server доступна для загрузки
-  <link xlink:href= "&url.apache;">на странице загрузки Apache</link>,
-  а совместимая версия PHP — на странице Download на этом сайте.
-  Это краткое руководство описывает только базовую установку Apache 2.x и PHP.
+ <simpara>
+  Последняя версия веб-сервера Apache httpd доступна для загрузки
+  <link xlink:href="&url.apache;">на странице загрузки Apache</link>,
+  а совместимая версия PHP — на упомянутых выше страницах.
+  Это краткое руководство описывает только базовую установку Apache httpd 2.x и PHP.
   Дополнительную информацию даёт
   <link xlink:href="&url.apache2.docs;">документация к Apache</link>.
-  В инструкции ниже опустили номера версий — замените 'NN' на
-  номер, который соответствует версии Apache.
- </para>
+  В инструкции ниже опустили номера версий, чтобы указания не устарели.
+  В примерах ниже 'NN' заменяют номером, который соответствует установленной
+  версии Apache httpd.
+ </simpara>
 
- <para>
-  Сайт веб-сервера предлагает для загрузки две версии Apache 2.x — 2.4 и 2.2.
-  Лучше предпочесть последнюю версию — 2.4, если нет причин для установки
-  версии 2.2.
-  Инструкции этого раздела будут работать как для версии 2.4, так и для версии 2.2.
-  Обратите внимание, что поддержку Apache httpd 2.2 официально прекратили,
-  поэтому разработку этой версии остановили и больше не выпускают исправлений.
- </para>
+ <simpara>
+  Инструкции относятся к Apache httpd 2.4 — единственной ветке Apache httpd,
+  которую поддерживают. Более ранние версии (2.2 и ниже) сняли с поддержки,
+  и применять их не следует.
+ </simpara>
+
+ <note>
+  <simpara>
+   Начиная с PHP 8.4.0 модулю SAPI apache2handler требуется как минимум
+   Apache 2.4; поддержку снятых с сопровождения Apache 2.0 и 2.2 удалили.
+  </simpara>
+ </note>
 
  <orderedlist>
   <listitem>
-   <para>
-    Скачайте Apache HTTP Server по приведённой ссылке
+   <simpara>
+    Скачайте Apache httpd по приведённой выше ссылке
     и распакуйте его:
-   </para>
+   </simpara>
 
    <informalexample>
     <screen>
@@ -53,9 +86,9 @@ tar -xzf httpd-2.x.NN.tar.gz
   </listitem>
 
   <listitem>
-   <para>
+   <simpara>
     Аналогичным способом скачайте и распакуйте исходные коды PHP:
-   </para>
+   </simpara>
 
    <informalexample>
     <screen>
@@ -67,16 +100,22 @@ tar -xzf php-NN.tar.gz
   </listitem>
 
   <listitem>
-   <para>
-    Скомпилируйте и установите Apache. Подробнее об установке
-    рассказывает документация к Apache.
-   </para>
+   <simpara>
+    Соберите и установите Apache httpd. Подробнее о сборке рассказывает
+    документация по установке Apache httpd. Обратите внимание, что модулю
+    <literal>mod_php</literal> требуется MPM-модуль <literal>prefork</literal>,
+    если PHP не собрали с поддержкой потокобезопасности
+    (<literal>--enable-zts</literal>). Когда вместо этого выбирают PHP-FPM
+    (рекомендованный вариант), берут стандартный MPM-модуль
+    <literal>event</literal> и переходят сразу к
+    <link linkend="install.fpm">инструкциям по установке PHP-FPM</link>.
+   </simpara>
 
    <informalexample>
     <screen>
 <![CDATA[
 cd httpd-2_x_NN
-./configure --enable-so
+./configure --enable-so --with-mpm=prefork
 make
 make install
 ]]>
@@ -86,12 +125,11 @@ make install
 
   <listitem>
    <para>
-    Теперь Apache 2.x.NN доступен по адресу /usr/local/apache2,
-    установщик настроил веб-сервер на поддержку загружаемых модулей и работу через
-    стандартный мультипроцессный MPM-модуль, который отвечает на запросы по модели prefork:
-    обрабатывает запросы в отдельном потоке однопоточных процессов.
+    Теперь Apache httpd 2.x.NN доступен по адресу /usr/local/apache2,
+    установщик настроил веб-сервер на поддержку загружаемых модулей
+    и MPM-модуль prefork.
     Правильно ли прошла установка, проверяют через стандартную
-    процедуру запуска Apache — командой наподобие вот такой:
+    процедуру запуска Apache httpd — командой наподобие вот такой:
 
     <informalexample>
      <screen>
@@ -114,21 +152,21 @@ make install
   </listitem>
 
   <listitem>
-   <para>
+   <simpara>
     Теперь сконфигурируем и соберём PHP. На этом этапе PHP настраивают
     через опции конфигурации, чтобы указать, например, какие модули требуется включить.
     Запустите команду <command>./configure --help</command>, чтобы получить список доступных параметров
     конфигурации. В примере мы выполним простую настройку
-    с поддержкой веб-сервера Apache и БД MySQL.
-   </para>
+    с поддержкой веб-сервера Apache httpd и БД MySQL.
+   </simpara>
 
-   <para>
-    При сборке Apache из исходного кода по приведённой на этой странице инструкции
+   <simpara>
+    При сборке Apache httpd из исходного кода по приведённой на этой странице инструкции
     путь к команде <command>apxs</command> будет соответствовать пути в следующем примере,
-    но если Apache установили другим способом, потребуется изменить пример и указать путь к <command>apxs</command>,
+    но если Apache httpd установили другим способом, потребуется изменить пример и указать путь к <command>apxs</command>,
     который соответствует установке. Обратите внимание, что отдельные дистрибутивы
     переименовывают <command>apxs</command> в <command>apxs2</command>.
-   </para>
+   </simpara>
 
    <informalexample>
     <screen>
@@ -141,13 +179,13 @@ make install
     </screen>
    </informalexample>
 
-   <para>
+   <simpara>
     Если потребуется изменить параметры конфигурации после установки,
     то потребуется повторно выполнить шаги <command>configure</command>, <command>make</command>
     и <command>make install</command>.
-    Просто перезапустите Apache, чтобы изменения вступили в силу и новый модуль начал работать.
-    Перекомпиляция Apache для этого не требуется.
-   </para>
+    Просто перезапустите Apache httpd, чтобы изменения вступили в силу и новый модуль начал работать.
+    Перекомпиляция Apache httpd для этого не требуется.
+   </simpara>
 
    <para>
     Обратите внимание: если не указали иное, команда <command>make install</command>
@@ -158,9 +196,9 @@ make install
   </listitem>
 
   <listitem>
-   <para>
+   <simpara>
     Настройте файл <filename>php.ini</filename>.
-   </para>
+   </simpara>
 
    <informalexample>
     <screen>
@@ -170,59 +208,47 @@ cp php.ini-development /usr/local/lib/php.ini
     </screen>
    </informalexample>
 
-   <para>
+   <simpara>
     Установка параметров PHP доступна через редактирование файла <literal>.ini</literal>.
     Укажите параметр <literal>--with-config-file-path=/some/path</literal> в шаге 5,
     если предпочитаете хранить файл <filename>php.ini</filename> в другом месте.
-   </para>
+   </simpara>
 
-   <para>
-    Если вместо этого вы выберете файл <filename>php.ini-production</filename>,
-    прочитайте список изменений внутри, поскольку они влияют на поведение PHP.
-   </para>
+   <simpara>
+    Если вместо этого выбрали файл <filename>php.ini-production</filename>,
+    обязательно прочитайте список изменений внутри, поскольку они влияют на поведение PHP.
+   </simpara>
   </listitem>
 
   <listitem>
-   <para>
+   <simpara>
     Отредактируйте файл <filename>httpd.conf</filename>,
-    чтобы Apache загружал модуль PHP.
+    чтобы Apache httpd загружал модуль PHP.
     Путь к PHP-модулю указывают справа от инструкции <literal>LoadModule</literal>.
     Команда <command>make install</command>, возможно, уже добавила эту инструкцию автоматически,
-    ну лучше проверить.
-   </para>
+    но лучше проверить.
+   </simpara>
 
    <informalexample>
-    <para>Для PHP 8:</para>
     <programlisting role="apache-conf">
 <![CDATA[
 LoadModule php_module modules/libphp.so
 ]]>
     </programlisting>
    </informalexample>
-
-   <informalexample>
-    <para>
-     Для PHP 7:
-    </para>
-    <programlisting role="apache-conf">
-<![CDATA[
-LoadModule php7_module modules/libphp7.so
-]]>
-    </programlisting>
-   </informalexample>
   </listitem>
 
   <listitem>
-   <para>
-    Скажите веб-серверу Apache, чтобы он разбирал файлы с конкретными расширениями как PHP-код.
-    Например, пусть Apache разбирает как PHP-код файлы с расширением <literal>.php</literal>.
+   <simpara>
+    Скажите веб-серверу Apache httpd, чтобы он разбирал файлы с конкретными расширениями как PHP-код.
+    Например, пусть Apache httpd разбирает как PHP-код файлы с расширением <literal>.php</literal>.
     Вместо установки только Apache-директивы
     <literal>AddType</literal> избегают исполнения опасных загрузок и файлов
     наподобие <filename>exploit.php.jpg</filename>.
     Аналогично следующему примеру указывают одно или больше произвольных расширений,
     которые веб-сервер будет разбирать как файлы с PHP-кодом.
     Для демонстрации добавим расширение <literal>.php</literal>.
-   </para>
+   </simpara>
 
    <informalexample>
     <programlisting role="apache-conf">
@@ -234,18 +260,18 @@ LoadModule php7_module modules/libphp7.so
     </programlisting>
    </informalexample>
 
-   <para>
+   <simpara>
     Или, когда требуется разрешить запуск PHP-кода из файлов
     с расширениями <literal>.php</literal>, <literal>.php2</literal>,
     <literal>.php3</literal>, <literal>.php4</literal>, <literal>.php5</literal>,
     <literal>.php6</literal> и <literal>.phtml</literal>, но не другими,
     настройка выглядит вот так:
-   </para>
+   </simpara>
 
    <informalexample>
     <programlisting role="apache-conf">
 <![CDATA[
-<FilesMatch "\.ph(p[2-6]?|tml)$">
+<FilesMatch "\.(php[2-6]?|phtml)$">
     SetHandler application/x-httpd-php
 </FilesMatch>
 ]]>
@@ -271,7 +297,6 @@ LoadModule php7_module modules/libphp7.so
    <simpara>
     Чтобы разрешить использование PHP-файла как обработчика по умолчанию, если ни один другой обработчик не найден,
     например при использовании механизма маршрутизации, можно применить директиву <literal>FallbackResource</literal>.
-    Доступно в Apache 2.4.4 и выше.
    </simpara>
 
    <simpara>
@@ -318,9 +343,9 @@ RewriteRule (.*\.php)s$ $1 [H=application/x-httpd-php-source]
   </listitem>
 
   <listitem>
-   <para>
-    Сервер Apache запускают стандартной процедурой наподобие:
-   </para>
+   <simpara>
+    Сервер Apache httpd запускают стандартной процедурой наподобие:
+   </simpara>
 
    <informalexample>
     <screen>
@@ -342,56 +367,44 @@ service httpd restart
   </listitem>
  </orderedlist>
 
- <para>
-  Выполнение действий, которые описала эта страница, запускает веб-сервер Apache2
+ <simpara>
+  Выполнение действий, которые описала эта страница, запускает веб-сервер Apache httpd
   с поддержкой PHP в виде <literal>SAPI</literal>-модуля.
-  Конечно, для PHP и Apache доступно гораздо больше параметров конфигурации.
+  Для Apache httpd и PHP доступно гораздо больше параметров конфигурации.
   Дополнительную информацию даёт команда <command>./configure --help</command>
   при запуске в соответствующем дереве исходного кода.
- </para>
-
- <para>
-  Сборка веб-сервера Apache будет работать в многопоточном режиме,
-  если при сборке Apache вместо стандартного мультипроцессного MPM-модуля <filename>prefork</filename>
-  выбрать мультипроцессный MPM-модуль, который отвечает на запросы
-  по модели <filename>worker</filename>: обрабатывает отдельный запрос в отдельном потоке
-  многопоточного процесса. Чтобы сделать это, к аргументу, который передали команде <command>./configure</command>
-  на шаге 3, добавляют следующую опцию:
- </para>
-
- <informalexample>
-  <screen>
-<![CDATA[
---with-mpm=worker
-]]>
-  </screen>
- </informalexample>
-
- <para>
-  Веб-сервер собирают для работы по такой модели, только если осознают
-  последствия решения и отчётливо понимают смысл действий. Документация Apache
-  <link xlink:href="&url.apache2.mpm;">к MPM-модулям</link>
-  рассматривает работу модулей MPM подробнее.
- </para>
+ </simpara>
 
  <note>
-  <para>
+  <title>Совместимость с MPM-модулями</title>
+  <simpara>
+   Если PHP не собрали с поддержкой потокобезопасного режима Zend Thread Safety
+   (<literal>--enable-zts</literal>), модулю <literal>mod_php</literal> требуется
+   MPM-модуль <literal>prefork</literal>.
+   Почему это так, объясняет соответствующий ответ в разделе FAQ о работе
+   <link linkend="faq.installation.apache2">Apache httpd с многопоточным
+   MPM-модулем</link>.
+  </simpara>
+
+  <simpara>
+   Большинство дистрибутивных пакетов модуля <literal>mod_php</literal>
+   собирают без ZTS, поэтому обычно требуется MPM-модуль
+   <literal>prefork</literal>. Когда нужен многопоточный MPM-модуль
+   (рекомендованный вариант ради производительности под нагрузкой),
+   вместо этого берут <link linkend="install.fpm">PHP-FPM</link>
+   с модулем <literal>mod_proxy_fcgi</literal>.
+  </simpara>
+ </note>
+
+ <note>
+  <simpara>
    В разделе FAQ в ответе на вопрос
    <link linkend="faq.installation.apache.multiviews">о параметре MultiViews в настройках Apache</link>
    обсуждается согласование контента множественного представления при работе веб-сервера с PHP-файлами.
-  </para>
- </note>
-
- <note>
-  <para>
-   Только в системах с поддержкой потоков получится собрать многопоточную версию Apache.
-   Тогда требуется и PHP-сборка с поддержкой потокобезопасного ZTS-режима (англ. Zend Thread Safety).
-   В этой конфигурации не каждое расширение будет доступно.
-   Разработчики PHP рекомендуют настраивать сборку Apache
-   на работу с MPM-модулем <filename>prefork</filename> по умолчанию.
-  </para>
+  </simpara>
  </note>
 </sect1>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
