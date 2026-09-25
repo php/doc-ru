@@ -1,23 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 322606e4f1742a6f959e952c63fb1f8bcd6d6ba0 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 282797eedc7c7bca6a6f55a9aad32b135feb3320 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
+
 <refentry xml:id="swoole-event.write" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>Swoole\Event::write</refname>
-  <refpurpose>Записывает данные в сокет</refpurpose>
+  <refpurpose>Асинхронно записывает данные в сокет</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
   &reftitle.description;
   <methodsynopsis>
-   <modifier>public</modifier> <modifier>static</modifier> <type>void</type><methodname>Swoole\Event::write</methodname>
-   <methodparam><type>string</type><parameter>fd</parameter></methodparam>
-   <methodparam><type>string</type><parameter>data</parameter></methodparam>
+   <modifier>public</modifier> <modifier>static</modifier> <type>bool</type><methodname>Swoole\Event::write</methodname>
+   <methodparam><type>mixed</type><parameter>fd</parameter></methodparam>
+   <methodparam><type>mixed</type><parameter>data</parameter></methodparam>
   </methodsynopsis>
-  <para>
-
-  </para>
-
+  <simpara>
+   Метод делает отправку данных асинхронной для ресурсов потоков и сокетов.
+  </simpara>
+  <note>
+   <simpara>
+    Если данные непрерывно пишут в сокет, а принимающая сторона не успевает
+    их читать, буфер сокета в итоге заполнится. В этом случае нижний уровень
+    Swoole сохранит лишние данные в буфере в памяти и подождёт события
+    готовности к записи, прежде чем снова попытаться писать в сокет. Однако,
+    если буфер в памяти тоже заполнится, Swoole выбросит ошибку
+    «pipe buffer overflow, reactor will block» и переключится в блокирующий
+    режим, приостановив дальнейшую запись, пока не освободится место.
+   </simpara>
+  </note>
+  <note>
+   <simpara>
+    Возврат значения false при заполненном буфере — атомарная операция:
+    она гарантирует либо полный успех, когда записали все данные, либо
+    полную неудачу, когда не записали ничего.
+   </simpara>
+  </note>
+  <warning>
+   <simpara>
+    Метод Event::write нельзя применять к потокам и сокетам, которые
+    зашифровали по SSL/TLS, то есть к туннелированным соединениям.
+   </simpara>
+  </warning>
+  <warning>
+   <simpara>
+    При успешном выполнении метод Event::write автоматически переключает
+    сокет $socket в неблокирующий режим.
+   </simpara>
+  </warning>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -26,17 +56,18 @@
    <varlistentry>
     <term><parameter>fd</parameter></term>
     <listitem>
-     <para>
-
-     </para>
+     <simpara>
+      Файловый дескриптор: ресурс потока или сокета, целое число либо объект.
+     </simpara>
     </listitem>
    </varlistentry>
    <varlistentry>
     <term><parameter>data</parameter></term>
     <listitem>
-     <para>
-
-     </para>
+     <simpara>
+      Данные, которые требуется отправить; их длина не должна превышать
+      размер буфера сокета.
+     </simpara>
     </listitem>
    </varlistentry>
   </variablelist>
@@ -44,13 +75,35 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-
-  </para>
+  <simpara>
+   &return.success;
+  </simpara>
  </refsect1>
 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <para>
+   <example>
+    <title>Пример использования метода <function>Swoole\Event::write</function></title>
+    <programlisting role="php">
+     <![CDATA[
+<?php
+use Swoole\Event;
 
+$fp = stream_socket_client('tcp://127.0.0.1:9501');
+$data = str_repeat('A', 1024 * 1024*2);
+Event::add($fp, function($fp) {
+     echo fread($fp);
+});
+Event::write($fp, $data);
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+ </refsect1>
 </refentry>
+
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
