@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 4de6272a1f15efc9e3df21d255965fd890da0d6f Maintainer: shein Status: ready -->
+<!-- EN-Revision: cdbe6f9826baecd4a6c05f1c95ea47d1d8f32551 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.preg-match" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -127,8 +127,11 @@ Array
          <listitem>
           <para>
            Если этот флаг установили, функция заполнит несовпадающие подшаблоны
-           значениями &null;; в противном случае они отображаются как пустые строки
-           (<type>string</type>).
+           значениями &null; и всегда включит их в результат, в том числе
+           конечные. Без этого флага несовпадающие подшаблоны, за которыми
+           идёт совпавший подшаблон, отображаются как пустые строки
+           (<type>string</type>), а конечные несовпадающие подшаблоны
+           отбрасываются из результата целиком.
            <informalexample>
             <programlisting role="php">
 <![CDATA[
@@ -138,6 +141,13 @@ preg_match('/(a)(b)*(c)/', 'ac', $matches);
 var_dump($matches);
 
 preg_match('/(a)(b)*(c)/', 'ac', $matches, PREG_UNMATCHED_AS_NULL);
+var_dump($matches);
+
+// Конечные несовпадающие подшаблоны:
+preg_match('/(a)(b)?(c)?/', 'a', $matches);
+var_dump($matches);
+
+preg_match('/(a)(b)?(c)?/', 'a', $matches, PREG_UNMATCHED_AS_NULL);
 var_dump($matches);
 
 ?>
@@ -165,6 +175,22 @@ array(4) {
   NULL
   [3]=>
   string(1) "c"
+}
+array(2) {
+  [0]=>
+  string(1) "a"
+  [1]=>
+  string(1) "a"
+}
+array(4) {
+  [0]=>
+  string(1) "a"
+  [1]=>
+  string(1) "a"
+  [2]=>
+  NULL
+  [3]=>
+  NULL
 }
 ]]>
             </screen>
@@ -245,12 +271,12 @@ Array
 )
 ]]>
          </screen>
-         <para>
-          В качестве альтернативы функции <function>substr()</function>
+         <simpara>
+          В качестве альтернативы функции <function>substr</function>
           вместо якоря <literal>^</literal> записывают утверждение <literal>\G</literal>
-          или модификатор <literal>A</literal>. Они оба работают с параметром
-          <parameter>offset</parameter>.
-         </para>
+          или модификатор <literal>A</literal>; ни то ни другое не работает
+          с параметром <parameter>offset</parameter>.
+         </simpara>
         </informalexample>
        </para>
       </note>
@@ -286,6 +312,18 @@ Array
       </row>
      </thead>
      <tbody>
+      <row>
+       <entry>7.4.0</entry>
+       <entry>
+        Когда указали флаг <constant>PREG_UNMATCHED_AS_NULL</constant>,
+        конечные несовпадающие захватывающие группы теперь тоже попадают
+        в результат со значением &null; (или <literal>[null, -1]</literal>,
+        если дополнительно указали флаг
+        <constant>PREG_OFFSET_CAPTURE</constant>), поэтому размер массива
+        <varname>$matches</varname> всегда одинаковый. Раньше такие группы
+        отбрасывались.
+       </entry>
+      </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
