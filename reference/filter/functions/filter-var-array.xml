@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 627f933cfe6a033dccac32982cd68e7c1b86927f Maintainer: shein Status: ready -->
+<!-- EN-Revision: 85264ba268a398c4b90c1948839d54ce688dd5cd Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.filter-var-array">
  <refnamediv>
@@ -46,7 +46,7 @@
      </simpara>
      <simpara>
       Массив опций – это ассоциативный массив, в котором ключ соответствует ключу
-      в массиве данных параметра <parameter>array</parameter>,
+      во входном массиве,
       а связанное с ним значение – это либо фильтр, который нужно применить к этой записи,
       либо ассоциативный массив, описывающий, как и какой фильтр должен быть применён к этой записи.
      </simpara>
@@ -56,8 +56,8 @@
       который может быть одной из констант <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
       <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>,
       <constant>FILTER_UNSAFE_RAW</constant> или <constant>FILTER_CALLBACK</constant>.
-      Дополнительно может содержать ключ <literal>'flags'</literal>, задающий флаги,
-      которые применяются к фильтру и ключ <literal>'options'</literal>,
+      Дополнительно может содержать ключ <literal>'flags'</literal>, задающий любые флаги,
+      которые применяются к фильтру, и ключ <literal>'options'</literal>,
       задающий любые опции, которые применяются к фильтру.
      </simpara>
     </listitem>
@@ -75,17 +75,38 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Массив, содержащий значения запрошенных переменных в случае успешного выполнения, или &false;
-   в случае возникновения ошибки. Значение массива будет &false;, если фильтрация завершилась неудачей, или &null;,
-   если переменная не определена.
-  </para>
+  <simpara>
+   В случае успешного выполнения функция возвращает массив (&array;),
+   который содержит значения запрошенных переменных.
+  </simpara>
+  <simpara>
+   Функция возвращает значение &false; в случае возникновения ошибки.
+  </simpara>
+  <simpara>
+   Недостающие записи входного массива добавляются в возвращаемый массив (&array;)
+   со значением &null;, если значение параметра <parameter>add_empty</parameter>
+   равно &true;, и полностью пропускаются, если оно равно &false;.
+  </simpara>
+  <simpara>
+   Элемент возвращаемого массива (&array;) будет &false;,
+   если фильтр не сработал, если только не используется флаг
+   <constant>FILTER_NULL_ON_FAILURE</constant>, в этом случае он будет &null;.
+   С флагом <constant>FILTER_FORCE_ARRAY</constant> это значение неудачи,
+   как и любой другой результат, оборачивается в массив из одного элемента.
+  </simpara>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
    <title>Пример использования <function>filter_var_array</function></title>
+   <simpara>
+    Записи фильтруются как скалярные значения, если не указали флаг
+    <constant>FILTER_REQUIRE_ARRAY</constant> или
+    <constant>FILTER_FORCE_ARRAY</constant>.
+    Поэтому флаг <constant>FILTER_REQUIRE_SCALAR</constant> у записи
+    <literal>testscalar</literal> ниже лишь задаёт это поведение явно.
+   </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -149,6 +170,78 @@ array(6) {
   }
   ["doesnotexist"]=>
   NULL
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Применение одного фильтра ко всем значениям</title>
+   <simpara>
+    Когда в параметре <parameter>options</parameter> передали целое число
+    (&integer;), один и тот же фильтр применяется к каждой записи массива.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$data = [
+    'name'  => '<b>John</b>',
+    'email' => 'john@example<script>.com',
+    'bio'   => 'Developer & writer',
+];
+
+var_dump(filter_var_array($data, FILTER_SANITIZE_SPECIAL_CHARS));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+array(3) {
+  ["name"]=>
+  string(27) "&#60;b&#62;John&#60;/b&#62;"
+  ["email"]=>
+  string(32) "john@example&#60;script&#62;.com"
+  ["bio"]=>
+  string(22) "Developer &#38; writer"
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Применение фильтра <constant>FILTER_CALLBACK</constant></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+$data = [
+    'name'  => '  John Doe  ',
+    'city'  => '  New York  ',
+];
+
+$options = [
+    'name' => [
+        'filter'  => FILTER_CALLBACK,
+        'options' => 'trim',
+    ],
+    'city' => [
+        'filter'  => FILTER_CALLBACK,
+        'options' => function ($value) {
+            return strtoupper(trim($value));
+        },
+    ],
+];
+
+var_dump(filter_var_array($data, $options));
+?>
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+array(2) {
+  ["name"]=>
+  string(8) "John Doe"
+  ["city"]=>
+  string(8) "NEW YORK"
 }
 ]]>
    </screen>
