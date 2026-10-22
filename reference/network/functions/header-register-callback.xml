@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5faa7a6747bca628b3bdcc9f93aec5603b65581f Maintainer: bfl Status: ready -->
+<!-- EN-Revision: abdc23836d3f42399028c1174961107e70ada52d Maintainer: bfl Status: ready -->
 <!-- Reviewed: no -->
 
 <refentry xml:id="function.header-register-callback" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>header_register_callback</refname>
-  <refpurpose>Вызывает функцию заголовка</refpurpose>
+  <refpurpose>Регистрирует callback-функцию для вызова перед отправкой заголовков</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,11 +15,21 @@
    <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Регистрирует функцию, которая будет вызвана когда PHP начнёт отправлять вывод.
+   Функция регистрирует callback-функцию, которая вызывается в начале PHP-вывода.
   </para>
   <para>
-   Параметр <parameter>callback</parameter> запускается сразу после того, как PHP были подготовлены все отправляемые заголовки, и перед отправкой любого другого вывода, создавая возможность для управления исходящими заголовками перед отправкой.
+   Функция в параметре <parameter>callback</parameter> запускается сразу после подготовки PHP всех отправляемых заголовков,
+   но перед отправкой остального вывода, разрешая управлять исходящими заголовками перед отправкой.
   </para>
+  <warning>
+   <simpara>
+    Функции обратного вызова не складываются в стек. Каждый следующий вызов функции
+    <function>header_register_callback</function> молча отменяет регистрацию
+    предыдущей <parameter>callback</parameter>-функции независимо от места установки,
+    поэтому перезапись функции обратного вызова зависимостями
+    трудно отслеживается.
+   </simpara>
+  </warning>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -29,7 +39,7 @@
     <term><parameter>callback</parameter></term>
     <listitem>
      <para>
-      Функция вызывается непосредственно перед отправкой заголовков, не получает параметров и возвращаемое значение игнорируется.
+      Функция вызывается непосредственно перед отправкой заголовков, не содержит параметров, а значение возврата игнорируется.
      </para>
     </listitem>
    </varlistentry>
@@ -46,7 +56,7 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example xml:id="header-register-callback.example.basic">
-   <title>Пример использования <function>header_register_callback</function></title>
+   <title>Пример регистрации функции обратного вызова функцией <function>header_register_callback</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -54,18 +64,18 @@
 header('Content-Type: text/plain');
 header('X-Test: foo');
 
-function foo() {
- foreach (headers_list() as $header) {
-   if (strpos($header, 'X-Powered-By:') !== false) {
-     header_remove('X-Powered-By');
-   }
-   header_remove('X-Test');
- }
+function foo()
+{
+    foreach (headers_list() as $header) {
+        if (strpos($header, 'X-Powered-By:') !== false) {
+            header_remove('X-Powered-By');
+        }
+        header_remove('X-Test');
+    }
 }
 
 $result = header_register_callback('foo');
 echo "a";
-?>
 ]]>
    </programlisting>
    &example.outputs.similar;
@@ -82,7 +92,8 @@ a
  <refsect1 role="notes">
   &reftitle.notes;
   <para>
-   Функция <function>header_register_callback</function> запускается по готовности отправки заголовков, так что любой вывод из этой функции может прервать вывод.
+   Зарегистрированная функцией <function>header_register_callback</function> функция обратного вызова
+   запускается прямо перед отправкой заголовков, поэтому в ряде сценариев вывод внутри callback-функции нарушает порядок вывода.
   </para>
   &note.network.header.sapi;
  </refsect1>
