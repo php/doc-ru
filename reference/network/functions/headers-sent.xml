@@ -4,7 +4,7 @@
 <refentry xml:id="function.headers-sent" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>headers_sent</refname>
-  <refpurpose>Проверяет, были ли отправлены заголовки</refpurpose>
+  <refpurpose>Проверяет факт и место отправки заголовков</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,12 +15,13 @@
    <methodparam choice="opt"><type>int</type><parameter role="reference">line</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Проверяет, были ли отправлены заголовки.
+   Функция проверяет, инициализировал ли уже скрипт отправку заголовков, и указывает в каком файле и на какой строке начался вывод.
   </para>
   <para>
-   Нельзя отправить дополнительные строки заголовков, используя функцию <function>header</function>, если заголовки уже отправлены. Используя эту функцию,
-   можно предупредить ошибки, связанные с  HTTP-заголовками.
-   Другим вариантом является использование <link linkend="ref.outcontrol">буферизации вывода</link>.
+   Нельзя отправить дополнительные строки заголовков функцией <function>header</function> после отправки блока заголовков.
+   Функцию <function>headers_sent</function> вызывают, чтобы предупредить ошибки, которые возникают при попытке добавить, изменить или удалить HTTP-заголовки
+   после вывода блока заголовков.
+   Другой способ избежать ошибок — <link linkend="ref.outcontrol">буферизация вывода</link>.
   </para>
  </refsect1>
 
@@ -32,14 +33,15 @@
      <term><parameter>filename</parameter></term>
      <listitem>
       <para>
-       Если заданы дополнительные параметры <parameter>filename</parameter> и
-       <parameter>line</parameter>, то функция
-       <function>headers_sent</function> поместит имя исходного файла PHP и номер строки, с которой начинается вывод в переменные <parameter>filename</parameter> и <parameter>line</parameter>.
+       При передаче необязательных аргументов <parameter>filename</parameter>
+       и <parameter>line</parameter> функция <function>headers_sent</function>
+       запишет в параметры <parameter>filename</parameter> и <parameter>line</parameter>
+       название исходного PHP-файла и номер строки, с которой начался вывод.
       </para>
       <note>
        <para>
-        Если вывод начался до выполнения исходного файла PHP (например, из-за ошибки запуска),
-        параметр <parameter>filename</parameter> будет установлен как пустая строка.
+        Значением параметра <parameter>filename</parameter> станет пустая строка,
+        если вывод начался до выполнения исходного PHP-файла, например из-за ошибки запуска.
        </para>
       </note>
      </listitem>
@@ -48,7 +50,7 @@
      <term><parameter>line</parameter></term>
      <listitem>
       <para>
-       Номер строки, с которой начинается вывод.
+       Номер строки, с которой начался вывод.
       </para>
      </listitem>
     </varlistentry>
@@ -60,7 +62,7 @@
   &reftitle.returnvalues;
   <para>
    Функция <function>headers_sent</function> вернёт &false;, если HTTP-заголовки
-   не были отправлены, либо &true; если отправлены.
+   ещё не отправлялись, иначе вернёт &true;.
   </para>
  </refsect1>
 
@@ -68,34 +70,31 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>headers_sent</function></title>
+    <title>Пример проверки факта отправки заголовков функцией <function>headers_sent</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Если не было отправлено ни одного заголовка, то отправить один
+// Отправить заголовок, только если заголовки ещё не отправлялись
 if (!headers_sent()) {
     header('Location: http://www.example.com/');
-    exit;
+    exit();
 }
 
-// Пример использования необязательных параметров file и line.
-// Необходимо отметить, что $filename и $linenum передаются для дальнейшего использования.
-// Не присваивайте им значения заранее.
-if (!headers_sent($filename, $linenum)) {
+// Пример заполнения необязательных параметров $filename и $line.
+// Переменные $filename и $line не объявляют заранее, а только передают в аргументах,
+// значения переменным присвоит функция.
+if (!headers_sent($filename, $line)) {
     header('Location: http://www.example.com/');
-    exit;
+    exit();
 
-// Скорее всего, ошибка будет происходит здесь.
+// Модификация заголовков после начала вывода вызовет ошибку
 } else {
-
-    echo "Заголовки уже были отправлены в $filename в строке $linenum\n" .
-          "Невозможно перенаправить, пожалуйста, передите по этой <a " .
-          "href=\"http://www.example.com\">ссылке</a>\n";
-    exit;
+    echo "Заголовки уже отправлены: вывод начался в файле $filename на строке $line\n" .
+          "Невозможно выполнить перенаправление, пожалуйста, перейдите <a " .
+          "href=\"http://www.example.com\">по ссылке</a>\n";
+    exit();
 }
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -115,7 +114,7 @@ if (!headers_sent($filename, $linenum)) {
     <member><function>trigger_error</function></member>
     <member><function>headers_list</function></member>
     <member>
-     Смотрите информацию по функции <function>header</function> для более детальной информации.
+     <function>header</function> — подробное описание работы с заголовками
     </member>
    </simplelist>
   </para>
