@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a109099b7deda187b68d43d8a90393620eaeb8e1 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 74492d20fff2f42c8aef4ba02f4bf4b59e2f8fcc Maintainer: shein Status: ready -->
 <section xml:id="filter.constants.validation" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Фильтры проверки значений</title>
  &extension.constants;
@@ -296,7 +296,8 @@
         <simpara>
          Флаг <emphasis>УСТАРЕЛ</emphasis> с PHP 7.3.0,
          а с PHP 8.0.0 флаг <emphasis>УДАЛИЛИ</emphasis>,
-         поскольку фильтр <constant>FILTER_VALIDATE_URL</constant>
+         поскольку для большинства схем фильтр
+         <constant>FILTER_VALIDATE_URL</constant>
          и без того проверяет, содержит ли адрес хост.
         </simpara>
        </warning>
@@ -339,6 +340,51 @@
       Фильтр проверяет только <acronym>URL</acronym>-адреса, которые состоят из <acronym>ASCII</acronym>-символов,
       поэтому отклоняет международные доменные имена (англ. Internationalized Domain Names, IDN).
      </simpara>
+    </warning>
+    <warning>
+     <simpara>
+      Фильтр очень нестрогий. Для любой схемы, кроме
+      <literal>http://</literal> и <literal>https://</literal>, содержимое хоста
+      принимается без какой-либо проверки, хотя наличие хоста всё равно
+      обязательно, если только у <acronym>URL</acronym>-адреса не схема
+      <literal>mailto:</literal>, <literal>news:</literal> или
+      <literal>file:</literal>. Сами схемы не проверяются, поэтому фильтр
+      может принять схему, которая не соответствует известной схеме
+      <acronym>URL</acronym>-адресов или имеет в PHP другой смысл
+      (например, <link linkend="book.phar">phar://</link>). Фильтр также
+      принимает петлевые (англ. <link xlink:href="&url.filter.loopback;">loopback</link>)
+      адреса, которые соответствуют текущему хосту.
+     </simpara>
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+var_dump(filter_var('javascript://x%0aalert(1)', FILTER_VALIDATE_URL));
+var_dump(filter_var('javascript://?demo', FILTER_VALIDATE_URL));
+var_dump(filter_var('news:?demo', FILTER_VALIDATE_URL));
+var_dump(filter_var('phar://demo', FILTER_VALIDATE_URL));
+var_dump(filter_var('123://demo', FILTER_VALIDATE_URL));
+var_dump(filter_var('-://demo', FILTER_VALIDATE_URL));
+var_dump(filter_var('http://127.0.0.1', FILTER_VALIDATE_URL));
+var_dump(filter_var('gopher://127.0.0.1', FILTER_VALIDATE_URL));
+?>
+]]>
+      </programlisting>
+      &example.outputs;
+      <screen>
+<![CDATA[
+string(25) "javascript://x%0aalert(1)"
+bool(false)
+string(10) "news:?demo"
+string(11) "phar://demo"
+string(10) "123://demo"
+string(8) "-://demo"
+string(16) "http://127.0.0.1"
+string(18) "gopher://127.0.0.1"
+]]>
+      </screen>
+     </informalexample>
     </warning>
    </listitem>
   </varlistentry>
@@ -383,6 +429,41 @@
       </listitem>
      </varlistentry>
     </variablelist>
+    <warning>
+     <simpara>
+      Фильтр очень нестрогий. Согласно
+      <link xlink:href="&url.rfc;2181">RFC 2181</link>, допустимое доменное имя
+      представляет собой строку длиной не более 253 символов (254, если считать
+      завершающий разделитель <literal>.</literal>), в которой каждая метка
+      (отделяемая символом <literal>.</literal>) содержит не более 63 символов. Если не
+      использовать флаг <constant>FILTER_FLAG_HOSTNAME</constant>, который
+      проверяет, что доменное имя также является допустимым именем хоста,
+      фильтр принимает пробельные символы, метасимволы, управляющие символы
+      и даже нулевые байты.
+     </simpara>
+     <informalexample>
+      <programlisting role="php">
+<![CDATA[
+<?php
+
+var_dump(filter_var("!@#$%^&*(){}[]/?=+\|`~\"'<>,", FILTER_VALIDATE_DOMAIN));
+var_dump(filter_var("null byte: >\0<", FILTER_VALIDATE_DOMAIN));
+var_dump(filter_var("space:> <, tab:>\t<, newline: >\n<, carriage return>\r<", FILTER_VALIDATE_DOMAIN));
+?>
+]]>
+      </programlisting>
+      &example.outputs;
+      <screen>
+<![CDATA[
+string(27) "!@#$%^&*(){}[]/?=+\|`~"'<>,"
+string(14) "null byte: ><"
+string(52) "space:> <, tab:>	<, newline: >
+<, carriage return>
+<"
+]]>
+      </screen>
+     </informalexample>
+    </warning>
    </listitem>
   </varlistentry>
   <varlistentry xml:id="constant.filter-validate-email">
@@ -449,7 +530,7 @@
      Фильтр проверяет значение как IP-адрес.
     </simpara>
     <variablelist xml:id="filter.constants.validation.ip.options">
-     <title>Available options</title>
+     <title>Доступные опции</title>
      <varlistentry>
       <term><literal>default</literal></term>
       <listitem>
