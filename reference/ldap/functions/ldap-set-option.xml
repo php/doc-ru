@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 87d63aa1a3fc86d64dc994332042fdd2c13bf3d8 Maintainer: mch Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 9ade3ccfc8f1fa82f116a2b2c1e5e3f516fb11e7 Maintainer: mch Status: ready -->
 <refentry xml:id="function.ldap-set-option" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>ldap_set_option</refname>
@@ -259,6 +258,14 @@
      </row>
     </thead>
     <tbody>
+     <row>
+      <entry>8.5.0</entry>
+      <entry>
+       Теперь при передаче недопустимого значения параметра
+       <parameter>option</parameter> выбрасывается ошибка
+       <exceptionname>ValueError</exceptionname>.
+      </entry>
+     </row>
      &ldap.changelog.ldap-object;
     </tbody>
    </tgroup>
@@ -302,6 +309,26 @@ $ctrl2 = array("oid" => "1.2.752.58.1.10", "value" => "magic");
 if (!ldap_set_option($ds, LDAP_OPT_SERVER_CONTROLS, array($ctrl1, $ctrl2))) {
     echo "Сбой установки серверных элементов управления";
 }
+
+?>
+]]>
+    </programlisting>
+   </example>
+   <example>
+    <title>Отладка проблемы с подключением</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// Значение NULL вместо подключения задаёт параметр для всего процесса (только OpenLDAP).
+// Если задать параметр до вызова ldap_connect(), трассировка охватит и инициализацию;
+// если позже — только последующие операции.
+// Значение 7 объединяет уровни OpenLDAP 1 (трассировка), 2 (пакеты) и 4 (аргументы).
+// Трассировка выводится в stderr, а не в вывод скрипта.
+ldap_set_option(null, LDAP_OPT_DEBUG_LEVEL, 7);
+
+$ds = ldap_connect("ldaps://ldap.example.com:636");
+ldap_bind($ds);
 
 ?>
 ]]>
