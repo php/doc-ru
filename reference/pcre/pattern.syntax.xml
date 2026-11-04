@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b55141fe2d4f601e32555c33fb00e1f9225c4638 Maintainer: shein Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 75ed9b0163e3e0563e82fdb98ef1cc9008c794a9 Maintainer: shein Status: ready -->
 <chapter xml:id="reference.pcre.pattern.syntax" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Описание синтаксиса Perl-совместимых регулярных выражений</title>
  <titleabbrev>Синтаксис регулярных выражений</titleabbrev>
@@ -171,9 +170,12 @@
       <row>
        <entry>?</entry>
        <entry>
-        расширяет смысл метасимвола <literal>(</literal>,
-        выступает в роли квантификатора, который означает 0 или 1 вхождение,
-        а также преобразовывает жадные квантификаторы в ленивые
+        если стоит первым символом после <literal>(</literal>, вводит особую
+        конструкцию, например незахватывающую группу, именованный подшаблон,
+        утверждение или установку опции.
+        В роли квантификатора означает необязательное вхождение
+        (эквивалентно <literal>{0,1}</literal>).
+        Также преобразовывает жадные квантификаторы в ленивые
         (смотрите раздел «<link linkend="regexp.reference.repetition">Повторение</link>»)
        </entry>
       </row>
@@ -333,7 +335,15 @@
     <varlistentry>
      <term><emphasis>\R</emphasis></term>
      <listitem>
-      <simpara>разрыв строки: совпадает с \n, \r и \r\n</simpara>
+      <simpara>
+       разрыв строки. По умолчанию <literal>\R</literal> совпадает с любой
+       последовательностью перевода строки Unicode: в 8-битном режиме без UTF-8
+       она равносильна <literal>(?&gt;\r\n|\n|\x0b|\f|\r|\x85)</literal>;
+       в режиме UTF-8 добавляются ещё два символа, U+2028 и U+2029. Если шаблон
+       содержит специальную последовательность <literal>(*BSR_ANYCRLF)</literal>,
+       <literal>\R</literal> совпадает только с <literal>\r\n</literal>,
+       <literal>\r</literal> и <literal>\n</literal>.
+      </simpara>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -347,6 +357,26 @@
      <listitem>
       <simpara>
        символ с шестнадцатеричным кодом hh
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\x{hhhh}</emphasis></term>
+     <listitem>
+      <simpara>
+       в <emphasis>режиме UTF-8</emphasis> символ Unicode, кодовый номер
+       которого — заданное шестнадцатеричное число
+      </simpara>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\N{U+hhhh}</emphasis></term>
+     <listitem>
+      <simpara>
+       в <emphasis>режиме UTF-8</emphasis> символ Unicode, кодовый номер
+       которого — заданное шестнадцатеричное число; в этом режиме равносильна
+       записи <literal>\x{hhhh}</literal>; в отличие от <literal>\x{hhhh}</literal>,
+       эта запись не распознаётся вне режима UTF-8
       </simpara>
      </listitem>
     </varlistentry>
@@ -612,6 +642,25 @@
    в параметре <parameter>offset</parameter> функции <function>preg_match</function>.
    Она отличается от последовательности <literal>\A</literal> при ненулевом значении
    параметра <parameter>offset</parameter>.
+  </para>
+  <simpara>
+   Обратная косая черта также используется в следующих последовательностях:
+  </simpara>
+  <para>
+   <variablelist>
+    <varlistentry>
+     <term><emphasis>\Q</emphasis></term>
+     <listitem><simpara>начало экранированной последовательности: метасимволы вплоть до <literal>\E</literal> считаются литералами</simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\E</emphasis></term>
+     <listitem><simpara>конец экранированной последовательности, начатой с <literal>\Q</literal></simpara></listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><emphasis>\K</emphasis></term>
+     <listitem><simpara>сброс начала сообщаемого совпадения</simpara></listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
@@ -1077,13 +1126,19 @@
    (<xref linkend="regexp.reference.onlyonce"/>).
    Символы со свойством «mark» обычно являются отличительными признаками, которые влияют на предыдущий символ.
   </simpara>
-  <para>
+  <simpara>
    Совпадение символов по Unicode-свойству — не быстрая операция,
    поскольку модулю PCRE приходится выполнить поиск в структуре данных,
-   которая содержит более пятнадцати тысяч символов. Поэтому традиционные управляющие
-   последовательности в модуле PCRE, например <literal>\d</literal> и <literal>\w</literal>,
-   не используют Unicode-свойства.
-  </para>
+   которая содержит более пятнадцати тысяч символов. Начиная с PHP 5.4.0
+   обобщённые управляющие последовательности типов символов
+   <literal>\d</literal>, <literal>\s</literal> и <literal>\w</literal> (а также
+   их версии в верхнем регистре) используют Unicode-свойства, если установлен
+   модификатор <link linkend="reference.pcre.pattern.modifiers">PCRE_UTF8</link>
+   (<literal>u</literal>), так что, например, <literal>\d</literal> совпадает
+   и с десятичными цифрами, не входящими в ASCII. До PHP 5.4.0 эти
+   последовательности из соображений эффективности не использовали
+   Unicode-свойства, если в шаблон явно не добавляли <literal>(*UCP)</literal>.
+  </simpara>
  </section>
 
  <section xml:id="regexp.reference.anchors">
@@ -1828,17 +1883,18 @@
 
  <section xml:id="regexp.reference.assertions">
   <title>Утверждения</title>
-  <para>
+  <simpara>
    Утверждения — проверка символов, которые идут до или после текущей позиции
    сопоставления, которая фактически не включает никаких символов (символы входной
    строки не сопоставляются с утверждениями). Наиболее простые варианты утверждений,
    например \b, \B, \A, \Z, \z, ^ и $, рассматривает раздел
    «<link linkend="regexp.reference.escape">Экранирующие последовательности</link>».
    Более сложные утверждения записываются как подшаблоны. Утверждения
-   бывают двух видов: те, которые анализируют текст, следующий
-   <emphasis>после текущей позиции</emphasis> (look ahead),
-   и идущий <emphasis>перед ней</emphasis> (look behind).
-  </para>
+   бывают двух видов: утверждения <emphasis>просмотра вперёд</emphasis> (lookahead),
+   которые анализируют текст, следующий после текущей позиции
+   в строке-субъекте, и утверждения <emphasis>просмотра назад</emphasis> (lookbehind),
+   которые анализируют текст, идущий перед ней.
+  </simpara>
   <para>
    Сопоставление подшаблонов, которые содержат утверждение, выполняют обычным
    образом, за исключением того, что текущая позиция не изменяется.
