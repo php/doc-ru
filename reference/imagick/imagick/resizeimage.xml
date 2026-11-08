@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0ffb9c9fc8f4bf1589a1a573644e1c23b6b451d1 Maintainer: zors1 Status: ready -->
+<!-- EN-Revision: 2fae40e40323696cab1d4108c8cfb3a424321a88 Maintainer: zors1 Status: ready -->
 <!-- Reviewed: no -->
 
-<refentry xmlns="http://docbook.org/ns/docbook" xml:id="imagick.resizeimage">
+<refentry xml:id="imagick.resizeimage" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>Imagick::resizeImage</refname>
   <refpurpose>Масштабирует изображение</refpurpose>
@@ -20,8 +20,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>legacy</parameter><initializer>&false;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Масштабирует изображение до желаемых размеров с помощью
-   <link linkend="imagick.constants.filters">filter</link>.
+   Метод масштабирует изображение до целевых размеров;
+   алгоритм масштабирования определяется <link linkend="imagick.constants.filters">фильтром</link>.
   </para>
   &imagick.bestfit.note;
  </refsect1>
@@ -50,7 +50,7 @@
      <term><parameter>filter</parameter></term>
      <listitem>
       <para>
-       Обратитесь к списку <link linkend="imagick.constants.filters">констант FILTER</link>.
+       Константа из списка <link linkend="imagick.constants.filters">констант фильтрации</link>.
       </para>
      </listitem>
     </varlistentry>
@@ -58,17 +58,32 @@
      <term><parameter>blur</parameter></term>
      <listitem>
       <para>
-       Коэффициент размытия, где значение &gt; 1 делает изображение более
-       размытым, а значение &lt; 1 - более резким.
+       Коэффициент размытия, где значение &gt; 1 делает изображение размытым,
+       а значение &lt; 1 — резким.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>bestfit</parameter></term>
      <listitem>
-      <para>
-       Необязательный параметр подгонки.
-      </para>
+      <simpara>
+       Необязательный параметр с типом <type>bool</type>.
+       При передаче значения &true; изображение вписывается в заданные размеры
+       с сохранением соотношения сторон.
+      </simpara>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><parameter>legacy</parameter></term>
+     <listitem>
+      <simpara>
+       Необязательный параметр с типом <type>bool</type>.
+       При передаче значения &true; вычисления выполняются с незначительной ошибкой округления,
+       которую давал модуль Imagick до версии 3.4.0. При передаче значения &false;
+       вычисления дают результаты, аналогичные утилитам
+       ImageMagick для командной строки.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -84,42 +99,45 @@
 
  <refsect1 role="changelog">
   &reftitle.changelog;
-  <para>
-   <informaltable>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>&Version;</entry>
-       <entry>&Description;</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>PECL imagick 2.1.0</entry>
-       <entry>
-        Добавлен необязательный параметр подгонки. Теперь метод поддерживает
-        пропорциональное масштабирование. Для пропорционального масштабирования
-        необходимо передать ноль в качестве любого параметра.
-       </entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </informaltable>
-  </para>
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>PECL imagick 2.1.0</entry>
+      <entry>
+       При передаче значения 0 в первый или второй параметр
+       метод теперь пропорционально масштабирует изображение.
+      </entry>
+     </row>
+     <row>
+      <entry>PECL imagick 3.4.0</entry>
+      <entry>
+       Добавили параметр <parameter>legacy</parameter>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
-
-
 
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
     <example>
-      <title>Пример использования <function>Imagick::resizeImage</function></title>
+      <title>Пример масштабирования изображения методом <function>Imagick::resizeImage</function></title>
       <programlisting role="php">
 <![CDATA[
 <?php
-function resizeImage($imagePath, $width, $height, $filterType, $blur, $bestFit, $cropZoom) {
-    //Коэффициент размытия, где значение >  1 делает изображение более размытым, а значение < 1 - более резким.
+
+function resizeImage($imagePath, $width, $height, $filterType, $blur, $bestFit, $cropZoom)
+{
+    // Коэффициент размытия, где значение >  1 размывает изображение, а значение < 1 — повышает резкость.
     $imagick = new \Imagick(realpath($imagePath));
 
     $imagick->resizeImage($width, $height, $filterType, $blur, $bestFit);
@@ -148,8 +166,6 @@ function resizeImage($imagePath, $width, $height, $filterType, $blur, $bestFit, 
     header("Content-Type: image/jpg");
     echo $imagick->getImageBlob();
 }
-
-?>
 ]]>
       </programlisting>
     </example>
