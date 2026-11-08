@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: be3574f52a050f3dd9aa6ca9dffc19b0484c250a Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 822b0828562580aac0327eb2d84e8e6e06e51a98 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <reference xml:id="class.allowdynamicproperties" role="class" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude">
  <title>Атрибут AllowDynamicProperties</title>
@@ -21,6 +21,15 @@
      если родительский класс разметили атрибутом.
     </simpara>
    </note>
+   <note>
+    <simpara>
+     Атрибут появился в PHP 8.2.0 как явный способ разрешить
+     динамические свойства. Создание динамического свойства в классе,
+     который не размечен этим атрибутом и не реализует методы
+     <link linkend="object.get">__get()</link> или
+     <link linkend="object.set">__set()</link>, устарело.
+    </simpara>
+   </note>
   </section>
 
   <section xml:id="allowdynamicproperties.synopsis">
@@ -28,47 +37,59 @@
 
    <classsynopsis class="class">
     <ooclass>
-     <modifier role="attribute">#[\Attribute]</modifier>
+     <modifier role="attribute">#[\Attribute(\Attribute::TARGET_CLASS)]</modifier>
      <modifier>final</modifier>
      <classname>AllowDynamicProperties</classname>
     </ooclass>
 
     <classsynopsisinfo role="comment">&Methods;</classsynopsisinfo>
-    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.allowdynamicproperties')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[@role='AllowDynamicProperties'])">
-     <xi:fallback/>
-    </xi:include>
+    <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('class.allowdynamicproperties')/db:refentry/db:refsect1[@role='description']/descendant::db:constructorsynopsis[@role='AllowDynamicProperties'])"/>
    </classsynopsis>
 
   </section>
 
   <section>
    &reftitle.examples;
-   <simpara>
-    Динамические свойства устарели с PHP 8.2.0, поэтому объявление динамического свойства
-    без маркировки класса атрибутом выдаст уведомление об устаревании.
-   </simpara>
    <example>
-    <title>Влияние атрибута AllowDynamicProperties на добавление динамических свойств</title>
+    <title>Атрибут AllowDynamicProperties и динамическое свойство</title>
+    <simpara>
+     Чтобы разрешить динамические свойства, добавляют атрибут <literal>#[\AllowDynamicProperties]</literal>.
+    </simpara>
     <programlisting role="php">
 <![CDATA[
 <?php
-
-class DefaultBehaviour {}
-
 #[\AllowDynamicProperties]
-class ClassAllowsDynamicProperties {}
+class ValidExample { }
 
-$o1 = new DefaultBehaviour();
-$o2 = new ClassAllowsDynamicProperties();
+$obj = new ValidExample();
+$obj->myDynamicProp = 1234;
+?>
+]]>
+    </programlisting>
+   </example>
 
-$o1->nonExistingProp = true;
-$o2->nonExistingProp = true;
+   <example>
+    <title>Атрибут AllowDynamicProperties и несуществующее свойство</title>
+    <simpara>
+     С PHP 8.2.0 свойство требуется объявлять, если класс не размечен
+     этим атрибутом. Создание необъявленного свойства в таком классе
+     выдаёт уведомление об устаревании.
+    </simpara>
+
+    <programlisting role="php">
+<![CDATA[
+<?php
+class InvalidExample { }
+
+$obj = new InvalidExample();
+$obj->myUnknownProperty = 1234;
+?>
 ]]>
     </programlisting>
     &example.outputs.82;
     <screen>
 <![CDATA[
-Deprecated: Creation of dynamic property DefaultBehaviour::$nonExistingProp is deprecated in file on line 10
+Deprecated: Creation of dynamic property InvalidExample::$myUnknownProperty is deprecated in file on line 5
 ]]>
     </screen>
    </example>
