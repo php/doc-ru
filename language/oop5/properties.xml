@@ -172,7 +172,6 @@ $circle = new Shape();
 $circle->setName("circle");
 var_dump($circle->getName());
 var_dump($circle->getNumberOfSides());
-
 ]]>
      </programlisting>
      &example.outputs;
@@ -227,7 +226,6 @@ var_dump($test->prop); // string(6) "foobar"
 // Неправильное переопределение. Не имеет значения, что присвоенное значение такое же
 $test->prop = "foobar";
 // Error: Cannot modify readonly property Test::$prop
-
 ]]>
     </programlisting>
    </example>
@@ -265,7 +263,6 @@ $test1 = new Test1();
 // Неправильная инициализация за пределами закрытой области
 $test1->prop = "foobar";
 // Error: Cannot initialize readonly property Test1::$prop from global scope
-
 ]]>
     </programlisting>
    </example>
@@ -274,19 +271,21 @@ $test1->prop = "foobar";
    <para>
     Readonly-свойство инициализируют только прямым присваиванием.
     Неинициализированное readonly-свойство нельзя инициализировать по ссылке,
-    даже из той области видимости, в которой свойство объявили: передача
+    даже из области видимости объявления свойства: передача
     свойства в параметр функции, который принимает значение по ссылке,
-    или присваивание свойства по ссылке выбрасывают исключение
+    или присваивание свойства по ссылке выбрасывают ошибку
     <exceptionname>Error</exceptionname>.
     <informalexample>
      <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
-class Test {
+class Test
+{
     public readonly array $matches;
 
-    public function __construct(string $subject) {
+    public function __construct(string $subject)
+    {
         // Недопустимая инициализация по ссылке.
         preg_match('/\d+/', $subject, $this->matches);
         // Error: Cannot indirectly modify readonly property Test::$matches
@@ -294,7 +293,6 @@ class Test {
 }
 
 new Test('abc 42');
-?>
 ]]>
      </programlisting>
     </informalexample>
@@ -315,7 +313,6 @@ class Test
     // Error: Readonly property Test::$prop cannot have default value
     public readonly int $prop = 42;
 }
-
 ]]>
      </programlisting>
     </informalexample>
@@ -356,7 +353,6 @@ $ref =& $test->i;
 $test->i =& $ref;
 byRef($test->i);
 foreach ($test as &$prop);
-
 ]]>
     </programlisting>
    </informalexample>
@@ -382,7 +378,6 @@ $test->obj->foo = 1;
 
 // Неправильное переопределение
 $test->obj = new stdClass();
-
 ]]>
     </programlisting>
    </informalexample>
@@ -416,7 +411,6 @@ $test1->setProp('foobar');
 
 $test2 = clone $test1;
 var_dump($test2->prop); // NULL
-
 ]]>
      </programlisting>
     </example>
@@ -425,8 +419,8 @@ var_dump($test2->prop); // NULL
     <simpara>
      Начиная с PHP 8.4.0 косвенное изменение readonly-свойства внутри метода
      <link linkend="object.clone">__clone()</link>, например получение ссылки
-     на свойство (<code>$ref = &amp;$this-&gt;prop</code>), больше не разрешено.
-     Во время инициализации readonly-свойства это запрещали и раньше.
+     на свойство (<code>$ref = &amp;$this-&gt;prop</code>), больше не поддерживается.
+     При инициализации readonly-свойства это запрещали и раньше.
     </simpara>
    </note>
  </sect2>
@@ -434,10 +428,10 @@ var_dump($test2->prop); // NULL
  <sect2 xml:id="language.oop5.properties.dynamic-properties">
   <title>Динамические свойства</title>
   <para>
-   При попытке присвоить несуществующее свойство объекту (&object;),
+   При попытке присвоить необъявленное свойство объекту (&object;),
    PHP автоматически создаст такое свойство.
-   Это динамически созданное свойство будет доступно
-   <emphasis>только</emphasis> для этого экземпляра класса.
+   Динамическое свойство доступно
+   <emphasis>только</emphasis> для текущего экземпляра класса.
   </para>
   <simpara>
    Динамические свойства поддерживают класс <link linkend="stdclass.intro">stdClass</link> и его подклассы.
@@ -447,13 +441,13 @@ var_dump($test2->prop); // NULL
   <warning>
    <simpara>
     С PHP 8.2.0 создание динамического свойства устарело,
-    если только класс не помечен атрибутом
+    если только класс не разметили атрибутом
     <code>#[\AllowDynamicProperties]</code>.
     Вместо динамического присваивания свойства классу рекомендуют объявлять свойство.
     Для обработки произвольных имён свойств
-    класс должен реализовать магические методы
+    в классе реализуют магические методы
     <link linkend="object.get">__get()</link> и <link linkend="object.set">__set()</link>.
-    Пометить класс атрибутом по-прежнему можно, но это обычно считают крайней мерой.
+    Разметка класса атрибутом по-прежнему поддерживается, но только в крайнем случае.
    </simpara>
   </warning>
  </sect2>
