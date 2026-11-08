@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 28529d3539b850e870e3aa97570f4db0e53daa03 Maintainer: shein Status: ready -->
-<!-- Reviewed: no -->
+<!-- EN-Revision: 09c650422aec6f59dca08d1c65eaa633d391a525 Maintainer: shein Status: ready -->
 <sect1 xml:id="language.oop5.cloning" xmlns="http://docbook.org/ns/docbook">
  <title>Клонирование объектов</title>
 
- <para>
+ <simpara>
   Создание копии объекта с абсолютно идентичными свойствами
   не всегда является приемлемым вариантом. Хорошим примером
   необходимости копирования конструкторов может послужить
@@ -18,7 +17,7 @@
   вам нужно также создать новый экземпляр этого другого объекта,
   так, чтобы копия объекта-контейнера содержала собственный отдельный
   экземпляр содержащегося объекта.
- </para>
+ </simpara>
 
  <para>
   Копия объекта создаётся с использованием ключевого слова <literal>clone</literal>
@@ -45,19 +44,20 @@ $copy_of_object = clone $object;
   <void/>
  </methodsynopsis>
 
- <para>
+ <simpara>
   После завершения клонирования, если метод
   <link linkend="object.clone">__clone()</link> определён, то
   будет вызван метод <link linkend="object.clone">__clone()</link>
   вновь созданного объекта для возможного
   изменения всех необходимых свойств.
- </para>
+ </simpara>
 
  <example>
   <title>Клонирование объекта</title>
   <programlisting role="php">
 <![CDATA[
 <?php
+
 class SubObject
 {
     static $instances = 0;
@@ -98,8 +98,6 @@ print_r($obj);
 
 print "Клонированный объект:\n";
 print_r($obj2);
-
-?>
 ]]>
   </programlisting>
   &example.outputs;
@@ -148,9 +146,9 @@ MyCloneable Object
   <programlisting role="php">
 <![CDATA[
 <?php
+
 $dateTime = new DateTime();
 echo (clone $dateTime)->format('Y');
-?>
 ]]>
    </programlisting>
    &example.outputs.similar;
@@ -160,6 +158,60 @@ echo (clone $dateTime)->format('Y');
 ]]>
    </screen>
  </example>
+
+ <sect2 xml:id="language.oop5.cloning.with-properties">
+  <title>Клонирование с переопределением свойств</title>
+
+  <simpara>
+   Начиная с PHP 8.5.0 <literal>clone</literal> доступен также как функция.
+   Второй параметр <parameter>withProperties</parameter> принимает массив,
+   в котором ключи — названия свойств, а значения — то, что получит копия.
+   Переопределяются только перечисленные свойства, остальные сохраняют значения,
+   с которыми скопировались.
+  </simpara>
+
+  <simpara>
+   Переопределённые значения применяются после вызова метода
+   <link linkend="object.clone">__clone()</link> и учитывают область видимости
+   всех свойств.
+   Свойства <link linkend="language.oop5.properties.readonly-properties">readonly</link>
+   в копии можно обновить, даже если они уже были заданы в исходном объекте,
+   поэтому функция подходит для методов, которые возвращают изменённую копию.
+  </simpara>
+
+  <example>
+   <title>Клонирование объекта с переопределением свойств</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class Point
+{
+    public function __construct(
+        public readonly int $x,
+        public readonly int $y,
+    ) {}
+
+    public function withX(int $x): static
+    {
+        return clone($this, ['x' => $x]);
+    }
+}
+
+$p = new Point(1, 2);
+$q = $p->withX(10);
+
+echo $q->x, ' ', $q->y;
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+10 2
+]]>
+   </screen>
+  </example>
+ </sect2>
 
 </sect1><!-- Keep this comment at the end of the file
 Local variables:
