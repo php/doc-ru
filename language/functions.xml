@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e290572f2599305beb62b13988024b5da187979d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 594c8c0a0188faae493b7070b3c1e331678e1655 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook" annotations="interactive">
  <title>Функции</title>
@@ -116,7 +116,7 @@ function foo()
 {
     function bar()
     {
-        echo "Я не существую пока не вызовут функцию foo().\n";
+        echo "Я не существую, пока не вызовут функцию foo().\n";
     }
 }
 
@@ -291,7 +291,7 @@ echo $str;    // Конструкция выведет «Это строка, и
    </para>
    <para>
     Передача в аргументе константного выражения в параметр, который ожидает значение по ссылке, вызовет ошибку.
-    </para>
+   </para>
   </sect2>
   <sect2 xml:id="functions.arguments.default">
    <title>Значения по умолчанию для параметров</title>
@@ -537,7 +537,7 @@ function foo($a, $b) {}          // Определение функционал�
 
 function bar(A $a = null, $b) {} // С PHP 8.1.0 параметр $a неявно обязателен, поскольку идёт перед обязательным,
                                  // но неявно обнуляем, поскольку для параметра определили значение по умолчанию null.
-                                 // Объявления значения по умолчанию null
+                                 // Объявление значения по умолчанию null
                                  // без указания обнуляемого типа устарело с PHP 8.4.0
 function bar(?A $a, $b) {}       // Определение, которое рекомендуют
 ]]>
@@ -832,6 +832,13 @@ var_dump(foo(...[1, 2], b: 20)); // Fatal error: Named parameter $b overwrites p
 ]]>
     </programlisting>
    </example>
+
+   <simpara>
+    Для отдельных встроенных функций, например <function>session_set_save_handler</function>,
+    документация описывает альтернативную сигнатуру с названиями параметров,
+    которых нет в самой функции. Такие названия нельзя указывать
+    как именованные аргументы, иначе возникнет ошибка.
+   </simpara>
 
    </sect2>
  </sect1>
@@ -1261,15 +1268,18 @@ $greet('PHP');
 <![CDATA[
 <?php
 
+// Переменная, которую определили в родительской области видимости
 $message = 'привет';
 
-// Без конструкции use
+// Переменная $message не наследуется и не определена,
+// поскольку конструкцию use не указали
 $example = function () {
     var_dump($message);
 };
 $example();
 
-// Наследуем переменную $message
+// Переменная $message наследуется из родительской области видимости
+// благодаря конструкции use
 $example = function () use ($message) {
     var_dump($message);
 };
@@ -1280,17 +1290,16 @@ $example();
 $message = 'мир';
 $example();
 
-// Сбросим message
+// Сбросим значение переменной $message
 $message = 'привет';
 
-// Наследование по ссылке
+// Наследование по ссылке: изменение, которое внесли в родительской области
+// видимости после определения замыкания, видно внутри замыкания
 $example = function () use (&$message) {
     var_dump($message);
 };
 $example();
 
-// Значение ссылки, которое изменили в родительской области видимости,
-// отражается внутри вызова функции
 $message = 'мир';
 $example();
 
@@ -1300,24 +1309,30 @@ $example = function ($arg) use ($message) {
 };
 $example("привет");
 
-// Объявление типа значения возврата идёт после конструкции use
-$example = function () use ($message): string {
-    return "привет, $message";
+// Замыкания, как и другие функции, умеют возвращать значения;
+// объявление типа значения возврата идёт после конструкции use
+$example = function () use ($message): array {
+    return ["привет", $message];
 };
 var_dump($example());
 ]]>
    </programlisting>
-   &example.outputs.similar;
+   &example.outputs;
    <screen>
 <![CDATA[
-Notice: Undefined variable: message in /example.php on line 6
+Warning: Undefined variable $message in script on line 9
 NULL
 string(12) "привет"
 string(12) "привет"
 string(12) "привет"
 string(6) "мир"
 string(20) "привет, мир"
-string(20) "привет, мир"
+array(2) {
+  [0]=>
+  string(12) "привет"
+  [1]=>
+  string(6) "мир"
+}
 ]]>
    </screen>
   </example>
@@ -1357,13 +1372,7 @@ class Cart
 
     public function add($product, $quantity)
     {
-        $this->products[$product] = $quantity;
-    }
-
-    public function getQuantity($product)
-    {
-        return isset($this->products[$product]) ? $this->products[$product] :
-               FALSE;
+        $this->products[$product] = ($this->products[$product] ?? 0) + $quantity;
     }
 
     public function getTotal($tax)
@@ -1429,8 +1438,8 @@ object(Test)#1 (0) {
   </example>
   <para>
    При объявлении замыкания в контексте класса текущий
-   класс автоматически привязывается к замыканию, а члены функции
-   получают доступ к переменной <literal>$this</literal> в области
+   класс автоматически привязывается к замыканию, а переменная
+   <literal>$this</literal> становится доступной в области
    видимости функции. <link linkend="functions.anonymous-functions.static">Статические анонимные функции</link> определяют,
    когда автоматическая привязка к текущему классу не требуется.
   </para>
@@ -1525,6 +1534,13 @@ Stack trace:
        </row>
       </thead>
       <tbody>
+        <row>
+         <entry>8.5.0</entry>
+         <entry>
+          Замыкания разрешили указывать в константных выражениях, например в значениях
+          свойств по умолчанию, параметрах атрибутов и константах.
+         </entry>
+        </row>
         <row>
          <entry>8.3.0</entry>
          <entry>
@@ -1875,6 +1891,29 @@ $obj?->prop->method(...);
     </informalexample>
    </para>
   </note>
+
+  <sect2 role="changelog">
+   &reftitle.changelog;
+   <informaltable>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>&Version;</entry>
+       <entry>&Description;</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>8.5.0</entry>
+       <entry>
+        Первоклассные callable-значения разрешили указывать в константных выражениях,
+        например в значениях свойств по умолчанию, параметрах атрибутов и константах.
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </informaltable>
+  </sect2>
  </sect1>
 
 </chapter>
