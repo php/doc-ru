@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ba6a83ca3558574695be5ef0a0e008e4e5f78ddb Maintainer: aur Status: ready -->
+<!-- EN-Revision: 211645e4fc10c688b3813dbcce05965a5f95f00e Maintainer: aur Status: ready -->
 <!-- Reviewed: no -->
 <book xml:id="book.session" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <?phpdoc extension-membership="bundled" ?>
@@ -31,7 +31,7 @@
    <para>
     Если директива <link linkend="ini.session.auto-start">
     session.auto_start</link> включена, то единственный способ поместить объекты
-    в сессию — это загрузить определение класса этого объекта черер директиву
+    в сессию — это загрузить определение класса этого объекта через директиву
     <link linkend="ini.auto-prepend-file">auto_prepend_file</link>, иначе
     придётся выполнить сериализацию
     (функцией <function>serialize</function>) и десериализацию
@@ -51,14 +51,35 @@
     Поскольку сессионные данные сериализуются, переменные с типом
     <type>resource</type> не могут храниться в сессиях.
    </para>
-   <para>
-    Обработчики сериализации (<literal>php</literal>
-    и <literal>php_binary</literal>) наследуют ограничения директивы register_globals.
-    Поэтому нельзя использовать числовые или строковые индексы, содержащие
-    специальные символы (<literal>|</literal> и <literal>!</literal>).
-    Они приведут к ошибкам при завершении работы скрипта.
-    У обработчика <literal>php_serialize</literal> такие ограничения отсутствуют.
-   </para>
+   <simpara>
+    Обработчики сериализации <literal>php</literal> и <literal>php_binary</literal>
+    накладывают ограничения на ключи <emphasis>корневого уровня</emphasis>
+    массива <varname>$_SESSION</varname>. На вложенные ключи массивов или объектов,
+    которые хранятся в сессии, эти ограничения не распространяются.
+    Следующие ключи корневого уровня недопустимы:
+   </simpara>
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Числовые ключи, например <literal>$_SESSION[0]</literal>.
+      Такие ключи пропускаются при записи сессии, и выдаётся
+      предупреждение.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Строковые ключи, которые содержат символ <literal>|</literal>, при работе
+      с обработчиком сериализации <literal>php</literal>. Такой ключ приводит
+      к сбою записи сессии, а начиная с PHP 8.5.0 — ещё и к предупреждению.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+   <simpara>
+    У обработчика <literal>php_serialize</literal> таких ограничений нет,
+    поэтому его используют, когда числовые ключи или ключи с символом
+    <literal>|</literal> требуется хранить в корне массива
+    <varname>$_SESSION</varname>.
+   </simpara>
   </warning>
   <note>
    <para>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 601f6f4ce5827d441a7e110184708f0abe9fd447 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 38bdb42b928616a559444a29fb5ae41f150fec59 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="sessionhandlerinterface.read" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -14,25 +14,26 @@
    <methodparam><type>string</type><parameter>id</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Читает данные сессии из хранилища сессий и возвращает результат.
-   Вызывается сразу после старта сессии или когда вызвана <function>session_start</function>.
-   Обратите внимание, что перед вызовом этого метода будет вызвана функция <function>SessionHandlerInterface::open</function>.
+   Метод считывает данные сессии из хранилища сессий и возвращает результат.
+   Метод вызывается сразу после старта сессии или после вызова функции <function>session_start</function>.
+   Обратите внимание, что перед вызовом метода вызовется метод <function>SessionHandlerInterface::open</function>.
+  </para>
+  <simpara>
+   Метод вызывается самим PHP при запуске сессии.
+   Метод получает данные сессии из хранилища по идентификатору сессии.
+   Метод возвращает строку в сериализованном формате,
+   аналогичном исходной строке, которая передавалась методу <function>SessionHandlerInterface::write</function>.
+   Из метода возвращают пустую строку, если сессионное хранилище не содержит данных для заданного идентификатора сессии;
+   значение &false; возвращают только для сообщения об ошибке.
+  </simpara>
+  <para>
+   Возвращаемые методом данные расшифровываются внутри PHP методом десериализации,
+   который указали в директиве <link linkend="ini.session.serialize-handler">session.serialize_handler</link>.
+   Полученными данными затем заполняется суперглобальный массив <varname>$_SESSION</varname>.
   </para>
   <para>
-   Этот метод вызывается PHP когда стартует сессия.
-   Этот метод должен получить данные сессии из хранилища по указанному
-   её идентификатору. Строка, возвращаемая этим методом, должна иметь тот же сериализованный формат,
-   что и исходная, которая передавалась функции <function>SessionHandlerInterface::write</function>.
-   Если запись не найдена, возвращается &false;.
-  </para>
-  <para>
-   Данные, возвращаемые этим методом, будут расшифрованы внутри PHP, используя
-   метод десериализации, указанный в <link linkend="ini.session.serialize-handler">session.serialize_handler</link>.
-   Полученные данные будут использованы для заполнения суперглобального массива <varname>$_SESSION</varname>.
-  </para>
-  <para>
-   Обратите внимание, что схема сериализации данных не такая, как в функции <function>unserialize</function>,
-   и получить доступ к данным можно с помощью функции <function>session_decode</function>.
+   Внимание: схема сериализации данных не совпадает со схемой функции <function>unserialize</function>,
+   а получить доступ к данным получится функцией <function>session_decode</function>.
   </para>
  </refsect1>
 
@@ -52,9 +53,13 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Возвращает закодированную строку прочитанных данных. Если ничего не прочитано, возвращается &false;. Обратите внимание, что это значение передаётся для обработки внутри PHP.
-  </para>
+  <simpara>
+   Метод возвращает закодированную строку прочитанных данных
+   или пустую строку, если для идентификатора сессии данные не сохранены.
+   Возврат значения &false; сообщает об ошибке:
+   функция <function>session_start</function> тогда выдаёт ошибку уровня <constant>E_WARNING</constant> и возвращает &false;.
+   Обратите внимание, что это значение передаётся для обработки внутри PHP.
+  </simpara>
  </refsect1>
 
  <refsect1 role="seealso">
