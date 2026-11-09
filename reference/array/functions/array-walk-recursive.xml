@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: cec5275f23d2db648df30a5702b378044431be97 Maintainer: shein Status: ready -->
+<!-- EN-Revision: 0d8ee2131b4da66a4d274c576da9137c2a7963d5 Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.array-walk-recursive" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>array_walk_recursive</refname>
-  <refpurpose>Рекурсивно применяет пользовательскую функцию к каждому элементу массива</refpurpose>
+  <refpurpose>Рекурсивно применяет пользовательскую функцию к элементам массива</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,10 +15,17 @@
    <methodparam choice="opt"><type>mixed</type><parameter>arg</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция применяет пользовательскую <parameter>callback</parameter>-функцию к каждому
-   элементу массива <parameter>array</parameter>. Функция обрабатывает
-   каждый элемент многомерного массива.
+   Функция применяет пользовательскую <parameter>callback</parameter>-функцию
+   к элементам массива <parameter>array</parameter>; многомерные массивы
+   обходятся рекурсивно.
   </para>
+  <simpara>
+   Объект в аргументе <parameter>array</parameter>
+   обрабатывается так, как если бы объект сначала
+   <link linkend="language.types.array.casting">привели</link> к массиву.
+   Функция не обходит вложенные объекты рекурсивно ни при вызове с массивом,
+   ни при вызове с объектом.
+  </simpara>
  </refsect1>
  <refsect1 role="parameters">
   &reftitle.parameters;
@@ -36,17 +43,16 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Обычно <parameter>callback</parameter>-функция принимает два аргумента.
-       Первым — значение элемента массива <parameter>array</parameter>,
-       а вторым — ключ или индекс элемента.
+       При вызове с двумя аргументами функция обратного вызова
+       в параметре <parameter>callback</parameter> принимает два аргумента:
+       в первый передаётся значение элемента массива <parameter>array</parameter>,
+       а во второй — ключ или индекс элемента.
       </para>
       <note>
        <para>
-        Первый параметр <parameter>callback</parameter>-функции
+        Для изменения значений исходного массива первый параметр <parameter>callback</parameter>-функции
         определяют как <link linkend="language.references">ссылку</link>,
-        если требуется, чтобы <parameter>callback</parameter>-функция изменяла
-        значения исходного массива. Тогда изменения
-        элементов внутри функции обратного вызова изменят сам исходный массив.
+        тогда изменения элементов внутри функции обратного вызова изменят сам исходный массив.
        </para>
       </note>
      </listitem>
@@ -55,9 +61,9 @@
      <term><parameter>arg</parameter></term>
      <listitem>
       <para>
-       Необязательный параметр <parameter>arg</parameter>,
-       передаётся в <parameter>callback</parameter>-функцию как третий аргумент,
-       если указали.
+       При вызове с тремя аргументами
+       значение необязательного параметра <parameter>arg</parameter>
+       передаётся в <parameter>callback</parameter>-функцию третьим аргументом.
       </para>
      </listitem>
     </varlistentry>
@@ -95,7 +101,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>array_walk_recursive</function></title>
+    <title>Пример рекурсивного обхода массива функцией <function>array_walk_recursive</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -109,9 +115,6 @@ function test_print($item, $key)
 }
 
 array_walk_recursive($fruits, 'test_print');
-
-?>
-
 ]]>
     </programlisting>
     &example.outputs;
@@ -127,6 +130,45 @@ array_walk_recursive($fruits, 'test_print');
      Ключи с <type>array</type>-значением
      не передаются в функцию обратного вызова.
     </para>
+   </example>
+  </para>
+  <simpara>
+   При передаче первого аргумента callback-функции по ссылке
+   функция <function>array_walk_recursive</function>
+   обновит значения исходного массива на месте:
+  </simpara>
+  <para>
+   <example>
+    <title>Пример изменения значений исходного массива на месте</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$sweet = ['a' => 'apple', 'b' => 'banana'];
+$fruits = ['sweet' => $sweet, 'sour' => 'lemon'];
+
+function test_update(&$item)
+{
+    $item = strtoupper($item);
+}
+
+function test_print($item, $key)
+{
+    echo "Ключ '$key' содержит значение: $item\n";
+}
+
+array_walk_recursive($fruits, 'test_update');
+array_walk_recursive($fruits, 'test_print');
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+Ключ 'a' содержит значение: APPLE
+Ключ 'b' содержит значение: BANANA
+Ключ 'sour' содержит значение: LEMON
+]]>
+    </screen>
    </example>
   </para>
  </refsect1>
