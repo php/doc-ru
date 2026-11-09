@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 55e0481a24fd4d7db21b62f1885973edbca25e60 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 35cadcfe561fc27ee973457a64880f0b85db2ec5 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="session.security" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Безопасность сессий</title>
@@ -74,7 +74,7 @@
     неинициализированный сессионный ID отвергается и создаётся новый.
     Это защищает от атак, которые принуждают пользователя использовать
     заранее известный ID. Атакующий может размещать ссылки или отправлять письма,
-    которые содержат сессионный ID. Например http://example.com/page.php?PHPSESSID=123456789 .
+    которые содержат сессионный ID. Например, <literal>http://example.com/page.php?PHPSESSID=123456789</literal>.
     Если опция <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link> включена, то
     жертва откроет сессию с этим идентификатором.
     Опция <link linkend="ini.session.use-strict-mode">session.use_strict_mode</link> уменьшает этот риск.
@@ -119,12 +119,12 @@
     </simpara>
 
     <simpara>
-     Если произошёл доступ к истёкшей сессией, вы должны сохранить все
+     Если произошёл доступ к истёкшей сессии, вы должны сохранить все
      данные активных сессий пользователя. Это позволит для дальнейшего
      расследования причин произошедшего. После этого, принудительно
      заставьте пользователя выйти из всех активных сессий, то есть потребуйте от
      пользователей переавторизации. Это позволит предотвратить
-     атаку с использованием краденной сессии.
+     атаку с использованием краденой сессии.
     </simpara>
    </note>
 
@@ -152,7 +152,7 @@
      например, <filename>/dev/urandom</filename> или
      <function>random_bytes</function> и функции хеширования для генерации
      нового идентификатора сессии. <function>session_create_id</function> имеет
-     встроенная функциональность обнаружения коллизий и генерирует идентификатор
+     встроенную функциональность обнаружения коллизий и генерирует идентификатор
      основываясь на INI-настройках. Использование <function>session_create_id</function>
      является предпочтительной практикой.
     </simpara>
@@ -184,7 +184,7 @@
     Функция <function>session_regenerate_id</function> должна вызываться до записи
     авторизационной информации в <varname>$_SESSION</varname>.
     (<function>session_regenerate_id</function> сохраняет данные текущей сессии
-    автоматически). Убедитесь, что только текущая сессия отмечена как
+    автоматически). Убедитесь, что только новая сессия отмечена как
     авторизованная.
    </para>
 
@@ -644,12 +644,16 @@
     <para>
      <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>=Off
     </para>
-    <para>
-     Использование прозрачного управления сессионным ID не рекомендуется.
-     Вы можете использовать его, если необходимо. Однако, отключение прозрачного
-     управления повышает безопасность сессий в целом, убирая возможность
-     инъекции сессионного ID и его кражи.
-    </para>
+    <simpara>
+     Отключение прозрачного управления сессионным ID повышает безопасность
+     сессий в целом, убирая возможность инъекции сессионного ID и его утечки.
+    </simpara>
+    <warning>
+     <simpara>
+      Включение директивы <literal>session.use_trans_sid</literal>
+      объявлено устаревшим с PHP 8.4.0.
+     </simpara>
+    </warning>
     <note>
      <para>
       Идентификатор сессии может утечь через закладку в браузере, URL посланный по почте,
@@ -659,40 +663,61 @@
    </listitem>
 
    <listitem>
-    <para>
-     <link linkend="ini.session.trans-sid-tags">session.trans_sid_tags</link>=[игнорируемые теги]
-    </para>
-    <para>
-     (PHP 7.1.0 &gt;=) Вы не должны перезаписывать ненужные HTML-теги.
-     Значения по умолчанию должно быть достаточно для большинства случаев. Старые версии PHP
+    <simpara>
+     <link linkend="ini.session.trans-sid-tags">session.trans_sid_tags</link>="a=href,area=href,frame=src,form="
+    </simpara>
+    <simpara>
+     Ненужные HTML-теги не следует перезаписывать.
+     Значения по умолчанию достаточно для большинства случаев. Старые версии PHP
      для этого используют <link linkend="ini.url-rewriter.tags">url_rewriter.tags</link>.
-    </para>
+    </simpara>
+    <warning>
+     <simpara>
+      Изменение директивы <literal>session.trans_sid_tags</literal>
+      относительно значения по умолчанию объявлено устаревшим с PHP 8.4.0.
+     </simpara>
+    </warning>
    </listitem>
 
    <listitem>
-    <para>
-     <link linkend="ini.session.trans-sid-hosts">session.trans_sid_hosts</link>=[список хостов]
-    </para>
-    <para>
-     (PHP 7.1.0 &gt;=) Эта настройка определяет белый список хостов, для которых
-     разрешено прозрачное управление идентификаторами сессий. Никогда не добавляйте
-     недоверенные хосты. Если данная настройка пустая, то будет разрешено только для $_SERVER['HTTP_HOST'].
-    </para>
+    <simpara>
+     <link linkend="ini.session.trans-sid-hosts">session.trans_sid_hosts</link>=""
+    </simpara>
+    <simpara>
+     Эта настройка перечисляет хосты, для которых идентификатор сессии разрешено
+     добавлять в URL-адреса. Недоверенные хосты добавлять нельзя.
+     Если настройка пустая, модуль сессии разрешает только
+     <literal>$_SERVER['HTTP_HOST']</literal>.
+    </simpara>
+    <warning>
+     <simpara>
+      Установка директиве <literal>session.trans_sid_hosts</literal> значения,
+      кроме пустой строки, устарела с PHP 8.4.0.
+     </simpara>
+    </warning>
    </listitem>
 
    <listitem>
-    <para>
-     <link linkend="ini.session.referer-check">session.referer_check</link>=[ваш исходный URL]
-    </para>
-    <para>
-     Если <link linkend="ini.session.use-trans-sid">session.use_trans_sid</link>
-     включён, то рекомендуется использовать эту опцию, если это возможно.
-     Это уменьшает риск для инъекции сессионного ID. Если ваш сайт
-     находится по адресу <literal>http://example.com/</literal>, то установите этой опции значение <literal>http://example.com/</literal>.
-     Обратите внимание, что при использовании HTTPS, браузер не отправляет
-     referrer заголовок. Таким образом, этот параметр не является достаточно
-     надёжным показателем безопасности, но, всё же, рекомендуется его использовать.
-    </para>
+    <simpara>
+     <link linkend="ini.session.referer-check">session.referer_check</link>=""
+    </simpara>
+    <simpara>
+     Если директива <link
+     linkend="ini.session.use-trans-sid">session.use_trans_sid</link>
+     включена, непустое значение уменьшает риск инъекции сессионного ID:
+     идентификатор сессии, который отправил клиент, отбрасывается, если заголовок
+     <literal>Referer</literal> не содержит это значение.
+     Обратите внимание, что при работе через HTTPS браузеры не отправляют
+     заголовок <literal>Referer</literal>, а также могут не отправлять его
+     из-за собственных настроек.
+     Поэтому эта настройка не является надёжной мерой безопасности.
+    </simpara>
+    <warning>
+     <simpara>
+      Установка директиве <literal>session.referer_check</literal> значения,
+      кроме пустой строки, устарела с PHP 8.4.0.
+     </simpara>
+    </warning>
    </listitem>
 
    <listitem>
@@ -711,21 +736,8 @@
    </listitem>
 
    <listitem>
-    <para>
-     <link linkend="ini.session.hash-function">session.hash_function</link>="sha256"
-    </para>
-    <para>
-     (PHP 7.1.0 &lt;) Более сложная хеш-функция будет создавать более сложный сессионный ID.
-     Хотя коллизии с хешом почти не происходят и с MD5-хешом, тем не менее
-     разработчику лучше использовать функции SHA-2 или новее. Разработчики
-     также могут использовать сложные функции sha384 и sha512. Удостовертесь, что вы используете
-     достаточно <link linkend="ini.session.entropy-length">энтропии</link> для этих функций.
-    </para>
-   </listitem>
-
-   <listitem>
      <para>
-      <link linkend="ini.session.save-path">session.save_path</link>=[общедоступный каталог для чтения]
+      <link linkend="ini.session.save-path">session.save_path</link>=[каталог, недоступный для чтения всем]
      </para>
      <para>
       Если установлено в общедоступный каталог для чтения всем, такой как
