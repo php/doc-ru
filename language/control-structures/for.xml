@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ee1ce6a0e1875b6851274f8c373ca2bd48630fa0 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 8c273ad6577a6b4d6d3adea73502a4516ca2fe0c Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="control-structures.for" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>for</title>
  <?phpdoc print-version-for="for"?>
  <para>
-  Цикл <literal>for</literal> самый сложный цикл в PHP.
+  Цикл <literal>for</literal> — самый сложный цикл в PHP.
   Цикл ведёт себя аналогично языку C. Синтаксис цикла
   <literal>for</literal> выглядит вот так:
   <informalexample>
@@ -50,42 +50,71 @@ for (expr1; expr2; expr3)
    <programlisting role="php">
 <![CDATA[
 <?php
-
-/* Пример 1 */
-
 for ($i = 1; $i <= 10; $i++) {
-    echo $i;
+    echo $i . " ";
 }
-
-/* Пример 2 */
-
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1 2 3 4 5 6 7 8 9 10
+]]>
+   </screen>
+  </informalexample>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
 for ($i = 1; ; $i++) {
     if ($i > 10) {
         break;
     }
-
-    echo $i;
+    echo $i . " ";
 }
-
-/* Пример 3 */
-
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1 2 3 4 5 6 7 8 9 10
+]]>
+   </screen>
+  </informalexample>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
 $i = 1;
 for (; ; ) {
     if ($i > 10) {
         break;
     }
-
-    echo $i;
+    echo $i . " ";
     $i++;
 }
-
-/* Пример 4 */
-
-for ($i = 1, $j = 0; $i <= 10; $j += $i, print $i, $i++);
-
-?>
 ]]>
    </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1 2 3 4 5 6 7 8 9 10
+]]>
+   </screen>
+  </informalexample>
+  <informalexample>
+   <programlisting role="php">
+<![CDATA[
+<?php
+for ($i = 1, $j = 0; $i <= 10; $j += $i, print $i . " ", $i++);
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+1 2 3 4 5 6 7 8 9 10
+]]>
+   </screen>
   </informalexample>
  </para>
  <simpara>
@@ -108,59 +137,61 @@ endfor;
   </informalexample>
  </para>
  <simpara>
-  Следующий пример перебирает массивы стандартным способом,
-  к которому привыкли разработчики.
+  Выражения <varname>expr2</varname> и <varname>expr3</varname> вычисляются
+  на каждой итерации. В этих местах рекомендуется указывать простые выражения,
+  чтобы избежать проблем с производительностью. Например, если количество итераций
+  известно заранее, в выражении <varname>expr2</varname> лучше указать переменную,
+  а не вызов функции:
  </simpara>
  <para>
   <informalexample>
-   <programlisting role="php">
+   <programlisting role="php" annotations="non-interactive">
 <![CDATA[
 <?php
 
-/**
- * Это массив с данными, которые требуется изменить
- * в цикле
- */
-$people = array(
-    array('name' => 'Kalle', 'salt' => 856412),
-    array('name' => 'Pierre', 'salt' => 215863)
-);
+$people = ['Kalle', 'Pierre'];
 
-for ($i = 0; $i < count($people); ++$i) {
-    $people[$i]['salt'] = mt_rand(000000, 999999);
+// Плохая практика: вызов функции на каждой итерации
+for($i = 0; $i < getIterationCount($people); ++$i) {
+    $people[$i] .= ' is cool';
 }
 
-?>
+// Хорошая практика: сохранение количества итераций в переменной
+for($i = 0, $peopleCount = getIterationCount($people); $i < $peopleCount; ++$i) {
+    $people[$i] .= ' is cool';
+}
+
 ]]>
    </programlisting>
   </informalexample>
  </para>
  <simpara>
-  Приведённый код иногда работает медленно, поскольку размер массива вычисляется
-  в каждой итерации. Поскольку размер не меняется, цикл легко оптимизируется
-  через промежуточную переменную, в которую записывается размер массива, вместо
-  повторяющихся вызовов функции <function>count</function>:
+  В приведённом примере функция вызывается на каждой итерации первого цикла,
+  хотя всегда возвращает одно и то же значение. Если сохранить это значение
+  в переменной, как во втором цикле, функция вызывается только один раз.
+  При этом количество итераций фиксируется: если массив изменяется внутри цикла,
+  сохранённое значение перестаёт соответствовать его размеру.
  </simpara>
- <para>
-  <informalexample>
-   <programlisting role="php">
-<![CDATA[
-<?php
 
-$people = array(
-    array('name' => 'Kalle', 'salt' => 856412),
-    array('name' => 'Pierre', 'salt' => 215863)
-);
+ <note>
+  <simpara>
+   Размер массива (<type>array</type>) хранится вместе с массивом, поэтому вызов
+   встроенной функции <function>count</function> не требует подсчёта элементов
+   и не вызывает проблем с производительностью. Это не относится к режиму
+   <constant>COUNT_RECURSIVE</constant>, в котором функция обходит весь массив.
+   Осторожность нужна и при вызове функции <function>count</function> на объектах,
+   которые реализуют интерфейс <interfacename>Countable</interfacename>, поскольку
+   такие вызовы бывают ресурсоёмкими.
+  </simpara>
+ </note>
 
-for($i = 0, $size = count($people); $i < $size; ++$i) {
-    $people[$i]['salt'] = mt_rand(000000, 999999);
-}
-
-?>
-]]>
-   </programlisting>
-  </informalexample>
- </para>
+ <note>
+  <simpara>
+   Цикл <literal>for</literal> — не рекомендуемый способ перебора массивов.
+   Цикл &foreach; специально предназначен для этой задачи
+   и обычно удобнее.
+  </simpara>
+ </note>
 </sect1>
 <!-- Keep this comment at the end of the file
 Local variables:

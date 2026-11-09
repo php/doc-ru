@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ba7093cf7f30dbcd301c62536ac7ef8664d891f4 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 0d9947f2b1f0997cd8ddf80227b632dd5d3f2f92 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
-<!-- Revision: $ -->
 <sect1 xml:id="control-structures.foreach" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>foreach</title>
  <?phpdoc print-version-for="foreach"?>
  <para>
   Языковой конструкцией <literal>foreach</literal> удобно перебирать
-  массивы (<type>array</type>) и объекты, классы которых реализуют интерфейс <interfacename>Traversable</interfacename>.
+  массивы (<type>array</type>) и объекты.
   Конструкция <literal>foreach</literal> выдаст ошибку при попытке
   перебора переменной с другим типом данных или неинициализированной переменной.
-  Разработчику доступны два вида синтаксиса:
   <informalexample>
    <simpara>
-    Конструкция <literal>foreach</literal> умеет получать ключ каждого элемента, если требуется, и присваивать значение ключа переменной <literal>key</literal>:
+    Конструкция <literal>foreach</literal> умеет дополнительно получать ключ (<literal>key</literal>) каждого элемента:
    </simpara>
    <programlisting>
 <![CDATA[
@@ -29,7 +27,7 @@ foreach (iterable_expression as $key => $value) {
   </informalexample>
  </para>
  <simpara>
-  Первая форма обходит доступные для перебора данные, заданные
+  Первая форма обходит значение, заданное
   выражением <literal>iterable_expression</literal>. На каждой итерации значение
   текущего элемента присваивается переменной <literal>$value</literal>.
  </simpara>
@@ -43,7 +41,9 @@ foreach (iterable_expression as $key => $value) {
   и <function>key</function>.
  </simpara>
  <simpara>
-  Разработчику доступна
+  По умолчанию при обходе объекта перебираются свойства,
+  <link linkend="language.oop5.visibility">видимые</link> из текущей
+  области видимости. Разработчику доступна
   <link linkend="language.oop5.iterations">настройка итерации объектов</link>.
  </simpara>
 
@@ -53,14 +53,14 @@ foreach (iterable_expression as $key => $value) {
 <![CDATA[
 <?php
 
-/* Пример перебора только значений */
+echo "Только значения\n";
 $array = [1, 2, 3, 17];
 
 foreach ($array as $value) {
     echo "Значение текущего элемента массива \$array: $value.\n";
 }
 
-/* Пример перебора ключей и значений */
+echo "\n\nКлючи и значения:\n";
 $array = [
     "one" => 1,
     "two" => 2,
@@ -72,7 +72,7 @@ foreach ($array as $key => $value) {
     echo "Ключ: $key => Значение: $value\n";
 }
 
-/* Пример итерации по ключам и значениям многомерного массива */
+echo "\n\nМногомерные массивы с ключами и значениями:\n";
 $grid = [];
 $grid[0][0] = "a";
 $grid[0][1] = "b";
@@ -85,14 +85,44 @@ foreach ($grid as $y => $row) {
     }
 }
 
-/* Пример итерации по динамическому массиву */
+echo "\n\nДинамические массивы:\n";
 foreach (range(1, 5) as $value) {
     echo "$value\n";
 }
-
-?>
 ]]>
   </programlisting>
+  &example.outputs;
+  <screen>
+<![CDATA[
+Только значения
+Значение текущего элемента массива $array: 1.
+Значение текущего элемента массива $array: 2.
+Значение текущего элемента массива $array: 3.
+Значение текущего элемента массива $array: 17.
+
+
+Ключи и значения:
+Ключ: one => Значение: 1
+Ключ: two => Значение: 2
+Ключ: three => Значение: 3
+Ключ: seventeen => Значение: 17
+
+
+Многомерные массивы с ключами и значениями:
+Значение на позиции x=0 и y=0: a
+Значение на позиции x=1 и y=0: b
+Значение на позиции x=0 и y=1: y
+Значение на позиции x=1 и y=1: z
+
+
+Динамические массивы:
+1
+2
+3
+4
+5
+]]>
+  </screen>
  </example>
  <note>
   <para>
@@ -115,7 +145,7 @@ foreach (range(1, 5) as $value) {
    <note>
     <simpara>
      <link linkend="language.types.array.syntax.destructuring">Деструктуризация массивов</link>
-     через конструкцию <literal>[]</literal> возможна только с PHP 7.1.0
+     через конструкцию <literal>[]</literal> возможна только с PHP 7.1.0.
     </simpara>
    </note>
   </para>
@@ -130,7 +160,6 @@ foreach (range(1, 5) as $value) {
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $array = [
     [1, 2],
     [3, 4],
@@ -143,13 +172,13 @@ foreach ($array as [$a, $b]) {
 foreach ($array as list($a, $b)) {
     echo "A: $a; B: $b\n";
 }
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
+A: 1; B: 2
+A: 3; B: 4
 A: 1; B: 2
 A: 3; B: 4
 ]]>
@@ -159,13 +188,12 @@ A: 3; B: 4
 
   <para>
    Распаковка проигнорирует оставшиеся элементы,
-   если в значении цикла указали меньшее переменных, чем элементов в массиве.
+   если в значении цикла указали меньше переменных, чем элементов в массиве.
    Аналогично элементы пропускают, оставляя только запятую:
    <informalexample>
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $array = [
     [1, 2, 5],
     [3, 4, 6],
@@ -180,8 +208,6 @@ foreach ($array as [, , $c]) {
     // Пропускаем переменные $a и $b
     echo "$c\n";
 }
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -204,7 +230,6 @@ foreach ($array as [, , $c]) {
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $array = [
     [1, 2],
     [3, 4],
@@ -213,8 +238,6 @@ $array = [
 foreach ($array as [$a, $b, $c]) {
     echo "A: $a; B: $b; C: $c\n";
 }
-
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -242,17 +265,30 @@ A: 3; B: 4; C:
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $arr = [1, 2, 3, 4];
 foreach ($arr as &$value) {
     $value = $value * 2;
 }
 // Массив $arr теперь содержит значения [2, 4, 6, 8]
+var_dump($arr);
 unset($value); // Разрываем ссылочную связь с последним элементом
-
-?>
 ]]>
     </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+array(4) {
+  [0]=>
+  int(2)
+  [1]=>
+  int(4)
+  [2]=>
+  int(6)
+  [3]=>
+  &int(8)
+}
+]]>
+    </screen>
    </informalexample>
   </para>
   <warning>
@@ -266,32 +302,53 @@ unset($value); // Разрываем ссылочную связь с после
     <programlisting role="php">
 <![CDATA[
 <?php
-
 $arr = [1, 2, 3, 4];
 foreach ($arr as &$value) {
     $value = $value * 2;
 }
 // Массив $arr теперь содержит значения [2, 4, 6, 8]
+var_dump($arr);
 
 // Без уничтожения ссылки конструкцией unset($value) переменная $value по-прежнему ссылается на последний элемент: $arr[3]
 
+echo "\nЕщё один цикл:\n";
 foreach ($arr as $key => $value) {
     // Элемент $arr[3] обновляется с каждым значением массива $arr...
-    echo "{$key} => {$value} ";
-    print_r($arr);
+    echo "{$key} => {$value}\n";
 }
 // ...пока предпоследнее значение не скопируется в последнее
-
-?>
+var_dump($arr);
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
-0 => 2 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 2 )
-1 => 4 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 4 )
-2 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
-3 => 6 Array ( [0] => 2, [1] => 4, [2] => 6, [3] => 6 )
+array(4) {
+  [0]=>
+  int(2)
+  [1]=>
+  int(4)
+  [2]=>
+  int(6)
+  [3]=>
+  &int(8)
+}
+
+Ещё один цикл:
+0 => 2
+1 => 4
+2 => 6
+3 => 6
+array(4) {
+  [0]=>
+  int(2)
+  [1]=>
+  int(4)
+  [2]=>
+  int(6)
+  [3]=>
+  &int(6)
+}
 ]]>
     </screen>
    </informalexample>
@@ -301,14 +358,21 @@ foreach ($arr as $key => $value) {
    <programlisting role="php">
 <![CDATA[
 <?php
-
 foreach ([1, 2, 3, 4] as &$value) {
     $value = $value * 2;
+    echo $value . "\n";
 }
-
-?>
 ]]>
    </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+2
+4
+6
+8
+]]>
+   </screen>
   </example>
  </sect2>
 
