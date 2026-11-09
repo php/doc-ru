@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: e290572f2599305beb62b13988024b5da187979d Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 0b916fb90f8862046a56a5e05057ef6cd78384c1 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="collator.setstrength" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -108,7 +108,7 @@
    Однако, если для параметра «Альтернативный» задали значение «Shifted»,
    то разницу на четвертичном уровне устанавливают, чтобы найти различия между пробелами, пунктуацией и символами,
    которые иначе функция проигнорировала бы. Символы сравнивают на Идентичном уровне, когда требуется
-   обнаружить тонкие различия между символами наподобие математической полужирной строчной буквой A
+   обнаружить тонкие различия между символами, например между математической полужирной строчной буквой A
    и математической курсивной строчной буквой A. Однако сравнение на уровнях выше третичного
    значительно увеличивает длину ключей сортировки и снижает производительность сравнения равных строк.
   </para>
@@ -129,7 +129,7 @@
     <varlistentry>
      <term><parameter>strength</parameter></term>
      <listitem>
-      <para>Strength to set.</para>
+      <para>Сила сопоставления, которую требуется установить.</para>
       <para>
        Допустимые значения:
        <itemizedlist>
@@ -218,6 +218,66 @@ array (
 ]]>
     </screen>
    </example>
+   <example>
+    <title>Установка силы сопоставления ключом <literal>ks</literal> расширения локали Unicode</title>
+    <simpara>
+     Силу сопоставления также разрешается устанавливать при создании объекта <classname>Collator</classname>
+     ключом <literal>ks</literal> расширения локали Unicode в идентификаторе локали.
+     Значения ключа <literal>ks</literal> соответствуют следующим константам класса <classname>Collator</classname>:
+    </simpara>
+    <informaltable>
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>Значение ключа локали</entry>
+        <entry>Константа класса Collator</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row><entry><literal>ks-level1</literal></entry><entry><constant>Collator::PRIMARY</constant></entry></row>
+       <row><entry><literal>ks-level2</literal></entry><entry><constant>Collator::SECONDARY</constant></entry></row>
+       <row><entry><literal>ks-level3</literal></entry><entry><constant>Collator::TERTIARY</constant></entry></row>
+       <row><entry><literal>ks-level4</literal></entry><entry><constant>Collator::QUATERNARY</constant></entry></row>
+       <row><entry><literal>ks-identic</literal></entry><entry><constant>Collator::IDENTICAL</constant></entry></row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+    <simpara>
+     У константы <constant>Collator::DEFAULT_STRENGTH</constant> нет эквивалента <literal>ks-*</literal>,
+     поэтому её устанавливают только программно функцией <function>collator_set_strength</function>.
+    </simpara>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+$textStyle  = "\u{263A}\u{FE0E}"; // U+263A + U+FE0E (селектор текстового представления)
+$emojiStyle = "\u{263A}\u{FE0F}"; // U+263A + U+FE0F (селектор представления эмодзи)
+
+// Объект Collator по умолчанию (сила TERTIARY): селекторы вариантов игнорируются.
+$collDefault = new Collator('en_US');
+var_dump($collDefault->compare($textStyle, $emojiStyle) === 0); // bool(true)
+
+// Идентичная сила, установленная методом setStrength().
+$coll1 = new Collator('en_US');
+$coll1->setStrength(Collator::IDENTICAL);
+var_dump($coll1->compare($textStyle, $emojiStyle) === 0); // bool(false)
+
+// Эквивалент: идентичная сила, заданная ключом ks расширения локали.
+$coll2 = new Collator('en_US-u-ks-identic');
+var_dump($coll2->compare($textStyle, $emojiStyle) === 0); // bool(false)
+
+?>
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+bool(true)
+bool(false)
+bool(false)
+]]>
+    </screen>
+   </example>
   </para>
  </refsect1>
 
@@ -227,6 +287,7 @@ array (
    <simplelist>
     <member><link linkend="intl.collator-constants">Константы класса Collator</link></member>
     <member><function>collator_get_strength</function></member>
+    <member><function>collator_create</function></member>
    </simplelist>
   </para>
  </refsect1>
