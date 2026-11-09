@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: eabde0419cf90f596f60db00e31fcb6ebe41ac55 Maintainer: shein Status: ready -->
+<!-- EN-Revision: a9d052e2db27dd26e5f77b13ca03f0e9d352db5a Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.htmlspecialchars" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -133,14 +133,14 @@
            <entry>
             Заменяет неправильные последовательности кодовых единиц символом замены
             Юникода вместо возврата пустой строки: U+FFFD для строк в кодировке UTF-8
-            и &amp;#FFFD; для строк в других кодировках.
+            и &amp;#xFFFD; для строк в других кодировках.
            </entry>
           </row>
           <row>
            <entry><constant>ENT_DISALLOWED</constant></entry>
            <entry>
             Заменяет неверные кодовые точки для заданного типа документа символом
-            замены юникода U+FFFD для строк в кодировке UTF-8 или &amp;#FFFD;
+            замены юникода U+FFFD для строк в кодировке UTF-8 или &amp;#xFFFD;
             для строк в других кодировках вместо того, чтобы оставлять всё как есть.
             Это бывает полезно для правильного оформления XML-документов,
             в которые встроили внешнее содержимое.
@@ -259,6 +259,29 @@
 
 $new = htmlspecialchars("<a href='test'>Test</a>", ENT_QUOTES);
 echo $new; // &lt;a href=&#039;test&#039;&gt;Test&lt;/a&gt;
+
+?>
+]]>
+    </programlisting>
+   </example>
+  </para>
+  <para>
+   <example>
+    <title>Пример обработки недопустимых последовательностей UTF-8 с флагами <constant>ENT_IGNORE</constant> и <constant>ENT_SUBSTITUTE</constant></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+// "\x80" — недопустимая последовательность байтов UTF-8
+$input = "atta\x80ck";
+
+// Флаг ENT_IGNORE без предупреждения отбрасывает недопустимый байт — вывод: "attack"
+echo bin2hex(htmlspecialchars($input, ENT_QUOTES | ENT_IGNORE, 'UTF-8')), "\n";
+// 61747461636b
+
+// Флаг ENT_SUBSTITUTE заменяет недопустимый байт символом U+FFFD — вывод: "atta" + символ замены + "ck"
+echo bin2hex(htmlspecialchars($input, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')), "\n";
+// 61747461efbfbd636b
 
 ?>
 ]]>
