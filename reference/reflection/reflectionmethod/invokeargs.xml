@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ec2fe9a592f794978114ef5021db9f1d00c2e05d Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 0f4bc7cf417d6c23a30f1b6e949c272651cf4ab4 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionmethod.invokeargs" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>ReflectionMethod::invokeArgs</refname>
-  <refpurpose>Вызов метода с передачей аргументов массивом</refpurpose>
+  <refpurpose>Вызов метода с передачей массива аргументов</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,7 +15,7 @@
    <methodparam><type>array</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Вызывает отражённый метод и передаёт ему аргументы в виде массива.
+   Метод вызывает отражённый метод с передачей массива аргументов.
   </para>
 
  </refsect1>
@@ -28,17 +28,33 @@
      <term><parameter>object</parameter></term>
      <listitem>
       <para>
-       Объект, метод которого вызывается. Если метод статический, можно
-       передать <type>null</type>.
+       Объект, метод которого вызывается. Статические методы
+       поддерживают передачу <type>null</type>.
       </para>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>args</parameter></term>
      <listitem>
-      <para>
-       Массив (<type>array</type>), содержащий аргументы функции.
-      </para>
+      <simpara>
+       Массив (<type>array</type>) аргументов для передачи в метод.
+      </simpara>
+      <simpara>
+       Если все ключи массива <parameter>args</parameter> числовые,
+       ключи игнорируются, и каждый элемент передаётся методу как позиционный
+       аргумент, по порядку.
+      </simpara>
+      <simpara>
+       Элементы массива <parameter>args</parameter> со строковыми ключами
+       передаются в метод как именованные аргументы,
+       где ключ — название параметра.
+      </simpara>
+      <simpara>
+       Метод выбрасывает ошибку <exceptionname>Error</exceptionname>,
+       если числовой ключ в массиве <parameter>args</parameter> идёт после строкового
+       или если строковый ключ не совпадает ни с одним названием параметра
+       метода.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -48,19 +64,19 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат выполнения метода.
+   Метод возвращает результат выполнения метода.
   </para>
  </refsect1>
 
  <refsect1 role="errors">
   &reftitle.errors;
   <para>
-   Выбрасывает исключение <classname>ReflectionException</classname>, если в объекте
-   <parameter>object</parameter> нет определения этого метода.
+   Метод выбрасывает исключение <classname>ReflectionException</classname>,
+   если класс объекта <parameter>object</parameter> не содержит определения метода.
   </para>
   <para>
-   Выбрасывает исключение <classname>ReflectionException</classname>, если вызвать
-   метод на исполнение не удалось.
+   Метод выбрасывает исключение <classname>ReflectionException</classname>,
+   если не получилось вызвать метод на исполнение.
   </para>
  </refsect1>
 
@@ -79,7 +95,7 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Ключи <parameter>args</parameter> теперь интерпретируются как имена параметров, а не игнорируются.
+        Ключи <parameter>args</parameter> теперь интерпретируются как названия параметров, а не игнорируются молча.
        </entry>
       </row>
      </tbody>
@@ -93,14 +109,16 @@
   <para>
    <example>
     <title>
-     Пример использования <methodname>ReflectionMethod::invokeArgs</methodname>
+     Пример вызова метода методом <methodname>ReflectionMethod::invokeArgs</methodname>
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
-class HelloWorld {
 
-    public function sayHelloTo($name) {
+class HelloWorld
+{
+    public function sayHelloTo($name)
+    {
         return 'Привет, ' . $name;
     }
 
@@ -108,7 +126,6 @@ class HelloWorld {
 
 $reflectionMethod = new ReflectionMethod('HelloWorld', 'sayHelloTo');
 echo $reflectionMethod->invokeArgs(new HelloWorld(), array('Майк'));
-?>
 ]]>
     </programlisting>
     &example.outputs;

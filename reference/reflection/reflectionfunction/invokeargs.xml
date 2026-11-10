@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: ec2fe9a592f794978114ef5021db9f1d00c2e05d Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 0f4bc7cf417d6c23a30f1b6e949c272651cf4ab4 Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="reflectionfunction.invokeargs" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -14,7 +14,7 @@
    <methodparam><type>array</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Вызывает функцию и передаёт ей аргументы в виде массива.
+   Метод вызывает функцию с передачей массива аргументов.
   </para>
 
  </refsect1>
@@ -26,10 +26,26 @@
     <varlistentry>
      <term><parameter>args</parameter></term>
      <listitem>
-      <para>
-       Передаваемые функции аргументы в виде массива. Поведение функции аналогично
-       <function>call_user_func_array</function>.
-      </para>
+      <simpara>
+       Массив (<type>array</type>) аргументов для передачи в функцию.
+       Поведение аналогично функции <function>call_user_func_array</function>.
+      </simpara>
+      <simpara>
+       Если все ключи массива <parameter>args</parameter> числовые,
+       ключи игнорируются, и каждый элемент передаётся функции как позиционный
+       аргумент, по порядку.
+      </simpara>
+      <simpara>
+       Элементы массива <parameter>args</parameter> со строковыми ключами
+       передаются в функцию как именованные аргументы,
+       где ключ — название параметра.
+      </simpara>
+      <simpara>
+       Функция выбрасывает ошибку <exceptionname>Error</exceptionname>,
+       если числовой ключ в массиве <parameter>args</parameter> идёт после строкового
+       или если строковый ключ не совпадает ни с одним названием параметра
+       функции.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -39,7 +55,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат выполнения вызванной функции.
+   Метод возвращает результат выполнения вызванной функции.
   </para>
  </refsect1>
 
@@ -58,7 +74,7 @@
       <row>
        <entry>8.0.0</entry>
        <entry>
-        Ключи <parameter>args</parameter> теперь интерпретируются как имена параметров, а не игнорируются.
+        Ключи <parameter>args</parameter> теперь интерпретируются как названия параметров, а не игнорируются молча.
        </entry>
       </row>
      </tbody>
@@ -71,10 +87,11 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <methodname>ReflectionFunction::invokeArgs</methodname></title>
+    <title>Пример вызова функции методом <methodname>ReflectionFunction::invokeArgs</methodname></title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function title($title, $name)
 {
     return sprintf("%s. %s\r\n", $title, $name);
@@ -83,7 +100,6 @@ function title($title, $name)
 $function = new ReflectionFunction('title');
 
 echo $function->invokeArgs(array('Dr', 'Phil'));
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -97,13 +113,14 @@ Dr. Phil
   <para>
    <example>
     <title>
-     Пример использования
+     Пример вызова метода
      <methodname>ReflectionFunction::invokeArgs</methodname> со ссылками
      на аргументы
     </title>
     <programlisting role="php">
 <![CDATA[
 <?php
+
 function get_false_conditions(array $conditions, array &$false_conditions)
 {
     foreach ($conditions as $condition) {
@@ -121,7 +138,6 @@ $false_conditions = array();
 $function_ref->invokeArgs(array($conditions, &$false_conditions));
 
 var_dump($false_conditions);
-?>
 ]]>
     </programlisting>
     &example.outputs;
