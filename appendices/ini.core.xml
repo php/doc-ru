@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a52e3d27cca786940272d0ae8efc21b5d6739070 Maintainer: mch Status: ready -->
+<!-- EN-Revision: 8c42bb41c9ecc3b278c4be82e4280f7bc9c36283 Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <section xml:id="ini.core" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Описание встроенных директив &php.ini;</title>
@@ -434,6 +434,18 @@
        <entry><constant>INI_ALL</constant></entry>
        <entry></entry>
       </row>
+      <row>
+       <entry><link linkend="ini.max-memory-limit">max_memory_limit</link></entry>
+       <entry>"-1"</entry>
+       <entry><constant>INI_SYSTEM</constant></entry>
+       <entry>Доступна с PHP 8.5.0</entry>
+      </row>
+      <row>
+       <entry><link linkend="ini.memory-hard-limit-percent">memory_hard_limit_percent</link></entry>
+       <entry>&null;</entry>
+       <entry><constant>INI_ALL</constant></entry>
+       <entry>Доступна с PHP 8.5.12, 8.4.27, 8.3.36 и 8.2.35</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -450,13 +462,135 @@
      </term>
      <listitem>
       <para>
-       Директива задаёт предельный объем памяти в байтах, который разрешается выделять для работы скрипта.
+       Директива задаёт предельный объём памяти в байтах, который разрешается выделять для работы скрипта.
        Ограничение исключает исчерпание доступной серверу памяти при ошибках в скрипте или попытках обработать данные за пределами ограничения.
        Значение <literal>-1</literal> отключает ограничение памяти.
       </para>
+      <simpara>
+       Начиная с PHP 8.5.12, 8.4.27, 8.3.36 и 8.2.35 ограничение смягчили:
+       до генерации ошибки PHP выделит память сверх ограничения,
+       поэтому потребление памяти процессом ненадолго превысит значение директивы <parameter>memory_limit</parameter>.
+       Директива <link linkend="ini.memory-hard-limit-percent">memory_hard_limit_percent</link>
+       задаёт отдельное жёсткое ограничение —
+       допустимый предел превышения памяти.
+      </simpara>
 
       &ini.shorthandbytes;
 
+     </listitem>
+    </varlistentry>
+    <varlistentry xml:id="ini.max-memory-limit">
+     <term>
+      <parameter>max_memory_limit</parameter>
+      <type>int</type>
+     </term>
+     <listitem>
+      <simpara>
+       Доступна с PHP 8.5.0. Директива, которую устанавливают только при запуске,
+       задаёт максимальное значение, которое разрешается установить для директивы
+       <link linkend="ini.memory-limit">memory_limit</link> как при запуске, так и во время
+       выполнения, например функцией <function>ini_set</function>. Установка для директивы
+       <link linkend="ini.memory-limit">memory_limit</link> значения, которое
+       превышает значение директивы <parameter>max_memory_limit</parameter>, вызывает
+       предупреждение, а значение урезается до предельного. Значение <literal>-1</literal>,
+       которое действует по умолчанию, снимает верхнюю границу.
+      </simpara>
+
+      &ini.shorthandbytes;
+
+     </listitem>
+    </varlistentry>
+    <varlistentry xml:id="ini.memory-hard-limit-percent">
+     <term>
+      <parameter>memory_hard_limit_percent</parameter>
+      <type>int</type>
+     </term>
+     <listitem>
+      <simpara>
+       Доступна с PHP 8.5.12, 8.4.27, 8.3.36 и 8.2.35. Директива задаёт жёсткое
+       ограничение памяти в процентах от значения директивы
+       <link linkend="ini.memory-limit">memory_limit</link>.
+       Например, при значениях <literal>memory_limit=128M</literal>
+       и <literal>memory_hard_limit_percent=150</literal> жёсткое ограничение равно
+       <literal>192M</literal>. В отличие от ограничения
+       <link linkend="ini.memory-limit">memory_limit</link>, жёсткое ограничение
+       превысить невозможно.
+      </simpara>
+      <warning>
+       <simpara>
+        Директиву добавили в выпусках безопасности от 21 октября 2026 года, которые
+        исправляют две критические уязвимости — CVE-2026-109618 и CVE-2026-109619, —
+        позволяющие удалённое выполнение кода без аутентификации; одну из уязвимостей
+        вызывает обработка нехватки памяти. Если директива не распознаётся, используемая
+        версия PHP подвержена этим уязвимостям и её требуется немедленно обновить.
+        Подробнее об этом рассказывает
+        <link xlink:href="&url.php;archive/2026.php#2026-10-21-5">бюллетень безопасности</link>.
+       </simpara>
+      </warning>
+      <simpara>
+       Когда выделение памяти превышает значение директивы <link linkend="ini.memory-limit">memory_limit</link>,
+       то есть мягкое ограничение, память всё равно выделяется, а обычная
+       фатальная ошибка возникает, как только движок достигнет безопасной точки.
+       Функции завершения, которые зарегистрировали функцией
+       <function>register_shutdown_function</function>, по-прежнему выполняются.
+      </simpara>
+      <simpara>
+       Когда выделение памяти превысило бы жёсткое ограничение, процесс
+       немедленно завершается с кодом выхода <literal>137</literal>.
+       Сообщение записывается непосредственно в стандартный поток ошибок
+       и выглядит примерно так:
+      </simpara>
+      <screen>
+<![CDATA[
+Hard memory limit of 201326592 bytes exhausted
+]]>
+      </screen>
+      <simpara>
+       Сообщение не проходит через механизм обработки ошибок, поэтому
+       не передаётся обработчикам ошибок и не записывается в лог
+       <link linkend="ini.error-log">error_log</link>. PHP-код больше
+       не выполняется: функции завершения, деструкторы и обработчики буфера
+       вывода пропускаются.
+      </simpara>
+      <simpara>
+       Значение должно быть не меньше <literal>100</literal> или равняться
+       <literal>-1</literal>.
+      </simpara>
+      <simpara>
+       Когда значение не задано, что действует по умолчанию, или равно <literal>-1</literal>,
+       жёсткое ограничение вдвое больше значения директивы
+       <link linkend="ini.memory-limit">memory_limit</link>, если значение директивы
+       <link linkend="ini.memory-limit">memory_limit</link> не превышает
+       <literal>1G</literal>, и равно значению директивы
+       <link linkend="ini.memory-limit">memory_limit</link> плюс
+       <literal>1G</literal> в противном случае. Например, при значении по умолчанию
+       <literal>memory_limit=128M</literal> жёсткое ограничение равно
+       <literal>256M</literal>, а при значении <literal>memory_limit=4G</literal>
+       равно <literal>5G</literal>. Если для директивы
+       <link linkend="ini.memory-limit">memory_limit</link> установили значение
+       <literal>-1</literal>, жёсткого ограничения тоже нет.
+      </simpara>
+      <caution>
+       <simpara>
+        Значение <literal>100</literal> делает жёсткое ограничение равным значению директивы
+        <link linkend="ini.memory-limit">memory_limit</link>, из-за чего большинство
+        ситуаций нехватки памяти приводят к немедленному завершению процесса
+        вместо фатальной ошибки. Тогда при нехватке памяти никогда не выполнится
+        работа на этапе завершения: запись логов, снятие блокировок
+        или завершение ответа.
+       </simpara>
+      </caution>
+      <note>
+       <simpara>
+        Поскольку процесс завершается без вывода, в окружениях, которые обрабатывают
+        несколько запросов, например PHP-FPM, рабочий процесс, который обслуживает
+        запрос, завершается, и клиент не получает от PHP ответа; менеджер процессов
+        запускает рабочий процесс на замену. Код выхода <literal>137</literal>
+        сообщается также для процесса, который завершили сигналом <literal>SIGKILL</literal>,
+        например OOM killer ядра или среда выполнения контейнеров, поэтому, чтобы
+        различить эти случаи, проверяют стандартный поток ошибок.
+       </simpara>
+      </note>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -1301,10 +1435,19 @@ include_path = ".:${USER}/pear/php"
         значение <literal>0</literal>, которое <emphasis>отключит</emphasis> realpath-кеш.
        </para>
       </note>
+      <warning>
+       <simpara>
+        Директива <option>open_basedir</option> не ограничивает доступ к Unix-сокетам.
+        Функции PHP для работы с сокетами, например <function>stream_socket_client</function>
+        и <function>fsockopen</function>, умеют подключаться к Unix-сокету по пути
+        наподобие <filename>unix:///var/run/docker.sock</filename>
+        независимо от значения директивы <option>open_basedir</option>.
+       </simpara>
+      </warning>
       <caution>
         <para>
          Опция конфигурации <literal>open_basedir</literal> — просто дополнительная подстраховка,
-         которая не претендует всесторонность,
+         которая не претендует на всесторонность,
          и поэтому на директиву нельзя полагаться, когда дело касается безопасности.
         </para>
        </caution>
