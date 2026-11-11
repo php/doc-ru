@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 9a8c593c09cf7d84085989e42f3b2b23536279db Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 0b916fb90f8862046a56a5e05057ef6cd78384c1 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.grapheme-strpos" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -55,7 +55,21 @@
     <varlistentry>
      <term><parameter>locale</parameter></term>
      <listitem>
-      &intl.param.grapheme.locale;
+      <simpara>
+       Идентификатор локали. От локали зависит, как определяются графемные кластеры
+       и как сравниваются строки. При пустой строке или значении &null; функция
+       берёт локаль по умолчанию.
+      </simpara>
+      <simpara>
+       Идентификатор локали разрешается дополнять ключами расширения локали Unicode,
+       которые управляют поведением сопоставления. В частности, ключ <literal>ks</literal>
+       управляет силой сопоставления: например, идентификатор
+       <literal>en_US-u-ks-identic</literal> включает сравнение на идентичном уровне,
+       которое различает селекторы вариантов Unicode, например эмодзи-представление
+       и текстовое представление, хотя без этого ключа они считаются эквивалентными.
+       Полное соответствие значений ключа <literal>ks</literal> уровням силы сопоставления
+       приводится на странице метода <methodname>Collator::setStrength</methodname>.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -122,6 +136,40 @@ print grapheme_strpos(
 2
 ]]>
   </screen>
+  <example>
+   <title>Пример различения селекторов вариантов ключом локали <literal>ks-identic</literal></title>
+   <simpara>
+    По умолчанию селекторы вариантов Unicode (U+FE0E — текстовый, U+FE0F — эмодзи)
+    при сравнении игнорируются. Ключ расширения локали <literal>ks-identic</literal>
+    включает сопоставление на идентичном уровне, при котором селекторы считаются разными символами.
+   </simpara>
+   <note>
+    <simpara>
+     Параметр <parameter>locale</parameter> доступен начиная с PHP 8.5.0.
+    </simpara>
+   </note>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$textStyle ="\u{263A}\u{FE0E}"; // U+263A + U+FE0E (селектор текстового представления)
+$emojiStyle = "\u{263A}\u{FE0F}"; // U+263A + U+FE0F (селектор представления эмодзи)
+
+// Локаль по умолчанию: селекторы вариантов игнорируются, поэтому подстрока найдена в позиции 0.
+var_dump(grapheme_strpos($textStyle, $emojiStyle));
+
+// С ключом ks-identic селекторы вариантов значимы, поэтому совпадение не найдено.
+var_dump(grapheme_strpos($textStyle, $emojiStyle, 0, 'en_US-u-ks-identic'));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+int(0)
+bool(false)
+]]>
+   </screen>
+  </example>
  </refsect1>
 
  <refsect1 role="seealso">
@@ -133,6 +181,7 @@ print grapheme_strpos(
     <member><function>grapheme_strripos</function></member>
     <member><function>grapheme_strrpos</function></member>
     <member><function>grapheme_strstr</function></member>
+    <member><methodname>Collator::setStrength</methodname></member>
     <member>
      <link xlink:href="&uri.unicode.graphemes;">
       Сегментация текста в Юникоде: Границы графемных кластеров

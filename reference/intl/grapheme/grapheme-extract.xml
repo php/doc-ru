@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 2245ff665ae4b3037728ee52c247b409ad75de35 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: 0b916fb90f8862046a56a5e05057ef6cd78384c1 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.grapheme-extract" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>grapheme_extract</refname>
-  <refpurpose>Функция для извлечения последовательности кластеров графем по умолчанию из текстового буфера, которая должна быть закодирована в UTF-8</refpurpose>
+  <refpurpose>Функция для извлечения последовательности кластеров графем по умолчанию из текстового буфера, который должен быть закодирован в UTF-8</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -18,7 +18,7 @@
    <methodparam choice="opt"><type>int</type><parameter role="reference">next</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция для извлечения последовательности кластеров графем по умолчанию из текстового буфера, которая должна быть закодирована в UTF-8.
+   Функция для извлечения последовательности кластеров графем по умолчанию из текстового буфера, который должен быть закодирован в UTF-8.
   </para>
   </refsect1>
 
@@ -38,7 +38,7 @@
      <term><parameter>size</parameter></term>
      <listitem>
       <para>
-       Максимальное количество возвращаемых элементов на основе <parameter>type</parameter>.
+       Максимальное количество возвращаемых элементов на основе параметра <parameter>type</parameter>.
       </para>
      </listitem>
     </varlistentry>
@@ -50,19 +50,33 @@
       </para>
        <para>
         <simplelist>
-         <member>GRAPHEME_EXTR_COUNT (по умолчанию) - <parameter>size</parameter> - это количество кластеров
-          графемы для извлечения по умолчанию.</member>
-         <member>GRAPHEME_EXTR_MAXBYTES - <parameter>size</parameter> - максимальное количество возвращаемых байтов.</member>
-         <member>GRAPHEME_EXTR_MAXCHARS - <parameter>size</parameter> - это максимальное количество возвращаемых символов UTF-8.</member>
+         <member><constant>GRAPHEME_EXTR_COUNT</constant> (по умолчанию) — параметр <parameter>size</parameter> задаёт количество
+         кластеров графем по умолчанию, которые требуется извлечь.</member>
+         <member><constant>GRAPHEME_EXTR_MAXBYTES</constant> — параметр <parameter>size</parameter> задаёт максимальное количество
+         возвращаемых байтов.</member>
+         <member><constant>GRAPHEME_EXTR_MAXCHARS</constant> — параметр <parameter>size</parameter> задаёт максимальное количество
+         возвращаемых символов UTF-8.</member>
         </simplelist>
        </para>
+      <caution>
+       <simpara>
+        Константа <constant>GRAPHEME_EXTR_COUNT</constant> ограничивает количество кластеров графем
+        (визуальных единиц), а не количество байтов. Один кластер графем способен занимать много байтов:
+        например, эмодзи семьи из последовательности с ZWJ-символами (<literal>👨‍👩‍👧‍👦</literal>) —
+        это один кластер графем, но 25 байтов. Когда извлечённая строка должна уложиться в лимит байтов,
+        вместо этой константы указывают константу <constant>GRAPHEME_EXTR_MAXBYTES</constant>.
+        С константой <constant>GRAPHEME_EXTR_MAXBYTES</constant> функция всегда возвращает целые кластеры графем
+        в пределах лимита байтов, но возвращает пустую строку, если лимит меньше
+        первого кластера графем.
+       </simpara>
+      </caution>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>offset</parameter></term>
      <listitem>
       <para>
-       Начальная позиция <parameter>haystack</parameter> в байтах - если задано, оно должно быть нулём или положительным значением,
+       Начальная позиция в строке <parameter>haystack</parameter> в байтах — если позиция задана, она должна быть нулём или положительным значением,
        которое меньше или равно длине <parameter>haystack</parameter> в байтах, либо отрицательным значением, отсчитываемым от конца <parameter>haystack</parameter>.
        Если <parameter>offset</parameter> не указывает на первый байт символа UTF-8, начальная позиция перемещается на границу следующего символа.
       </para>
@@ -121,8 +135,8 @@
 <![CDATA[
 <?php
 
-$char_a_ring_nfd = "a\xCC\x8A";  // 'LATIN SMALL LETTER A WITH RING ABOVE' (U+00E5) normalization form "D"
-$char_o_diaeresis_nfd = "o\xCC\x88"; // 'LATIN SMALL LETTER O WITH DIAERESIS' (U+00F6) normalization form "D"
+$char_a_ring_nfd = "a\xCC\x8A";  // 'LATIN SMALL LETTER A WITH RING ABOVE' (U+00E5) форма нормализации "D"
+$char_o_diaeresis_nfd = "o\xCC\x88"; // 'LATIN SMALL LETTER O WITH DIAERESIS' (U+00F6) форма нормализации "D"
 
 print urlencode(grapheme_extract( $char_a_ring_nfd . $char_o_diaeresis_nfd, 1, GRAPHEME_EXTR_COUNT, 2));
 
@@ -143,11 +157,13 @@ o%CC%88
   <para>
    <simplelist>
     <member><function>grapheme_substr</function></member>
-     <member>
-      <link xlink:href="&uri.unicode.graphemes;">
-       Сегментация текста в Unicode: границы кластера графемы
-      </link>
-     </member>
+    <member><function>grapheme_strlen</function></member>
+    <member><function>grapheme_strpos</function></member>
+    <member>
+     <link xlink:href="&uri.unicode.graphemes;">
+      Сегментация текста в Unicode: границы кластера графемы
+     </link>
+    </member>
    </simplelist>
   </para>
  </refsect1>
