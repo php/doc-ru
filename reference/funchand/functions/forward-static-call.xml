@@ -4,7 +4,7 @@
 <refentry xml:id="function.forward-static-call" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>forward_static_call</refname>
-  <refpurpose>Вызывает функцию обратного вызова, сохраняя текущий вызванный класс</refpurpose>
+  <refpurpose>Вызывает callback-функцию с сохранением текущего статического контекста</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,14 +15,14 @@
    <methodparam rep="repeat"><type>mixed</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция вызывает пользовательскую функцию или метод, заданные в параметре
-   <parameter>callback</parameter>, с последующими аргументами. Эту функцию
-   вызывают в контексте метода, вне класса её вызвать нельзя.
-   Когда вызывают метод, функция выполняет
+   Функция вызывает пользовательскую функцию или метод из параметра
+   <parameter>callback</parameter> с произвольным количеством аргументов.
+   Функцию вызывают только в контексте метода; вызов вне класса выдаст фатальную ошибку.
+   При передаче callback-метода в первом аргументе функция выполняет
    <link linkend="language.oop5.late-static-bindings">перенаправляющий вызов</link>,
-   поэтому <literal>static::</literal> внутри метода разрешается в тот же
-   вызванный класс, что и у вызывающей стороны. Это удобно для статических
-   методов обратного вызова, которые должны вести себя как
+   поэтому <literal>static::</literal> внутри целевого метода разрешается в класс,
+   в контексте которого вызвали функцию, как если бы callback-метод
+   вызвали через языковую конструкцию
    <literal>self::</literal> или <literal>parent::</literal>.
   </simpara>
  </refsect1>
@@ -44,7 +44,7 @@
      <term><parameter>args</parameter></term>
      <listitem>
       <simpara>
-       Ноль или более аргументов, которые передают функции обратного вызова.
+       Ноль или больше аргументов для передачи в функцию или метод обратного вызова.
       </simpara>
      </listitem>
     </varlistentry>
@@ -63,7 +63,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример вызова метода с сохранением вызванного класса функцией <function>forward_static_call</function></title>
+    <title>Пример вызова статического метода и функции функцией <function>forward_static_call</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -71,9 +71,11 @@
 class A
 {
     const NAME = 'A';
-    public static function test() {
+
+    public static function test()
+    {
         $args = func_get_args();
-        echo static::NAME, " ".join(',', $args)." \n";
+        echo static::NAME, ": " . join(', ', $args) . "\n";
     }
 }
 
@@ -81,27 +83,30 @@ class B extends A
 {
     const NAME = 'B';
 
-    public static function test() {
+    public static function test()
+    {
         echo self::NAME, "\n";
         forward_static_call(array('A', 'test'), 'more', 'args');
-        forward_static_call( 'test', 'other', 'args');
+        forward_static_call('test', 'other', 'args');
     }
 }
 
 B::test('foo');
 
-function test() {
-        $args = func_get_args();
-        echo "C ".join(',', $args)." \n";
-    }
+function test()
+{
+    $args = func_get_args();
+    echo "C: " . join(', ', $args) . "\n";
+}
+
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
 B
-B more,args
-C other,args
+B: more, args
+C: other, args
 ]]>
     </screen>
    </example>
