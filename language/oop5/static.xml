@@ -6,36 +6,35 @@
 
  <tip>
   <simpara>
-   Эта страница описывает использование ключевого слова
-   <literal>static</literal>
-   для определения статических методов и свойств. <literal>static</literal> также
-   может использоваться для <link linkend="language.variables.scope.static">определения
-   статических переменных</link>, <link linkend="functions.anonymous-functions.static">определения статических анонимных функций</link>
-   и <link linkend="language.oop5.late-static-bindings">позднего статического связывания</link>.
-   Для получения информации о таком применении ключевого слова <literal>static</literal> обратитесь по вышеуказанным страницам.
+   Страница описывает ключевое слово <literal>static</literal>
+   для определения статических методов и свойств. Слово <literal>static</literal> также указывают
+   <link linkend="language.variables.scope.static">при определении статических переменных</link>,
+   <link linkend="functions.anonymous-functions.static">определении статических анонимных функций</link>
+   и вызовов <link linkend="language.oop5.late-static-bindings">с поздним статическим связыванием</link>.
+   Приведённые страницы дают дополнительную информацию о ключевом слове <literal>static</literal>.
   </simpara>
  </tip>
 
  <para>
-  Объявление свойств и методов класса статическими позволяет обращаться к ним
-  без создания экземпляра класса.
-  К ним также можно получить доступ статически в созданном экземпляре объекта класса.
+  Статические свойства и методы класса доступны в статическом контексте —
+  без создания экземпляра класса —
+  и в контексте объекта.
  </para>
 
  <sect2 xml:id="language.oop5.static.methods">
   <title>Статические методы</title>
   <para>
-   Так как статические методы вызываются без создания экземпляра класса,
-   то псевдопеременная <varname>$this</varname> недоступна внутри статических методов.
+   Псевдопеременная <varname>$this</varname> недоступна внутри статических методов,
+   поскольку статические методы вызываются вне контекста объекта.
   </para>
 
   <warning>
    <para>
-    Вызов нестатических методов статически вызывает ошибку <classname>Error</classname>.
+    Статический вызов нестатических методов выбрасывает ошибку <classname>Error</classname>.
    </para>
    <para>
-    До PHP 8.0.0 вызов нестатических методов статически был объявлен устаревшим
-    и вызывал ошибку уровня <constant>E_DEPRECATED</constant>.
+    До PHP 8.0.0 вызов нестатических методов статически объявлялся устаревшим
+    и выдавал ошибку уровня <constant>E_DEPRECATED</constant>.
     </para>
   </warning>
 
@@ -44,8 +43,11 @@
    <programlisting role="php">
 <![CDATA[
 <?php
-class Foo {
-    public static function aStaticMethod() {
+
+class Foo
+{
+    public static function aStaticMethod()
+    {
         // ...
     }
 }
@@ -53,7 +55,7 @@ class Foo {
 Foo::aStaticMethod();
 $classname = 'Foo';
 $classname::aStaticMethod();
-?>
+
 ]]>
    </programlisting>
   </example>
@@ -62,15 +64,15 @@ $classname::aStaticMethod();
  <sect2 xml:id="language.oop5.static.properties">
   <title>Статические свойства</title>
   <para>
-   Доступ к статическим свойствам осуществляется с помощью <link linkend="language.oop5.paamayim-nekudotayim">оператора разрешения области видимости</link>
-   (<literal>::</literal>), и к ним нельзя получить доступ через оператор объекта (<literal>-&gt;</literal>).
+   Доступ к статическим свойствам получают <link linkend="language.oop5.paamayim-nekudotayim">через оператор разрешения области действия</link>
+   <literal>::</literal>; нельзя получить доступ к статическим свойствам через оператор объекта <literal>-&gt;</literal>.
   </para>
 
   <para>
-   На класс можно ссылаться с помощью переменной.
-   Значение переменной в таком случае не может быть ключевым
-   словом (например, <literal>self</literal>, <literal>parent</literal> и
-   <literal>static</literal>).
+   PHP разрешает ссылаться на класс через переменную,
+   если только значение переменной не равно
+   <literal>self</literal>, <literal>parent</literal>, <literal>static</literal>
+   или другому ключевому слову.
   </para>
 
   <example>
@@ -78,18 +80,21 @@ $classname::aStaticMethod();
    <programlisting role="php">
 <![CDATA[
 <?php
+
 class Foo
 {
     public static $my_static = 'foo';
 
-    public function staticValue() {
+    public function staticValue()
+    {
         return self::$my_static;
     }
 }
 
 class Bar extends Foo
 {
-    public function fooStatic() {
+    public function fooStatic()
+    {
         return parent::$my_static;
     }
 }
@@ -99,7 +104,7 @@ print Foo::$my_static . "\n";
 
 $foo = new Foo();
 print $foo->staticValue() . "\n";
-print $foo->my_static . "\n";      // Не определено свойство my_static
+print $foo->my_static . "\n"; // Неопределённое «свойство» my_static
 
 print $foo::$my_static . "\n";
 $classname = 'Foo';
@@ -108,7 +113,7 @@ print $classname::$my_static . "\n";
 print Bar::$my_static . "\n";
 $bar = new Bar();
 print $bar->fooStatic() . "\n";
-?>
+
 ]]>
    </programlisting>
    &example.outputs.8.similar;
