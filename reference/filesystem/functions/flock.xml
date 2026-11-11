@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 75a76afb61d91f04feebc83931c5412b13682d2b Maintainer: shein Status: ready -->
+<!-- EN-Revision: 0baba6599fa96a354d01ce3592bee5d2d355e1ba Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.flock" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -118,8 +118,6 @@ if (flock($fp, LOCK_EX)) { // Выполняем эксклюзивную бло
 }
 
 fclose($fp);
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -142,7 +140,6 @@ if (!flock($fp, LOCK_EX | LOCK_NB)) {
 /* ... */
 
 fclose($fp);
-?>
 ]]>
     </programlisting>
    </example>
@@ -173,12 +170,14 @@ fclose($fp);
    </para>
   </note>
   <note>
-   <para>
+   <simpara>
     Функцию разрешено вызывать только на дескрипторах локальных файлов,
     которые возвращает функция <function>fopen</function>, или файловых
     дескрипторах пользовательских потоков, которые реализуют метод
     <function>streamWrapper::stream_lock</function>.
-   </para>
+    Начиная с PHP 8.5.0 функцию также разрешено вызывать на файловых
+    дескрипторах, которые возвращает функция <function>gzopen</function>.
+   </simpara>
   </note>
   <warning>
    <para>
@@ -199,12 +198,35 @@ fclose($fp);
     наподобие <literal>FAT</literal> и её производные, поэтому функцию будет
     возвращать &false; в этих окружениях.
    </para>
+   <para>
+    В Windows попытка выполнить файл с PHP-исходным кодом, который заблокировали
+    флагом <constant>LOCK_EX</constant>, приводит к зависанию до тех пор, пока
+    файл не разблокируют. Следующий пример приводит к взаимоблокировке:
+    <informalexample>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+if ($argv[1] ?? null === 'child') {
+    die();
+}
+$fp = fopen(__FILE__, "rb");
+flock($fp, LOCK_EX);
+shell_exec("php " . escapeshellarg(__FILE__) . " child");
+]]>
+     </programlisting>
+    </informalexample>
+   </para>
   </warning>
   <note>
    <para>
     Если в Windows процесс блокировки открывает файл во второй раз, он не может
     получить доступ к файлу через второй дескриптор, пока не разблокирует файл.
    </para>
+   <simpara>
+    В Windows попытка подключить файл, который заблокировали флагом LOCK_EX,
+    завершится ошибкой ErrorException: require(): Read of X bytes failed with errno=13 Permission denied
+   </simpara>
   </note>
  </refsect1>
 
