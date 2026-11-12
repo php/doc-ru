@@ -4,8 +4,8 @@
 <refentry xml:id="function.forward-static-call-array" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>forward_static_call_array</refname>
-  <refpurpose>Вызывает функцию обратного вызова с массивом аргументов, сохраняя
-  текущий вызванный класс</refpurpose>
+  <refpurpose>Вызывает функцию или метод обратного вызова с массивом аргументов
+   и сохранением текущего статического контекста</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,24 +16,25 @@
    <methodparam><type>array</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция вызывает пользовательскую функцию или метод, заданные в параметре
-   <parameter>callback</parameter>, и передаёт аргументы в виде массива,
-   аналогично функции <function>call_user_func_array</function>.
-   Когда функцию вызвали в контексте метода и вызывают метод, она выполняет
+   Функция вызывает пользовательскую функцию или метод из параметра
+   <parameter>callback</parameter> с массивом аргументов, которые обрабатываются
+   аналогично функции <function>call_user_func_array</function>,
+   и сохраняет текущий статический контекст, но только при движении к предкам по иерархии наследования.
+   При вызове в контексте метода и передаче callback-метода в первом аргументе функция выполняет
    <link linkend="language.oop5.late-static-bindings">перенаправляющий вызов</link>,
-   поэтому <literal>static::</literal> внутри метода разрешается в тот же
-   вызванный класс, что и у вызывающей стороны. Это удобно для статических
-   методов обратного вызова, которые должны вести себя как
+   поэтому <literal>static::</literal> внутри целевого метода разрешается в класс,
+   в контексте которого сработал последний неперенаправленный вызов,
+   как если бы callback-метод вызвали через языковую конструкцию
    <literal>self::</literal> или <literal>parent::</literal>.
   </simpara>
   <note>
    <simpara>
-    В отличие от функции <function>forward_static_call</function>, функция
-    <function>forward_static_call_array</function> не требует активной области
+    В отличие от функции <function>forward_static_call</function>,
+    функция <function>forward_static_call_array</function> не требует активной области
     видимости класса: вызов функции
     <function>forward_static_call</function> вне класса выбрасывает ошибку
-    <exceptionname>Error</exceptionname>, а функция
-    <function>forward_static_call_array</function> — нет.
+    <exceptionname>Error</exceptionname>,
+    тогда как функция <function>forward_static_call_array</function> поддерживает вызов вне класса.
    </simpara>
   </note>
  </refsect1>
@@ -46,8 +47,7 @@
      <term><parameter>callback</parameter></term>
      <listitem>
       <para>
-       Функция или метод для вызова. Этот параметр может быть массивом с именем
-       класса и метода, либо строкой с именем функции.
+       Функция или метод для вызова в виде callable-выражения.
       </para>
      </listitem>
     </varlistentry>
@@ -55,12 +55,12 @@
      <term><parameter>args</parameter></term>
      <listitem>
       <simpara>
-       Аргументы, которые передают функции обратного вызова, в виде массива.
+       Массив аргументов для передачи в функцию или метод обратного вызова.
       </simpara>
       <note>
        <simpara>
-        Чтобы передать аргумент по ссылке, соответствующий элемент массива
-        <parameter>args</parameter> должен быть ссылкой.
+        Аргумент передаётся по ссылке,
+        если элемент в <parameter>args</parameter> указали как ссылку.
        </simpara>
       </note>
      </listitem>
@@ -80,7 +80,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример вызова метода с сохранением вызванного класса функцией <function>forward_static_call_array</function></title>
+    <title>Пример вызова статического метода и функции функцией <function>forward_static_call_array</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -88,9 +88,11 @@
 class A
 {
     const NAME = 'A';
-    public static function test() {
+
+    public static function test()
+    {
         $args = func_get_args();
-        echo static::NAME, " ".join(',', $args)." \n";
+        echo static::NAME, ": " . join(', ', $args) . " \n";
     }
 }
 
@@ -98,27 +100,30 @@ class B extends A
 {
     const NAME = 'B';
 
-    public static function test() {
+    public static function test()
+    {
         echo self::NAME, "\n";
         forward_static_call_array(array('A', 'test'), array('more', 'args'));
-        forward_static_call_array( 'test', array('other', 'args'));
+        forward_static_call_array('test', array('other', 'args'));
     }
 }
 
 B::test('foo');
 
-function test() {
-        $args = func_get_args();
-        echo "C ".join(',', $args)." \n";
-    }
+function test()
+{
+    $args = func_get_args();
+    echo "C: " . join(', ', $args) . " \n";
+}
+
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
 B
-B more,args
-C other,args
+B: more, args
+C: other, args
 ]]>
     </screen>
    </example>
