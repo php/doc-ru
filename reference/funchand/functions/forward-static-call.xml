@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0c9c2dd669fe9395eaa73d487fbd160f9057429a Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 17ddeefd6592d09dd9abcf185f56b5befc7b2d6d Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.forward-static-call" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>forward_static_call</refname>
-  <refpurpose>Вызов статического метода</refpurpose>
+  <refpurpose>Вызывает функцию или метод обратного вызова с сохранением текущего статического контекста</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,12 +14,18 @@
    <methodparam><type>callable</type><parameter>callback</parameter></methodparam>
    <methodparam rep="repeat"><type>mixed</type><parameter>args</parameter></methodparam>
   </methodsynopsis>
-  <para>
-   Вызов пользовательской функции или метода, заданные в параметре
-   <parameter>callback</parameter> с последующими аргументами. Эта функция должна
-   вызываться в контексте метода и не может быть вызвана вне класса. Она использует
-   <link linkend="language.oop5.late-static-bindings">позднее статическое связывание</link>.
-  </para>
+  <simpara>
+   Функция вызывает пользовательскую функцию или метод из параметра
+   <parameter>callback</parameter> с произвольным количеством аргументов
+   и сохраняет текущий статический контекст, но только при движении к предкам по иерархии наследования.
+   Функцию вызывают только в контексте метода; вызов вне класса выдаст ошибку.
+   При передаче callback-метода в первом аргументе функция выполняет
+   <link linkend="language.oop5.late-static-bindings">перенаправляющий вызов</link>,
+   поэтому <literal>static::</literal> внутри целевого метода разрешается в класс,
+   в контексте которого сработал последний неперенаправленный вызов,
+   как если бы callback-метод вызвали через языковую конструкцию
+   <literal>self::</literal> или <literal>parent::</literal>.
+  </simpara>
  </refsect1>
 
  <refsect1 role="parameters">
@@ -38,9 +44,9 @@
     <varlistentry>
      <term><parameter>args</parameter></term>
      <listitem>
-      <para>
-       Ноль или более параметров, которые будут переданы вызываемой функции.
-      </para>
+      <simpara>
+       Ноль или больше аргументов для передачи в функцию или метод обратного вызова.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -50,7 +56,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает результат функции или &false;, в случае возникновения ошибки.
+   Функция возвращает результат вызываемой функции или &false;, если возникла ошибка.
   </para>
  </refsect1>
 
@@ -58,7 +64,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>forward_static_call</function></title>
+    <title>Пример вызова статического метода и функции функцией <function>forward_static_call</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -66,9 +72,11 @@
 class A
 {
     const NAME = 'A';
-    public static function test() {
+
+    public static function test()
+    {
         $args = func_get_args();
-        echo static::NAME, " ".join(',', $args)." \n";
+        echo static::NAME, ": " . join(', ', $args) . "\n";
     }
 }
 
@@ -76,29 +84,30 @@ class B extends A
 {
     const NAME = 'B';
 
-    public static function test() {
+    public static function test()
+    {
         echo self::NAME, "\n";
         forward_static_call(array('A', 'test'), 'more', 'args');
-        forward_static_call( 'test', 'other', 'args');
+        forward_static_call('test', 'other', 'args');
     }
 }
 
 B::test('foo');
 
-function test() {
-        $args = func_get_args();
-        echo "C ".join(',', $args)." \n";
-    }
+function test()
+{
+    $args = func_get_args();
+    echo "C: " . join(', ', $args) . "\n";
+}
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
     <screen>
 <![CDATA[
 B
-B more,args
-C other,args
+B: more, args
+C: other, args
 ]]>
     </screen>
    </example>
