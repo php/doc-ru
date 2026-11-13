@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f2cdcd5af4558c22db95463b6ccdd25e4cea3cf5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 83c44e16897a8f6371b0c652ce9610b396514fb8 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="opcache.configuration">
  &reftitle.runtime;
@@ -27,7 +27,7 @@
       <entry><link linkend="ini.opcache.enable-cli">opcache.enable_cli</link></entry>
       <entry>0</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
-      <entry>Между PHP 7.1.2 и 7.1.6 включительно значение по умолчанию было равно <literal>1</literal></entry>
+      <entry>Между PHP 7.1.2 и 7.1.6 включительно значение по умолчанию равнялось <literal>1</literal></entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.memory-consumption">opcache.memory_consumption</link></entry>
@@ -87,7 +87,7 @@
       <entry><link linkend="ini.opcache.fast-shutdown">opcache.fast_shutdown</link></entry>
       <entry>0</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
-      <entry/>
+      <entry>Удалили в PHP 7.2.0</entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.enable-file-override">opcache.enable_file_override</link></entry>
@@ -147,7 +147,7 @@
      </row>
      <row>
       <entry><link linkend="ini.opcache.log-verbosity-level">opcache.log_verbosity_level</link></entry>
-      <entry>"1"</entry>
+      <entry>1</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
       <entry/>
      </row>
@@ -227,7 +227,7 @@
       <entry><link linkend="ini.opcache.file-cache-fallback">opcache.file_cache_fallback</link></entry>
       <entry>1</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
-      <entry/>
+      <entry>Опция доступна только на ОС Windows</entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.validate-permission">opcache.validate_permission</link></entry>
@@ -261,15 +261,15 @@
      </row>
      <row>
       <entry><link linkend="ini.opcache.jit">opcache.jit</link></entry>
-      <entry>"tracing"</entry>
+      <entry>"disable"</entry>
       <entry><constant>INI_ALL</constant></entry>
-      <entry>Опция доступна с PHP 8.0.0</entry>
+      <entry>Опция доступна с PHP 8.0.0. До PHP 8.4.0 значение по умолчанию равнялось "tracing"</entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.jit-buffer-size">opcache.jit_buffer_size</link></entry>
-      <entry>0</entry>
+      <entry>64M</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
-      <entry>Опция доступна с PHP 8.0.0</entry>
+      <entry>Опция доступна с PHP 8.0.0. До PHP 8.4.0 значение по умолчанию равнялось 0</entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.jit-debug">opcache.jit_debug</link></entry>
@@ -311,7 +311,7 @@
       <entry><link linkend="ini.opcache.jit-hot-loop">opcache.jit_hot_loop</link></entry>
       <entry>61</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
-      <entry>Опция доступна с PHP 8.0.0. До PHP 8.5.0 значение по умолчанию было 64</entry>
+      <entry>Опция доступна с PHP 8.0.0. До PHP 8.5.0 значение по умолчанию равнялось 64</entry>
      </row>
      <row>
       <entry><link linkend="ini.opcache.jit-hot-func">opcache.jit_hot_func</link></entry>
@@ -411,6 +411,14 @@
      Размер разделяемой памяти в мегабайтах для OPcache.
      Минимально допустимое значение — <literal>8</literal>,
      которое кеш опкодов займёт, если установили значение меньше.
+    </simpara>
+    <simpara>
+     Если JIT включён, в разделяемой памяти размещается также буфер JIT,
+     поэтому общий размер сегмента равен этому значению плюс
+     <link linkend="ini.opcache.jit-buffer-size">opcache.jit_buffer_size</link>.
+     OPcache сначала пытается выделить сегмент в HUGE PAGES и без предупреждений
+     переходит на обычные страницы, если операционная система не зарезервировала
+     достаточно больших страниц.
     </simpara>
    </listitem>
   </varlistentry>
@@ -715,12 +723,12 @@
     <note>
      <title>Безопасные и небезопасные оптимизации</title>
      <simpara>
-      <emphasis>Безопасные оптимизации</emphasis> (включены по умолчанию) сохраняют точное
+      <emphasis>Безопасные оптимизации</emphasis> включены по умолчанию и сохраняют точное
       поведение кода PHP, одновременно повышая производительность. Включают удаление мёртвого кода,
       сворачивание констант и оптимизацию переходов.
      </simpara>
      <simpara>
-      <emphasis>Небезопасные оптимизации</emphasis> (по умолчанию отключено) может изменить поведение
+      <emphasis>Небезопасные оптимизации</emphasis> по умолчанию отключены и изменяют поведение
       в пограничных случаях:
      </simpara>
      <itemizedlist>
@@ -733,7 +741,8 @@
         <programlisting role="php">
 <![CDATA[
 <?php
-echo getA();         // Вывод: "hello" вместо того, чтобы вызывать ошибку
+
+echo getA();         // Вывод: "hello" вместо вызова ошибки
 const A = "hello";
 function getA() { return A; }
 ]]>
@@ -846,9 +855,9 @@ function getA() { return A; }
      которые удерживают блокировки в кеше.
     </simpara>
     <simpara>
-     Если для параметра
+     При установке для параметра
      <link linkend="ini.opcache.log-verbosity-level">opcache.log_verbosity_level</link>
-     установили значение 2 или больше, то когда возникнет ситуации с превышением времени ожидания,
+     значение 2 или больше при превышении времени ожидания
      модуль запишет в лог ошибок предупреждение.
     </simpara>
     <simpara>
@@ -974,6 +983,11 @@ function getA() { return A; }
      Включает или отключает копирование PHP-кода (текстового сегмента) в HUGE PAGES.
      Опция может повысить производительность, но требует соответствующих системных
      настроек.
+     Копируется только текстовый сегмент бинарного файла PHP; сегмент
+     разделяемой памяти, описанный в параметре
+     <link linkend="ini.opcache.memory-consumption">opcache.memory_consumption</link>,
+     директива не затрагивает. При сбое копирования модуль OPcache
+     выдаёт ошибку уровня <constant>E_WARNING</constant>.
      Опция доступна в Linux начиная с PHP 7.0.0 и во FreeBSD начиная с PHP 7.4.0.
     </simpara>
    </listitem>
@@ -1159,7 +1173,9 @@ function getA() { return A; }
      <member><literal>off</literal>: Выключен, но разрешается включить во время выполнения.</member>
      <member>
       <literal>tracing</literal>/<literal>on</literal>: Включить JIT с компиляцией трассировок.
-      Включён по умолчанию и рекомендуется для большей части пользователей.
+      Режим рекомендуют для большей части пользователей. До PHP 8.4.0 —
+      значение по умолчанию; начиная с PHP 8.4.0 по умолчанию установили
+      значение <literal>disable</literal>.
      </member>
      <member><literal>function</literal>: Включить JIT с компиляцией функций.</member>
     </simplelist>
@@ -1190,7 +1206,7 @@ function getA() { return A; }
        <listitem>
         <simplelist>
          <member><literal>0</literal>: Компилировать каждую функцию при загрузке скрипта.</member>
-         <member><literal>1</literal>: Компилировать функций при первом выполнении.</member>
+         <member><literal>1</literal>: Компилировать функции при первом выполнении.</member>
          <member>
           <literal>2</literal>: Профилировать функции при первом запросе и компилировать самые горячие функции.
          </member>
@@ -1220,6 +1236,12 @@ function getA() { return A; }
      Режим <literal>tracing</literal> соответствует <code>CRTO = 1254</code>,
      Режим <literal>function</literal> соответствует <code>CRTO = 1205</code>.
     </para>
+    <note>
+     <simpara>
+      Начиная с PHP 8.4.0 при отключённом JIT PHP завершает работу с фатальной
+      ошибкой времени запуска, если возникла ошибка инициализации JIT.
+     </simpara>
+    </note>
    </listitem>
   </varlistentry>
   <varlistentry xml:id="ini.opcache.jit-buffer-size">
@@ -1330,7 +1352,7 @@ function getA() { return A; }
     </simpara>
     <note>
      <simpara>
-      Рекомендуется задавать этому параметру простое число, чтобы оно не было кратно числу итераций цикла.
+      Рекомендуется задавать параметру простое число некратное числу итераций цикла.
      </simpara>
     </note>
    </listitem>

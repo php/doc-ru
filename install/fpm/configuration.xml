@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 1f01e2a8e478c63bd6598cde09235ec027b23dd5 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 5b4bfdfc809de5b31fcce97b2c9ee19a9c518fd8 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="install.fpm.configuration" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <title>Настройка</title>
@@ -253,10 +253,28 @@
     </term>
     <listitem>
      <para>
-      Адрес, который будет принимать FastCGI-запросы.
+      Адрес, который принимает FastCGI-запросы.
       Синтаксис: 'ip.add.re.ss:port', 'port', '/path/to/unix/socket'.
       Опция обязательна для каждого пула.
      </para>
+     <warning>
+      <simpara>
+       Открытая конечная точка FastCGI допускает выполнение произвольного кода.
+       При работе веб-сервера на том же хосте целесообразно передавать запросы через Unix-сокет;
+       в Linux доступом к сокету управляют параметры
+       <link linkend="listen-owner">listen.owner</link>,
+       <literal>listen.group</literal> и <literal>listen.mode</literal>,
+       хотя многие системы семейства BSD принимают подключения независимо
+       от этих разрешений.
+       При направлении запросов в TCP-сокет разрешённые для подключения адреса
+       перечисляют в директиве
+       <link linkend="listen-allowed-clients">listen.allowed_clients</link>;
+       по умолчанию параметр не задан, поэтому принимаются подключения
+       с любого адреса.
+       В контейнерных окружениях службу FPM не следует публиковать на порту хоста:
+       контейнеры в одной сети обращаются друг к другу напрямую.
+      </simpara>
+     </warning>
     </listitem>
    </varlistentry>
    <varlistentry xml:id="listen-backlog">
@@ -392,7 +410,7 @@
     </term>
     <listitem>
      <para>
-      Выбор того, как менеджер процессов будет контролировать создание дочерних процессов.
+      Способ контроля менеджера процессов за созданием дочерних процессов
       Возможные значения: <literal>static</literal>, <literal>ondemand</literal>,
       <literal>dynamic</literal>.
       Параметр обязателен.
@@ -403,7 +421,9 @@
      <simpara>
       <literal>ondemand</literal> — число процессов, которые порождаются по требованию (когда появляются запросы,
       в отличие от опции dynamic, когда стартует конкретное количество процессов, равное <literal>pm.start_servers</literal>,
-      вместе с запуском службы).
+      вместе с запуском службы). Число дочерних процессов ограничено значением
+      <literal>pm.max_children</literal>, а простаивающие процессы завершаются
+      через <literal>pm.process_idle_timeout</literal>.
      </simpara>
      <simpara>
       <literal>dynamic</literal> — количество дочерних процессов, которое изменяется динамически, задаётся на основе
@@ -778,7 +798,7 @@
     </term>
     <listitem>
      <para>
-      Ограничивает модули, которые FPM проанализирует.
+      Ограничивает расширения файлов главного скрипта, которые FPM разрешает анализировать.
       Директива помогает предотвратить ошибки конфигурации на стороне веб-сервера.
       FPM-менеджер ограничивают только расширениями .php, чтобы злоумышленники
       не выполнили PHP-код с другими расширениями.
@@ -805,10 +825,32 @@
      <type>string</type>
     </term>
     <listitem>
-     <para>
+     <simpara>
       Файл журнала доступа.
       Значение по умолчанию: нет.
-     </para>
+     </simpara>
+     <simpara>
+      Начиная с PHP 8.5.0 ограничение на длину строки журнала доступа
+      учитывает глобальный параметр <link linkend="log-limit">log_limit</link>.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry xml:id="ini.fastcgi.script-path-encoded">
+    <term>
+     <parameter>fastcgi.script_path_encoded</parameter>
+     <type>bool</type>
+    </term>
+    <listitem>
+     <simpara>
+      Директива управляет декодированием пути в параметре <literal>SCRIPT_FILENAME</literal>,
+      который веб-сервер httpd передаёт при проксировании через директиву
+      <link xlink:href="&url.apache.proxy;#proxypass"><literal>ProxyPass</literal></link>.
+      Значение по умолчанию — <literal>1</literal>,
+      при котором менеджер сохраняет прежнее поведение и не преобразовывает URL-кодированный путь.
+      Значение <literal>0</literal> включает новое поведение,
+      при котором FPM декодирует полный путь к скрипту.
+      Настройка доступна с PHP 8.5.0.
+     </simpara>
     </listitem>
    </varlistentry>
    <varlistentry xml:id="access-format">
@@ -1048,6 +1090,21 @@
     </listitem>
    </varlistentry>
   </variablelist>
+  <para>
+   Значения настроек задают через подстановку переменных окружения.
+   Начиная с PHP 8.3.0 поддерживаются также значения по умолчанию на случай,
+   если переменная окружения не установлена или пуста. Например:
+   <example>
+    <title>Подстановка переменных окружения</title>
+    <programlisting role="ini">
+<![CDATA[
+listen = /var/run/php-fpm-${POOL_NAME}.sock
+user = ${USER_NAME:-www-data}
+group = ${USER_NAME:-www-data}
+]]>
+    </programlisting>
+   </example>
+  </para>
   <para>
    Передача дополнительных переменных окружения обновляет настройки
    PHP для конкретного пула. Для этого добавляют следующие параметры
