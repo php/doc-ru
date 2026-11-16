@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 61374bbe228e8e9c55a24aba59a1e2bb2a871148 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: e43fb30acb61e76ef50174ec84c2aa33674a3828 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pcntl-rfork" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>pcntl_rfork</refname>
-  <refpurpose>Взаимодействует с ресурсами процесса</refpurpose>
+  <refpurpose>Управляет ресурсами процесса</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -15,7 +15,7 @@
    <methodparam choice="opt"><type>int</type><parameter>signal</parameter><initializer>0</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Взаимодействует с ресурсами процесса.
+   Функция управляет ресурсами процесса.
   </para>
  </refsect1>
 
@@ -31,27 +31,41 @@
        разделяются новым процессом (дочерним) или инициализируются в значения по умолчанию.
       </para>
       <para>
-       <parameter>flags</parameter> является логическим OR (или) некоторого подмножества из:
+       Параметр <parameter>flags</parameter> принимает битовую маску из комбинации следующих флагов:
        <simplelist>
         <member>
-         <constant>RFPROC</constant>: Если установлено, создаётся новый процесс;
-         в противном случае изменения затрагивают текущий процесс.
+         <constant>RFPROC</constant>: создаётся новый процесс;
+         иначе изменения затрагивают текущий процесс.
         </member>
         <member>
-         <constant>RFNOWAIT</constant>: Если установлено, дочерний процесс будет отделён от родительского.
-         При выходе дочерний процесс не будет оставлять статус для родителя, чтобы забрать его.
+         <constant>RFNOWAIT</constant>: дочерний процесс отделится от родительского.
+         При выходе дочерний процесс не оставит статус для родителя, чтобы забрать его.
         </member>
         <member>
-         <constant>RFFDG</constant>: Если установлено, копируется таблица дескрипторов файлов вызывающей стороны;
-         В противном случае два процесса используют одну таблицу.
+         <constant>RFFDG</constant>: копируется таблица дескрипторов файлов вызывающей стороны;
+         иначе оба процесса работают с одной общей таблицей.
         </member>
         <member>
-         <constant>RFCFDG</constant>: Если установлено, новый процесс начинается с чистой таблицей дескрипторов файлов.
+         <constant>RFCFDG</constant>: новый процесс начинается с чистой таблицей дескрипторов файлов.
          Взаимоисключающий флаг с <constant>RFFDG</constant>.
         </member>
         <member>
-         <constant>RFLINUXTHPN</constant>: Если установлено, ядро будет возвращать SIGUSR1 вместо SIGCHILD при выходе из дочернего потока.
-         Предназначен для уведомления родительского процесса о выходе из Linux-клона.
+         <constant>RFLINUXTHPN</constant>: при выходе из дочернего потока вместо сигнала SIGCHLD ядро возвращает сигнал SIGUSR1.
+         Флаг указывают для уведомления родительского процесса о выходе из Linux-клона.
+        </member>
+        <member>
+         <constant>RFTSIGZMB</constant>: при выходе дочернего процесса
+         вместо сигнала SIGCHLD по умолчанию
+         ядро отправляет родителю сигнал,
+         который задали параметром <parameter>signal</parameter>.
+         Номер сигнала <literal>0</literal> отключает отправку сигнала при выходе
+         дочернего процесса.
+        </member>
+        <member>
+         <constant>RFTHREAD</constant>: новый процесс разделяет
+         с родителем таблицу соответствия дескрипторов файлов лидерам процессов.
+         Флаг действует, только когда не установили ни <constant>RFFDG</constant>,
+         ни <constant>RFCFDG</constant>.
         </member>
        </simplelist>
       </para>
@@ -60,9 +74,12 @@
     <varlistentry>
      <term><parameter>signal</parameter></term>
      <listitem>
-      <para>
-       Номер сигнала.
-      </para>
+      <simpara>
+       Номер сигнала, который отправляют родителю при выходе дочернего процесса.
+       Параметр учитывается только при установке флага
+       <constant>RFTSIGZMB</constant>. Значение <literal>0</literal> отключает
+       отправку сигнала при выходе дочернего процесса.
+      </simpara>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -72,9 +89,9 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   В случае успешного выполнения в потоке выполнения родительского процесса возвращается PID дочернего процесса,
-   а в потоке выполнения дочернего процесса возвращается <literal>0</literal>.
-   Если в контексте родителя возникла ошибка, функция вернёт <literal>-1</literal>,
+   При успешном выполнении в потоке выполнения родительского процесса возвращается PID дочернего процесса,
+   а в потоке выполнения дочернего процесса — <literal>0</literal>.
+   При ошибке в контексте родителя функция вернёт <literal>-1</literal>,
    не создаст дочерний процесс и выдаст ошибку PHP.
   </para>
  </refsect1>
@@ -83,23 +100,23 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>pcntl_rfork</function></title>
+    <title>Пример управления ресурсами процесса функцией <function>pcntl_rfork</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-$pid = pcntl_rfork(RFNOWAIT|RFTSIGZMB, SIGUSR1);
+$pid = pcntl_rfork(RFNOWAIT | RFTSIGZMB, SIGUSR1);
 
 if ($pid > 0) {
-  // Родительский процесс
-  var_dump($pid);
+    // Родительский процесс
+    var_dump($pid);
 } else {
-  // Дочерний процесс
-  var_dump($pid);
-  sleep(2); // Поскольку дочерний процесс не ждёт, мы видим его pid
+    // Для дочернего процесса переменной $pid присваивается значение 0
+    var_dump($pid);
+    sleep(2); // Удерживаем дочерний процесс активным, чтобы увидеть вывод
+              // или PID потомка в списке процессов,
+              // поскольку родитель не ждёт завершения потомка
 }
-
-?>
 ]]>
     </programlisting>
     &example.outputs.similar;
