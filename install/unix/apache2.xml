@@ -5,75 +5,75 @@
  <title>Apache httpd 2.x на Unix-системах</title>
 
  <simpara>
-  Раздел содержит замечания и подсказки, которые касаются установки PHP
+  Раздел содержит примечания и подсказки, которые касаются установки PHP
   с веб-сервером Apache HTTP Server 2.x в Linux и Unix-подобных системах.
  </simpara>
 
  <warning>
-  <title>Лучше выбрать PHP-FPM</title>
+  <title>Приоритет PHP-FPM</title>
   <simpara>
    <emphasis role="strong">Для новых установок модуль <literal>mod_php</literal>
-   не применяют.</emphasis> Инструкции на этой странице сохранили для истории
-   и для тех редких случаев, когда PHP требуется встроить непосредственно
-   в процесс Apache httpd.
+   не применяют.</emphasis> Инструкции на этой странице сохранили для исторической справки
+   и тех редких сценариев, в которых PHP требуется встроить непосредственно
+   в процесс httpd — исполняемую программу веб-сервера Apache.
   </simpara>
   <simpara>
-   Для современных развёртываний берут
-   <link linkend="install.fpm">PHP-FPM</link> (FastCGI Process Manager)
-   вместе с модулем <literal>mod_proxy_fcgi</literal> веб-сервера Apache httpd.
+   Для современных проектов разворачивают
+   <link linkend="install.fpm">PHP-FPM</link> (англ. FastCGI Process Manager)
+   в связке с Apache-модулем <literal>mod_proxy_fcgi</literal>.
    PHP-FPM лучше управляет ресурсами, изолирует процессы, перезапускает
-   PHP независимо от Apache httpd и совместим с MPM-модулем
-   <literal>event</literal> веб-сервера Apache httpd (стандартный модуль начиная
-   с Apache httpd 2.4). Крупные Linux-дистрибутивы поставляют такую конфигурацию
+   PHP независимо от httpd и совместим с MPM-модулем
+   <literal>event</literal> — стандартным модулем управления процессами и потоками начиная с Apache 2.4.
+   Крупные Linux-дистрибутивы поставляют такую конфигурацию
    как стандартную.
   </simpara>
   <simpara>
    Подход с модулем <literal>mod_php</literal> встраивает PHP непосредственно
-   в каждый рабочий процесс Apache httpd. Если PHP не собрали с поддержкой
-   потокобезопасности (<literal>--enable-zts</literal>), модулю
-   <literal>mod_php</literal> требуется MPM-модуль <literal>prefork</literal>,
-   который заметно ограничивает параллельность. Прежде чем выбрать модуль
-   <literal>mod_php</literal>, требуется в полной мере понимать последствия
+   в каждый рабочий процесс httpd. При сборке PHP без флага <literal>--enable-zts</literal>,
+   который подключает поддержку потокобезопасности,
+   модулю <literal>mod_php</literal> требуется MPM-модуль <literal>prefork</literal>,
+   который заметно ограничивает параллельность. Модуль <literal>mod_php</literal>
+   выбирают, только если в полной мере понимают последствия
    для производительности и безопасности.
   </simpara>
  </warning>
 
  <simpara>
-  Наиболее авторитетный источник информации по Apache httpd 2.x —
-  <link xlink:href="&url.apache2.docs;">документация к Apache</link>.
-  Документация даёт подробную информацию о настройках при установке Apache httpd.
+  <link xlink:href="&url.apache2.docs;">Документация к веб-серверу Apache</link> —
+  надёжный источник информации об httpd 2.x,
+  который даёт подробную информацию о настройках при установке веб-сервера.
  </simpara>
 
  <simpara>
-  Последняя версия веб-сервера Apache httpd доступна для загрузки
-  <link xlink:href="&url.apache;">на странице загрузки Apache</link>,
-  а совместимая версия PHP — на упомянутых выше страницах.
+  Последняя версия веб-сервера доступна
+  <link xlink:href="&url.apache;">на странице загрузок проекта Apache</link>,
+  а совместимая версия PHP — на уже приведённых страницах.
   Это краткое руководство описывает только базовую установку Apache httpd 2.x и PHP.
   Дополнительную информацию даёт
   <link xlink:href="&url.apache2.docs;">документация к Apache</link>.
-  В инструкции ниже опустили номера версий, чтобы указания не устарели.
-  В примерах ниже 'NN' заменяют номером, который соответствует установленной
-  версии Apache httpd.
+  Номера версий опустили, чтобы инструкции не устарели.
+  В примерах 'NN' заменяется номером, который соответствует установленной
+  версии веб-сервера.
  </simpara>
 
  <simpara>
-  Инструкции относятся к Apache httpd 2.4 — единственной ветке Apache httpd,
-  которую поддерживают. Более ранние версии (2.2 и ниже) сняли с поддержки,
-  и применять их не следует.
+  Инструкции относятся к Apache 2.4 — единственной ветке веб-сервера,
+  которую продолжают поддерживать. Жизненный цикл версии 2.2 и предыдущих версий закончился,
+  поэтому старые версии больше не устанавливают.
  </simpara>
 
  <note>
   <simpara>
-   Начиная с PHP 8.4.0 модулю SAPI apache2handler требуется как минимум
-   Apache 2.4; поддержку снятых с сопровождения Apache 2.0 и 2.2 удалили.
+   Начиная с PHP 8.4.0 SAPI-модулю apache2handler требуется как минимум
+   Apache 2.4; поддержку снятых с сопровождения версий Apache 2.0 и 2.2 удалили.
   </simpara>
  </note>
 
  <orderedlist>
   <listitem>
    <simpara>
-    Скачайте Apache httpd по приведённой выше ссылке
-    и распакуйте его:
+    Скачайте веб-сервер по приведённой ссылке
+    и распакуйте дистрибутив:
    </simpara>
 
    <informalexample>
@@ -87,7 +87,7 @@ tar -xzf httpd-2.x.NN.tar.gz
 
   <listitem>
    <simpara>
-    Аналогичным способом скачайте и распакуйте исходные коды PHP:
+    Аналогичным способом скачайте и распакуйте исходный код PHP:
    </simpara>
 
    <informalexample>
@@ -101,14 +101,14 @@ tar -xzf php-NN.tar.gz
 
   <listitem>
    <simpara>
-    Соберите и установите Apache httpd. Подробнее о сборке рассказывает
-    документация по установке Apache httpd. Обратите внимание, что модулю
-    <literal>mod_php</literal> требуется MPM-модуль <literal>prefork</literal>,
-    если PHP не собрали с поддержкой потокобезопасности
-    (<literal>--enable-zts</literal>). Когда вместо этого выбирают PHP-FPM
-    (рекомендованный вариант), берут стандартный MPM-модуль
-    <literal>event</literal> и переходят сразу к
-    <link linkend="install.fpm">инструкциям по установке PHP-FPM</link>.
+    Соберите и установите httpd. Подробнее о сборке рассказывает
+    документация по установке веб-сервера. Обратите внимание,
+    при сборке PHP без флага <literal>--enable-zts</literal>
+    модулю <literal>mod_php</literal> потребуется MPM-модуль <literal>prefork</literal>.
+    При выборе PHP-FPM
+    со стандартным MPM-модулем
+    <literal>event</literal> сразу переходите
+    <link linkend="install.fpm">к инструкциям по установке PHP-FPM</link>.
    </simpara>
 
    <informalexample>
@@ -125,11 +125,11 @@ make install
 
   <listitem>
    <para>
-    Теперь Apache httpd 2.x.NN доступен по адресу /usr/local/apache2,
+    Программа httpd 2.x.NN теперь доступна по адресу /usr/local/apache2,
     установщик настроил веб-сервер на поддержку загружаемых модулей
     и MPM-модуль prefork.
     Правильно ли прошла установка, проверяют через стандартную
-    процедуру запуска Apache httpd — командой наподобие вот такой:
+    процедуру запуска веб-сервера — командой наподобие:
 
     <informalexample>
      <screen>
@@ -156,14 +156,14 @@ make install
     Теперь сконфигурируем и соберём PHP. На этом этапе PHP настраивают
     через опции конфигурации, чтобы указать, например, какие модули требуется включить.
     Запустите команду <command>./configure --help</command>, чтобы получить список доступных параметров
-    конфигурации. В примере мы выполним простую настройку
-    с поддержкой веб-сервера Apache httpd и БД MySQL.
+    конфигурации. В примере выполним простую настройку
+    с поддержкой веб-сервера Apache и БД MySQL.
    </simpara>
 
    <simpara>
-    При сборке Apache httpd из исходного кода по приведённой на этой странице инструкции
+    При сборке httpd из исходного кода по приведённой на странице инструкции
     путь к команде <command>apxs</command> будет соответствовать пути в следующем примере,
-    но если Apache httpd установили другим способом, потребуется изменить пример и указать путь к <command>apxs</command>,
+    но если Apache установили другим способом, потребуется изменить пример и указать путь к <command>apxs</command>,
     который соответствует установке. Обратите внимание, что отдельные дистрибутивы
     переименовывают <command>apxs</command> в <command>apxs2</command>.
    </simpara>
@@ -180,11 +180,11 @@ make install
    </informalexample>
 
    <simpara>
-    Если потребуется изменить параметры конфигурации после установки,
-    то потребуется повторно выполнить шаги <command>configure</command>, <command>make</command>
+    Для изменения параметров конфигурации после установки
+    потребуется повторно выполнить шаги <command>configure</command>, <command>make</command>
     и <command>make install</command>.
-    Просто перезапустите Apache httpd, чтобы изменения вступили в силу и новый модуль начал работать.
-    Перекомпиляция Apache httpd для этого не требуется.
+    Перезапустите процесс httpd, чтобы изменения вступили в силу и новый модуль начал работать.
+    Перекомпиляция веб-сервера для этого не требуется.
    </simpara>
 
    <para>
@@ -215,7 +215,7 @@ cp php.ini-development /usr/local/lib/php.ini
    </simpara>
 
    <simpara>
-    Если вместо этого выбрали файл <filename>php.ini-production</filename>,
+    При выборе файла <filename>php.ini-production</filename>
     обязательно прочитайте список изменений внутри, поскольку они влияют на поведение PHP.
    </simpara>
   </listitem>
@@ -223,7 +223,7 @@ cp php.ini-development /usr/local/lib/php.ini
   <listitem>
    <simpara>
     Отредактируйте файл <filename>httpd.conf</filename>,
-    чтобы Apache httpd загружал модуль PHP.
+    чтобы Apache загружал модуль PHP.
     Путь к PHP-модулю указывают справа от инструкции <literal>LoadModule</literal>.
     Команда <command>make install</command>, возможно, уже добавила эту инструкцию автоматически,
     но лучше проверить.
@@ -240,13 +240,13 @@ LoadModule php_module modules/libphp.so
 
   <listitem>
    <simpara>
-    Скажите веб-серверу Apache httpd, чтобы он разбирал файлы с конкретными расширениями как PHP-код.
-    Например, пусть Apache httpd разбирает как PHP-код файлы с расширением <literal>.php</literal>.
-    Вместо установки только Apache-директивы
-    <literal>AddType</literal> избегают исполнения опасных загрузок и файлов
+    Укажите веб-серверу, файлы с какими расширениями разбирать как PHP-код.
+    Например, пусть Apache разбирает как PHP-код файлы с расширением <literal>.php</literal>.
+    Установки одной только Apache-директивы <literal>AddType</literal> недостаточно,
+    чтобы предотвратить исполнение потенциально опасных загрузок и файлов
     наподобие <filename>exploit.php.jpg</filename>.
     Аналогично следующему примеру указывают одно или больше произвольных расширений,
-    которые веб-сервер будет разбирать как файлы с PHP-кодом.
+    которые веб-сервер станет разбирать как файлы с PHP-кодом.
     Для демонстрации добавим расширение <literal>.php</literal>.
    </simpara>
 
@@ -261,11 +261,11 @@ LoadModule php_module modules/libphp.so
    </informalexample>
 
    <simpara>
-    Или, когда требуется разрешить запуск PHP-кода из файлов
+    Следующая настройка разрешит запускать PHP-код из файлов
     с расширениями <literal>.php</literal>, <literal>.php2</literal>,
     <literal>.php3</literal>, <literal>.php4</literal>, <literal>.php5</literal>,
-    <literal>.php6</literal> и <literal>.phtml</literal>, но не другими,
-    настройка выглядит вот так:
+    <literal>.php6</literal> и <literal>.phtml</literal>,
+    но не другими:
    </simpara>
 
    <informalexample>
@@ -295,16 +295,18 @@ LoadModule php_module modules/libphp.so
    </informalexample>
 
    <simpara>
-    Чтобы разрешить использование PHP-файла как обработчика по умолчанию, если ни один другой обработчик не найден,
-    например при использовании механизма маршрутизации, можно применить директиву <literal>FallbackResource</literal>.
+    Для передачи запроса, которому не соответствует файл на диске и для которого не назначили обработчик,
+    в конкретный PHP-файл по умолчанию, например для маршрутизации запроса внутри приложения,
+    устанавливают директиву <literal>FallbackResource</literal>.
    </simpara>
 
    <simpara>
-    Поскольку директива <literal>SetHandler</literal> применяется независимо от того, существует ли файл, а
-    <literal>FallbackResource</literal> применяется только если обработчик ещё не задан,
-    может потребоваться использовать директиву <literal>If</literal>, чтобы обработчик применялся только для существующих файлов.
-    Это позволяет <literal>FallbackResource</literal> обрабатывать пути, заканчивающиеся на <literal>.php</literal>,
-    но не существующие, что удобно для обработки ошибок и маршрутизации.
+    Директива <literal>SetHandler</literal> применяется независимо от наличия файла,
+    а директива <literal>FallbackResource</literal> — только если обработчик ещё не задали,
+    поэтому иногда требуется указать директиву <literal>If</literal>,
+    чтобы обработчик назначался только для файлов, которые веб-сервер нашёл на диске,
+    а остальные пути с окончанием на <literal>.php</literal> перенаправлялись в скрипт
+    директивы <literal>FallbackResource</literal> для обработки ошибок и управления маршрутизацией.
    </simpara>
 
    <informalexample>
@@ -344,7 +346,7 @@ RewriteRule (.*\.php)s$ $1 [H=application/x-httpd-php-source]
 
   <listitem>
    <simpara>
-    Сервер Apache httpd запускают стандартной процедурой наподобие:
+    Сервер Apache запускают стандартной процедурой наподобие:
    </simpara>
 
    <informalexample>
@@ -368,9 +370,9 @@ service httpd restart
  </orderedlist>
 
  <simpara>
-  Выполнение действий, которые описала эта страница, запускает веб-сервер Apache httpd
-  с поддержкой PHP в виде <literal>SAPI</literal>-модуля.
-  Для Apache httpd и PHP доступно гораздо больше параметров конфигурации.
+  Выполнение приведённых на странице инструкций запускает процесс веб-сервера Apache httpd
+  с поддержкой PHP в роли <literal>SAPI</literal>-модуля.
+  Для Apache и PHP доступно значительно больше параметров конфигурации.
   Дополнительную информацию даёт команда <command>./configure --help</command>
   при запуске в соответствующем дереве исходного кода.
  </simpara>
@@ -378,29 +380,29 @@ service httpd restart
  <note>
   <title>Совместимость с MPM-модулями</title>
   <simpara>
-   Если PHP не собрали с поддержкой потокобезопасного режима Zend Thread Safety
-   (<literal>--enable-zts</literal>), модулю <literal>mod_php</literal> требуется
+   При сборке PHP не в потокобезопасном режиме (англ. Zend Thread Safety),
+   который включается параметром <literal>--enable-zts</literal>,
+   модулю <literal>mod_php</literal> требуется
    MPM-модуль <literal>prefork</literal>.
-   Почему это так, объясняет соответствующий ответ в разделе FAQ о работе
-   <link linkend="faq.installation.apache2">Apache httpd с многопоточным
-   MPM-модулем</link>.
+   Причины объясняет раздел FAQ о работе
+   <link linkend="faq.installation.apache2">Apache-процесса httpd с многопоточным MPM-модулем</link>.
   </simpara>
 
   <simpara>
-   Большинство дистрибутивных пакетов модуля <literal>mod_php</literal>
-   собирают без ZTS, поэтому обычно требуется MPM-модуль
-   <literal>prefork</literal>. Когда нужен многопоточный MPM-модуль
-   (рекомендованный вариант ради производительности под нагрузкой),
-   вместо этого берут <link linkend="install.fpm">PHP-FPM</link>
-   с модулем <literal>mod_proxy_fcgi</literal>.
+   Поддержку ZTS редко включают при сборке дистрибутивных пакетов модуля <literal>mod_php</literal>,
+   а для работы с непотокобезопасной версией веб-серверу требуется MPM-модуль
+   <literal>prefork</literal>. Для работы с многопоточным MPM-модулем —
+   рекомендованный вариант ради производительности под нагрузкой —
+   выбирают <link linkend="install.fpm">PHP-FPM</link>
+   в связке с модулем <literal>mod_proxy_fcgi</literal>.
   </simpara>
  </note>
 
  <note>
   <simpara>
-   В разделе FAQ в ответе на вопрос
+   Раздел FAQ в ответе на вопрос
    <link linkend="faq.installation.apache.multiviews">о параметре MultiViews в настройках Apache</link>
-   обсуждается согласование контента множественного представления при работе веб-сервера с PHP-файлами.
+   рассказывает о согласовании содержимого при работе веб-сервера с PHP-файлами в режиме множественного представления.
   </simpara>
  </note>
 </sect1>
