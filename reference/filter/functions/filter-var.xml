@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c938838be5a7f6d2a0b0710476afb9fb2ccb6e52 Maintainer: shein Status: ready -->
+<!-- EN-Revision: d5e14b9107cacb7d7257ebcf4beec48e0ea741bc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.filter-var" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -75,9 +75,20 @@
   &reftitle.returnvalues;
   <simpara>
    В случае успешного выполнения функция возвращает отфильтрованные данные.
-   В случае возникновения ошибки возвращается значение &false;,
+   Если возникла ошибка, возвращается значение &false;,
    только если не используется флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
    в этом случае возвращается значение &null;.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Начиная с PHP 8.5.0 функция выбрасывает исключение
+   <exceptionname>Filter\FilterFailedException</exceptionname>, если используется флаг
+   <constant>FILTER_THROW_ON_FAILURE</constant> и фильтр не проходит,
+   а также ошибку <exceptionname>ValueError</exceptionname>, если этот флаг
+   используется вместе с <constant>FILTER_NULL_ON_FAILURE</constant>.
   </simpara>
  </refsect1>
 
@@ -91,7 +102,6 @@
 
 var_dump(filter_var('bob@example.com', FILTER_VALIDATE_EMAIL));
 var_dump(filter_var('https://example.com', FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED));
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -115,8 +125,6 @@ $emails = [
 ];
 
 var_dump(filter_var($emails, FILTER_VALIDATE_EMAIL, FILTER_REQUIRE_ARRAY));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -148,8 +156,6 @@ $options = [
 
 var_dump(filter_var('0755', FILTER_VALIDATE_INT, $options));
 var_dump(filter_var('011', FILTER_VALIDATE_INT, $options));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -161,7 +167,7 @@ bool(false)
    </screen>
   </example>
   <example>
-   <title>Передача флагов напрямую или с помощью массива (<type>array</type>)</title>
+   <title>Пример передачи флагов напрямую или с помощью массива (<type>array</type>)</title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -170,8 +176,6 @@ $str = 'string';
 
 var_dump(filter_var($str, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
 var_dump(filter_var($str, FILTER_VALIDATE_BOOLEAN, ['flags' => FILTER_NULL_ON_FAILURE]));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -179,6 +183,62 @@ var_dump(filter_var($str, FILTER_VALIDATE_BOOLEAN, ['flags' => FILTER_NULL_ON_FA
 <![CDATA[
 NULL
 NULL
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример корректной проверки результата валидации</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$value = '0';
+
+// Неправильно: 0 является допустимым целым числом, но приводится к false
+if (!filter_var($value, FILTER_VALIDATE_INT)) {
+    echo "Неправильная проверка: '$value' отклонено\n";
+}
+
+// Правильно: строгое сравнение с false
+if (filter_var($value, FILTER_VALIDATE_INT) === false) {
+    echo "'$value' не является допустимым целым числом\n";
+} else {
+    echo "'$value' является допустимым целым числом\n";
+}
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+Неправильная проверка: '0' отклонено
+'0' является допустимым целым числом
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример проверки результата булевой валидации</title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+foreach (['yes', 'no', 'maybe'] as $value) {
+    $result = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+    // false является допустимым результатом, поэтому проверяется значение null
+    if ($result === null) {
+        echo "'$value' не является допустимым логическим значением\n";
+    } else {
+        echo "'$value' равно ", var_export($result, true), "\n";
+    }
+}
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+'yes' равно true
+'no' равно false
+'maybe' не является допустимым логическим значением
 ]]>
    </screen>
   </example>
