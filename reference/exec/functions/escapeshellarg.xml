@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 0600ff7ba94e3f491aeb246d8ddfedd98f0d7276 Maintainer: mch Status: ready -->
+<!-- EN-Revision: d71237a6d72fe22ef4b47b6d65ef169b90aecd9b Maintainer: mch Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.escapeshellarg" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>escapeshellarg</refname>
-  <refpurpose>Экранирует строку для передачи в качестве аргумента командной строки</refpurpose>
+  <refpurpose>Экранирует строку для передачи в качестве аргумента командной оболочки</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,24 +14,25 @@
    <methodparam><type>string</type><parameter>arg</parameter></methodparam>
   </methodsynopsis>
   <simpara>
-   Функция <function>escapeshellarg</function> добавляет одинарные кавычки вокруг строки и кавычек
-   и экранирует любые существующие одинарные кавычки, разрешая
-   передать строку непосредственно в функцию оболочки и рассматривать её как один
-   безопасный аргумент. Эта функция должна использоваться для того, чтобы экранировать
-   отдельные аргументы для функций оболочки, полученные из пользовательского ввода. Экранирование
-   аргумента необходимо в таких функциях оболочки как <function>exec</function>,
-   <function>system</function> и оператор <link linkend="language.operators.execution">"обратный апостроф"</link>.
+   Функция <function>escapeshellarg</function> обрамляет входную строку одинарными кавычками,
+   а одинарные кавычки внутри строки экранирует и обрамляет одинарными кавычками,
+   подготавливая строку к передаче на выполнение в системной оболочке в виде одного безопасного аргумента.
+   Передача сырых аргументов пользовательского ввода
+   на выполнение в командной оболочке небезопасна,
+   поэтому каждый аргумент экранируют.
+   Команды системной оболочки выполняются функциями <function>exec</function>,
+   <function>system</function> и <link linkend="language.operators.execution">оператором выполнения</link>.
   </simpara>
   <simpara>
-   В ОС Windows <function>escapeshellarg</function> заменяет восклицательный знак,
-   знак процента (позднее связывание переменных) и двойные кавычки на пробелы и
-   добавляет двойные кавычки вокруг строки.
-   Кроме того, каждая серия последовательных обратных слешей (<literal>\</literal>)
-   экранируется одним дополнительным обратным слешем.
+   В ОС Windows функция <function>escapeshellarg</function> заменяет пробелами знак процента,
+   восклицательный знак (отложенная подстановка переменных среды) и двойные кавычки,
+   и обрамляет входную строку не одинарными, а двойными кавычками.
+   Каждая серия последовательных обратных слешей
+   экранируется одним дополнительным символом <literal>\</literal>.
   </simpara>
   <simpara>
    Поведение функции с многобайтовыми строками зависит от текущей настройки
-   локали <constant>LC_CTYPE</constant>. Нераспознанные символы отбрасываются.
+   локали в категории <constant>LC_CTYPE</constant>. Нераспознанные символы отбрасываются.
    Подробности даёт описание функции <function>setlocale</function>.
   </simpara>
  </refsect1>
@@ -44,7 +45,7 @@
      <term><parameter>arg</parameter></term>
      <listitem>
       <para>
-       Аргумент, который заэкранирует функция.
+       Аргумент для экранирования.
       </para>
      </listitem>
     </varlistentry>
@@ -59,18 +60,60 @@
   </simpara>
  </refsect1>
 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если параметр <parameter>arg</parameter> содержит нулевые байты,
+   либо если исходный или экранированный аргумент <parameter>arg</parameter>
+   превышает допустимую длину команды в системной оболочке.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.4.0</entry>
+      <entry>
+       Функция <function>escapeshellarg</function>
+       теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+       если исходный или экранированный аргумент <parameter>arg</parameter> превышает допустимую длину.
+       Раньше выдавалась фатальная ошибка <constant>E_ERROR</constant>.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция <function>escapeshellarg</function> теперь выбрасывает ошибку
+       <exceptionname>ValueError</exceptionname>,
+       если параметр <parameter>arg</parameter> содержит нулевые байты.
+       Раньше выдавалась фатальная ошибка <constant>E_ERROR</constant>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
+ </refsect1>
+
  <refsect1 role="examples">
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования функции <function>escapeshellarg</function></title>
+    <title>Пример экранирования аргумента командной оболочки функцией <function>escapeshellarg</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
 system('ls '.escapeshellarg($dir));
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -86,7 +129,7 @@ system('ls '.escapeshellarg($dir));
     <member><function>exec</function></member>
     <member><function>popen</function></member>
     <member><function>system</function></member>
-    <member><link linkend="language.operators.execution">Оператор исполнения</link></member>
+    <member><link linkend="language.operators.execution">Оператор выполнения</link></member>
    </simplelist>
   </para>
  </refsect1>
