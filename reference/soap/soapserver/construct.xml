@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: fe4e8b87d18f17394e7177917c498774b062448c Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 3e3ce447badbc0cf74b37a7fcd31b10a3d4c5fba Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="soapserver.construct" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -38,22 +38,36 @@
      <term><parameter>options</parameter></term>
      <listitem>
       <para>
-       Попытка установить версию SOAP по умолчанию (<literal>soap_version</literal>),
+       Позволяет задать версию SOAP по умолчанию (<literal>soap_version</literal>),
        внутреннюю кодировку (<literal>encoding</literal>)
        и URI отправителя (<literal>actor</literal>).
       </para>
-      <para>
+      <simpara>
        Опцию <literal>classmap</literal> можно использовать для сопоставления
        некоторых типов WSDL с классами PHP. Данная опция должна быть массивом с
-       ключами равными типам WSDL и значениям равными именам классов PHP.
-      </para>
+       ключами, равными типам WSDL, и значениями, равными именам классов PHP.
+       Начиная с PHP 8.4.0 ключи разрешается задавать также в кларковской
+       нотации, в виде <literal>{namespace}type</literal>, чтобы сопоставить
+       тип из конкретного XML-пространства имён, например
+       <literal>'{http://example.com}foo'</literal>.
+      </simpara>
       <para>
        Опция <literal>typemap</literal> является массивом сопоставления типов.
        Массив с ключами <literal>type_name</literal>,
        <literal>type_ns</literal> (URI пространства имён), <literal>from_xml</literal>
        (callback-функция, принимающая один строковый параметр) и <literal>to_xml</literal>
-       (callback-функция, принимающая один объект в качестве параметр).
+       (callback-функция, принимающая один объект в качестве параметра).
       </para>
+      <simpara>
+       Строка, возвращаемая функцией <literal>to_xml</literal>, должна быть правильно
+       сформированным элементом XML, который копируется в SOAP-сообщение
+       вместе с атрибутами и дочерними элементами. Строка не должна начинаться
+       с объявления типа документа или инструкции обработки. Если callback-функция
+       возвращает что-либо иное, например обычный текст, строку, которую
+       невозможно разобрать как XML, или значение не строкового типа, то
+       отправляется пустой элемент, при этом не возникает ни ошибки,
+       ни предупреждения.
+      </simpara>
       <para>
        Опция <literal>cache_wsdl</literal> задаётся одной из констант:
        <constant>WSDL_CACHE_NONE</constant>,
@@ -68,7 +82,7 @@
        <constant>SOAP_USE_XSI_ARRAY_TYPE</constant>.
       </para>
       <para>
-       опция <literal>send_errors</literal> может быть установлена в &false; для отправки
+       Опция <literal>send_errors</literal> может быть установлена в &false; для отправки
        общего сообщения об ошибке ("Internal error") вместо специального
        сообщения об ошибке, отправляемого в противном случае.
       </para>
@@ -82,7 +96,7 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>SoapServer::SoapServer</function></title>
+    <title>Пример создания объекта SoapServer методом <function>SoapServer::__construct</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
@@ -103,8 +117,6 @@ class MyBook {
 }
 
 $server = new SoapServer("books.wsdl", array('classmap' => array('book' => "MyBook")));
-
-?>
 ]]>
     </programlisting>
    </example>
@@ -115,7 +127,7 @@ $server = new SoapServer("books.wsdl", array('classmap' => array('book' => "MyBo
   &reftitle.seealso;
   <para>
    <simplelist>
-    <member><methodname>SoapClient::SoapClient</methodname></member>
+    <member><methodname>SoapClient::__construct</methodname></member>
    </simplelist>
   </para>
  </refsect1>
