@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 525aa5f198d482c0d03be54ddee5af13b376ab99 Maintainer: tmn Status: ready -->
+<!-- EN-Revision: 4cab6e04096c02da7accd5668f9e5aaae2ac681b Maintainer: tmn Status: ready -->
 <!-- Reviewed: no -->
-<refentry xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook" xml:id="function.getimagesize">
+<refentry xml:id="function.getimagesize" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>getimagesize</refname>
   <refpurpose>Получает размер изображения</refpurpose>
@@ -43,6 +43,15 @@
     множественные кодовые потоки <literal>multiple JPEG 2000 codestreams</literal>,
     тогда функция <function>getimagesize</function> вернёт значения первого потока кода,
     который обнаружит в корне файла.
+   </simpara>
+  </note>
+  <note>
+   <simpara>
+    SVG-изображения распознаются, только если загружен модуль
+    <link linkend="book.libxml">libxml</link>. Корневой элемент <tag>svg</tag>
+    должен содержать атрибуты <literal>width</literal> и <literal>height</literal>,
+    каждый из которых — целое число, за которым может следовать единица измерения,
+    например <literal>5cm</literal>. Иначе возвращается &false;.
    </simpara>
   </note>
   <note>
@@ -101,10 +110,10 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Функция возвращает массив из 7 элементов. Не каждый тип изображения содержит элементы с каналами
+  <simpara>
+   Функция возвращает массив из 9 элементов. Не каждый тип изображения содержит элементы с каналами
    <literal>channels</literal> и битрейтом <literal>bits</literal>.
-  </para>
+  </simpara>
   <para>
    Индексы 0 и 1 содержат ширину и высоту изображения.
   </para>
@@ -128,11 +137,12 @@
    Индекс 2 содержит константу семейства <constant>IMAGETYPE_<replaceable>*</replaceable></constant>,
    которая обозначает тип изображения.
   </para>
-  <para>
+  <simpara>
    Индекс 3 содержит строку со значениями ширины и высоты изображения
    <literal>height="yyy" width="xxx"</literal>, которые указывают
-   в атрибутах тега <acronym>IMG</acronym>.
-  </para>
+   в атрибутах тега <acronym>IMG</acronym>. Индекс отсутствует, если ширина
+   или высота выражена не в пикселях.
+  </simpara>
   <para>
    <literal>mime</literal> — MIME-тип, который соответствует изображению.
    Эти сведения помогают корректно обрабатывать изображения на основании
@@ -157,6 +167,11 @@ if ($size && $fp) {
     </programlisting>
    </example>
   </para>
+  <simpara>
+   Элементы <literal>width_unit</literal> и <literal>height_unit</literal> — единицы измерения,
+   в которых выражены индексы 0 и 1. По умолчанию это <literal>"px"</literal>,
+   если изображение не указывает иное, как это делают SVG-изображения; единицы могут различаться.
+  </simpara>
   <para>
    Элемент <literal>channels</literal> принимает значение 3 для RGB-картинок и 4 для цветовой модели CMYK.
   </para>
@@ -191,42 +206,59 @@ if ($size && $fp) {
 
  <refsect1 role="changelog">
   &reftitle.changelog;
-  <para>
-   <informaltable>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>&Version;</entry>
-       <entry>&Description;</entry>
-      </row>
-     </thead>
-     <tbody>
-      <row>
-       <entry>8.2.0</entry>
-       <entry>
-        Функция теперь возвращает фактические размеры, биты и каналы изображений в формате AVIF;
-        раньше размеры сообщались как <literal>0x0</literal>,
-        а биты и каналы не сообщались вообще.
-       </entry>
-      </row>
-      <row>
-       <entry>8.0.0</entry>
-       <entry>
-        Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
-        если в параметр <parameter>filename</parameter> передали пустую строку;
-        раньше выдавалась ошибка уровня <constant>E_WARNING</constant>, и функция возвращала значение &false;.
-       </entry>
-      </row>
-      <row>
-       <entry>7.1.0</entry>
-       <entry>
-        Добавили поддержку формата WebP.
-       </entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </informaltable>
-  </para>
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.5.0</entry>
+      <entry>
+       Добавили поддержку изображений в форматах HEIF/HEIC.
+      </entry>
+     </row>
+     <row>
+      <entry>8.5.0</entry>
+      <entry>
+       Добавили поддержку SVG-изображений, если загружен модуль libxml.
+      </entry>
+     </row>
+     <row>
+      <entry>8.5.0</entry>
+      <entry>
+       Возвращаемый массив теперь содержит элементы <literal>width_unit</literal> и
+       <literal>height_unit</literal>.
+      </entry>
+     </row>
+     <row>
+      <entry>8.2.0</entry>
+      <entry>
+       Функция теперь возвращает фактические размеры, биты и каналы изображений в формате AVIF;
+       раньше размеры сообщались как <literal>0x0</literal>,
+       а биты и каналы не сообщались вообще.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+       если в параметр <parameter>filename</parameter> передали пустую строку;
+       раньше выдавалась ошибка уровня <constant>E_WARNING</constant>, и функция возвращала значение &false;.
+      </entry>
+     </row>
+     <row>
+      <entry>7.1.0</entry>
+      <entry>
+       Добавили поддержку формата WebP.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
@@ -281,6 +313,7 @@ if (isset($info["APP13"])) {
  <refsect1 role="seealso">
   &reftitle.seealso;
   <simplelist>
+   <member><function>getimagesizefromstring</function></member>
    <member><function>image_type_to_mime_type</function></member>
    <member><function>exif_imagetype</function></member>
    <member><function>exif_read_data</function></member>
