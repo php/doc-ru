@@ -17,15 +17,15 @@
    Функция загружает модуль PHP, заданный параметром <parameter>extension_filename</parameter>.
   </para>
   <para>
-   Чтобы проверить, что заданный модуль уже загружен, используйте функцию
-   <function>extension_loaded</function>. Функция работает как для встроенных
-   модулей, так и для динамически загруженных (т. е. загруженных как через
-   &php.ini;, так и через <function>dl</function>).
+   Загружен ли модуль, проверяет функция <function>extension_loaded</function>,
+   которая работает для встроенных
+   и динамически загруженных модулей —
+   загруженных через файл &php.ini; или функцией <function>dl</function>.
   </para>
   <warning>
    <simpara>
-    Функция доступна только для <acronym>CLI</acronym> и встроенного <acronym>SAPI</acronym>,
-    а также для <acronym>CGI</acronym> <acronym>SAPI</acronym> при запуске из командной строки.
+    Функция доступна только через <acronym>SAPI</acronym>-интерфейсы <acronym>CLI</acronym> и embed,
+    и через <acronym>SAPI</acronym>-интерфейс <acronym>CGI</acronym>, но только при запуске из командной строки.
    </simpara>
   </warning>
  </refsect1>
@@ -38,46 +38,45 @@
      <term><parameter>extension_filename</parameter></term>
      <listitem>
       <para>
-       Параметр содержит <emphasis>только</emphasis> имя файла модуля,
-       который требуется загрузить. Это имя зависит от платформы. Например,
-       модуль <link linkend="ref.sockets">sockets</link> (если скомпилирован,
-       как загружаемый модуль, а не модуль по умолчанию!) будет называться
-       <filename>sockets.so</filename> на Unix-платформах, и
-       <filename>php_sockets.dll</filename> в среде Windows.
+       В параметр передают <emphasis>только</emphasis> название файла загружаемого модуля,
+       которое зависит от платформы.
+       Например, модуль <link linkend="ref.sockets">sockets</link> —
+       но только скомпилированный как загружаемый, а не встроенный —
+       на Unix-платформах называется <filename>sockets.so</filename>,
+       а в среде Windows — <filename>php_sockets.dll</filename>.
       </para>
       <para>
-       Директория, из которой модуль должен быть загружен, также зависит от
-       платформы:
+       Каталог, из которой загружается модуль,
+       тоже зависит от платформы:
       </para>
       <para>
-       Windows - Если явно не задано в &php.ini;, модуль будет грузиться из
-       <filename>C:\php5\</filename> по умолчанию.
+       На Windows по умолчанию модули загружаются из каталога <filename>C:\php5\</filename>,
+       если в файле &php.ini; не указали другой путь.
       </para>
       <para>
-       Unix - Если явно не задано в &php.ini;, директория по умолчанию зависит от
-       <itemizedlist>
+       На Unix-платформах путь к стандартному каталогу загрузки модулей, если конкретную директорию не указали в файле &php.ini;,
+       строится с учётом следующих условий: <itemizedlist>
         <listitem>
          <simpara>
-          PHP собран с настройкой <literal>--enable-debug</literal> или без неё
+          собирался ли PHP с параметром <literal>--enable-debug</literal>
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          PHP собран с поддержкой ZTS (Zend Thread Safety) или нет
+          поддерживает ли сборка режим ZTS (англ. Zend Thread Safety) или PHP собрали для работы в непотокобезопасном режиме
          </simpara>
         </listitem>
         <listitem>
          <simpara>
-          текущий внутренний номер <literal>ZEND_MODULE_API_NO</literal>
-          (номер внутреннего модуля Zend API, который, как правило, является датой
-          основного изменения API модуля, например <literal>20010901</literal>)
+          какой текущий внутренний номер присвоили макросу <literal>ZEND_MODULE_API_NO</literal> —
+          версия API-интерфейса между движком Zend и внутренними модулями,
+          которая стандартно представляет дату мажорного изменения, например <literal>20010901</literal>
          </simpara>
         </listitem>
        </itemizedlist>
-       Принимая во внимание вышесказанное, получаем следующие значения по умолчанию для
-       директории модуля
-       <literal>&lt;install-dir&gt;/lib/php/extensions/ &lt;debug-or-not&gt;-&lt;zts-or-not&gt;-ZEND_MODULE_API_NO</literal>,
-       например,
+       При подстановке конкретных значений в шаблон
+       <literal>&lt;install-dir&gt;/lib/php/extensions/&lt;debug-or-not&gt;-&lt;zts-or-not&gt;-ZEND_MODULE_API_NO</literal>
+       получим пути к стандартному каталогу загрузки модулей наподобие
        <filename>/usr/local/php/lib/php/extensions/debug-non-zts-20010901</filename>
        или
        <filename>/usr/local/php/lib/php/extensions/no-debug-zts-20010901</filename>.
@@ -91,11 +90,11 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   &return.success; Если механизм загрузки модулей недоступен или отключён
-   (значение off настройки <link linkend="ini.enable-dl">enable_dl</link> в &php.ini;), поднимается
-   ошибка уровня <constant>E_WARNING</constant> и возвращается &false;. Если
-   <function>dl</function> не сможет загрузить заданную библиотеку, то в дополнение
-   к &false; будет выдано сообщение <constant>E_WARNING</constant>.
+   &return.success; Функция <function>dl</function> дополнительно выдаст ошибку уровня <constant>E_WARNING</constant>,
+   если значение &false; вернулось по следующими причинам:
+   механизм загрузки модулей недоступен, загрузка модулей отключена
+   установкой значения Off директиве <link linkend="ini.enable-dl">enable_dl</link> в файле &php.ini;
+   или невозможно загрузить библиотеку.
   </simpara>
  </refsect1>
 
@@ -103,12 +102,12 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Примеры использования <function>dl</function></title>
+    <title>Примеры загрузки PHP-модуля функцией <function>dl</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Пример загрузки модуля, основываясь на ОС
+// Пример загрузки модуля на основе ОС…
 if (!extension_loaded('sqlite')) {
     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
         dl('php_sqlite.dll');
@@ -117,7 +116,7 @@ if (!extension_loaded('sqlite')) {
     }
 }
 
-// Или на константе PHP_SHLIB_SUFFIX
+// …или на основе значения константы PHP_SHLIB_SUFFIX
 if (!extension_loaded('sqlite')) {
     $prefix = (PHP_SHLIB_SUFFIX === 'dll') ? 'php_' : '';
     dl($prefix . 'sqlite.' . PHP_SHLIB_SUFFIX);
@@ -132,7 +131,7 @@ if (!extension_loaded('sqlite')) {
   &reftitle.notes;
   <note>
    <para>
-    <function>dl</function> чувствительна к регистру на Unix-платформах.
+    Функция <function>dl</function> чувствительна к регистру на Unix-платформах.
    </para>
   </note>
  </refsect1>
