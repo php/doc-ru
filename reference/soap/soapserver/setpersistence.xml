@@ -4,7 +4,7 @@
 <refentry xml:id="soapserver.setpersistence" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>SoapServer::setPersistence</refname>
-  <refpurpose>Устанавливает режим сохранения SoapServer</refpurpose>
+  <refpurpose>Устанавливает режим сохранения объекта SoapServer</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -14,26 +14,27 @@
    <methodparam><type>int</type><parameter>mode</parameter></methodparam>
   </methodsynopsis>
   <para>
-   Метод изменяет режим сохранения объекта SoapServer между
-   запросами. Метод сохраняет данные между запросами, используя
-   механизм сессий PHP. Этот метод влияет только на SoapServer после экспорта функций,
-   используя <methodname>SoapServer::setClass</methodname>.
+   Метод изменяет режим сохранения состояния объекта SoapServer между запросами.
+   Метод сохраняет данные между запросами через механизм сессий PHP.
+   Метод влияет на SoapServer только при экспорте функций
+   методом <methodname>SoapServer::setClass</methodname>.
   </para>
   <note>
    <para>
-    Сохранение <constant>SOAP_PERSISTENCE_SESSION</constant> гарантирует
-    сохранение только объектов заданного класса, но не статические данные класса.
-    В этом случае используйте <varname>$this->bar</varname> вместо self::$bar.
+    Режим <constant>SOAP_PERSISTENCE_SESSION</constant>
+    сохраняет состояние только объектов, но не статических данных класса,
+    поэтому вместо статических свойств класса self::$bar
+    обращаются к свойствам объекта — <varname>$this->bar</varname>.
    </para>
   </note>
   <note>
    <para>
-    <constant>SOAP_PERSISTENCE_SESSION</constant> сериализует данные объекта
-    класса и сохраняет их между запросами. Для корректной работы с ресурсами
-    (например, <classname>PDO</classname>),
-    следует использовать магические методы
-    <link linkend="object.wakeup">__wakeup()</link> и
-    <link linkend="object.sleep">__sleep()</link>.
+    Режим <constant>SOAP_PERSISTENCE_SESSION</constant> сериализует и сохраняет
+    данные объектов между запросами. Для корректного восстановления состояния внешних ресурсов
+    наподобие объектов модуля <classname>PDO</classname>
+    в классе потребуется определить магические методы
+    <link linkend="object.wakeup">__wakeup()</link>
+    и <link linkend="object.sleep">__sleep()</link>.
    </para>
   </note>
  </refsect1>
@@ -46,18 +47,18 @@
      <term><parameter>mode</parameter></term>
      <listitem>
       <para>
-       Константа из следующего списка: <constant>SOAP_PERSISTENCE_<replaceable>*</replaceable></constant>.
+       Константа семейства <constant>SOAP_PERSISTENCE_<replaceable>*</replaceable></constant>.
       </para>
       <para>
-       <constant>SOAP_PERSISTENCE_REQUEST</constant> - данные SoapServer не сохраняются
-       между запросами. Это поведение <emphasis role="bold">по умолчанию</emphasis>
-       любого объекта SoapServer после вызова setClass.
+       В режиме <constant>SOAP_PERSISTENCE_REQUEST</constant> данные объекта SoapServer не сохраняются
+       между запросами — поведение <emphasis role="bold">по умолчанию</emphasis>
+       объектов SoapServer после вызова метода setClass.
       </para>
       <para>
-       <constant>SOAP_PERSISTENCE_SESSION</constant> - данные SoapServer сохраняются
-       между запросами. Это достигается путём сериализации объекта SoapServer в
-       <varname>$_SESSION['_bogus_session_name']</varname>, следовательно
-       необходимо вызвать <function>session_start</function> перед включением этого режима.
+       В режиме <constant>SOAP_PERSISTENCE_SESSION</constant> данные объекта SoapServer сохраняются
+       между запросами за счёт записи сериализованного представления
+       объекта SoapServer в элемент <varname>$_SESSION['_bogus_session_name']</varname>,
+       поэтому перед включением режима потребуется вызвать функцию <function>session_start</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -86,13 +87,13 @@
      <row>
       <entry>8.4.0</entry>
       <entry>
-       Константа <constant>SOAP_PERSISTENCE_SESSION</constant> теперь работает,
-       когда модуль session собрали как разделяемый; раньше вызов молча
-       завершался неудачей.
+       Режим <constant>SOAP_PERSISTENCE_SESSION</constant> теперь работает,
+       если модуль session собрали как загружаемый;
+       раньше режим не работал и не сообщал об ошибке.
        Метод <methodname>SoapServer::setPersistence</methodname> теперь также
-       выбрасывает исключение <exceptionname>Error</exceptionname>, когда запросили
-       константу <constant>SOAP_PERSISTENCE_SESSION</constant>, а модуль session
-       недоступен.
+       выбрасывает ошибку <exceptionname>Error</exceptionname>
+       при запросе режима <constant>SOAP_PERSISTENCE_SESSION</constant>,
+       если модуль session недоступен.
       </entry>
      </row>
     </tbody>
@@ -104,42 +105,48 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример использования <function>SoapServer::setPersistence</function></title>
+    <title>Пример установки режима сохранения методом <function>SoapServer::setPersistence</function></title>
     <programlisting role="php">
 <![CDATA[
 <?php
- class MyFirstPersistentSoapServer {
-     private $resource; // (Такие как PDO, mysqli и т.д.)
-     public $myvar1;
-     public $myvar2;
 
-     public function __construct() {
-         $this->__wakeup(); // Вызываем __wakeup для пересоздания $resource
-     }
+class MyFirstPersistentSoapServer
+{
+    private $resource; // Ресурс наподобие объекта PDO, mysqli и т. д.
+    public $myvar1;
+    public $myvar2;
 
-     public function __wakeup() {
-         $this->resource = CodeToStartOurResourceUp();
-     }
+    public function __construct()
+    {
+        $this->__wakeup(); // Вызываем метод __wakeup для восстановления ресурса $resource
+    }
 
-     public function __sleep() {
-         // Не сохраняем $resource здесь.
-         // Ошибка в этом методе приведёт к тому, что при последующей десериализации
-         // мы не сможем восстановить состояние объекта.
-         return array('myvar1','myvar2');
-     }
- }
+    public function __wakeup()
+    {
+        $this->resource = CodeToStartOurResourceUp();
+    }
 
- try {
-     session_start();
-     $server = new SoapServer(null, array('uri' => $_SERVER['REQUEST_URI']));
-     $server->setClass('MyFirstPersistentSoapServer');
-     // setPersistence НЕОБХОДИМО вызвать после setClass, поскольку setClass
-     // принудительно устанавливает SESSION_PERSISTENCE_REQUEST.
-     $server->setPersistence(SOAP_PERSISTENCE_SESSION);
-     $server->handle();
- } catch(SoapFault $e) {
-     error_log("ОШИБКА SOAP: ". $e->getMessage());
- }
+    public function __sleep()
+    {
+        // Исключаем свойство $resource из списка полей для сериализации,
+        // чтобы сохранить данные сессии. Иначе при следующем запросе десериализация
+        // завершится ошибкой и объект SoapObject не сохранит состояние между запросами.
+        return array('myvar1', 'myvar2');
+    }
+}
+
+try {
+    session_start();
+    $server = new SoapServer(null, array('uri' => $_SERVER['REQUEST_URI']));
+    $server->setClass('MyFirstPersistentSoapServer');
+    // Метод setPersistence вызывают ТОЛЬКО ПОСЛЕ вызова метода setClass,
+    // поскольку setClass принудительно устанавливает режим SESSION_PERSISTENCE_REQUEST.
+    $server->setPersistence(SOAP_PERSISTENCE_SESSION);
+    $server->handle();
+} catch (SoapFault $e) {
+    error_log("ОШИБКА SOAP: " . $e->getMessage());
+}
+
 ]]>
     </programlisting>
    </example>
