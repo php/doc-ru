@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: c68930acbf73c9e46dc7275afb8212e4f89eca2e Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 0e165c09c5b960013112a58e82320cc3f3961797 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="soapserver.setpersistence" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -118,20 +118,26 @@ class MyFirstPersistentSoapServer
 
     public function __construct()
     {
-        $this->__wakeup(); // Вызываем метод __wakeup для восстановления ресурса $resource
+        $this->resource = CodeToStartOurResourceUp(); // Восстанавливаем ресурс $resource
     }
 
-    public function __wakeup()
+    public function __unserialize(array $data): void
     {
+        $this->myvar1 = $data['myvar1'];
+        $this->myvar2 = $data['myvar2'];
+
         $this->resource = CodeToStartOurResourceUp();
     }
 
-    public function __sleep()
+    public function __serialize(): array
     {
         // Исключаем свойство $resource из списка полей для сериализации,
         // чтобы сохранить данные сессии. Иначе при следующем запросе десериализация
         // завершится ошибкой и объект MyFirstPersistentSoapServer не сохранит состояние между запросами.
-        return array('myvar1', 'myvar2');
+        return [
+            'myvar1' => $this->myvar1,
+            'myvar2' => $this->myvar2,
+        ];
     }
 }
 
