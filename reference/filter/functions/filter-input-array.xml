@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 53054bf8decc8648cf2e90a493692a161e2371af Maintainer: shein Status: ready -->
+<!-- EN-Revision: d5e14b9107cacb7d7257ebcf4beec48e0ea741bc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="function.filter-input-array">
  <refnamediv>
   <refname>filter_input_array</refname>
-  <refpurpose>Получает несколько переменных извне PHP и, при необходимости, фильтрует их</refpurpose>
+  <refpurpose>Извлекает элементы из сырого суперглобального массива и фильтрует значения</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,8 +15,8 @@
    <methodparam choice="opt"><type>bool</type><parameter>add_empty</parameter><initializer>&true;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция полезна для получения множества переменных без
-   многократного вызова функции <function>filter_input</function>.
+   Функция извлекает набор элементов
+   вместо многократного вызова функции <function>filter_input</function>.
   </para>
  </refsect1>
  <refsect1 role="parameters">
@@ -26,128 +26,219 @@
     <term><parameter>type</parameter></term>
     <listitem>
      <simpara>
-      Одна из констант <constant>INPUT_<replaceable>*</replaceable></constant>.
+      Константа семейства <constant>INPUT_<replaceable>*</replaceable></constant>.
      </simpara>
      <warning>
       <simpara>
-       Содержимое фильтруемых суперглобальных переменных – это исходное «сырое» содержимое,
-       предоставленное <acronym>SAPI</acronym>, до внесения пользователем каких-либо изменений
-       в суперглобальные переменные.
-       Для фильтрации изменённого суперглобального содержимого
-       используйте функцию <function>filter_var_array</function>.
+       Функция фильтрует только «сырые» значения,
+       которыми <acronym>SAPI</acronym> заполняет суперглобальные массивы исходно.
+       Новые и изменённые значения суперглобальных массивов
+       фильтруют функцией <function>filter_var_array</function>.
       </simpara>
      </warning>
     </listitem>
    </varlistentry>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)">
-    <xi:fallback/>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='add_empty']]]/.)">
-    <xi:fallback/>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var-array')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='add_empty']]]/.)"/>
   </variablelist>
  </refsect1>
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   В случае успешного выполнения, функция возвращает массив (&array;),
-   содержащий значения запрошенных переменных.
+   Функция возвращает массив (&array;) запрошенных элементов,
+   если выполнилась успешно.
   </simpara>
   <simpara>
-   Функция возвращает значение &false; в случае возникновения ошибки.
-   Если входной массив, определяемый параметром <parameter>type</parameter>, не заполнен,
-   функция вернёт значение &null;, если флаг <constant>FILTER_NULL_ON_FAILURE</constant>
-   не задан.
+   При ошибке функция возвращает &false;.
+   Функция возвращает &null;,
+   если обозначенный параметром <parameter>type</parameter> входной массив
+   не заполнен.
   </simpara>
   <simpara>
-   Недостающие записи входного массива будут заполнены в возвращаемый массив (&array;),
-   если значение параметра <parameter>add_empty</parameter> равно &true;.
-   В этом случае отсутствующим записям будем присвоено значение &null;,
-   если только не используется флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
-   в этом случае записям будет присвоено значение &false;.
+   Недостающие элементы входного массива функция добавляет в возвращаемый массив (&array;)
+   как элементы со значением &null;, если значение параметра <parameter>add_empty</parameter>
+   равно &true;, и игнорирует, если для третьего параметра установили &false;.
+   В отличие от функции <function>filter_input</function>,
+   флаг <constant>FILTER_NULL_ON_FAILURE</constant> не изменяет поведение функции
+   и не заставляет добавлять элемент со значением &null; для недостающих элементов.
   </simpara>
   <simpara>
-   Элемент возвращаемого массива (&array;) будет &false;,
-   если фильтр не сработал, если только не используется флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
-   в этом случае он будет &null;.
+   В элемент возвращаемого массива (&array;) запишется значение &false;,
+   если значение элемента не прошло фильтр, если только не установили флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
+   который заставит добавить для элемента значение &null;.
+   При установке флага <constant>FILTER_FORCE_ARRAY</constant> функция оборачивает результат
+   провала фильтрации в одноэлементный массив, как и остальные результаты.
   </simpara>
+ </refsect1>
 
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если значение параметра <parameter>type</parameter>
+   не совпадает со значениями констант семейства <constant>INPUT_<replaceable>*</replaceable></constant>.
+  </simpara>
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+   если обозначенный параметром <parameter>type</parameter> входной массив заполнен,
+   а в параметр <parameter>options</parameter> передали массив (&array;)
+   с нестроковым (&string;) ключом,
+   и ошибку <exceptionname>ValueError</exceptionname>,
+   если массив опций содержит пустой ключ.
+  </simpara>
+  <simpara>
+   Начиная с PHP 8.5.0 функция выбрасывает исключение
+   <exceptionname>Filter\FilterFailedException</exceptionname>,
+   если для элемента входного массива
+   установили флаг <constant>FILTER_THROW_ON_FAILURE</constant>
+   и значение не прошло фильтр,
+   и ошибку <exceptionname>ValueError</exceptionname>,
+   если для такого элемента флаг <constant>FILTER_THROW_ON_FAILURE</constant> указали вместе
+   с флагом <constant>FILTER_NULL_ON_FAILURE</constant>.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+       если значение параметра <parameter>type</parameter> не совпадает со значениями
+       констант семейства <constant>INPUT_<replaceable>*</replaceable></constant>;
+       раньше входной массив обрабатывался как незаполненный.
+      </entry>
+     </row>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+       если обозначенный параметром <parameter>type</parameter> входной массив заполнен,
+       а в массиве <parameter>options</parameter> передали массив
+       с нестроковым (&string;) ключом,
+       и ошибку <exceptionname>ValueError</exceptionname>,
+       если массив опций содержит пустой ключ; раньше выдавалось предупреждение
+       <constant>E_WARNING</constant> и возвращалось значение &false;.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>filter_input_array</function></title>
+   <title>Пример фильтрации входных данных функцией <function>filter_input_array</function></title>
+   <simpara>
+    Пример фильтрует аргументы GET-запроса
+    <literal>?email=user@example.com&amp;age=twenty&amp;url=https://example.com</literal>.
+    Элемент <literal>age</literal> не проходит фильтр,
+    поскольку значение <literal>twenty</literal> не относится к целочисленным;
+    значение за пределами диапазона от <literal>1</literal> до <literal>120</literal> тоже не прошло бы фильтрацию.
+   </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
 
-/* данные, полученные методом POST
-$_POST = array(
-    'product_id' => 'libgd<script>',
-    'component'  => array('10'),
-    'version'    => '2.0.33',
-    'testarray'  => array('2', '23', '10', '12'),
-    'testscalar' => '2',
-);
-*/
+$filters = [
+    'email' => FILTER_VALIDATE_EMAIL,
+    'age'   => [
+        'filter'  => FILTER_VALIDATE_INT,
+        'options' => ['min_range' => 1, 'max_range' => 120],
+    ],
+    'url'   => FILTER_VALIDATE_URL,
+];
 
-$args = array(
-    'product_id'   => FILTER_SANITIZE_ENCODED,
-    'component'    => array('filter'    => FILTER_VALIDATE_INT,
-                            'flags'     => FILTER_REQUIRE_ARRAY,
-                            'options'   => array('min_range' => 1, 'max_range' => 10)
-                           ),
-    'version'      => FILTER_SANITIZE_ENCODED,
-    'doesnotexist' => FILTER_VALIDATE_INT,
-    'testscalar'   => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_REQUIRE_SCALAR,
-                           ),
-    'testarray'    => array(
-                            'filter' => FILTER_VALIDATE_INT,
-                            'flags'  => FILTER_REQUIRE_ARRAY,
-                           )
+$result = filter_input_array(INPUT_GET, $filters);
 
-);
-
-$myinputs = filter_input_array(INPUT_POST, $args);
-
-var_dump($myinputs);
-echo "\n";
-?>
+var_dump($result);
 ]]>
    </programlisting>
-   &example.outputs;
+   &example.outputs.similar;
    <screen>
 <![CDATA[
-array(6) {
-  ["product_id"]=>
-    string(17) "libgd%3Cscript%3E"
-  ["component"]=>
-  array(1) {
-    [0]=>
-    int(10)
-  }
-  ["version"]=>
-    string(6) "2.0.33"
-  ["doesnotexist"]=>
-  NULL
-  ["testscalar"]=>
-  int(2)
-  ["testarray"]=>
-  array(4) {
-    [0]=>
-    int(2)
-    [1]=>
-    int(23)
-    [2]=>
-    int(10)
-    [3]=>
-    int(12)
-  }
+array(3) {
+  ["email"]=>
+  string(16) "user@example.com"
+  ["age"]=>
+  bool(false)
+  ["url"]=>
+  string(19) "https://example.com"
 }
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример фильтрации POST-данных функцией <function>filter_input_array</function></title>
+   <simpara>
+    Следующий пример фильтрует POST-запрос с полями
+    <literal>username=&lt;script&gt;alert&lt;/script&gt;</literal>
+    и <literal>comment=Hello World</literal>.
+    Поле с ключом <literal>missing</literal> не передали:
+    поле всё равно попадает в результат со значением &null;,
+    поскольку предустановленное значение параметра <parameter>add_empty</parameter> равно &true;.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$filters = [
+    'username' => FILTER_SANITIZE_SPECIAL_CHARS,
+    'comment'  => FILTER_SANITIZE_SPECIAL_CHARS,
+    'missing'  => FILTER_VALIDATE_INT,
+];
+
+$result = filter_input_array(INPUT_POST, $filters);
+
+var_dump($result);
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+array(3) {
+  ["username"]=>
+  string(38) "&#60;script&#62;alert&#60;/script&#62;"
+  ["comment"]=>
+  string(11) "Hello World"
+  ["missing"]=>
+  NULL
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример фильтрации функцией <function>filter_input_array</function> значений незаполненного массива</title>
+   <simpara>
+    При фильтрации GET-запроса
+    обозначенный константой <constant>INPUT_POST</constant> входной массив остаётся пустым,
+    поскольку запрос не содержал POST-полей,
+    поэтому вместо массива (&array;) функция возвращает &null;.
+    Правило относится к каждому типу входных данных: запрос без аргументов
+    тоже выдаст &null; при передаче в первом аргументе константы <constant>INPUT_GET</constant>.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+var_dump(filter_input_array(INPUT_POST, ['a' => FILTER_VALIDATE_INT]));
+]]>
+   </programlisting>
+   &example.outputs.similar;
+   <screen>
+<![CDATA[
+NULL
 ]]>
    </screen>
   </example>
@@ -157,9 +248,9 @@ array(6) {
   &reftitle.notes;
   <note>
    <para>
-    В массиве <constant>INPUT_SERVER</constant> нет ключа
-    <literal>REQUEST_TIME</literal>, потому что он будет позднее
-    в <varname>$_SERVER</varname>.
+    Массив <constant>INPUT_SERVER</constant> не содержит ключа
+    <literal>REQUEST_TIME</literal>, поскольку серверный интерфейс вставляет
+    ключ в массив <varname>$_SERVER</varname> позднее.
    </para>
   </note>
  </refsect1>

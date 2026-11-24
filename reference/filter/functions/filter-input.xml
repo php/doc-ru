@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: f7e68a1a35d622977d1a1c2155795204243ec3f1 Maintainer: shein Status: ready -->
+<!-- EN-Revision: d5e14b9107cacb7d7257ebcf4beec48e0ea741bc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="function.filter-input">
  <refnamediv>
   <refname>filter_input</refname>
-  <refpurpose>Получает конкретную внешнюю переменную по имени и, если нужно, фильтрует значение переменной</refpurpose>
+  <refpurpose>Извлекает элемент по ключу из сырого суперглобального массива и фильтрует значение</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -24,15 +24,14 @@
     <term><parameter>type</parameter></term>
     <listitem>
      <simpara>
-      Одна из констант <constant>INPUT_<replaceable>*</replaceable></constant>.
+      Константа семейства <constant>INPUT_<replaceable>*</replaceable></constant>.
      </simpara>
      <warning>
       <simpara>
-       Содержимое фильтруемых суперглобальных переменных – это исходное «сырое» содержимое,
-       предоставленное <acronym>SAPI</acronym>, до внесения пользователем каких-либо изменений
-       в суперглобальные переменные.
-       Для фильтрации изменённого суперглобального содержимого
-       используйте функцию <function>filter_var</function>.
+       Функция фильтрует только «сырые» значения,
+       которыми <acronym>SAPI</acronym> заполняет суперглобальные массивы исходно.
+       Новые и изменённые значения суперглобальных массивов
+       фильтруют функцией <function>filter_var</function>.
       </simpara>
      </warning>
     </listitem>
@@ -41,35 +40,74 @@
     <term><parameter>var_name</parameter></term>
     <listitem>
      <simpara>
-      Имя переменной для фильтрации внутри соответствующего типа (<parameter>type</parameter>) суперглобальных переменных.
+      Ключ для фильтрации значения суперглобального массива, тип которого указали в параметре <parameter>type</parameter>.
      </simpara>
     </listitem>
    </varlistentry>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='filter']]]/.)">
-    <xi:fallback/>
-   </xi:include>
-   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)">
-    <xi:fallback/>
-   </xi:include>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='filter']]]/.)"/>
+   <xi:include xpointer="xmlns(db=http://docbook.org/ns/docbook) xpointer(id('function.filter-var')/db:refsect1[@role='parameters']//db:varlistentry[db:term[db:parameter[text()='options']]]/.)"/>
   </variablelist>
  </refsect1>
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <simpara>
-   В случае успешного выполнения функция возвращает значение запрошенной переменной,
-   значение &false;, если фильтр не пропустил значение,
-   или значение &null;, если переменная <parameter>var_name</parameter> не установлена.
-   Если задан флаг <constant>FILTER_NULL_ON_FAILURE</constant>,
-   функция возвращает значение &false;, когда переменная не установлена,
-   и значение &null;, когда фильтр не пропустил значение.
+   Функция возвращает значение запрошенного элемента, если выполнилась успешно,
+   &false;, если значение не прошло фильтр,
+   или &null;, если массив не содержит ключа <parameter>var_name</parameter>.
+   При установке флага <constant>FILTER_NULL_ON_FAILURE</constant>
+   функция возвращает значение &false;, если массив не содержит ключа,
+   и &null;, если значение не прошло фильтр.
   </simpara>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+   если значение параметра <parameter>type</parameter>
+   не совпадает со значениями констант семейства <constant>INPUT_<replaceable>*</replaceable></constant>.
+  </simpara>
+  <simpara>
+   Начиная с PHP 8.5.0 функция выбрасывает исключение
+   <exceptionname>Filter\FilterFailedException</exceptionname>,
+   если установили флаг <constant>FILTER_THROW_ON_FAILURE</constant>
+   и значение не прошло фильтр или массив не содержит ключа <parameter>var_name</parameter>,
+   и ошибку <exceptionname>ValueError</exceptionname>,
+   если флаг <constant>FILTER_THROW_ON_FAILURE</constant> указали вместе
+   с флагом <constant>FILTER_NULL_ON_FAILURE</constant>.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+       если значение параметра <parameter>type</parameter> не совпадает со значениями
+       констант семейства <constant>INPUT_<replaceable>*</replaceable></constant>;
+       раньше элемент массива неизвестного типа обрабатывался так, как будто ключ не содержится в массиве.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования функции <function>filter_input</function></title>
+   <title>Пример фильтрации значений функцией <function>filter_input</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -78,8 +116,6 @@ $search_html = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
 $search_url = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_ENCODED);
 echo "Вы искали $search_html.\n";
 echo "<a href='?search=$search_url'>Искать снова.</a>";
-
-?>
 ]]>
    </programlisting>
    &example.outputs.similar;
