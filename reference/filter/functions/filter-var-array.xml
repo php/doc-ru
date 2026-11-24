@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 627f933cfe6a033dccac32982cd68e7c1b86927f Maintainer: shein Status: ready -->
+<!-- EN-Revision: d5e14b9107cacb7d7257ebcf4beec48e0ea741bc Maintainer: shein Status: ready -->
 <!-- Reviewed: no -->
 <refentry xmlns="http://docbook.org/ns/docbook" xml:id="function.filter-var-array">
  <refnamediv>
   <refname>filter_var_array</refname>
-  <refpurpose>Принимает несколько переменных и, при необходимости, фильтрует их</refpurpose>
+  <refpurpose>Извлекает элементы из массива и фильтрует значения</refpurpose>
  </refnamediv>
 
  <refsect1 role="description">
@@ -16,10 +16,10 @@
    <methodparam choice="opt"><type>bool</type><parameter>add_empty</parameter><initializer>&true;</initializer></methodparam>
   </methodsynopsis>
   <simpara>
-   Фильтр значений ассоциативного массива (&array;) с использованием
-   фильтров проверки (<constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>),
-   очистки (<constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>)
-   или пользовательских фильтров.
+   Функция фильтрует значения ассоциативного массива (&array;)
+   фильтрами проверки — константами семейства <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
+   очистки — семейства <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant> —
+   или пользовательскими фильтрами.
   </simpara>
  </refsect1>
 
@@ -30,7 +30,7 @@
     <term><parameter>array</parameter></term>
     <listitem>
      <simpara>
-      Ассоциативный массив (&array;), содержащий данные для фильтрации.
+      Ассоциативный массив (&array;) с данными для фильтрации.
      </simpara>
     </listitem>
    </varlistentry>
@@ -38,27 +38,26 @@
     <term><parameter>options</parameter></term>
     <listitem>
      <simpara>
-      Либо ассоциативный массив (<type>array</type>) опций, либо фильтр,
-      применяемый к каждой записи, который может быть либо фильтром проверки с использованием одной из констант
-      <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
-      либо фильтром очистки с использованием одной из констант
+      Параметры фильтрации — ассоциативный массив (<type>array</type>) опций или отдельный фильтр.
+      Опции устанавливают индивидуальный фильтр для каждого элемента входного массива, а отдельный фильтр применяется ко всем элементам.
+      В отдельном фильтре указывают фильтры проверки — константы семейства <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>
+      или фильтры очистки — константы семейства
       <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>.
      </simpara>
      <simpara>
-      Массив опций – это ассоциативный массив, в котором ключ соответствует ключу
-      в массиве данных параметра <parameter>array</parameter>,
-      а связанное с ним значение – это либо фильтр, который нужно применить к этой записи,
-      либо ассоциативный массив, описывающий, как и какой фильтр должен быть применён к этой записи.
+      Массив опций – ассоциативный массив,
+      в котором ключ соответствует ключу во входном массиве,
+      а связанное с ключом значение – фильтр, который требуется применить к значению элемента:
+      отдельный фильтр или ассоциативный массив с фильтром и параметрами фильтрации.
      </simpara>
      <simpara>
-      Ассоциативный массив, описывающий применение фильтра, должен содержать ключ <literal>'filter'</literal>,
-      ассоциированным значением которого является применяемый фильтр,
-      который может быть одной из констант <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>,
-      <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>,
-      <constant>FILTER_UNSAFE_RAW</constant> или <constant>FILTER_CALLBACK</constant>.
-      Дополнительно может содержать ключ <literal>'flags'</literal>, задающий флаги,
-      которые применяются к фильтру и ключ <literal>'options'</literal>,
-      задающий любые опции, которые применяются к фильтру.
+      В ассоциативном массиве с параметрами фильтрации обязательно указывается ключ <literal>'filter'</literal>
+      со значением фильтра — константой семейства
+      <constant>FILTER_VALIDATE_<replaceable>*</replaceable></constant>
+      или <constant>FILTER_SANITIZE_<replaceable>*</replaceable></constant>,
+      фильтром <constant>FILTER_UNSAFE_RAW</constant> или <constant>FILTER_CALLBACK</constant>.
+      Дополнительно в массив добавляют ключ <literal>'flags'</literal> для флагов фильтра
+      и ключ <literal>'options'</literal> для опций фильтра.
      </simpara>
     </listitem>
    </varlistentry>
@@ -75,17 +74,84 @@
 
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Массив, содержащий значения запрошенных переменных в случае успешного выполнения, или &false;
-   в случае возникновения ошибки. Значение массива будет &false;, если фильтрация завершилась неудачей, или &null;,
-   если переменная не определена.
-  </para>
+  <simpara>
+   Функция возвращает массив (&array;) со значениями запрошенных переменных,
+   если выполнилась успешно.
+  </simpara>
+  <simpara>
+   При ошибке функция возвращает значение &false;.
+  </simpara>
+  <simpara>
+   Недостающие записи входного массива добавляются в возвращаемый массив (&array;)
+   со значением &null;, если значение параметра <parameter>add_empty</parameter>
+   равно &true;, и полностью пропускаются, если оно равно &false;.
+  </simpara>
+  <simpara>
+   Элемент возвращаемого массива (&array;) равен &false;,
+   если фильтр не сработал, если только не используется флаг
+   <constant>FILTER_NULL_ON_FAILURE</constant>, в этом случае он равен &null;.
+   С флагом <constant>FILTER_FORCE_ARRAY</constant> это значение неудачи,
+   как и любой другой результат, оборачивается в массив из одного элемента.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Функция выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+   если в параметр <parameter>options</parameter> передали массив (&array;)
+   с нестроковым (&string;) ключом, и ошибку
+   <exceptionname>ValueError</exceptionname>, если массив опций содержит пустой ключ.
+  </simpara>
+  <simpara>
+   Начиная с PHP 8.5.0 функция выбрасывает исключение
+   <exceptionname>Filter\FilterFailedException</exceptionname>,
+   если для элемента массива <parameter>array</parameter>
+   установили флаг <constant>FILTER_THROW_ON_FAILURE</constant>
+   и значение не прошло фильтр,
+   и ошибку <exceptionname>ValueError</exceptionname>,
+   если для такого элемента флаг <constant>FILTER_THROW_ON_FAILURE</constant> указали вместе
+   с флагом <constant>FILTER_NULL_ON_FAILURE</constant>.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="changelog">
+  &reftitle.changelog;
+  <informaltable>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>&Version;</entry>
+      <entry>&Description;</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>8.0.0</entry>
+      <entry>
+       Функция теперь выбрасывает ошибку <exceptionname>TypeError</exceptionname>,
+       если массив в параметре <parameter>options</parameter> содержит нестроковый (&string;) ключ,
+       и ошибку <exceptionname>ValueError</exceptionname>,
+       если в массив опций содержит пустой ключ; раньше выдавалось предупреждение
+       <constant>E_WARNING</constant> и возвращалось значение &false;.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </informaltable>
  </refsect1>
 
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>filter_var_array</function></title>
+   <title>Пример фильтрации массива значений функцией <function>filter_var_array</function></title>
+   <simpara>
+    Записи фильтруются как скалярные значения, если не указали флаг
+    <constant>FILTER_REQUIRE_ARRAY</constant> или
+    <constant>FILTER_FORCE_ARRAY</constant>.
+    Поэтому флаг <constant>FILTER_REQUIRE_SCALAR</constant> у записи
+    <literal>testscalar</literal> ниже лишь задаёт это поведение явно.
+   </simpara>
    <programlisting role="php">
 <![CDATA[
 <?php
@@ -123,8 +189,6 @@ $filters = [
 ];
 
 var_dump(filter_var_array($data, $filters));
-
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -149,6 +213,78 @@ array(6) {
   }
   ["doesnotexist"]=>
   NULL
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример применения одного фильтра ко всем значениям функцией <function>filter_var_array</function></title>
+   <simpara>
+    При передаче в параметр <parameter>options</parameter> целочисленного значения (&integer;)
+    один и тот же фильтр применяется к каждой записи массива.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$data = [
+    'name'  => '<b>John</b>',
+    'email' => 'john@example<script>.com',
+    'bio'   => 'Developer & writer',
+];
+
+var_dump(filter_var_array($data, FILTER_SANITIZE_SPECIAL_CHARS));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+array(3) {
+  ["name"]=>
+  string(27) "&#60;b&#62;John&#60;/b&#62;"
+  ["email"]=>
+  string(32) "john@example&#60;script&#62;.com"
+  ["bio"]=>
+  string(22) "Developer &#38; writer"
+}
+]]>
+   </screen>
+  </example>
+  <example>
+   <title>Пример применения фильтра <constant>FILTER_CALLBACK</constant> функцией <function>filter_var_array</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+$data = [
+    'name'  => '  John Doe  ',
+    'city'  => '  New York  ',
+];
+
+$options = [
+    'name' => [
+        'filter'  => FILTER_CALLBACK,
+        'options' => 'trim',
+    ],
+    'city' => [
+        'filter'  => FILTER_CALLBACK,
+        'options' => function ($value) {
+            return strtoupper(trim($value));
+        },
+    ],
+];
+
+var_dump(filter_var_array($data, $options));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+array(2) {
+  ["name"]=>
+  string(8) "John Doe"
+  ["city"]=>
+  string(8) "NEW YORK"
 }
 ]]>
    </screen>
