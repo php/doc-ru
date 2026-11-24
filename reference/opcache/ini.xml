@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 83c44e16897a8f6371b0c652ce9610b396514fb8 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 3feebd8c17479a0fd12d714bf7c19e12e2eacd12 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="opcache.configuration">
  &reftitle.runtime;
@@ -230,6 +230,12 @@
       <entry>Опция доступна только на ОС Windows</entry>
      </row>
      <row>
+      <entry><link linkend="ini.opcache.file-cache-read-only">opcache.file_cache_read_only</link></entry>
+      <entry>0</entry>
+      <entry><constant>INI_SYSTEM</constant></entry>
+      <entry>Опция доступна с PHP 8.5.0</entry>
+     </row>
+     <row>
       <entry><link linkend="ini.opcache.validate-permission">opcache.validate_permission</link></entry>
       <entry>0</entry>
       <entry><constant>INI_SYSTEM</constant></entry>
@@ -420,6 +426,12 @@
      переходит на обычные страницы, если операционная система не зарезервировала
      достаточно больших страниц.
     </simpara>
+    <simpara>
+     Начиная с PHP 8.5.0 изменение этой директивы после настройки OPcache завершается
+     неудачей и записывает предупреждение в журнал, например при использовании
+     <literal>php_admin_value</literal> в конфигурации пула FPM.
+     Ранее изменение молча игнорировалось.
+    </simpara>
    </listitem>
   </varlistentry>
   <varlistentry xml:id="ini.opcache.interned-strings-buffer">
@@ -478,10 +490,24 @@
    </term>
    <listitem>
     <simpara>
-     При включении опции OPcache добавляет текущую рабочую директорию к ключу
-     скрипта, чем устраняет возможность коллизий для файлов с одинаковым
-     основным именем. Отключение этой директивы повышает производительность, но иногда
-     приводит к сбоям приложений.
+     При включении опции OPcache добавляет текущую рабочую директорию, значение
+     <link linkend="ini.include-path">include_path</link> и директорию подключающего
+     скрипта к ключу скрипта, подключаемого по относительному пути, чем устраняет
+     возможность коллизий между разными файлами, подключаемыми по одному и тому же
+     относительному пути. Отключение этой директивы повышает производительность,
+     но иногда приводит к сбоям приложений.
+    </simpara>
+    <simpara>
+     При отключении опции ключом служит один лишь относительный путь. Например, если
+     и <filename>foo/x.php</filename>, и <filename>bar/y.php</filename> содержат
+     <code>include 'config.php';</code>, то при втором подключении выполнится
+     закешированный <filename>foo/config.php</filename> вместо
+     <filename>bar/config.php</filename>.
+    </simpara>
+    <simpara>
+     Директива не влияет на скрипты, подключаемые по абсолютному пути или через
+     обёртку потока, а также на случай, когда включена директива
+     <link linkend="ini.opcache.revalidate-path">opcache.revalidate_path</link>.
     </simpara>
    </listitem>
   </varlistentry>
@@ -532,10 +558,19 @@
    </term>
    <listitem>
     <simpara>
-     При отключении опции модуль переиспользует файлы кеша,
-     пути которых содержат путь из списка <link linkend="ini.include-path">include_path</link>.
-     Поэтому модуль не будет искать файл с таким же именем по другим путям
-     списка include_path.
+     При отключении опции OPcache сначала ищет закешированный скрипт, используя в качестве
+     ключа путь, переданный в <function>include</function> или <function>require</function>
+     (см. <link linkend="ini.opcache.use-cwd">opcache.use_cwd</link>), и применяет
+     найденный скрипт без повторного разрешения пути. Поэтому если путь теперь указывает
+     на другой файл, по-прежнему используется ранее закешированный скрипт.
+     Например, файл с таким же именем, добавленный раньше в списке
+     <link linkend="ini.include-path">include_path</link>, не будет найден, а символическая
+     ссылка в пути, изменённая так, чтобы указывать на другой каталог, не будет учтена.
+    </simpara>
+    <simpara>
+     При включении опции путь всегда разрешается в реальный путь к файлу, по которому
+     затем ищется закешированный скрипт. Это медленнее, но всегда используется файл,
+     на который путь указывает в данный момент.
     </simpara>
    </listitem>
   </varlistentry>
@@ -956,6 +991,30 @@ function getA() { return A; }
     <simpara>
      Разрешает вызывать API-функции модуля OPcache только из PHP-скриптов, чей путь начинается
      с заданной строки. Значение по умолчанию равно <literal>""</literal> и означает отсутствие ограничений.
+     Если ограничение действует, функции <function>opcache_get_status</function>,
+     <function>opcache_get_configuration</function>,
+     <function>opcache_reset</function>, <function>opcache_invalidate</function>,
+     <function>opcache_is_script_cached</function> и
+     <function>opcache_is_script_cached_in_file_cache</function> (начиная с PHP 8.5.0)
+     выдают ошибку уровня <constant>E_WARNING</constant> и возвращают &false;.
+    </simpara>
+    <simpara>
+     Проверяется путь главного скрипта, то есть скрипта, запрошенного у веб-сервера или
+     переданного в CLI, в том виде, в каком его сообщает SAPI. Путь файла, из которого
+     вызывается функция, значения не имеет: файлы, подключённые разрешённым скриптом,
+     могут вызывать API, а файлы из разрешённого каталога не могут, если их подключает
+     скрипт вне этого каталога. SAPI CLI разрешает символические ссылки в пути к скрипту
+     перед проверкой.
+    </simpara>
+    <simpara>
+     Сравнение выполняется как простое посимвольное сравнение префикса с учётом регистра,
+     без какой-либо нормализации путей. Поэтому значение <literal>/var/www/admin</literal>
+     разрешает и скрипты в <literal>/var/www/administrator</literal>; чтобы совпадал
+     только этот каталог и его подкаталоги, значение нужно завершить разделителем каталогов.
+     Значение должно также использовать те же разделители каталогов, что и путь, сообщаемый
+     SAPI: в SAPI apache2handler на Windows этот путь содержит прямые косые черты (например,
+     <literal>C:/www/admin/status.php</literal>), поэтому следует использовать
+     <literal>C:/www/admin</literal>, а не <literal>C:\www\admin</literal>.
     </simpara>
    </listitem>
   </varlistentry>
@@ -1076,6 +1135,32 @@ function getA() { return A; }
       Отключение этой опции конфигурации может помешать запуску процессов, и поэтому не рекомендуется.
      </simpara>
     </caution>
+   </listitem>
+  </varlistentry>
+  <varlistentry xml:id="ini.opcache.file-cache-read-only">
+   <term>
+    <parameter>opcache.file_cache_read_only</parameter>
+    <type>bool</type>
+   </term>
+   <listitem>
+    <simpara>
+     Если включена, позволяет использовать каталог
+     <link linkend="ini.opcache.file-cache">opcache.file_cache</link>, доступный только
+     для чтения. Предназначена для файловых систем, доступных только для чтения,
+     например контейнеров Docker в режиме только для чтения. Лучше всего использовать
+     в сочетании с <literal>opcache.validate_timestamps=0</literal>,
+     <literal>opcache.enable_file_override=1</literal> и
+     <literal>opcache.file_cache_consistency_checks=0</literal>.
+    </simpara>
+    <note>
+     <simpara>
+      Кеш, созданный другой сборкой PHP, с другим путём к файлу или с другими настройками
+      (включая набор загруженных модулей), может быть проигнорирован.
+     </simpara>
+    </note>
+    <simpara>
+     Доступна с PHP 8.5.0.
+    </simpara>
    </listitem>
   </varlistentry>
   <varlistentry xml:id="ini.opcache.validate-permission">
