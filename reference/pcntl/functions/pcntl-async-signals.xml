@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: b890f28c0c6d2856eadcdc34b3faf83a846b3d79 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: 3e4d4fa6a24d0f04db6fa1f42905653bdd853905 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pcntl-async-signals" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
@@ -65,6 +65,67 @@
     </tbody>
    </tgroup>
   </informaltable>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример вызова обработчиков сигналов во время передачи данных cURL</title>
+   <simpara>
+    Без callback-функции прогресса обработчик не вызывался бы до завершения
+    передачи данных. Константа <constant>CURLOPT_XFERINFOFUNCTION</constant>
+    доступна начиная с PHP 8.2.0; в более ранних версиях следует использовать
+    <constant>CURLOPT_PROGRESSFUNCTION</constant>.
+   </simpara>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+pcntl_async_signals(true);
+
+pcntl_signal(SIGALRM, function () {
+    echo "Сигнал активности\n";
+    pcntl_alarm(1);
+});
+pcntl_alarm(1);
+
+$ch = curl_init('https://example.com/slow-endpoint');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+// Вызов PHP-кода во время передачи данных позволяет выполниться обработчику
+curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+curl_setopt($ch, CURLOPT_XFERINFOFUNCTION, function () {
+    return 0;
+});
+
+$response = curl_exec($ch);
+]]>
+   </programlisting>
+  </example>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <simpara>
+   При включённой асинхронной обработке сигналов обработчик, установленный
+   функцией <function>pcntl_signal</function>, вызывается не в момент получения
+   сигнала. Сигнал запоминается, а обработчик вызывается при следующей проверке
+   движком ожидающих сигналов во время выполнения PHP-кода, например после
+   возврата из вызова функции или на следующей итерации цикла.
+  </simpara>
+  <simpara>
+   Поэтому длительный вызов внутренней функции, такой как
+   <function>curl_exec</function> или запрос к базе данных, не прерывается ради
+   вызова обработчика: обработчик вызывается только после возврата из этой функции.
+   Раньше обработчик вызывается, только если функция обращается к PHP-коду
+   во время работы, например через callback-функцию
+   <constant>CURLOPT_XFERINFOFUNCTION</constant>.
+  </simpara>
+  <simpara>
+   Сигнал по-прежнему может прервать системный вызов, в котором заблокирована
+   функция. Например, <function>sleep</function> тогда возвращает управление
+   досрочно, а обработчик вызывается после этого возврата.
+  </simpara>
  </refsect1>
 
  <refsect1 role="seealso"><!-- {{{ -->
