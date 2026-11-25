@@ -4,7 +4,7 @@
 <refentry xml:id="function.idn-to-ascii" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>idn_to_ascii</refname>
-  <refpurpose>Преобразовывает доменное имя в формат ASCII по спецификации IDNA</refpurpose>
+  <refpurpose>Изменяет формат доменного имени с UTF-8 на ASCII</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -17,8 +17,8 @@
    <methodparam choice="opt"><type>array</type><parameter role="reference">idna_info</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция преобразовывает доменные имена в кодировке Юникод
-   в формат, совместимый со стандартом ASCII, и возвращает результат в нижнем регистре.
+   Функция заменяет доменное имя в кодировке UTF-8 представлением в формате ASCII,
+   совместимым с текущими протоколами, и возвращает результат в нижнем регистре.
    Доменные имена, в состав которых входят символы национальных алфавитов, обрабатываются по правилам
    механизма интернационализации доменных имён в приложениях — IDNA (англ. Internationalizing Domain Names in Applications).
   </para>
@@ -32,7 +32,7 @@
      <term><parameter>domain</parameter></term>
      <listitem>
       <para>
-       Домен с символами в кодировке UTF-8, которые требуется преобразовать.
+       Домен в кодировке UTF-8 для преобразования.
       </para>
      </listitem>
     </varlistentry>
@@ -49,8 +49,8 @@
      <term><parameter>variant</parameter></term>
      <listitem>
       <para>
-       Константа <constant>INTL_IDNA_VARIANT_2003</constant> (устарела с PHP 7.2.0) для преобразования домена по правилам спецификации IDNA 2003
-       или константа <constant>INTL_IDNA_VARIANT_UTS46</constant> (доступна только с ICU 4.6) для преобразования по правилам спецификации UTS #46.
+       Константа <constant>INTL_IDNA_VARIANT_2003</constant> (устарела с PHP 7.2.0) для преобразования домена по стандарту IDNA 2003
+       или константа <constant>INTL_IDNA_VARIANT_UTS46</constant> (доступна только с ICU 4.6) для преобразования по стандарту UTS #46.
       </para>
      </listitem>
     </varlistentry>
@@ -58,13 +58,15 @@
      <term><parameter>idna_info</parameter></term>
      <listitem>
       <para>
-       Параметр влияет на результат только при передаче константы
-       <constant>INTL_IDNA_VARIANT_UTS46</constant> в параметр
-       <parameter>variant</parameter>. Функция заполнит переменную
-       массивом с ключами <literal>'result'</literal> — домен в ASCII-формате,
-       возможно, с ошибками преобразования, <literal>'isTransitionalDifferent'</literal> —
-       логическое значение, которое указывает, повлиял ли переходный механизм протокола UTS #46 на результат или мог бы повлиять,
-       и <literal>'errors'</literal> — значение <type>int</type>, которое представляет битовую маску из констант
+       Параметр заполняется только при передаче
+       в аргументе <parameter>variant</parameter>
+       константы <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+       Значением параметра станет массив с ключами:
+       <literal>'result'</literal> — результат преобразования, даже некорректный;
+       <literal>'isTransitionalDifferent'</literal> — логическое значение,
+       которое показывает, изменился ли результат при запуске переходного механизма UTS #46
+       или изменился бы, если бы механизм активировали;
+       <literal>'errors'</literal> — значение <type>int</type>, которое представляет битовую маску из констант
        семейства IDNA_ERROR_*.
       </para>
      </listitem>
@@ -76,7 +78,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Функция возвращает доменное имя, закодированное в формате, совместимом со стандартом ASCII,&return.falseforfailure;.
+   Функция возвращает доменное имя в ASCII-совместимой форме&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -95,31 +97,31 @@
       <row>
        <entry>8.4.0</entry>
        <entry>
-        Теперь выбрасывает исключение <exceptionname>ValueError</exceptionname>,
-        если параметр <parameter>domain</parameter> пустой.
+        Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+        если в параметр <parameter>domain</parameter> передали пустую строку.
        </entry>
       </row>
       <row>
        <entry>8.4.0</entry>
        <entry>
-        Теперь выбрасывает исключение <exceptionname>ValueError</exceptionname>,
-        если параметр <parameter>variant</parameter> не равен
-        <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+        Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+        если значение параметра <parameter>variant</parameter> не совпадает
+        со значением константы <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Значением по умолчанию для параметра <parameter>variant</parameter>
-        стала константа <constant>INTL_IDNA_VARIANT_UTS46</constant> вместо устаревшего
-        варианта <constant>INTL_IDNA_VARIANT_2003</constant>.
+        Вместо устаревшей константы <constant>INTL_IDNA_VARIANT_2003</constant>
+        значением по умолчанию для параметра <parameter>variant</parameter>
+        стала константа <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
-        Константа <constant>INTL_IDNA_VARIANT_2003</constant> устарела
-        в пользу варианта <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+        Константа <constant>INTL_IDNA_VARIANT_2003</constant> устарела;
+        на замену пришла константа <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
      </tbody>
@@ -131,14 +133,13 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример преобразования национального доменного имени функцией <function>idn_to_ascii</function></title>
+   <title>Пример преобразования домена функцией <function>idn_to_ascii</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
 echo idn_to_ascii('täst.de');
 
-?>
 ]]>
    </programlisting>
   </example>
@@ -157,7 +158,6 @@ xn--tst-qla.de
 // ASCII-домены функция только приводит к нижнему регистру
 var_dump(idn_to_ascii('Example.com'));
 
-?>
 ]]>
    </programlisting>
   </example>
