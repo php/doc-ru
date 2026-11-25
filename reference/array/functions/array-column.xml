@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 8bf3587d8f70239a65d9aa44d42ced8a696a3e86 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: b91033ba3d6831cfa2ef6745150cd5d6b4af65c9 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.array-column" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
   <refname>array_column</refname>
-  <refpurpose>Возвращает массив из значений одного столбца входного массива</refpurpose>
+  <refpurpose>Возвращает массив значений одного столбца входного массива</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -15,11 +15,19 @@
    <methodparam choice="opt"><type class="union"><type>int</type><type>string</type><type>null</type></type><parameter>index_key</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Функция <function>array_column</function> возвращает значения из одного столбца массива
+   Функция <function>array_column</function> возвращает значения одного столбца массива
    <parameter>array</parameter>, который идентифицируется ключом <parameter>column_key</parameter>.
    Необязательный параметр <parameter>index_key</parameter> индексирует значения выходного массива
    значениями столбца <parameter>index_key</parameter> входного массива.
   </para>
+  <simpara>
+   Параметр <parameter>array</parameter> обрабатывается как список строк,
+   каждая из которых — массив или объект; параметр <parameter>column_key</parameter>
+   принимает ключ массива или название объектного свойства, которое встречается в каждой строке.
+   Строки других типов, кроме массива и объекта, или строки, которые не содержат ключа или названия свойства,
+   пропускаются без диагностического сообщения.
+   Ключи массива <parameter>array</parameter> не сохраняются.
+  </simpara>
  </refsect1>
  <refsect1 role="parameters">
   &reftitle.parameters;
@@ -28,23 +36,29 @@
     <varlistentry>
      <term><parameter>array</parameter></term>
      <listitem>
-      <para>
-       Многомерный массив или массив объектов, из которого вытягивается
-       столбец значений. При передаче массива объектов функция вытянет из объектов только общедоступные
-       свойства. Для вытягивания защищённых или закрытых свойств потребуется реализовать в классе
-       оба магических метода — <function>__get</function> и <function>__isset</function>.
-      </para>
+      <simpara>
+       Список строк — массивов или объектов, из которого извлекается столбец значений.
+       В строках-объектах открытые свойства считываются без вызова магических методов,
+       а для считывания закрытых и защищённых свойств
+       в классе потребуется реализовать оба магических метода —
+       <link linkend="object.get">__get()</link>
+       и <link linkend="object.isset">__isset()</link>:
+       без метода <link linkend="object.isset">__isset()</link> строка пропускается,
+       а с методом <link linkend="object.isset">__isset()</link>,
+       но без метода <link linkend="object.get">__get()</link> — выбрасывается ошибка
+       <exceptionname>Error</exceptionname>.
+      </simpara>
      </listitem>
     </varlistentry>
     <varlistentry>
      <term><parameter>column_key</parameter></term>
      <listitem>
-      <para>
-       Столбец, значения которого требуется вернуть. В аргументе передают либо целочисленный ключ столбца,
-       значения которого требуется получить, либо название строкового ключа ассоциативного массива или свойства объекта.
-       В параметр передают значение &null;, чтобы вернуть массивы или объекты целиком, что полезно
-       при одновременной передаче аргумента <parameter>index_key</parameter> для переиндексации выходного массива.
-      </para>
+      <simpara>
+       Столбец, значения которого требуется вернуть. В аргументе передают либо целочисленный ключ извлекаемого столбца,
+       либо строковый ключ ассоциативного массива или название свойства.
+       При передаче значения &null; строки возвращаются целиком, что полезно
+       при одновременной передаче аргумента <parameter>index_key</parameter> для переиндексации массива.
+      </simpara>
      </listitem>
     </varlistentry>
     <varlistentry>
@@ -52,10 +66,9 @@
      <listitem>
       <para>
        Столбец, значения которого станут ключами или индексами возвращаемого массива.
-       В аргументе передают либо целочисленный ключ столбца,
-       либо название строкового ключа. Значение
-       <link linkend="language.types.array.key-casts">приводится</link>
-       стандартным для ключей массива способом, а до PHP 8.0.0 также разрешались объекты,
+       В аргументе передают целочисленный или строковый ключ столбца.
+       Значение <link linkend="language.types.array.key-casts">приводится</link>
+       стандартным для ключей массива способом; до PHP 8.0.0 в значениях столбца также допускались объекты,
        которые поддерживают преобразование в строку.
       </para>
      </listitem>
@@ -65,9 +78,10 @@
  </refsect1>
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
-  <para>
-   Функция возвращает массив значений, которые представляют один столбец из входного массива.
-  </para>
+  <simpara>
+   Функция возвращает массив значений, которые представляют один столбец входного массива.
+   При передаче в параметре <parameter>column_key</parameter> значения &null; возвращаются сами строки.
+  </simpara>
  </refsect1>
  <refsect1 role="changelog">
   &reftitle.changelog;
@@ -88,6 +102,20 @@
         а вместо этого выбрасывает ошибку <classname>TypeError</classname>.
        </entry>
       </row>
+      <row>
+       <entry>7.1.0</entry>
+       <entry>
+        Функция теперь учитывает видимость свойств. Раньше защищённые и закрытые
+        свойства считывались напрямую.
+       </entry>
+      </row>
+      <row>
+       <entry>7.0.0</entry>
+       <entry>
+        Параметр <parameter>array</parameter> наряду с массивами
+        стал поддерживать объекты.
+       </entry>
+      </row>
      </tbody>
     </tgroup>
    </informaltable>
@@ -97,12 +125,12 @@
   &reftitle.examples;
   <para>
    <example>
-    <title>Пример получения столбца с именами из набора записей</title>
+    <title>Пример получения из набора записей столбца с именами</title>
     <programlisting role="php">
 <![CDATA[
 <?php
 
-// Массив с набором записей, похожих на те, которые возвращает база данных
+// Имитация набора записей, которые возвращает база данных
 $records = [
     [
         'id' => 2135,
@@ -129,7 +157,6 @@ $records = [
 $first_names = array_column($records, 'first_name');
 print_r($first_names);
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -182,7 +209,6 @@ $records = [
 $last_names = array_column($records, 'last_name', 'id');
 print_r($last_names);
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -202,7 +228,7 @@ Array
   <para>
    <example>
     <title>
-     Пример получения столбца с именами пользователей из открытого свойства объекта "username"
+     Пример получения столбца с именами пользователей из открытого свойства "username"
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -226,7 +252,6 @@ $users = [
 
 print_r(array_column($users, 'username'));
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -245,8 +270,8 @@ Array
   <para>
    <example>
     <title>
-     Пример получения столбца с именами из закрытого свойства объекта "name"
-     путём определения магических методов <function>__isset</function> и <function>__get</function>
+     Пример получения столбца с именами из закрытого свойства "name"
+     путём определения магических методов <link linkend="object.isset">__isset()</link> и <link linkend="object.get">__get()</link>
     </title>
     <programlisting role="php">
 <![CDATA[
@@ -280,7 +305,6 @@ $people = [
 
 print_r(array_column($people, 'name'));
 
-?>
 ]]>
     </programlisting>
     &example.outputs;
@@ -295,8 +319,8 @@ Array
 ]]>
     </screen>
    </example>
-   Функция вернёт пустой массив, если класс объекта
-   не содержит определения магического метода <function>__isset</function>.
+   Без метода <link linkend="object.isset">__isset()</link>
+   значение свойства не добавляется в результат.
   </para>
  </refsect1>
 </refentry>
