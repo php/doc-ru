@@ -4,7 +4,7 @@
 <refentry xml:id="function.idn-to-utf8" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
  <refnamediv>
   <refname>idn_to_utf8</refname>
-  <refpurpose>Преобразование доменного имени из IDNA ASCII в Unicode</refpurpose>
+  <refpurpose>Изменяет формат доменного имени с ASCII на UTF-8</refpurpose>
  </refnamediv>
  <refsect1 role="description">
   &reftitle.description;
@@ -17,7 +17,10 @@
    <methodparam choice="opt"><type>array</type><parameter role="reference">idna_info</parameter><initializer>&null;</initializer></methodparam>
   </methodsynopsis>
   <para>
-   Эта функция преобразовывает доменные имена из формата IDNA ASCII в Unicode, в кодировке UTF-8.
+   Функция заменяет доменное имя в формате ASCII, совместимом с текущими протоколами, представлением в кодировке UTF-8.
+   Доменные имена, в состав которых входят символы национальных алфавитов,
+   обрабатываются по правилам механизма интернационализации доменных имён в приложениях —
+   IDNA (англ. Internationalizing Domain Names in Applications).
   </para>
  </refsect1>
 
@@ -29,7 +32,7 @@
      <term><parameter>domain</parameter></term>
      <listitem>
       <para>
-       Доменное имя в формате IDNA ASCII.
+       Домен в ASCII-совместимом формате, который требуется изменить на представление в кодировке UTF-8 по правилам спецификации IDNA.
       </para>
      </listitem>
     </varlistentry>
@@ -37,8 +40,8 @@
      <term><parameter>flags</parameter></term>
      <listitem>
       <para>
-       Опции преобразования - комбинация констант IDNA_*
-       (кроме констант IDNA_ERROR_*).
+       Опции преобразования — комбинация констант семейства IDNA_*,
+       кроме констант семейства IDNA_ERROR_*.
       </para>
      </listitem>
     </varlistentry>
@@ -46,8 +49,8 @@
      <term><parameter>variant</parameter></term>
      <listitem>
       <para>
-       <constant>INTL_IDNA_VARIANT_2003</constant> (объявлена устаревшей начиная с PHP 7.2.0) для IDNA 2003 или
-       <constant>INTL_IDNA_VARIANT_UTS46</constant> (доступна только с ICU 4.6) для UTS #46.
+       Константа <constant>INTL_IDNA_VARIANT_2003</constant> (устарела с PHP 7.2.0) для преобразования домена по стандарту IDNA 2003
+       или <constant>INTL_IDNA_VARIANT_UTS46</constant> (доступна только с ICU 4.6) для преобразования по стандарту UTS #46.
       </para>
      </listitem>
     </varlistentry>
@@ -55,15 +58,16 @@
      <term><parameter>idna_info</parameter></term>
      <listitem>
       <para>
-       Этот параметр используется только если используется
-       <constant>INTL_IDNA_VARIANT_UTS46</constant> в
-       <parameter>variant</parameter>. В этом случае он будет заполнен
-       массивом с ключами <literal>'result'</literal>, возможными ошибочными
-       результатами преобразования, <literal>'isTransitionalDifferent'</literal>,
-       логическое выражение означает изменило или могло бы изменить результат
-       при использовании сквозного механизма UTS #46, и <literal>'errors'</literal>,
-       содержащими целочисленное представление битовой маски из констант
-       IDNA_ERROR_*.
+       Параметр заполняется только при передаче
+       в аргументе <parameter>variant</parameter>
+       константы <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+       Значением параметра станет массив с ключами:
+       <literal>'result'</literal> — результат преобразования, даже некорректный;
+       <literal>'isTransitionalDifferent'</literal> — логическое значение,
+       которое показывает, изменился ли результат при запуске переходного механизма UTS #46
+       или изменился бы, если бы механизм активировали;
+       <literal>'errors'</literal> — значение <type>int</type>, которое представляет битовую маску из констант
+       семейства IDNA_ERROR_*.
       </para>
      </listitem>
     </varlistentry>
@@ -74,7 +78,7 @@
  <refsect1 role="returnvalues">
   &reftitle.returnvalues;
   <para>
-   Возвращает доменное имя, перекодированное из кодировки Unicode в кодировку UTF-8,&return.falseforfailure;.
+   Функция возвращает доменное имя в кодировке UTF-8&return.falseforfailure;.
   </para>
  </refsect1>
 
@@ -93,31 +97,31 @@
       <row>
        <entry>8.4.0</entry>
        <entry>
-        Теперь выбрасывает исключение <exceptionname>ValueError</exceptionname>,
-        если параметр <parameter>domain</parameter> пустой.
+        Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+        если в параметр <parameter>domain</parameter> передали пустую строку.
        </entry>
       </row>
       <row>
        <entry>8.4.0</entry>
        <entry>
-        Теперь выбрасывает исключение <exceptionname>ValueError</exceptionname>,
-        если параметр <parameter>variant</parameter> не равен
-        <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+        Функция теперь выбрасывает ошибку <exceptionname>ValueError</exceptionname>,
+        если значение параметра <parameter>variant</parameter> не совпадает
+        со значением константы <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
       <row>
        <entry>7.4.0</entry>
        <entry>
-        Теперь значение по умолчанию <parameter>variant</parameter> изменено на
-        <constant>INTL_IDNA_VARIANT_UTS46</constant> вместо устаревшей константы
-        <constant>INTL_IDNA_VARIANT_2003</constant>.
+        Вместо устаревшей константы <constant>INTL_IDNA_VARIANT_2003</constant>
+        значением по умолчанию для параметра <parameter>variant</parameter>
+        стала константа <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
       <row>
        <entry>7.2.0</entry>
        <entry>
-        <constant>INTL_IDNA_VARIANT_2003</constant> объявлена устаревшей, вместо неё
-        используйте <constant>INTL_IDNA_VARIANT_UTS46</constant>.
+        Константа <constant>INTL_IDNA_VARIANT_2003</constant> устарела;
+        на замену пришла константа <constant>INTL_IDNA_VARIANT_UTS46</constant>.
        </entry>
       </row>
      </tbody>
@@ -129,14 +133,13 @@
  <refsect1 role="examples">
   &reftitle.examples;
   <example>
-   <title>Пример использования <function>idn_to_utf8</function></title>
+   <title>Пример преобразования домена функцией <function>idn_to_utf8</function></title>
    <programlisting role="php">
 <![CDATA[
 <?php
 
 echo idn_to_utf8('xn--tst-qla.de');
 
-?>
 ]]>
    </programlisting>
   </example>
