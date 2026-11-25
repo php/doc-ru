@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 5e26d11dc3f606b25c95467df22f9469636781f9 Maintainer: lex Status: ready -->
+<!-- EN-Revision: 86489832fab924a8c07fedf337ecd46ec85be83e Maintainer: lex Status: ready -->
 <!-- Reviewed: no -->
 <sect1 xml:id="migration72.incompatible">
  <title>Изменения, которые ломают обратную совместимость</title>
@@ -8,9 +8,9 @@
   <title>Предотвращение возврата отрицательного нуля из функции <function>number_format</function></title>
 
   <para>
-   Раньше функция <function>number_format</function> возвращала <literal>-0</literal>.
-   Хотя это совершенно правильно в соответствии со спецификацией чисел с плавающей точкой IEEE 754,
-   эта странность нежелательна для отображения отформатированных чисел в удобочитаемой форме.
+   Раньше в ряде сценариев функция <function>number_format</function> возвращала <literal>-0</literal>.
+   Такая странность мешала отображать отформатированные числа в удобной для чтения форме,
+   хотя вывод отрицательного нуля соответствует спецификации чисел с плавающей точкой IEEE 754.
   </para>
 
   <informalexample>
@@ -20,7 +20,6 @@
 
 var_dump(number_format(-0.01)); // Теперь выводит string(1) "0" вместо string(2) "-0"
 
-?>
 ]]>
    </programlisting>
   </informalexample>
@@ -30,13 +29,14 @@ var_dump(number_format(-0.01)); // Теперь выводит string(1) "0" в�
   <title>Преобразование числовых ключей при приведении объектов и массивов</title>
 
   <para>
-   Теперь числовые ключи лучше обрабатываются при приведении массивов к объектам и
-   объектов к массивам (через явное приведение, либо через функцию <function>settype</function>).
+   При приведении массивов к объектам и объектов к массивам
+   числовые ключи и свойства теперь обрабатываются корректно; исправление затронуло
+   и операторы приведения, и функцию <function>settype</function>.
   </para>
 
   <para>
-   То есть целочисленные (или строковые целочисленные) ключи из массивов, которые приводятся
-   к объектам, теперь будут доступны:
+   Целочисленные и строковые целочисленные ключи приводимого к объекту массива
+   теперь становятся доступными свойствами объекта.
   </para>
 
   <informalexample>
@@ -51,17 +51,16 @@ $obj = (object) $arr;
 var_dump(
     $obj,
     $obj->{'0'}, // Теперь работает
-    $obj->{0} // Теперь работает
+    $obj->{0}    // Теперь работает
 );
 
-?>
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
 object(stdClass)#1 (1) {
-  ["0"]=>    // теперь это строковый ключ, а не числовой
+  ["0"]=>    // Название свойства теперь сохраняется с типом string, а не int
   int(1)
 }
 int(1)
@@ -71,7 +70,8 @@ int(1)
   </informalexample>
 
   <para>
-   И теперь целочисленные (или строковые целочисленные) ключи объектов доступны при конвертации в массивы:
+   Целочисленные и строковые целочисленные названия свойств приводимого объекта
+   тоже теперь становятся доступными ключами массива:
   </para>
 
   <informalexample>
@@ -83,7 +83,8 @@ int(1)
 $obj = new class {
     public function __construct()
     {
-        $this->{0} = 1;
+        $this->{0} = 1; // Названия свойств сохраняются строковыми,
+                        // даже если инициализируются как целочисленные
     }
 };
 
@@ -91,18 +92,17 @@ $arr = (array) $obj;
 
 var_dump(
     $arr,
-    $arr[0], // теперь работает
-    $arr['0'] // теперь работает
+    $arr[0],  // Теперь работает
+    $arr['0'] // Теперь работает
 );
 
-?>
 ]]>
    </programlisting>
    &example.outputs;
    <screen>
 <![CDATA[
 array(1) {
-  [0]=>    // Теперь это целочисленный ключ, а не строковый
+  [0]=>    // Название свойства теперь становится целочисленным ключом, а не строковым
   int(1)
 }
 int(1)
@@ -113,7 +113,7 @@ int(1)
  </sect2>
 
  <sect2 xml:id="migration72.incompatible.no-null-to-get_class">
-  <title>Запретили передачу константы &null; в функцию <function>get_class</function></title>
+  <title>Запрет передачи константы &null; в функцию <function>get_class</function></title>
 
   <para>
    Раньше передача &null; в функцию <function>get_class</function> возвращала
@@ -145,7 +145,6 @@ var_dump(
     count([1,2]) // Массивы можно подсчитать
 );
 
-?>
 ]]>
    </programlisting>
    &example.outputs;
@@ -218,22 +217,22 @@ int(2)
  </sect2>
 
  <sect2 xml:id="migration72.incompatible.is_object-on-incomplete_class">
-  <title><function>is_object</function> и <classname>__PHP_Incomplete_Class</classname></title>
+  <title>Вызов функции <function>is_object</function> на экземпляре класса <classname>__PHP_Incomplete_Class</classname></title>
 
   <para>
-   Раньше вызов функции <function>is_object</function> на классе
+   Раньше вызов функции <function>is_object</function> на экземпляре класса
    <classname>__PHP_Incomplete_Class</classname> возвращал &false;.
-   Теперь будет возвращаться &true;.
+   Теперь возвращается &true;.
   </para>
  </sect2>
 
  <sect2 xml:id="migration72.incompatible.undefined-constants">
-  <title>Повышены уровни ошибок неопределённых констант</title>
+  <title>Повышение уровня ошибок неопределённых констант</title>
 
   <para>
-   Не полностью определённые ссылки на неопределённые константы теперь будут генерировать
-   <constant>E_WARNING</constant> (вместо <constant>E_NOTICE</constant>).
-   В следующей основной версии PHP они будут генерировать исключения <classname>Error</classname>.
+   Неполностью определённые ссылки на неопределённые константы теперь вместо <constant>E_NOTICE</constant>
+   генерируют ошибку уровня <constant>E_WARNING</constant>.
+   В следующей основной версии PHP такие ссылки начнут генерировать ошибки <classname>Error</classname>.
   </para>
  </sect2>
 
@@ -247,7 +246,7 @@ int(2)
  </sect2>
 
  <sect2 xml:id="migration72.incompatible.trait-properties">
-  <title>Проверка значений свойств по умолчанию трейта</title>
+  <title>Проверка предустановленных значений свойств трейта</title>
 
   <para>
    Проверки совместимости значений свойств по умолчанию трейта больше не выполняют приведение типа.
@@ -255,12 +254,11 @@ int(2)
  </sect2>
 
  <sect2 xml:id="migration72.incompatible.object-reserved-word">
-  <title><literal>object</literal> для имён классов</title>
+  <title>Резервирование слова <literal>object</literal></title>
 
   <para>
-   Имя <literal>object</literal> раньше было мягко зарезервировано с PHP 7.0.
-   Теперь оно полноценное зарезервированное слово,
-   которое запрещает использовать его как имя класса, трейта или интерфейса.
+   Начиная с PHP 7.0 слово <literal>object</literal> мягко зарезервировали —
+   рекомендовали не указывать как название класса, трейта или интерфейса, — а теперь запретили.
   </para>
  </sect2>
 
@@ -274,11 +272,11 @@ int(2)
 
  <sect2 xml:id="migration72.incompatible.array-unique">
   <title>
-   Пример работы функции <function>array_unique</function> с константой <constant>SORT_STRING</constant>
+   Вызов функции <function>array_unique</function> с флагом <constant>SORT_STRING</constant>
   </title>
 
   <simpara>
-   Функция <function>array_unique</function> с флагом <constant>SORT_STRING</constant>
+   Функция <function>array_unique</function> при вызове с флагом <constant>SORT_STRING</constant>
    строит возвращаемый массив путём добавления уникальных элементов в новый массив;
    раньше возвращалась копия входного массива, из которой удалялись неуникальные элементы.
    Оба варианта содержат одни и те же элементы с теми же ключами, но если среди удалённых
@@ -293,7 +291,7 @@ int(2)
 
   <para>
    Функция <function>bcmod</function> больше не обрезает числа с плавающей точкой до целых.
-   Таким образом, её поведение теперь соответствует функции
+   Поэтому поведение функции теперь соответствует функции
    <function>fmod</function>, а не оператору <literal>%</literal>.
    Например, <literal>bcmod('4', '3.5')</literal> теперь возвращает
    значение <literal>0.5</literal>, а не <literal>1</literal>.
@@ -305,8 +303,8 @@ int(2)
 
   <para>
    Функции <function>hash_hmac</function>, <function>hash_hmac_file</function>,
-   <function>hash_pbkdf2</function> и <function>hash_init</function> (с
-   флагом <constant>HASH_HMAC</constant>) больше не принимают некриптографические хеши.
+   <function>hash_pbkdf2</function> и <function>hash_init</function> при вызове
+   с флагом <constant>HASH_HMAC</constant> больше не принимают некриптографические хеши.
   </para>
  </sect2>
 
@@ -314,9 +312,9 @@ int(2)
   <title>Опции функции <function>json_decode</function></title>
 
   <para>
-   Теперь используется опция <constant>JSON_OBJECT_AS_ARRAY</constant> функции <function>json_decode</function>,
-   если второй параметр (assoc) равен &null;. Раньше
-   флаг <constant>JSON_OBJECT_AS_ARRAY</constant> всегда игнорировался.
+   Флаг <constant>JSON_OBJECT_AS_ARRAY</constant> теперь срабатывает
+   при передаче значения &null; во второй параметр функции <function>json_decode</function>;
+   раньше флаг <constant>JSON_OBJECT_AS_ARRAY</constant> игнорировался.
   </para>
  </sect2>
 
@@ -324,9 +322,11 @@ int(2)
   <title>Вывод функций <function>rand</function> и <function>mt_rand</function></title>
 
   <para>
-   Числа, которые генерируют функции <function>rand</function>
-   и <function>mt_rand</function> для определённого параметра переинициализации (seed), могут отличаться от PHP 7.1 на
-   64-битных машинах (из-за исправления ошибки модульного смещения в реализации).
+   На 64-битных машинах при конкретном начальном значении
+   последовательности чисел, которые генерируют функции
+   <function>rand</function> и <function>mt_rand</function>,
+   иногда не совпадают с результатами, которые выдаёт PHP 7.1 с аналогичными входными данными.
+   Причина — исправление в реализации ошибки модульного смещения.
   </para>
  </sect2>
 
@@ -342,11 +342,12 @@ int(2)
   <title>Изменения в функциях <function>date_parse</function> и <function>date_parse_from_format</function></title>
 
   <para>
-   Элемент массива <literal>zone</literal>, который возвращают функции
-   <function>date_parse_from_format</function>
-   и <function>date_parse</function>, теперь отображает секунды вместо
-   минут, а его знак инвертируется. Например, значение <literal>-120</literal>
-   теперь будет значением <literal>7200</literal>.
+   Элемент <literal>zone</literal> в массиве, который возвращают функции
+   <function>date_parse_from_format</function> и <function>date_parse</function>,
+   теперь содержит смещение не в минутах, а в секундах.
+   Знак числа больше не инвертируется и согласуется с направлением смещения.
+   Например, для двухчасового положительного смещения теперь вместо <literal>-120</literal>
+   возвращается <literal>7200</literal>.
   </para>
  </sect2>
 
@@ -354,8 +355,8 @@ int(2)
   <title>Входящие Cookies</title>
 
   <para>
-   Начиная с PHP 7.2.34 <emphasis>имена</emphasis> входящих cookie
-   больше не декодируются из URL-закодированной строки из соображений безопасности.
+   В целях безопасности начиная с PHP 7.2.34 <emphasis>названия</emphasis> входящих cookies
+   больше не преобразовываются по правилам декодирования URL-адресов.
   </para>
  </sect2>
 
