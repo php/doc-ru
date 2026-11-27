@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- EN-Revision: 0fed0090046dc4a062211dd285a3bc89e07696c2 Maintainer: lacatoire Status: ready -->
+<!-- Reviewed: no -->
+<refentry xml:id="reflectionproperty.iswritable" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <refnamediv>
+  <refname>ReflectionProperty::isWritable</refname>
+  <refpurpose>Проверяет, можно ли изменить свойство из заданной области видимости</refpurpose>
+ </refnamediv>
+
+ <refsect1 role="description">
+  &reftitle.description;
+  <methodsynopsis role="ReflectionProperty">
+   <modifier>public</modifier> <type>bool</type><methodname>ReflectionProperty::isWritable</methodname>
+   <methodparam><type class="union"><type>string</type><type>null</type></type><parameter>scope</parameter></methodparam>
+   <methodparam choice="opt"><type class="union"><type>object</type><type>null</type></type><parameter>object</parameter><initializer>&null;</initializer></methodparam>
+  </methodsynopsis>
+  <simpara>
+   Метод проверяет, разрешена ли запись в свойство из области видимости
+   <parameter>scope</parameter>.
+   Учитываются видимость свойства, включая его
+   <link linkend="language.oop5.visibility-members-aviz">асимметричную видимость</link>,
+   его <link linkend="language.oop5.property-hooks">хуки</link>,
+   магический метод <link linkend="object.set">__set()</link> и, если передан
+   <parameter>object</parameter>, состояние
+   <link linkend="language.oop5.properties.readonly-properties">readonly-свойства</link>
+   в этом объекте.
+  </simpara>
+  <note>
+   <simpara>
+    Возвращаемое значение &true; не гарантирует, что запись в свойство
+    завершится успешно. Например, хук <literal>set</literal> или
+    <link linkend="object.set">__set()</link> всё равно может выбросить исключение,
+    а тип присваиваемого значения не учитывается.
+   </simpara>
+  </note>
+ </refsect1>
+
+ <refsect1 role="parameters">
+  &reftitle.parameters;
+  <variablelist>
+   <varlistentry>
+    <term><parameter>scope</parameter></term>
+    <listitem>
+     <simpara>
+      Название класса, из которого в свойство запишут,
+      или &null; для глобальной области видимости, то есть для кода вне любого класса.
+      Чтобы проверить из области видимости вызывающего кода, находящегося внутри класса,
+      используют <literal>static::class</literal>.
+     </simpara>
+    </listitem>
+   </varlistentry>
+   <varlistentry>
+    <term><parameter>object</parameter></term>
+    <listitem>
+     <simpara>
+      Объект, в свойство которого запишут. Если передан &null;, учитывается только
+      объявление свойства.
+      Для статических свойств должен быть равен &null;.
+     </simpara>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1 role="returnvalues">
+  &reftitle.returnvalues;
+  <simpara>
+   Метод возвращает &false;, если видимость или
+   <link linkend="language.oop5.visibility-members-aviz">видимость записи</link>
+   свойства не позволяет запись из области видимости
+   <parameter>scope</parameter>, если это
+   <link linkend="language.oop5.property-hooks.virtual">виртуальное свойство</link>
+   без хука <literal>set</literal> или если передан
+   <parameter>object</parameter> и readonly-свойство
+   в нём уже инициализировано.
+   В остальных случаях возвращается &true;.
+  </simpara>
+  <simpara>
+   Однако если класс определяет <link linkend="object.set">__set()</link>,
+   для нестатического свойства, которое недоступно из области видимости
+   <parameter>scope</parameter>, возвращается &true;.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="errors">
+  &reftitle.errors;
+  <simpara>
+   Метод выбрасывает исключение <exceptionname>ReflectionException</exceptionname>, если
+   <parameter>object</parameter> передан для статического свойства или если
+   <parameter>object</parameter> не является экземпляром класса, в котором
+   объявлено свойство.
+  </simpara>
+  <simpara>
+   Метод выбрасывает ошибку <exceptionname>Error</exceptionname>, если <parameter>scope</parameter> не
+   является названием существующего класса.
+  </simpara>
+ </refsect1>
+
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example xml:id="reflectionproperty.iswritable.example.basic">
+   <title>Пример проверки возможности записи в свойство методом <methodname>ReflectionProperty::isWritable</methodname></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+class User
+{
+    public readonly string $name;
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+}
+
+$reflectionProperty = new ReflectionProperty(User::class, 'name');
+$user = new User();
+
+// Readonly-свойства можно записывать только внутри класса
+var_dump($reflectionProperty->isWritable(null, $user));
+
+// Свойство ещё не инициализировано
+var_dump($reflectionProperty->isWritable(User::class, $user));
+
+$user->setName('Alice');
+var_dump($reflectionProperty->isWritable(User::class, $user));
+
+// Без объекта учитывается только объявление свойства
+var_dump($reflectionProperty->isWritable(User::class));
+]]>
+   </programlisting>
+   &example.outputs;
+   <screen>
+<![CDATA[
+bool(false)
+bool(true)
+bool(false)
+bool(true)
+]]>
+   </screen>
+  </example>
+ </refsect1>
+
+ <refsect1 role="notes">
+  &reftitle.notes;
+  <note>
+   <simpara>
+    Если <parameter>object</parameter> — неинициализированный
+    <link linkend="language.oop5.lazy-objects">ленивый объект</link>,
+    вызов метода для readonly-свойства может запустить его инициализацию.
+   </simpara>
+  </note>
+ </refsect1>
+
+ <refsect1 role="seealso">
+  &reftitle.seealso;
+  <simplelist>
+   <member><methodname>ReflectionProperty::isReadable</methodname></member>
+   <member><methodname>ReflectionProperty::isReadOnly</methodname></member>
+   <member><methodname>ReflectionProperty::isPrivateSet</methodname></member>
+   <member><methodname>ReflectionProperty::isProtectedSet</methodname></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+indent-tabs-mode:nil
+sgml-parent-document:nil
+sgml-default-dtd-file:"~/.phpdoc/manual.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+vim600: syn=xml fen fdm=syntax fdl=2 si
+vim: et tw=78 syn=sgml
+vi: ts=1 sw=1
+-->
