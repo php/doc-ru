@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: 594c8c0a0188faae493b7070b3c1e331678e1655 Maintainer: sergey Status: ready -->
+<!-- EN-Revision: a8bfeea36a821f895dc4bd928d8001d55f408421 Maintainer: sergey Status: ready -->
 <!-- Reviewed: no -->
 <chapter xml:id="language.functions" xmlns="http://docbook.org/ns/docbook" annotations="interactive">
  <title>Функции</title>
@@ -1844,6 +1844,7 @@ $privateMethod();
     <programlisting role="php">
 <![CDATA[
 <?php
+
 class Foo1
 {
     public function getPrivateMethod()
@@ -1863,9 +1864,38 @@ class Foo1
 $foo1 = new Foo1;
 $privateMethod = $foo1->getPrivateMethod();
 $privateMethod();  // Foo1::privateMethod
+
 ]]>
     </programlisting>
    </informalexample>
+
+   <para>
+    Начиная с PHP 8.6.0 при создании объекта <classname>Closure</classname>
+    разрешается передавать только часть аргументов, а для остальных указывать
+    заполнитель <code>?</code>. См.
+    <link linkend="functions.partial-application">частичное применение функции</link>.
+    <example>
+     <title>Частичное применение функции</title>
+     <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
+
+class Foo
+{
+    public function method($first, $second) {}
+    public static function staticmethod($first, $second) {}
+}
+
+$obj = new Foo();
+
+$partial1 = $obj->method(1, ?);          // Принимает значение для второго параметра $second
+$partial2 = $obj->method(?, 2);          // Принимает значение для первого параметра $first
+$partial3 = Foo::staticmethod(1, ...);   // Принимает остальные аргументы
+
+]]>
+     </programlisting>
+    </example>
+   </para>
 
   <note>
    <para>
@@ -1915,6 +1945,320 @@ $obj?->prop->method(...);
    </informaltable>
   </sect2>
  </sect1>
+
+  <sect1 xml:id="functions.partial-application">
+   <title>Частичное применение функции</title>
+
+   <simpara>
+    Частичное применение функции доступно с PHP 8.6.0.
+    Синтаксис вызова функции или метода, в котором указали только часть аргументов,
+    а остальные заменили заполнителями, — не выполняет вызов,
+    а только создаёт объект <classname>Closure</classname> с теми параметрами,
+    вместо которых указали заполнители. Частичное применение функций расширяет
+    <link linkend="functions.first_class_callable_syntax">синтаксис создания первоклассных вызываемых значений</link> —
+    частный случай пропуска аргументов —
+    и работает со всеми вызываемыми выражениями,
+    которые преобразовываются в объекты <classname>Closure</classname> и определяют конкретную функцию или метод
+    для вызова.
+   </simpara>
+
+   <itemizedlist>
+    <listitem>
+     <simpara>
+      Заполнитель <code>?</code> замещает ровно один параметр. Параметр
+      объекта <classname>Closure</classname>, который появляется на месте заполнителя, становится обязательным,
+      даже если параметр целевой функции опциональный.
+     </simpara>
+    </listitem>
+    <listitem>
+     <simpara>
+      Заполнитель <code>...</code> замещает остальные параметры, которые не указали другим способом.
+      Необозначенные параметры целевой функции сохраняют свои значения по умолчанию,
+      а параметры с переменным количеством аргументов остаются переменными.
+      Переменный заполнитель указывают только один раз и только последним аргументом.
+     </simpara>
+    </listitem>
+   </itemizedlist>
+
+   <example>
+    <title>Частичное применение функции</title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+function volume(int $length, int $width, int $height): int
+{
+    return $length * $width * $height;
+}
+
+// Заполнитель "?" замещает ровно один параметр
+$closure = volume(2, ?, 4);
+// эквивалент: static fn(int $width): int => volume(2, $width, 4)
+var_dump($closure(3));
+
+$closure = volume(?, 3, ?);
+// эквивалент: static fn(int $length, int $height): int => volume($length, 3, $height)
+var_dump($closure(2, 4));
+
+// Заполнитель "..." замещает остальные параметры
+$closure = volume(2, ...);
+// эквивалент: static fn(int $width, int $height): int => volume(2, $width, $height)
+var_dump($closure(3, 4));
+
+// При передаче полного набора аргументов заполнитель "..." только откладывает вызов
+$closure = volume(2, 3, 4, ...);
+// эквивалент: static fn(): int => volume(2, 3, 4)
+var_dump($closure());
+
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+int(24)
+int(24)
+int(24)
+int(24)
+]]>
+    </screen>
+   </example>
+
+   <simpara>
+    Частичное применение функций сокращает количество шаблонного кода
+    при подготовке callable-значений с одним параметром,
+    которые принимает <link linkend="language.operators.functional">оператор конвейеризации</link>.
+   </simpara>
+
+   <example>
+    <title>Частичное применение функции с оператором <literal>|&gt;</literal></title>
+    <programlisting role="php">
+<![CDATA[
+<?php
+
+echo ' Hello  World '
+    |> trim(...)
+    |> str_replace(' ', '', ?)
+    |> strtoupper(...)
+    |> str_pad(?, 12, '*', STR_PAD_BOTH);
+
+]]>
+    </programlisting>
+    &example.outputs;
+    <screen>
+<![CDATA[
+*HELLOWORLD*
+]]>
+    </screen>
+   </example>
+
+   <simpara>
+    Название, объявление типа и режим передачи по ссылке параметры замыкания <classname>Closure</classname>
+    получают из целевой функции, как и тип возвращаемого значения.
+    Частичное применение функции поддерживается
+    в константных выражениях при условии, что сами аргументы —
+    константные выражения.
+   </simpara>
+
+   <sect2 xml:id="functions.partial-application.named">
+    <title>Именованные заполнители</title>
+
+    <simpara>
+     Частичное применение поддерживает передачу
+     <link linkend="functions.named-arguments">именованных аргументов</link>,
+     заполнители именуются аналогично:
+     <code>name: ?</code>. Как и при стандартном вызове, именованные аргументы и заполнители
+     указывают после позиционных аргументов. Позиции параметров объекта
+     <classname>Closure</classname> определяются порядком именованных заполнителей,
+     поэтому параметры возможно переупорядочить.
+    </simpara>
+
+    <example>
+     <title>Именованные заполнители</title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+// В замыкании параметр $subject станет первым, а $search — вторым
+$remove = str_replace(subject: ?, search: ?, replace: '');
+
+var_dump($remove('a-b-c', '-'));
+
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+string(3) "abc"
+]]>
+     </screen>
+    </example>
+   </sect2>
+
+   <sect2 xml:id="functions.partial-application.evaluation">
+    <title>Вычисление аргументов</title>
+
+    <simpara>
+     Аргументы частичного применения вычисляются однократно, когда создаётся
+     объект <classname>Closure</classname>, а не при каждом вызове,
+     а тело <link linkend="functions.arrow">стрелочной функции</link>,
+     которой обернули тот же вызов,
+     вычисляется при каждом запуске.
+    </simpara>
+
+    <example>
+     <title>Вычисление аргументов при создании объекта <classname>Closure</classname></title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function now(): string
+{
+    echo "Сработал вызов функции now()\n";
+    return '12:00';
+}
+
+function greet(string $name, string $time): string
+{
+    return "Привет, $name! Текущее время: $time\n";
+}
+
+$arrow = fn(string $name) => greet($name, now());
+echo "Создалась стрелочная функция\n";
+echo $arrow('Алиса');
+echo $arrow('Алиса');
+
+echo "\n====\n\n";
+
+$partial = greet(?, now());
+echo "Создалось частичное применение\n";
+echo $partial('Боб');
+echo $partial('Боб');
+
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+Создалась стрелочная функция
+Сработал вызов функции now()
+Привет, Алиса! Текущее время: 12:00
+Сработал вызов функции now()
+Привет, Алиса! Текущее время: 12:00
+
+====
+
+Сработал вызов функции now()
+Создалось частичное применение
+Привет, Боб! Текущее время: 12:00
+Привет, Боб! Текущее время: 12:00
+]]>
+     </screen>
+    </example>
+   </sect2>
+
+   <sect2 xml:id="functions.partial-application.extra-arguments">
+    <title>Дополнительные аргументы</title>
+
+    <simpara>
+     Объект <classname>Closure</classname> перенаправляет аргументы в целевую функцию;
+     замыкание, которое создали без заполнителя <code>...</code>,
+     игнорирует аргументы сверх количества своих параметров.
+     Объект <classname>Closure</classname> создают с заполнителем <code>...</code>,
+     если замыкание работает как callback-функция и получает больше аргументов, чем готово принять, —
+     например, кроме значения элемента массива функция передаёт и ключ, —
+     иначе дополнительные аргументы не попадут в целевую функцию.
+    </simpara>
+
+    <example>
+     <title>Перенаправление дополнительных аргументов только с заполнителем <code>...</code></title>
+     <programlisting role="php">
+<![CDATA[
+<?php
+
+function greet(string $name, string $greeting = 'Привет,'): string
+{
+    return "$greeting $name\n";
+}
+
+// Замыкание игнорирует второй аргумент
+$closure = greet(?);
+echo $closure('Алиса!', 'Пока,');
+
+// Замыкание перенаправляет второй аргумент в функцию greet()
+$closure = greet(?, ...);
+echo $closure('Алиса!', 'Пока,');
+
+]]>
+     </programlisting>
+     &example.outputs;
+     <screen>
+<![CDATA[
+Привет, Алиса!
+Пока, Алиса!
+]]>
+     </screen>
+    </example>
+   </sect2>
+
+   <sect2 xml:id="functions.partial-application.errors">
+    <title>Ограничения</title>
+
+    <itemizedlist>
+     <listitem>
+      <simpara>
+       Выражения наподобие <code>new Foo(1, ?)</code> не поддерживаются,
+       поскольку синтаксис <code>new Foo()</code> — не вызов.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Заполнители нельзя объединять
+       <link linkend="language.oop5.basic.nullsafe">с nullsafe-оператором</link>.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Заполнители нельзя объединять
+       <link linkend="functions.variable-arg-list">с распаковкой аргументов</link>.
+      </simpara>
+     </listitem>
+     <listitem>
+      <simpara>
+       Частичное применение несовместимо с функциями,
+       которые проверяют область видимости в точке вызова:
+       <function>compact</function>, <function>extract</function>,
+       <function>func_get_args</function> и <function>get_defined_vars</function>;
+       попытка создать замыкание из перечисленных функций выбрасывает ошибку <exceptionname>Error</exceptionname>.
+      </simpara>
+     </listitem>
+    </itemizedlist>
+
+    <example>
+     <title>Недопустимый синтаксис, который вызывает ошибки при компиляции</title>
+     <programlisting role="php" annotations="non-interactive">
+<![CDATA[
+<?php
+
+new Foo(1, ?);             // Невозможно создать объект Closure с заполнителем в выражении new
+
+$obj?->method(1, ?);       // Невозможно создать объект Closure при объединении nullsafe-оператора и заполнителя
+
+foo(?, ...$array);         // Нельзя объединять частичное применение и распаковку
+
+foo(..., ?);               // Переменный заполнитель обязательно указывается в конце
+foo(a: 1, ?);              // Нельзя указывать позиционный аргумент после именованного
+
+]]>
+     </programlisting>
+    </example>
+
+    <simpara>
+     Частичное применение выбрасывает ошибку <exceptionname>ArgumentCountError</exceptionname>
+     при попытке создать объект <classname>Closure</classname>,
+     если количество аргументов и заполнителей не согласуется с параметрами целевой функции.
+    </simpara>
+   </sect2>
+  </sect1>
 
 </chapter>
 <!-- Keep this comment at the end of the file
