@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- EN-Revision: a747e132c5506a0273c686cbe20e227c980d8ec7 Maintainer: rjhdby Status: ready -->
+<!-- EN-Revision: ec891f50fa7c999195c1c792261bfd15e41daf73 Maintainer: rjhdby Status: ready -->
 <!-- Reviewed: no -->
 <refentry xml:id="function.pcntl-waitpid" xmlns="http://docbook.org/ns/docbook">
  <refnamediv>
@@ -131,6 +131,24 @@
       </para>
      </listitem>
     </varlistentry>
+    <varlistentry>
+     <term><parameter>resource_usage</parameter></term>
+     <listitem>
+      <simpara>
+       Параметр <parameter>resource_usage</parameter> заполняется ассоциативным
+       массивом (<type>array</type>) со статистикой потребления ресурсов дочерним
+       процессом. Подробнее о содержимом массива — в описании функции
+       <function>getrusage</function>.
+      </simpara>
+      <simpara>
+       Параметр заполняется, только если в системе доступен системный вызов
+       <literal>wait4(2)</literal>; иначе параметр остаётся нетронутым.
+       Если статус ни одного дочернего процесса не был получен, то есть функция
+       возвращает <literal>0</literal> или <literal>-1</literal>, в параметр
+       записывается пустой массив (<type>array</type>).
+      </simpara>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
  </refsect1>
@@ -144,12 +162,73 @@
   </para>
  </refsect1>
 
+ <refsect1 role="examples">
+  &reftitle.examples;
+  <example>
+   <title>Пример использования функции <function>pcntl_waitpid</function></title>
+   <programlisting role="php">
+<![CDATA[
+<?php
+
+function checkChild(int $pid, bool $wait): void
+{
+    $flags = ($wait ? 0 : WNOHANG);
+    $deadPid = pcntl_waitpid($pid, $status, $flags, $rusage);
+    if ($deadPid === -1) {
+        $errNo = pcntl_get_last_error();
+        $errMsg = pcntl_strerror($errNo);
+        print "РОДИТЕЛЬ: не удалось выполнить pcntl_waitpid ({$errNo}): {$errMsg}\n";
+    } elseif ($deadPid === 0) {
+        print "РОДИТЕЛЬ pcntl_waitpid: завершённых дочерних процессов нет.\n";
+    } elseif (pcntl_wifexited($status)) {
+        print "РОДИТЕЛЬ pcntl_waitpid: дочерний процесс {$deadPid} завершился со статусом: "
+            . pcntl_wexitstatus($status) . "\n";
+        var_dump($rusage);
+    } else {
+        print "РОДИТЕЛЬ pcntl_waitpid: дочерний процесс {$deadPid} был завершён сигналом: "
+            . pcntl_wtermsig($status) . "\n";
+    }
+}
+
+$parentPid = getmypid();
+$forkedPid = pcntl_fork();
+if ($forkedPid == -1) {
+    die('Не удалось выполнить fork');
+} else if ($forkedPid) {
+    // Родительский процесс
+    print "РОДИТЕЛЬ {$parentPid} создал дочерний процесс {$forkedPid}\n";
+
+    print "РОДИТЕЛЬ проверяет завершённые дочерние процессы\n";
+    checkChild($forkedPid, false);
+
+    // Не позволяет дочернему процессу остаться «зомби»
+    print "РОДИТЕЛЬ ожидает завершения дочернего процесса\n";
+    checkChild($forkedPid, true);
+
+    print "РОДИТЕЛЬ проверяет завершённые дочерние процессы\n";
+    checkChild($forkedPid, false);
+
+    print "РОДИТЕЛЬ завершает работу\n";
+} else {
+    // Дочерний процесс
+    $pid = getmypid();
+    print "ДОЧЕРНИЙ {$pid} спит\n";
+    sleep(10);
+    print "ДОЧЕРНИЙ завершает работу\n";
+    exit(7);
+}
+]]>
+   </programlisting>
+  </example>
+ </refsect1>
+
  <refsect1 role="seealso">
   &reftitle.seealso;
   <para>
    <simplelist>
     <member><function>pcntl_fork</function></member>
     <member><function>pcntl_signal</function></member>
+    <member><function>pcntl_wait</function></member>
     <member><function>pcntl_wifexited</function></member>
     <member><function>pcntl_wifstopped</function></member>
     <member><function>pcntl_wifsignaled</function></member>
